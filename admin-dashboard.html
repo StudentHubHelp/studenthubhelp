@@ -426,7 +426,7 @@
         </div>
     </div>
 
-    <!-- ================= 3. POPUP MODALS (DETAILS & EDIT) ================= -->
+  <!-- ================= 3. POPUP MODALS (DETAILS & EDIT) ================= -->
     <!-- Info Viewer Modal -->
     <div id="detailInfoModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative space-y-5">
@@ -441,6 +441,40 @@
                 </div>
             </div>
             <div id="modalBodyContent" class="bg-navy-850 p-5 rounded-2xl border border-navy-800 text-xs text-slate-300 space-y-2.5 leading-relaxed"></div>
+        </div>
+    </div>
+
+    <!-- UNIVERSAL EDIT MODAL -->
+    <div id="editDataModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative space-y-4">
+            <button onclick="closeEditModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="flex items-center gap-2 pb-2 border-b border-navy-800">
+                <i class="fa-solid fa-pen-to-square text-gold-400 text-lg"></i>
+                <h3 id="editModalHeading" class="text-base font-bold text-white">Edit Details</h3>
+            </div>
+            <form id="universalEditForm" class="space-y-3 text-xs">
+                <div>
+                    <label id="lblField1" class="block text-slate-300 mb-1">Name / Title</label>
+                    <input type="text" id="editField1" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label id="lblField2" class="block text-slate-300 mb-1">Phone Number</label>
+                    <input type="text" id="editField2" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label id="lblField3" class="block text-slate-300 mb-1">Address / Location</label>
+                    <input type="text" id="editField3" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label id="lblField4" class="block text-slate-300 mb-1">Price / Detail</label>
+                    <input type="text" id="editField4" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl hover:brightness-110 shadow-md transition mt-2">
+                    Save Changes
+                </button>
+            </form>
         </div>
     </div>
 
@@ -506,7 +540,6 @@
 
         notifBellBtn.addEventListener('click', () => {
             notifDropdown.classList.toggle('hidden');
-            // Remove red dot on reading
             notifRedDot.classList.add('hidden');
         });
 
@@ -523,24 +556,32 @@
             if (activeBtn) activeBtn.className = 'sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-gold-300 bg-gold-500/10 border border-gold-500/40 text-left transition';
         };
 
-        // ================= DATABASE ARRAYS =================
-        let studentsData = [
+        // ================= LOCALSTORAGE PERSISTENT DATABASE =================
+        function loadStorage(key, defaultData) {
+            const saved = localStorage.getItem('sh_' + key);
+            return saved ? JSON.parse(saved) : defaultData;
+        }
+        function saveStorage(key, data) {
+            localStorage.setItem('sh_' + key, JSON.stringify(data));
+        }
+
+        let studentsData = loadStorage('students', [
             { id: 1, photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80", name: "Vikas Shekhawat", phone: "+91 98291 55441", email: "vikas.sikar@gmail.com", address: "Piprali Road, Sikar", exam: "NEET (Matrix Academy)" },
             { id: 2, photo: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&q=80", name: "Anil Kumar", phone: "+91 97852 44112", email: "anil.rrbscholar@gmail.com", address: "Nawalgarh Road, Sikar", exam: "RRB Technician Grade 3" },
             { id: 3, photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80", name: "Pooja Choudhary", phone: "+91 94142 88991", email: "pooja.raj@gmail.com", address: "Jat Colony, Sikar", exam: "Rajasthan CET & REET" }
-        ];
+        ]);
 
-        let ownersData = [
+        let ownersData = loadStorage('owners', [
             { id: 1, photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80", name: "Ramesh Ji", phone: "+91 76910 94588", email: "princehostel.sikar@gmail.com", business: "Prince Boys PG & Hostel", type: "Hostel", address: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar", price: "₹4,500/mo" },
             { id: 2, photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80", name: "Devendra Singh", phone: "+91 97847 96538", email: "devhostel.sikar@gmail.com", business: "Dev Hostel Sikar", type: "Hostel", address: "Opposite Matrix NEET Division, Piprali Road, Sikar", price: "₹4,800/mo" },
             { id: 3, photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80", name: "Smt. Sharda Devi", phone: "+91 63785 04820", email: "diditiffin.sikar@gmail.com", business: "दीदी का टिफिन (Didi Ka Tiffin)", type: "Tiffin", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar", price: "₹2,600/mo" },
             { id: 4, photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&q=80", name: "Mukesh Choudhary", phone: "+91 75971 08814", email: "studypoint.library@gmail.com", business: "थे स्टडी पॉइंट लाइब्रेरी", type: "Library", address: "Sanjay Restaurant Ki Galli, New Janta Colony, Sikar", price: "₹650/mo" }
-        ];
+        ]);
 
-        let hostelsData = [
-            { id: 1, name: "Prince Boys PG & Hostel", owner: "Ramesh Ji", phone: "+91 76910 94588", address: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar", roomsVacant: "6 Rooms Vacant (Single & Double)", price: "₹4,500 / month", facilities: "High-Speed WiFi, Inverter Power Backup, RO Drinking Water, 3-Time Satvik Food, CCTV Surveillance, Separate Study Table." },
-            { id: 2, name: "Dev Hostel Sikar", owner: "Devendra Singh", phone: "+91 97847 96538", address: "Opposite Matrix NEET Division, Piprali Road, Sikar", roomsVacant: "4 AC Rooms Vacant", price: "₹4,800 / month", facilities: "AC Silent Rooms, High-Speed WiFi, RO Cold Water, 3 Meals with Milk, Attached Washrooms." },
-            { id: 51, name: "Times Square Girls Hostel", owner: "Sunita Devi", phone: "+91 96025 02561", address: "Near Balaji Hospital, Allen Gali, Jagdamba Colony, Sikar", roomsVacant: "8 Girls Rooms Vacant", price: "₹5,200 / month", facilities: "24/7 Lady Warden, Full CCTV Security, AC Rooms, Hygienic Meals, WiFi, Power Backup." },
+        let hostelsData = loadStorage('hostels', [
+            { id: 1, name: "Prince Boys PG & Hostel", owner: "Ramesh Ji", phone: "+91 76910 94588", address: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar", roomsVacant: "6 Rooms Vacant", price: "₹4,500 / month", facilities: "WiFi, Power Backup, RO Water, 3-Time Food, CCTV." },
+            { id: 2, name: "Dev Hostel Sikar", owner: "Devendra Singh", phone: "+91 97847 96538", address: "Opposite Matrix NEET Division, Piprali Road, Sikar", roomsVacant: "4 AC Rooms Vacant", price: "₹4,800 / month", facilities: "AC Rooms, WiFi, RO Water, 3 Meals." },
+            { id: 51, name: "Times Square Girls Hostel", owner: "Sunita Devi", phone: "+91 96025 02561", address: "Near Balaji Hospital, Allen Gali, Jagdamba Colony, Sikar", roomsVacant: "8 Girls Rooms Vacant", price: "₹5,200 / month", facilities: "Lady Warden, CCTV, AC Rooms, WiFi." },
             ...Array.from({length: 97}, (_, i) => {
                 const id = i + 3;
                 return {
@@ -551,14 +592,14 @@
                     address: ["Piprali Road", "Nawalgarh Road", "Palwas Road", "Samarthpura", "Jat Colony"][i % 5] + ", Sikar",
                     roomsVacant: `${(id % 5) + 2} Rooms Available`,
                     price: `₹${3800 + (id % 4) * 350} / month`,
-                    facilities: "WiFi, Food, RO Water, Power Backup, Study Desks."
+                    facilities: "WiFi, Food, RO Water, Power Backup."
                 };
             })
-        ];
+        ]);
 
-        let tiffinsData = [
-            { id: 1, name: "दीदी का टिफिन (Didi Ka Tiffin)", phone: "+91 63785 04820", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar", price: "₹2,600 / month", menu: "Morning: 4 Butter Roti, Dal Fry, Seasonal Sabji, Steamed Rice, Salad. Evening: 4 Roti, Paneer/Green Veg, Kadhi/Curd, Pickle." },
-            { id: 2, name: "राधे फूड्स (Radhe Foods)", phone: "+91 70623 47736", address: "Vandematram chowk, Radhakishan Pura, Sikar", price: "₹2,800 / month", menu: "Pure Desi Ghee Roti (4 pcs), Dal Tadka, Mix Veg, Rice, Green Salad & Sweet once a week." },
+        let tiffinsData = loadStorage('tiffins', [
+            { id: 1, name: "दीदी का टिफिन (Didi Ka Tiffin)", phone: "+91 63785 04820", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar", price: "₹2,600 / month", menu: "Morning: 4 Butter Roti, Dal, Sabji, Rice, Salad. Evening: 4 Roti, Green Veg, Kadhi, Pickle." },
+            { id: 2, name: "राधे फूड्स (Radhe Foods)", phone: "+91 70623 47736", address: "Vandematram chowk, Radhakishan Pura, Sikar", price: "₹2,800 / month", menu: "Desi Ghee Roti, Dal Tadka, Mix Veg, Rice, Green Salad." },
             ...Array.from({length: 98}, (_, i) => {
                 const id = i + 3;
                 return {
@@ -567,14 +608,14 @@
                     phone: `+91 94142 ${40000 + id}`,
                     address: ["Nawalgarh Road", "Palwas Road", "Bajaj Road", "Piprali Road", "Charan Singh Nagar"][i % 5] + ", Sikar",
                     price: `₹${2400 + (id % 3) * 200} / month`,
-                    menu: "Daily 2 Times Homemade Pure Veg Thali with 4 Roti, Dal, Sabji & Rice."
+                    menu: "Daily 2 Times Homemade Pure Veg Thali."
                 };
             })
-        ];
+        ]);
 
-        let librariesData = [
-            { id: 1, name: "थे स्टडी पॉइंट लाइब्रेरी एंड हॉस्टल", phone: "+91 75971 08814", address: "Sanjay Restaurant Ki Galli, New Janta Colony, Sikar", price: "₹650 / month", seatsVacant: "12 Seats Available", facilities: "24/7 Centralized AC, 100 Mbps 5G WiFi, Personal Charging Socket & Lamp, Noise Cancelling Partitions, RO Water, Discussion Room." },
-            { id: 2, name: "तपोवन लाइब्रेरी", phone: "+91 96948 14577", address: "Om Tower, Charan Singh Gate, Sikar", price: "₹600 / month", seatsVacant: "18 Seats Available", facilities: "AC Silent Study, Ergonomic Cushion Chairs, Power Inverter Backup, Clean Restrooms." },
+        let librariesData = loadStorage('libraries', [
+            { id: 1, name: "थे स्टडी पॉइंट लाइब्रेरी एंड हॉस्टल", phone: "+91 75971 08814", address: "Sanjay Restaurant Ki Galli, New Janta Colony, Sikar", price: "₹650 / month", seatsVacant: "12 Seats Available", facilities: "24/7 Centralized AC, 100 Mbps WiFi, Personal Charging Socket, RO Water." },
+            { id: 2, name: "तपोवन लाइब्रेरी", phone: "+91 96948 14577", address: "Om Tower, Charan Singh Gate, Sikar", price: "₹600 / month", seatsVacant: "18 Seats Available", facilities: "AC Silent Study, Ergonomic Cushion Chairs, Power Backup." },
             ...Array.from({length: 98}, (_, i) => {
                 const id = i + 3;
                 return {
@@ -584,12 +625,12 @@
                     address: ["Palwas Road", "Piprali Road", "Nawalgarh Road", "Jat Colony", "Radhakishan Pura"][i % 5] + ", Sikar",
                     price: `₹${550 + (id % 4) * 50} / month`,
                     seatsVacant: `${(id % 12) + 4} Seats Available`,
-                    facilities: "AC Zone, High Speed WiFi, Personal Locker, RO Drinking Water."
+                    facilities: "AC Zone, High Speed WiFi, Personal Locker."
                 };
             })
-        ];
+        ]);
 
-        // ================= RENDERING TABLES =================
+        // ================= RENDERING TABLES WITH WORKING EDIT & DELETE =================
         function renderStudents() {
             const tbody = document.getElementById('studentTableBody');
             tbody.innerHTML = studentsData.map((s, idx) => `
@@ -599,9 +640,9 @@
                     <td class="p-4 font-mono text-gold-300 font-semibold">${s.phone}</td>
                     <td class="p-4 text-slate-300">${s.email}</td>
                     <td class="p-4"><span class="bg-navy-900 px-2 py-0.5 rounded border border-navy-700 text-[11px] text-emerald-300">${s.exam}</span></td>
-                    <td class="p-4 text-right space-x-2">
-                        <button onclick="editStudent(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="deleteStudent(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash"></i></button>
+                    <td class="p-4 text-right space-x-1.5">
+                        <button onclick="openEditModal('student', ${idx})" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteItem('students', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -616,8 +657,9 @@
                     <td class="p-4 font-mono text-gold-300 font-semibold">${o.phone}</td>
                     <td class="p-4 text-slate-300">${o.email}</td>
                     <td class="p-4"><span class="bg-gold-500/10 text-gold-300 px-2 py-0.5 rounded border border-gold-500/20 text-[11px]">${o.business} (${o.type})</span></td>
-                    <td class="p-4 text-right space-x-2" onclick="event.stopPropagation()">
-                        <button onclick="deleteOwner(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash"></i></button>
+                    <td class="p-4 text-right space-x-1.5" onclick="event.stopPropagation()">
+                        <button onclick="openEditModal('owner', ${idx})" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteItem('owners', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -632,9 +674,10 @@
                     <td class="p-4 text-slate-300">${h.owner}</td>
                     <td class="p-4 font-mono text-gold-300 font-semibold">${h.phone}</td>
                     <td class="p-4 text-slate-400">${h.address}</td>
-                    <td class="p-4 text-right space-x-1" onclick="event.stopPropagation()">
-                        <a href="tel:${h.phone}" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
-                        <button onclick="deleteHostel(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white inline-block"><i class="fa-solid fa-trash"></i></button>
+                    <td class="p-4 text-right space-x-1.5" onclick="event.stopPropagation()">
+                        <a href="tel:${h.phone}" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
+                        <button onclick="openEditModal('hostel', ${idx})" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteItem('hostels', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -648,9 +691,10 @@
                     <td class="p-4 font-bold text-white hover:text-gold-300 transition">${t.name} <i class="fa-solid fa-utensils text-[10px] ml-1 text-gold-400"></i></td>
                     <td class="p-4 font-mono text-gold-300 font-semibold">${t.phone}</td>
                     <td class="p-4 text-slate-300">${t.address}</td>
-                    <td class="p-4 text-right space-x-1" onclick="event.stopPropagation()">
-                        <a href="tel:${t.phone}" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
-                        <button onclick="deleteTiffin(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white inline-block"><i class="fa-solid fa-trash"></i></button>
+                    <td class="p-4 text-right space-x-1.5" onclick="event.stopPropagation()">
+                        <a href="tel:${t.phone}" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
+                        <button onclick="openEditModal('tiffin', ${idx})" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteItem('tiffins', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -664,9 +708,10 @@
                     <td class="p-4 font-bold text-white hover:text-gold-300 transition">${l.name} <i class="fa-solid fa-landmark text-[10px] ml-1 text-gold-400"></i></td>
                     <td class="p-4 font-mono text-gold-300 font-semibold">${l.phone}</td>
                     <td class="p-4 text-slate-300">${l.address}</td>
-                    <td class="p-4 text-right space-x-1" onclick="event.stopPropagation()">
-                        <a href="tel:${l.phone}" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
-                        <button onclick="deleteLibrary(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white inline-block"><i class="fa-solid fa-trash"></i></button>
+                    <td class="p-4 text-right space-x-1.5" onclick="event.stopPropagation()">
+                        <a href="tel:${l.phone}" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
+                        <button onclick="openEditModal('library', ${idx})" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteItem('libraries', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -680,7 +725,138 @@
             renderLibraries();
         }
 
-        // ================= DETAIL POPUP HANDLERS =================
+        // ================= DELETE FUNCTION WITH PERMANENT PERSISTENCE =================
+        window.deleteItem = function(type, idx) {
+            let itemName = "";
+            if(type === 'students') itemName = studentsData[idx].name;
+            else if(type === 'owners') itemName = ownersData[idx].name;
+            else if(type === 'hostels') itemName = hostelsData[idx].name;
+            else if(type === 'tiffins') itemName = tiffinsData[idx].name;
+            else if(type === 'libraries') itemName = librariesData[idx].name;
+
+            if(confirm(`Are you sure you want to delete "${itemName}"? This will be permanently removed.`)) {
+                if(type === 'students') { studentsData.splice(idx, 1); saveStorage('students', studentsData); renderStudents(); }
+                else if(type === 'owners') { ownersData.splice(idx, 1); saveStorage('owners', ownersData); renderOwners(); }
+                else if(type === 'hostels') { hostelsData.splice(idx, 1); saveStorage('hostels', hostelsData); renderHostels(); }
+                else if(type === 'tiffins') { tiffinsData.splice(idx, 1); saveStorage('tiffins', tiffinsData); renderTiffins(); }
+                else if(type === 'libraries') { librariesData.splice(idx, 1); saveStorage('libraries', librariesData); renderLibraries(); }
+                alert('Deleted successfully!');
+            }
+        };
+
+        // ================= EDIT MODAL CONTROLLER =================
+        const editDataModal = document.getElementById('editDataModal');
+        const universalEditForm = document.getElementById('universalEditForm');
+        let currentEditType = null;
+        let currentEditIndex = null;
+
+        window.openEditModal = function(type, idx) {
+            currentEditType = type;
+            currentEditIndex = idx;
+
+            const lbl1 = document.getElementById('lblField1');
+            const lbl2 = document.getElementById('lblField2');
+            const lbl3 = document.getElementById('lblField3');
+            const lbl4 = document.getElementById('lblField4');
+
+            const f1 = document.getElementById('editField1');
+            const f2 = document.getElementById('editField2');
+            const f3 = document.getElementById('editField3');
+            const f4 = document.getElementById('editField4');
+
+            if(type === 'student') {
+                const s = studentsData[idx];
+                document.getElementById('editModalHeading').textContent = `Edit Student (${s.name})`;
+                lbl1.textContent = 'Student Name'; f1.value = s.name;
+                lbl2.textContent = 'Phone Number'; f2.value = s.phone;
+                lbl3.textContent = 'Email Address'; f3.value = s.email;
+                lbl4.textContent = 'Target Exam / Prep Goal'; f4.value = s.exam;
+            } else if(type === 'owner') {
+                const o = ownersData[idx];
+                document.getElementById('editModalHeading').textContent = `Edit Owner (${o.name})`;
+                lbl1.textContent = 'Owner Name'; f1.value = o.name;
+                lbl2.textContent = 'Phone Number'; f2.value = o.phone;
+                lbl3.textContent = 'Business Name'; f3.value = o.business;
+                lbl4.textContent = 'Monthly Price / Charge'; f4.value = o.price;
+            } else if(type === 'hostel') {
+                const h = hostelsData[idx];
+                document.getElementById('editModalHeading').textContent = `Edit Hostel (${h.name})`;
+                lbl1.textContent = 'Hostel Name'; f1.value = h.name;
+                lbl2.textContent = 'Owner Phone Number'; f2.value = h.phone;
+                lbl3.textContent = 'Address / Location'; f3.value = h.address;
+                lbl4.textContent = 'Monthly Rent'; f4.value = h.price;
+            } else if(type === 'tiffin') {
+                const t = tiffinsData[idx];
+                document.getElementById('editModalHeading').textContent = `Edit Tiffin (${t.name})`;
+                lbl1.textContent = 'Tiffin Center Name'; f1.value = t.name;
+                lbl2.textContent = 'Phone Number'; f2.value = t.phone;
+                lbl3.textContent = 'Address / Area'; f3.value = t.address;
+                lbl4.textContent = 'Monthly Charge'; f4.value = t.price;
+            } else if(type === 'library') {
+                const l = librariesData[idx];
+                document.getElementById('editModalHeading').textContent = `Edit Library (${l.name})`;
+                lbl1.textContent = 'Library Name'; f1.value = l.name;
+                lbl2.textContent = 'Phone Number'; f2.value = l.phone;
+                lbl3.textContent = 'Address / Area'; f3.value = l.address;
+                lbl4.textContent = 'Monthly Fee'; f4.value = l.price;
+            }
+
+            editDataModal.classList.remove('hidden');
+        };
+
+        window.closeEditModal = function() {
+            editDataModal.classList.add('hidden');
+        };
+
+        universalEditForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const f1 = document.getElementById('editField1').value.trim();
+            const f2 = document.getElementById('editField2').value.trim();
+            const f3 = document.getElementById('editField3').value.trim();
+            const f4 = document.getElementById('editField4').value.trim();
+
+            if(currentEditType === 'student') {
+                studentsData[currentEditIndex].name = f1;
+                studentsData[currentEditIndex].phone = f2;
+                studentsData[currentEditIndex].email = f3;
+                studentsData[currentEditIndex].exam = f4;
+                saveStorage('students', studentsData);
+                renderStudents();
+            } else if(currentEditType === 'owner') {
+                ownersData[currentEditIndex].name = f1;
+                ownersData[currentEditIndex].phone = f2;
+                ownersData[currentEditIndex].business = f3;
+                ownersData[currentEditIndex].price = f4;
+                saveStorage('owners', ownersData);
+                renderOwners();
+            } else if(currentEditType === 'hostel') {
+                hostelsData[currentEditIndex].name = f1;
+                hostelsData[currentEditIndex].phone = f2;
+                hostelsData[currentEditIndex].address = f3;
+                hostelsData[currentEditIndex].price = f4;
+                saveStorage('hostels', hostelsData);
+                renderHostels();
+            } else if(currentEditType === 'tiffin') {
+                tiffinsData[currentEditIndex].name = f1;
+                tiffinsData[currentEditIndex].phone = f2;
+                tiffinsData[currentEditIndex].address = f3;
+                tiffinsData[currentEditIndex].price = f4;
+                saveStorage('tiffins', tiffinsData);
+                renderTiffins();
+            } else if(currentEditType === 'library') {
+                librariesData[currentEditIndex].name = f1;
+                librariesData[currentEditIndex].phone = f2;
+                librariesData[currentEditIndex].address = f3;
+                librariesData[currentEditIndex].price = f4;
+                saveStorage('libraries', librariesData);
+                renderLibraries();
+            }
+
+            alert('Details updated and saved permanently!');
+            closeEditModal();
+        });
+
+        // Detail Popup Handlers
         const detailInfoModal = document.getElementById('detailInfoModal');
         const modalIconBox = document.getElementById('modalIconBox');
         const modalTypeBadge = document.getElementById('modalTypeBadge');
@@ -754,39 +930,7 @@
             );
         };
 
-        // Delete Actions
-        window.deleteStudent = function(idx) {
-            if(confirm(`Are you sure you want to delete student "${studentsData[idx].name}"?`)) {
-                studentsData.splice(idx, 1);
-                renderStudents();
-            }
-        };
-        window.deleteOwner = function(idx) {
-            if(confirm(`Are you sure you want to delete owner "${ownersData[idx].name}"?`)) {
-                ownersData.splice(idx, 1);
-                renderOwners();
-            }
-        };
-        window.deleteHostel = function(idx) {
-            if(confirm(`Are you sure you want to delete "${hostelsData[idx].name}"?`)) {
-                hostelsData.splice(idx, 1);
-                renderHostels();
-            }
-        };
-        window.deleteTiffin = function(idx) {
-            if(confirm(`Are you sure you want to delete "${tiffinsData[idx].name}"?`)) {
-                tiffinsData.splice(idx, 1);
-                renderTiffins();
-            }
-        };
-        window.deleteLibrary = function(idx) {
-            if(confirm(`Are you sure you want to delete "${librariesData[idx].name}"?`)) {
-                librariesData.splice(idx, 1);
-                renderLibraries();
-            }
-        };
-
-        // Add Student Prompt
+        // Add Student Function
         window.openAddStudentModal = function() {
             const name = prompt("Enter Student Full Name:");
             if(!name) return;
@@ -801,11 +945,12 @@
                 address: "Sikar, Rajasthan",
                 exam: exam || "General Competitive"
             });
+            saveStorage('students', studentsData);
             renderStudents();
             alert("New student added successfully!");
         };
 
-        // Global Search Logic (Filters active table rows instantly)
+        // Global Search Logic
         document.getElementById('globalAdminSearch').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase();
             document.querySelectorAll('tbody tr').forEach(r => {
@@ -813,7 +958,7 @@
             });
         });
 
-        // Individual Section Search Filters
+        // Individual Search Filters
         function setupTableFilter(inputId, tbodyId) {
             const el = document.getElementById(inputId);
             if(!el) return;
