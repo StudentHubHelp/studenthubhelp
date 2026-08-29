@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Director Admin Console | StudentHub Shekhawati</title>
+    
+    <!-- Navy & Gold "SH" Luxury Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23060B18'/><rect x='4' y='4' width='92' height='92' rx='21' fill='none' stroke='%23D4AF37' stroke-width='4'/><text x='50%25' y='58%25' dominant-baseline='central' text-anchor='middle' font-family='serif' font-weight='800' font-size='44' fill='%23D4AF37'>SH</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            950: '#060B18', // Deepest Navy
+                            900: '#0A1128', // Background
+                            850: '#0E1736', // Card Surface
+                            800: '#141F48', // Elevated Surface
+                            700: '#1E2C63',
+                        },
+                        gold: {
+                            100: '#FFF7D6',
+                            200: '#FDECB2',
+                            300: '#F5DE88',
+                            400: '#E6C65E',
+                            500: '#D4AF37', // Classic Rich Gold
+                            600: '#B89020',
+                            700: '#8C6B10',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Cinzel', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #FDECB2 0%, #D4AF37 50%, #B89020 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gold-gradient-bg {
+            background: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89020 100%);
+        }
+        .gold-border-glow {
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-gold-500 selection:text-navy-950 min-h-screen">
+
+    <!-- ADMIN AUTH MODAL (PROTECTED LOGIN ACCESS) -->
+    <div id="adminAuthLock" class="fixed inset-0 z-50 bg-navy-950/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-8 text-center shadow-2xl space-y-6">
+            <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 text-3xl font-display font-extrabold flex items-center justify-center mx-auto shadow-lg shadow-gold-500/20">
+                SH
+            </div>
+            <div>
+                <h2 class="text-2xl font-display font-bold text-white">Director Admin Login</h2>
+                <p class="text-xs text-slate-400 mt-1">Authorized access for <strong>Satpal Swami</strong> only.</p>
+            </div>
+            
+            <form id="adminLoginForm" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Director Email</label>
+                    <input type="email" id="adminEmail" required value="satpalswami22742@gmail.com" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Director Access Key / Password</label>
+                    <input type="password" id="adminPassword" required placeholder="Enter admin password" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gold-500">
+                    <p class="text-[11px] text-gold-400/80 mt-1">Default Password: <span class="font-mono font-bold text-gold-300">admin123</span></p>
+                </div>
+                <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition">
+                    <i class="fa-solid fa-shield-halved mr-1.5"></i> Unlock Control Center
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN ADMIN INTERFACE -->
+    <div id="adminInterface" class="hidden">
+        
+        <!-- TOP ADMIN NAVBAR -->
+        <nav class="bg-navy-900 border-b border-gold-500/20 px-4 sm:px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gold-500 flex items-center justify-center text-navy-950 font-display font-extrabold text-lg">
+                    SH
+                </div>
+                <div>
+                    <span class="text-lg font-display font-bold gold-gradient-text">StudentHub Admin</span>
+                    <span class="block text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-circle text-[6px]"></i> Director Console Active
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-2 text-xs text-slate-300 bg-navy-850 px-3 py-1.5 rounded-xl border border-navy-700">
+                    <i class="fa-solid fa-user-tie text-gold-500"></i>
+                    <span>Satpal Swami (Director)</span>
+                </div>
+                <a href="index.html" class="text-xs px-3.5 py-2 rounded-lg bg-navy-800 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition">
+                    <i class="fa-solid fa-globe mr-1"></i> View Live Site
+                </a>
+                <button id="adminLogoutBtn" class="text-xs px-3 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- DASHBOARD BODY -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-8 py-10 space-y-8">
+            
+            <!-- ANALYTICS CARDS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                
+                <div class="bg-navy-850 p-6 rounded-2xl gold-border-glow flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Active Hostels</span>
+                        <h3 class="text-3xl font-display font-bold text-white mt-1">100</h3>
+                        <span class="text-[11px] text-emerald-400 font-semibold"><i class="fa-solid fa-check-double mr-1"></i>50 Boys + 50 Girls</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-navy-900 border border-gold-500/30 flex items-center justify-center text-gold-400 text-xl">
+                        <i class="fa-solid fa-hotel"></i>
+                    </div>
+                </div>
+
+                <div class="bg-navy-850 p-6 rounded-2xl gold-border-glow flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Active Tiffins</span>
+                        <h3 class="text-3xl font-display font-bold text-white mt-1">100</h3>
+                        <span class="text-[11px] text-emerald-400 font-semibold"><i class="fa-solid fa-leaf mr-1"></i>Pure-Veg Sikar</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-navy-900 border border-gold-500/30 flex items-center justify-center text-gold-400 text-xl">
+                        <i class="fa-solid fa-bowl-food"></i>
+                    </div>
+                </div>
+
+                <div class="bg-navy-850 p-6 rounded-2xl gold-border-glow flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Active Libraries</span>
+                        <h3 class="text-3xl font-display font-bold text-white mt-1">100</h3>
+                        <span class="text-[11px] text-emerald-400 font-semibold"><i class="fa-solid fa-clock mr-1"></i>24/7 AC Study</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-navy-900 border border-gold-500/30 flex items-center justify-center text-gold-400 text-xl">
+                        <i class="fa-solid fa-landmark"></i>
+                    </div>
+                </div>
+
+                <div class="bg-navy-850 p-6 rounded-2xl gold-border-glow flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 uppercase font-semibold">Pending Verifications</span>
+                        <h3 id="pendingCount" class="text-3xl font-display font-bold text-gold-400 mt-1">2</h3>
+                        <span class="text-[11px] text-gold-300 font-semibold"><i class="fa-solid fa-hourglass-half mr-1"></i>Action Required</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-navy-900 border border-gold-500/30 flex items-center justify-center text-gold-400 text-xl">
+                        <i class="fa-solid fa-user-clock"></i>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- PENDING SUBMISSIONS QUEUE (APPROVAL WORKFLOW) -->
+            <div class="bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow space-y-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-4 border-b border-navy-800">
+                    <div>
+                        <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-check text-gold-400"></i> New Submissions Approval Queue
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Approve or reject properties submitted by owners via <code>add-listing.html</code>.</p>
+                    </div>
+                    <span class="text-xs bg-navy-900 text-gold-300 px-3 py-1.5 rounded-xl border border-gold-500/30 font-semibold">
+                        Direct WhatsApp: +91 99297 18264
+                    </span>
+                </div>
+
+                <div id="pendingListingsGrid" class="space-y-4">
+                    <!-- Sample Pending 1 -->
+                    <div id="pendingCard1" class="bg-navy-900 p-5 rounded-2xl border border-navy-700 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div class="space-y-1.5 flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-gold-500/20 text-gold-300 text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-gold-500/30">Hostel</span>
+                                <h4 class="text-base font-bold text-white">Shree Shyam Executive Boys PG (New Wing)</h4>
+                            </div>
+                            <p class="text-xs text-slate-400"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> Piprali Road, Near Matrix, Sikar | <strong>Rent: ₹4,800/mo</strong></p>
+                            <p class="text-xs text-slate-300">Owner: <strong>Ramesh Ji</strong> • Phone: <a href="tel:9876543210" class="text-gold-400 underline">9876543210</a></p>
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:w-auto">
+                            <button onclick="approveListing(1)" class="flex-1 md:flex-none px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-check"></i> Approve
+                            </button>
+                            <button onclick="rejectListing(1)" class="flex-1 md:flex-none px-5 py-2.5 rounded-xl bg-red-600/80 hover:bg-red-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-xmark"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sample Pending 2 -->
+                    <div id="pendingCard2" class="bg-navy-900 p-5 rounded-2xl border border-navy-700 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div class="space-y-1.5 flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-gold-500/20 text-gold-300 text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-gold-500/30">Tiffin</span>
+                                <h4 class="text-base font-bold text-white">Annapurna Pure Veg Kitchen & Tiffin</h4>
+                            </div>
+                            <p class="text-xs text-slate-400"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> Nawalgarh Road, Sikar | <strong>Charge: ₹2,600/mo</strong></p>
+                            <p class="text-xs text-slate-300">Owner: <strong>Suresh Sharma</strong> • Phone: <a href="tel:9414246048" class="text-gold-400 underline">9414246048</a></p>
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:w-auto">
+                            <button onclick="approveListing(2)" class="flex-1 md:flex-none px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-check"></i> Approve
+                            </button>
+                            <button onclick="rejectListing(2)" class="flex-1 md:flex-none px-5 py-2.5 rounded-xl bg-red-600/80 hover:bg-red-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-xmark"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="noPendingState" class="hidden text-center py-8 text-slate-400 text-xs">
+                    <i class="fa-solid fa-circle-check text-emerald-400 text-2xl mb-2 block"></i>
+                    All listings are up-to-date! No pending approvals.
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SCRIPT FOR AUTH AND APPROVAL CONTROLS -->
+    <script>
+        const adminAuthLock = document.getElementById('adminAuthLock');
+        const adminInterface = document.getElementById('adminInterface');
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const adminEmail = document.getElementById('adminEmail');
+        const adminPassword = document.getElementById('adminPassword');
+        const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+        const pendingCount = document.getElementById('pendingCount');
+        const noPendingState = document.getElementById('noPendingState');
+
+        // Check Local Session
+        if (sessionStorage.getItem('studenthub_admin_logged') === 'true') {
+            adminAuthLock.classList.add('hidden');
+            adminInterface.classList.remove('hidden');
+        }
+
+        // Login Handler
+        adminLoginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = adminEmail.value.trim().toLowerCase();
+            const pass = adminPassword.value.trim();
+
+            if (email === 'satpalswami22742@gmail.com' && pass === 'admin123') {
+                sessionStorage.setItem('studenthub_admin_logged', 'true');
+                adminAuthLock.classList.add('hidden');
+                adminInterface.classList.remove('hidden');
+            } else {
+                alert('Invalid Director Credentials! Please check your email or password.');
+            }
+        });
+
+        // Logout Handler
+        adminLogoutBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('studenthub_admin_logged');
+            location.reload();
+        });
+
+        // Approve / Reject Actions
+        let currentPending = 2;
+        window.approveListing = function(id) {
+            alert(`Listing #${id} has been Approved and published to StudentHub live directories!`);
+            document.getElementById(`pendingCard${id}`).remove();
+            currentPending--;
+            pendingCount.textContent = currentPending;
+            if(currentPending === 0) noPendingState.classList.remove('hidden');
+        };
+
+        window.rejectListing = function(id) {
+            alert(`Listing #${id} has been Rejected.`);
+            document.getElementById(`pendingCard${id}`).remove();
+            currentPending--;
+            pendingCount.textContent = currentPending;
+            if(currentPending === 0) noPendingState.classList.remove('hidden');
+        };
+    </script>
+</body>
+</html>
