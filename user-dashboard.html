@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard | StudentHub Shekhawati</title>
+    
+    <!-- Navy & Gold "SH" Luxury Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23060B18'/><rect x='4' y='4' width='92' height='92' rx='21' fill='none' stroke='%23D4AF37' stroke-width='4'/><text x='50%25' y='58%25' dominant-baseline='central' text-anchor='middle' font-family='serif' font-weight='800' font-size='44' fill='%23D4AF37'>SH</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            950: '#060B18',
+                            900: '#0A1128',
+                            850: '#0E1736',
+                            800: '#141F48',
+                            700: '#1E2C63',
+                        },
+                        gold: {
+                            100: '#FFF7D6',
+                            200: '#FDECB2',
+                            300: '#F5DE88',
+                            400: '#E6C65E',
+                            500: '#D4AF37',
+                            600: '#B89020',
+                            700: '#8C6B10',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Cinzel', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #FDECB2 0%, #D4AF37 50%, #B89020 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gold-gradient-bg {
+            background: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89020 100%);
+        }
+        .gold-border-glow {
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-gold-500 selection:text-navy-950 min-h-screen flex flex-col justify-between">
+
+    <!-- NAVBAR -->
+    <nav class="bg-navy-900 border-b border-gold-500/15 px-4 sm:px-8 py-4 flex items-center justify-between">
+        <a href="./" class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gold-500 flex items-center justify-center text-navy-950 font-display font-extrabold text-lg">
+                SH
+            </div>
+            <div>
+                <span class="text-lg font-display font-bold gold-gradient-text">StudentHub</span>
+                <span class="block text-[10px] text-slate-400 uppercase font-semibold">User Dashboard</span>
+            </div>
+        </a>
+
+        <div class="flex items-center gap-3">
+            <a href="./" class="text-xs px-3.5 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition">
+                <i class="fa-solid fa-home mr-1"></i> Home
+            </a>
+            <button onclick="userLogout()" class="text-xs px-3.5 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition font-bold">
+                <i class="fa-solid fa-power-off mr-1"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- DASHBOARD CONTAINER -->
+    <main class="max-w-5xl w-full mx-auto px-4 py-10 space-y-8 flex-1">
+        
+        <!-- TOP WELCOME BANNER -->
+        <div class="bg-gradient-to-r from-navy-900 via-navy-850 to-navy-900 border border-gold-500/30 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 text-2xl font-bold flex items-center justify-center font-display" id="userAvatar">
+                    U
+                </div>
+                <div>
+                    <span id="roleBadge" class="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border">Role</span>
+                    <h2 class="text-2xl font-display font-bold text-white mt-1" id="userName">User Name</h2>
+                    <p class="text-xs text-slate-400" id="userEmail">user@example.com</p>
+                </div>
+            </div>
+            <div id="quickActionHeader"></div>
+        </div>
+
+        <!-- ================= STUDENT VIEW ================= -->
+        <div id="studentView" class="hidden space-y-6">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-compass text-gold-400"></i> Explore Sikar Student Services
+            </h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <a href="pg-finder.html" class="bg-navy-850 p-6 rounded-2xl gold-border-glow block hover:bg-navy-800 transition group">
+                    <i class="fa-solid fa-hotel text-2xl text-gold-400 mb-3 block"></i>
+                    <h4 class="text-base font-bold text-white group-hover:text-gold-300">Find 100+ Hostels</h4>
+                    <p class="text-xs text-slate-400 mt-1">Direct warden & owner contacts in Piprali & Nawalgarh road.</p>
+                </a>
+                <a href="tiffin-services.html" class="bg-navy-850 p-6 rounded-2xl gold-border-glow block hover:bg-navy-800 transition group">
+                    <i class="fa-solid fa-bowl-food text-2xl text-gold-400 mb-3 block"></i>
+                    <h4 class="text-base font-bold text-white group-hover:text-gold-300">100+ Tiffin Providers</h4>
+                    <p class="text-xs text-slate-400 mt-1">Homemade daily thali & mess delivery services.</p>
+                </a>
+                <a href="library-coaching.html" class="bg-navy-850 p-6 rounded-2xl gold-border-glow block hover:bg-navy-800 transition group">
+                    <i class="fa-solid fa-landmark text-2xl text-gold-400 mb-3 block"></i>
+                    <h4 class="text-base font-bold text-white group-hover:text-gold-300">100+ 24/7 Libraries</h4>
+                    <p class="text-xs text-slate-400 mt-1">Air-conditioned self-study zones & seat inquiry.</p>
+                </a>
+            </div>
+
+            <!-- Student Support Box -->
+            <div class="bg-navy-850 p-6 rounded-2xl border border-navy-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h4 class="text-sm font-bold text-white">Need help finding a room in Sikar?</h4>
+                    <p class="text-xs text-slate-400 mt-0.5">Chat directly with Director Satpal Swami for verified zero-brokerage guidance.</p>
+                </div>
+                <a href="https://wa.me/919929718264?text=Hi%20Satpal%20Sir,%20I%20am%20a%20student%20looking%20for%20a%20hostel%20in%20Sikar" target="_blank" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 flex-shrink-0">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp Helpdesk
+                </a>
+            </div>
+        </div>
+
+        <!-- ================= OWNER VIEW ================= -->
+        <div id="ownerView" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-building text-gold-400"></i> My Properties & Listings
+                </h3>
+                <a href="add-listing.html" class="px-4 py-2 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl hover:brightness-110 flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-plus"></i> Add New Property
+                </a>
+            </div>
+
+            <div class="bg-navy-850 rounded-2xl gold-border-glow p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-navy-800">
+                    <span class="text-xs font-bold text-white">Status Overview</span>
+                    <span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i>Live Partner</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Your properties are visible to thousands of students in Sikar. To update rent, available rooms, or new amenities, submit an update via <a href="add-listing.html" class="text-gold-400 underline">Add Listing form</a> or contact the Director.
+                </p>
+                <div class="pt-3 flex gap-3">
+                    <a href="https://wa.me/919929718264?text=Hello%20Satpal%20Sir,%20I%20am%20a%20property%20owner%20on%20StudentHub" target="_blank" class="px-4 py-2 bg-navy-900 border border-gold-500/40 text-gold-300 text-xs font-bold rounded-xl hover:bg-gold-500/10">
+                        <i class="fa-brands fa-whatsapp mr-1"></i> Contact Director (+91 99297 18264)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-navy-950 border-t border-navy-900 py-6 text-slate-500 text-xs text-center">
+        <p>© 2026 StudentHub (Shekhawati). Director: Satpal Swami (+91 99297 18264)</p>
+    </footer>
+
+    <script>
+        // Load Current User Session
+        const currentUser = JSON.parse(localStorage.getItem('sh_current_user') || sessionStorage.getItem('sh_current_user') || 'null');
+
+        if (!currentUser) {
+            alert('Please sign in first.');
+            window.location.href = 'auth.html';
+        } else {
+            // Populate User Details
+            document.getElementById('userName').textContent = currentUser.name || 'StudentHub User';
+            document.getElementById('userEmail').textContent = `${currentUser.email || ''} • ${currentUser.phone || ''}`;
+            document.getElementById('userAvatar').textContent = (currentUser.name || 'U').charAt(0).toUpperCase();
+
+            const roleBadge = document.getElementById('roleBadge');
+            const studentView = document.getElementById('studentView');
+            const ownerView = document.getElementById('ownerView');
+
+            if (currentUser.role === 'owner') {
+                roleBadge.textContent = 'Property / Tiffin Owner';
+                roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-amber-500/10 text-amber-300 border-amber-500/30';
+                ownerView.classList.remove('hidden');
+            } else {
+                roleBadge.textContent = 'Student / Aspirant';
+                roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
+                studentView.classList.remove('hidden');
+            }
+        }
+
+        function userLogout() {
+            localStorage.removeItem('sh_current_user');
+            sessionStorage.removeItem('sh_current_user');
+            alert('Logged out successfully.');
+            window.location.href = 'auth.html';
+        }
+    </script>
+</body>
+</html>
