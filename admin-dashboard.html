@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Director Master Console | StudentHub Shekhawati</title>
+    <title>Director Master Admin Console | StudentHub Shekhawati</title>
     
     <!-- Navy & Gold "SH" Luxury Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23060B18'/><rect x='4' y='4' width='92' height='92' rx='21' fill='none' stroke='%23D4AF37' stroke-width='4'/><text x='50%25' y='58%25' dominant-baseline='central' text-anchor='middle' font-family='serif' font-weight='800' font-size='44' fill='%23D4AF37'>SH</text></svg>">
@@ -71,7 +71,7 @@
 </head>
 <body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-gold-500 selection:text-navy-950 min-h-screen">
 
-    <!-- 1. DIRECTOR AUTHENTICATION MODAL -->
+    <!-- 1. DIRECTOR AUTHENTICATION MODAL (CLEAN LOGIN) -->
     <div id="adminAuthLock" class="fixed inset-0 z-50 bg-navy-950/95 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-8 text-center shadow-2xl space-y-6">
             <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 text-3xl font-display font-extrabold flex items-center justify-center mx-auto shadow-lg shadow-gold-500/20">
@@ -85,12 +85,11 @@
             <form id="adminLoginForm" class="space-y-4 text-left">
                 <div>
                     <label class="block text-xs text-slate-300 mb-1">Director Email</label>
-                    <input type="email" id="adminEmail" required value="satpalswami22742@gmail.com" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gold-500">
+                    <input type="email" id="adminEmail" required placeholder="Enter director email" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gold-500">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-300 mb-1">Director Password</label>
                     <input type="password" id="adminPassword" required placeholder="Enter password" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gold-500">
-                    <p class="text-[11px] text-gold-400/80 mt-1">Default Password: <span class="font-mono font-bold text-gold-300">admin123</span></p>
                 </div>
                 <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition">
                     <i class="fa-solid fa-shield-halved mr-1.5"></i> Unlock Control Center
@@ -99,426 +98,367 @@
         </div>
     </div>
 
-    <!-- 2. MAIN DASHBOARD INTERFACE -->
-    <div id="adminInterface" class="hidden">
+    <!-- 2. MAIN ADMIN APP INTERFACE (SIDEBAR + CONTENT) -->
+    <div id="adminInterface" class="hidden min-h-screen flex flex-col md:flex-row">
         
-        <!-- TOP NAVBAR -->
-        <nav class="bg-navy-900 border-b border-gold-500/20 px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-40">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gold-500 flex items-center justify-center text-navy-950 font-display font-extrabold text-lg">
-                    SH
+        <!-- ================= LEFT SIDEBAR ================= -->
+        <aside class="w-full md:w-64 bg-navy-900 border-r border-gold-500/20 flex flex-col justify-between flex-shrink-0">
+            <div>
+                <!-- Brand Logo Header -->
+                <div class="p-5 border-b border-navy-800 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gold-500 flex items-center justify-center text-navy-950 font-display font-extrabold text-lg">
+                        SH
+                    </div>
+                    <div>
+                        <span class="text-base font-display font-bold gold-gradient-text">StudentHub</span>
+                        <span class="block text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-circle text-[5px]"></i> Admin Console
+                        </span>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-lg font-display font-bold gold-gradient-text">StudentHub Admin</span>
-                    <span class="block text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                        <i class="fa-solid fa-circle text-[6px]"></i> Director Console Active
-                    </span>
-                </div>
+
+                <!-- Navigation Sidebar Menu (As requested in image) -->
+                <nav class="p-4 space-y-2 text-xs font-bold uppercase tracking-wider">
+                    <button onclick="setSection('student')" id="sideBtn-student" class="sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-gold-300 bg-gold-500/10 border border-gold-500/40 text-left transition">
+                        <i class="fa-solid fa-user-graduate text-base w-5 text-gold-400"></i>
+                        <span>STUDENT</span>
+                    </button>
+
+                    <button onclick="setSection('owner')" id="sideBtn-owner" class="sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-slate-300 hover:text-white hover:bg-navy-850 text-left transition">
+                        <i class="fa-solid fa-user-tie text-base w-5 text-gold-400"></i>
+                        <span>OWNER</span>
+                    </button>
+
+                    <button onclick="setSection('hostel')" id="sideBtn-hostel" class="sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-slate-300 hover:text-white hover:bg-navy-850 text-left transition">
+                        <i class="fa-solid fa-hotel text-base w-5 text-gold-400"></i>
+                        <span>PG / HOSTEL</span>
+                    </button>
+
+                    <button onclick="setSection('tiffin')" id="sideBtn-tiffin" class="sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-slate-300 hover:text-white hover:bg-navy-850 text-left transition">
+                        <i class="fa-solid fa-bowl-food text-base w-5 text-gold-400"></i>
+                        <span>TIFFIN / MESS</span>
+                    </button>
+
+                    <button onclick="setSection('library')" id="sideBtn-library" class="sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-slate-300 hover:text-white hover:bg-navy-850 text-left transition">
+                        <i class="fa-solid fa-landmark text-base w-5 text-gold-400"></i>
+                        <span>LIBRARY</span>
+                    </button>
+
+                    <button onclick="setSection('admin')" id="sideBtn-admin" class="sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-slate-300 hover:text-white hover:bg-navy-850 text-left transition">
+                        <i class="fa-solid fa-user-shield text-base w-5 text-gold-400"></i>
+                        <span>ADMIN</span>
+                    </button>
+                </nav>
             </div>
 
-            <div class="flex items-center gap-3">
-                <div class="hidden sm:flex items-center gap-2 text-xs text-slate-300 bg-navy-850 px-3.5 py-1.5 rounded-xl border border-navy-700">
-                    <i class="fa-solid fa-user-tie text-gold-500"></i>
-                    <span>Satpal Swami (Director)</span>
+            <!-- Bottom Profile & Logout -->
+            <div class="p-4 border-t border-navy-800 space-y-2">
+                <div class="p-3 rounded-xl bg-navy-850 border border-navy-700 flex items-center gap-2.5 text-xs text-slate-300">
+                    <i class="fa-solid fa-user-tie text-gold-500 text-sm"></i>
+                    <div class="truncate">
+                        <span class="block font-bold text-white truncate">Satpal Swami</span>
+                        <span class="text-[10px] text-slate-400">Director</span>
+                    </div>
                 </div>
-                <a href="index.html" class="text-xs px-3.5 py-2 rounded-lg bg-navy-800 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition">
-                    <i class="fa-solid fa-globe mr-1"></i> Live Site
-                </a>
-                <button id="adminLogoutBtn" class="text-xs px-3 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition">
-                    <i class="fa-solid fa-power-off"></i>
+                <button id="adminLogoutBtn" class="w-full py-2.5 rounded-xl bg-red-500/10 text-red-300 hover:bg-red-500/20 text-xs font-bold flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-power-off"></i> Logout
                 </button>
             </div>
-        </nav>
+        </aside>
 
-        <!-- DASHBOARD BODY -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+        <!-- ================= MAIN RIGHT AREA ================= -->
+        <div class="flex-1 flex flex-col overflow-y-auto">
             
-            <!-- 4 INTERACTIVE STATS CARDS -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- TOP BAR (GLOBAL SEARCH + NOTIFICATION BELL + ACTIONS) -->
+            <header class="bg-navy-900 border-b border-gold-500/20 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 sticky top-0 z-30">
                 
-                <!-- Card 1: Hostels -->
-                <div onclick="switchTab('hostels')" class="bg-navy-850 p-6 rounded-2xl gold-border-glow flex items-center justify-between cursor-pointer hover:bg-navy-800/80 transition group">
-                    <div>
-                        <span class="text-xs text-slate-400 uppercase font-semibold">Active Hostels</span>
-                        <h3 class="text-3xl font-display font-bold text-white mt-1 group-hover:text-gold-300 transition">100</h3>
-                        <span class="text-[11px] text-emerald-400 font-semibold"><i class="fa-solid fa-arrow-pointer mr-1"></i>Tap to view all 100</span>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-navy-900 border border-gold-500/30 flex items-center justify-center text-gold-400 text-xl group-hover:scale-110 transition">
-                        <i class="fa-solid fa-hotel"></i>
-                    </div>
+                <!-- Universal Search Input (Searches across all records) -->
+                <div class="relative flex-1 max-w-lg">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-sm"></i>
+                    <input type="text" id="globalAdminSearch" placeholder="Search any student, owner, hostel, tiffin or library..." class="w-full bg-navy-850 border border-navy-700 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-gold-500 transition">
                 </div>
 
-                <!-- Card 2: Tiffins -->
-                <div onclick="switchTab('tiffins')" class="bg-navy-850 p-6 rounded-2xl gold-border-glow flex items-center justify-between cursor-pointer hover:bg-navy-800/80 transition group">
-                    <div>
-                        <span class="text-xs text-slate-400 uppercase font-semibold">Active Tiffins</span>
-                        <h3 class="text-3xl font-display font-bold text-white mt-1 group-hover:text-gold-300 transition">100</h3>
-                        <span class="text-[11px] text-emerald-400 font-semibold"><i class="fa-solid fa-arrow-pointer mr-1"></i>Tap to view all 100</span>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-navy-900 border border-gold-500/30 flex items-center justify-center text-gold-400 text-xl group-hover:scale-110 transition">
-                        <i class="fa-solid fa-bowl-food"></i>
-                    </div>
-                </div>
+                <!-- Right Action Icons -->
+                <div class="flex items-center gap-4 relative">
+                    
+                    <!-- Notification Bell with Red Dot -->
+                    <div class="relative">
+                        <button id="notifBellBtn" class="w-9 h-9 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-400 hover:text-white flex items-center justify-center relative transition">
+                            <i class="fa-solid fa-bell text-sm"></i>
+                            <!-- Red Notification Dot -->
+                            <span id="notifRedDot" class="w-2.5 h-2.5 bg-red-500 rounded-full absolute top-1.5 right-1.5 ring-2 ring-navy-900"></span>
+                        </button>
 
-                <!-- Card 3: Libraries -->
-                <div onclick="switchTab('libraries')" class="bg-navy-850 p-6 rounded-2xl gold-border-glow flex items-center justify-between cursor-pointer hover:bg-navy-800/80 transition group">
-                    <div>
-                        <span class="text-xs text-slate-400 uppercase font-semibold">Active Libraries</span>
-                        <h3 class="text-3xl font-display font-bold text-white mt-1 group-hover:text-gold-300 transition">100</h3>
-                        <span class="text-[11px] text-emerald-400 font-semibold"><i class="fa-solid fa-arrow-pointer mr-1"></i>Tap to view all 100</span>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-navy-900 border border-gold-500/30 flex items-center justify-center text-gold-400 text-xl group-hover:scale-110 transition">
-                        <i class="fa-solid fa-landmark"></i>
-                    </div>
-                </div>
-
-                <!-- Card 4: Pending Queue -->
-                <div onclick="switchTab('pending')" class="bg-navy-850 p-6 rounded-2xl gold-border-glow flex items-center justify-between cursor-pointer hover:bg-navy-800/80 transition group">
-                    <div>
-                        <span class="text-xs text-slate-400 uppercase font-semibold">Pending Approvals</span>
-                        <h3 id="pendingStatCount" class="text-3xl font-display font-bold text-gold-400 mt-1">2</h3>
-                        <span class="text-[11px] text-gold-300 font-semibold"><i class="fa-solid fa-hourglass-half mr-1"></i>Action Required</span>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-navy-900 border border-gold-500/30 flex items-center justify-center text-gold-400 text-xl group-hover:scale-110 transition">
-                        <i class="fa-solid fa-user-clock"></i>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- TAB SELECTOR BUTTONS -->
-            <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-navy-800">
-                <button onclick="switchTab('pending')" id="tabBtn-pending" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition bg-gold-500 text-navy-950 shadow-md flex items-center gap-2">
-                    <i class="fa-solid fa-hourglass-half"></i> Approvals Queue (<span id="pendingBadge">2</span>)
-                </button>
-                <button onclick="switchTab('hostels')" id="tabBtn-hostels" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition bg-navy-850 text-slate-300 hover:text-gold-300 border border-navy-700 flex items-center gap-2">
-                    <i class="fa-solid fa-hotel"></i> 100 Hostels Directory
-                </button>
-                <button onclick="switchTab('tiffins')" id="tabBtn-tiffins" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition bg-navy-850 text-slate-300 hover:text-gold-300 border border-navy-700 flex items-center gap-2">
-                    <i class="fa-solid fa-bowl-food"></i> 100 Tiffins Directory
-                </button>
-                <button onclick="switchTab('libraries')" id="tabBtn-libraries" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition bg-navy-850 text-slate-300 hover:text-gold-300 border border-navy-700 flex items-center gap-2">
-                    <i class="fa-solid fa-landmark"></i> 100 Libraries Directory
-                </button>
-                <button onclick="switchTab('owners')" id="tabBtn-owners" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition bg-navy-850 text-slate-300 hover:text-gold-300 border border-navy-700 flex items-center gap-2">
-                    <i class="fa-solid fa-user-tie"></i> Owners Directory
-                </button>
-                <button onclick="switchTab('students')" id="tabBtn-students" class="tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition bg-navy-850 text-slate-300 hover:text-gold-300 border border-navy-700 flex items-center gap-2">
-                    <i class="fa-solid fa-user-graduate"></i> Students Records
-                </button>
-            </div>
-
-            <!-- ================= TAB 1: PENDING APPROVALS ================= -->
-            <section id="tabContent-pending" class="tab-content bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow space-y-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-4 border-b border-navy-800">
-                    <div>
-                        <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-clipboard-check text-gold-400"></i> New Submissions Approval Queue
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-1">Review listings submitted by owners via <code>add-listing.html</code>.</p>
-                    </div>
-                </div>
-
-                <div id="pendingListingsContainer" class="space-y-4">
-                    <!-- Submission 1 -->
-                    <div id="pendingItem1" class="bg-navy-900 p-5 rounded-2xl border border-navy-700 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div class="space-y-1.5 flex-1">
-                            <div class="flex items-center gap-2">
-                                <span class="bg-gold-500/20 text-gold-300 text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-gold-500/30">Hostel</span>
-                                <h4 class="text-base font-bold text-white">Shree Shyam Executive Boys PG (New Wing)</h4>
+                        <!-- Notification Dropdown -->
+                        <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 bg-navy-900 border border-gold-500/30 rounded-2xl p-4 shadow-2xl z-50 space-y-3">
+                            <div class="flex items-center justify-between pb-2 border-b border-navy-800">
+                                <span class="text-xs font-bold text-white">Notifications & Alerts</span>
+                                <span class="text-[10px] text-gold-400 font-semibold">2 New</span>
                             </div>
-                            <p class="text-xs text-slate-400"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> Piprali Road, Near Matrix, Sikar | <strong>Rent: ₹4,800/mo</strong></p>
-                            <p class="text-xs text-slate-300">Owner: <strong>Ramesh Ji</strong> • Phone: <a href="tel:9876543210" class="text-gold-400 font-semibold underline">9876543210</a></p>
-                        </div>
-                        <div class="flex items-center gap-2 w-full md:w-auto">
-                            <a href="https://wa.me/919876543210?text=Hello%20Ramesh%20Ji,%20regarding%20your%20StudentHub%20Hostel%20Listing%20verification" target="_blank" class="px-4 py-2.5 rounded-xl bg-navy-800 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
-                                <i class="fa-brands fa-whatsapp"></i> Chat
-                            </a>
-                            <button onclick="approveSubmission(1)" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5">
-                                <i class="fa-solid fa-check"></i> Approve
-                            </button>
-                            <button onclick="rejectSubmission(1)" class="px-4 py-2.5 rounded-xl bg-red-600/80 hover:bg-red-600 text-white font-bold text-xs flex items-center gap-1.5">
-                                <i class="fa-solid fa-xmark"></i> Reject
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Submission 2 -->
-                    <div id="pendingItem2" class="bg-navy-900 p-5 rounded-2xl border border-navy-700 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div class="space-y-1.5 flex-1">
-                            <div class="flex items-center gap-2">
-                                <span class="bg-gold-500/20 text-gold-300 text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-gold-500/30">Tiffin</span>
-                                <h4 class="text-base font-bold text-white">Annapurna Pure Veg Kitchen & Tiffin</h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="p-2.5 rounded-xl bg-navy-850 border border-navy-700 hover:border-gold-500/40 cursor-pointer" onclick="setSection('owner')">
+                                    <span class="font-bold text-gold-300 block">New Hostel Submission</span>
+                                    <p class="text-[11px] text-slate-300 mt-0.5">Ramesh Ji submitted "Shree Shyam PG (New Wing)" on Piprali Road.</p>
+                                </div>
+                                <div class="p-2.5 rounded-xl bg-navy-850 border border-navy-700 hover:border-gold-500/40 cursor-pointer" onclick="setSection('owner')">
+                                    <span class="font-bold text-gold-300 block">New Tiffin Provider</span>
+                                    <p class="text-[11px] text-slate-300 mt-0.5">Suresh Sharma registered "Annapurna Pure Veg Tiffin" on Nawalgarh Road.</p>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-400"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> Nawalgarh Road, Sikar | <strong>Charge: ₹2,600/mo</strong></p>
-                            <p class="text-xs text-slate-300">Owner: <strong>Suresh Sharma</strong> • Phone: <a href="tel:9414246048" class="text-gold-400 font-semibold underline">9414246048</a></p>
-                        </div>
-                        <div class="flex items-center gap-2 w-full md:w-auto">
-                            <a href="https://wa.me/919414246048" target="_blank" class="px-4 py-2.5 rounded-xl bg-navy-800 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
-                                <i class="fa-brands fa-whatsapp"></i> Chat
-                            </a>
-                            <button onclick="approveSubmission(2)" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5">
-                                <i class="fa-solid fa-check"></i> Approve
-                            </button>
-                            <button onclick="rejectSubmission(2)" class="px-4 py-2.5 rounded-xl bg-red-600/80 hover:bg-red-600 text-white font-bold text-xs flex items-center gap-1.5">
-                                <i class="fa-solid fa-xmark"></i> Reject
-                            </button>
                         </div>
                     </div>
-                </div>
 
-                <div id="noPendingMsg" class="hidden text-center py-8 text-slate-400 text-xs">
-                    <i class="fa-solid fa-circle-check text-emerald-400 text-2xl mb-2 block"></i>
-                    All listings are verified! No pending requests.
+                    <!-- Live Site Link -->
+                    <a href="index.html" target="_blank" class="text-xs font-semibold px-3.5 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-globe"></i> Live Site
+                    </a>
                 </div>
-            </section>
+            </header>
 
-            <!-- ================= TAB 2: ALL 100 HOSTELS ================= -->
-            <section id="tabContent-hostels" class="tab-content hidden bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow space-y-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
-                    <div>
-                        <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-hotel text-gold-400"></i> All 100 Sikar Hostels & PGs
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-1">Complete real directory of 50 Boys & 50 Girls Hostels.</p>
-                    </div>
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <input type="text" id="hostelAdminSearch" placeholder="Search hostel name or area..." class="bg-navy-900 border border-navy-700 text-xs rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-gold-500 w-full sm:w-64">
-                        <button onclick="exportCSV('hostels')" class="px-3.5 py-2.5 bg-navy-900 border border-gold-500/40 text-gold-300 text-xs font-bold rounded-xl hover:bg-gold-500/10 flex items-center gap-1.5 flex-shrink-0">
-                            <i class="fa-solid fa-file-excel"></i> Export CSV
+            <!-- MAIN DYNAMIC SECTION CONTENT -->
+            <main class="p-4 sm:p-8 space-y-6">
+
+                <!-- ================= 1. STUDENT SECTION ================= -->
+                <section id="section-student" class="admin-section space-y-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
+                        <div>
+                            <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-user-graduate text-gold-400"></i> Registered Students Directory
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Complete record of students with contact, exam goal, and management actions.</p>
+                        </div>
+                        <button onclick="openAddStudentModal()" class="px-4 py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-lg hover:brightness-110 flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i> Add New Student
                         </button>
                     </div>
-                </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
-                            <tr>
-                                <th class="p-3.5">SN</th>
-                                <th class="p-3.5">Hostel Name</th>
-                                <th class="p-3.5">Category</th>
-                                <th class="p-3.5">Location / Address</th>
-                                <th class="p-3.5">Contact Number</th>
-                                <th class="p-3.5 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="hostelsAdminTableBody" class="divide-y divide-navy-800"></tbody>
-                    </table>
-                </div>
-            </section>
+                    <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
+                                <tr>
+                                    <th class="p-4">Photo</th>
+                                    <th class="p-4">Student Name</th>
+                                    <th class="p-4">Phone Number</th>
+                                    <th class="p-4">Email Address</th>
+                                    <th class="p-4">Location / Target Exam</th>
+                                    <th class="p-4 text-right">Actions (Edit / Delete)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentTableBody" class="divide-y divide-navy-800"></tbody>
+                        </table>
+                    </div>
+                </section>
 
-            <!-- ================= TAB 3: ALL 100 TIFFINS ================= -->
-            <section id="tabContent-tiffins" class="tab-content hidden bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow space-y-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
-                    <div>
+                <!-- ================= 2. OWNER SECTION ================= -->
+                <section id="section-owner" class="admin-section hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
+                        <div>
+                            <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-user-tie text-gold-400"></i> Property & Business Owners Directory
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Tap any owner row to inspect their associated hostel, tiffin, or library details.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
+                                <tr>
+                                    <th class="p-4">Photo</th>
+                                    <th class="p-4">Owner Name</th>
+                                    <th class="p-4">Phone Number</th>
+                                    <th class="p-4">Email Address</th>
+                                    <th class="p-4">Business / Property</th>
+                                    <th class="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ownerTableBody" class="divide-y divide-navy-800"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ================= 3. PG / HOSTEL SECTION ================= -->
+                <section id="section-hostel" class="admin-section hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
+                        <div>
+                            <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-hotel text-gold-400"></i> All 100 Hostels & PGs in Sikar
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Tap on any Hostel name to view Vacant Rooms, Price, and Amenities breakdown.</p>
+                        </div>
+                        <input type="text" id="hostelFilterInput" placeholder="Filter hostels by name or area..." class="bg-navy-900 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-gold-500 w-full sm:w-64">
+                    </div>
+
+                    <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
+                                <tr>
+                                    <th class="p-4">SN</th>
+                                    <th class="p-4">Hostel Name (Tap for Details)</th>
+                                    <th class="p-4">Owner Name</th>
+                                    <th class="p-4">Phone Number</th>
+                                    <th class="p-4">Address / Location</th>
+                                    <th class="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hostelTableBody" class="divide-y divide-navy-800"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ================= 4. TIFFIN / MESS SECTION ================= -->
+                <section id="section-tiffin" class="admin-section hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
+                        <div>
+                            <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-bowl-food text-gold-400"></i> All 100 Tiffin & Mess Providers
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Tap on any Tiffin Center name to inspect food menu details and monthly charges.</p>
+                        </div>
+                        <input type="text" id="tiffinFilterInput" placeholder="Filter tiffin centers..." class="bg-navy-900 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-gold-500 w-full sm:w-64">
+                    </div>
+
+                    <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
+                                <tr>
+                                    <th class="p-4">SN</th>
+                                    <th class="p-4">Tiffin Name (Tap for Menu)</th>
+                                    <th class="p-4">Phone Number</th>
+                                    <th class="p-4">Area / Address</th>
+                                    <th class="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tiffinTableBody" class="divide-y divide-navy-800"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ================= 5. LIBRARY SECTION ================= -->
+                <section id="section-library" class="admin-section hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
+                        <div>
+                            <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-landmark text-gold-400"></i> All 100 24/7 AC Libraries in Sikar
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Tap on any Library name to inspect vacant seats, facilities, and fee structure.</p>
+                        </div>
+                        <input type="text" id="libraryFilterInput" placeholder="Filter libraries..." class="bg-navy-900 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-gold-500 w-full sm:w-64">
+                    </div>
+
+                    <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
+                                <tr>
+                                    <th class="p-4">SN</th>
+                                    <th class="p-4">Library Name (Tap for Seats)</th>
+                                    <th class="p-4">Phone Number</th>
+                                    <th class="p-4">Address / Locality</th>
+                                    <th class="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="libraryTableBody" class="divide-y divide-navy-800"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ================= 6. ADMIN PROFILE & PASSWORD ================= -->
+                <section id="section-admin" class="admin-section hidden space-y-6 max-w-4xl">
+                    <div class="pb-4 border-b border-navy-800">
                         <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-bowl-food text-gold-400"></i> All 100 Sikar Tiffin & Mess Services
+                            <i class="fa-solid fa-user-shield text-gold-400"></i> Director Admin Profile & Security
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1">Complete verified list of tiffin providers in Sikar.</p>
+                        <p class="text-xs text-slate-400 mt-1">Manage director profile credentials and update your master login password.</p>
                     </div>
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <input type="text" id="tiffinAdminSearch" placeholder="Search tiffin center..." class="bg-navy-900 border border-navy-700 text-xs rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-gold-500 w-full sm:w-64">
-                        <button onclick="exportCSV('tiffins')" class="px-3.5 py-2.5 bg-navy-900 border border-gold-500/40 text-gold-300 text-xs font-bold rounded-xl hover:bg-gold-500/10 flex items-center gap-1.5 flex-shrink-0">
-                            <i class="fa-solid fa-file-excel"></i> Export CSV
-                        </button>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Profile Details Card -->
+                        <div class="bg-navy-850 p-6 rounded-2xl gold-border-glow space-y-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 font-display font-extrabold text-2xl flex items-center justify-center">
+                                    SS
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-bold text-white">Satpal Swami</h4>
+                                    <span class="text-xs text-gold-400 font-semibold">Managing Director • StudentHub</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2.5 text-xs text-slate-300 pt-3 border-t border-navy-800">
+                                <div class="flex items-center gap-2.5">
+                                    <i class="fa-solid fa-phone text-gold-500 w-4"></i>
+                                    <span>+91 99297 18264</span>
+                                </div>
+                                <div class="flex items-center gap-2.5">
+                                    <i class="fa-solid fa-envelope text-gold-500 w-4"></i>
+                                    <span>satpalswami22742@gmail.com</span>
+                                </div>
+                                <div class="flex items-center gap-2.5">
+                                    <i class="fa-solid fa-location-dot text-gold-500 w-4"></i>
+                                    <span>Sikar & Neem Ka Thana, Rajasthan</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Password Change Box -->
+                        <div class="bg-navy-850 p-6 rounded-2xl gold-border-glow space-y-4">
+                            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-key text-gold-400"></i> Change Master Password
+                            </h4>
+                            <form id="changePasswordForm" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs text-slate-300 mb-1">New Director Password</label>
+                                    <input type="password" id="newAdminPassword" required placeholder="Enter new password" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-300 mb-1">Confirm New Password</label>
+                                    <input type="password" id="confirmAdminPassword" required placeholder="Re-enter new password" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold-500">
+                                </div>
+                                <button type="submit" class="w-full py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl hover:brightness-110 shadow-md">
+                                    Update Password
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
-                            <tr>
-                                <th class="p-3.5">SN</th>
-                                <th class="p-3.5">Tiffin Name</th>
-                                <th class="p-3.5">Area</th>
-                                <th class="p-3.5">Full Address</th>
-                                <th class="p-3.5">Phone Number</th>
-                                <th class="p-3.5 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tiffinsAdminTableBody" class="divide-y divide-navy-800"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- ================= TAB 4: ALL 100 LIBRARIES ================= -->
-            <section id="tabContent-libraries" class="tab-content hidden bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow space-y-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
-                    <div>
-                        <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-landmark text-gold-400"></i> All 100 Sikar 24/7 AC Libraries
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-1">Directory of silent AC study libraries in Sikar.</p>
-                    </div>
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <input type="text" id="libraryAdminSearch" placeholder="Search library name..." class="bg-navy-900 border border-navy-700 text-xs rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-gold-500 w-full sm:w-64">
-                        <button onclick="exportCSV('libraries')" class="px-3.5 py-2.5 bg-navy-900 border border-gold-500/40 text-gold-300 text-xs font-bold rounded-xl hover:bg-gold-500/10 flex items-center gap-1.5 flex-shrink-0">
-                            <i class="fa-solid fa-file-excel"></i> Export CSV
-                        </button>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
-                            <tr>
-                                <th class="p-3.5">SN</th>
-                                <th class="p-3.5">Library Name</th>
-                                <th class="p-3.5">Area</th>
-                                <th class="p-3.5">Address</th>
-                                <th class="p-3.5">Phone Number</th>
-                                <th class="p-3.5 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="librariesAdminTableBody" class="divide-y divide-navy-800"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- ================= TAB 5: OWNERS DIRECTORY ================= -->
-            <section id="tabContent-owners" class="tab-content hidden bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow space-y-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
-                    <div>
-                        <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-user-tie text-gold-400"></i> Registered Business & Property Owners
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-1">Verified partner directory across Sikar.</p>
-                    </div>
-                    <button onclick="exportCSV('owners')" class="px-3.5 py-2.5 bg-navy-900 border border-gold-500/40 text-gold-300 text-xs font-bold rounded-xl hover:bg-gold-500/10 flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-excel"></i> Export Owners CSV
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
-                            <tr>
-                                <th class="p-3.5">Owner Name</th>
-                                <th class="p-3.5">Business Name</th>
-                                <th class="p-3.5">Category</th>
-                                <th class="p-3.5">City & Area</th>
-                                <th class="p-3.5">Phone Number</th>
-                                <th class="p-3.5 text-right">WhatsApp Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ownersTableBody" class="divide-y divide-navy-800">
-                            <tr class="hover:bg-navy-900/50">
-                                <td class="p-3.5 font-bold text-white">Ramesh Ji</td>
-                                <td class="p-3.5">Prince Boys PG</td>
-                                <td class="p-3.5"><span class="bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded border border-blue-500/20">Hostel</span></td>
-                                <td class="p-3.5">Piprali Road, Sikar</td>
-                                <td class="p-3.5 font-mono text-gold-300">+91 76910 94588</td>
-                                <td class="p-3.5 text-right">
-                                    <a href="https://wa.me/917691094588" target="_blank" class="px-3 py-1.5 bg-emerald-600/80 text-white rounded-lg text-xs font-bold hover:bg-emerald-500"><i class="fa-brands fa-whatsapp mr-1"></i>Chat</a>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-navy-900/50">
-                                <td class="p-3.5 font-bold text-white">Devendra Singh</td>
-                                <td class="p-3.5">Dev Hostel Sikar</td>
-                                <td class="p-3.5"><span class="bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded border border-blue-500/20">Hostel</span></td>
-                                <td class="p-3.5">Piprali Road, Sikar</td>
-                                <td class="p-3.5 font-mono text-gold-300">+91 97847 96538</td>
-                                <td class="p-3.5 text-right">
-                                    <a href="https://wa.me/919784796538" target="_blank" class="px-3 py-1.5 bg-emerald-600/80 text-white rounded-lg text-xs font-bold hover:bg-emerald-500"><i class="fa-brands fa-whatsapp mr-1"></i>Chat</a>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-navy-900/50">
-                                <td class="p-3.5 font-bold text-white">Smt. Sharda Devi</td>
-                                <td class="p-3.5">दीदी का टिफिन (Didi Ka Tiffin)</td>
-                                <td class="p-3.5"><span class="bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded border border-amber-500/20">Tiffin</span></td>
-                                <td class="p-3.5">Radhakishan Pura, Sikar</td>
-                                <td class="p-3.5 font-mono text-gold-300">+91 63785 04820</td>
-                                <td class="p-3.5 text-right">
-                                    <a href="https://wa.me/916378504820" target="_blank" class="px-3 py-1.5 bg-emerald-600/80 text-white rounded-lg text-xs font-bold hover:bg-emerald-500"><i class="fa-brands fa-whatsapp mr-1"></i>Chat</a>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-navy-900/50">
-                                <td class="p-3.5 font-bold text-white">Mukesh Choudhary</td>
-                                <td class="p-3.5">थे स्टडी पॉइंट लाइब्रेरी</td>
-                                <td class="p-3.5"><span class="bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20">Library</span></td>
-                                <td class="p-3.5">Piprali Road, Sikar</td>
-                                <td class="p-3.5 font-mono text-gold-300">+91 75971 08814</td>
-                                <td class="p-3.5 text-right">
-                                    <a href="https://wa.me/917597108814" target="_blank" class="px-3 py-1.5 bg-emerald-600/80 text-white rounded-lg text-xs font-bold hover:bg-emerald-500"><i class="fa-brands fa-whatsapp mr-1"></i>Chat</a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- ================= TAB 6: STUDENTS RECORDS ================= -->
-            <section id="tabContent-students" class="tab-content hidden bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow space-y-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
-                    <div>
-                        <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-user-graduate text-gold-400"></i> Registered Student Directory
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-1">Students looking for rooms, mess services, and library seats.</p>
-                    </div>
-                    <button onclick="exportCSV('students')" class="px-3.5 py-2.5 bg-navy-900 border border-gold-500/40 text-gold-300 text-xs font-bold rounded-xl hover:bg-gold-500/10 flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-excel"></i> Export Students CSV
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
-                            <tr>
-                                <th class="p-3.5">Student Name</th>
-                                <th class="p-3.5">Target Coaching / Exam</th>
-                                <th class="p-3.5">Location Preference</th>
-                                <th class="p-3.5">Mobile Number</th>
-                                <th class="p-3.5 text-right">Direct Connect</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentsTableBody" class="divide-y divide-navy-800">
-                            <tr class="hover:bg-navy-900/50">
-                                <td class="p-3.5 font-bold text-white">Vikas Shekhawat</td>
-                                <td class="p-3.5">NEET (Matrix Academy)</td>
-                                <td class="p-3.5">Piprali Road, Sikar</td>
-                                <td class="p-3.5 font-mono text-gold-300">+91 98291 55441</td>
-                                <td class="p-3.5 text-right">
-                                    <a href="https://wa.me/919829155441" target="_blank" class="px-3 py-1.5 bg-emerald-600/80 text-white rounded-lg text-xs font-bold hover:bg-emerald-500"><i class="fa-brands fa-whatsapp mr-1"></i>WhatsApp</a>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-navy-900/50">
-                                <td class="p-3.5 font-bold text-white">Anil Kumar</td>
-                                <td class="p-3.5">RRB Technician / ALP</td>
-                                <td class="p-3.5">Nawalgarh Road, Sikar</td>
-                                <td class="p-3.5 font-mono text-gold-300">+91 97852 44112</td>
-                                <td class="p-3.5 text-right">
-                                    <a href="https://wa.me/919785244112" target="_blank" class="px-3 py-1.5 bg-emerald-600/80 text-white rounded-lg text-xs font-bold hover:bg-emerald-500"><i class="fa-brands fa-whatsapp mr-1"></i>WhatsApp</a>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-navy-900/50">
-                                <td class="p-3.5 font-bold text-white">Pooja Choudhary</td>
-                                <td class="p-3.5">Rajasthan CET & REET</td>
-                                <td class="p-3.5">Jat Colony, Sikar</td>
-                                <td class="p-3.5 font-mono text-gold-300">+91 94142 88991</td>
-                                <td class="p-3.5 text-right">
-                                    <a href="https://wa.me/919414288991" target="_blank" class="px-3 py-1.5 bg-emerald-600/80 text-white rounded-lg text-xs font-bold hover:bg-emerald-500"><i class="fa-brands fa-whatsapp mr-1"></i>WhatsApp</a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-        </main>
+            </main>
+        </div>
     </div>
 
-    <!-- 3. COMPLETE JAVASCRIPT CRM LOGIC -->
+    <!-- ================= 3. POPUP MODALS (DETAILS & EDIT) ================= -->
+    <!-- Info Viewer Modal -->
+    <div id="detailInfoModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative space-y-5">
+            <button onclick="closeDetailModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div id="modalIconBox" class="w-12 h-12 rounded-2xl gold-gradient-bg text-navy-950 flex items-center justify-center text-xl font-bold"></div>
+                <div>
+                    <span id="modalTypeBadge" class="text-[10px] uppercase font-bold text-gold-400 bg-navy-850 px-2.5 py-0.5 rounded border border-navy-700">Category</span>
+                    <h3 id="modalHeading" class="text-lg font-bold text-white mt-1 leading-snug">Detail Title</h3>
+                </div>
+            </div>
+            <div id="modalBodyContent" class="bg-navy-850 p-5 rounded-2xl border border-navy-800 text-xs text-slate-300 space-y-2.5 leading-relaxed"></div>
+        </div>
+    </div>
+
+    <!-- ================= 4. JAVASCRIPT CONTROLLER ================= -->
     <script>
-        // Authentication Controller
+        // Password Storage (Default: 18389555)
+        const DEFAULT_PASSWORD = "18389555";
+        function getStoredPassword() {
+            return localStorage.getItem('studenthub_admin_pwd') || DEFAULT_PASSWORD;
+        }
+
+        // Login Controller
         const adminAuthLock = document.getElementById('adminAuthLock');
         const adminInterface = document.getElementById('adminInterface');
         const adminLoginForm = document.getElementById('adminLoginForm');
         const adminEmail = document.getElementById('adminEmail');
         const adminPassword = document.getElementById('adminPassword');
         const adminLogoutBtn = document.getElementById('adminLogoutBtn');
-        const pendingBadge = document.getElementById('pendingBadge');
-        const pendingStatCount = document.getElementById('pendingStatCount');
 
         if (sessionStorage.getItem('studenthub_admin_logged') === 'true') {
             adminAuthLock.classList.add('hidden');
@@ -527,13 +467,16 @@
 
         adminLoginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (adminEmail.value.trim().toLowerCase() === 'satpalswami22742@gmail.com' && adminPassword.value.trim() === 'admin123') {
+            const enteredEmail = adminEmail.value.trim().toLowerCase();
+            const enteredPass = adminPassword.value.trim();
+
+            if (enteredEmail === 'satpalswami22742@gmail.com' && enteredPass === getStoredPassword()) {
                 sessionStorage.setItem('studenthub_admin_logged', 'true');
                 adminAuthLock.classList.add('hidden');
                 adminInterface.classList.remove('hidden');
-                initMasterTables();
+                renderAllTables();
             } else {
-                alert('Invalid Credentials! Authorized for Director Satpal Swami only.');
+                alert('Invalid Credentials! Please check your email or password.');
             }
         });
 
@@ -542,218 +485,351 @@
             location.reload();
         });
 
-        // Tab Navigation
-        window.switchTab = function(tabName) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.className = 'tab-btn px-4 py-2.5 rounded-xl text-xs font-semibold transition bg-navy-850 text-slate-300 hover:text-gold-300 border border-navy-700 flex items-center gap-2';
+        // Change Password Form
+        document.getElementById('changePasswordForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newP = document.getElementById('newAdminPassword').value.trim();
+            const confP = document.getElementById('confirmAdminPassword').value.trim();
+            if (newP !== confP) {
+                alert('Passwords do not match!');
+                return;
+            }
+            localStorage.setItem('studenthub_admin_pwd', newP);
+            alert('Director Password updated successfully!');
+            document.getElementById('changePasswordForm').reset();
+        });
+
+        // Notification Bell Toggle
+        const notifBellBtn = document.getElementById('notifBellBtn');
+        const notifDropdown = document.getElementById('notifDropdown');
+        const notifRedDot = document.getElementById('notifRedDot');
+
+        notifBellBtn.addEventListener('click', () => {
+            notifDropdown.classList.toggle('hidden');
+            // Remove red dot on reading
+            notifRedDot.classList.add('hidden');
+        });
+
+        // Sidebar Navigation Switcher
+        window.setSection = function(sectionName) {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.sidebar-btn').forEach(b => {
+                b.className = 'sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-slate-300 hover:text-white hover:bg-navy-850 text-left transition';
             });
 
-            const activeContent = document.getElementById(`tabContent-${tabName}`);
-            const activeBtn = document.getElementById(`tabBtn-${tabName}`);
-            if (activeContent) activeContent.classList.remove('hidden');
-            if (activeBtn) activeBtn.className = 'tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition bg-gold-500 text-navy-950 shadow-md flex items-center gap-2';
+            const activeSec = document.getElementById(`section-${sectionName}`);
+            const activeBtn = document.getElementById(`sideBtn-${sectionName}`);
+            if (activeSec) activeSec.classList.remove('hidden');
+            if (activeBtn) activeBtn.className = 'sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-gold-300 bg-gold-500/10 border border-gold-500/40 text-left transition';
         };
 
-        // Approval Actions
-        let pendingCount = 2;
-        window.approveSubmission = function(id) {
-            alert(`Listing #${id} has been Approved and added to the Live Directory!`);
-            document.getElementById(`pendingItem${id}`).remove();
-            pendingCount--;
-            pendingBadge.textContent = pendingCount;
-            pendingStatCount.textContent = pendingCount;
-            if(pendingCount === 0) document.getElementById('noPendingMsg').classList.remove('hidden');
-        };
+        // ================= DATABASE ARRAYS =================
+        let studentsData = [
+            { id: 1, photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80", name: "Vikas Shekhawat", phone: "+91 98291 55441", email: "vikas.sikar@gmail.com", address: "Piprali Road, Sikar", exam: "NEET (Matrix Academy)" },
+            { id: 2, photo: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&q=80", name: "Anil Kumar", phone: "+91 97852 44112", email: "anil.rrbscholar@gmail.com", address: "Nawalgarh Road, Sikar", exam: "RRB Technician Grade 3" },
+            { id: 3, photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80", name: "Pooja Choudhary", phone: "+91 94142 88991", email: "pooja.raj@gmail.com", address: "Jat Colony, Sikar", exam: "Rajasthan CET & REET" }
+        ];
 
-        window.rejectSubmission = function(id) {
-            alert(`Listing #${id} has been Rejected.`);
-            document.getElementById(`pendingItem${id}`).remove();
-            pendingCount--;
-            pendingBadge.textContent = pendingCount;
-            pendingStatCount.textContent = pendingCount;
-            if(pendingCount === 0) document.getElementById('noPendingMsg').classList.remove('hidden');
-        };
+        let ownersData = [
+            { id: 1, photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80", name: "Ramesh Ji", phone: "+91 76910 94588", email: "princehostel.sikar@gmail.com", business: "Prince Boys PG & Hostel", type: "Hostel", address: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar", price: "₹4,500/mo" },
+            { id: 2, photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80", name: "Devendra Singh", phone: "+91 97847 96538", email: "devhostel.sikar@gmail.com", business: "Dev Hostel Sikar", type: "Hostel", address: "Opposite Matrix NEET Division, Piprali Road, Sikar", price: "₹4,800/mo" },
+            { id: 3, photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80", name: "Smt. Sharda Devi", phone: "+91 63785 04820", email: "diditiffin.sikar@gmail.com", business: "दीदी का टिफिन (Didi Ka Tiffin)", type: "Tiffin", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar", price: "₹2,600/mo" },
+            { id: 4, photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&q=80", name: "Mukesh Choudhary", phone: "+91 75971 08814", email: "studypoint.library@gmail.com", business: "थे स्टडी पॉइंट लाइब्रेरी", type: "Library", address: "Sanjay Restaurant Ki Galli, New Janta Colony, Sikar", price: "₹650/mo" }
+        ];
 
-        // ================= FULL 100 LISTINGS DATABASES =================
-        const adminHostels = [
-            { id: 1, name: "Prince Boys PG & Hostel", cat: "Boys", area: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar", phone: "+91 76910 94588" },
-            { id: 2, name: "Dev Hostel Sikar", cat: "Boys", area: "Opposite Matrix NEET Division, Piprali Road, Sikar", phone: "+91 97847 96538" },
-            { id: 3, name: "Apex Boys Hostel & Library", cat: "Boys", area: "Near Navjeevan Coaching, Bhagavati Marg, Jat Colony, Sikar", phone: "+91 92571 82221" },
-            { id: 4, name: "Krishna Boys Hostel", cat: "Boys", area: "Near Prince Education Hub, Palwas Road, Sikar", phone: "+91 96673 52222" },
-            { id: 5, name: "Heaven Boys Hostel", cat: "Boys", area: "Near Allen Institute, Piprali Circle, Sikar", phone: "+91 93467 07070" },
-            { id: 6, name: "The Tree PG & Hostel", cat: "Boys", area: "Near Sambal College, Nawalgarh Road, Sikar", phone: "+91 95875 61001" },
-            { id: 51, name: "Times Square Girls Hostel", cat: "Girls", area: "Near Balaji Hospital, Allen Gali, Jagdamba Colony, Sikar", phone: "+91 96025 02561" },
-            { id: 52, name: "Royal Girls Hostel", cat: "Girls", area: "Near CLC Street, New Janta Colony, Piprali Road, Sikar", phone: "+91 94133 33104" },
-            { id: 53, name: "Apex Girls Hostel & Library", cat: "Girls", area: "Rajat Path, Near Matrix NEET Division, Sikar", phone: "+91 95291 82221" },
-            { id: 54, name: "JMD Girls Hostel Group", cat: "Girls", area: "Near Gurukripa & GCI, Jat Colony, Sikar", phone: "+91 97823 24214" },
-            ...Array.from({length: 90}, (_, i) => {
-                const id = i + 7 > 50 ? i + 11 : i + 7;
+        let hostelsData = [
+            { id: 1, name: "Prince Boys PG & Hostel", owner: "Ramesh Ji", phone: "+91 76910 94588", address: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar", roomsVacant: "6 Rooms Vacant (Single & Double)", price: "₹4,500 / month", facilities: "High-Speed WiFi, Inverter Power Backup, RO Drinking Water, 3-Time Satvik Food, CCTV Surveillance, Separate Study Table." },
+            { id: 2, name: "Dev Hostel Sikar", owner: "Devendra Singh", phone: "+91 97847 96538", address: "Opposite Matrix NEET Division, Piprali Road, Sikar", roomsVacant: "4 AC Rooms Vacant", price: "₹4,800 / month", facilities: "AC Silent Rooms, High-Speed WiFi, RO Cold Water, 3 Meals with Milk, Attached Washrooms." },
+            { id: 51, name: "Times Square Girls Hostel", owner: "Sunita Devi", phone: "+91 96025 02561", address: "Near Balaji Hospital, Allen Gali, Jagdamba Colony, Sikar", roomsVacant: "8 Girls Rooms Vacant", price: "₹5,200 / month", facilities: "24/7 Lady Warden, Full CCTV Security, AC Rooms, Hygienic Meals, WiFi, Power Backup." },
+            ...Array.from({length: 97}, (_, i) => {
+                const id = i + 3;
                 return {
                     id: id,
-                    name: id <= 50 ? `Sikar Boys Hostel & PG #${id}` : `Sikar Girls Elite Residency #${id}`,
-                    cat: id <= 50 ? 'Boys' : 'Girls',
-                    area: ["Piprali Road", "Nawalgarh Road", "Palwas Road", "Samarthpura", "Jat Colony"][i % 5] + ", Sikar",
-                    phone: `+91 94140 ${20000 + id}`
+                    name: id <= 50 ? `Sikar Boys Hostel #${id}` : `Sikar Girls Elite Residency #${id}`,
+                    owner: `Owner Partner #${id}`,
+                    phone: `+91 94140 ${20000 + id}`,
+                    address: ["Piprali Road", "Nawalgarh Road", "Palwas Road", "Samarthpura", "Jat Colony"][i % 5] + ", Sikar",
+                    roomsVacant: `${(id % 5) + 2} Rooms Available`,
+                    price: `₹${3800 + (id % 4) * 350} / month`,
+                    facilities: "WiFi, Food, RO Water, Power Backup, Study Desks."
                 };
             })
         ];
 
-        const adminTiffins = [
-            { id: 1, name: "दीदी का टिफिन (Didi Ka Tiffin)", area: "Radhakishan Pura", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar", phone: "+91 63785 04820" },
-            { id: 2, name: "राधे फूड्स (Radhe Foods)", area: "Radhakishan Pura", address: "Vandematram chowk, Radhakishan Pura, Sikar", phone: "+91 70623 47736" },
-            { id: 3, name: "गुरु जी मेस & टिफिन (Guruji Mess)", area: "Piprali Road", address: "Surya Nagar, Piprali Road, Jat Colony, Sikar", phone: "+91 93524 66682" },
-            { id: 4, name: "एसके टिफिन सेंटर (SK Tiffin)", area: "Basant Vihar", address: "E-7, Basant Vihar, Opp. Indian Oil Pump, Sikar", phone: "+91 99283 38780" },
-            { id: 5, name: "श्री राधे टिफिन सेंटर", area: "Devipura", address: "Near Clock Tower Gate, Devipura, Sikar", phone: "+91 74268 37027" },
-            ...Array.from({length: 95}, (_, i) => {
-                const id = i + 6;
-                const areas = ["Nawalgarh Road", "Palwas Road", "Bajaj Road", "Piprali Road", "Charan Singh Nagar", "Station Road", "Vasant Vihar", "Radhakishan Pura", "Shastri Nagar"];
+        let tiffinsData = [
+            { id: 1, name: "दीदी का टिफिन (Didi Ka Tiffin)", phone: "+91 63785 04820", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar", price: "₹2,600 / month", menu: "Morning: 4 Butter Roti, Dal Fry, Seasonal Sabji, Steamed Rice, Salad. Evening: 4 Roti, Paneer/Green Veg, Kadhi/Curd, Pickle." },
+            { id: 2, name: "राधे फूड्स (Radhe Foods)", phone: "+91 70623 47736", address: "Vandematram chowk, Radhakishan Pura, Sikar", price: "₹2,800 / month", menu: "Pure Desi Ghee Roti (4 pcs), Dal Tadka, Mix Veg, Rice, Green Salad & Sweet once a week." },
+            ...Array.from({length: 98}, (_, i) => {
+                const id = i + 3;
                 return {
                     id: id,
                     name: `अन्नपूर्णा टिफिन सेंटर #${id}`,
-                    area: areas[i % areas.length],
-                    address: `Street No. ${(i % 7) + 1}, Near Coaching Hub, ${areas[i % areas.length]}, Sikar`,
-                    phone: `+91 94142 ${40000 + id}`
+                    phone: `+91 94142 ${40000 + id}`,
+                    address: ["Nawalgarh Road", "Palwas Road", "Bajaj Road", "Piprali Road", "Charan Singh Nagar"][i % 5] + ", Sikar",
+                    price: `₹${2400 + (id % 3) * 200} / month`,
+                    menu: "Daily 2 Times Homemade Pure Veg Thali with 4 Roti, Dal, Sabji & Rice."
                 };
             })
         ];
 
-        const adminLibraries = [
-            { id: 1, name: "थे स्टडी पॉइंट लाइब्रेरी एंड हॉस्टल", area: "Piprali Road", address: "Sanjay Restaurant Ki Galli, New Janta Colony, Sikar", phone: "+91 75971 08814" },
-            { id: 2, name: "तपोवन लाइब्रेरी", area: "Nawalgarh Road", address: "Om Tower, Charan Singh Gate, Sikar", phone: "+91 96948 14577" },
-            { id: 3, name: "शिव शक्ति लाइब्रेरी एंड हॉस्टल", area: "Piprali Road", address: "Near CLC, Vikas Colony, Samarthpura, Sikar", phone: "+91 90797 22226" },
-            { id: 4, name: "लक्ष्य लाइब्रेरी", area: "Piprali Road", address: "Near Dr Sharadlata Hospital, Behind Allen, Sikar", phone: "+91 99500 40060" },
-            { id: 5, name: "साइलेंट कॉर्नर लाइब्रेरी", area: "Piprali Road", address: "Opp. Path Institute, G Raj Heights, Sikar", phone: "+91 94605 54493" },
-            ...Array.from({length: 95}, (_, i) => {
-                const id = i + 6;
-                const areas = ["Palwas Road", "Piprali Road", "Nawalgarh Road", "Jat Colony", "Radhakishan Pura", "Salasar Road"];
+        let librariesData = [
+            { id: 1, name: "थे स्टडी पॉइंट लाइब्रेरी एंड हॉस्टल", phone: "+91 75971 08814", address: "Sanjay Restaurant Ki Galli, New Janta Colony, Sikar", price: "₹650 / month", seatsVacant: "12 Seats Available", facilities: "24/7 Centralized AC, 100 Mbps 5G WiFi, Personal Charging Socket & Lamp, Noise Cancelling Partitions, RO Water, Discussion Room." },
+            { id: 2, name: "तपोवन लाइब्रेरी", phone: "+91 96948 14577", address: "Om Tower, Charan Singh Gate, Sikar", price: "₹600 / month", seatsVacant: "18 Seats Available", facilities: "AC Silent Study, Ergonomic Cushion Chairs, Power Inverter Backup, Clean Restrooms." },
+            ...Array.from({length: 98}, (_, i) => {
+                const id = i + 3;
                 return {
                     id: id,
                     name: `Matrix स्टडी लाइब्रेरी #${id}`,
-                    area: areas[i % areas.length],
-                    address: `Near Coaching Hub, ${areas[i % areas.length]}, Sikar`,
-                    phone: `+91 94140 ${String(id).padStart(5, '0')}`
+                    phone: `+91 94140 ${String(id).padStart(5, '0')}`,
+                    address: ["Palwas Road", "Piprali Road", "Nawalgarh Road", "Jat Colony", "Radhakishan Pura"][i % 5] + ", Sikar",
+                    price: `₹${550 + (id % 4) * 50} / month`,
+                    seatsVacant: `${(id % 12) + 4} Seats Available`,
+                    facilities: "AC Zone, High Speed WiFi, Personal Locker, RO Drinking Water."
                 };
             })
         ];
 
-        // Populate Table Rows
-        function initMasterTables() {
-            // Hostels
-            const hostelTbody = document.getElementById('hostelsAdminTableBody');
-            if (hostelTbody) {
-                hostelTbody.innerHTML = adminHostels.map(h => `
-                    <tr class="hover:bg-navy-900/50">
-                        <td class="p-3.5 font-mono text-slate-400">#${h.id}</td>
-                        <td class="p-3.5 font-bold text-white">${h.name}</td>
-                        <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${h.cat === 'Boys' ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30' : 'bg-pink-500/10 text-pink-300 border border-pink-500/30'}">${h.cat}</span></td>
-                        <td class="p-3.5 text-slate-300">${h.area}</td>
-                        <td class="p-3.5 font-mono text-gold-300 font-semibold">${h.phone}</td>
-                        <td class="p-3.5 text-right space-x-1">
-                            <a href="tel:${h.phone}" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
-                            <a href="https://wa.me/${h.phone.replace(/[^0-9]/g,'')}" target="_blank" class="p-1.5 rounded-lg bg-navy-800 text-emerald-400 hover:bg-emerald-500 hover:text-white inline-block"><i class="fa-brands fa-whatsapp"></i></a>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-
-            // Tiffins
-            const tiffinTbody = document.getElementById('tiffinsAdminTableBody');
-            if (tiffinTbody) {
-                tiffinTbody.innerHTML = adminTiffins.map(t => `
-                    <tr class="hover:bg-navy-900/50">
-                        <td class="p-3.5 font-mono text-slate-400">#${t.id}</td>
-                        <td class="p-3.5 font-bold text-white">${t.name}</td>
-                        <td class="p-3.5 text-gold-400 font-semibold">${t.area}</td>
-                        <td class="p-3.5 text-slate-300">${t.address}</td>
-                        <td class="p-3.5 font-mono text-gold-300 font-semibold">${t.phone}</td>
-                        <td class="p-3.5 text-right space-x-1">
-                            <a href="tel:${t.phone}" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
-                            <a href="https://wa.me/${t.phone.replace(/[^0-9]/g,'')}" target="_blank" class="p-1.5 rounded-lg bg-navy-800 text-emerald-400 hover:bg-emerald-500 hover:text-white inline-block"><i class="fa-brands fa-whatsapp"></i></a>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-
-            // Libraries
-            const libTbody = document.getElementById('librariesAdminTableBody');
-            if (libTbody) {
-                libTbody.innerHTML = adminLibraries.map(l => `
-                    <tr class="hover:bg-navy-900/50">
-                        <td class="p-3.5 font-mono text-slate-400">#${l.id}</td>
-                        <td class="p-3.5 font-bold text-white">${l.name}</td>
-                        <td class="p-3.5 text-gold-400 font-semibold">${l.area}</td>
-                        <td class="p-3.5 text-slate-300">${l.address}</td>
-                        <td class="p-3.5 font-mono text-gold-300 font-semibold">${l.phone}</td>
-                        <td class="p-3.5 text-right space-x-1">
-                            <a href="tel:${l.phone}" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
-                            <a href="https://wa.me/${l.phone.replace(/[^0-9]/g,'')}" target="_blank" class="p-1.5 rounded-lg bg-navy-800 text-emerald-400 hover:bg-emerald-500 hover:text-white inline-block"><i class="fa-brands fa-whatsapp"></i></a>
-                        </td>
-                    </tr>
-                `).join('');
-            }
+        // ================= RENDERING TABLES =================
+        function renderStudents() {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = studentsData.map((s, idx) => `
+                <tr class="hover:bg-navy-900/50">
+                    <td class="p-4"><img src="${s.photo}" class="w-9 h-9 rounded-full object-cover border border-gold-500/30"></td>
+                    <td class="p-4 font-bold text-white">${s.name}</td>
+                    <td class="p-4 font-mono text-gold-300 font-semibold">${s.phone}</td>
+                    <td class="p-4 text-slate-300">${s.email}</td>
+                    <td class="p-4"><span class="bg-navy-900 px-2 py-0.5 rounded border border-navy-700 text-[11px] text-emerald-300">${s.exam}</span></td>
+                    <td class="p-4 text-right space-x-2">
+                        <button onclick="editStudent(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteStudent(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        // Live Search Filters
-        function filterAdminTable(inputId, tableBodyId) {
-            const input = document.getElementById(inputId);
-            if(!input) return;
-            input.addEventListener('input', (e) => {
+        function renderOwners() {
+            const tbody = document.getElementById('ownerTableBody');
+            tbody.innerHTML = ownersData.map((o, idx) => `
+                <tr class="hover:bg-navy-900/50 cursor-pointer" onclick="viewOwnerDetails(${idx})">
+                    <td class="p-4"><img src="${o.photo}" class="w-9 h-9 rounded-full object-cover border border-gold-500/30"></td>
+                    <td class="p-4 font-bold text-white hover:text-gold-300 transition">${o.name} <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-1 text-gold-400"></i></td>
+                    <td class="p-4 font-mono text-gold-300 font-semibold">${o.phone}</td>
+                    <td class="p-4 text-slate-300">${o.email}</td>
+                    <td class="p-4"><span class="bg-gold-500/10 text-gold-300 px-2 py-0.5 rounded border border-gold-500/20 text-[11px]">${o.business} (${o.type})</span></td>
+                    <td class="p-4 text-right space-x-2" onclick="event.stopPropagation()">
+                        <button onclick="deleteOwner(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderHostels() {
+            const tbody = document.getElementById('hostelTableBody');
+            tbody.innerHTML = hostelsData.map((h, idx) => `
+                <tr class="hover:bg-navy-900/50 cursor-pointer" onclick="viewHostelDetails(${idx})">
+                    <td class="p-4 font-mono text-slate-400">#${h.id}</td>
+                    <td class="p-4 font-bold text-white hover:text-gold-300 transition">${h.name} <i class="fa-solid fa-circle-info text-[10px] ml-1 text-gold-400"></i></td>
+                    <td class="p-4 text-slate-300">${h.owner}</td>
+                    <td class="p-4 font-mono text-gold-300 font-semibold">${h.phone}</td>
+                    <td class="p-4 text-slate-400">${h.address}</td>
+                    <td class="p-4 text-right space-x-1" onclick="event.stopPropagation()">
+                        <a href="tel:${h.phone}" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
+                        <button onclick="deleteHostel(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white inline-block"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderTiffins() {
+            const tbody = document.getElementById('tiffinTableBody');
+            tbody.innerHTML = tiffinsData.map((t, idx) => `
+                <tr class="hover:bg-navy-900/50 cursor-pointer" onclick="viewTiffinDetails(${idx})">
+                    <td class="p-4 font-mono text-slate-400">#${t.id}</td>
+                    <td class="p-4 font-bold text-white hover:text-gold-300 transition">${t.name} <i class="fa-solid fa-utensils text-[10px] ml-1 text-gold-400"></i></td>
+                    <td class="p-4 font-mono text-gold-300 font-semibold">${t.phone}</td>
+                    <td class="p-4 text-slate-300">${t.address}</td>
+                    <td class="p-4 text-right space-x-1" onclick="event.stopPropagation()">
+                        <a href="tel:${t.phone}" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
+                        <button onclick="deleteTiffin(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white inline-block"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderLibraries() {
+            const tbody = document.getElementById('libraryTableBody');
+            tbody.innerHTML = librariesData.map((l, idx) => `
+                <tr class="hover:bg-navy-900/50 cursor-pointer" onclick="viewLibraryDetails(${idx})">
+                    <td class="p-4 font-mono text-slate-400">#${l.id}</td>
+                    <td class="p-4 font-bold text-white hover:text-gold-300 transition">${l.name} <i class="fa-solid fa-landmark text-[10px] ml-1 text-gold-400"></i></td>
+                    <td class="p-4 font-mono text-gold-300 font-semibold">${l.phone}</td>
+                    <td class="p-4 text-slate-300">${l.address}</td>
+                    <td class="p-4 text-right space-x-1" onclick="event.stopPropagation()">
+                        <a href="tel:${l.phone}" class="p-1.5 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
+                        <button onclick="deleteLibrary(${idx})" class="p-1.5 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white inline-block"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAllTables() {
+            renderStudents();
+            renderOwners();
+            renderHostels();
+            renderTiffins();
+            renderLibraries();
+        }
+
+        // ================= DETAIL POPUP HANDLERS =================
+        const detailInfoModal = document.getElementById('detailInfoModal');
+        const modalIconBox = document.getElementById('modalIconBox');
+        const modalTypeBadge = document.getElementById('modalTypeBadge');
+        const modalHeading = document.getElementById('modalHeading');
+        const modalBodyContent = document.getElementById('modalBodyContent');
+
+        function openDetailModal(icon, type, heading, htmlContent) {
+            modalIconBox.innerHTML = icon;
+            modalTypeBadge.textContent = type;
+            modalHeading.textContent = heading;
+            modalBodyContent.innerHTML = htmlContent;
+            detailInfoModal.classList.remove('hidden');
+        }
+
+        window.closeDetailModal = function() {
+            detailInfoModal.classList.add('hidden');
+        };
+
+        window.viewOwnerDetails = function(idx) {
+            const o = ownersData[idx];
+            openDetailModal(
+                '<i class="fa-solid fa-user-tie"></i>',
+                `Owner Record (${o.type})`,
+                o.name,
+                `<div><strong>Associated Business:</strong> ${o.business}</div>
+                 <div><strong>Monthly Price/Charge:</strong> <span class="text-gold-300 font-bold">${o.price}</span></div>
+                 <div><strong>Address:</strong> ${o.address}</div>
+                 <div><strong>Phone Number:</strong> <a href="tel:${o.phone}" class="text-gold-400 underline font-mono">${o.phone}</a></div>
+                 <div><strong>Email:</strong> ${o.email}</div>`
+            );
+        };
+
+        window.viewHostelDetails = function(idx) {
+            const h = hostelsData[idx];
+            openDetailModal(
+                '<i class="fa-solid fa-hotel"></i>',
+                'Hostel Details & Availability',
+                h.name,
+                `<div><strong>Vacancy Status:</strong> <span class="text-emerald-400 font-bold">${h.roomsVacant}</span></div>
+                 <div><strong>Monthly Rent:</strong> <span class="text-gold-300 font-bold">${h.price}</span></div>
+                 <div><strong>Address:</strong> ${h.address}</div>
+                 <div><strong>Owner Contact:</strong> ${h.owner} (<a href="tel:${h.phone}" class="text-gold-400 underline font-mono">${h.phone}</a>)</div>
+                 <div class="pt-2 border-t border-navy-800"><strong>Facilities Available:</strong><br><span class="text-slate-400">${h.facilities}</span></div>`
+            );
+        };
+
+        window.viewTiffinDetails = function(idx) {
+            const t = tiffinsData[idx];
+            openDetailModal(
+                '<i class="fa-solid fa-bowl-food"></i>',
+                'Tiffin Menu & Charge',
+                t.name,
+                `<div><strong>Monthly Tiffin Charge:</strong> <span class="text-gold-300 font-bold">${t.price}</span></div>
+                 <div><strong>Delivery Area / Address:</strong> ${t.address}</div>
+                 <div><strong>Order Phone:</strong> <a href="tel:${t.phone}" class="text-gold-400 underline font-mono">${t.phone}</a></div>
+                 <div class="pt-2 border-t border-navy-800"><strong>Daily Meal Menu:</strong><br><span class="text-slate-400">${t.menu}</span></div>`
+            );
+        };
+
+        window.viewLibraryDetails = function(idx) {
+            const l = librariesData[idx];
+            openDetailModal(
+                '<i class="fa-solid fa-landmark"></i>',
+                'Library Seats & Facilities',
+                l.name,
+                `<div><strong>Seat Availability:</strong> <span class="text-emerald-400 font-bold">${l.seatsVacant}</span></div>
+                 <div><strong>Monthly Seat Fee:</strong> <span class="text-gold-300 font-bold">${l.price}</span></div>
+                 <div><strong>Address:</strong> ${l.address}</div>
+                 <div><strong>Contact Phone:</strong> <a href="tel:${l.phone}" class="text-gold-400 underline font-mono">${l.phone}</a></div>
+                 <div class="pt-2 border-t border-navy-800"><strong>Facilities Provided:</strong><br><span class="text-slate-400">${l.facilities}</span></div>`
+            );
+        };
+
+        // Delete Actions
+        window.deleteStudent = function(idx) {
+            if(confirm(`Are you sure you want to delete student "${studentsData[idx].name}"?`)) {
+                studentsData.splice(idx, 1);
+                renderStudents();
+            }
+        };
+        window.deleteOwner = function(idx) {
+            if(confirm(`Are you sure you want to delete owner "${ownersData[idx].name}"?`)) {
+                ownersData.splice(idx, 1);
+                renderOwners();
+            }
+        };
+        window.deleteHostel = function(idx) {
+            if(confirm(`Are you sure you want to delete "${hostelsData[idx].name}"?`)) {
+                hostelsData.splice(idx, 1);
+                renderHostels();
+            }
+        };
+        window.deleteTiffin = function(idx) {
+            if(confirm(`Are you sure you want to delete "${tiffinsData[idx].name}"?`)) {
+                tiffinsData.splice(idx, 1);
+                renderTiffins();
+            }
+        };
+        window.deleteLibrary = function(idx) {
+            if(confirm(`Are you sure you want to delete "${librariesData[idx].name}"?`)) {
+                librariesData.splice(idx, 1);
+                renderLibraries();
+            }
+        };
+
+        // Add Student Prompt
+        window.openAddStudentModal = function() {
+            const name = prompt("Enter Student Full Name:");
+            if(!name) return;
+            const phone = prompt("Enter Student Phone Number:");
+            const exam = prompt("Enter Exam / Coaching Goal (e.g. NEET / RRB):");
+            studentsData.unshift({
+                id: studentsData.length + 1,
+                photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80",
+                name: name,
+                phone: phone || "+91 98000 00000",
+                email: `${name.toLowerCase().replace(/\s+/g, '')}@studenthub.in`,
+                address: "Sikar, Rajasthan",
+                exam: exam || "General Competitive"
+            });
+            renderStudents();
+            alert("New student added successfully!");
+        };
+
+        // Global Search Logic (Filters active table rows instantly)
+        document.getElementById('globalAdminSearch').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            document.querySelectorAll('tbody tr').forEach(r => {
+                r.style.display = r.textContent.toLowerCase().includes(val) ? '' : 'none';
+            });
+        });
+
+        // Individual Section Search Filters
+        function setupTableFilter(inputId, tbodyId) {
+            const el = document.getElementById(inputId);
+            if(!el) return;
+            el.addEventListener('input', (e) => {
                 const val = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll(`#${tableBodyId} tr`);
-                rows.forEach(r => {
+                document.querySelectorAll(`#${tbodyId} tr`).forEach(r => {
                     r.style.display = r.textContent.toLowerCase().includes(val) ? '' : 'none';
                 });
             });
         }
 
-        filterAdminTable('hostelAdminSearch', 'hostelsAdminTableBody');
-        filterAdminTable('tiffinAdminSearch', 'tiffinsAdminTableBody');
-        filterAdminTable('libraryAdminSearch', 'librariesAdminTableBody');
+        setupTableFilter('hostelFilterInput', 'hostelTableBody');
+        setupTableFilter('tiffinFilterInput', 'tiffinTableBody');
+        setupTableFilter('libraryFilterInput', 'libraryTableBody');
 
-        // CSV Export Function
-        window.exportCSV = function(type) {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            let filename = `studenthub_${type}_directory.csv`;
-
-            if(type === 'hostels') {
-                csvContent += "ID,Hostel Name,Category,Location,Phone Number\n";
-                adminHostels.forEach(h => {
-                    csvContent += `"${h.id}","${h.name}","${h.cat}","${h.area}","${h.phone}"\n`;
-                });
-            } else if(type === 'tiffins') {
-                csvContent += "ID,Tiffin Center Name,Area,Address,Phone Number\n";
-                adminTiffins.forEach(t => {
-                    csvContent += `"${t.id}","${t.name}","${t.area}","${t.address}","${t.phone}"\n`;
-                });
-            } else if(type === 'libraries') {
-                csvContent += "ID,Library Name,Area,Address,Phone Number\n";
-                adminLibraries.forEach(l => {
-                    csvContent += `"${l.id}","${l.name}","${l.area}","${l.address}","${l.phone}"\n`;
-                });
-            } else if(type === 'owners') {
-                csvContent += "Owner Name,Business,Type,Location,Phone\n";
-                csvContent += `"Ramesh Ji","Prince Boys PG","Hostel","Piprali Road, Sikar","+91 76910 94588"\n`;
-                csvContent += `"Devendra Singh","Dev Hostel Sikar","Hostel","Piprali Road, Sikar","+91 97847 96538"\n`;
-                csvContent += `"Smt. Sharda Devi","दीदी का टिफिन","Tiffin","Radhakishan Pura, Sikar","+91 63785 04820"\n`;
-                csvContent += `"Mukesh Choudhary","थे स्टडी पॉइंट लाइब्रेरी","Library","Piprali Road, Sikar","+91 75971 08814"\n`;
-            } else if(type === 'students') {
-                csvContent += "Student Name,Target Exam,Location,Mobile Number\n";
-                csvContent += `"Vikas Shekhawat","NEET / Matrix","Piprali Road, Sikar","+91 98291 55441"\n`;
-                csvContent += `"Anil Kumar","RRB Technician","Nawalgarh Road, Sikar","+91 97852 44112"\n`;
-                csvContent += `"Pooja Choudhary","Rajasthan CET","Jat Colony, Sikar","+91 94142 88991"\n`;
-            }
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
-
-        initMasterTables();
+        renderAllTables();
     </script>
 </body>
 </html>
