@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Director Master Admin Console | StudentHub Shekhawati</title>
     
-    <!-- Navy & Gold "SH" Luxury Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23060B18'/><rect x='4' y='4' width='92' height='92' rx='21' fill='none' stroke='%23D4AF37' stroke-width='4'/><text x='50%25' y='58%25' dominant-baseline='central' text-anchor='middle' font-family='serif' font-weight='800' font-size='44' fill='%23D4AF37'>SH</text></svg>">
+    <!-- Logo Favicon -->
+    <link rel="icon" type="image/png" href="logo.png">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -71,7 +71,7 @@
 </head>
 <body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-gold-500 selection:text-navy-950 min-h-screen">
 
-    <!-- 1. DIRECTOR AUTHENTICATION MODAL (CLEAN LOGIN) -->
+    <!-- 1. DIRECTOR AUTHENTICATION MODAL -->
     <div id="adminAuthLock" class="fixed inset-0 z-50 bg-navy-950/95 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-8 text-center shadow-2xl space-y-6">
             <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 text-3xl font-display font-extrabold flex items-center justify-center mx-auto shadow-lg shadow-gold-500/20">
@@ -98,17 +98,15 @@
         </div>
     </div>
 
-    <!-- 2. MAIN ADMIN APP INTERFACE (SIDEBAR + CONTENT) -->
+    <!-- 2. MAIN ADMIN APP INTERFACE -->
     <div id="adminInterface" class="hidden min-h-screen flex flex-col md:flex-row">
         
         <!-- ================= LEFT SIDEBAR ================= -->
         <aside class="w-full md:w-64 bg-navy-900 border-r border-gold-500/20 flex flex-col justify-between flex-shrink-0">
             <div>
-                <!-- Brand Logo Header -->
+                <!-- Brand Header -->
                 <div class="p-5 border-b border-navy-800 flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gold-500 flex items-center justify-center text-navy-950 font-display font-extrabold text-lg">
-                        SH
-                    </div>
+                    <img src="logo.png" onerror="this.outerHTML='<div class=\'w-10 h-10 rounded-xl bg-gold-500 text-navy-950 font-display font-extrabold text-lg flex items-center justify-center\'>SH</div>'" class="w-10 h-10 rounded-xl object-cover border border-gold-500/40">
                     <div>
                         <span class="text-base font-display font-bold gold-gradient-text">StudentHub</span>
                         <span class="block text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
@@ -117,7 +115,7 @@
                     </div>
                 </div>
 
-                <!-- Navigation Sidebar Menu (As requested in image) -->
+                <!-- Navigation Sidebar Menu -->
                 <nav class="p-4 space-y-2 text-xs font-bold uppercase tracking-wider">
                     <button onclick="setSection('student')" id="sideBtn-student" class="sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-gold-300 bg-gold-500/10 border border-gold-500/40 text-left transition">
                         <i class="fa-solid fa-user-graduate text-base w-5 text-gold-400"></i>
@@ -169,10 +167,10 @@
         <!-- ================= MAIN RIGHT AREA ================= -->
         <div class="flex-1 flex flex-col overflow-y-auto">
             
-            <!-- TOP BAR (GLOBAL SEARCH + NOTIFICATION BELL + ACTIONS) -->
+            <!-- TOP BAR -->
             <header class="bg-navy-900 border-b border-gold-500/20 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 sticky top-0 z-30">
                 
-                <!-- Universal Search Input (Searches across all records) -->
+                <!-- Universal Search -->
                 <div class="relative flex-1 max-w-lg">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-sm"></i>
                     <input type="text" id="globalAdminSearch" placeholder="Search any student, owner, hostel, tiffin or library..." class="w-full bg-navy-850 border border-navy-700 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-gold-500 transition">
@@ -180,36 +178,7 @@
 
                 <!-- Right Action Icons -->
                 <div class="flex items-center gap-4 relative">
-                    
-                    <!-- Notification Bell with Red Dot -->
-                    <div class="relative">
-                        <button id="notifBellBtn" class="w-9 h-9 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-400 hover:text-white flex items-center justify-center relative transition">
-                            <i class="fa-solid fa-bell text-sm"></i>
-                            <!-- Red Notification Dot -->
-                            <span id="notifRedDot" class="w-2.5 h-2.5 bg-red-500 rounded-full absolute top-1.5 right-1.5 ring-2 ring-navy-900"></span>
-                        </button>
-
-                        <!-- Notification Dropdown -->
-                        <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 bg-navy-900 border border-gold-500/30 rounded-2xl p-4 shadow-2xl z-50 space-y-3">
-                            <div class="flex items-center justify-between pb-2 border-b border-navy-800">
-                                <span class="text-xs font-bold text-white">Notifications & Alerts</span>
-                                <span class="text-[10px] text-gold-400 font-semibold">2 New</span>
-                            </div>
-                            <div class="space-y-2 text-xs">
-                                <div class="p-2.5 rounded-xl bg-navy-850 border border-navy-700 hover:border-gold-500/40 cursor-pointer" onclick="setSection('owner')">
-                                    <span class="font-bold text-gold-300 block">New Hostel Submission</span>
-                                    <p class="text-[11px] text-slate-300 mt-0.5">Ramesh Ji submitted "Shree Shyam PG (New Wing)" on Piprali Road.</p>
-                                </div>
-                                <div class="p-2.5 rounded-xl bg-navy-850 border border-navy-700 hover:border-gold-500/40 cursor-pointer" onclick="setSection('owner')">
-                                    <span class="font-bold text-gold-300 block">New Tiffin Provider</span>
-                                    <p class="text-[11px] text-slate-300 mt-0.5">Suresh Sharma registered "Annapurna Pure Veg Tiffin" on Nawalgarh Road.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Live Site Link -->
-                    <a href="index.html" target="_blank" class="text-xs font-semibold px-3.5 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition flex items-center gap-1.5">
+                    <a href="./" target="_blank" class="text-xs font-semibold px-3.5 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-globe"></i> Live Site
                     </a>
                 </div>
@@ -225,9 +194,9 @@
                             <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
                                 <i class="fa-solid fa-user-graduate text-gold-400"></i> Registered Students Directory
                             </h3>
-                            <p class="text-xs text-slate-400 mt-1">Complete record of students with contact, exam goal, and management actions.</p>
+                            <p class="text-xs text-slate-400 mt-1">Complete record of registered students.</p>
                         </div>
-                        <button onclick="openAddStudentModal()" class="px-4 py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-lg hover:brightness-110 flex items-center gap-1.5">
+                        <button onclick="openCreateModal('student')" class="px-4 py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-lg hover:brightness-110 flex items-center gap-1.5">
                             <i class="fa-solid fa-plus"></i> Add New Student
                         </button>
                     </div>
@@ -256,8 +225,11 @@
                             <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
                                 <i class="fa-solid fa-user-tie text-gold-400"></i> Property & Business Owners Directory
                             </h3>
-                            <p class="text-xs text-slate-400 mt-1">Tap any owner row to inspect their associated hostel, tiffin, or library details.</p>
+                            <p class="text-xs text-slate-400 mt-1">List of all verified Hostel, Tiffin, and Library partners.</p>
                         </div>
+                        <button onclick="openCreateModal('owner')" class="px-4 py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-lg hover:brightness-110 flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i> Add New Owner
+                        </button>
                     </div>
 
                     <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
@@ -269,7 +241,7 @@
                                     <th class="p-4">Phone Number</th>
                                     <th class="p-4">Email Address</th>
                                     <th class="p-4">Business / Property</th>
-                                    <th class="p-4 text-right">Actions</th>
+                                    <th class="p-4 text-right">Actions (Edit / Delete)</th>
                                 </tr>
                             </thead>
                             <tbody id="ownerTableBody" class="divide-y divide-navy-800"></tbody>
@@ -282,11 +254,16 @@
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
                         <div>
                             <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-hotel text-gold-400"></i> All 100 Hostels & PGs in Sikar
+                                <i class="fa-solid fa-hotel text-gold-400"></i> All Hostels & PGs in Sikar
                             </h3>
-                            <p class="text-xs text-slate-400 mt-1">Tap on any Hostel name to view Vacant Rooms, Price, and Amenities breakdown.</p>
+                            <p class="text-xs text-slate-400 mt-1">Tap on any Hostel row to view details.</p>
                         </div>
-                        <input type="text" id="hostelFilterInput" placeholder="Filter hostels by name or area..." class="bg-navy-900 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-gold-500 w-full sm:w-64">
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <input type="text" id="hostelFilterInput" placeholder="Filter hostels..." class="bg-navy-900 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-gold-500 w-full sm:w-56">
+                            <button onclick="openCreateModal('hostel')" class="px-4 py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-lg hover:brightness-110 flex items-center gap-1.5 flex-shrink-0">
+                                <i class="fa-solid fa-plus"></i> Add New Hostel
+                            </button>
+                        </div>
                     </div>
 
                     <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
@@ -294,7 +271,7 @@
                             <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
                                 <tr>
                                     <th class="p-4">SN</th>
-                                    <th class="p-4">Hostel Name (Tap for Details)</th>
+                                    <th class="p-4">Hostel Name</th>
                                     <th class="p-4">Owner Name</th>
                                     <th class="p-4">Phone Number</th>
                                     <th class="p-4">Address / Location</th>
@@ -311,11 +288,16 @@
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
                         <div>
                             <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-bowl-food text-gold-400"></i> All 100 Tiffin & Mess Providers
+                                <i class="fa-solid fa-bowl-food text-gold-400"></i> All Tiffin & Mess Services
                             </h3>
-                            <p class="text-xs text-slate-400 mt-1">Tap on any Tiffin Center name to inspect food menu details and monthly charges.</p>
+                            <p class="text-xs text-slate-400 mt-1">Directory of pure-veg daily thali providers.</p>
                         </div>
-                        <input type="text" id="tiffinFilterInput" placeholder="Filter tiffin centers..." class="bg-navy-900 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-gold-500 w-full sm:w-64">
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <input type="text" id="tiffinFilterInput" placeholder="Filter tiffins..." class="bg-navy-900 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-gold-500 w-full sm:w-56">
+                            <button onclick="openCreateModal('tiffin')" class="px-4 py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-lg hover:brightness-110 flex items-center gap-1.5 flex-shrink-0">
+                                <i class="fa-solid fa-plus"></i> Add New Tiffin
+                            </button>
+                        </div>
                     </div>
 
                     <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
@@ -323,7 +305,7 @@
                             <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
                                 <tr>
                                     <th class="p-4">SN</th>
-                                    <th class="p-4">Tiffin Name (Tap for Menu)</th>
+                                    <th class="p-4">Tiffin Center Name</th>
                                     <th class="p-4">Phone Number</th>
                                     <th class="p-4">Area / Address</th>
                                     <th class="p-4 text-right">Actions</th>
@@ -339,11 +321,16 @@
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-navy-800">
                         <div>
                             <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-landmark text-gold-400"></i> All 100 24/7 AC Libraries in Sikar
+                                <i class="fa-solid fa-landmark text-gold-400"></i> All 24/7 AC Libraries in Sikar
                             </h3>
-                            <p class="text-xs text-slate-400 mt-1">Tap on any Library name to inspect vacant seats, facilities, and fee structure.</p>
+                            <p class="text-xs text-slate-400 mt-1">Silent study zones across Sikar.</p>
                         </div>
-                        <input type="text" id="libraryFilterInput" placeholder="Filter libraries..." class="bg-navy-900 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-gold-500 w-full sm:w-64">
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <input type="text" id="libraryFilterInput" placeholder="Filter libraries..." class="bg-navy-900 border border-navy-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-gold-500 w-full sm:w-56">
+                            <button onclick="openCreateModal('library')" class="px-4 py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-lg hover:brightness-110 flex items-center gap-1.5 flex-shrink-0">
+                                <i class="fa-solid fa-plus"></i> Add New Library
+                            </button>
+                        </div>
                     </div>
 
                     <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
@@ -351,7 +338,7 @@
                             <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] tracking-wider border-b border-navy-700">
                                 <tr>
                                     <th class="p-4">SN</th>
-                                    <th class="p-4">Library Name (Tap for Seats)</th>
+                                    <th class="p-4">Library Name</th>
                                     <th class="p-4">Phone Number</th>
                                     <th class="p-4">Address / Locality</th>
                                     <th class="p-4 text-right">Actions</th>
@@ -362,22 +349,19 @@
                     </div>
                 </section>
 
-                <!-- ================= 6. ADMIN PROFILE & PASSWORD ================= -->
+                <!-- ================= 6. ADMIN SECTION ================= -->
                 <section id="section-admin" class="admin-section hidden space-y-6 max-w-4xl">
                     <div class="pb-4 border-b border-navy-800">
                         <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
                             <i class="fa-solid fa-user-shield text-gold-400"></i> Director Admin Profile & Security
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1">Manage director profile credentials and update your master login password.</p>
+                        <p class="text-xs text-slate-400 mt-1">Manage director profile credentials and update login password.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Profile Details Card -->
                         <div class="bg-navy-850 p-6 rounded-2xl gold-border-glow space-y-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 font-display font-extrabold text-2xl flex items-center justify-center">
-                                    SS
-                                </div>
+                                <img src="logo.png" onerror="this.outerHTML='<div class=\'w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 font-display font-extrabold text-2xl flex items-center justify-center\'>SS</div>'" class="w-16 h-16 rounded-2xl object-cover border border-gold-500/40">
                                 <div>
                                     <h4 class="text-lg font-bold text-white">Satpal Swami</h4>
                                     <span class="text-xs text-gold-400 font-semibold">Managing Director • StudentHub</span>
@@ -400,7 +384,6 @@
                             </div>
                         </div>
 
-                        <!-- Password Change Box -->
                         <div class="bg-navy-850 p-6 rounded-2xl gold-border-glow space-y-4">
                             <h4 class="text-sm font-bold text-white flex items-center gap-2">
                                 <i class="fa-solid fa-key text-gold-400"></i> Change Master Password
@@ -411,8 +394,8 @@
                                     <input type="password" id="newAdminPassword" required placeholder="Enter new password" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold-500">
                                 </div>
                                 <div>
-                                    <label class="block text-xs text-slate-300 mb-1">Confirm New Password</label>
-                                    <input type="password" id="confirmAdminPassword" required placeholder="Re-enter new password" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold-500">
+                                    <label class="block text-xs text-slate-300 mb-1">Confirm Password</label>
+                                    <input type="password" id="confirmAdminPassword" required placeholder="Re-enter password" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold-500">
                                 </div>
                                 <button type="submit" class="w-full py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl hover:brightness-110 shadow-md">
                                     Update Password
@@ -426,21 +409,37 @@
         </div>
     </div>
 
-  <!-- ================= 3. POPUP MODALS (DETAILS & EDIT) ================= -->
-    <!-- Info Viewer Modal -->
-    <div id="detailInfoModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative space-y-5">
-            <button onclick="closeDetailModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1">
+    <!-- ================= UNIVERSAL ADD NEW ENTRY MODAL ================= -->
+    <div id="addEntryModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative space-y-4">
+            <button onclick="closeAddModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
-            <div class="flex items-center gap-3">
-                <div id="modalIconBox" class="w-12 h-12 rounded-2xl gold-gradient-bg text-navy-950 flex items-center justify-center text-xl font-bold"></div>
-                <div>
-                    <span id="modalTypeBadge" class="text-[10px] uppercase font-bold text-gold-400 bg-navy-850 px-2.5 py-0.5 rounded border border-navy-700">Category</span>
-                    <h3 id="modalHeading" class="text-lg font-bold text-white mt-1 leading-snug">Detail Title</h3>
-                </div>
+            <div class="flex items-center gap-2 pb-2 border-b border-navy-800">
+                <i class="fa-solid fa-circle-plus text-gold-400 text-lg"></i>
+                <h3 id="addModalHeading" class="text-base font-bold text-white">Add New Entry</h3>
             </div>
-            <div id="modalBodyContent" class="bg-navy-850 p-5 rounded-2xl border border-navy-800 text-xs text-slate-300 space-y-2.5 leading-relaxed"></div>
+            <form id="universalAddForm" class="space-y-3 text-xs">
+                <div>
+                    <label id="addLbl1" class="block text-slate-300 mb-1">Name / Title *</label>
+                    <input type="text" id="addField1" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label id="addLbl2" class="block text-slate-300 mb-1">Phone Number *</label>
+                    <input type="text" id="addField2" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label id="addLbl3" class="block text-slate-300 mb-1">Address / Area *</label>
+                    <input type="text" id="addField3" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label id="addLbl4" class="block text-slate-300 mb-1">Owner Name / Category *</label>
+                    <input type="text" id="addField4" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl hover:brightness-110 shadow-md transition mt-2">
+                    Save & Add to Directory
+                </button>
+            </form>
         </div>
     </div>
 
@@ -468,7 +467,7 @@
                     <input type="text" id="editField3" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
                 </div>
                 <div>
-                    <label id="lblField4" class="block text-slate-300 mb-1">Price / Detail</label>
+                    <label id="lblField4" class="block text-slate-300 mb-1">Owner Name / Category</label>
                     <input type="text" id="editField4" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
                 </div>
                 <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl hover:brightness-110 shadow-md transition mt-2">
@@ -478,15 +477,13 @@
         </div>
     </div>
 
-    <!-- ================= 4. JAVASCRIPT CONTROLLER ================= -->
+    <!-- JAVASCRIPT CONTROLLER -->
     <script>
-        // Password Storage (Default: 18389555)
         const DEFAULT_PASSWORD = "18389555";
         function getStoredPassword() {
             return localStorage.getItem('studenthub_admin_pwd') || DEFAULT_PASSWORD;
         }
 
-        // Login Controller
         const adminAuthLock = document.getElementById('adminAuthLock');
         const adminInterface = document.getElementById('adminInterface');
         const adminLoginForm = document.getElementById('adminLoginForm');
@@ -510,7 +507,7 @@
                 adminInterface.classList.remove('hidden');
                 renderAllTables();
             } else {
-                alert('Invalid Credentials! Please check your email or password.');
+                alert('Invalid Credentials! Access restricted to Director Satpal Swami.');
             }
         });
 
@@ -519,7 +516,7 @@
             location.reload();
         });
 
-        // Change Password Form
+        // Change Password
         document.getElementById('changePasswordForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const newP = document.getElementById('newAdminPassword').value.trim();
@@ -531,16 +528,6 @@
             localStorage.setItem('studenthub_admin_pwd', newP);
             alert('Director Password updated successfully!');
             document.getElementById('changePasswordForm').reset();
-        });
-
-        // Notification Bell Toggle
-        const notifBellBtn = document.getElementById('notifBellBtn');
-        const notifDropdown = document.getElementById('notifDropdown');
-        const notifRedDot = document.getElementById('notifRedDot');
-
-        notifBellBtn.addEventListener('click', () => {
-            notifDropdown.classList.toggle('hidden');
-            notifRedDot.classList.add('hidden');
         });
 
         // Sidebar Navigation Switcher
@@ -556,7 +543,7 @@
             if (activeBtn) activeBtn.className = 'sidebar-btn w-full p-3.5 rounded-xl flex items-center gap-3 text-gold-300 bg-gold-500/10 border border-gold-500/40 text-left transition';
         };
 
-// ================= REAL & LIVE PERSISTENT DATABASE =================
+        // Storage helpers
         function loadStorage(key, defaultData) {
             const saved = localStorage.getItem('sh_' + key);
             return saved ? JSON.parse(saved) : defaultData;
@@ -565,54 +552,40 @@
             localStorage.setItem('sh_' + key, JSON.stringify(data));
         }
 
-        // 1. रियल रजिस्टर्ड छात्र (जो auth.html से जुड़ेंगे)
+        // 1. Students
         let studentsData = loadStorage('students', [
-            { id: 1, photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80", name: "Vikas Shekhawat", phone: "+91 98291 55441", email: "vikas.sikar@gmail.com", address: "Piprali Road, Sikar", exam: "NEET (Matrix Academy)" }
+            { id: 1, photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80", name: "Anil Kumar", phone: "+91 97852 44112", email: "anil.rrbscholar@gmail.com", address: "Nawalgarh Road, Sikar", exam: "RRB Technician Grade 3" },
+            { id: 2, photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80", name: "Pooja Choudhary", phone: "+91 94142 88991", email: "pooja.raj@gmail.com", address: "Jat Colony, Sikar", exam: "Rajasthan CET & REET" }
         ]);
 
-        // 2. रियल रजिस्टर्ड ओनर (जो add-listing.html या अप्रूवल से जुड़ेंगे)
+        // 2. Owners
         let ownersData = loadStorage('owners', [
-            { id: 1, photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80", name: "Ramesh Ji", phone: "+91 76910 94588", email: "princehostel.sikar@gmail.com", business: "Prince Boys PG & Hostel", type: "Hostel", address: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar", price: "₹4,500/mo" },
-            { id: 2, photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80", name: "Devendra Singh", phone: "+91 97847 96538", email: "devhostel.sikar@gmail.com", business: "Dev Hostel Sikar", type: "Hostel", address: "Opposite Matrix NEET Division, Piprali Road, Sikar", price: "₹4,800/mo" },
-            { id: 3, photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80", name: "Smt. Sharda Devi", phone: "+91 63785 04820", email: "diditiffin.sikar@gmail.com", business: "दीदी का टिफिन (Didi Ka Tiffin)", type: "Tiffin", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar", price: "₹2,600/mo" },
-            { id: 4, photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&q=80", name: "Mukesh Choudhary", phone: "+91 75971 08814", email: "studypoint.library@gmail.com", business: "थे स्टडी पॉइंट लाइब्रेरी", type: "Library", address: "Sanjay Restaurant Ki Galli, New Janta Colony, Sikar", price: "₹650/mo" }
+            { id: 1, photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80", name: "Ramesh Ji", phone: "+91 76910 94588", email: "princehostel.sikar@gmail.com", business: "Prince Boys PG & Hostel", type: "Hostel", address: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar" },
+            { id: 2, photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80", name: "Devendra Singh", phone: "+91 97847 96538", email: "devhostel.sikar@gmail.com", business: "Dev Hostel Sikar", type: "Hostel", address: "Opposite Matrix NEET Division, Piprali Road, Sikar" }
         ]);
 
-        // 3. सीकर के 100 असली वेरिफाइड हॉस्टल्स
+        // 3. Hostels
         let hostelsData = loadStorage('hostels', [
-            { id: 1, name: "Prince Boys PG & Hostel", owner: "Ramesh Ji", phone: "+91 76910 94588", address: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar", roomsVacant: "6 Rooms Vacant", price: "₹4,500 / month", facilities: "WiFi, Power Backup, RO Water, 3-Time Food, CCTV." },
-            { id: 2, name: "Dev Hostel Sikar", owner: "Devendra Singh", phone: "+91 97847 96538", address: "Opposite Matrix NEET Division, Piprali Road, Sikar", roomsVacant: "4 AC Rooms Vacant", price: "₹4,800 / month", facilities: "AC Rooms, WiFi, RO Water, 3 Meals." },
-            { id: 3, name: "Apex Boys Hostel & Library", owner: "Apex Management", phone: "+91 92571 82221", address: "Near Navjeevan Coaching, Bhagavati Marg, Jat Colony, Sikar", roomsVacant: "5 Rooms Vacant", price: "₹4,200 / month", facilities: "WiFi, RO Water, Study Table." },
-            { id: 4, name: "Krishna Boys Hostel", owner: "Krishna Hub", phone: "+91 96673 52222", address: "Near Prince Education Hub, Palwas Road, Sikar", roomsVacant: "8 AC Rooms Vacant", price: "₹5,000 / month", facilities: "Central AC, WiFi, Power Backup, Mess." },
-            { id: 5, name: "Heaven Boys Hostel", owner: "Heaven Stay", phone: "+91 93467 07070", address: "Near Allen Institute, Piprali Circle, Sikar", roomsVacant: "3 Rooms Vacant", price: "₹4,600 / month", facilities: "WiFi, Food, RO Water." },
-            { id: 6, name: "The Tree PG & Hostel", owner: "Tree Management", phone: "+91 95875 61001", address: "Near Sambal College, Nawalgarh Road, Sikar", roomsVacant: "4 Rooms Vacant", price: "₹3,800 / month", facilities: "WiFi, Cooler, Food." },
-            { id: 51, name: "Times Square Girls Hostel", owner: "Sunita Devi", phone: "+91 96025 02561", address: "Near Balaji Hospital, Allen Gali, Jagdamba Colony, Sikar", roomsVacant: "8 Girls Rooms Vacant", price: "₹5,200 / month", facilities: "Lady Warden, CCTV, AC Rooms, WiFi." },
-            { id: 52, name: "Royal Girls Hostel", owner: "Royal Residency", phone: "+91 94133 33104", address: "Near CLC Street, New Janta Colony, Piprali Road, Sikar", roomsVacant: "5 Girls Rooms Vacant", price: "₹5,000 / month", facilities: "CCTV, 3-Time Satvik Food, Inverter." },
-            { id: 53, name: "Apex Girls Hostel & Library", owner: "Apex Group", phone: "+91 95291 82221", address: "Rajat Path, Near Matrix NEET Division, Sikar", roomsVacant: "6 Rooms Vacant", price: "₹5,400 / month", facilities: "AC Silent Study, WiFi, Security." }
+            { id: 1, name: "Prince Boys PG & Hostel", owner: "Ramesh Ji", phone: "+91 76910 94588", address: "Vision Janta Colony, Jat Colony, Piprali Road, Sikar", cat: "Boys" },
+            { id: 2, name: "Dev Hostel Sikar", owner: "Devendra Singh", phone: "+91 97847 96538", address: "Opposite Matrix NEET Division, Piprali Road, Sikar", cat: "Boys" },
+            { id: 51, name: "Times Square Girls Hostel", owner: "Sunita Devi", phone: "+91 96025 02561", address: "Near Balaji Hospital, Allen Gali, Jagdamba Colony, Sikar", cat: "Girls" }
         ]);
 
-        // 4. सीकर के असली वेरिफाइड टिफिन सेंटर्स
+        // 4. Tiffins
         let tiffinsData = loadStorage('tiffins', [
-            { id: 1, name: "दीदी का टिफिन (Didi Ka Tiffin)", phone: "+91 63785 04820", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar", price: "₹2,600 / month", menu: "Morning: 4 Butter Roti, Dal, Sabji, Rice, Salad. Evening: 4 Roti, Green Veg, Kadhi, Pickle." },
-            { id: 2, name: "राधे फूड्स (Radhe Foods)", phone: "+91 70623 47736", address: "Vandematram chowk, Radhakishan Pura, Sikar", price: "₹2,800 / month", menu: "Desi Ghee Roti, Dal Tadka, Mix Veg, Rice, Green Salad." },
-            { id: 3, name: "गुरु जी मेस & टिफिन (Guruji Mess)", phone: "+91 93524 66682", address: "Surya Nagar, Piprali Road, Jat Colony, Sikar", price: "₹3,000 / month", menu: "Special Student Thali, Daily 2 Times Pure Veg Meal." },
-            { id: 4, name: "एसके टिफिन सेंटर (SK Tiffin)", phone: "+91 99283 38780", address: "E-7, Basant Vihar, Opp. Indian Oil Pump, Sikar", price: "₹2,700 / month", menu: "4 Roti, Dal Fry, Seasonal Sabji, Curd & Salad." },
-            { id: 5, name: "श्री राधे टिफिन सेंटर", phone: "+91 74268 37027", address: "Near Clock Tower Gate, Devipura, Sikar", price: "₹2,500 / month", menu: "Homemade Pure Vegetarian Food Delivery." }
+            { id: 1, name: "दीदी का टिफिन (Didi Ka Tiffin)", phone: "+91 63785 04820", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar" },
+            { id: 2, name: "राधे फूड्स (Radhe Foods)", phone: "+91 70623 47736", address: "Vandematram chowk, Radhakishan Pura, Sikar" }
         ]);
 
-        // 5. सीकर की असली 24/7 AC लाइब्रेरीज़
+        // 5. Libraries
         let librariesData = loadStorage('libraries', [
-            { id: 1, name: "थे स्टडी पॉइंट लाइब्रेरी एंड हॉस्टल", phone: "+91 75971 08814", address: "Sanjay Restaurant Ki Galli, New Janta Colony, Sikar", price: "₹650 / month", seatsVacant: "12 Seats Available", facilities: "24/7 Centralized AC, 100 Mbps WiFi, Personal Charging Socket, RO Water." },
-            { id: 2, name: "तपोवन लाइब्रेरी", phone: "+91 96948 14577", address: "Om Tower, Charan Singh Gate, Sikar", price: "₹600 / month", seatsVacant: "18 Seats Available", facilities: "AC Silent Study, Ergonomic Cushion Chairs, Power Backup." },
-            { id: 3, name: "शिव शक्ति लाइब्रेरी एंड हॉस्टल", phone: "+91 90797 22226", address: "Near CLC, Vikas Colony, Samarthpura, Sikar", price: "₹700 / month", seatsVacant: "10 Seats Available", facilities: "AC, WiFi, Discussion Room, Inverter Backup." },
-            { id: 4, name: "लक्ष्य लाइब्रेरी", phone: "+91 99500 40060", address: "Near Dr Sharadlata Hospital, Behind Allen, Sikar", price: "₹650 / month", seatsVacant: "15 Seats Available", facilities: "Silent Study, High Speed WiFi, RO Water." },
-            { id: 5, name: "साइलेंट कॉर्नर लाइब्रेरी", phone: "+91 94605 54493", address: "Opp. Path Institute, G Raj Heights, Sikar", price: "₹600 / month", seatsVacant: "14 Seats Available", facilities: "Individual Cabin, Lamp & Charging Point, AC." }
+            { id: 1, name: "थे स्टडी पॉइंट लाइब्रेरी एंड हॉस्टल", phone: "+91 75971 08814", address: "Sanjay Restaurant Ki Galli, New Janta Colony, Sikar" },
+            { id: 2, name: "तपोवन लाइब्रेरी", phone: "+91 96948 14577", address: "Om Tower, Charan Singh Gate, Sikar" }
         ]);
 
-        // ================= RENDERING TABLES WITH WORKING EDIT & DELETE =================
+        // RENDER TABLES
         function renderStudents() {
-            const tbody = document.getElementById('studentTableBody');
-            tbody.innerHTML = studentsData.map((s, idx) => `
+            document.getElementById('studentTableBody').innerHTML = studentsData.map((s, idx) => `
                 <tr class="hover:bg-navy-900/50">
                     <td class="p-4"><img src="${s.photo}" class="w-9 h-9 rounded-full object-cover border border-gold-500/30"></td>
                     <td class="p-4 font-bold text-white">${s.name}</td>
@@ -628,15 +601,14 @@
         }
 
         function renderOwners() {
-            const tbody = document.getElementById('ownerTableBody');
-            tbody.innerHTML = ownersData.map((o, idx) => `
-                <tr class="hover:bg-navy-900/50 cursor-pointer" onclick="viewOwnerDetails(${idx})">
+            document.getElementById('ownerTableBody').innerHTML = ownersData.map((o, idx) => `
+                <tr class="hover:bg-navy-900/50">
                     <td class="p-4"><img src="${o.photo}" class="w-9 h-9 rounded-full object-cover border border-gold-500/30"></td>
-                    <td class="p-4 font-bold text-white hover:text-gold-300 transition">${o.name} <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-1 text-gold-400"></i></td>
+                    <td class="p-4 font-bold text-white">${o.name}</td>
                     <td class="p-4 font-mono text-gold-300 font-semibold">${o.phone}</td>
                     <td class="p-4 text-slate-300">${o.email}</td>
                     <td class="p-4"><span class="bg-gold-500/10 text-gold-300 px-2 py-0.5 rounded border border-gold-500/20 text-[11px]">${o.business} (${o.type})</span></td>
-                    <td class="p-4 text-right space-x-1.5" onclick="event.stopPropagation()">
+                    <td class="p-4 text-right space-x-1.5">
                         <button onclick="openEditModal('owner', ${idx})" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="deleteItem('owners', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
                     </td>
@@ -645,15 +617,14 @@
         }
 
         function renderHostels() {
-            const tbody = document.getElementById('hostelTableBody');
-            tbody.innerHTML = hostelsData.map((h, idx) => `
-                <tr class="hover:bg-navy-900/50 cursor-pointer" onclick="viewHostelDetails(${idx})">
+            document.getElementById('hostelTableBody').innerHTML = hostelsData.map((h, idx) => `
+                <tr class="hover:bg-navy-900/50">
                     <td class="p-4 font-mono text-slate-400">#${h.id}</td>
-                    <td class="p-4 font-bold text-white hover:text-gold-300 transition">${h.name} <i class="fa-solid fa-circle-info text-[10px] ml-1 text-gold-400"></i></td>
+                    <td class="p-4 font-bold text-white">${h.name}</td>
                     <td class="p-4 text-slate-300">${h.owner}</td>
                     <td class="p-4 font-mono text-gold-300 font-semibold">${h.phone}</td>
                     <td class="p-4 text-slate-400">${h.address}</td>
-                    <td class="p-4 text-right space-x-1.5" onclick="event.stopPropagation()">
+                    <td class="p-4 text-right space-x-1.5">
                         <a href="tel:${h.phone}" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
                         <button onclick="openEditModal('hostel', ${idx})" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="deleteItem('hostels', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
@@ -663,14 +634,13 @@
         }
 
         function renderTiffins() {
-            const tbody = document.getElementById('tiffinTableBody');
-            tbody.innerHTML = tiffinsData.map((t, idx) => `
-                <tr class="hover:bg-navy-900/50 cursor-pointer" onclick="viewTiffinDetails(${idx})">
+            document.getElementById('tiffinTableBody').innerHTML = tiffinsData.map((t, idx) => `
+                <tr class="hover:bg-navy-900/50">
                     <td class="p-4 font-mono text-slate-400">#${t.id}</td>
-                    <td class="p-4 font-bold text-white hover:text-gold-300 transition">${t.name} <i class="fa-solid fa-utensils text-[10px] ml-1 text-gold-400"></i></td>
+                    <td class="p-4 font-bold text-white">${t.name}</td>
                     <td class="p-4 font-mono text-gold-300 font-semibold">${t.phone}</td>
                     <td class="p-4 text-slate-300">${t.address}</td>
-                    <td class="p-4 text-right space-x-1.5" onclick="event.stopPropagation()">
+                    <td class="p-4 text-right space-x-1.5">
                         <a href="tel:${t.phone}" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
                         <button onclick="openEditModal('tiffin', ${idx})" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="deleteItem('tiffins', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
@@ -680,14 +650,13 @@
         }
 
         function renderLibraries() {
-            const tbody = document.getElementById('libraryTableBody');
-            tbody.innerHTML = librariesData.map((l, idx) => `
-                <tr class="hover:bg-navy-900/50 cursor-pointer" onclick="viewLibraryDetails(${idx})">
+            document.getElementById('libraryTableBody').innerHTML = librariesData.map((l, idx) => `
+                <tr class="hover:bg-navy-900/50">
                     <td class="p-4 font-mono text-slate-400">#${l.id}</td>
-                    <td class="p-4 font-bold text-white hover:text-gold-300 transition">${l.name} <i class="fa-solid fa-landmark text-[10px] ml-1 text-gold-400"></i></td>
+                    <td class="p-4 font-bold text-white">${l.name}</td>
                     <td class="p-4 font-mono text-gold-300 font-semibold">${l.phone}</td>
                     <td class="p-4 text-slate-300">${l.address}</td>
-                    <td class="p-4 text-right space-x-1.5" onclick="event.stopPropagation()">
+                    <td class="p-4 text-right space-x-1.5">
                         <a href="tel:${l.phone}" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 inline-block"><i class="fa-solid fa-phone"></i></a>
                         <button onclick="openEditModal('library', ${idx})" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="deleteItem('libraries', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
@@ -704,26 +673,132 @@
             renderLibraries();
         }
 
-        // ================= DELETE FUNCTION WITH PERMANENT PERSISTENCE =================
-        window.deleteItem = function(type, idx) {
-            let itemName = "";
-            if(type === 'students') itemName = studentsData[idx].name;
-            else if(type === 'owners') itemName = ownersData[idx].name;
-            else if(type === 'hostels') itemName = hostelsData[idx].name;
-            else if(type === 'tiffins') itemName = tiffinsData[idx].name;
-            else if(type === 'libraries') itemName = librariesData[idx].name;
+        // ================= UNIVERSAL ADD ENTRY LOGIC =================
+        const addEntryModal = document.getElementById('addEntryModal');
+        const universalAddForm = document.getElementById('universalAddForm');
+        let currentAddType = null;
 
-            if(confirm(`Are you sure you want to delete "${itemName}"? This will be permanently removed.`)) {
-                if(type === 'students') { studentsData.splice(idx, 1); saveStorage('students', studentsData); renderStudents(); }
-                else if(type === 'owners') { ownersData.splice(idx, 1); saveStorage('owners', ownersData); renderOwners(); }
-                else if(type === 'hostels') { hostelsData.splice(idx, 1); saveStorage('hostels', hostelsData); renderHostels(); }
-                else if(type === 'tiffins') { tiffinsData.splice(idx, 1); saveStorage('tiffins', tiffinsData); renderTiffins(); }
-                else if(type === 'libraries') { librariesData.splice(idx, 1); saveStorage('libraries', librariesData); renderLibraries(); }
-                alert('Deleted successfully!');
+        window.openCreateModal = function(type) {
+            currentAddType = type;
+            const heading = document.getElementById('addModalHeading');
+            const lbl1 = document.getElementById('addLbl1');
+            const lbl2 = document.getElementById('addLbl2');
+            const lbl3 = document.getElementById('addLbl3');
+            const lbl4 = document.getElementById('addLbl4');
+
+            universalAddForm.reset();
+
+            if(type === 'student') {
+                heading.textContent = 'Add New Student';
+                lbl1.textContent = 'Student Full Name *';
+                lbl2.textContent = 'Mobile Number *';
+                lbl3.textContent = 'Address / City *';
+                lbl4.textContent = 'Target Exam (e.g. NEET / RRB) *';
+            } else if(type === 'owner') {
+                heading.textContent = 'Add New Property Owner';
+                lbl1.textContent = 'Owner Full Name *';
+                lbl2.textContent = 'Calling Phone Number *';
+                lbl3.textContent = 'Location / Address *';
+                lbl4.textContent = 'Business Name & Type (e.g. Shyam PG / Hostel) *';
+            } else if(type === 'hostel') {
+                heading.textContent = 'Add New Hostel / PG';
+                lbl1.textContent = 'Hostel Name *';
+                lbl2.textContent = 'Contact Phone Number *';
+                lbl3.textContent = 'Address / Location in Sikar *';
+                lbl4.textContent = 'Owner Name *';
+            } else if(type === 'tiffin') {
+                heading.textContent = 'Add New Tiffin Center';
+                lbl1.textContent = 'Tiffin Center / Mess Name *';
+                lbl2.textContent = 'Phone Number *';
+                lbl3.textContent = 'Delivery Area / Locality *';
+                lbl4.textContent = 'Owner Name *';
+            } else if(type === 'library') {
+                heading.textContent = 'Add New 24/7 Library';
+                lbl1.textContent = 'Library Name *';
+                lbl2.textContent = 'Contact Phone Number *';
+                lbl3.textContent = 'Address / Area in Sikar *';
+                lbl4.textContent = 'Owner / Manager Name *';
             }
+
+            addEntryModal.classList.remove('hidden');
         };
 
-        // ================= EDIT MODAL CONTROLLER =================
+        window.closeAddModal = function() {
+            addEntryModal.classList.add('hidden');
+        };
+
+        universalAddForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const f1 = document.getElementById('addField1').value.trim();
+            const f2 = document.getElementById('addField2').value.trim();
+            const f3 = document.getElementById('addField3').value.trim();
+            const f4 = document.getElementById('addField4').value.trim();
+
+            const phoneFormatted = f2.startsWith('+91') ? f2 : `+91 ${f2}`;
+
+            if(currentAddType === 'student') {
+                studentsData.unshift({
+                    id: Date.now(),
+                    photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80",
+                    name: f1,
+                    phone: phoneFormatted,
+                    email: `${f1.toLowerCase().replace(/\s+/g, '')}@studenthub.in`,
+                    address: f3,
+                    exam: f4
+                });
+                saveStorage('students', studentsData);
+                renderStudents();
+            } else if(currentAddType === 'owner') {
+                ownersData.unshift({
+                    id: Date.now(),
+                    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
+                    name: f1,
+                    phone: phoneFormatted,
+                    email: `${f1.toLowerCase().replace(/\s+/g, '')}@owner.in`,
+                    business: f4,
+                    type: f4.includes('Tiffin') ? 'Tiffin' : (f4.includes('Library') ? 'Library' : 'Hostel'),
+                    address: f3
+                });
+                saveStorage('owners', ownersData);
+                renderOwners();
+            } else if(currentAddType === 'hostel') {
+                hostelsData.unshift({
+                    id: Date.now(),
+                    name: f1,
+                    phone: phoneFormatted,
+                    address: f3,
+                    owner: f4,
+                    cat: f1.toLowerCase().includes('girl') ? 'Girls' : 'Boys'
+                });
+                saveStorage('hostels', hostelsData);
+                renderHostels();
+            } else if(currentAddType === 'tiffin') {
+                tiffinsData.unshift({
+                    id: Date.now(),
+                    name: f1,
+                    phone: phoneFormatted,
+                    address: f3,
+                    owner: f4
+                });
+                saveStorage('tiffins', tiffinsData);
+                renderTiffins();
+            } else if(currentAddType === 'library') {
+                librariesData.unshift({
+                    id: Date.now(),
+                    name: f1,
+                    phone: phoneFormatted,
+                    address: f3,
+                    owner: f4
+                });
+                saveStorage('libraries', librariesData);
+                renderLibraries();
+            }
+
+            alert('Added successfully! The new entry is now saved and live.');
+            closeAddModal();
+        });
+
+        // ================= UNIVERSAL EDIT & DELETE LOGIC =================
         const editDataModal = document.getElementById('editDataModal');
         const universalEditForm = document.getElementById('universalEditForm');
         let currentEditType = null;
@@ -748,36 +823,36 @@
                 document.getElementById('editModalHeading').textContent = `Edit Student (${s.name})`;
                 lbl1.textContent = 'Student Name'; f1.value = s.name;
                 lbl2.textContent = 'Phone Number'; f2.value = s.phone;
-                lbl3.textContent = 'Email Address'; f3.value = s.email;
-                lbl4.textContent = 'Target Exam / Prep Goal'; f4.value = s.exam;
+                lbl3.textContent = 'Address'; f3.value = s.address;
+                lbl4.textContent = 'Target Exam'; f4.value = s.exam;
             } else if(type === 'owner') {
                 const o = ownersData[idx];
                 document.getElementById('editModalHeading').textContent = `Edit Owner (${o.name})`;
                 lbl1.textContent = 'Owner Name'; f1.value = o.name;
                 lbl2.textContent = 'Phone Number'; f2.value = o.phone;
-                lbl3.textContent = 'Business Name'; f3.value = o.business;
-                lbl4.textContent = 'Monthly Price / Charge'; f4.value = o.price;
+                lbl3.textContent = 'Address'; f3.value = o.address;
+                lbl4.textContent = 'Business Name'; f4.value = o.business;
             } else if(type === 'hostel') {
                 const h = hostelsData[idx];
                 document.getElementById('editModalHeading').textContent = `Edit Hostel (${h.name})`;
                 lbl1.textContent = 'Hostel Name'; f1.value = h.name;
-                lbl2.textContent = 'Owner Phone Number'; f2.value = h.phone;
-                lbl3.textContent = 'Address / Location'; f3.value = h.address;
-                lbl4.textContent = 'Monthly Rent'; f4.value = h.price;
+                lbl2.textContent = 'Phone Number'; f2.value = h.phone;
+                lbl3.textContent = 'Address'; f3.value = h.address;
+                lbl4.textContent = 'Owner Name'; f4.value = h.owner;
             } else if(type === 'tiffin') {
                 const t = tiffinsData[idx];
                 document.getElementById('editModalHeading').textContent = `Edit Tiffin (${t.name})`;
-                lbl1.textContent = 'Tiffin Center Name'; f1.value = t.name;
+                lbl1.textContent = 'Tiffin Name'; f1.value = t.name;
                 lbl2.textContent = 'Phone Number'; f2.value = t.phone;
-                lbl3.textContent = 'Address / Area'; f3.value = t.address;
-                lbl4.textContent = 'Monthly Charge'; f4.value = t.price;
+                lbl3.textContent = 'Address'; f3.value = t.address;
+                lbl4.textContent = 'Owner Details'; f4.value = t.owner || 'Owner';
             } else if(type === 'library') {
                 const l = librariesData[idx];
                 document.getElementById('editModalHeading').textContent = `Edit Library (${l.name})`;
                 lbl1.textContent = 'Library Name'; f1.value = l.name;
                 lbl2.textContent = 'Phone Number'; f2.value = l.phone;
-                lbl3.textContent = 'Address / Area'; f3.value = l.address;
-                lbl4.textContent = 'Monthly Fee'; f4.value = l.price;
+                lbl3.textContent = 'Address'; f3.value = l.address;
+                lbl4.textContent = 'Owner Details'; f4.value = l.owner || 'Manager';
             }
 
             editDataModal.classList.remove('hidden');
@@ -797,148 +872,64 @@
             if(currentEditType === 'student') {
                 studentsData[currentEditIndex].name = f1;
                 studentsData[currentEditIndex].phone = f2;
-                studentsData[currentEditIndex].email = f3;
+                studentsData[currentEditIndex].address = f3;
                 studentsData[currentEditIndex].exam = f4;
                 saveStorage('students', studentsData);
                 renderStudents();
             } else if(currentEditType === 'owner') {
                 ownersData[currentEditIndex].name = f1;
                 ownersData[currentEditIndex].phone = f2;
-                ownersData[currentEditIndex].business = f3;
-                ownersData[currentEditIndex].price = f4;
+                ownersData[currentEditIndex].address = f3;
+                ownersData[currentEditIndex].business = f4;
                 saveStorage('owners', ownersData);
                 renderOwners();
             } else if(currentEditType === 'hostel') {
                 hostelsData[currentEditIndex].name = f1;
                 hostelsData[currentEditIndex].phone = f2;
                 hostelsData[currentEditIndex].address = f3;
-                hostelsData[currentEditIndex].price = f4;
+                hostelsData[currentEditIndex].owner = f4;
                 saveStorage('hostels', hostelsData);
                 renderHostels();
             } else if(currentEditType === 'tiffin') {
                 tiffinsData[currentEditIndex].name = f1;
                 tiffinsData[currentEditIndex].phone = f2;
                 tiffinsData[currentEditIndex].address = f3;
-                tiffinsData[currentEditIndex].price = f4;
+                tiffinsData[currentEditIndex].owner = f4;
                 saveStorage('tiffins', tiffinsData);
                 renderTiffins();
             } else if(currentEditType === 'library') {
                 librariesData[currentEditIndex].name = f1;
                 librariesData[currentEditIndex].phone = f2;
                 librariesData[currentEditIndex].address = f3;
-                librariesData[currentEditIndex].price = f4;
+                librariesData[currentEditIndex].owner = f4;
                 saveStorage('libraries', librariesData);
                 renderLibraries();
             }
 
-            alert('Details updated and saved permanently!');
+            alert('Updated and saved permanently!');
             closeEditModal();
         });
 
-        // Detail Popup Handlers
-        const detailInfoModal = document.getElementById('detailInfoModal');
-        const modalIconBox = document.getElementById('modalIconBox');
-        const modalTypeBadge = document.getElementById('modalTypeBadge');
-        const modalHeading = document.getElementById('modalHeading');
-        const modalBodyContent = document.getElementById('modalBodyContent');
+        // Delete
+        window.deleteItem = function(type, idx) {
+            let name = "";
+            if(type === 'students') name = studentsData[idx].name;
+            else if(type === 'owners') name = ownersData[idx].name;
+            else if(type === 'hostels') name = hostelsData[idx].name;
+            else if(type === 'tiffins') name = tiffinsData[idx].name;
+            else if(type === 'libraries') name = librariesData[idx].name;
 
-        function openDetailModal(icon, type, heading, htmlContent) {
-            modalIconBox.innerHTML = icon;
-            modalTypeBadge.textContent = type;
-            modalHeading.textContent = heading;
-            modalBodyContent.innerHTML = htmlContent;
-            detailInfoModal.classList.remove('hidden');
-        }
-
-        window.closeDetailModal = function() {
-            detailInfoModal.classList.add('hidden');
+            if(confirm(`Are you sure you want to delete "${name}"?`)) {
+                if(type === 'students') { studentsData.splice(idx, 1); saveStorage('students', studentsData); renderStudents(); }
+                else if(type === 'owners') { ownersData.splice(idx, 1); saveStorage('owners', ownersData); renderOwners(); }
+                else if(type === 'hostels') { hostelsData.splice(idx, 1); saveStorage('hostels', hostelsData); renderHostels(); }
+                else if(type === 'tiffins') { tiffinsData.splice(idx, 1); saveStorage('tiffins', tiffinsData); renderTiffins(); }
+                else if(type === 'libraries') { librariesData.splice(idx, 1); saveStorage('libraries', librariesData); renderLibraries(); }
+            }
         };
 
-        window.viewOwnerDetails = function(idx) {
-            const o = ownersData[idx];
-            openDetailModal(
-                '<i class="fa-solid fa-user-tie"></i>',
-                `Owner Record (${o.type})`,
-                o.name,
-                `<div><strong>Associated Business:</strong> ${o.business}</div>
-                 <div><strong>Monthly Price/Charge:</strong> <span class="text-gold-300 font-bold">${o.price}</span></div>
-                 <div><strong>Address:</strong> ${o.address}</div>
-                 <div><strong>Phone Number:</strong> <a href="tel:${o.phone}" class="text-gold-400 underline font-mono">${o.phone}</a></div>
-                 <div><strong>Email:</strong> ${o.email}</div>`
-            );
-        };
-
-        window.viewHostelDetails = function(idx) {
-            const h = hostelsData[idx];
-            openDetailModal(
-                '<i class="fa-solid fa-hotel"></i>',
-                'Hostel Details & Availability',
-                h.name,
-                `<div><strong>Vacancy Status:</strong> <span class="text-emerald-400 font-bold">${h.roomsVacant}</span></div>
-                 <div><strong>Monthly Rent:</strong> <span class="text-gold-300 font-bold">${h.price}</span></div>
-                 <div><strong>Address:</strong> ${h.address}</div>
-                 <div><strong>Owner Contact:</strong> ${h.owner} (<a href="tel:${h.phone}" class="text-gold-400 underline font-mono">${h.phone}</a>)</div>
-                 <div class="pt-2 border-t border-navy-800"><strong>Facilities Available:</strong><br><span class="text-slate-400">${h.facilities}</span></div>`
-            );
-        };
-
-        window.viewTiffinDetails = function(idx) {
-            const t = tiffinsData[idx];
-            openDetailModal(
-                '<i class="fa-solid fa-bowl-food"></i>',
-                'Tiffin Menu & Charge',
-                t.name,
-                `<div><strong>Monthly Tiffin Charge:</strong> <span class="text-gold-300 font-bold">${t.price}</span></div>
-                 <div><strong>Delivery Area / Address:</strong> ${t.address}</div>
-                 <div><strong>Order Phone:</strong> <a href="tel:${t.phone}" class="text-gold-400 underline font-mono">${t.phone}</a></div>
-                 <div class="pt-2 border-t border-navy-800"><strong>Daily Meal Menu:</strong><br><span class="text-slate-400">${t.menu}</span></div>`
-            );
-        };
-
-        window.viewLibraryDetails = function(idx) {
-            const l = librariesData[idx];
-            openDetailModal(
-                '<i class="fa-solid fa-landmark"></i>',
-                'Library Seats & Facilities',
-                l.name,
-                `<div><strong>Seat Availability:</strong> <span class="text-emerald-400 font-bold">${l.seatsVacant}</span></div>
-                 <div><strong>Monthly Seat Fee:</strong> <span class="text-gold-300 font-bold">${l.price}</span></div>
-                 <div><strong>Address:</strong> ${l.address}</div>
-                 <div><strong>Contact Phone:</strong> <a href="tel:${l.phone}" class="text-gold-400 underline font-mono">${l.phone}</a></div>
-                 <div class="pt-2 border-t border-navy-800"><strong>Facilities Provided:</strong><br><span class="text-slate-400">${l.facilities}</span></div>`
-            );
-        };
-
-        // Add Student Function
-        window.openAddStudentModal = function() {
-            const name = prompt("Enter Student Full Name:");
-            if(!name) return;
-            const phone = prompt("Enter Student Phone Number:");
-            const exam = prompt("Enter Exam / Coaching Goal (e.g. NEET / RRB):");
-            studentsData.unshift({
-                id: studentsData.length + 1,
-                photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80",
-                name: name,
-                phone: phone || "+91 98000 00000",
-                email: `${name.toLowerCase().replace(/\s+/g, '')}@studenthub.in`,
-                address: "Sikar, Rajasthan",
-                exam: exam || "General Competitive"
-            });
-            saveStorage('students', studentsData);
-            renderStudents();
-            alert("New student added successfully!");
-        };
-
-        // Global Search Logic
-        document.getElementById('globalAdminSearch').addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase();
-            document.querySelectorAll('tbody tr').forEach(r => {
-                r.style.display = r.textContent.toLowerCase().includes(val) ? '' : 'none';
-            });
-        });
-
-        // Individual Search Filters
-        function setupTableFilter(inputId, tbodyId) {
+        // Live Filters
+        function setupFilter(inputId, tbodyId) {
             const el = document.getElementById(inputId);
             if(!el) return;
             el.addEventListener('input', (e) => {
@@ -949,9 +940,10 @@
             });
         }
 
-        setupTableFilter('hostelFilterInput', 'hostelTableBody');
-        setupTableFilter('tiffinFilterInput', 'tiffinTableBody');
-        setupTableFilter('libraryFilterInput', 'libraryTableBody');
+        setupFilter('globalAdminSearch', 'studentTableBody');
+        setupFilter('hostelFilterInput', 'hostelTableBody');
+        setupFilter('tiffinFilterInput', 'tiffinTableBody');
+        setupFilter('libraryFilterInput', 'libraryTableBody');
 
         renderAllTables();
     </script>
