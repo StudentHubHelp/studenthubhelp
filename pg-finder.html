@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Hostels, PGs & Rooms | StudentHub Shekhawati</title>
+    
+    <!-- Google Fonts (Cinzel for Luxury Gold Typography + Inter for Crisp Readability) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            950: '#060B18', // Deepest Navy
+                            900: '#0A1128', // Background
+                            850: '#0E1736', // Card Surface
+                            800: '#141F48', // Elevated Surface
+                            700: '#1E2C63',
+                        },
+                        gold: {
+                            100: '#FFF7D6',
+                            200: '#FDECB2',
+                            300: '#F5DE88',
+                            400: '#E6C65E',
+                            500: '#D4AF37', // Classic Rich Gold
+                            600: '#B89020',
+                            700: '#8C6B10',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Cinzel', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #FDECB2 0%, #D4AF37 50%, #B89020 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gold-gradient-bg {
+            background: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89020 100%);
+        }
+        .gold-border-glow {
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.05);
+        }
+        .gold-border-glow:hover {
+            border-color: rgba(212, 175, 55, 0.6);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+        }
+        /* Custom styled range slider */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #D4AF37;
+            cursor: pointer;
+            border: 2px solid #060B18;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-gold-500 selection:text-navy-950">
+
+    <!-- MAIN NAVIGATION -->
+    <nav class="sticky top-0 z-50 bg-navy-900/90 backdrop-blur-md border-b border-gold-500/15">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Brand Logo -->
+                <a href="index.html" class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-navy-950 font-display font-extrabold text-xl shadow-lg shadow-gold-500/20">
+                        SH
+                    </div>
+                    <div>
+                        <span class="text-2xl font-display font-bold tracking-wider gold-gradient-text">StudentHub</span>
+                        <span class="block text-[10px] tracking-widest text-slate-400 uppercase font-semibold">Shekhawati Region</span>
+                    </div>
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-7 text-sm font-medium">
+                    <a href="index.html" class="text-slate-300 hover:text-gold-400 transition">Home</a>
+                    <a href="pg-finder.html" class="text-gold-400 font-semibold border-b-2 border-gold-500 pb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-bed text-xs text-gold-400"></i> PG & Rooms
+                    </a>
+                    <a href="tiffin-services.html" class="text-slate-300 hover:text-gold-400 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-utensils text-xs text-gold-500/80"></i> Tiffin & Mess
+                    </a>
+                    <a href="study-material.html" class="text-slate-300 hover:text-gold-400 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-open text-xs text-gold-500/80"></i> Notes & PYQs
+                    </a>
+                    <a href="library-coaching.html" class="text-slate-300 hover:text-gold-400 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-landmark text-xs text-gold-500/80"></i> Libraries
+                    </a>
+                </div>
+
+                <!-- Right Action Buttons -->
+                <div class="hidden md:flex items-center gap-3">
+                    <a href="add-listing.html" class="text-xs font-semibold px-4 py-2.5 rounded-lg border border-gold-500/40 text-gold-300 hover:bg-gold-500/10 transition">
+                        <i class="fa-solid fa-plus-circle mr-1"></i> List Property
+                    </a>
+                    <a href="auth.html" class="text-xs font-bold px-5 py-2.5 rounded-lg gold-gradient-bg text-navy-950 hover:brightness-110 shadow-md shadow-gold-500/20 transition">
+                        <i class="fa-solid fa-user-lock mr-1.5"></i> Sign In
+                    </a>
+                </div>
+
+                <!-- Mobile Filter & Menu Buttons -->
+                <div class="flex items-center gap-2 md:hidden">
+                    <button id="openMobileFilterBtn" class="px-3 py-2 bg-navy-850 border border-gold-500/40 text-gold-300 text-xs font-bold rounded-lg flex items-center gap-1.5">
+                        <i class="fa-solid fa-sliders"></i> Filters
+                    </button>
+                    <button id="mobileMenuBtn" class="text-gold-400 p-2">
+                        <i class="fa-solid fa-bars-staggered text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-navy-900 border-b border-gold-500/20 px-6 py-5 space-y-4">
+            <a href="index.html" class="block text-slate-300">Home</a>
+            <a href="pg-finder.html" class="block text-gold-400 font-semibold">PG & Rooms</a>
+            <a href="tiffin-services.html" class="block text-slate-300">Tiffin & Mess</a>
+            <a href="study-material.html" class="block text-slate-300">Study Notes & PYQs</a>
+            <a href="library-coaching.html" class="block text-slate-300">Libraries & Coaching</a>
+            <div class="pt-3 border-t border-navy-800 flex flex-col gap-2">
+                <a href="add-listing.html" class="text-center py-2.5 rounded-lg border border-gold-500/40 text-gold-300 text-sm font-semibold">+ List Property</a>
+                <a href="auth.html" class="text-center py-2.5 rounded-lg gold-gradient-bg text-navy-950 text-sm font-bold">Sign In</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- PAGE HEADER -->
+    <header class="bg-navy-900 border-b border-navy-800 py-10 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2 text-xs text-gold-400 font-semibold uppercase tracking-wider mb-2">
+                        <a href="index.html" class="hover:underline">Home</a>
+                        <span>/</span>
+                        <span>Accommodations</span>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-display font-extrabold text-white">
+                        Student PGs, Hostels & Room Rentals
+                    </h1>
+                    <p class="text-sm text-slate-300 mt-2">
+                        Browse verified properties across Sikar, Neem Ka Thana & Jhunjhunu with zero brokerage.
+                    </p>
+                </div>
+                <!-- Search bar in header -->
+                <div class="w-full md:w-80">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500/70 text-sm"></i>
+                        <input type="text" id="keywordSearch" placeholder="Search by area or hostel name..." class="w-full bg-navy-850 border border-navy-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-gold-500 transition">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT (FILTERS + LISTINGS GRID) -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT SIDEBAR FILTERS (DESKTOP) -->
+            <aside class="hidden lg:block lg:col-span-4 xl:col-span-3">
+                <div class="bg-navy-850 p-6 rounded-2xl gold-border-glow sticky top-28 space-y-6">
+                    
+                    <div class="flex items-center justify-between pb-4 border-b border-navy-800">
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-gold-400"></i> Filters
+                        </h3>
+                        <button id="resetFiltersBtn" class="text-xs font-semibold text-gold-400 hover:text-gold-300 underline">
+                            Reset All
+                        </button>
+                    </div>
+
+                    <!-- Location Filter -->
+                    <div>
+                        <label class="block text-xs font-bold text-gold-400 uppercase tracking-wider mb-2">City / Location</label>
+                        <select id="filterLocation" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-gold-500 transition cursor-pointer">
+                            <option value="all">All Shekhawati</option>
+                            <option value="sikar-piprali">Sikar - Piprali Road</option>
+                            <option value="sikar-nawalgarh">Sikar - Nawalgarh Road</option>
+                            <option value="sikar-sanwali">Sikar - Sanwali Road</option>
+                            <option value="neem-ka-thana">Neem Ka Thana</option>
+                            <option value="jhunjhunu">Jhunjhunu</option>
+                        </select>
+                    </div>
+
+                    <!-- Accommodation Type Filter -->
+                    <div>
+                        <label class="block text-xs font-bold text-gold-400 uppercase tracking-wider mb-2">Property Category</label>
+                        <div class="space-y-2 text-sm text-slate-300">
+                            <label class="flex items-center gap-2.5 cursor-pointer hover:text-gold-300">
+                                <input type="radio" name="genderType" value="all" checked class="accent-gold-500"> All Categories
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer hover:text-gold-300">
+                                <input type="radio" name="genderType" value="boys" class="accent-gold-500"> Boys Hostel / PG
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer hover:text-gold-300">
+                                <input type="radio" name="genderType" value="girls" class="accent-gold-500"> Girls Hostel / PG
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer hover:text-gold-300">
+                                <input type="radio" name="genderType" value="room" class="accent-gold-500"> Independent Room / Flat
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Budget Range Slider -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-bold text-gold-400 uppercase tracking-wider">Max Rent (₹)</label>
+                            <span id="priceDisplay" class="text-sm font-bold text-gold-300">₹8,000 / mo</span>
+                        </div>
+                        <input type="range" id="priceRange" min="2000" max="10000" step="500" value="8000" class="w-full h-2 bg-navy-900 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-[11px] text-slate-400 mt-1.5">
+                            <span>₹2,000</span>
+                            <span>₹10,000+</span>
+                        </div>
+                    </div>
+
+                    <!-- Amenities Checkboxes -->
+                    <div class="pt-4 border-t border-navy-800">
+                        <label class="block text-xs font-bold text-gold-400 uppercase tracking-wider mb-3">Amenities Included</label>
+                        <div class="grid grid-cols-1 gap-2 text-sm text-slate-300">
+                            <label class="flex items-center gap-2.5 cursor-pointer hover:text-gold-300">
+                                <input type="checkbox" class="amenity-checkbox rounded bg-navy-900 border-navy-700 accent-gold-500" value="WiFi"> High Speed WiFi
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer hover:text-gold-300">
+                                <input type="checkbox" class="amenity-checkbox rounded bg-navy-900 border-navy-700 accent-gold-500" value="AC"> Air Conditioner (AC)
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer hover:text-gold-300">
+                                <input type="checkbox" class="amenity-checkbox rounded bg-navy-900 border-navy-700 accent-gold-500" value="Food"> 3-Time Meals (Food)
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer hover:text-gold-300">
+                                <input type="checkbox" class="amenity-checkbox rounded bg-navy-900 border-navy-700 accent-gold-500" value="RO"> RO Drinking Water
+                            </label>
+                            <label class="flex items-center gap-2.5 cursor-pointer hover:text-gold-300">
+                                <input type="checkbox" class="amenity-checkbox rounded bg-navy-900 border-navy-700 accent-gold-500" value="Power"> Power Backup (Inverter)
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </aside>
+
+            <!-- RIGHT COLUMN: RESULTS & SORTING -->
+            <section class="lg:col-span-8 xl:col-span-9">
+                
+                <!-- Results Counter & Sort Options -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 bg-navy-850 p-4 rounded-xl border border-navy-800">
+                    <div class="text-sm">
+                        <span class="text-slate-400">Showing</span>
+                        <span id="resultsCount" class="font-bold text-gold-400">6</span>
+                        <span class="text-slate-400">verified properties</span>
+                    </div>
+
+                    <div class="flex items-center gap-2 text-sm w-full sm:w-auto">
+                        <span class="text-xs text-slate-400 flex-shrink-0">Sort By:</span>
+                        <select id="sortOrder" class="bg-navy-900 border border-navy-700 text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-gold-500 cursor-pointer">
+                            <option value="featured">Featured / Recommended</option>
+                            <option value="price-low">Rent: Low to High</option>
+                            <option value="price-high">Rent: High to Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Listings Grid Container -->
+                <div id="listingsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Cards will be dynamically rendered here by JavaScript -->
+                </div>
+
+                <!-- No Results State -->
+                <div id="noResultsState" class="hidden text-center py-16 bg-navy-850 rounded-2xl border border-navy-800 p-8">
+                    <div class="w-16 h-16 rounded-full bg-navy-900 text-gold-400 text-2xl flex items-center justify-center mx-auto mb-4 border border-gold-500/20">
+                        <i class="fa-solid fa-bed"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">No matching properties found</h3>
+                    <p class="text-sm text-slate-400 max-w-sm mx-auto mb-6">Try adjusting your budget slider, selecting a different location, or clearing specific amenities.</p>
+                    <button id="resetNoResultsBtn" class="px-5 py-2.5 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-lg hover:brightness-110">
+                        Reset All Filters
+                    </button>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- MOBILE FILTERS MODAL / DRAWER -->
+    <div id="mobileFilterDrawer" class="fixed inset-0 z-50 bg-navy-950/80 backdrop-blur-sm hidden flex justify-end">
+        <div class="w-full max-w-xs bg-navy-900 h-full p-6 overflow-y-auto border-l border-gold-500/30 flex flex-col justify-between">
+            <div class="space-y-6">
+                <div class="flex items-center justify-between pb-4 border-b border-navy-800">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-gold-400"></i> Filters
+                    </h3>
+                    <button id="closeMobileFilterBtn" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <!-- Location -->
+                <div>
+                    <label class="block text-xs font-bold text-gold-400 uppercase mb-2">Location</label>
+                    <select id="mobileFilterLocation" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3 py-2 text-sm text-white">
+                        <option value="all">All Shekhawati</option>
+                        <option value="sikar-piprali">Sikar - Piprali Road</option>
+                        <option value="sikar-nawalgarh">Sikar - Nawalgarh Road</option>
+                        <option value="neem-ka-thana">Neem Ka Thana</option>
+                        <option value="jhunjhunu">Jhunjhunu</option>
+                    </select>
+                </div>
+                <!-- Category -->
+                <div>
+                    <label class="block text-xs font-bold text-gold-400 uppercase mb-2">Category</label>
+                    <div class="space-y-2 text-sm text-slate-300">
+                        <label class="flex items-center gap-2"><input type="radio" name="mobileGenderType" value="all" checked class="accent-gold-500"> All</label>
+                        <label class="flex items-center gap-2"><input type="radio" name="mobileGenderType" value="boys" class="accent-gold-500"> Boys PG</label>
+                        <label class="flex items-center gap-2"><input type="radio" name="mobileGenderType" value="girls" class="accent-gold-500"> Girls PG</label>
+                        <label class="flex items-center gap-2"><input type="radio" name="mobileGenderType" value="room" class="accent-gold-500"> Room / Flat</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pt-6 border-t border-navy-800">
+                <button id="applyMobileFilterBtn" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-navy-950 border-t border-navy-800 py-10 text-slate-400 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+            <div class="flex items-center justify-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-gold-500 flex items-center justify-center text-navy-950 font-display font-extrabold text-sm">SH</div>
+                <span class="text-base font-display font-bold gold-gradient-text">StudentHub</span>
+            </div>
+            <p>© 2026 StudentHub. All room & PG listings are verified with zero brokerage.</p>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE JAVASCRIPT FOR DYNAMIC FILTERING -->
+    <script>
+        // Sample Property Database for Shekhawati
+        const properties = [
+            {
+                id: 1,
+                title: "Shree Shyam Executive Boys PG",
+                cityKey: "sikar-piprali",
+                locationName: "Piprali Road, Sikar",
+                gender: "boys",
+                rent: 4500,
+                amenities: ["WiFi", "AC", "Food", "RO", "Power"],
+                image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80",
+                phone: "+919876543210",
+                whatsapp: "919876543210"
+            },
+            {
+                id: 2,
+                title: "Kisan Kunj Student Residency",
+                cityKey: "neem-ka-thana",
+                locationName: "Station Road, Neem Ka Thana",
+                gender: "room",
+                rent: 3200,
+                amenities: ["RO", "Power", "WiFi"],
+                image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80",
+                phone: "+919876543211",
+                whatsapp: "919876543211"
+            },
+            {
+                id: 3,
+                title: "Saraswati Girls Elite Residency",
+                cityKey: "sikar-nawalgarh",
+                locationName: "Nawalgarh Road, Sikar",
+                gender: "girls",
+                rent: 5200,
+                amenities: ["WiFi", "AC", "Food", "RO", "Power"],
+                image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80",
+                phone: "+919876543212",
+                whatsapp: "919876543212"
+            },
+            {
+                id: 4,
+                title: "Balaji Budget Single Rooms",
+                cityKey: "sikar-sanwali",
+                locationName: "Sanwali Bypass, Sikar",
+                gender: "room",
+                rent: 2500,
+                amenities: ["RO", "WiFi"],
+                image: "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=800&q=80",
+                phone: "+919876543213",
+                whatsapp: "919876543213"
+            },
+            {
+                id: 5,
+                title: "Radhika Kripa Girls PG",
+                cityKey: "neem-ka-thana",
+                locationName: "Kapil Mandi, Neem Ka Thana",
+                gender: "girls",
+                rent: 4200,
+                amenities: ["Food", "WiFi", "RO", "Power"],
+                image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+                phone: "+919876543214",
+                whatsapp: "919876543214"
+            },
+            {
+                id: 6,
+                title: "Shekhawati Royal Boys Hostel",
+                cityKey: "jhunjhunu",
+                locationName: "Road No. 3, Jhunjhunu",
+                gender: "boys",
+                rent: 4800,
+                amenities: ["AC", "Food", "WiFi", "Power"],
+                image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+                phone: "+919876543215",
+                whatsapp: "919876543215"
+            }
+        ];
+
+        // DOM Elements
+        const listingsGrid = document.getElementById('listingsGrid');
+        const resultsCount = document.getElementById('resultsCount');
+        const noResultsState = document.getElementById('noResultsState');
+        const priceRange = document.getElementById('priceRange');
+        const priceDisplay = document.getElementById('priceDisplay');
+        const filterLocation = document.getElementById('filterLocation');
+        const keywordSearch = document.getElementById('keywordSearch');
+        const sortOrder = document.getElementById('sortOrder');
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+        const resetNoResultsBtn = document.getElementById('resetNoResultsBtn');
+
+        // URL Parameters Handler (e.g. from index.html ?location=sikar)
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const locParam = urlParams.get('location');
+            const searchParam = urlParams.get('q');
+
+            if (locParam && locParam !== 'all') {
+                if (locParam === 'sikar') filterLocation.value = 'sikar-piprali';
+                else if (locParam === 'neem-ka-thana') filterLocation.value = 'neem-ka-thana';
+                else if (locParam === 'jhunjhunu') filterLocation.value = 'jhunjhunu';
+            }
+
+            if (searchParam) {
+                keywordSearch.value = searchParam;
+            }
+
+            renderListings();
+        });
+
+        // Price Slider Live Display
+        priceRange.addEventListener('input', (e) => {
+            priceDisplay.textContent = `₹${Number(e.target.value).toLocaleString('en-IN')} / mo`;
+            renderListings();
+        });
+
+        // Event Listeners for Filters
+        filterLocation.addEventListener('change', renderListings);
+        keywordSearch.addEventListener('input', renderListings);
+        sortOrder.addEventListener('change', renderListings);
+        document.querySelectorAll('input[name="genderType"]').forEach(r => r.addEventListener('change', renderListings));
+        document.querySelectorAll('.amenity-checkbox').forEach(c => c.addEventListener('change', renderListings));
+
+        // Reset Filter Action
+        function resetFilters() {
+            filterLocation.value = 'all';
+            priceRange.value = 8000;
+            priceDisplay.textContent = '₹8,000 / mo';
+            keywordSearch.value = '';
+            document.querySelector('input[name="genderType"][value="all"]').checked = true;
+            document.querySelectorAll('.amenity-checkbox').forEach(c => c.checked = false);
+            renderListings();
+        }
+        resetFiltersBtn.addEventListener('click', resetFilters);
+        resetNoResultsBtn.addEventListener('click', resetFilters);
+
+        // Core Render & Filter Logic
+        function renderListings() {
+            const selectedLocation = filterLocation.value;
+            const maxRent = Number(priceRange.value);
+            const selectedGender = document.querySelector('input[name="genderType"]:checked').value;
+            const searchKeyword = keywordSearch.value.trim().toLowerCase();
+            const checkedAmenities = Array.from(document.querySelectorAll('.amenity-checkbox:checked')).map(c => c.value);
+
+            let filtered = properties.filter(item => {
+                // Location Check
+                if (selectedLocation !== 'all' && item.cityKey !== selectedLocation) {
+                    return false;
+                }
+                // Rent Check
+                if (item.rent > maxRent) {
+                    return false;
+                }
+                // Gender / Category Check
+                if (selectedGender !== 'all' && item.gender !== selectedGender) {
+                    return false;
+                }
+                // Keyword Search
+                if (searchKeyword && !item.title.toLowerCase().includes(searchKeyword) && !item.locationName.toLowerCase().includes(searchKeyword)) {
+                    return false;
+                }
+                // Amenities Check
+                if (checkedAmenities.length > 0) {
+                    const hasAllAmenities = checkedAmenities.every(a => item.amenities.includes(a));
+                    if (!hasAllAmenities) return false;
+                }
+                return true;
+            });
+
+            // Sorting
+            const sortVal = sortOrder.value;
+            if (sortVal === 'price-low') {
+                filtered.sort((a, b) => a.rent - b.rent);
+            } else if (sortVal === 'price-high') {
+                filtered.sort((a, b) => b.rent - a.rent);
+            }
+
+            // Update Counter
+            resultsCount.textContent = filtered.length;
+
+            // Render to HTML
+            if (filtered.length === 0) {
+                listingsGrid.innerHTML = '';
+                noResultsState.classList.remove('hidden');
+            } else {
+                noResultsState.classList.add('hidden');
+                listingsGrid.innerHTML = filtered.map(item => `
+                    <div class="bg-navy-850 rounded-2xl overflow-hidden gold-border-glow transition duration-300 flex flex-col">
+                        <div class="relative h-48 bg-navy-800">
+                            <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover">
+                            <div class="absolute top-3 left-3 bg-navy-950/85 backdrop-blur-md px-3 py-1 rounded-full border border-gold-500/40 text-[11px] font-bold text-gold-300">
+                                <i class="fa-solid fa-circle-check text-green-400 mr-1"></i> Verified
+                            </div>
+                            <div class="absolute bottom-3 right-3 bg-navy-950/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-gold-500/30 text-white font-bold text-sm">
+                                ₹${item.rent.toLocaleString('en-IN')} <span class="text-xs text-slate-400 font-normal">/ mo</span>
+                            </div>
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                                    <span><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> ${item.locationName}</span>
+                                    <span class="text-gold-400 font-semibold capitalize">${item.gender === 'boys' ? 'Boys Hostel' : (item.gender === 'girls' ? 'Girls PG' : 'Room / Flat')}</span>
+                                </div>
+                                <h3 class="text-base font-bold text-white mb-3 hover:text-gold-300 transition">${item.title}</h3>
+                                
+                                <div class="flex flex-wrap gap-1.5 mb-4 text-[11px] text-slate-300">
+                                    ${item.amenities.map(a => `
+                                        <span class="bg-navy-900 px-2 py-0.5 rounded border border-navy-700/70">
+                                            <i class="fa-solid fa-check text-gold-400 mr-1"></i>${a}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <div class="pt-3 border-t border-navy-800 flex items-center gap-2">
+                                <a href="tel:${item.phone}" class="flex-1 text-center py-2.5 rounded-xl bg-navy-800 border border-gold-500/40 text-gold-300 hover:bg-gold-500/20 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-phone"></i> Call Owner
+                                </a>
+                                <a href="https://wa.me/${item.whatsapp}?text=Hi,%20I%20found%20${encodeURIComponent(item.title)}%20on%20StudentHub" target="_blank" class="flex-1 text-center py-2.5 rounded-xl bg-emerald-600/90 text-white hover:bg-emerald-500 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Mobile Filter Drawer Toggle
+        const openMobileFilterBtn = document.getElementById('openMobileFilterBtn');
+        const closeMobileFilterBtn = document.getElementById('closeMobileFilterBtn');
+        const mobileFilterDrawer = document.getElementById('mobileFilterDrawer');
+        const applyMobileFilterBtn = document.getElementById('applyMobileFilterBtn');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        if(openMobileFilterBtn) {
+            openMobileFilterBtn.addEventListener('click', () => mobileFilterDrawer.classList.remove('hidden'));
+            closeMobileFilterBtn.addEventListener('click', () => mobileFilterDrawer.classList.add('hidden'));
+            applyMobileFilterBtn.addEventListener('click', () => {
+                filterLocation.value = document.getElementById('mobileFilterLocation').value;
+                const mGender = document.querySelector('input[name="mobileGenderType"]:checked').value;
+                document.querySelector(`input[name="genderType"][value="${mGender}"]`).checked = true;
+                mobileFilterDrawer.classList.add('hidden');
+                renderListings();
+            });
+        }
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
