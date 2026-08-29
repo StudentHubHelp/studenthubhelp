@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In / Register | StudentHub Shekhawati</title>
+    
+    <!-- Navy & Gold "SH" Luxury Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23060B18'/><rect x='4' y='4' width='92' height='92' rx='21' fill='none' stroke='%23D4AF37' stroke-width='4'/><text x='50%25' y='58%25' dominant-baseline='central' text-anchor='middle' font-family='serif' font-weight='800' font-size='44' fill='%23D4AF37'>SH</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            950: '#060B18', // Deepest Navy
+                            900: '#0A1128', // Background
+                            850: '#0E1736', // Card Surface
+                            800: '#141F48', // Elevated Surface
+                            700: '#1E2C63',
+                        },
+                        gold: {
+                            100: '#FFF7D6',
+                            200: '#FDECB2',
+                            300: '#F5DE88',
+                            400: '#E6C65E',
+                            500: '#D4AF37', // Classic Rich Gold
+                            600: '#B89020',
+                            700: '#8C6B10',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Cinzel', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #FDECB2 0%, #D4AF37 50%, #B89020 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gold-gradient-bg {
+            background: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89020 100%);
+        }
+        .gold-border-glow {
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.05);
+        }
+        .gold-border-glow:hover {
+            border-color: rgba(212, 175, 55, 0.6);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-gold-500 selection:text-navy-950 min-h-screen flex flex-col justify-between">
+
+    <!-- MAIN NAVIGATION -->
+    <nav class="bg-navy-900/90 backdrop-blur-md border-b border-gold-500/15">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Brand Logo -->
+                <a href="index.html" class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-navy-950 font-display font-extrabold text-xl shadow-lg shadow-gold-500/20">
+                        SH
+                    </div>
+                    <div>
+                        <span class="text-2xl font-display font-bold tracking-wider gold-gradient-text">StudentHub</span>
+                        <span class="block text-[10px] tracking-widest text-slate-400 uppercase font-semibold">Shekhawati Region</span>
+                    </div>
+                </a>
+
+                <!-- Back to Home -->
+                <div>
+                    <a href="index.html" class="text-xs font-semibold px-4 py-2 rounded-lg border border-gold-500/40 text-gold-300 hover:bg-gold-500/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- AUTH CONTAINER -->
+    <main class="max-w-md w-full mx-auto px-4 py-12">
+        <div class="bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow shadow-2xl">
+            
+            <!-- Auth Toggle Tabs -->
+            <div class="flex rounded-xl bg-navy-900 p-1.5 mb-8 border border-navy-800">
+                <button id="signInTabBtn" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition gold-gradient-bg text-navy-950 shadow-md">
+                    Sign In
+                </button>
+                <button id="signUpTabBtn" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
+                    Create Account
+                </button>
+            </div>
+
+            <!-- SIGN IN FORM -->
+            <form id="signInForm" class="space-y-5">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-display font-bold text-white">Welcome Back</h2>
+                    <p class="text-xs text-slate-400 mt-1">Sign in to manage your listings and profile.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Email or Mobile Number</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-xs"></i>
+                        <input type="text" required placeholder="name@example.com" class="w-full bg-navy-900 border border-navy-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-xs"></i>
+                        <input type="password" required placeholder="••••••••" class="w-full bg-navy-900 border border-navy-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="accent-gold-500"> Remember me
+                    </label>
+                    <a href="#" class="text-gold-400 hover:underline">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition">
+                    Sign In
+                </button>
+            </form>
+
+            <!-- SIGN UP FORM (Initially Hidden) -->
+            <form id="signUpForm" class="space-y-4 hidden">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-display font-bold text-white">Join StudentHub</h2>
+                    <p class="text-xs text-slate-400 mt-1">Create an account as a Student or Property Owner.</p>
+                </div>
+
+                <!-- Role Selection -->
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1.5">I am a:</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="userRole" value="student" checked class="peer sr-only">
+                            <div class="p-2.5 rounded-xl bg-navy-900 border border-navy-700 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 text-center text-xs font-semibold text-white">
+                                Student / Aspirant
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="userRole" value="owner" class="peer sr-only">
+                            <div class="p-2.5 rounded-xl bg-navy-900 border border-navy-700 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 text-center text-xs font-semibold text-white">
+                                Hostel / Tiffin Owner
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Full Name</label>
+                    <input type="text" required placeholder="e.g. Rahul Sharma" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Mobile Number</label>
+                    <input type="tel" required placeholder="e.g. 9876543210" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Email Address</label>
+                    <input type="email" required placeholder="name@example.com" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1">Create Password</label>
+                    <input type="password" required placeholder="••••••••" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
+                </div>
+
+                <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
+                    Create Account
+                </button>
+            </form>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-navy-950 border-t border-navy-900 py-6 text-slate-500 text-xs text-center">
+        <p>© 2026 StudentHub (Shekhawati). Director: Satpal Swami (+91 99297 18264)</p>
+    </footer>
+
+    <!-- INTERACTIVE TAB SCRIPT -->
+    <script>
+        const signInTabBtn = document.getElementById('signInTabBtn');
+        const signUpTabBtn = document.getElementById('signUpTabBtn');
+        const signInForm = document.getElementById('signInForm');
+        const signUpForm = document.getElementById('signUpForm');
+
+        signInTabBtn.addEventListener('click', () => {
+            signInTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition gold-gradient-bg text-navy-950 shadow-md';
+            signUpTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
+            signInForm.classList.remove('hidden');
+            signUpForm.classList.add('hidden');
+        });
+
+        signUpTabBtn.addEventListener('click', () => {
+            signUpTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition gold-gradient-bg text-navy-950 shadow-md';
+            signInTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
+            signUpForm.classList.remove('hidden');
+            signInForm.classList.add('hidden');
+        });
+
+        signInForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Signed in successfully! Redirecting to StudentHub home.');
+            window.location.href = 'index.html';
+        });
+
+        signUpForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Account created successfully! Welcome to StudentHub.');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
