@@ -5,64 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In / Register | StudentHub Shekhawati</title>
     
-    <!-- Navy & Gold "SH" Luxury Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23060B18'/><rect x='4' y='4' width='92' height='92' rx='21' fill='none' stroke='%23D4AF37' stroke-width='4'/><text x='50%25' y='58%25' dominant-baseline='central' text-anchor='middle' font-family='serif' font-weight='800' font-size='44' fill='%23D4AF37'>SH</text></svg>">
+    <!-- Logo Favicon -->
+    <link rel="icon" type="image/png" href="logo.png">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SUPABASE JS CLIENT SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        navy: {
-                            950: '#060B18', // Deepest Navy
-                            900: '#0A1128', // Background
-                            850: '#0E1736', // Card Surface
-                            800: '#141F48', // Elevated Surface
-                            700: '#1E2C63',
-                        },
-                        gold: {
-                            100: '#FFF7D6',
-                            200: '#FDECB2',
-                            300: '#F5DE88',
-                            400: '#E6C65E',
-                            500: '#D4AF37', // Classic Rich Gold
-                            600: '#B89020',
-                            700: '#8C6B10',
-                        }
+                        navy: { 950: '#060B18', 900: '#0A1128', 850: '#0E1736', 800: '#141F48', 700: '#1E2C63' },
+                        gold: { 100: '#FFF7D6', 200: '#FDECB2', 300: '#F5DE88', 400: '#E6C65E', 500: '#D4AF37', 600: '#B89020', 700: '#8C6B10' }
                     },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        display: ['Cinzel', 'serif'],
-                    }
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Cinzel', 'serif'] }
                 }
             }
         }
     </script>
-
     <style>
-        .gold-gradient-text {
-            background: linear-gradient(135deg, #FDECB2 0%, #D4AF37 50%, #B89020 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .gold-gradient-bg {
-            background: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89020 100%);
-        }
-        .gold-border-glow {
-            border: 1px solid rgba(212, 175, 55, 0.25);
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.05);
-        }
+        .gold-gradient-text { background: linear-gradient(135deg, #FDECB2 0%, #D4AF37 50%, #B89020 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gold-gradient-bg { background: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89020 100%); }
+        .gold-border-glow { border: 1px solid rgba(212, 175, 55, 0.25); box-shadow: 0 0 15px rgba(212, 175, 55, 0.05); }
     </style>
 </head>
 <body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-gold-500 selection:text-navy-950 min-h-screen flex flex-col justify-between">
@@ -72,9 +46,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <a href="./" class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-navy-950 font-display font-extrabold text-xl shadow-lg shadow-gold-500/20">
-                        SH
-                    </div>
+                    <img src="logo.png" onerror="this.outerHTML='<div class=\'w-11 h-11 rounded-full gold-gradient-bg text-navy-950 font-display font-extrabold text-xl flex items-center justify-center\'>SH</div>'" class="w-12 h-12 rounded-full object-cover border border-gold-500/40">
                     <div>
                         <span class="text-2xl font-display font-bold tracking-wider gold-gradient-text">StudentHub</span>
                         <span class="block text-[10px] tracking-widest text-slate-400 uppercase font-semibold">Shekhawati Region</span>
@@ -106,15 +78,15 @@
             <div id="signInContainer">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-display font-bold text-white">Welcome Back</h2>
-                    <p class="text-xs text-slate-400 mt-1">Sign in to manage your listings and profile.</p>
+                    <p class="text-xs text-slate-400 mt-1">Sign in to access your dashboard.</p>
                 </div>
 
                 <form id="signInForm" class="space-y-4">
                     <div>
-                        <label class="block text-xs text-slate-300 mb-1">Email or Mobile Number</label>
+                        <label class="block text-xs text-slate-300 mb-1">Email Address</label>
                         <div class="relative">
                             <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-xs"></i>
-                            <input type="text" id="loginUsername" required placeholder="Enter email or mobile number" class="w-full bg-navy-900 border border-navy-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
+                            <input type="email" id="loginEmail" required placeholder="name@example.com" class="w-full bg-navy-900 border border-navy-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
                         </div>
                     </div>
 
@@ -133,7 +105,7 @@
                         <a href="https://wa.me/919929718264?text=Hello%20Satpal%20Sir,%20I%20forgot%20my%20StudentHub%20password" target="_blank" class="text-gold-400 hover:underline">Forgot password?</a>
                     </div>
 
-                    <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
+                    <button type="submit" id="signInSubmitBtn" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
                         Sign In
                     </button>
                 </form>
@@ -143,11 +115,10 @@
             <div id="signUpContainer" style="display: none;">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-display font-bold text-white">Join StudentHub</h2>
-                    <p class="text-xs text-slate-400 mt-1">Create an account as a Student or Property Owner.</p>
+                    <p class="text-xs text-slate-400 mt-1">Create your account in 30 seconds.</p>
                 </div>
 
                 <form id="signUpForm" class="space-y-4">
-                    <!-- Role Selection -->
                     <div>
                         <label class="block text-xs text-slate-300 mb-1.5">I am a:</label>
                         <div class="grid grid-cols-2 gap-2">
@@ -186,7 +157,7 @@
                         <input type="password" id="regPassword" required placeholder="••••••••" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
                     </div>
 
-                    <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
+                    <button type="submit" id="signUpSubmitBtn" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
                         Create Account
                     </button>
                 </form>
@@ -200,14 +171,24 @@
         <p>© 2026 StudentHub (Shekhawati). Director: Satpal Swami (+91 99297 18264)</p>
     </footer>
 
-    <!-- INTERACTIVE AUTH JAVASCRIPT -->
+    <!-- SUPABASE CLIENT & LIVE AUTH CONTROLLER -->
     <script>
+        // ================= YOUR SUPABASE CONFIGURATION =================
+        const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+        // अपनी Supabase anon public key यहाँ डालें:
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+
+        // Initialize Supabase Client
+        let supabaseClient = null;
+        if (typeof supabase !== 'undefined' && SUPABASE_ANON_KEY !== "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA") {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
         const signInContainer = document.getElementById('signInContainer');
         const signUpContainer = document.getElementById('signUpContainer');
         const signInTabBtn = document.getElementById('signInTabBtn');
         const signUpTabBtn = document.getElementById('signUpTabBtn');
 
-        // Tab Switching Functions
         function showSignInTab() {
             signInTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition gold-gradient-bg text-navy-950 shadow-md';
             signUpTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
@@ -222,94 +203,120 @@
             signUpContainer.style.display = 'block';
         }
 
-        // 1. SIGN IN SUBMIT
-        document.getElementById('signInForm').addEventListener('submit', (e) => {
+        // 1. SIGN IN ACTION (SUPABASE CONNECTED)
+        document.getElementById('signInForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const pass = document.getElementById('loginPassword').value.trim();
 
-            // Check if Director Admin
+            // Director Admin Login Check
             const adminPwd = localStorage.getItem('studenthub_admin_pwd') || '18389555';
-            if (username === 'satpalswami22742@gmail.com' && pass === adminPwd) {
+            if (email === 'satpalswami22742@gmail.com' && pass === adminPwd) {
                 sessionStorage.setItem('studenthub_admin_logged', 'true');
                 alert('Welcome Director Satpal Swami! Opening Admin Console.');
                 window.location.href = 'admin-dashboard.html';
                 return;
             }
 
-            // Check All Registered Users
-            let allUsers = JSON.parse(localStorage.getItem('sh_all_users') || '[]');
-            let user = allUsers.find(u => u.email === username || u.phone === username);
+            // Supabase Auth Login
+            if (supabaseClient) {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: pass
+                });
 
-            if (!user) {
-                user = {
-                    name: username.split('@')[0],
-                    email: username,
-                    phone: "+91 99297 00000",
-                    role: username.includes('owner') ? 'owner' : 'student'
+                if (error) {
+                    alert('Login Error: ' + error.message);
+                    return;
+                }
+
+                const userMeta = data.user.user_metadata || {};
+                const currentUser = {
+                    name: userMeta.full_name || email.split('@')[0],
+                    email: email,
+                    phone: userMeta.phone || "+91 98000 00000",
+                    role: userMeta.role || "student"
                 };
-            }
 
-            localStorage.setItem('sh_current_user', JSON.stringify(user));
-            alert(`Welcome back, ${user.name}! Opening your dashboard.`);
-            window.location.href = 'user-dashboard.html';
+                localStorage.setItem('sh_current_user', JSON.stringify(currentUser));
+                alert(`Welcome back, ${currentUser.name}!`);
+                window.location.href = 'user-dashboard.html';
+            } else {
+                // Fallback local session
+                const currentUser = {
+                    name: email.split('@')[0],
+                    email: email,
+                    phone: "+91 99297 00000",
+                    role: email.includes('owner') ? 'owner' : 'student'
+                };
+                localStorage.setItem('sh_current_user', JSON.stringify(currentUser));
+                window.location.href = 'user-dashboard.html';
+            }
         });
 
-        // 2. SIGN UP SUBMIT
-        document.getElementById('signUpForm').addEventListener('submit', (e) => {
+        // 2. SIGN UP ACTION (INSERTS INTO SUPABASE AUTH & PROFILES)
+        document.getElementById('signUpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const role = document.querySelector('input[name="regRole"]:checked').value;
             const name = document.getElementById('regName').value.trim();
             const phone = document.getElementById('regPhone').value.trim();
             const email = document.getElementById('regEmail').value.trim().toLowerCase();
+            const password = document.getElementById('regPassword').value.trim();
+
+            const phoneFormatted = phone.startsWith('+91') ? phone : `+91 ${phone}`;
+
+            if (supabaseClient) {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: name,
+                            phone: phoneFormatted,
+                            role: role
+                        }
+                    }
+                });
+
+                if (error) {
+                    alert('Registration Error: ' + error.message);
+                    return;
+                }
+
+                // Insert into profiles table
+                if (data.user) {
+                    await supabaseClient.from('profiles').insert([{
+                        id: data.user.id,
+                        full_name: name,
+                        phone: phoneFormatted,
+                        role: role
+                    }]);
+                }
+            }
 
             const newUser = {
                 id: Date.now(),
                 name: name,
-                phone: phone.startsWith('+91') ? phone : `+91 ${phone}`,
+                phone: phoneFormatted,
                 email: email,
                 role: role,
                 address: "Sikar, Rajasthan"
             };
 
-            // Save Active Session
+            // Save active session & sync with admin dashboard
             localStorage.setItem('sh_current_user', JSON.stringify(newUser));
 
-            // Save in Registered Users List
-            let allUsers = JSON.parse(localStorage.getItem('sh_all_users') || '[]');
-            allUsers.push(newUser);
-            localStorage.setItem('sh_all_users', JSON.stringify(allUsers));
-
-            // Sync with Director Admin Dashboard
             if (role === 'student') {
                 let students = JSON.parse(localStorage.getItem('sh_students') || '[]');
-                students.unshift({
-                    id: students.length + 1,
-                    photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80",
-                    name: name,
-                    phone: newUser.phone,
-                    email: email,
-                    address: "Sikar, Rajasthan",
-                    exam: "Aspirant (Registered)"
-                });
+                students.unshift({ id: Date.now(), name: name, phone: phoneFormatted, email: email, address: "Sikar, Rajasthan", exam: "Registered Student" });
                 localStorage.setItem('sh_students', JSON.stringify(students));
             } else {
                 let owners = JSON.parse(localStorage.getItem('sh_owners') || '[]');
-                owners.unshift({
-                    id: owners.length + 1,
-                    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
-                    name: name,
-                    phone: newUser.phone,
-                    email: email,
-                    business: `${name}'s Property / Tiffin`,
-                    type: "Hostel/Tiffin",
-                    address: "Sikar, Rajasthan",
-                    price: "Verified Partner"
-                });
+                owners.unshift({ id: Date.now(), name: name, phone: phoneFormatted, email: email, business: `${name}'s Property`, type: "Hostel/Tiffin", address: "Sikar, Rajasthan", price: "Live Partner" });
                 localStorage.setItem('sh_owners', JSON.stringify(owners));
             }
 
-            alert(`Account created successfully! Welcome to StudentHub, ${name}.`);
+            alert(`Registration successful in Supabase! Welcome ${name}.`);
             window.location.href = 'user-dashboard.html';
         });
     </script>
