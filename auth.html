@@ -65,7 +65,7 @@
         <div class="bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow shadow-2xl">
             
             <!-- Auth Toggle Tabs -->
-            <div class="flex rounded-xl bg-navy-900 p-1.5 mb-8 border border-navy-800">
+            <div id="authTabsHeader" class="flex rounded-xl bg-navy-900 p-1.5 mb-8 border border-navy-800">
                 <button type="button" onclick="showSignInTab()" id="signInTabBtn" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition gold-gradient-bg text-navy-950 shadow-md">
                     Sign In
                 </button>
@@ -165,6 +165,39 @@
                 </form>
             </div>
 
+            <!-- 3. SET NEW PASSWORD FORM (AUTOMATICALLY SHOWN WHEN OPENED FROM EMAIL LINK) -->
+            <div id="setNewPasswordContainer" style="display: none;">
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 rounded-2xl gold-gradient-bg text-navy-950 text-xl font-bold flex items-center justify-center mx-auto mb-3 shadow-lg">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <h2 class="text-2xl font-display font-bold text-white">Set New Password</h2>
+                    <p class="text-xs text-slate-400 mt-1">Create a new secure password for your account.</p>
+                </div>
+
+                <form id="setNewPasswordForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-300 mb-1">New Password</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-xs"></i>
+                            <input type="password" id="newPasswordInput" required placeholder="Enter new password" class="w-full bg-navy-900 border border-navy-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-gold-500 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-slate-300 mb-1">Confirm New Password</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-check-double absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-xs"></i>
+                            <input type="password" id="confirmNewPasswordInput" required placeholder="Re-enter new password" class="w-full bg-navy-900 border border-navy-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-gold-500 transition">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="saveNewPassBtn" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
+                        Save New Password & Log In
+                    </button>
+                </form>
+            </div>
+
         </div>
     </main>
 
@@ -181,7 +214,7 @@
             </div>
 
             <p class="text-xs text-slate-300 leading-relaxed">
-                Enter your registered email address. A password reset link will be sent to your email.
+                Enter your registered email address. We will send you a direct link to set your new password.
             </p>
 
             <form id="forgotPasswordForm" class="space-y-3.5 text-xs">
@@ -202,7 +235,7 @@
         <p>© 2026 StudentHub (Shekhawati). Director: Satpal Swami (+91 99297 18264)</p>
     </footer>
 
-    <!-- SUPABASE CLIENT & STRICT AUTH CONTROLLER -->
+    <!-- INTERACTIVE JAVASCRIPT & RECOVERY FLOW -->
     <script>
         const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
@@ -211,6 +244,8 @@
 
         const signInContainer = document.getElementById('signInContainer');
         const signUpContainer = document.getElementById('signUpContainer');
+        const setNewPasswordContainer = document.getElementById('setNewPasswordContainer');
+        const authTabsHeader = document.getElementById('authTabsHeader');
         const signInTabBtn = document.getElementById('signInTabBtn');
         const signUpTabBtn = document.getElementById('signUpTabBtn');
 
@@ -219,6 +254,8 @@
             signUpTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
             signInContainer.style.display = 'block';
             signUpContainer.style.display = 'none';
+            setNewPasswordContainer.style.display = 'none';
+            authTabsHeader.style.display = 'flex';
         }
 
         function showSignUpTab() {
@@ -226,8 +263,82 @@
             signInTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
             signInContainer.style.display = 'none';
             signUpContainer.style.display = 'block';
+            setNewPasswordContainer.style.display = 'none';
+            authTabsHeader.style.display = 'flex';
         }
 
+        // ================= INSTANT RECOVERY DETECTION FROM EMAIL LINK =================
+        function checkRecoveryMode() {
+            const hash = window.location.hash || '';
+            const search = window.location.search || '';
+            
+            if (hash.includes('type=recovery') || search.includes('type=recovery') || hash.includes('access_token')) {
+                // Instantly switch to "Set New Password" screen!
+                signInContainer.style.display = 'none';
+                signUpContainer.style.display = 'none';
+                authTabsHeader.style.display = 'none';
+                setNewPasswordContainer.style.display = 'block';
+            }
+        }
+        checkRecoveryMode();
+
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            if (event === "PASSWORD_RECOVERY") {
+                signInContainer.style.display = 'none';
+                signUpContainer.style.display = 'none';
+                authTabsHeader.style.display = 'none';
+                setNewPasswordContainer.style.display = 'block';
+            }
+        });
+
+        // 1. SAVE NEW PASSWORD (WHEN OPENED FROM EMAIL LINK)
+        document.getElementById('setNewPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const p1 = document.getElementById('newPasswordInput').value.trim();
+            const p2 = document.getElementById('confirmNewPasswordInput').value.trim();
+            const submitBtn = document.getElementById('saveNewPassBtn');
+
+            if (p1.length < 6) {
+                alert('Password must be at least 6 characters!');
+                return;
+            }
+
+            if (p1 !== p2) {
+                alert('Passwords do not match! Please re-type.');
+                return;
+            }
+
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Password...';
+            submitBtn.disabled = true;
+
+            const { data, error } = await supabaseClient.auth.updateUser({ password: p1 });
+
+            submitBtn.innerHTML = 'Save New Password & Log In';
+            submitBtn.disabled = false;
+
+            if (error) {
+                alert('Error updating password: ' + error.message);
+                return;
+            }
+
+            alert('Your password has been reset successfully! Logging you into your dashboard.');
+            
+            // Auto login & open dashboard
+            const email = (data.user && data.user.email) || 'satpalnehra30@gmail.com';
+            const meta = (data.user && data.user.user_metadata) || {};
+            const currentUser = {
+                id: (data.user && data.user.id) || Date.now(),
+                name: meta.full_name || 'Harsh Nehra',
+                email: email,
+                phone: meta.phone || '+91 98288 42530',
+                role: meta.role || 'student'
+            };
+
+            localStorage.setItem('sh_current_user', JSON.stringify(currentUser));
+            window.location.href = 'user-dashboard.html';
+        });
+
+        // 2. FORGOT PASSWORD POPUP
         const forgotPasswordModal = document.getElementById('forgotPasswordModal');
         const forgotPasswordForm = document.getElementById('forgotPasswordForm');
 
@@ -239,29 +350,30 @@
             forgotPasswordModal.classList.add('hidden');
         };
 
-        // Reset Password Form
         forgotPasswordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('resetTargetEmail').value.trim().toLowerCase();
             const btn = document.getElementById('sendResetBtn');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending link...';
+            btn.disabled = true;
 
             const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin + window.location.pathname
+                redirectTo: 'https://studenthubhelp.github.io/studenthubhelp/auth.html'
             });
 
             btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Password Reset Link';
+            btn.disabled = false;
 
             if (error) {
                 alert('Error: ' + error.message);
                 return;
             }
 
-            alert(`Password reset link sent to "${email}". Please check your email inbox!`);
+            alert(`A password reset link has been sent to "${email}". Please check your inbox or spam folder!`);
             closeForgotPasswordModal();
         });
 
-        // 1. STRICT SIGN IN (NO LOGIN ON WRONG PASSWORD)
+        // 3. STRICT SIGN IN
         document.getElementById('signInForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
@@ -273,19 +385,17 @@
             if (email === 'satpalswami22742@gmail.com') {
                 if (pass === adminPwd) {
                     sessionStorage.setItem('studenthub_admin_logged', 'true');
-                    alert('Welcome Director Satpal Swami! Opening Admin Console.');
                     window.location.href = 'admin-dashboard.html';
                     return;
                 } else {
-                    alert('Incorrect password for Director Account!');
-                    return; // STRICT STOP
+                    alert('Incorrect password for Director account!');
+                    return;
                 }
             }
 
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
             submitBtn.disabled = true;
 
-            // Supabase Strict Sign In Verification
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: pass
@@ -294,13 +404,11 @@
             submitBtn.innerHTML = 'Sign In';
             submitBtn.disabled = false;
 
-            // IF PASSWORD IS WRONG -> STOP AND SHOW ALERT!
             if (error) {
-                alert('Invalid email or password! Please check your credentials or reset password.');
-                return; // STRICT STOP! Never log in on wrong password
+                alert('Invalid email or password! Please check your credentials or click "Forgot password?" to reset it.');
+                return;
             }
 
-            // ONLY RUNS IF PASSWORD IS 100% CORRECT
             if (data && data.user) {
                 const meta = data.user.user_metadata || {};
                 const currentUser = {
@@ -316,7 +424,7 @@
             }
         });
 
-        // 2. SIGN UP (CREATES USER IN SUPABASE DATABASE)
+        // 4. SIGN UP
         document.getElementById('signUpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const role = document.querySelector('input[name="regRole"]:checked').value;
