@@ -62,7 +62,6 @@
                 <div class="hidden xl:flex items-center space-x-6 text-xs font-semibold uppercase tracking-wider">
                     <a href="./" class="text-slate-300 hover:text-gold-400 transition">Home</a>
                     <a href="pg-finder.html" class="text-gold-400 border-b-2 border-gold-500 pb-1">Hostels (100)</a>
-                    <a href="pg-finder.html?cat=PG" class="text-slate-300 hover:text-gold-400 transition">PG & Rooms</a>
                     <a href="tiffin-services.html" class="text-slate-300 hover:text-gold-400 transition">Tiffin & Mess (10+)</a>
                     <a href="library-coaching.html" class="text-slate-300 hover:text-gold-400 transition">Libraries (35+)</a>
                     <a href="#coachingSection" class="text-slate-300 hover:text-gold-400 transition">Coaching</a>
@@ -301,11 +300,6 @@
             <button onclick="closeHostelModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
-
-            <!-- Edit 6-Tabs Button (Admin/Owner Control) -->
-<button onclick="openEditHostelTabsModal()" class="absolute top-4 right-16 z-20 px-3 py-1.5 rounded-full bg-navy-950/80 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold flex items-center gap-1.5 border border-gold-500/40 shadow-lg transition">
-    <i class="fa-solid fa-pen-to-square"></i> Edit Details
-</button>
             
             <!-- Top Banner Image -->
             <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
@@ -450,23 +444,7 @@
         <p>© 2026 StudentHubHelp (Shekhawati). Director: Satpal Swami (+91 99297 18264)</p>
         <p><a href="./" class="text-gold-400 hover:underline">Home</a> • <a href="tiffin-services.html" class="hover:underline">Tiffin</a> • <a href="library-coaching.html" class="hover:underline">Library</a> • <a href="privacy-policy.html" class="hover:underline">Privacy Policy</a></p>
     </footer>
-<!-- ================= 6-TABS CUSTOM EDIT MODAL ================= -->
-<div id="editHostelTabsModal" class="fixed inset-0 z-50 bg-navy-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
-    <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col p-6 shadow-2xl relative">
-        <button onclick="closeEditHostelTabsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-        
-        <h3 class="text-base font-bold text-white flex items-center gap-2 pb-3 border-b border-navy-800">
-            <i class="fa-solid fa-sliders text-gold-400"></i> Edit 6 Tabs (<span id="editModalHostelName" class="text-gold-300">Hostel</span>)
-        </h3>
 
-        <form id="editTabsForm" class="space-y-4 overflow-y-auto flex-1 pr-1 text-xs text-slate-300 mt-3">
-            <input type="hidden" id="editCurrentHostelId">
-
-            <!-- 1. Overview Tab -->
-            <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 space-y-1.5">
-                <label class="font-bold text-gold-400 block">1. Overview (About Text)</label>
-                <textarea id="editTabAbout" rows="2" class="w-full bg-navy-900 border border-navy-700 rounded-lg p-2 text-white"></textarea>
-            </div>
 
             <!-- 2. Rooms & Rates Tab -->
             <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 space-y-1.5">
@@ -810,59 +788,7 @@
         if (urlParams.get('cat') && urlParams.get('cat') === 'PG') setCategoryFilter('PG');
 
         renderHostels();
-        // ================= 6-TABS EDIT CONTROLLER =================
-        let currentViewingHostelId = 1;
 
-        const originalOpenHostelModal = window.openHostelModal;
-        window.openHostelModal = function(id) {
-            currentViewingHostelId = id;
-            const h = hostelsList.find(item => item.id === id) || hostelsList[0];
-            
-            if (h.about) document.getElementById('modalAboutText').textContent = h.about;
-            if (h.facilities) document.getElementById('tabContent-facilities').innerHTML = h.facilities.split(',').map(f => `<div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex items-center gap-2 text-slate-300 font-semibold"><i class="fa-solid fa-check text-gold-400"></i> ${f.trim()}</div>`).join('');
-            
-            originalOpenHostelModal(id);
-        };
-
-        window.openEditHostelTabsModal = function() {
-            const h = hostelsList.find(item => item.id === currentViewingHostelId) || hostelsList[0];
-            document.getElementById('editCurrentHostelId').value = h.id;
-            document.getElementById('editModalHostelName').textContent = h.name;
-            document.getElementById('editTabAbout').value = h.about || "A peaceful and well-maintained student accommodation located in prime coaching zone of Sikar with direct access to classes.";
-            document.getElementById('editTabSingle').value = h.singlePrice || "Single Bed: ₹5,500/mo";
-            document.getElementById('editTabDouble').value = h.doublePrice || "Double Sharing: ₹4,500/mo";
-            document.getElementById('editTabFacilities').value = h.facilities || "AC Rooms, High Speed WiFi, RO Drinking Water, 3-Time Satvik Food, Power Backup, CCTV";
-            document.getElementById('editTabReview').value = h.reviewText || "Peaceful study atmosphere and cooperative warden.";
-            document.getElementById('editTabDistance').value = h.distanceText || "Strategically located within 2-10 minutes walking distance from coaching campuses.";
-            document.getElementById('editTabFaq').value = h.faqText || "Food charges and electricity backup are included in rent.";
-
-            document.getElementById('editHostelTabsModal').classList.remove('hidden');
-        };
-
-        window.closeEditHostelTabsModal = function() {
-            document.getElementById('editHostelTabsModal').classList.add('hidden');
-        };
-
-        document.getElementById('editTabsForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('editCurrentHostelId').value);
-            const idx = hostelsList.findIndex(item => item.id === id);
-
-            if (idx !== -1) {
-                hostelsList[idx].about = document.getElementById('editTabAbout').value.trim();
-                hostelsList[idx].singlePrice = document.getElementById('editTabSingle').value.trim();
-                hostelsList[idx].doublePrice = document.getElementById('editTabDouble').value.trim();
-                hostelsList[idx].facilities = document.getElementById('editTabFacilities').value.trim();
-                hostelsList[idx].reviewText = document.getElementById('editTabReview').value.trim();
-                hostelsList[idx].distanceText = document.getElementById('editTabDistance').value.trim();
-                hostelsList[idx].faqText = document.getElementById('editTabFaq').value.trim();
-
-                localStorage.setItem('sh_hostels', JSON.stringify(hostelsList));
-                alert('Hostel 6-Tab details updated successfully!');
-                closeEditHostelTabsModal();
-                openHostelModal(id);
-            }
-        });
     </script>
 </body>
 </html>
