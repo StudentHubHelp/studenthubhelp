@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In / Register | StudentHub Shekhawati</title>
+    <title>My Dashboard | StudentHub Shekhawati</title>
     
     <!-- Logo Favicon -->
     <link rel="icon" type="image/png" href="logo.png">
@@ -16,9 +16,6 @@
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- SUPABASE JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
         tailwind.config = {
@@ -41,161 +38,128 @@
 </head>
 <body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-gold-500 selection:text-navy-950 min-h-screen flex flex-col justify-between">
 
-    <!-- NAVIGATION -->
-    <nav class="bg-navy-900/90 backdrop-blur-md border-b border-gold-500/15">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-20">
-                <a href="./" class="flex items-center gap-3">
-                    <img src="logo.png" onerror="this.outerHTML='<div class=\'w-11 h-11 rounded-full gold-gradient-bg text-navy-950 font-display font-extrabold text-xl flex items-center justify-center\'>SH</div>'" class="w-12 h-12 rounded-full object-cover border border-gold-500/40">
-                    <div>
-                        <span class="text-2xl font-display font-bold tracking-wider gold-gradient-text">StudentHub</span>
-                        <span class="block text-[10px] tracking-widest text-slate-400 uppercase font-semibold">Shekhawati Region</span>
-                    </div>
-                </a>
-
-                <a href="./" class="text-xs font-semibold px-4 py-2 rounded-lg border border-gold-500/40 text-gold-300 hover:bg-gold-500/10 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-arrow-left"></i> Back to Home
-                </a>
+    <!-- NAVBAR -->
+    <nav class="bg-navy-900 border-b border-gold-500/15 px-4 sm:px-8 py-4 flex items-center justify-between">
+        <a href="./" class="flex items-center gap-3">
+            <img src="logo.png" onerror="this.outerHTML='<div class=\'w-10 h-10 rounded-xl bg-gold-500 text-navy-950 font-display font-extrabold text-lg flex items-center justify-center\'>SH</div>'" class="w-10 h-10 rounded-xl object-cover border border-gold-500/40">
+            <div>
+                <span class="text-lg font-display font-bold gold-gradient-text">StudentHub</span>
+                <span class="block text-[10px] text-slate-400 uppercase font-semibold">User Dashboard</span>
             </div>
+        </a>
+
+        <div class="flex items-center gap-3">
+            <a href="./" class="text-xs px-3.5 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition">
+                <i class="fa-solid fa-home mr-1"></i> Home
+            </a>
+            <button onclick="userLogout()" class="text-xs px-3.5 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition font-bold">
+                <i class="fa-solid fa-power-off mr-1"></i> Logout
+            </button>
         </div>
     </nav>
 
-    <!-- AUTH CONTAINER -->
-    <main class="max-w-md w-full mx-auto px-4 py-10">
-        <div class="bg-navy-850 rounded-3xl p-6 sm:p-8 gold-border-glow shadow-2xl">
-            
-            <!-- Auth Toggle Tabs -->
-            <div class="flex rounded-xl bg-navy-900 p-1.5 mb-8 border border-navy-800">
-                <button type="button" onclick="showSignInTab()" id="signInTabBtn" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition gold-gradient-bg text-navy-950 shadow-md">
-                    Sign In
-                </button>
-                <button type="button" onclick="showSignUpTab()" id="signUpTabBtn" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
-                    Create Account
-                </button>
-            </div>
-
-            <!-- 1. SIGN IN FORM -->
-            <div id="signInContainer">
-                <div class="text-center mb-6">
-                    <h2 class="text-2xl font-display font-bold text-white">Welcome Back</h2>
-                    <p class="text-xs text-slate-400 mt-1">Sign in to manage your profile and dashboard.</p>
+    <!-- DASHBOARD CONTAINER -->
+    <main class="max-w-5xl w-full mx-auto px-4 py-10 space-y-8 flex-1">
+        
+        <!-- TOP WELCOME BANNER -->
+        <div class="bg-gradient-to-r from-navy-900 via-navy-850 to-navy-900 border border-gold-500/30 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 text-2xl font-bold flex items-center justify-center font-display shadow-lg shadow-gold-500/20" id="userAvatar">
+                    U
                 </div>
-
-                <form id="signInForm" class="space-y-4">
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1">Email Address</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-xs"></i>
-                            <input type="email" id="loginEmail" required placeholder="name@example.com" class="w-full bg-navy-900 border border-navy-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1">Password</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-xs"></i>
-                            <input type="password" id="loginPassword" required placeholder="Enter password" class="w-full bg-navy-900 border border-navy-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" class="accent-gold-500"> Remember me
-                        </label>
-                        <button type="button" onclick="openForgotPasswordModal()" class="text-gold-400 hover:underline">
-                            Forgot password?
-                        </button>
-                    </div>
-
-                    <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
-                        Sign In
-                    </button>
-                </form>
-            </div>
-
-            <!-- 2. SIGN UP / CREATE ACCOUNT FORM -->
-            <div id="signUpContainer" style="display: none;">
-                <div class="text-center mb-6">
-                    <h2 class="text-2xl font-display font-bold text-white">Join StudentHub</h2>
-                    <p class="text-xs text-slate-400 mt-1">Create your account in 30 seconds.</p>
-                </div>
-
-                <form id="signUpForm" class="space-y-4">
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1.5">I am a:</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="cursor-pointer">
-                                <input type="radio" name="regRole" value="student" checked class="peer sr-only">
-                                <div class="p-2.5 rounded-xl bg-navy-900 border border-navy-700 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 text-center text-xs font-semibold text-white">
-                                    <i class="fa-solid fa-user-graduate mr-1 text-gold-400"></i> Student
-                                </div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="regRole" value="owner" class="peer sr-only">
-                                <div class="p-2.5 rounded-xl bg-navy-900 border border-navy-700 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 text-center text-xs font-semibold text-white">
-                                    <i class="fa-solid fa-user-tie mr-1 text-gold-400"></i> Owner
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1">Full Name</label>
-                        <input type="text" id="regName" required placeholder="e.g. Harsh Nehra" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1">Mobile Number</label>
-                        <input type="tel" id="regPhone" required placeholder="e.g. 9828842530" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1">Email Address</label>
-                        <input type="email" id="regEmail" required placeholder="name@example.com" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1">Create Password</label>
-                        <input type="password" id="regPassword" required placeholder="••••••••" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
-                    </div>
-
-                    <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
-                        Create Account
-                    </button>
-                </form>
-            </div>
-
-        </div>
-    </main>
-
-    <!-- FORGOT PASSWORD EMAIL MODAL -->
-    <div id="forgotPasswordModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative space-y-4">
-            <button onclick="closeForgotPasswordModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            
-            <div class="flex items-center gap-2 pb-2 border-b border-navy-800">
-                <i class="fa-solid fa-envelope-open-text text-gold-400 text-lg"></i>
-                <h3 class="text-base font-bold text-white">Reset Your Password</h3>
-            </div>
-
-            <p class="text-xs text-slate-300 leading-relaxed">
-                Enter your registered email address. We will send a secure password reset link directly to your inbox.
-            </p>
-
-            <form id="forgotPasswordForm" class="space-y-3.5 text-xs">
                 <div>
-                    <label class="block text-slate-300 mb-1">Registered Email Address</label>
-                    <input type="email" id="resetTargetEmail" required placeholder="e.g. name@example.com" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                    <span id="roleBadge" class="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border">Role</span>
+                    <h2 class="text-2xl font-display font-bold text-white mt-1 uppercase" id="userName">User Name</h2>
+                    <p class="text-xs text-slate-300 font-mono mt-0.5" id="userContactDetails">email • phone</p>
+                </div>
+            </div>
+            <div>
+                <span class="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-3.5 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-check"></i> Account Verified
+                </span>
+            </div>
+        </div>
+
+        <!-- ================= STUDENT VIEW ================= -->
+        <div id="studentView" class="hidden space-y-6">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-compass text-gold-400"></i> Explore Sikar Student Services
+            </h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <a href="pg-finder.html" class="bg-navy-850 p-6 rounded-2xl gold-border-glow block hover:bg-navy-800 transition group">
+                    <i class="fa-solid fa-hotel text-2xl text-gold-400 mb-3 block"></i>
+                    <h4 class="text-base font-bold text-white group-hover:text-gold-300">Find 100+ Hostels</h4>
+                    <p class="text-xs text-slate-400 mt-1">Direct warden & owner contacts in Piprali & Nawalgarh road.</p>
+                </a>
+                <a href="tiffin-services.html" class="bg-navy-850 p-6 rounded-2xl gold-border-glow block hover:bg-navy-800 transition group">
+                    <i class="fa-solid fa-bowl-food text-2xl text-gold-400 mb-3 block"></i>
+                    <h4 class="text-base font-bold text-white group-hover:text-gold-300">100+ Tiffin Providers</h4>
+                    <p class="text-xs text-slate-400 mt-1">Homemade daily thali & mess delivery services.</p>
+                </a>
+                <a href="library-coaching.html" class="bg-navy-850 p-6 rounded-2xl gold-border-glow block hover:bg-navy-800 transition group">
+                    <i class="fa-solid fa-landmark text-2xl text-gold-400 mb-3 block"></i>
+                    <h4 class="text-base font-bold text-white group-hover:text-gold-300">100+ 24/7 Libraries</h4>
+                    <p class="text-xs text-slate-400 mt-1">Air-conditioned self-study zones & seat inquiry.</p>
+                </a>
+            </div>
+
+            <div class="bg-navy-850 p-6 rounded-2xl border border-navy-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h4 class="text-sm font-bold text-white">Need help finding a room or tiffin in Sikar?</h4>
+                    <p class="text-xs text-slate-400 mt-0.5">Chat directly with Director Satpal Swami for verified guidance.</p>
+                </div>
+                <a href="https://wa.me/919929718264?text=Hi%20Satpal%20Sir,%20I%20am%20a%20student%20registered%20on%20StudentHub" target="_blank" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 flex-shrink-0">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp Helpdesk
+                </a>
+            </div>
+        </div>
+
+        <!-- ================= OWNER VIEW ================= -->
+        <div id="ownerView" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-building text-gold-400"></i> My Listed Properties & Vacancy Status
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Manage your room availability, pricing, and student inquiries.</p>
+                </div>
+                <a href="add-listing.html" class="px-4 py-2 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl hover:brightness-110 flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-plus"></i> Add Property
+                </a>
+            </div>
+
+            <div class="bg-navy-850 rounded-3xl gold-border-glow p-6 sm:p-8 space-y-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-navy-800">
+                    <div>
+                        <span class="text-[10px] font-bold px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/30 uppercase">
+                            Hostel / PG
+                        </span>
+                        <h4 class="text-xl font-bold text-white mt-1.5" id="ownerPropName">RAM's Property / PG</h4>
+                        <p class="text-xs text-slate-400"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> Piprali Road, Near Matrix, Sikar</p>
+                    </div>
                 </div>
 
-                <button type="submit" id="sendResetBtn" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl hover:brightness-110 shadow-md transition mt-2 flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-paper-plane"></i> Send Password Reset Link
-                </button>
-            </form>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700">
+                        <span class="text-[11px] text-slate-400 block font-semibold">Vacant Rooms</span>
+                        <div class="text-xl font-extrabold text-emerald-400 mt-1">5 Rooms Available</div>
+                    </div>
+                    <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700">
+                        <span class="text-[11px] text-slate-400 block font-semibold">Monthly Rent</span>
+                        <div class="text-xl font-extrabold text-gold-300 mt-1">₹4,500 / month</div>
+                    </div>
+                    <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700">
+                        <span class="text-[11px] text-slate-400 block font-semibold">Listing Status</span>
+                        <div class="text-base font-bold text-emerald-400 mt-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> Live on Site
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+
+    </main>
 
     <!-- FOOTER -->
     <footer class="bg-navy-950 border-t border-navy-900 py-6 text-slate-500 text-xs text-center">
@@ -203,140 +167,42 @@
     </footer>
 
     <script>
-        const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+        let currentUser = JSON.parse(localStorage.getItem('sh_current_user') || 'null');
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        const signInContainer = document.getElementById('signInContainer');
-        const signUpContainer = document.getElementById('signUpContainer');
-        const signInTabBtn = document.getElementById('signInTabBtn');
-        const signUpTabBtn = document.getElementById('signUpTabBtn');
-
-        function showSignInTab() {
-            signInTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition gold-gradient-bg text-navy-950 shadow-md';
-            signUpTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
-            signInContainer.style.display = 'block';
-            signUpContainer.style.display = 'none';
-        }
-
-        function showSignUpTab() {
-            signUpTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition gold-gradient-bg text-navy-950 shadow-md';
-            signInTabBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
-            signInContainer.style.display = 'none';
-            signUpContainer.style.display = 'block';
-        }
-
-        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
-        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
-
-        window.openForgotPasswordModal = function() {
-            forgotPasswordModal.classList.remove('hidden');
-        };
-
-        window.closeForgotPasswordModal = function() {
-            forgotPasswordModal.classList.add('hidden');
-        };
-
-        // Reset Password Link
-        forgotPasswordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('resetTargetEmail').value.trim().toLowerCase();
-            const btn = document.getElementById('sendResetBtn');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending link...';
-
-            try {
-                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + window.location.pathname
-                });
-                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Password Reset Link';
-                if (error) {
-                    alert('Note: ' + error.message);
-                } else {
-                    alert(`Password reset link sent to "${email}". Please check your inbox or spam folder!`);
-                }
-            } catch(err) {
-                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Password Reset Link';
-                alert(`Password reset request processed for "${email}". Please check your inbox.`);
-            }
-            closeForgotPasswordModal();
-        });
-
-        // SIGN IN
-        document.getElementById('signInForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-            const pass = document.getElementById('loginPassword').value.trim();
-
-            // Director Admin Check
-            const adminPwd = localStorage.getItem('studenthub_admin_pwd') || '18389555';
-            if (email === 'satpalswami22742@gmail.com' && pass === adminPwd) {
-                sessionStorage.setItem('studenthub_admin_logged', 'true');
-                window.location.href = 'admin-dashboard.html';
-                return;
-            }
-
-            // Real user login
-            let fullName = email.split('@')[0];
-            let phone = "+91 98288 42530";
-            let role = email.includes('owner') ? 'owner' : 'student';
-
-            try {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: pass
-                });
-
-                if (data && data.user) {
-                    const meta = data.user.user_metadata || {};
-                    fullName = meta.full_name || fullName;
-                    phone = meta.phone || phone;
-                    role = meta.role || role;
-                }
-            } catch(err) {}
-
-            const currentUser = {
-                name: fullName,
-                email: email,
-                phone: phone,
-                role: role
+        if (!currentUser) {
+            currentUser = {
+                name: "Harsh Nehra",
+                email: "satpalnehra30@gmail.com",
+                phone: "+91 98288 42530",
+                role: "student"
             };
-
             localStorage.setItem('sh_current_user', JSON.stringify(currentUser));
-            window.location.href = 'user-dashboard.html';
-        });
+        }
 
-        // SIGN UP
-        document.getElementById('signUpForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const role = document.querySelector('input[name="regRole"]:checked').value;
-            const name = document.getElementById('regName').value.trim();
-            const phone = document.getElementById('regPhone').value.trim();
-            const email = document.getElementById('regEmail').value.trim().toLowerCase();
-            const password = document.getElementById('regPassword').value.trim();
+        // Render Data
+        document.getElementById('userName').textContent = currentUser.name;
+        document.getElementById('userContactDetails').textContent = `${currentUser.email} • ${currentUser.phone}`;
+        document.getElementById('userAvatar').textContent = (currentUser.name || 'U').charAt(0).toUpperCase();
 
-            const phoneFormatted = phone.startsWith('+91') ? phone : `+91 ${phone}`;
+        const roleBadge = document.getElementById('roleBadge');
+        const studentView = document.getElementById('studentView');
+        const ownerView = document.getElementById('ownerView');
 
-            try {
-                await supabaseClient.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: {
-                        data: { full_name: name, phone: phoneFormatted, role: role }
-                    }
-                });
-            } catch(err) {}
+        if (currentUser.role === 'owner') {
+            roleBadge.textContent = 'Property / Tiffin Owner';
+            roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-amber-500/10 text-amber-300 border-amber-500/30';
+            ownerView.classList.remove('hidden');
+            document.getElementById('ownerPropName').textContent = `${currentUser.name}'s Property / PG`;
+        } else {
+            roleBadge.textContent = 'Student / Aspirant';
+            roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
+            studentView.classList.remove('hidden');
+        }
 
-            const newUser = {
-                name: name,
-                phone: phoneFormatted,
-                email: email,
-                role: role
-            };
-
-            localStorage.setItem('sh_current_user', JSON.stringify(newUser));
-            window.location.href = 'user-dashboard.html';
-        });
+        function userLogout() {
+            localStorage.removeItem('sh_current_user');
+            window.location.href = 'auth.html';
+        }
     </script>
 </body>
 </html>
