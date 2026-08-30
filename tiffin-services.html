@@ -62,7 +62,6 @@
                 <div class="hidden xl:flex items-center space-x-6 text-xs font-semibold uppercase tracking-wider">
                     <a href="./" class="text-slate-300 hover:text-gold-400 transition">Home</a>
                     <a href="pg-finder.html" class="text-slate-300 hover:text-gold-400 transition">Hostel (100)</a>
-                    <a href="pg-finder.html?cat=PG" class="text-slate-300 hover:text-gold-400 transition">PG & Rooms</a>
                     <a href="tiffin-services.html" class="text-gold-400 border-b-2 border-gold-500 pb-1">Tiffin & Mess</a>
                     <a href="library-coaching.html" class="text-slate-300 hover:text-gold-400 transition">Libraries (35+)</a>
                     <a href="#coachingTiffins" class="text-slate-300 hover:text-gold-400 transition">Coaching</a>
@@ -261,9 +260,7 @@
             <button onclick="closeTiffinModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
-            <button onclick="openEditTiffinTabsModal()" class="absolute top-4 right-16 z-20 px-3 py-1.5 rounded-full bg-navy-950/80 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold flex items-center gap-1.5 border border-gold-500/40 shadow-lg transition">
-                <i class="fa-solid fa-pen-to-square"></i> Edit Details
-            </button>
+
 
             <!-- Top Banner Image -->
             <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
@@ -348,22 +345,7 @@
         </div>
     </div>
 
-    <!-- ================= 8. EDIT 6-TABS MODAL FOR TIFFIN ================= -->
-    <div id="editTiffinTabsModal" class="fixed inset-0 z-50 bg-navy-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
-        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col p-6 shadow-2xl relative">
-            <button onclick="closeEditTiffinTabsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            
-            <h3 class="text-base font-bold text-white flex items-center gap-2 pb-3 border-b border-navy-800">
-                <i class="fa-solid fa-pen-to-square text-gold-400"></i> Edit Tiffin Details (<span id="editTiffinModalName" class="text-gold-300">Tiffin</span>)
-            </h3>
 
-            <form id="editTiffinTabsForm" class="space-y-4 overflow-y-auto flex-1 pr-1 text-xs text-slate-300 mt-3">
-                <input type="hidden" id="editCurrentTiffinId">
-
-                <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 space-y-1.5">
-                    <label class="font-bold text-gold-400 block">1. Overview (About Text)</label>
-                    <textarea id="editTAbout" rows="2" class="w-full bg-navy-900 border border-navy-700 rounded-lg p-2 text-white"></textarea>
-                </div>
 
                 <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 space-y-1.5">
                     <label class="font-bold text-gold-400 block">2. Daily Lunch & Dinner Menu</label>
@@ -589,27 +571,6 @@
             document.getElementById(`tTabBtn-${tabName}`).className = 'ttab-btn py-3.5 border-b-2 border-gold-500 text-gold-300 flex-shrink-0 font-bold';
         };
 
-        // EDIT 6-TABS LOGIC
-        window.openEditTiffinTabsModal = function() {
-            const t = tiffinsList.find(item => item.id === currentViewingTiffinId) || tiffinsList[0];
-            document.getElementById('editCurrentTiffinId').value = t.id;
-            document.getElementById('editTiffinModalName').textContent = t.name;
-            document.getElementById('editTAbout').value = t.about || "Nutritious home-style pure-veg thali prepared daily using fresh seasonal vegetables.";
-            document.getElementById('editTLunch').value = t.lunchMenu || "4 Butter/Plain Roti, Dal Fry / Kadhi, Seasonal Green Sabji, Jeera Rice & Salad.";
-            document.getElementById('editTDinner').value = t.dinnerMenu || "4 Tawa Roti, Special Sabji (Paneer/Kofta), Rice & Fresh Salad.";
-            document.getElementById('editTReview').value = t.reviewText || "Tastes just like home food, rotis are always soft.";
-            document.getElementById('editTDelivery').value = t.deliveryAreas || "Piprali Road, Nawalgarh Road, Jat Colony, Radhakishan Pura.";
-            document.getElementById('editTFaq').value = t.faqText || "Yes, contact directly to order a 1-day trial meal.";
-
-            document.getElementById('editTiffinTabsModal').classList.remove('hidden');
-        };
-
-        window.closeEditTiffinTabsModal = function() { document.getElementById('editTiffinTabsModal').classList.add('hidden'); };
-
-        document.getElementById('editTiffinTabsForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('editCurrentTiffinId').value);
-            const idx = tiffinsList.findIndex(item => item.id === id);
 
             if (idx !== -1) {
                 tiffinsList[idx].about = document.getElementById('editTAbout').value.trim();
