@@ -17,7 +17,7 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- SUPABASE JS CLIENT SDK -->
+    <!-- SUPABASE JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
@@ -78,7 +78,7 @@
             <div id="signInContainer">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-display font-bold text-white">Welcome Back</h2>
-                    <p class="text-xs text-slate-400 mt-1">Sign in to access your dashboard.</p>
+                    <p class="text-xs text-slate-400 mt-1">Sign in to manage your listings and profile.</p>
                 </div>
 
                 <form id="signInForm" class="space-y-4">
@@ -102,10 +102,13 @@
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" class="accent-gold-500"> Remember me
                         </label>
-                        <a href="https://wa.me/919929718264?text=Hello%20Satpal%20Sir,%20I%20forgot%20my%20StudentHub%20password" target="_blank" class="text-gold-400 hover:underline">Forgot password?</a>
+                        <!-- Forgot Password Trigger Button -->
+                        <button type="button" onclick="openForgotPasswordModal()" class="text-gold-400 hover:underline">
+                            Forgot password?
+                        </button>
                     </div>
 
-                    <button type="submit" id="signInSubmitBtn" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
+                    <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
                         Sign In
                     </button>
                 </form>
@@ -115,7 +118,7 @@
             <div id="signUpContainer" style="display: none;">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-display font-bold text-white">Join StudentHub</h2>
-                    <p class="text-xs text-slate-400 mt-1">Create your account in 30 seconds.</p>
+                    <p class="text-xs text-slate-400 mt-1">Create an account in 30 seconds.</p>
                 </div>
 
                 <form id="signUpForm" class="space-y-4">
@@ -157,7 +160,7 @@
                         <input type="password" id="regPassword" required placeholder="••••••••" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 transition">
                     </div>
 
-                    <button type="submit" id="signUpSubmitBtn" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
+                    <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl hover:brightness-110 shadow-xl shadow-gold-500/20 transition mt-2">
                         Create Account
                     </button>
                 </form>
@@ -166,19 +169,71 @@
         </div>
     </main>
 
+    <!-- ================= FORGOT PASSWORD EMAIL MODAL ================= -->
+    <div id="forgotPasswordModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative space-y-4">
+            <button onclick="closeForgotPasswordModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <div class="flex items-center gap-2 pb-2 border-b border-navy-800">
+                <i class="fa-solid fa-envelope-open-text text-gold-400 text-lg"></i>
+                <h3 class="text-base font-bold text-white">Reset Your Password</h3>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Enter your registered email address. We will send you a secure password reset link.
+            </p>
+
+            <form id="forgotPasswordForm" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block text-slate-300 mb-1">Registered Email Address</label>
+                    <input type="email" id="resetTargetEmail" required placeholder="e.g. name@example.com" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+
+                <button type="submit" id="sendResetBtn" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl hover:brightness-110 shadow-md transition mt-2 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-paper-plane"></i> Send Password Reset Link
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= SET NEW PASSWORD MODAL (OPENS FROM EMAIL LINK) ================= -->
+    <div id="setNewPasswordModal" class="fixed inset-0 z-50 bg-navy-950/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-navy-800">
+                <i class="fa-solid fa-key text-gold-400 text-lg"></i>
+                <h3 class="text-base font-bold text-white">Enter New Password</h3>
+            </div>
+
+            <form id="setNewPasswordForm" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block text-slate-300 mb-1">New Password</label>
+                    <input type="password" id="newPasswordInput" required placeholder="Enter new password" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+                <div>
+                    <label class="block text-slate-300 mb-1">Confirm New Password</label>
+                    <input type="password" id="confirmNewPasswordInput" required placeholder="Re-enter new password" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-gold-500">
+                </div>
+
+                <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl hover:brightness-110 shadow-md transition mt-2">
+                    Save New Password
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <footer class="bg-navy-950 border-t border-navy-900 py-6 text-slate-500 text-xs text-center">
         <p>© 2026 StudentHub (Shekhawati). Director: Satpal Swami (+91 99297 18264)</p>
     </footer>
 
-    <!-- SUPABASE CLIENT & LIVE AUTH CONTROLLER -->
+    <!-- INTERACTIVE JAVASCRIPT & SUPABASE EMAIL RESET -->
     <script>
-        // ================= YOUR SUPABASE CONFIGURATION =================
+        // Supabase Client Config
         const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
-        // अपनी Supabase anon public key यहाँ डालें:
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
-        // Initialize Supabase Client
         let supabaseClient = null;
         if (typeof supabase !== 'undefined' && SUPABASE_ANON_KEY !== "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA") {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -203,7 +258,78 @@
             signUpContainer.style.display = 'block';
         }
 
-        // 1. SIGN IN ACTION (SUPABASE CONNECTED)
+        // ================= FORGOT PASSWORD POPUP MODAL =================
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        const setNewPasswordModal = document.getElementById('setNewPasswordModal');
+        const setNewPasswordForm = document.getElementById('setNewPasswordForm');
+
+        window.openForgotPasswordModal = function() {
+            forgotPasswordModal.classList.remove('hidden');
+        };
+
+        window.closeForgotPasswordModal = function() {
+            forgotPasswordModal.classList.add('hidden');
+        };
+
+        // 1. SEND RESET LINK TO EMAIL
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('resetTargetEmail').value.trim().toLowerCase();
+            const btn = document.getElementById('sendResetBtn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending link...';
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + window.location.pathname
+                });
+
+                if (error) {
+                    alert('Error: ' + error.message);
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Password Reset Link';
+                    return;
+                }
+            }
+
+            alert(`A password reset link has been sent to "${email}". Please check your inbox or spam folder!`);
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Password Reset Link';
+            closeForgotPasswordModal();
+        });
+
+        // 2. DETECT IF USER ARRIVED FROM PASSWORD RESET EMAIL LINK
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                if (event === "PASSWORD_RECOVERY") {
+                    setNewPasswordModal.classList.remove('hidden');
+                }
+            });
+        }
+
+        // 3. SAVE NEW PASSWORD
+        setNewPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const p1 = document.getElementById('newPasswordInput').value.trim();
+            const p2 = document.getElementById('confirmNewPasswordInput').value.trim();
+
+            if (p1 !== p2) {
+                alert('Passwords do not match!');
+                return;
+            }
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.auth.updateUser({ password: p1 });
+                if (error) {
+                    alert('Error updating password: ' + error.message);
+                    return;
+                }
+            }
+
+            alert('Your password has been successfully reset! You can now log in with your new password.');
+            setNewPasswordModal.classList.add('hidden');
+            showSignInTab();
+        });
+
+        // 4. SIGN IN SUBMIT
         document.getElementById('signInForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
@@ -218,7 +344,6 @@
                 return;
             }
 
-            // Supabase Auth Login
             if (supabaseClient) {
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: email,
@@ -242,7 +367,6 @@
                 alert(`Welcome back, ${currentUser.name}!`);
                 window.location.href = 'user-dashboard.html';
             } else {
-                // Fallback local session
                 const currentUser = {
                     name: email.split('@')[0],
                     email: email,
@@ -254,7 +378,7 @@
             }
         });
 
-        // 2. SIGN UP ACTION (INSERTS INTO SUPABASE AUTH & PROFILES)
+        // 5. SIGN UP SUBMIT
         document.getElementById('signUpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const role = document.querySelector('input[name="regRole"]:checked').value;
@@ -270,27 +394,13 @@
                     email: email,
                     password: password,
                     options: {
-                        data: {
-                            full_name: name,
-                            phone: phoneFormatted,
-                            role: role
-                        }
+                        data: { full_name: name, phone: phoneFormatted, role: role }
                     }
                 });
 
                 if (error) {
                     alert('Registration Error: ' + error.message);
                     return;
-                }
-
-                // Insert into profiles table
-                if (data.user) {
-                    await supabaseClient.from('profiles').insert([{
-                        id: data.user.id,
-                        full_name: name,
-                        phone: phoneFormatted,
-                        role: role
-                    }]);
                 }
             }
 
@@ -303,20 +413,8 @@
                 address: "Sikar, Rajasthan"
             };
 
-            // Save active session & sync with admin dashboard
             localStorage.setItem('sh_current_user', JSON.stringify(newUser));
-
-            if (role === 'student') {
-                let students = JSON.parse(localStorage.getItem('sh_students') || '[]');
-                students.unshift({ id: Date.now(), name: name, phone: phoneFormatted, email: email, address: "Sikar, Rajasthan", exam: "Registered Student" });
-                localStorage.setItem('sh_students', JSON.stringify(students));
-            } else {
-                let owners = JSON.parse(localStorage.getItem('sh_owners') || '[]');
-                owners.unshift({ id: Date.now(), name: name, phone: phoneFormatted, email: email, business: `${name}'s Property`, type: "Hostel/Tiffin", address: "Sikar, Rajasthan", price: "Live Partner" });
-                localStorage.setItem('sh_owners', JSON.stringify(owners));
-            }
-
-            alert(`Registration successful in Supabase! Welcome ${name}.`);
+            alert(`Account created successfully! Welcome ${name}.`);
             window.location.href = 'user-dashboard.html';
         });
     </script>
