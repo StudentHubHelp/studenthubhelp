@@ -62,7 +62,6 @@
                 <div class="hidden xl:flex items-center space-x-6 text-xs font-semibold uppercase tracking-wider">
                     <a href="./" class="text-slate-300 hover:text-gold-400 transition">Home</a>
                     <a href="pg-finder.html" class="text-slate-300 hover:text-gold-400 transition">Hostel (100)</a>
-                    <a href="pg-finder.html?cat=PG" class="text-slate-300 hover:text-gold-400 transition">PG & Rooms</a>
                     <a href="tiffin-services.html" class="text-slate-300 hover:text-gold-400 transition">Tiffin & Mess</a>
                     <a href="library-coaching.html" class="text-gold-400 border-b-2 border-gold-500 pb-1">Libraries (33)</a>
                     <a href="#coachingLibraries" class="text-slate-300 hover:text-gold-400 transition">Coaching</a>
@@ -265,9 +264,6 @@
             <button onclick="closeLibModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
-            <button onclick="openEditLibTabsModal()" class="absolute top-4 right-16 z-20 px-3 py-1.5 rounded-full bg-navy-950/80 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold flex items-center gap-1.5 border border-gold-500/40 shadow-lg transition">
-                <i class="fa-solid fa-pen-to-square"></i> Edit Details
-            </button>
 
             <!-- Top Banner Image -->
             <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
@@ -357,23 +353,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ================= 8. EDIT 6-TABS MODAL FOR LIBRARY ================= -->
-    <div id="editLibTabsModal" class="fixed inset-0 z-50 bg-navy-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
-        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col p-6 shadow-2xl relative">
-            <button onclick="closeEditLibTabsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            
-            <h3 class="text-base font-bold text-white flex items-center gap-2 pb-3 border-b border-navy-800">
-                <i class="fa-solid fa-pen-to-square text-gold-400"></i> Edit Library Details (<span id="editLibModalName" class="text-gold-300">Library</span>)
-            </h3>
-
-            <form id="editLibTabsForm" class="space-y-4 overflow-y-auto flex-1 pr-1 text-xs text-slate-300 mt-3">
-                <input type="hidden" id="editCurrentLibId">
-
-                <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 space-y-1.5">
-                    <label class="font-bold text-gold-400 block">1. Overview (About Text)</label>
-                    <textarea id="editLAbout" rows="2" class="w-full bg-navy-900 border border-navy-700 rounded-lg p-2 text-white"></textarea>
-                </div>
 
                 <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 space-y-1.5">
                     <label class="font-bold text-gold-400 block">2. Seats & Shift Fees</label>
@@ -623,26 +602,6 @@
             document.getElementById(`lTabBtn-${tabName}`).className = 'ltab-btn py-3.5 border-b-2 border-gold-500 text-gold-300 flex-shrink-0 font-bold';
         };
 
-        // EDIT 6-TABS LOGIC
-        window.openEditLibTabsModal = function() {
-            const l = librariesList.find(item => item.id === currentViewingLibId) || librariesList[0];
-            document.getElementById('editCurrentLibId').value = l.id;
-            document.getElementById('editLibModalName').textContent = l.name;
-            document.getElementById('editLAbout').value = l.about || "Quiet, fully air-conditioned self-study library with ergonomic seating and uninterrupted high-speed internet.";
-            document.getElementById('editLShifts').value = l.shiftsText || "Morning: ₹650 | Evening: ₹650 | 24/7 Full: ₹1,200";
-            document.getElementById('editLReview').value = l.reviewText || "Pin-drop silence and high-speed internet. Perfect for test series.";
-            document.getElementById('editLDistance').value = l.distanceText || "Walking distance from Matrix, CLC, Gurukripa & Allen.";
-            document.getElementById('editLFaq').value = l.faqText || "Yes, personal lockers and reading lamps are available.";
-
-            document.getElementById('editLibTabsModal').classList.remove('hidden');
-        };
-
-        window.closeEditLibTabsModal = function() { document.getElementById('editLibTabsModal').classList.add('hidden'); };
-
-        document.getElementById('editLibTabsForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('editCurrentLibId').value);
-            const idx = librariesList.findIndex(item => item.id === id);
 
             if (idx !== -1) {
                 librariesList[idx].about = document.getElementById('editLAbout').value.trim();
