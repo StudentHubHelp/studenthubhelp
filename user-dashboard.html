@@ -518,8 +518,16 @@
 
         let currentOwnerImage = '';
 
-        function loadOwnerPropertyData() {
-            const savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + currentUser.email) || 'null');
+function loadOwnerPropertyData() {
+            // 1. पहले Supabase या LocalStorage से चेक करें
+            let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + currentUser.email) || 'null');
+            
+            // अगर व्यक्तिगत सेव नहीं है, तो全局 hostels डेटा से मैच करें जो इस ओनर का है
+            if (!savedProp) {
+                const allHostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
+                savedProp = allHostels.find(h => h.phone === currentUser.phone || h.email === currentUser.email);
+            }
+
             const ownerEmptyState = document.getElementById('ownerEmptyState');
             const ownerPropertyCard = document.getElementById('ownerPropertyCard');
 
@@ -533,10 +541,10 @@
             ownerPropertyCard.classList.remove('hidden');
 
             document.getElementById('ownerPropName').textContent = savedProp.name;
-            document.getElementById('ownerPropAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> ${savedProp.address}`;
-            document.getElementById('ownerVacantRooms').textContent = savedProp.vacant || "0 Rooms Available";
+            document.getElementById('ownerPropAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> ${savedProp.address || savedProp.area || 'Sikar'}`;
+            document.getElementById('ownerVacantRooms').textContent = savedProp.vacant || savedProp.roomsVacant || "0 Rooms Available";
             document.getElementById('ownerPropPrice').textContent = savedProp.price || "₹0 / month";
-            document.getElementById('ownerPropFacilities').textContent = savedProp.facilities || "--";
+            document.getElementById('ownerPropFacilities').textContent = savedProp.facilities || savedProp.menu || "--";
             
             const propImg = document.getElementById('ownerPropImg');
             propImg.src = savedProp.image || 'hostel-banner.png';
