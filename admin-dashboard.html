@@ -459,7 +459,7 @@
             <form id="adminEditForm" class="space-y-3.5 overflow-y-auto flex-1 pr-1 text-xs text-slate-300 mt-3">
                 <input type="hidden" id="adminEditType">
                 <input type="hidden" id="adminEditIndex">
-
+</div>
                 <!-- Photo Upload & URL -->
                 <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 space-y-2">
                     <label class="block text-gold-400 font-bold">Property Photo (Upload File or Enter Image URL)</label>
@@ -516,7 +516,15 @@
             </form>
         </div>
     </div>
-
+<div id="assignPropModal" class="fixed inset-0 z-50 bg-navy-950/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative space-y-4 max-h-[85vh] flex flex-col">
+        <button onclick="closeAssignModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <h3 class="text-base font-bold text-white flex items-center gap-2 pb-2 border-b border-navy-800">
+            <i class="fa-solid fa-link text-gold-400"></i> Assign Property to <span id="assignOwnerNameTitle" class="text-gold-300">Owner</span>
+        </h3>
+        <p class="text-xs text-slate-400">Select any property below to link it with this owner:</p>
+        <div id="assignPropListContainer" class="overflow-y-auto space-y-2 flex-1 pr-1 max-h-72"></div>
+    </div>
     <!-- ================= 5. MODAL: CREATE NEW ITEM MODAL ================= -->
     <div id="adminCreateModal" class="fixed inset-0 z-50 bg-navy-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
@@ -1034,7 +1042,7 @@ window.openOwnerPropertyModal = function(ownerEmail, ownerName, ownerPhone) {
             alert('Master Password updated successfully!');
         });
 // Universal Search Logic for Admin Search Bar
-        const globalSearchInput = document.getElementById('globalAdminSearch');
+const globalSearchInput = document.getElementById('globalAdminSearch');
         const searchResultsBox = document.getElementById('universalSearchResults');
 
         if (globalSearchInput) {
@@ -1049,37 +1057,99 @@ window.openOwnerPropertyModal = function(ownerEmail, ownerName, ownerPhone) {
                 let matches = [];
                 
                 hostelsData.forEach((h, i) => {
-                    if (h.name.toLowerCase().includes(query) || (h.area && h.area.toLowerCase().includes(query))) {
-                        matches.push({ title: h.name, type: 'Hostel', idx: i, category: 'hostels' });
+                    if ((h.name && h.name.toLowerCase().includes(query)) || (h.phone && h.phone.toLowerCase().includes(query)) || (h.address && h.address.toLowerCase().includes(query))) {
+                        matches.push({ title: h.name, subtitle: `${h.phone} • Hostel`, type: 'Hostel', idx: i, category: 'hostels' });
                     }
                 });
                 tiffinsData.forEach((t, i) => {
-                    if (t.name.toLowerCase().includes(query)) {
-                        matches.push({ title: t.name, type: 'Tiffin', idx: i, category: 'tiffins' });
+                    if ((t.name && t.name.toLowerCase().includes(query)) || (t.phone && t.phone.toLowerCase().includes(query)) || (t.address && t.address.toLowerCase().includes(query))) {
+                        matches.push({ title: t.name, subtitle: `${t.phone} • Tiffin`, type: 'Tiffin', idx: i, category: 'tiffins' });
                     }
                 });
                 librariesData.forEach((l, i) => {
-                    if (l.name.toLowerCase().includes(query)) {
-                        matches.push({ title: l.name, type: 'Library', idx: i, category: 'libraries' });
+                    if ((l.name && l.name.toLowerCase().includes(query)) || (l.phone && l.phone.toLowerCase().includes(query)) || (l.address && l.address.toLowerCase().includes(query))) {
+                        matches.push({ title: l.name, subtitle: `${l.phone} • Library`, type: 'Library', idx: i, category: 'libraries' });
+                    }
+                });
+                studentsData.forEach((s, i) => {
+                    if ((s.full_name && s.full_name.toLowerCase().includes(query)) || (s.name && s.name.toLowerCase().includes(query)) || (s.phone && s.phone.toLowerCase().includes(query))) {
+                        matches.push({ title: s.full_name || s.name, subtitle: `${s.phone || ''} • Student`, type: 'Student', idx: i, category: 'students' });
+                    }
+                });
+                ownersData.forEach((o, i) => {
+                    if ((o.full_name && o.full_name.toLowerCase().includes(query)) || (o.name && o.name.toLowerCase().includes(query)) || (o.phone && o.phone.toLowerCase().includes(query))) {
+                        matches.push({ title: o.full_name || o.name, subtitle: `${o.phone || ''} • Owner`, type: 'Owner', idx: i, category: 'owners' });
                     }
                 });
 
                 if (matches.length === 0) {
-                    searchResultsBox.innerHTML = `<p class="text-slate-400 p-2 text-center">No results found for "${query}"</p>`;
+                    searchResultsBox.innerHTML = `<p class="text-slate-400 p-3 text-center">No results found for "${query}"</p>`;
                 } else {
-                    searchResultsBox.innerHTML = matches.slice(0, 6).map(m => `
-                        <div onclick="openAdminPropertyView('${m.category}', ${m.idx}); searchResultsBox.classList.add('hidden'); globalSearchInput.value='';" class="p-2.5 hover:bg-navy-800 rounded-xl cursor-pointer flex justify-between items-center transition">
-                            <span class="font-bold text-white">${m.title}</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded bg-gold-500/20 text-gold-300">${m.type}</span>
+                    searchResultsBox.innerHTML = matches.slice(0, 8).map(m => `
+                        <div onclick="handleGlobalSearchSelect('${m.category}', ${m.idx})" class="p-3 hover:bg-navy-800 rounded-xl cursor-pointer flex justify-between items-center transition border-b border-navy-800/50">
+                            <div>
+                                <span class="font-bold text-white block text-xs">${m.title}</span>
+                                <span class="text-[10px] text-slate-400">${m.subtitle}</span>
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-gold-500/20 text-gold-300 font-bold">${m.type}</span>
                         </div>
                     `).join('');
                 }
                 searchResultsBox.classList.remove('hidden');
             });
         }
+
+        window.handleGlobalSearchSelect = function(cat, idx) {
+            searchResultsBox.classList.add('hidden');
+            globalSearchInput.value = '';
+            if (cat === 'hostels' || cat === 'tiffins' || cat === 'libraries') {
+                openAdminPropertyView(cat, idx);
+            } else if (cat === 'owners') {
+                setSection('owner');
+            } else if (cat === 'students') {
+                setSection('student');
+            }
+        };
         function initAllData() {
             fetchRealUsers();
         }
+        let activeAssignOwnerEmail = '';
+
+        window.openOwnerAssignModal = function(ownerEmail, ownerName) {
+            activeAssignOwnerEmail = ownerEmail;
+            let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + ownerEmail) || 'null');
+            
+            if (savedProp) {
+                openOwnerPropertyModal(ownerEmail, ownerName, '');
+            } else {
+                document.getElementById('assignOwnerNameTitle').textContent = ownerName;
+                const container = document.getElementById('assignPropListContainer');
+                container.innerHTML = hostelsData.map(h => `
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex justify-between items-center hover:border-gold-500 transition">
+                        <div>
+                            <span class="font-bold text-white block text-xs">${h.name}</span>
+                            <span class="text-[10px] text-slate-400">${h.area || 'Sikar'} • ${h.phone || ''}</span>
+                        </div>
+                        <button onclick="selectAndAssignProperty(${h.id})" class="px-3 py-1.5 bg-gold-500 text-navy-950 font-bold rounded-lg text-xs hover:brightness-110">Select</button>
+                    </div>
+                `).join('');
+                document.getElementById('assignPropModal').classList.remove('hidden');
+            }
+        };
+
+        window.closeAssignModal = function() {
+            document.getElementById('assignPropModal').classList.add('hidden');
+        };
+
+        window.selectAndAssignProperty = function(propId) {
+            let selected = hostelsData.find(h => h.id === propId);
+            if (selected) {
+                localStorage.setItem('sh_owner_prop_' + activeAssignOwnerEmail, JSON.stringify(selected));
+                alert(`सफलतापूर्वक "${selected.name}" को ओनर से जोड़ दिया गया है!`);
+                closeAssignModal();
+                fetchRealUsers();
+            }
+        };
     </script>
 </body>
 </html>
