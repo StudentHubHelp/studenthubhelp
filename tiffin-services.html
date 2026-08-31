@@ -14,10 +14,10 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://studenthubhelp.github.io/studenthubhelp/tiffin-services.html">
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts (With Devanagari Support) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- Tailwind CSS CDN -->
@@ -32,7 +32,7 @@
                         navy: { 950: '#040814', 900: '#081026', 850: '#0D1838', 800: '#14224D', 700: '#1F316B' },
                         gold: { 100: '#FFF7D6', 200: '#FDECB2', 300: '#F5DE88', 400: '#E6C65E', 500: '#D4AF37', 600: '#B89020', 700: '#8C6B10' }
                     },
-                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Cinzel', 'serif'] }
+                    fontFamily: { sans: ['Inter', 'Noto Sans Devanagari', 'sans-serif'], display: ['Cinzel', 'serif'] }
                 }
             }
         }
@@ -265,9 +265,7 @@
                         <span class="font-bold text-gold-400 block text-xs">Walking Routes to Major Institutes:</span>
                         <span class="text-[10px] text-slate-400">Live Maps Navigation</span>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="tiffinRoutesList">
-                        <!-- Dynamic Routes -->
-                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="tiffinRoutesList"></div>
                 </div>
 
                 <!-- TAB 5: DELIVERY ZONES & LOCATION -->
@@ -289,7 +287,7 @@
                     </div>
                     <div class="p-3 bg-navy-850 rounded-xl border border-navy-700">
                         <strong>Q: Can I get a 1-day trial meal?</strong>
-                        <p class="text-slate-400 mt-1" id="tiffinModalFaq">Yes, contact the tiffin center directly to order a trial thali before taking a monthly plan.</p>
+                        <p class="text-slate-400 mt-1">Yes, contact the tiffin center directly to order a trial thali before taking a monthly plan.</p>
                     </div>
                 </div>
             </div>
@@ -302,7 +300,7 @@
         </div>
     </div>
 
-    <!-- ================= 8. WISHLIST MODAL ================= -->
+    <!-- ================= 6. WISHLIST MODAL ================= -->
     <div id="tiffinWishlistModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-lg w-full max-h-[80vh] flex flex-col p-6 shadow-2xl relative">
             <button onclick="closeTiffinWishlistModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -325,7 +323,18 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let tiffinsList = [];
+        // 7 Real Pure-Veg Tiffins from CSV
+        const pureRealTiffins = [
+            { id: 1, name: "दीदी का टिफिन (Didi Ka Tiffin)", area: "Radhakishan Pura", address: "Purohit ji ki dhani, Radhakishan Pura, Sikar", phone: "+91 63785 04820", rating: "4.8", reviews: "51", image: "tiffin-banner.png" },
+            { id: 2, name: "राधे फूड्स (Radhe Foods)", area: "Radhakishan Pura", address: "Vandematram chowk, Radhakishan Pura, Sikar", phone: "+91 70623 47736", rating: "4.7", reviews: "28", image: "tiffin-banner.png" },
+            { id: 3, name: "गुरु जी मेस & टिफिन (Guruji Mess)", area: "Piprali Road", address: "Surya Nagar, Piprali Road, Jat Colony, Sikar", phone: "+91 93524 66682", rating: "4.9", reviews: "45", image: "tiffin-banner.png" },
+            { id: 4, name: "एसके टिफिन सेंटर (SK Tiffin)", area: "Basant Vihar", address: "E-7, Basant Vihar, Opp. Indian Oil Pump, Sikar", phone: "+91 99283 38780", rating: "4.8", reviews: "30", image: "tiffin-banner.png" },
+            { id: 5, name: "श्री राधे टिफिन सेंटर", area: "Devipura", address: "Near Clock Tower Gate, Devipura, Sikar", phone: "+91 74268 37027", rating: "5.0", reviews: "13", image: "tiffin-banner.png" },
+            { id: 6, name: "शेफाली टिफिन सेंटर", area: "Chandpol", address: "Chandpol Bazar, Near Gate, Sikar", phone: "+91 63701 28289", rating: "4.6", reviews: "12", image: "tiffin-banner.png" },
+            { id: 7, name: "श्री श्याम पवित्र भोजनालय & टिफिन", area: "Piprali Road", address: "CLC Chowk, Piprali Road, Sikar", phone: "+91 75977 57003", rating: "4.9", reviews: "85", image: "tiffin-banner.png" }
+        ];
+
+        let tiffinsList = JSON.parse(localStorage.getItem('sh_tiffins') || JSON.stringify(pureRealTiffins));
         let tiffinWishlist = JSON.parse(localStorage.getItem('sh_wishlist_tiffin') || '[]');
 
         const tiffinGrid = document.getElementById('tiffinGrid');
@@ -334,23 +343,28 @@
         const tiffinKeywordSearch = document.getElementById('tiffinKeywordSearch');
 
         async function fetchTiffins() {
-            tiffinGrid.innerHTML = '<div class="col-span-3 text-center py-12 text-gold-400 font-bold text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading 7 Pure-Veg Tiffins from Database...</div>';
-            
             try {
                 const { data, error } = await supabaseClient
                     .from('properties')
                     .select('*')
-                    .eq('category', 'tiffin')
+                    .ilike('category', 'tiffin')
                     .order('id', { ascending: true });
 
                 if (data && data.length > 0) {
-                    tiffinsList = data;
-                } else {
-                    tiffinsList = JSON.parse(localStorage.getItem('sh_tiffins') || '[]');
+                    tiffinsList = data.map(d => ({
+                        id: d.id,
+                        name: d.verified_name || d.property_name,
+                        area: d.area || 'Sikar',
+                        address: d.verified_address || d.supplied_address,
+                        phone: d.verified_phone || d.supplied_phone,
+                        rating: d.rating || '4.8',
+                        reviews: d.review_count || '50',
+                        image: d.image || 'tiffin-banner.png',
+                        about: d.about
+                    }));
+                    localStorage.setItem('sh_tiffins', JSON.stringify(tiffinsList));
                 }
-            } catch(e) {
-                tiffinsList = JSON.parse(localStorage.getItem('sh_tiffins') || '[]');
-            }
+            } catch(e) {}
             renderTiffins();
         }
 
@@ -366,8 +380,8 @@
 
             let filtered = tiffinsList.filter(item => {
                 const itemArea = (item.area || '').toLowerCase();
-                const itemAddr = (item.verified_address || item.supplied_address || '').toLowerCase();
-                const itemName = (item.verified_name || item.supplied_name || '').toLowerCase();
+                const itemAddr = (item.address || '').toLowerCase();
+                const itemName = (item.name || '').toLowerCase();
 
                 if (loc !== 'all' && !itemArea.includes(loc.toLowerCase()) && !itemAddr.includes(loc.toLowerCase())) return false;
                 if (q && !itemName.includes(q) && !itemAddr.includes(q) && !itemArea.includes(q)) return false;
@@ -378,22 +392,16 @@
 
             tiffinGrid.innerHTML = filtered.map(item => {
                 const isSaved = tiffinWishlist.includes(item.id);
-                const name = item.verified_name || item.supplied_name || 'Tiffin Center';
-                const addr = item.verified_address || item.supplied_address || 'Sikar';
-                const phone = item.verified_phone || item.supplied_phone || '+91 99297 18264';
-                const rating = item.rating || '4.8';
-                const reviews = item.review_count || '50+';
-
                 return `
                 <div onclick="openTiffinModal(${item.id})" class="bg-navy-850 rounded-3xl p-5 sm:p-6 gold-border-glow cursor-pointer transition duration-300 flex flex-col justify-between space-y-4 hover:bg-navy-800 relative group">
                     
                     <div class="relative w-full h-44 rounded-2xl overflow-hidden bg-navy-900 border border-gold-500/20">
-                        <img src="${item.image_url || 'tiffin-banner.png'}" onerror="this.src='tiffin-banner.png'" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <img src="${item.image || 'tiffin-banner.png'}" onerror="this.src='tiffin-banner.png'" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                         <div class="absolute inset-0 bg-gradient-to-t from-navy-950 via-transparent to-transparent"></div>
                         
                         <div class="absolute top-3 left-3 flex gap-1.5">
                             <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-500/90 text-white shadow-md">🟢 Pure Veg</span>
-                            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/90 text-navy-950 shadow-md">⭐ ${rating} (${reviews})</span>
+                            <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-500/90 text-navy-950 shadow-md">⭐ ${item.rating} (${item.reviews})</span>
                         </div>
 
                         <button onclick="toggleTiffinWishlist(${item.id}, event)" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-navy-950/80 text-white flex items-center justify-center border border-navy-700 hover:text-red-400 transition">
@@ -406,8 +414,8 @@
                     </div>
 
                     <div>
-                        <h3 class="text-lg font-bold text-white leading-snug group-hover:text-gold-300 transition">${name}</h3>
-                        <p class="text-xs text-slate-300 mt-1 line-clamp-2"><i class="fa-solid fa-map-pin text-gold-500 mr-1"></i> ${addr}</p>
+                        <h3 class="text-lg font-bold text-white leading-snug group-hover:text-gold-300 transition">${item.name}</h3>
+                        <p class="text-xs text-slate-300 mt-1 line-clamp-2"><i class="fa-solid fa-map-pin text-gold-500 mr-1"></i> ${item.address}</p>
                         
                         <div class="flex flex-wrap gap-1.5 mt-3 text-[10px] text-slate-400 font-semibold">
                             <span class="px-2 py-0.5 bg-navy-900 rounded border border-navy-700">🚚 Room Delivery</span>
@@ -415,12 +423,12 @@
                             <span class="px-2 py-0.5 bg-navy-900 rounded border border-navy-700">💧 RO Water</span>
                         </div>
 
-                        <p class="text-xs text-gold-300 font-mono font-semibold mt-3"><i class="fa-solid fa-phone text-gold-500 mr-1"></i> ${phone}</p>
+                        <p class="text-xs text-gold-300 font-mono font-semibold mt-3"><i class="fa-solid fa-phone text-gold-500 mr-1"></i> ${item.phone}</p>
                     </div>
 
                     <div class="pt-3 border-t border-navy-800 flex items-center gap-2" onclick="event.stopPropagation()">
-                        <a href="tel:${phone}" class="flex-1 text-center py-2.5 rounded-xl bg-navy-900 border border-gold-500/40 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-phone"></i> Call</a>
-                        <a href="https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=Hello,%20I%20want%20to%20order%20daily%20tiffin%20from%20${encodeURIComponent(name)}" target="_blank" class="flex-1 text-center py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 text-xs font-bold transition flex items-center justify-center gap-1.5"><i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp</a>
+                        <a href="tel:${item.phone}" class="flex-1 text-center py-2.5 rounded-xl bg-navy-900 border border-gold-500/40 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-phone"></i> Call</a>
+                        <a href="https://wa.me/${(item.phone || '').replace(/[^0-9]/g, '')}?text=Hello,%20I%20want%20to%20order%20daily%20tiffin%20from%20${encodeURIComponent(item.name)}" target="_blank" class="flex-1 text-center py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 text-xs font-bold transition flex items-center justify-center gap-1.5"><i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp</a>
                     </div>
                 </div>
                 `;
@@ -431,22 +439,16 @@
 
         window.openTiffinModal = function(id) {
             const t = tiffinsList.find(item => item.id === id) || tiffinsList[0];
-            const name = t.verified_name || t.supplied_name || 'Tiffin Center';
-            const addr = t.verified_address || t.supplied_address || 'Sikar';
-            const phone = t.verified_phone || t.supplied_phone || '+91 99297 18264';
-            const rating = t.rating || '4.8';
-            const reviews = t.review_count || '50+';
+            document.getElementById('tiffinBannerImg').src = t.image || 'tiffin-banner.png';
+            document.getElementById('tiffinModalTitle').textContent = t.name;
+            document.getElementById('tiffinModalArea').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${t.address}`;
+            document.getElementById('tiffinRatingBadge').textContent = `⭐ ${t.rating} (${t.reviews} Reviews)`;
+            document.getElementById('tiffinModalReviewHeader').textContent = `⭐ ${t.rating} / 5 Rating`;
+            document.getElementById('tiffinCallBtn').href = `tel:${t.phone}`;
+            document.getElementById('tiffinWhatsAppBtn').href = `https://wa.me/${(t.phone || '').replace(/[^0-9]/g, '')}?text=Hi,%20I%20want%20to%20inquire%20about%20meal%20plan%20in%20${encodeURIComponent(t.name)}`;
+            document.getElementById('tiffinMapBtn').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.name + ' ' + t.address)}`;
 
-            document.getElementById('tiffinBannerImg').src = t.image_url || 'tiffin-banner.png';
-            document.getElementById('tiffinModalTitle').textContent = name;
-            document.getElementById('tiffinModalArea').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${addr}`;
-            document.getElementById('tiffinRatingBadge').textContent = `⭐ ${rating} (${reviews} Reviews)`;
-            document.getElementById('tiffinModalReviewHeader').textContent = `⭐ ${rating} / 5 Rating`;
-            document.getElementById('tiffinCallBtn').href = `tel:${phone}`;
-            document.getElementById('tiffinWhatsAppBtn').href = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=Hi,%20I%20want%20to%20inquire%20about%20meal%20plan%20in%20${encodeURIComponent(name)}`;
-            document.getElementById('tiffinMapBtn').href = t.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + addr)}`;
-
-            const baseAddr = encodeURIComponent(addr + ', Sikar');
+            const baseAddr = encodeURIComponent(t.address);
             document.getElementById('tiffinRoutesList').innerHTML = `
                 <div class="p-2.5 bg-navy-850 rounded-xl border border-navy-700 flex justify-between items-center">
                     <div><strong class="text-white block">Matrix Academy</strong><span class="text-[10px] text-slate-400">Piprali Road Hub</span></div>
@@ -480,8 +482,6 @@
             }
             localStorage.setItem('sh_wishlist_tiffin', JSON.stringify(tiffinWishlist));
             updateTiffinWishlistBadge();
-            renderTiffins();iffin', JSON.stringify(tiffinWishlist));
-            updateTiffinWishlistBadge();
             renderTiffins();
         };
 
@@ -493,8 +493,8 @@
             } else {
                 grid.innerHTML = savedItems.map(item => `
                     <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex justify-between items-center">
-                        <div><span class="font-bold text-white block">${item.verified_name || item.supplied_name}</span><span class="text-slate-400 text-[11px]">${item.area}</span></div>
-                        <a href="tel:${item.verified_phone || item.supplied_phone}" class="px-3 py-1.5 bg-gold-500 text-navy-950 font-bold rounded-lg text-xs">Call</a>
+                        <div><span class="font-bold text-white block">${item.name}</span><span class="text-slate-400 text-[11px]">${item.area}</span></div>
+                        <a href="tel:${item.phone}" class="px-3 py-1.5 bg-gold-500 text-navy-950 font-bold rounded-lg text-xs">Call</a>
                     </div>
                 `).join('');
             }
