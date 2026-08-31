@@ -678,24 +678,50 @@
                     `).join('');
                 }
             }
-
+// ओनर पर क्लिक करने पर अगर प्रॉपर्टी न मिले, तो लिस्ट से सेलेक्ट करके लिंक करने का फंक्शन
+        window.openOwnerAssignModal = function(ownerEmail, ownerName) {
+            let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + ownerEmail) || 'null');
+            
+            if (savedProp) {
+                // अगर पहले से प्रॉपर्टी है, तो उसका 6-tab वाला पॉपअप खोलें
+                openOwnerPropertyModal(ownerEmail, ownerName, '');
+            } else {
+                // अगर प्रॉपर्टी रजिस्टर नहीं है, तो सभी होस्टल्स/टिफिन की लिस्ट से सेलेक्ट करने का प्रॉम्प्ट दिखाएं
+                const allHostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
+                let listStr = allHostels.map((h, i) => `${i + 1}. ${h.name} (${h.area})`).join('\n');
+                
+                let choice = prompt(`"${ownerName}" की कोई प्रॉपर्टी रजिस्टर नहीं है।\n\nनीचे दी गई लिस्ट में से नंबर टाइप करें जिसे इस ओनर से जोड़ना है:\n\n${listStr}`);
+                
+                if (choice && !isNaN(choice)) {
+                    let selectedHostel = allHostels[parseInt(choice) - 1];
+                    if (selectedHostel) {
+                        localStorage.setItem('sh_owner_prop_' + ownerEmail, JSON.stringify(selectedHostel));
+                        alert(`सफलतापूर्वक "${selectedHostel.name}" को ओनर ${ownerName} से जोड़ दिया गया है! अब यह ओनर के डैशबोर्ड में भी दिखेगी।`);
+                        openOwnerPropertyModal(ownerEmail, ownerName, selectedHostel.phone);
+                    } else {
+                        alert('अमान्य चयन (Invalid Choice)!');
+                    }
+                }
+            }
+        };
             // Owners Table (Row click opens 6-tab modal)
             const oBody = document.getElementById('ownerTableBody');
             if (oBody) {
                 if (ownersData.length === 0) {
                     oBody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No property owners registered yet.</td></tr>`;
                 } else {
-                    oBody.innerHTML = ownersData.map((o, idx) => `
-                        <tr onclick="openOwnerPropertyModal('${o.email}', '${o.full_name || o.name}', '${o.phone}')" class="hover:bg-navy-900/80 cursor-pointer transition">
-                            <td class="p-4 font-bold text-white flex items-center gap-2"><i class="fa-solid fa-building text-gold-400"></i> ${o.full_name || o.name || 'Owner'}</td>
-                            <td class="p-4 font-mono text-gold-300">${o.phone || '--'}</td>
-                            <td class="p-4">${o.email || '--'}</td>
-                            <td class="p-4 text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> Verified Partner</td>
-                            <td class="p-4 text-right" onclick="event.stopPropagation()">
-                                <button onclick="deleteItem('owners', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white" title="Delete Owner"><i class="fa-solid fa-trash"></i></button>
-                            </td>
-                        </tr>
-                    `).join('');
+oBody.innerHTML = ownersData.map((o, idx) => `
+        <tr onclick="openOwnerPropertyModal('${o.email}', '${o.full_name || o.name}', '${o.phone}')" class="hover:bg-navy-900/80 cursor-pointer transition">
+            <td class="p-4 font-bold text-white flex items-center gap-2"><i class="fa-solid fa-building text-gold-400"></i> ${o.full_name || o.name || 'Owner'}</td>
+            <td class="p-4 font-mono text-gold-300">${o.phone || '--'}</td>
+            <td class="p-4 text-slate-300 font-mono">${o.email || 'satpalswami22742@gmail.com'}</td>
+            <td class="p-4 text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> Verified Partner</td>
+            <td class="p-4 text-right flex items-center justify-end gap-2" onclick="event.stopPropagation()">
+                <button onclick="openOwnerAssignModal('${o.email}', '${o.full_name || o.name}')" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950" title="Assign / Link Property"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button onclick="deleteItem('owners', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white" title="Delete Owner"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
                 }
             }
 
