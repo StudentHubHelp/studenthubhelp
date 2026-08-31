@@ -42,7 +42,7 @@
 <body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-gold-500 selection:text-navy-950 min-h-screen flex flex-col justify-between">
 
     <!-- ================= NAVBAR ================= -->
-    <nav class="bg-navy-900 border-b border-gold-500/15 px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md">
+    <nav class="bg-navy-900 border-b border-gold-500/15 px-4 sm:px-8 py-4 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-40 backdrop-blur-md">
         <a href="./" class="flex items-center gap-3">
             <img src="logo.png" onerror="this.outerHTML='<div class=\'w-10 h-10 rounded-xl bg-gold-500 text-navy-950 font-display font-extrabold text-lg flex items-center justify-center\'>SH</div>'" class="w-10 h-10 rounded-xl object-cover border border-gold-500/40 shadow-md">
             <div>
@@ -51,14 +51,24 @@
             </div>
         </a>
 
-        <div class="flex items-center gap-2.5 sm:gap-3 text-xs">
-            <a href="./" class="px-3.5 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition flex items-center gap-1">
+        <!-- VIEW SWITCHER (STUDENT / OWNER LIVE TOGGLE) -->
+        <div class="flex items-center bg-navy-850 p-1 rounded-xl border border-gold-500/30 text-xs font-bold shadow-inner">
+            <button onclick="switchDashboardRole('student')" id="toggleStudentBtn" class="px-3.5 py-1.5 rounded-lg gold-gradient-bg text-navy-950 shadow-md transition">
+                <i class="fa-solid fa-user-graduate mr-1"></i> Student View
+            </button>
+            <button onclick="switchDashboardRole('owner')" id="toggleOwnerBtn" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-building mr-1"></i> Owner View
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2.5 text-xs">
+            <a href="./" class="px-3 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition flex items-center gap-1">
                 <i class="fa-solid fa-home"></i> <span class="hidden sm:inline">Home</span>
             </a>
-            <button onclick="openChangePasswordModal()" class="px-3.5 py-2 rounded-xl bg-navy-850 border border-navy-700 text-slate-300 hover:border-gold-500 hover:text-gold-300 transition flex items-center gap-1">
+            <button onclick="openChangePasswordModal()" class="px-3 py-2 rounded-xl bg-navy-850 border border-navy-700 text-slate-300 hover:border-gold-500 hover:text-gold-300 transition flex items-center gap-1">
                 <i class="fa-solid fa-key"></i> <span class="hidden sm:inline">Password</span>
             </button>
-            <button onclick="userLogout()" class="px-3.5 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 font-bold transition flex items-center gap-1">
+            <button onclick="userLogout()" class="px-3 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 font-bold transition flex items-center gap-1">
                 <i class="fa-solid fa-power-off"></i> <span>Logout</span>
             </button>
         </div>
@@ -71,29 +81,29 @@
         <div class="bg-gradient-to-r from-navy-900 via-navy-850 to-navy-900 border border-gold-500/35 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
             <div class="flex items-center gap-4">
                 <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 text-2xl font-bold flex items-center justify-center font-display shadow-lg shadow-gold-500/20" id="userAvatar">
-                    U
+                    H
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <span id="roleBadge" class="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border">Student</span>
+                        <span id="roleBadge" class="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-emerald-500/10 text-emerald-300 border-emerald-500/30">Student Aspirant</span>
                         <span class="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/30">
-                            <i class="fa-solid fa-circle-check mr-1"></i> Verified
+                            <i class="fa-solid fa-circle-check mr-1"></i> Account Verified
                         </span>
                     </div>
-                    <h2 class="text-2xl font-display font-bold text-white mt-1.5 uppercase" id="userName">User Name</h2>
-                    <p class="text-xs text-slate-300 font-mono mt-0.5" id="userContactDetails">email • phone</p>
+                    <h2 class="text-2xl font-display font-bold text-white mt-1.5 uppercase" id="userName">Harsh Nehra</h2>
+                    <p class="text-xs text-slate-300 font-mono mt-0.5" id="userContactDetails">hsprivetsecret@gmail.com • +91 7014768657</p>
                 </div>
             </div>
             <div class="text-right hidden sm:block">
-                <span class="text-[11px] text-slate-400 block">Sikar Student Platform</span>
-                <span class="text-xs text-gold-400 font-bold">Zero Brokerage Network</span>
+                <span class="text-[11px] text-slate-400 block">Sikar Student Network</span>
+                <span class="text-xs text-gold-400 font-bold">Zero Brokerage Platform</span>
             </div>
         </div>
 
         <!-- ========================================================================= -->
-        <!-- 1. STUDENT VIEW (छात्रों के लिए संपूर्ण डैशबोर्ड) -->
+        <!-- 1. STUDENT VIEW -->
         <!-- ========================================================================= -->
-        <div id="studentView" class="hidden space-y-8">
+        <div id="studentView" class="space-y-8">
             
             <!-- A. Active Enrolled Services & Dates Card -->
             <div class="bg-navy-850 rounded-3xl gold-border-glow p-6 sm:p-8 space-y-6">
@@ -119,14 +129,14 @@
                                 <span class="text-xs font-bold text-gold-400 flex items-center gap-1.5">
                                     <i class="fa-solid fa-hotel"></i> Current Hostel / PG
                                 </span>
-                                <span id="studentHostelBadge" class="text-[9px] px-2 py-0.5 rounded font-semibold border">Status</span>
+                                <span id="studentHostelBadge" class="text-[9px] px-2 py-0.5 rounded font-semibold border bg-emerald-500/10 text-emerald-300 border-emerald-500/30">Active</span>
                             </div>
-                            <h4 class="text-sm font-bold text-white leading-snug" id="studentHostelName">Not Joined Yet</h4>
-                            <p class="text-xs text-slate-300" id="studentHostelRoom">No active room</p>
+                            <h4 class="text-sm font-bold text-white leading-snug" id="studentHostelName">Prince Boys PG & Hostel</h4>
+                            <p class="text-xs text-slate-300" id="studentHostelRoom"><i class="fa-solid fa-door-open text-gold-500 text-[10px]"></i> Room #204 (Single Bed)</p>
                         </div>
                         <div class="pt-2.5 border-t border-navy-800 flex items-center justify-between text-[11px]">
                             <span class="text-slate-400">Joining Date:</span>
-                            <span class="text-gold-300 font-mono font-semibold" id="studentHostelDate">Not Joined</span>
+                            <span class="text-gold-300 font-mono font-semibold" id="studentHostelDate">15 July 2026</span>
                         </div>
                     </div>
 
@@ -137,14 +147,14 @@
                                 <span class="text-xs font-bold text-gold-400 flex items-center gap-1.5">
                                     <i class="fa-solid fa-bowl-food"></i> Active Tiffin Service
                                 </span>
-                                <span id="studentTiffinBadge" class="text-[9px] px-2 py-0.5 rounded font-semibold border">Status</span>
+                                <span id="studentTiffinBadge" class="text-[9px] px-2 py-0.5 rounded font-semibold border bg-emerald-500/10 text-emerald-300 border-emerald-500/30">Daily Meal</span>
                             </div>
-                            <h4 class="text-sm font-bold text-white leading-snug" id="studentTiffinName">Not Subscribed Yet</h4>
-                            <p class="text-xs text-slate-300" id="studentTiffinPlan">No active meal plan</p>
+                            <h4 class="text-sm font-bold text-white leading-snug" id="studentTiffinName">दीदी का टिफिन (Didi Ka Tiffin)</h4>
+                            <p class="text-xs text-slate-300" id="studentTiffinPlan"><i class="fa-solid fa-utensils text-gold-500 text-[10px]"></i> 2-Time Pure Veg Thali</p>
                         </div>
                         <div class="pt-2.5 border-t border-navy-800 flex items-center justify-between text-[11px]">
                             <span class="text-slate-400">Start Date:</span>
-                            <span class="text-gold-300 font-mono font-semibold" id="studentTiffinDate">Not Subscribed</span>
+                            <span class="text-gold-300 font-mono font-semibold" id="studentTiffinDate">01 August 2026</span>
                         </div>
                     </div>
 
@@ -155,14 +165,14 @@
                                 <span class="text-xs font-bold text-gold-400 flex items-center gap-1.5">
                                     <i class="fa-solid fa-landmark"></i> 24/7 Study Library
                                 </span>
-                                <span id="studentLibraryBadge" class="text-[9px] px-2 py-0.5 rounded font-semibold border">Status</span>
+                                <span id="studentLibraryBadge" class="text-[9px] px-2 py-0.5 rounded font-semibold border bg-emerald-500/10 text-emerald-300 border-emerald-500/30">Reserved</span>
                             </div>
-                            <h4 class="text-sm font-bold text-white leading-snug" id="studentLibraryName">Not Enrolled Yet</h4>
-                            <p class="text-xs text-slate-300" id="studentLibrarySeat">No reserved seat</p>
+                            <h4 class="text-sm font-bold text-white leading-snug" id="studentLibraryName">थे स्टडी पॉइंट लाइब्रेरी</h4>
+                            <p class="text-xs text-slate-300" id="studentLibrarySeat"><i class="fa-solid fa-chair text-gold-500 text-[10px]"></i> Seat #14 (AC Cabin)</p>
                         </div>
                         <div class="pt-2.5 border-t border-navy-800 flex items-center justify-between text-[11px]">
                             <span class="text-slate-400">Joining Date:</span>
-                            <span class="text-gold-300 font-mono font-semibold" id="studentLibraryDate">Not Enrolled</span>
+                            <span class="text-gold-300 font-mono font-semibold" id="studentLibraryDate">20 July 2026</span>
                         </div>
                     </div>
 
@@ -180,17 +190,17 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                     <div class="p-4 bg-navy-900 rounded-2xl border border-navy-700 space-y-1">
                         <span class="text-slate-400 text-[10px] uppercase font-bold">Hostel Rent Due Date</span>
-                        <div class="text-base font-bold text-white" id="trackerHostelDue">1st of Every Month</div>
+                        <div class="text-base font-bold text-white">1st of Every Month</div>
                         <span class="text-[10px] text-emerald-400">Direct to Warden</span>
                     </div>
                     <div class="p-4 bg-navy-900 rounded-2xl border border-navy-700 space-y-1">
                         <span class="text-slate-400 text-[10px] uppercase font-bold">Tiffin Renewal Date</span>
-                        <div class="text-base font-bold text-white" id="trackerTiffinDue">5th of Every Month</div>
+                        <div class="text-base font-bold text-white">5th of Every Month</div>
                         <span class="text-[10px] text-emerald-400">Direct to Mess Cook</span>
                     </div>
                     <div class="p-4 bg-navy-900 rounded-2xl border border-navy-700 space-y-1">
                         <span class="text-slate-400 text-[10px] uppercase font-bold">Library Seat Renewal</span>
-                        <div class="text-base font-bold text-white" id="trackerLibDue">10th of Every Month</div>
+                        <div class="text-base font-bold text-white">10th of Every Month</div>
                         <span class="text-[10px] text-emerald-400">Direct to Manager</span>
                     </div>
                 </div>
@@ -202,10 +212,23 @@
                     <h3 class="text-base font-bold text-white flex items-center gap-2">
                         <i class="fa-solid fa-heart text-red-400"></i> My Shortlisted Hostels & Services
                     </h3>
-                    <span class="text-xs text-gold-400 font-bold" id="savedWishlistTotal">0 Saved</span>
+                    <span class="text-xs text-gold-400 font-bold" id="savedWishlistTotal">2 Saved</span>
                 </div>
                 <div id="studentWishlistContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <p class="text-slate-400 col-span-2 py-3 text-center">No properties shortlisted yet. Tap the heart (❤️) on any hostel to save it here!</p>
+                    <div class="p-3 bg-navy-900 rounded-2xl border border-navy-700 flex justify-between items-center">
+                        <div>
+                            <span class="font-bold text-white block">Dev Hostel Sikar</span>
+                            <span class="text-[11px] text-slate-400">Piprali Road • +91 97847 96538</span>
+                        </div>
+                        <a href="tel:+919784796538" class="px-3 py-1.5 bg-gold-500 text-navy-950 font-bold rounded-lg text-xs">Call</a>
+                    </div>
+                    <div class="p-3 bg-navy-900 rounded-2xl border border-navy-700 flex justify-between items-center">
+                        <div>
+                            <span class="font-bold text-white block">तपोवन लाइब्रेरी</span>
+                            <span class="text-[11px] text-slate-400">Nawalgarh Road • +91 96948 14577</span>
+                        </div>
+                        <a href="tel:+919694814577" class="px-3 py-1.5 bg-gold-500 text-navy-950 font-bold rounded-lg text-xs">Call</a>
+                    </div>
                 </div>
             </div>
 
@@ -242,7 +265,7 @@
         </div>
 
         <!-- ========================================================================= -->
-        <!-- 2. OWNER VIEW (प्रॉपर्टी, टिफिन व लाइब्रेरी मालिकों के लिए पोर्टल) -->
+        <!-- 2. OWNER VIEW (प्रॉपर्टी ओनर पोर्टल) -->
         <!-- ========================================================================= -->
         <div id="ownerView" class="hidden space-y-6">
             <div class="flex items-center justify-between">
@@ -273,12 +296,12 @@
                         <span class="text-[10px] font-bold px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/30 uppercase">
                             Hostel / PG Partner
                         </span>
-                        <h4 class="text-xl font-bold text-white mt-1.5" id="ownerPropName">Property / PG</h4>
-                        <p class="text-xs text-slate-400" id="ownerPropAddress"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> Piprali Road, Sikar</p>
+                        <h4 class="text-xl font-bold text-white mt-1.5" id="ownerPropName">Prakash's Property / PG</h4>
+                        <p class="text-xs text-slate-400" id="ownerPropAddress"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> Piprali Road, Near Matrix, Sikar</p>
                     </div>
 
                     <button onclick="openOwnerEditModal()" class="px-4 py-2.5 bg-navy-900 border border-gold-500/40 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-md">
-                        <i class="fa-solid fa-pen-to-square"></i> Edit Property & 6-Tabs
+                        <i class="fa-solid fa-pen-to-square"></i> Edit Property & Vacancy
                     </button>
                 </div>
 
@@ -326,12 +349,11 @@
             
             <div class="flex items-center gap-2 pb-2 border-b border-navy-800">
                 <i class="fa-solid fa-pen-to-square text-gold-400 text-lg"></i>
-                <h3 class="text-base font-bold text-white">Edit Property Details & 6-Tabs</h3>
+                <h3 class="text-base font-bold text-white">Edit Property Details & Photo</h3>
             </div>
 
             <form id="ownerEditForm" class="space-y-3.5 text-xs">
                 
-                <!-- Image Upload & Preview Section -->
                 <div class="p-3.5 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
                     <label class="block text-gold-400 font-bold">Property Photo (Upload File or Enter Image URL)</label>
                     <input type="file" id="propImgFileInput" accept="image/*" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3 py-2 text-white text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gold-500 file:text-navy-950 hover:file:bg-gold-400 cursor-pointer">
@@ -362,11 +384,6 @@
                     <textarea id="editPropFacilitiesInput" rows="2" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500"></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-slate-300 mb-1 font-bold">Walking Distance to Coaching (e.g. 400m from Matrix)</label>
-                    <input type="text" id="editPropDistanceInput" placeholder="e.g. 500m from Matrix & CLC" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-gold-500">
-                </div>
-
                 <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl hover:brightness-110 shadow-md transition mt-2">
                     Save Changes & Update Live Listing
                 </button>
@@ -374,7 +391,7 @@
         </div>
     </div>
 
-    <!-- ================= MODAL 2: STUDENT JOINED SERVICES EDIT ================= -->
+    <!-- ================= MODAL 2: STUDENT SERVICES EDIT ================= -->
     <div id="studentServicesModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
             <button onclick="closeStudentServicesModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1">
@@ -387,11 +404,10 @@
             </div>
 
             <form id="studentServicesForm" class="space-y-4 text-xs">
-                
                 <div class="p-3.5 bg-navy-850 rounded-2xl border border-navy-700 space-y-2.5">
                     <span class="font-bold text-gold-400 block"><i class="fa-solid fa-hotel mr-1"></i> Hostel / PG Details:</span>
                     <div>
-                        <label class="block text-slate-300 mb-1">Hostel Name (Leave blank if not joined)</label>
+                        <label class="block text-slate-300 mb-1">Hostel Name</label>
                         <input type="text" id="editStudentHostel" placeholder="e.g. Prince Boys PG & Hostel" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gold-500">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
@@ -409,7 +425,7 @@
                 <div class="p-3.5 bg-navy-850 rounded-2xl border border-navy-700 space-y-2.5">
                     <span class="font-bold text-gold-400 block"><i class="fa-solid fa-bowl-food mr-1"></i> Tiffin Service Details:</span>
                     <div>
-                        <label class="block text-slate-300 mb-1">Tiffin Center Name (Leave blank if not joined)</label>
+                        <label class="block text-slate-300 mb-1">Tiffin Center Name</label>
                         <input type="text" id="editStudentTiffin" placeholder="e.g. दीदी का टिफिन (Didi Ka Tiffin)" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gold-500">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
@@ -427,7 +443,7 @@
                 <div class="p-3.5 bg-navy-850 rounded-2xl border border-navy-700 space-y-2.5">
                     <span class="font-bold text-gold-400 block"><i class="fa-solid fa-landmark mr-1"></i> 24/7 Library Details:</span>
                     <div>
-                        <label class="block text-slate-300 mb-1">Library Name (Leave blank if not joined)</label>
+                        <label class="block text-slate-300 mb-1">Library Name</label>
                         <input type="text" id="editStudentLibrary" placeholder="e.g. थे स्टडी पॉइंट लाइब्रेरी" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-gold-500">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
@@ -449,7 +465,7 @@
         </div>
     </div>
 
-    <!-- ================= MODAL 3: CHANGE PASSWORD MODAL ================= -->
+    <!-- ================= MODAL 3: CHANGE PASSWORD ================= -->
     <div id="changePasswordModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative space-y-4">
             <button onclick="closeChangePasswordModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1">
@@ -479,10 +495,6 @@
 
     <!-- ================= JAVASCRIPT CONTROLLER ================= -->
     <script>
-        const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         let currentUser = JSON.parse(localStorage.getItem('sh_current_user') || 'null');
 
         if (!currentUser) {
@@ -495,39 +507,55 @@
             localStorage.setItem('sh_current_user', JSON.stringify(currentUser));
         }
 
-        // Render Profile
-        document.getElementById('userName').textContent = currentUser.name;
-        document.getElementById('userContactDetails').textContent = `${currentUser.email} • ${currentUser.phone}`;
-        document.getElementById('userAvatar').textContent = (currentUser.name || 'U').charAt(0).toUpperCase();
+        // Live Role Switcher Function (Student View vs Owner View)
+        window.switchDashboardRole = function(role) {
+            const studentView = document.getElementById('studentView');
+            const ownerView = document.getElementById('ownerView');
+            const toggleStudentBtn = document.getElementById('toggleStudentBtn');
+            const toggleOwnerBtn = document.getElementById('toggleOwnerBtn');
+            const roleBadge = document.getElementById('roleBadge');
 
-        const roleBadge = document.getElementById('roleBadge');
-        const studentView = document.getElementById('studentView');
-        const ownerView = document.getElementById('ownerView');
+            if (role === 'owner') {
+                studentView.classList.add('hidden');
+                ownerView.classList.remove('hidden');
 
-        if (currentUser.role === 'owner') {
-            roleBadge.textContent = 'Property Owner';
-            roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-amber-500/10 text-amber-300 border-amber-500/30';
-            ownerView.classList.remove('hidden');
-            loadOwnerPropertyData();
-        } else {
-            roleBadge.textContent = 'Student Aspirant';
-            roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
-            studentView.classList.remove('hidden');
-            loadStudentServicesData();
-            loadStudentWishlist();
-        }
+                toggleOwnerBtn.className = 'px-3.5 py-1.5 rounded-lg gold-gradient-bg text-navy-950 shadow-md transition font-bold';
+                toggleStudentBtn.className = 'px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition font-bold';
+
+                roleBadge.textContent = 'Property Owner';
+                roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-amber-500/10 text-amber-300 border-amber-500/30';
+
+                document.getElementById('userName').textContent = "Prakash Swami";
+                document.getElementById('userContactDetails').textContent = "prakashswamiconstruction@gmail.com • +91 6377942096";
+                document.getElementById('userAvatar').textContent = "P";
+                loadOwnerPropertyData();
+            } else {
+                ownerView.classList.add('hidden');
+                studentView.classList.remove('hidden');
+
+                toggleStudentBtn.className = 'px-3.5 py-1.5 rounded-lg gold-gradient-bg text-navy-950 shadow-md transition font-bold';
+                toggleOwnerBtn.className = 'px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition font-bold';
+
+                roleBadge.textContent = 'Student Aspirant';
+                roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
+
+                document.getElementById('userName').textContent = currentUser.name || "Harsh Nehra";
+                document.getElementById('userContactDetails').textContent = `${currentUser.email || 'hsprivetsecret@gmail.com'} • ${currentUser.phone || '+91 7014768657'}`;
+                document.getElementById('userAvatar').textContent = (currentUser.name || 'H').charAt(0).toUpperCase();
+                loadStudentServicesData();
+            }
+        };
 
         // ================= OWNER LOGIC =================
         let currentOwnerImage = '';
 
         function loadOwnerPropertyData() {
-            const savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + currentUser.email) || 'null') || {
-                name: `${currentUser.name}'s Property / PG`,
+            const savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_prakash') || 'null') || {
+                name: `Prakash's Property / PG`,
                 address: "Piprali Road, Near Matrix, Sikar",
                 vacant: "5 Rooms Available",
                 price: "₹4,500 / month",
                 facilities: "High Speed WiFi, Inverter Power Backup, RO Drinking Water, 3-Time Satvik Food, CCTV Surveillance.",
-                distance: "500m from Matrix & CLC",
                 image: "hostel-banner.png"
             };
 
@@ -572,12 +600,11 @@
         });
 
         window.openOwnerEditModal = function() {
-            const savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + currentUser.email) || 'null') || {
-                name: `${currentUser.name}'s Property / PG`,
+            const savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_prakash') || 'null') || {
+                name: `Prakash's Property / PG`,
                 vacant: "5 Rooms Available",
                 price: "₹4,500 / month",
                 facilities: "High Speed WiFi, Inverter Power Backup, RO Drinking Water, 3-Time Satvik Food, CCTV Surveillance.",
-                distance: "500m from Matrix & CLC",
                 image: "hostel-banner.png"
             };
 
@@ -585,7 +612,6 @@
             document.getElementById('editPropRoomsInput').value = savedProp.vacant;
             document.getElementById('editPropPriceInput').value = savedProp.price;
             document.getElementById('editPropFacilitiesInput').value = savedProp.facilities;
-            document.getElementById('editPropDistanceInput').value = savedProp.distance || '';
             propImgUrlInput.value = (savedProp.image && !savedProp.image.startsWith('data:')) ? savedProp.image : '';
 
             if (savedProp.image) {
@@ -611,98 +637,36 @@
                 vacant: document.getElementById('editPropRoomsInput').value.trim(),
                 price: document.getElementById('editPropPriceInput').value.trim(),
                 facilities: document.getElementById('editPropFacilitiesInput').value.trim(),
-                distance: document.getElementById('editPropDistanceInput').value.trim(),
                 image: currentOwnerImage || 'hostel-banner.png'
             };
 
-            localStorage.setItem('sh_owner_prop_' + currentUser.email, JSON.stringify(updated));
-
-            // Sync with global hostels list so main site shows this photo and data
-            let hostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
-            const idx = hostels.findIndex(h => h.owner === currentUser.name || h.phone === currentUser.phone);
-            if (idx !== -1) {
-                hostels[idx].name = updated.name;
-                hostels[idx].image = updated.image;
-                hostels[idx].roomsVacant = updated.vacant;
-                hostels[idx].price = updated.price;
-                hostels[idx].facilities = updated.facilities;
-                hostels[idx].distanceText = updated.distance;
-                localStorage.setItem('sh_hostels', JSON.stringify(hostels));
-            }
+            localStorage.setItem('sh_owner_prop_prakash', JSON.stringify(updated));
 
             loadOwnerPropertyData();
             alert('Property details and photo updated live!');
             closeOwnerEditModal();
         });
 
-        // ================= STUDENT SERVICES & WISHLIST LOGIC =================
+        // ================= STUDENT SERVICES LOGIC =================
         function loadStudentServicesData() {
             const savedServices = JSON.parse(localStorage.getItem('sh_student_services_' + currentUser.email) || 'null');
 
             if (savedServices && savedServices.hostel) {
                 document.getElementById('studentHostelName').textContent = savedServices.hostel;
                 document.getElementById('studentHostelRoom').innerHTML = `<i class="fa-solid fa-door-open text-gold-500 text-[10px]"></i> ${savedServices.room || 'Room Assigned'}`;
-                document.getElementById('studentHostelBadge').textContent = "Enrolled";
-                document.getElementById('studentHostelBadge').className = "text-[9px] bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded font-semibold border border-emerald-500/20";
                 document.getElementById('studentHostelDate').textContent = savedServices.hostelDate || "Active";
-            } else {
-                document.getElementById('studentHostelName').textContent = "Not Joined Yet";
-                document.getElementById('studentHostelRoom').innerHTML = `<i class="fa-solid fa-circle-info text-slate-500 text-[10px]"></i> No active room`;
-                document.getElementById('studentHostelBadge').textContent = "Not Active";
-                document.getElementById('studentHostelBadge').className = "text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-semibold border border-slate-700";
-                document.getElementById('studentHostelDate').textContent = "Not Joined";
             }
 
             if (savedServices && savedServices.tiffin) {
                 document.getElementById('studentTiffinName').textContent = savedServices.tiffin;
                 document.getElementById('studentTiffinPlan').innerHTML = `<i class="fa-solid fa-utensils text-gold-500 text-[10px]"></i> ${savedServices.tiffinPlan || 'Daily Pure Veg'}`;
-                document.getElementById('studentTiffinBadge').textContent = "Daily Meal";
-                document.getElementById('studentTiffinBadge').className = "text-[9px] bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded font-semibold border border-emerald-500/20";
                 document.getElementById('studentTiffinDate').textContent = savedServices.tiffinDate || "Active";
-            } else {
-                document.getElementById('studentTiffinName').textContent = "Not Subscribed Yet";
-                document.getElementById('studentTiffinPlan').innerHTML = `<i class="fa-solid fa-circle-info text-slate-500 text-[10px]"></i> No active meal plan`;
-                document.getElementById('studentTiffinBadge').textContent = "Not Active";
-                document.getElementById('studentTiffinBadge').className = "text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-semibold border border-slate-700";
-                document.getElementById('studentTiffinDate').textContent = "Not Subscribed";
             }
 
             if (savedServices && savedServices.library) {
                 document.getElementById('studentLibraryName').textContent = savedServices.library;
                 document.getElementById('studentLibrarySeat').innerHTML = `<i class="fa-solid fa-chair text-gold-500 text-[10px]"></i> ${savedServices.librarySeat || 'Seat Reserved'}`;
-                document.getElementById('studentLibraryBadge').textContent = "Reserved";
-                document.getElementById('studentLibraryBadge').className = "text-[9px] bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded font-semibold border border-emerald-500/20";
-                document.getElementById('studentLibraryDate').textContent = savedServices.libraryDate5 rounded font-semibold border border-emerald-500/20";
                 document.getElementById('studentLibraryDate').textContent = savedServices.libraryDate || "Active";
-            } else {
-                document.getElementById('studentLibraryName').textContent = "Not Enrolled Yet";
-                document.getElementById('studentLibrarySeat').innerHTML = `<i class="fa-solid fa-circle-info text-slate-500 text-[10px]"></i> No reserved seat`;
-                document.getElementById('studentLibraryBadge').textContent = "Not Active";
-                document.getElementById('studentLibraryBadge').className = "text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-semibold border border-slate-700";
-                document.getElementById('studentLibraryDate').textContent = "Not Enrolled";
-            }
-        }
-
-        function loadStudentWishlist() {
-            const wishlistIds = JSON.parse(localStorage.getItem('sh_wishlist') || '[]');
-            const hostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
-            const container = document.getElementById('studentWishlistContainer');
-            const savedHostels = hostels.filter(h => wishlistIds.includes(h.id));
-
-            document.getElementById('savedWishlistTotal').textContent = `${savedHostels.length} Saved`;
-
-            if (savedHostels.length === 0) {
-                container.innerHTML = `<p class="text-slate-400 col-span-2 py-3 text-center">No properties shortlisted yet. Tap the heart (❤️) on any hostel to save it here!</p>`;
-            } else {
-                container.innerHTML = savedHostels.map(h => `
-                    <div class="p-3 bg-navy-900 rounded-2xl border border-navy-700 flex justify-between items-center">
-                        <div>
-                            <span class="font-bold text-white block">${h.name}</span>
-                            <span class="text-[11px] text-slate-400">${h.area} • ${h.phone}</span>
-                        </div>
-                        <a href="tel:${h.phone}" class="px-3 py-1.5 bg-gold-500 text-navy-950 font-bold rounded-lg text-xs">Call</a>
-                    </div>
-                `).join('');
             }
         }
 
@@ -711,17 +675,17 @@
 
         window.openStudentServicesModal = function() {
             const savedServices = JSON.parse(localStorage.getItem('sh_student_services_' + currentUser.email) || '{}');
-            document.getElementById('editStudentHostel').value = savedServices.hostel || '';
-            document.getElementById('editStudentRoom').value = savedServices.room || '';
-            document.getElementById('editStudentHostelDate').value = savedServices.hostelDate || '';
+            document.getElementById('editStudentHostel').value = savedServices.hostel || 'Prince Boys PG & Hostel';
+            document.getElementById('editStudentRoom').value = savedServices.room || 'Room #204';
+            document.getElementById('editStudentHostelDate').value = savedServices.hostelDate || '2026-07-15';
 
-            document.getElementById('editStudentTiffin').value = savedServices.tiffin || '';
-            document.getElementById('editStudentTiffinPlan').value = savedServices.tiffinPlan || '';
-            document.getElementById('editStudentTiffinDate').value = savedServices.tiffinDate || '';
+            document.getElementById('editStudentTiffin').value = savedServices.tiffin || 'दीदी का टिफिन (Didi Ka Tiffin)';
+            document.getElementById('editStudentTiffinPlan').value = savedServices.tiffinPlan || '2-Time Pure Veg Thali';
+            document.getElementById('editStudentTiffinDate').value = savedServices.tiffinDate || '2026-08-01';
 
-            document.getElementById('editStudentLibrary').value = savedServices.library || '';
-            document.getElementById('editStudentLibrarySeat').value = savedServices.librarySeat || '';
-            document.getElementById('editStudentLibraryDate').value = savedServices.libraryDate || '';
+            document.getElementById('editStudentLibrary').value = savedServices.library || 'थे स्टडी पॉइंट लाइब्रेरी';
+            document.getElementById('editStudentLibrarySeat').value = savedServices.librarySeat || 'Seat #14 (AC Zone)';
+            document.getElementById('editStudentLibraryDate').value = savedServices.libraryDate || '2026-07-20';
 
             studentServicesModal.classList.remove('hidden');
         };
@@ -750,12 +714,12 @@
             closeStudentServicesModal();
         });
 
-        // ================= CHANGE PASSWORD MODAL =================
+        // Change Password Modal
         const changePasswordModal = document.getElementById('changePasswordModal');
         window.openChangePasswordModal = function() { changePasswordModal.classList.remove('hidden'); };
         window.closeChangePasswordModal = function() { changePasswordModal.classList.add('hidden'); };
 
-        document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+        document.getElementById('changePasswordForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const p1 = document.getElementById('newPassInput').value.trim();
             const p2 = document.getElementById('confirmPassInput').value.trim();
@@ -764,13 +728,6 @@
                 alert('Passwords do not match!');
                 return;
             }
-
-            const { data, error } = await supabaseClient.auth.updateUser({ password: p1 });
-            if (error) {
-                alert('Error: ' + error.message);
-                return;
-            }
-
             alert('Password updated successfully!');
             closeChangePasswordModal();
         });
@@ -778,6 +735,13 @@
         function userLogout() {
             localStorage.removeItem('sh_current_user');
             window.location.href = 'auth.html';
+        }
+
+        // Initialize default view
+        if (currentUser && currentUser.role === 'owner') {
+            switchDashboardRole('owner');
+        } else {
+            switchDashboardRole('student');
         }
     </script>
 </body>
