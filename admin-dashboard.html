@@ -895,6 +895,178 @@
             fetchRealUsers();
         }
         initAllData();
+        // ================= 6-TAB MODAL CONTROLLER FOR ADMIN =================
+        let currentInspectedType = 'hostels';
+        let currentInspectedIdx = 0;
+
+        window.openAdminPropertyView = function(type, idx) {
+            currentInspectedType = type;
+            currentInspectedIdx = idx;
+
+            let item = null;
+            if (type === 'hostels') item = hostelsData[idx];
+            else if (type === 'tiffins') item = tiffinsData[idx];
+            else if (type === 'libraries') item = librariesData[idx];
+
+            if (!item) return;
+
+            document.getElementById('adminModalBannerImg').src = item.image || (type === 'hostels' ? 'hostel-banner.png' : type === 'tiffins' ? 'tiffin-banner.png' : 'library-banner.png');
+            document.getElementById('adminModalTitle').textContent = item.name;
+            document.getElementById('adminModalAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${item.address}`;
+            document.getElementById('adminModalFullAddress').textContent = item.address;
+            document.getElementById('adminModalCatBadge').textContent = (item.cat || (type === 'hostels' ? 'HOSTEL' : type === 'tiffins' ? 'PURE VEG TIFFIN' : '24/7 LIBRARY')).toUpperCase();
+
+            document.getElementById('adminModalCallBtn').href = `tel:${item.phone}`;
+            document.getElementById('adminModalWhatsAppBtn').href = `https://wa.me/${(item.phone || '').replace(/[^0-9]/g, '')}?text=Hello%20from%20Director%20Satpal%20Swami%20(StudentHubHelp)`;
+            document.getElementById('adminModalMapLink').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' ' + item.address)}`;
+
+            if (item.about) document.getElementById('adminModalAbout').textContent = item.about;
+            if (item.price) document.getElementById('adminModalRoomsRate').textContent = item.price;
+            if (item.reviewText) document.getElementById('adminModalReview').textContent = `"${item.reviewText}"`;
+            if (item.distanceText) document.getElementById('adminModalDistanceText').textContent = item.distanceText;
+            if (item.faqText) document.getElementById('adminModalFaqText').textContent = item.faqText;
+
+            switchAdminTab('overview');
+            document.getElementById('admin6TabModal').classList.remove('hidden');
+        };
+
+        window.closeAdmin6TabModal = function() {
+            document.getElementById('admin6TabModal').classList.add('hidden');
+        };
+
+        window.switchAdminTab = function(tabName) {
+            document.querySelectorAll('[id^="admTabContent-"]').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.admtab-btn').forEach(btn => btn.className = 'admtab-btn py-3.5 border-b-2 border-transparent text-slate-400 hover:text-white flex-shrink-0');
+            document.getElementById(`admTabContent-${tabName}`).classList.remove('hidden');
+            document.getElementById(`admTabBtn-${tabName}`).className = 'admtab-btn py-3.5 border-b-2 border-gold-500 text-gold-300 flex-shrink-0 font-bold';
+        };
+
+        window.editCurrentAdminItem = function() {
+            closeAdmin6TabModal();
+            openAdminEdit(currentInspectedType, currentInspectedIdx);
+        };
     </script>
+    <!-- ================= 6-TAB DETAIL POPUP MODAL (EXACT AS MAIN WEBSITE) ================= -->
+    <div id="admin6TabModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
+            
+            <!-- Close & Edit Buttons -->
+            <button onclick="closeAdmin6TabModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <button onclick="editCurrentAdminItem()" class="absolute top-4 right-16 z-20 px-3 py-1.5 rounded-full bg-navy-950/80 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold flex items-center gap-1.5 border border-gold-500/40 shadow-lg transition">
+                <i class="fa-solid fa-pen-to-square"></i> Edit Details
+            </button>
+
+            <!-- Top Banner Image -->
+            <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
+                <img id="adminModalBannerImg" src="hostel-banner.png" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
+                
+                <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                    <div>
+                        <span id="adminModalCatBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-blue-500/20 text-blue-300 border-blue-500/40">BOYS HOSTEL</span>
+                        <h2 id="adminModalTitle" class="text-xl sm:text-2xl font-bold text-white mt-1 leading-snug">Prince Boys PG & Hostel</h2>
+                        <p id="adminModalAddress" class="text-xs text-slate-300 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-500"></i> Vision Janta Colony, Jat Colony, Piprali Road, Sikar</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6 Interactive Tabs Bar -->
+            <div class="bg-navy-850 px-4 flex items-center space-x-2 sm:space-x-4 border-b border-navy-700 overflow-x-auto text-xs font-bold scrollbar-none flex-shrink-0">
+                <button onclick="switchAdminTab('overview')" id="admTabBtn-overview" class="admtab-btn py-3.5 border-b-2 border-gold-500 text-gold-300 flex-shrink-0">Overview</button>
+                <button onclick="switchAdminTab('rooms')" id="admTabBtn-rooms" class="admtab-btn py-3.5 border-b-2 border-transparent text-slate-400 hover:text-white flex-shrink-0">Rooms & Rates</button>
+                <button onclick="switchAdminTab('facilities')" id="admTabBtn-facilities" class="admtab-btn py-3.5 border-b-2 border-transparent text-slate-400 hover:text-white flex-shrink-0">Facilities</button>
+                <button onclick="switchAdminTab('reviews')" id="admTabBtn-reviews" class="admtab-btn py-3.5 border-b-2 border-transparent text-slate-400 hover:text-white flex-shrink-0">Reviews</button>
+                <button onclick="switchAdminTab('location')" id="admTabBtn-location" class="admtab-btn py-3.5 border-b-2 border-transparent text-slate-400 hover:text-white flex-shrink-0">Location</button>
+                <button onclick="switchAdminTab('faqs')" id="admTabBtn-faqs" class="admtab-btn py-3.5 border-b-2 border-transparent text-slate-400 hover:text-white flex-shrink-0">FAQs</button>
+            </div>
+
+            <!-- Tab Content Body -->
+            <div class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 text-xs text-slate-300 leading-relaxed">
+                
+                <!-- TAB 1: OVERVIEW -->
+                <div id="admTabContent-overview" class="space-y-4">
+                    <p id="adminModalAbout">
+                        A peaceful and well-maintained student accommodation located in prime coaching zone of Sikar with direct access to classes and quiet study atmosphere.
+                    </p>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
+                        <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 text-center"><span class="text-slate-400 block text-[10px]">Warden</span><span class="text-white font-bold">24x7 Available</span></div>
+                        <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 text-center"><span class="text-slate-400 block text-[10px]">Security</span><span class="text-white font-bold">CCTV & Guard</span></div>
+                        <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 text-center"><span class="text-slate-400 block text-[10px]">Drinking Water</span><span class="text-white font-bold">RO Purified</span></div>
+                        <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 text-center"><span class="text-slate-400 block text-[10px]">Power</span><span class="text-white font-bold">Inverter Backup</span></div>
+                    </div>
+
+                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
+                        <span class="font-bold text-gold-300 block">Why choose this hostel?</span>
+                        <ul class="space-y-1.5 text-[11px] text-slate-300">
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-1.5"></i> Short walking distance to Matrix, Allen, CLC & Gurukripa.</li>
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-1.5"></i> Zero Brokerage • Direct calling with warden/owner.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- TAB 2: ROOMS & RATES -->
+                <div id="admTabContent-rooms" class="hidden space-y-4">
+                    <div class="flex gap-2">
+                        <span class="px-3 py-1.5 rounded-lg bg-gold-500/20 border border-gold-500/40 text-gold-300 font-bold">Single Bed</span>
+                        <span class="px-3 py-1.5 rounded-lg bg-navy-850 border border-navy-700 text-slate-300">Double Sharing</span>
+                        <span class="px-3 py-1.5 rounded-lg bg-navy-850 border border-navy-700 text-slate-300">Triple Sharing</span>
+                    </div>
+                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 text-center space-y-2">
+                        <i class="fa-solid fa-bed text-3xl text-gold-400"></i>
+                        <h4 class="text-sm font-bold text-white" id="adminModalRoomsRate">Rent Details</h4>
+                        <p class="text-[11px] text-slate-400 max-w-sm mx-auto" id="adminModalRoomsDesc">
+                            Monthly charges range between ₹3,500 - ₹6,500 based on AC/Cooler preference.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- TAB 3: FACILITIES -->
+                <div id="admTabContent-facilities" class="hidden grid grid-cols-2 sm:grid-cols-3 gap-3" id="adminModalFacilitiesGrid">
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex items-center gap-2"><i class="fa-solid fa-wifi text-gold-400"></i> High Speed WiFi</div>
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex items-center gap-2"><i class="fa-solid fa-snowflake text-gold-400"></i> AC / Cooler Rooms</div>
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex items-center gap-2"><i class="fa-solid fa-faucet-drip text-gold-400"></i> RO Drinking Water</div>
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex items-center gap-2"><i class="fa-solid fa-bolt text-gold-400"></i> Power Backup</div>
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex items-center gap-2"><i class="fa-solid fa-utensils text-gold-400"></i> 3-Time Satvik Food</div>
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex items-center gap-2"><i class="fa-solid fa-video text-gold-400"></i> CCTV Security</div>
+                </div>
+
+                <!-- TAB 4: REVIEWS -->
+                <div id="admTabContent-reviews" class="hidden text-center py-4 space-y-2">
+                    <div class="text-2xl font-bold text-gold-400"><i class="fa-solid fa-star"></i> 5.0 / 5</div>
+                    <p class="text-xs text-slate-300">Verified student reviews & ratings.</p>
+                    <p class="text-[11px] text-slate-400 italic" id="adminModalReview">"Peaceful study atmosphere and cooperative warden." — Verified Student</p>
+                </div>
+
+                <!-- TAB 5: LOCATION -->
+                <div id="admTabContent-location" class="hidden space-y-3">
+                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
+                        <span class="font-bold text-white block" id="adminModalFullAddress">Address details</span>
+                        <p class="text-[11px] text-slate-400" id="adminModalDistanceText">Strategically located within 2-10 minutes walking distance from coaching campuses.</p>
+                        <a id="adminModalMapLink" href="#" target="_blank" class="inline-block px-4 py-2 bg-navy-900 border border-gold-500/40 text-gold-300 rounded-xl font-bold hover:bg-gold-500 hover:text-navy-950 transition">
+                            <i class="fa-solid fa-map-location-dot mr-1"></i> View on Google Maps
+                        </a>
+                    </div>
+                </div>
+
+                <!-- TAB 6: FAQS -->
+                <div id="admTabContent-faqs" class="hidden space-y-2">
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700"><strong>Q: Is food included in the rent?</strong><p class="text-slate-400 mt-1" id="adminModalFaqText">Yes, morning breakfast, lunch, and dinner are included.</p></div>
+                </div>
+            </div>
+
+            <!-- Sticky Bottom Action Bar -->
+            <div class="bg-navy-950 p-4 border-t border-navy-800 flex items-center justify-between gap-3 flex-shrink-0">
+                <a id="adminModalCallBtn" href="#" class="flex-1 py-3 bg-navy-850 border border-gold-500/40 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold text-center rounded-xl transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-phone"></i> Call Warden
+                </a>
+                <a id="adminModalWhatsAppBtn" href="#" target="_blank" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold text-center rounded-xl transition flex items-center justify-center gap-1.5">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
