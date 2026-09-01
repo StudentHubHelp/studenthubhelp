@@ -1,318 +1,613 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Cafes & Hangout Hubs in Sikar | StudentHubHelp</title>
-    
-    <!-- Logo Favicon -->
-    <link rel="icon" type="image/png" href="logo.png">
+<script>
+const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjoFUeLB1yMA";
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Tailwind CSS & Supabase -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        navy: { 950: '#040814', 900: '#081026', 850: '#0D1838', 800: '#14224D', 700: '#1F316B' },
-                        gold: { 100: '#FFF7D6', 200: '#FDECB2', 300: '#F5DE88', 400: '#E6C65E', 500: '#D4AF37', 600: '#B89020', 700: '#8C6B10' }
-                    },
-                    fontFamily: { sans: ['Inter', 'Noto Sans Devanagari', 'sans-serif'], display: ['Cinzel', 'serif'] }
-                }
-            }
-        }
-    </script>
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
 
-    <style>
-        .gold-gradient-text { background: linear-gradient(135deg, #FFF7D6 0%, #D4AF37 50%, #B89020 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .gold-gradient-bg { background: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89020 100%); }
-        .gold-border-glow { border: 1px solid rgba(212, 175, 55, 0.25); box-shadow: 0 0 20px rgba(212, 175, 55, 0.06); }
-        .gold-border-glow:hover { border-color: rgba(212, 175, 55, 0.65); box-shadow: 0 0 25px rgba(212, 175, 55, 0.18); }
-    </style>
-</head>
-<body class="bg-navy-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-gold-500 selection:text-navy-950">
+let allCafes = [];
+let activeCafe = null;
+let liveChannel = null;
 
-    <!-- ================= NAVBAR ================= -->
-    <nav class="bg-navy-900 border-b border-gold-500/15 px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md">
-        <a href="./" class="flex items-center gap-3">
-            <img src="logo.png" onerror="this.outerHTML='<div class=\'w-10 h-10 rounded-xl bg-gold-500 text-navy-950 font-display font-extrabold text-lg flex items-center justify-center\'>SH</div>'" class="w-10 h-10 rounded-xl object-cover border border-gold-500/40 shadow-md">
-            <div>
-                <span class="text-lg font-display font-bold gold-gradient-text">StudentHubHelp</span>
-                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Sikar Student Platform</span>
+/* =========================
+   SAFE TEXT
+========================= */
+function esc(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/* =========================
+   LOAD CAFES FROM SUPABASE
+========================= */
+async function loadCafes() {
+    try {
+        const { data, error } = await supabaseClient
+            .from("cafes")
+            .select("*");
+
+        if (error) throw error;
+
+        allCafes = data || [];
+
+        renderCafes(allCafes);
+
+        console.log("✅ Cafes loaded:", allCafes.length);
+
+    } catch (error) {
+
+        console.error("Cafe Supabase Error:", error);
+
+        document.getElementById("cafesGridContainer").innerHTML = `
+            <div class="col-span-full py-16 text-center text-red-400">
+                <i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i>
+                <p class="text-sm font-bold">Unable to load cafes</p>
+                <p class="text-xs text-slate-500 mt-1">
+                    Please check Supabase table/RLS settings.
+                </p>
             </div>
-        </a>
-        <div class="flex items-center gap-3 text-xs">
-            <a href="./" class="px-4 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition flex items-center gap-1.5 font-bold">
-                <i class="fa-solid fa-home"></i> Home
-            </a>
-        </div>
-    </nav>
+        `;
+    }
+}
 
-    <!-- ================= HERO HEADER ================= -->
-    <header class="bg-gradient-to-b from-navy-900 to-navy-950 py-12 px-4 text-center border-b border-navy-800">
-        <div class="max-w-3xl mx-auto space-y-3">
-            <span class="text-[11px] font-bold px-3 py-1 rounded-full uppercase border bg-gold-500/10 text-gold-300 border-gold-500/30">
-                <i class="fa-solid fa-mug-hot mr-1"></i> Student Hangout Hubs
-            </span>
-            <h1 class="text-3xl sm:text-4xl font-display font-bold text-white">Sikar Student Cafes & Food Spots</h1>
-            <p class="text-xs sm:text-sm text-slate-400">Discover verified cafes, bakeries, and refreshment spots near coaching hubs in Sikar.</p>
-            
-            <!-- Search Bar -->
-            <div class="pt-4 max-w-xl mx-auto relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gold-500"></i>
-                <input type="text" id="cafeSearchInput" placeholder="Search cafe by name, area or food items..." class="w-full bg-navy-850 border border-navy-700 rounded-2xl pl-11 pr-4 py-3.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-gold-500 shadow-xl">
-            </div>
-        </div>
-    </header>
+/* =========================
+   NORMALIZE DATABASE DATA
+   Supports both old + new columns
+========================= */
+function cafeValue(c, newKey, oldKey, fallback = "") {
+    return c?.[newKey] ??
+           c?.[oldKey] ??
+           fallback;
+}
 
-    <!-- ================= CAFES GRID SECTION ================= -->
-    <main class="max-w-7xl w-full mx-auto px-4 sm:px-8 py-10 flex-1 space-y-6">
-        <div class="flex justify-between items-center">
-            <h2 class="text-base font-bold text-white flex items-center gap-2">
-                <i class="fa-solid fa-utensils text-gold-400"></i> All Verified Cafes (<span id="cafeCountBadge">0</span>)
-            </h2>
-        </div>
+/* =========================
+   RENDER CAFES
+========================= */
+function renderCafes(list) {
 
-        <div id="cafesGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Loading State -->
+    const container =
+        document.getElementById("cafesGridContainer");
+
+    document.getElementById("cafeCountBadge").textContent =
+        list.length;
+
+    if (!list.length) {
+
+        container.innerHTML = `
             <div class="col-span-full py-16 text-center text-slate-400">
-                <i class="fa-solid fa-spinner fa-spin text-3xl text-gold-500 mb-2"></i>
-                <p class="text-xs">Loading live cafes from Supabase database...</p>
+                <i class="fa-solid fa-mug-hot text-3xl text-gold-500 mb-3"></i>
+                <p class="text-sm">No cafes found.</p>
             </div>
-        </div>
-    </main>
+        `;
 
-    <!-- ================= 6-TAB PROPERTY / CAFE DETAIL MODAL ================= -->
-    <div id="cafeDetailModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
-        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
-            <button onclick="closeCafeModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-            
-            <!-- Banner Image -->
-            <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
-                <img id="modalCafeImg" src="cafe-banner.png" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
-                <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
-                    <div>
-                        <span class="text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-gold-500/20 text-gold-300 border-gold-500/40">STUDENT CAFE</span>
-                        <h2 id="modalCafeTitle" class="text-xl sm:text-2xl font-bold text-white mt-1 leading-snug">Cafe Name</h2>
-                        <p id="modalCafeAddress" class="text-xs text-slate-300 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-500"></i> Address</p>
-                    </div>
+        return;
+    }
+
+    container.innerHTML = list.map((c, index) => {
+
+        const name = cafeValue(
+            c, "name", "Name", "Cafe"
+        );
+
+        const address = cafeValue(
+            c, "address", "Public/Exact Address",
+            "Sikar, Rajasthan"
+        );
+
+        const area = cafeValue(
+            c, "area", "Area", ""
+        );
+
+        const phone = cafeValue(
+            c, "phone", "Contact", ""
+        );
+
+        const timing = cafeValue(
+            c, "timing", "Opening Hours",
+            "09:00 AM - 09:00 PM"
+        );
+
+        const facilities = cafeValue(
+            c, "facilities", "Facilities",
+            "Seating & refreshments"
+        );
+
+        const rating = cafeValue(
+            c, "rating", "Google Rating",
+            "4.5"
+        );
+
+        const food = cafeValue(
+            c, "food_details", "Food Details",
+            facilities
+        );
+
+        const image = cafeValue(
+            c, "image", "Image",
+            "cafe-banner.png"
+        );
+
+        const reviews = cafeValue(
+            c, "review_count", "Review Count",
+            "—"
+        );
+
+        return `
+        <article
+            onclick="openCafeModal(${index})"
+            class="bg-navy-900 border border-navy-800 rounded-3xl
+                   overflow-hidden gold-border-glow cursor-pointer
+                   transition hover:border-gold-500/60">
+
+            <div class="relative w-full h-40 bg-navy-950 overflow-hidden">
+
+                <img
+                    src="${esc(image)}"
+                    onerror="this.src='cafe-banner.png'"
+                    class="w-full h-full object-cover"
+                    alt="${esc(name)}">
+
+                <div class="absolute inset-0
+                            bg-gradient-to-t
+                            from-navy-900 via-transparent">
                 </div>
+
+                <span
+                    class="absolute top-3 right-3
+                           text-[11px] font-bold px-2.5 py-1
+                           rounded-xl bg-navy-950/80
+                           text-gold-300
+                           border border-gold-500/30">
+
+                    <i class="fa-solid fa-star text-[10px]"></i>
+                    ${esc(rating)}
+                    ${reviews !== "—" ? `(${esc(reviews)})` : ""}
+                </span>
+
             </div>
 
-            <!-- 6-Tabs Navigation Bar -->
-            <div class="bg-navy-850 px-4 py-2 border-b border-navy-800 flex gap-2 overflow-x-auto text-xs font-bold flex-shrink-0">
-                <button onclick="switchCafeTab('overview')" id="tabBtn-overview" class="cafe-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition">Overview</button>
-                <button onclick="switchCafeTab('food')" id="tabBtn-food" class="cafe-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Food & Menu</button>
-                <button onclick="switchCafeTab('facilities')" id="tabBtn-facilities" class="cafe-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Facilities</button>
-                <button onclick="switchCafeTab('timing')" id="tabBtn-timing" class="cafe-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Timing</button>
-                <button onclick="switchCafeTab('reviews')" id="tabBtn-reviews" class="cafe-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Reviews</button>
-                <button onclick="switchCafeTab('location')" id="tabBtn-location" class="cafe-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Location</button>
-            </div>
+            <div class="px-6 py-5 space-y-3">
 
-            <!-- Tab Content Body -->
-            <div class="p-5 overflow-y-auto space-y-4 flex-1 text-xs text-slate-300 leading-relaxed">
-                <div id="cafeTabContent" class="space-y-3">
-                    <!-- Dynamic Content Loaded Here -->
+                <h3 class="text-base font-bold text-white">
+                    ${esc(name)}
+                </h3>
+
+                ${
+                    area
+                    ? `<p class="text-[11px] text-gold-400">
+                         <i class="fa-solid fa-location-dot mr-1"></i>
+                         ${esc(area)}
+                       </p>`
+                    : ""
+                }
+
+                <p class="text-xs text-slate-300">
+                    <i class="fa-solid fa-location-dot
+                              text-gold-500 mr-1"></i>
+                    ${esc(address)}
+                </p>
+
+                <div class="p-3 bg-navy-850 rounded-2xl
+                            border border-navy-700/60">
+
+                    <span class="text-[10px] text-gold-400
+                                 font-bold uppercase">
+                        Food / Speciality
+                    </span>
+
+                    <p class="text-xs text-slate-200 mt-1">
+                        ${esc(food)}
+                    </p>
+
                 </div>
+
             </div>
 
-            <!-- Footer Call Buttons -->
-            <div class="bg-navy-950 p-4 border-t border-navy-800 flex items-center justify-between gap-3 flex-shrink-0">
-                <a id="modalCafeCallBtn" href="#" class="flex-1 py-3 bg-navy-850 border border-gold-500/40 text-gold-300 text-xs font-bold text-center rounded-xl hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-phone mr-1"></i> Call Cafe</a>
-                <a id="modalCafeWhatsAppBtn" href="#" target="_blank" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold text-center rounded-xl transition"><i class="fa-brands fa-whatsapp text-sm mr-1"></i> WhatsApp Inquiry</a>
+            <div class="px-6 pb-6 pt-3
+                        border-t border-navy-800
+                        flex items-center
+                        justify-between gap-3">
+
+                <span class="text-[11px] text-slate-400">
+                    <i class="fa-solid fa-clock text-gold-400 mr-1"></i>
+                    ${esc(timing)}
+                </span>
+
+                ${
+                    phone
+                    ? `<a
+                        href="tel:${esc(phone)}"
+                        onclick="event.stopPropagation()"
+                        class="px-3.5 py-2 rounded-xl
+                               gold-gradient-bg text-navy-950
+                               font-bold text-xs">
+
+                        <i class="fa-solid fa-phone"></i>
+                        Call
+                       </a>`
+                    : ""
+                }
+
             </div>
-        </div>
-    </div>
 
-    <!-- ================= FOOTER ================= -->
-    <footer class="bg-navy-900 border-t border-navy-800 py-6 text-slate-500 text-xs text-center">
-        <p>© 2026 StudentHubHelp (Shekhawati). Director: Satpal Swami (+91 63779 42096)</p>
-    </footer>
+        </article>
+        `;
 
-    <!-- ================= JAVASCRIPT ================= -->
-    <script>
-        const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }).join("");
+}
 
-        let allCafes = [];
-        let activeCafe = null;
+/* =========================
+   OPEN MODAL
+========================= */
+function openCafeModal(index) {
 
-        async function loadCafes() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('cafes')
-                    .select('*')
-                    .order('Rank', { ascending: true });
+    activeCafe = allCafes[index];
 
-                if (error) throw error;
-                allCafes = data || [];
-                renderCafes(allCafes);
-            } catch (err) {
-                console.error('Supabase fetch error:', err);
-                document.getElementById('cafesGridContainer').innerHTML = `
-                    <div class="col-span-full py-12 text-center text-red-400">
-                        <p class="text-xs">Failed to load cafes from database.</p>
-                    </div>
-                `;
-            }
-        }
+    if (!activeCafe) return;
 
-        function renderCafes(list) {
-            const container = document.getElementById('cafesGridContainer');
-            document.getElementById('cafeCountBadge').textContent = list.length;
+    const c = activeCafe;
 
-            if (list.length === 0) {
-                container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">No cafes found matching your search.</div>`;
-                return;
-            }
+    const name = cafeValue(c, "name", "Name", "Cafe");
+    const address = cafeValue(
+        c, "address",
+        "Public/Exact Address",
+        "Sikar"
+    );
 
-            container.innerHTML = list.map((c, index) => {
-                const cafeName = c.Name || c.name || 'Cafe';
-                const cafeAddress = c["Public/Exact Address"] || c.address || 'Sikar, Rajasthan';
-                const cafeRating = c["Google Rating"] || c.google_rating || '4.5';
-                const cafeReviews = c["Review Count"] || c.review_count || '10+';
-                const cafeFood = c["Food Details"] || c.food_details || 'Snacks & Coffee';
-                const cafeHours = c["Opening Hours"] || c.opening_hours || '09:00 AM - 09:00 PM';
-                const cafeContact = c["Contact"] || c.contact || '6377942096';
-                const cafeImage = c.image || 'cafe-banner.png';
+    const phone = cafeValue(
+        c, "phone",
+        "Contact",
+        ""
+    );
 
-                return `
-                <div onclick="openCafeModal(${index})" class="bg-navy-900 border border-navy-800 rounded-3xl overflow-hidden gold-border-glow flex flex-col justify-between space-y-4 cursor-pointer hover:border-gold-500/60 transition">
-                    <!-- Banner Image -->
-                    <div class="relative w-full h-40 bg-navy-950 overflow-hidden">
-                        <img src="${cafeImage}" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
-                        <span class="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-navy-950/80 backdrop-blur-md text-gold-300 border border-gold-500/30 flex items-center gap-1 shadow-md">
-                            <i class="fa-solid fa-star text-[10px]"></i> ${cafeRating} (${cafeReviews})
-                        </span>
-                    </div>
-                    <div class="px-6 space-y-3">
-                        <h3 class="text-base font-bold text-white leading-snug">${cafeName}</h3>
-                        <p class="text-xs text-slate-300 flex items-start gap-1.5 leading-relaxed">
-                            <i class="fa-solid fa-location-dot text-gold-500 mt-0.5 flex-shrink-0"></i> 
-                            <span>${cafeAddress}</span>
-                        </p>
-                        <div class="p-3 bg-navy-850 rounded-2xl border border-navy-700/60 text-xs space-y-1">
-                            <span class="text-[10px] text-gold-400 font-bold uppercase tracking-wider block">Speciality / Food:</span>
-                            <p class="text-slate-200">${cafeFood}</p>
-                        </div>
-                    </div>
-                    <div class="px-6 pb-6 pt-2 border-t border-navy-800 flex items-center justify-between gap-3 text-xs">
-                        <span class="text-slate-400 text-[11px]"><i class="fa-solid fa-clock text-gold-400 mr-1"></i> ${cafeHours}</span>
-                        <a href="tel:${cafeContact && cafeContact !== 'Not publicly listed' ? cafeContact : '6377942096'}" onclick="event.stopPropagation()" class="px-3.5 py-2 rounded-xl gold-gradient-bg text-navy-950 font-bold hover:brightness-110 transition shadow-md flex items-center gap-1">
-                            <i class="fa-solid fa-phone"></i> Call
-                        </a>
-                    </div>
-                </div>
-            `;
-            }).join('');
-        }
+    const image = cafeValue(
+        c, "image",
+        "Image",
+        "cafe-banner.png"
+    );
 
-        // Modal Functions & 6-Tabs
-        function openCafeModal(index) {
-            activeCafe = allCafes[index];
-            if (!activeCafe) return;
+    document.getElementById("modalCafeTitle").textContent =
+        name;
 
-            document.getElementById('modalCafeTitle').textContent = activeCafe.Name || activeCafe.name || 'Cafe';
-            document.getElementById('modalCafeAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${activeCafe["Public/Exact Address"] || activeCafe.address || 'Sikar'}`;
-            document.getElementById('modalCafeImg').src = activeCafe.image || 'cafe-banner.png';
-            
-            const contactNum = activeCafe["Contact"] || activeCafe.contact || '6377942096';
-            document.getElementById('modalCafeCallBtn').href = `tel:${contactNum !== 'Not publicly listed' ? contactNum : '6377942096'}`;
-            document.getElementById('modalCafeWhatsAppBtn').href = `https://wa.me/91${(contactNum).replace(/[^0-9]/g, '')}?text=Hi,%20I%20want%20to%20know%20more%20about%20${encodeURIComponent(activeCafe.Name)}`;
+    document.getElementById("modalCafeAddress").innerHTML =
+        `<i class="fa-solid fa-location-dot text-gold-500"></i>
+         ${esc(address)}`;
 
-            switchCafeTab('overview');
-            document.getElementById('cafeDetailModal').classList.remove('hidden');
-        }
+    document.getElementById("modalCafeImg").src =
+        image || "cafe-banner.png";
 
-        function closeCafeModal() {
-            document.getElementById('cafeDetailModal').classList.add('hidden');
-        }
+    document.getElementById("modalCafeCallBtn").href =
+        phone ? `tel:${phone}` : "#";
 
-        function switchCafeTab(tabName) {
-            document.querySelectorAll('.cafe-tab-btn').forEach(b => {
-                b.className = 'cafe-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition';
-            });
-            const activeBtn = document.getElementById(`tabBtn-${tabName}`);
-            if (activeBtn) activeBtn.className = 'cafe-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition font-bold shadow-md';
+    const cleanPhone =
+        String(phone).replace(/[^0-9]/g, "");
 
-            const contentBox = document.getElementById('cafeTabContent');
-            if (!activeCafe) return;
+    document.getElementById(
+        "modalCafeWhatsAppBtn"
+    ).href = cleanPhone
+        ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+            "Hi, I want to know more about " + name
+        )}`
+        : "#";
 
-            if (tabName === 'overview') {
-                contentBox.innerHTML = `
-                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
-                        <strong class="text-gold-300 block">About Cafe & Hangout Hub:</strong>
-                        <p class="text-slate-200">${activeCafe.Name} is a verified student-friendly spot in Sikar offering great ambience and refreshments.</p>
-                    </div>
-                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-1">
-                        <strong class="text-gold-300 block">Google Rating & Sentiment:</strong>
-                        <p class="text-slate-200">⭐ ${activeCafe["Google Rating"]} / 5 (${activeCafe["Review Count"]} Reviews) — Sentiment: ${activeCafe["Review Sentiment"] || 'Positive'}</p>
-                    </div>
-                `;
-            } else if (tabName === 'food') {
-                contentBox.innerHTML = `
-                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
-                        <strong class="text-gold-300 block">Food & Beverages Menu:</strong>
-                        <p class="text-slate-200">${activeCafe["Food Details"] || 'Coffee, Tea, Fast Food, Snacks & Beverages.'}</p>
-                    </div>
-                `;
-            } else if (tabName === 'facilities') {
-                contentBox.innerHTML = `
-                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
-                        <strong class="text-gold-300 block">Available Facilities:</strong>
-                        <p class="text-slate-200">${activeCafe["Facilities"] || 'Seating space, Wi-Fi, Relaxed Environment.'}</p>
-                    </div>
-                `;
-            } else if (tabName === 'timing') {
-                contentBox.innerHTML = `
-                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
-                        <strong class="text-gold-300 block">Opening & Closing Hours:</strong>
-                        <p class="text-slate-200">🕒 ${activeCafe["Opening Hours"] || '09:00 AM - 09:00 PM'}</p>
-                    </div>
-                `;
-            } else if (tabName === 'reviews') {
-                contentBox.innerHTML = `
-                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
-                        <strong class="text-gold-300 block">Customer Feedback:</strong>
-                        <p class="text-slate-200">Based on ${activeCafe["Review Count"]} student reviews on Google Maps. Overall sentiment is highly positive for study breaks and hangouts.</p>
-                    </div>
-                `;
-            } else if (tabName === 'location') {
-                contentBox.innerHTML = `
-                    <div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
-                        <strong class="text-gold-300 block">Exact Address & Location:</strong>
-                        <p class="text-slate-200">📍 ${activeCafe["Public/Exact Address"]}</p>
-                        <p class="text-slate-400 text-[11px] mt-1">Easily accessible from major coaching areas in Sikar.</p>
-                    </div>
-                `;
-            }
-        }
+    switchCafeTab("overview");
 
-        // Search Filter
-        document.getElementById('cafeSearchInput').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            const filtered = allCafes.filter(c => {
-                const name = (c.Name || c.name || '').toLowerCase();
-                const address = (c["Public/Exact Address"] || c.address || '').toLowerCase();
-                const food = (c["Food Details"] || c.food_details || '').toLowerCase();
-                return name.includes(query) || address.includes(query) || food.includes(query);
-            });
-            renderCafes(filtered);
+    document
+        .getElementById("cafeDetailModal")
+        .classList.remove("hidden");
+}
+
+/* =========================
+   CLOSE MODAL
+========================= */
+function closeCafeModal() {
+
+    document
+        .getElementById("cafeDetailModal")
+        .classList.add("hidden");
+
+    activeCafe = null;
+}
+
+/* =========================
+   TABS
+========================= */
+function switchCafeTab(tabName) {
+
+    document.querySelectorAll(".cafe-tab-btn").forEach(btn => {
+
+        btn.className =
+            "cafe-tab-btn px-3 py-1.5 rounded-xl " +
+            "text-slate-300 hover:bg-navy-800 transition";
+
+    });
+
+    const activeBtn =
+        document.getElementById(`tabBtn-${tabName}`);
+
+    if (activeBtn) {
+
+        activeBtn.className =
+            "cafe-tab-btn px-3 py-1.5 rounded-xl " +
+            "bg-gold-500 text-navy-950 transition " +
+            "font-bold shadow-md";
+    }
+
+    if (!activeCafe) return;
+
+    const c = activeCafe;
+
+    const name =
+        cafeValue(c, "name", "Name", "Cafe");
+
+    const rating =
+        cafeValue(c, "rating", "Google Rating", "4.5");
+
+    const reviews =
+        cafeValue(c, "review_count", "Review Count", "—");
+
+    const food =
+        cafeValue(
+            c,
+            "food_details",
+            "Food Details",
+            "Coffee, Tea, Snacks & Fast Food"
+        );
+
+    const facilities =
+        cafeValue(
+            c,
+            "facilities",
+            "Facilities",
+            "Seating space & refreshments"
+        );
+
+    const timing =
+        cafeValue(
+            c,
+            "timing",
+            "Opening Hours",
+            "09:00 AM - 09:00 PM"
+        );
+
+    const address =
+        cafeValue(
+            c,
+            "address",
+            "Public/Exact Address",
+            "Sikar"
+        );
+
+    const content =
+        document.getElementById("cafeTabContent");
+
+    if (tabName === "overview") {
+
+        content.innerHTML = `
+            <div class="p-4 bg-navy-850 rounded-2xl
+                        border border-navy-700 space-y-2">
+
+                <strong class="text-gold-300 block">
+                    About ${esc(name)}
+                </strong>
+
+                <p class="text-slate-200">
+                    ${esc(name)} is listed on
+                    StudentHubHelp as a student-friendly
+                    cafe/food spot in Sikar.
+                </p>
+
+            </div>
+
+            <div class="p-4 bg-navy-850 rounded-2xl
+                        border border-navy-700">
+
+                <strong class="text-gold-300 block">
+                    Rating
+                </strong>
+
+                <p class="text-slate-200 mt-1">
+                    ⭐ ${esc(rating)} / 5
+                    ${reviews !== "—" ? `(${esc(reviews)} Reviews)` : ""}
+                </p>
+
+            </div>
+        `;
+
+    } else if (tabName === "food") {
+
+        content.innerHTML = `
+            <div class="p-4 bg-navy-850 rounded-2xl
+                        border border-navy-700">
+
+                <strong class="text-gold-300 block">
+                    Food & Menu
+                </strong>
+
+                <p class="text-slate-200 mt-2">
+                    ${esc(food)}
+                </p>
+
+            </div>
+        `;
+
+    } else if (tabName === "facilities") {
+
+        content.innerHTML = `
+            <div class="p-4 bg-navy-850 rounded-2xl
+                        border border-navy-700">
+
+                <strong class="text-gold-300 block">
+                    Facilities
+                </strong>
+
+                <p class="text-slate-200 mt-2">
+                    ${esc(facilities)}
+                </p>
+
+            </div>
+        `;
+
+    } else if (tabName === "timing") {
+
+        content.innerHTML = `
+            <div class="p-4 bg-navy-850 rounded-2xl
+                        border border-navy-700">
+
+                <strong class="text-gold-300 block">
+                    Opening Hours
+                </strong>
+
+                <p class="text-slate-200 mt-2">
+                    🕒 ${esc(timing)}
+                </p>
+
+            </div>
+        `;
+
+    } else if (tabName === "reviews") {
+
+        content.innerHTML = `
+            <div class="p-4 bg-navy-850 rounded-2xl
+                        border border-navy-700">
+
+                <strong class="text-gold-300 block">
+                    Reviews
+                </strong>
+
+                <p class="text-slate-200 mt-2">
+                    ${
+                        reviews !== "—"
+                        ? `${esc(reviews)} reviews`
+                        : "Review information not available."
+                    }
+                </p>
+
+            </div>
+        `;
+
+    } else if (tabName === "location") {
+
+        content.innerHTML = `
+            <div class="p-4 bg-navy-850 rounded-2xl
+                        border border-navy-700">
+
+                <strong class="text-gold-300 block">
+                    Exact Address
+                </strong>
+
+                <p class="text-slate-200 mt-2">
+                    📍 ${esc(address)}
+                </p>
+
+            </div>
+        `;
+    }
+}
+
+/* =========================
+   SEARCH
+========================= */
+document
+    .getElementById("cafeSearchInput")
+    .addEventListener("input", function () {
+
+        const query =
+            this.value.toLowerCase().trim();
+
+        const filtered = allCafes.filter(c => {
+
+            const values = [
+                cafeValue(c, "name", "Name"),
+                cafeValue(c, "area", "Area"),
+                cafeValue(c, "address", "Public/Exact Address"),
+                cafeValue(c, "food_details", "Food Details"),
+                cafeValue(c, "facilities", "Facilities")
+            ];
+
+            return values.some(value =>
+                String(value || "")
+                    .toLowerCase()
+                    .includes(query)
+            );
         });
 
-        window.addEventListener('DOMContentLoaded', loadCafes);
-    </script>
-</body>
-</html>
+        renderCafes(filtered);
+    });
+
+/* =========================
+   SUPABASE REALTIME
+========================= */
+function startRealtime() {
+
+    if (liveChannel) {
+        supabaseClient.removeChannel(liveChannel);
+    }
+
+    liveChannel = supabaseClient
+        .channel("studenthubhelp-cafes-live")
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "cafes"
+            },
+            async payload => {
+
+                console.log(
+                    "🔴 LIVE CAFE CHANGE:",
+                    payload.eventType
+                );
+
+                await loadCafes();
+            }
+        )
+        .subscribe(status => {
+
+            console.log(
+                "Cafe realtime status:",
+                status
+            );
+
+        });
+}
+
+/* =========================
+   START
+========================= */
+window.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+
+        await loadCafes();
+
+        startRealtime();
+    }
+);
+
+/* =========================
+   ESC CLOSE MODAL
+========================= */
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Escape" &&
+            !document
+                .getElementById("cafeDetailModal")
+                .classList.contains("hidden")
+        ) {
+            closeCafeModal();
+        }
+
+    }
+);
+</script>
