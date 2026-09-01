@@ -519,16 +519,16 @@
         let currentOwnerImage = '';
 
 function loadOwnerPropertyData() {
-            // 1. पहले ओनर की ईमेल से चेक करें
+            // 1. सबसे पहले ओनर की ईमेल से सेव की गई प्रॉपर्टी ढूंढें
             let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + currentUser.email) || 'null');
             
-            // 2. अगर वहाँ नहीं है, तो全局 hostels डेटा में से ओनर के फोन नंबर या नाम से मैच करें
+            // 2. अगर ईमेल से नहीं मिली, तो ग्लोबल होस्टल्स लिस्ट में से ओनर के फोन नंबर या नाम से मैच करें
             if (!savedProp) {
                 const allHostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
                 savedProp = allHostels.find(h => 
-                    (currentUser.phone && h.phone === currentUser.phone) || 
+                    (currentUser.phone && h.phone && h.phone.replace(/[^0-9]/g, '') === currentUser.phone.replace(/[^0-9]/g, '')) || 
                     (currentUser.name && h.name.toLowerCase().includes(currentUser.name.toLowerCase())) ||
-                    (currentUser.email && currentUser.email.includes('satpal')) // Satpal Swami के लिए ऑटो-मैच
+                    (currentUser.email && currentUser.email.includes('satpal') && h.name.toUpperCase().includes('SATPAL'))
                 );
             }
 
@@ -544,7 +544,7 @@ function loadOwnerPropertyData() {
             ownerEmptyState.classList.add('hidden');
             ownerPropertyCard.classList.remove('hidden');
 
-            document.getElementById('ownerPropName').textContent = savedProp.name;
+            document.getElementById('ownerPropName').textContent = savedProp.name || 'Property Title';
             document.getElementById('ownerPropAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> ${savedProp.address || savedProp.area || 'Piprali Road, Sikar'}`;
             document.getElementById('ownerVacantRooms').textContent = savedProp.vacant || savedProp.roomsVacant || "5 Rooms Available";
             document.getElementById('ownerPropPrice').textContent = savedProp.price || "₹4,500 / month";
@@ -560,37 +560,47 @@ function loadOwnerPropertyData() {
         const propImgPreviewBox = document.getElementById('propImgPreviewBox');
         const propImgPreview = document.getElementById('propImgPreview');
 
-        propImgFileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    currentOwnerImage = evt.target.result;
+        if (propImgFileInput) {
+            propImgFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        currentOwnerImage = evt.target.result;
+                        propImgPreview.src = currentOwnerImage;
+                        propImgPreviewBox.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        if (propImgUrlInput) {
+            propImgUrlInput.addEventListener('input', function(e) {
+                if (e.target.value.trim()) {
+                    currentOwnerImage = e.target.value.trim();
                     propImgPreview.src = currentOwnerImage;
                     propImgPreviewBox.classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        propImgUrlInput.addEventListener('input', function(e) {
-            if (e.target.value.trim()) {
-                currentOwnerImage = e.target.value.trim();
-                propImgPreview.src = currentOwnerImage;
-                propImgPreviewBox.classList.remove('hidden');
-            }
-        });
+                }
+            });
+        }
 
         window.openOwnerEditModal = function() {
-            const savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + currentUser.email) || '{}');
+            let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + currentUser.email) || 'null');
+            if (!savedProp) {
+                const allHostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
+                savedProp = allHostels.find(h => h.phone === currentUser.phone || (currentUser.email && h.name.toLowerCase().includes('satpal')));
+            }
+            savedProp = savedProp || {};
+
             document.getElementById('editPropNameInput').value = savedProp.name || '';
-            document.getElementById('editPropRoomsInput').value = savedProp.vacant || '';
+            document.getElementById('editPropRoomsInput').value = savedProp.vacant || savedProp.roomsVacant || '';
             document.getElementById('editPropPriceInput').value = savedProp.price || '';
-            document.getElementById('editPropFacilitiesInput').value = savedProp.facilities || '';
+            document.getElementById('editPropFacilitiesInput').value = savedProp.facilities || savedProp.menu || '';
             document.getElementById('editPropDistanceInput').value = savedProp.distance || '';
             document.getElementById('editPropAboutInput').value = savedProp.about || '';
             
-            propImgUrlInput.value = (savedProp.image && !savedProp.image.startsWith('data:')) ? savedProp.image : '';
+            if (propImgUrlInput) propImgUrlInput.value = (savedProp.image && !savedProp.image.startsWith('data:')) ? savedProp.image : '';
 
             if (savedProp.image) {
                 currentOwnerImage = savedProp.image;
@@ -607,37 +617,40 @@ function loadOwnerPropertyData() {
             document.getElementById('ownerEditModal').classList.add('hidden');
         };
 
-        document.getElementById('ownerEditForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const updated = {
-                name: document.getElementById('editPropNameInput').value.trim(),
-                address: "Piprali Road, Sikar",
-                vacant: document.getElementById('editPropRoomsInput').value.trim(),
-                price: document.getElementById('editPropPriceInput').value.trim(),
-                facilities: document.getElementById('editPropFacilitiesInput').value.trim(),
-                distance: document.getElementById('editPropDistanceInput').value.trim(),
-                about: document.getElementById('editPropAboutInput').value.trim(),
-                image: currentOwnerImage || 'hostel-banner.png'
-            };
+        const ownerEditForm = document.getElementById('ownerEditForm');
+        if (ownerEditForm) {
+            ownerEditForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const updated = {
+                    name: document.getElementById('editPropNameInput').value.trim(),
+                    address: "Piprali Road, Sikar",
+                    vacant: document.getElementById('editPropRoomsInput').value.trim(),
+                    price: document.getElementById('editPropPriceInput').value.trim(),
+                    facilities: document.getElementById('editPropFacilitiesInput').value.trim(),
+                    distance: document.getElementById('editPropDistanceInput').value.trim(),
+                    about: document.getElementById('editPropAboutInput').value.trim(),
+                    image: currentOwnerImage || 'hostel-banner.png'
+                };
 
-            localStorage.setItem('sh_owner_prop_' + currentUser.email, JSON.stringify(updated));
+                // 1. ओनर की पर्सनल प्रॉपर्टी स्टोरेज में सेव करें
+                localStorage.setItem('sh_owner_prop_' + currentUser.email, JSON.stringify(updated));
 
-            let hostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
-            const idx = hostels.findIndex(h => h.owner === currentUser.name || h.phone === currentUser.phone);
-            if (idx !== -1) {
-                hostels[idx].name = updated.name;
-                hostels[idx].image = updated.image;
-                hostels[idx].roomsVacant = updated.vacant;
-                hostels[idx].price = updated.price;
-                hostels[idx].facilities = updated.facilities;
-                hostels[idx].about = updated.about;
+                // 2. ग्लोबल होस्टल्स लिस्ट (sh_hostels) में भी अपडेट करें ताकि मुख्य वेबसाइट पर भी लाइव दिखे
+                let hostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
+                let idx = hostels.findIndex(h => (h.phone && currentUser.phone && h.phone.replace(/[^0-9]/g, '') === currentUser.phone.replace(/[^0-9]/g, '')) || (currentUser.email && h.name.toLowerCase().includes('satpal')));
+                
+                if (idx !== -1) {
+                    hostels[idx] = { ...hostels[idx], ...updated };
+                } else {
+                    hostels.push({ id: hostels.length + 1, ...updated, phone: currentUser.phone || '+91 6377942096', cat: 'Boys' });
+                }
                 localStorage.setItem('sh_hostels', JSON.stringify(hostels));
-            }
 
-            loadOwnerPropertyData();
-            alert('Property details and photo updated live!');
-            closeOwnerEditModal();
-        });
+                loadOwnerPropertyData();
+                alert('Property details and photo updated live!');
+                closeOwnerEditModal();
+            });
+        }
 
         function loadStudentServicesData() {
             const saved = JSON.parse(localStorage.getItem('sh_student_services_' + currentUser.email) || 'null');
