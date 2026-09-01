@@ -698,7 +698,67 @@
                 const allHostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
                 let listStr = allHostels.map((h, i) => `${i + 1}. ${h.name} (${h.area})`).join('\n');
                 
-                let choice = prompt(`"${ownerName}" की कोई प्रॉपर्टी रजिस्टर नहीं है।\n\nनीचे दी गई लिस्ट में से नंबर टाइप करें जिसे इस ओनर से जोड़ना है:\n\n${listStr}`);
+               let activeAssignOwnerEmail = '';
+
+        // ओनर पर क्लिक करने पर नया सुंदर पॉपअप खुलेगा (न कि पुराना prompt)
+        window.openOwnerAssignModal = function(ownerEmail, ownerName) {
+            activeAssignOwnerEmail = ownerEmail;
+            let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + ownerEmail) || 'null');
+            
+            if (savedProp) {
+                openOwnerPropertyModal(ownerEmail, ownerName, '');
+            } else {
+                document.getElementById('assignOwnerNameTitle').textContent = ownerName;
+                renderAssignModalList(hostelsData); // सभी प्रॉपर्टी की लिस्ट दिखाएगा
+                document.getElementById('assignPropModal').classList.remove('hidden');
+            }
+        };
+
+        window.closeAssignModal = function() {
+            document.getElementById('assignPropModal').classList.add('hidden');
+        };
+
+        // लिस्ट रेंडर करने का फंक्शन ताकि सारी प्रॉपर्टी स्क्रॉल करके दिख सकें
+        function renderAssignModalList(list) {
+            const container = document.getElementById('assignPropListContainer');
+            if (list.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-center py-4">No properties found.</p>`;
+                return;
+            }
+            container.innerHTML = list.map((h) => `
+                <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex justify-between items-center hover:border-gold-500 transition">
+                    <div>
+                        <span class="font-bold text-white block text-xs">${h.name}</span>
+                        <span class="text-[10px] text-slate-400">${h.area || 'Sikar'} • ${h.phone || ''}</span>
+                    </div>
+                    <button onclick="selectAndAssignProperty(${h.id})" class="px-3 py-1.5 bg-gold-500 text-navy-950 font-bold rounded-lg text-xs hover:brightness-110">Select</button>
+                </div>
+            `).join('');
+        }
+
+        window.selectAndAssignProperty = function(propId) {
+            let selected = hostelsData.find(h => h.id === propId);
+            if (selected) {
+                localStorage.setItem('sh_owner_prop_' + activeAssignOwnerEmail, JSON.stringify(selected));
+                alert(`सफलतापूर्वक "${selected.name}" को ओनर से जोड़ दिया गया है!`);
+                closeAssignModal();
+                fetchRealUsers();
+            }
+        };
+
+        // पॉपअप के अंदर सर्च करने का फीचर ताकि नाम या नंबर से प्रॉपर्टी तुरंत मिल जाए
+        const assignSearchInput = document.getElementById('assignSearchInput');
+        if (assignSearchInput) {
+            assignSearchInput.addEventListener('input', function(e) {
+                const keyword = e.target.value.toLowerCase().trim();
+                const filtered = hostelsData.filter(h => 
+                    (h.name && h.name.toLowerCase().includes(keyword)) || 
+                    (h.phone && h.phone.toLowerCase().includes(keyword)) ||
+                    (h.area && h.area.toLowerCase().includes(keyword))
+                );
+                renderAssignModalList(filtered);
+            });
+        }
                 
                 if (choice && !isNaN(choice)) {
                     let selectedHostel = allHostels[parseInt(choice) - 1];
