@@ -59,17 +59,18 @@
             document.getElementById('hostelCountBadge').textContent = list.length;
             if(!list.length) { container.innerHTML = '<div class="col-span-full text-center text-slate-400">No hostels found.</div>'; return; }
             container.innerHTML = list.map(h => `
-                <div class="bg-navy-900 border border-navy-800 rounded-3xl p-5 space-y-3">
+                <div class="bg-navy-900 border border-navy-800 rounded-3xl p-5 space-y-3 shadow-lg">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-gold-500/20 text-gold-300">${h["Category"] || 'Hostel'}</span>
                     <h3 class="text-base font-bold text-white">${h["Hostel Name (Supplied)"] || h.name || 'Hostel'}</h3>
                     <p class="text-xs text-slate-300"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i>${h["Verified / Live Address"] || h.address || 'Sikar'}</p>
-                    <div class="p-2.5 bg-navy-850 rounded-xl text-xs text-slate-200">Facilities: ${h["Facilities"] || h.facilities || 'Standard'}</div>
-                    <a href="tel:${h["Contact (Verified)"] || h.phone || '9929718264'}" class="block text-center py-2.5 rounded-xl bg-gold-500 text-navy-950 font-bold text-xs"><i class="fa-solid fa-phone"></i> Call Warden</a>
+                    <div class="p-2.5 bg-navy-850 rounded-xl text-xs text-slate-200">Facilities: ${h["Facilities"] || 'Standard'}</div>
+                    <a href="tel:${h["Contact (Verified)"] || '9929718264'}" class="block text-center py-2.5 rounded-xl bg-gold-500 text-navy-950 font-bold text-xs"><i class="fa-solid fa-phone"></i> Call Warden</a>
                 </div>
             `).join('');
         }
         document.getElementById('hostelSearchInput').addEventListener('input', (e) => {
             const q = e.target.value.toLowerCase();
-            renderHostels(allHostels.filter(h => (h["Hostel Name (Supplied)"] || '').toLowerCase().includes(q)));
+            renderHostels(allHostels.filter(h => (h["Hostel Name (Supplied)"] || '').toLowerCase().includes(q) || (h["Verified / Live Address"] || '').toLowerCase().includes(q)));
         });
         window.addEventListener('DOMContentLoaded', loadHostels);
     </script>
