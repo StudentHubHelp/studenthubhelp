@@ -787,7 +787,8 @@ oBody.innerHTML = ownersData.map((o, idx) => `
             <td class="p-4 text-slate-300 font-mono">${o.email || 'satpalswami22742@gmail.com'}</td>
             <td class="p-4 text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> Verified Partner</td>
             <td class="p-4 text-right flex items-center justify-end gap-2" onclick="event.stopPropagation()">
-                <button onclick="openOwnerAssignModal('${o.email}', '${o.full_name || o.name}')" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950" title="Assign / Link Property"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button onclick="openEditOwnerProfileModal(${idx})" class="p-2 rounded-lg bg-navy-800 text-blue-300 hover:bg-blue-500 hover:text-white" title="Edit Owner Personal Details"><i class="fa-solid fa-user-pen"></i></button>
+                <button onclick="openOwnerAssignModal('${o.email}', '${o.full_name || o.name}')" class="p-2 rounded-lg bg-navy-800 text-gold-300 hover:bg-gold-500 hover:text-navy-950" title="Assign Property"><i class="fa-solid fa-pen-to-square"></i></button>
                 <button onclick="deleteItem('owners', ${idx})" class="p-2 rounded-lg bg-navy-800 text-red-400 hover:bg-red-500 hover:text-white" title="Delete Owner"><i class="fa-solid fa-trash"></i></button>
             </td>
         </tr>
@@ -1046,7 +1047,31 @@ window.openOwnerPropertyModal = function(ownerEmail, ownerName, ownerPhone) {
             alert('Listing updated live! Changes are now visible across the main website and owner portal.');
             closeAdminEditModal();
         });
-
+<!-- ================= MODAL: EDIT OWNER PERSONAL PROFILE ================= -->
+<div id="editOwnerModal" class="fixed inset-0 z-50 bg-navy-950/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+        <button onclick="closeEditOwnerModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <h3 class="text-base font-bold text-white flex items-center gap-2 pb-2 border-b border-navy-800">
+            <i class="fa-solid fa-user-pen text-gold-400"></i> Edit Owner Personal Details
+        </h3>
+        <form id="editOwnerForm" class="space-y-3 text-xs">
+            <input type="hidden" id="editOwnerIndex">
+            <div>
+                <label class="block text-slate-300 mb-1 font-bold">Owner Name *</label>
+                <input type="text" id="editOwnerNameInput" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
+            </div>
+            <div>
+                <label class="block text-slate-300 mb-1 font-bold">Phone Number *</label>
+                <input type="tel" id="editOwnerPhoneInput" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
+            </div>
+            <div>
+                <label class="block text-slate-300 mb-1 font-bold">Email Address *</label>
+                <input type="email" id="editOwnerEmailInput" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
+            </div>
+            <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl shadow-md mt-2">Save Owner Details</button>
+        </form>
+    </div>
+</div>
         // ================= DELETE ITEM =================
         window.deleteItem = async function(type, idx) {
             let name = "";
@@ -1126,6 +1151,36 @@ window.openOwnerPropertyModal = function(ownerEmail, ownerName, ownerPhone) {
             if (p1 !== p2) { alert('Passwords do not match!'); return; }
             localStorage.setItem('studenthub_admin_pwd', p1);
             alert('Master Password updated successfully!');
+        });
+        window.openEditOwnerProfileModal = function(idx) {
+            const owner = ownersData[idx];
+            document.getElementById('editOwnerIndex').value = idx;
+            document.getElementById('editOwnerNameInput').value = owner.full_name || owner.name || '';
+            document.getElementById('editOwnerPhoneInput').value = owner.phone || '';
+            document.getElementById('editOwnerEmailInput').value = owner.email || '';
+            document.getElementById('editOwnerModal').classList.remove('hidden');
+        };
+
+        window.closeEditOwnerModal = function() {
+            document.getElementById('editOwnerModal').classList.add('hidden');
+        };
+
+        document.getElementById('editOwnerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const idx = parseInt(document.getElementById('editOwnerIndex').value);
+            const newName = document.getElementById('editOwnerNameInput').value.trim();
+            const newPhone = document.getElementById('editOwnerPhoneInput').value.trim();
+            const newEmail = document.getElementById('editOwnerEmailInput').value.trim();
+
+            ownersData[idx].full_name = newName;
+            ownersData[idx].name = newName;
+            ownersData[idx].phone = newPhone;
+            ownersData[idx].email = newEmail;
+
+            localStorage.setItem('sh_registered_users', JSON.stringify([...studentsData, ...ownersData]));
+            renderAllTables();
+            alert('ओनर की पर्सनल डिटेल्स सफलतापूर्वक अपडेट कर दी गई हैं!');
+            closeEditOwnerModal();
         });
 // Universal Search Logic for Admin Search Bar
 const globalSearchInput = document.getElementById('globalAdminSearch');
