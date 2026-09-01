@@ -501,39 +501,90 @@
             document.getElementById('editOwnerModal').classList.add('hidden');
         };
 
-        document.getElementById('editOwnerForm').addEventListener('submit', async function(e) {
+document.getElementById('editOwnerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const idx = parseInt(document.getElementById('editOwnerIndex').value);
-            ownersData[idx].full_name = document.getElementById('editOwnerNameInput').value.trim();
-            ownersData[idx].name = ownersData[idx].full_name;
-            ownersData[idx].phone = document.getElementById('editOwnerPhoneInput').value.trim();
-            ownersData[idx].email = document.getElementById('editOwnerEmailInput').value.trim();
+            const newName = document.getElementById('editOwnerNameInput').value.trim();
+            const newPhone = document.getElementById('editOwnerPhoneInput').value.trim();
+            const newEmail = document.getElementById('editOwnerEmailInput').value.trim();
 
-            localStorage.setItem('sh_registered_users', JSON.stringify([...studentsData, ...ownersData]));
-            renderAllTables();
-            alert('ओनर की पर्सनल डिटेल्स सफलतापूर्वक अपडेट कर दी गई हैं!');
-            closeEditOwnerModal();
+            if (ownersData[idx]) {
+                // 1. Array में वैल्यू अपडेट करें
+                ownersData[idx].full_name = newName;
+                ownersData[idx].name = newName;
+                ownersData[idx].phone = newPhone;
+                ownersData[idx].email = newEmail;
+
+                // 2. LocalStorage में 'sh_registered_users' को सही से अपडेट करें ताकि रीफ्रेश होने पर गायब न हो
+                const allRegisteredUsers = JSON.parse(localStorage.getItem('sh_registered_users') || '[]');
+                const targetIndex = allRegisteredUsers.findIndex(u => u.id === ownersData[idx].id || u.email === ownersData[idx].email || u.phone === ownersData[idx].phone);
+                
+                if (targetIndex !== -1) {
+                    allRegisteredUsers[targetIndex] = ownersData[idx];
+                } else {
+                    allRegisteredUsers.push(ownersData[idx]);
+                }
+                localStorage.setItem('sh_registered_users', JSON.stringify(allRegisteredUsers));
+
+                // 3. अगर Supabase प्रोफाइल है तो उसे भी अपडेट करें
+                if (ownersData[idx].id) {
+                    try {
+                        await supabaseClient.from('profiles').update({
+                            full_name: newName,
+                            phone: newPhone,
+                            email: newEmail
+                        }).eq('id', ownersData[idx].id);
+                    } catch (err) {
+                        console.log('Supabase update note:', err);
+                    }
+                }
+
+                renderAllTables();
+                alert('ओनर की पर्सनल डिटेल्स सफलतापूर्वक अपडेट कर दी गई हैं!');
+                closeEditOwnerModal();
+            }
         });
-
         // Owner Property Inspection Modal
-        window.openOwnerPropertyModal = function(ownerEmail, ownerName, ownerPhone) {
+window.openOwnerPropertyModal = function(ownerEmail, ownerName, ownerPhone) {
+            // 1. सिर्फ उसी प्रॉपर्टी को ढूंढें जो इस ओनर की ईमेल से खास तौर पर लिंक (Save) की गई है
             let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + ownerEmail) || 'null');
-            if (!savedProp) {
-                savedProp = hostelsData.find(h => 
-                    (ownerPhone && h.phone === ownerPhone) || 
-                    (ownerName && h.name.toLowerCase().includes(ownerName.toLowerCase())) ||
-                    (h.name && h.name.toLowerCase().includes('satpal'))
-                );
+            
+            // 2. अगर ईमेल से नहीं मिली, तो फोन नंबर से मैच करें (लेकिन सिर्फ तभी जब फोन नंबर पूरी तरह मैच हो)
+            if (!savedProp && ownerPhone) {
+                const cleanOwnerPhone = ownerPhone.replace(/[^0-9]/g, '');
+                savedProp = hostelsData.find(h => h.phone && h.phone.replace(/[^0-9]/g, '') === cleanOwnerPhone);
             }
 
             if (savedProp) {
+                // अगर सही प्रॉपर्टी लिंक्ड है, तभी उसका 6-tab वाला पॉपअप खोलें
                 document.getElementById('adminModalBannerImg').src = savedProp.image || 'hostel-banner.png';
                 document.getElementById('adminModalTitle').textContent = savedProp.name;
-                document.getElementById('adminModalAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${savedProp.address || 'Piprali Road, Sikar'}`;
-                document.getElementById('adminModalAbout').textContent = savedProp.about || "Verified accommodation in Sikar.";
+                document.getElementById('adminModalAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${savedProp.address || savedProp.area || 'Piprali Road, Sikar'}`;
+                document.getElementById('adminModalFullAddress').textContent = savedProp.address || savedProp.area || 'Sikar';
+                document.getElementById('adminModalCatBadge').textContent = "BOYS HOSTEL • VERIFIED";
+                document.getElementById('adminModalRatingBadge').textContent = `⭐ ${savedProp.rating || '4.8'} (${savedProp.reviews || '100+'} Reviews)`;
+
+                document.getElementById('adminModalCallBtn').href = `tel:${savedProp.phone || ownerPhone || ''}`;
+                document.getElementById('adminModalWhatsAppBtn').href = `https://wa.me/${(savedProp.phone || ownerPhone || '').replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(savedProp.name)}`;
+                document.getElementById('adminModalMapLink').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(savedProp.name + ' Sikar')}`;
+
+                document.getElementById('adminModalAbout').textContent = savedProp.about || `${savedProp.name} is a verified accommodation located in Sikar.`;
+                document.getElementById('adminModalRoomsRate').textContent = savedProp.price || "₹4,500 / month";
+                document.getElementById('adminModalDistanceText').textContent = savedProp.distance || "Located in prime student area.";
+                document.getElementById('adminModalReview').textContent = `⭐ ${savedProp.rating || '4.8'} / 5 Rating`;
+                document.getElementById('adminModalFaqText').textContent = "🟢 Ground Verified • Sikar Student Network Standards";
+
+                const fGrid = document.getElementById('adminModalFacilitiesGrid');
+                const facList = (savedProp.facilities || "High Speed WiFi, AC Rooms, RO Water, Power Backup").split(',');
+                fGrid.innerHTML = facList.map(f => `<div class="p-3 bg-navy-850 rounded-xl border border-navy-700 flex items-center gap-2"><i class="fa-solid fa-check text-gold-400"></i> ${f.trim()}</div>`).join('');
+
+                switchAdminTab('overview');
                 document.getElementById('admin6TabModal').classList.remove('hidden');
             } else {
-                alert(`"${ownerName}" के लिए कोई प्रॉपर्टी लिंक नहीं है।`);
+                // अगर कोई प्रॉपर्टी लिंक नहीं है, तो गलती से दूसरी प्रॉपर्टी खोलने के बजाय 
+                // सीधे असाइनमेंट वाला पॉपअप खोलें ताकि एडमिन खुद 'SATPAL SWAMI PG' को सेलेक्ट कर सके।
+                alert(`"${ownerName}" के साथ अभी तक कोई प्रॉपर्टी लिंक नहीं की गई है। कृपया सही प्रॉपर्टी सिलेक्ट करें।`);
+                openOwnerAssignModal(ownerEmail, ownerName);
             }
         };
 
