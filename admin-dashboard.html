@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="hi" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#081026">
+<title>Director Admin Dashboard | StudentHubHelp</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{
+navy:{950:"#040814",900:"#081026",850:"#0D1838",800:"#14224D",700:"#1F316B"},
+gold:{100:"#FFF7D6",200:"#FDECB2",300:"#F5DE88",400:"#E6C65E",500:"#D4AF37",600:"#B89020",700:"#8C6B10"}
+},fontFamily:{sans:["Inter","Noto Sans Devanagari","sans-serif"],display:["Cinzel","serif"]}}}};
+</script>
+<style>
+body{background:linear-gradient(rgba(4,8,20,.80),rgba(4,8,20,.88)),url("ChatGPT Image Sep 1, 2026, 03_17_37 PM.png") center/cover fixed}
+.gold-gradient-text{background:linear-gradient(135deg,#FFF7D6,#D4AF37,#B89020);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gold-gradient-bg{background:linear-gradient(135deg,#D4AF37,#F5DE88,#B89020)}
+.card{background:rgba(8,16,38,.94);border:1px solid rgba(212,175,55,.20);box-shadow:0 10px 35px rgba(0,0,0,.20)}
+.input{width:100%;background:#0D1838;border:1px solid #1F316B;border-radius:.75rem;padding:.7rem .85rem;color:#fff;outline:none}
+.input:focus{border-color:#D4AF37;box-shadow:0 0 0 2px rgba(212,175,55,.08)}
+.modal{background:rgba(4,8,20,.88);backdrop-filter:blur(10px)}
+button:disabled{opacity:.55;cursor:not-allowed}
+.table-wrap{overflow-x:auto}
+.toast{animation:toast .2s ease-out}@keyframes toast{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+</style>
+</head>
+
+<body class="bg-navy-950 text-slate-100 font-sans min-h-screen">
+
+<!-- ================= AUTH ================= -->
+<div id="authScreen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy-950/95 backdrop-blur-xl">
+  <div class="card rounded-3xl w-full max-w-md p-7">
+    <div class="flex justify-center mb-5">
+      <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 flex items-center justify-center text-2xl font-extrabold shadow-xl">SH</div>
+    </div>
+    <h1 class="text-2xl text-center font-display font-bold">Director Admin Login</h1>
+    <p class="text-center text-xs text-slate-400 mt-1">StudentHubHelp • Master Control Center</p>
+
+    <form id="loginForm" class="space-y-4 mt-7">
+      <div>
+        <label class="text-xs font-bold text-slate-300">Director Email</label>
+        <input id="loginEmail" class="input mt-1" type="email" autocomplete="username" value="satpalswami22742@gmail.com" required>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-300">Password</label>
+        <input id="loginPassword" class="input mt-1" type="password" autocomplete="current-password" required>
+      </div>
+      <button id="loginBtn" type="submit" class="w-full py-3 rounded-xl gold-gradient-bg text-navy-950 font-extrabold">
+        <i class="fa-solid fa-shield-halved mr-1"></i> Sign In Securely
+      </button>
+      <p id="authMessage" class="text-xs text-center min-h-4 text-red-300"></p>
+    </form>
+
+    <p class="text-[10px] text-slate-500 text-center mt-5">
+      Authentication is handled by Supabase Auth. No master password is stored in this HTML.
+    </p>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app" class="hidden min-h-screen md:flex">
+
+  <aside class="w-full md:w-64 bg-navy-900/95 border-r border-gold-500/20 flex-shrink-0 md:sticky md:top-0 md:h-screen">
+    <div class="p-5 border-b border-navy-800 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl gold-gradient-bg text-navy-950 flex items-center justify-center font-display font-bold">SH</div>
+      <div>
+        <div class="font-display font-bold gold-gradient-text">StudentHubHelp</div>
+        <div class="text-[10px] text-emerald-400">● ADMIN ONLINE</div>
+      </div>
+    </div>
+
+    <nav class="p-3 space-y-1 text-xs font-bold">
+      <button data-section="overview" class="nav w-full p-3 rounded-xl text-left text-gold-300 bg-gold-500/10 border border-gold-500/30"><i class="fa-solid fa-chart-pie w-5 text-gold-400"></i> Overview</button>
+      <button data-section="students" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-user-graduate w-5 text-gold-400"></i> Students</button>
+      <button data-section="owners" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-user-tie w-5 text-gold-400"></i> Owners</button>
+      <button data-section="hostels" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-hotel w-5 text-gold-400"></i> Hostels / PG</button>
+      <button data-section="tiffins" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-bowl-food w-5 text-gold-400"></i> Tiffin / Mess</button>
+      <button data-section="libraries" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-book-open w-5 text-gold-400"></i> Libraries</button>
+      <button data-section="cafes" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-mug-hot w-5 text-gold-400"></i> Cafes</button>
+      <button data-section="admin" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-user-gear w-5 text-gold-400"></i> Admin Profile</button>
+    </nav>
+
+    <div class="p-3 border-t border-navy-800">
+      <button id="logoutBtn" class="w-full py-2.5 rounded-xl bg-red-500/10 text-red-300 font-bold text-xs">
+        <i class="fa-solid fa-power-off mr-1"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <div class="flex-1 min-w-0">
+    <header class="sticky top-0 z-40 bg-navy-900/95 backdrop-blur border-b border-gold-500/20 p-3 sm:p-4">
+      <div class="flex gap-2 items-center">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gold-500"></i>
+          <input id="globalSearch" class="input pl-9" placeholder="Search students, owners, properties, phone, area...">
+          <div id="searchResults" class="absolute left-0 right-0 top-12 hidden card rounded-2xl p-2 max-h-96 overflow-auto z-50"></div>
+        </div>
+        <button id="refreshBtn" class="w-11 h-11 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300"><i class="fa-solid fa-rotate"></i></button>
+        <a href="./" target="_blank" class="hidden sm:flex px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold"><i class="fa-solid fa-globe mr-1"></i> Live Site</a>
+      </div>
+    </header>
+
+    <main class="p-4 sm:p-7 space-y-6">
+
+      <!-- OVERVIEW -->
+      <section id="section-overview" class="section space-y-6">
+        <div>
+          <h2 class="text-2xl font-display font-bold">Dashboard Overview</h2>
+          <p class="text-xs text-slate-400">Live records from Supabase.</p>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
+          <div class="card rounded-2xl p-4 cursor-pointer" data-go="students"><div class="text-xs text-slate-400">Students</div><div id="statStudents" class="text-2xl font-bold mt-1">0</div></div>
+          <div class="card rounded-2xl p-4 cursor-pointer" data-go="owners"><div class="text-xs text-slate-400">Owners</div><div id="statOwners" class="text-2xl font-bold mt-1">0</div></div>
+          <div class="card rounded-2xl p-4 cursor-pointer" data-go="hostels"><div class="text-xs text-slate-400">Hostels</div><div id="statHostels" class="text-2xl font-bold mt-1">0</div></div>
+          <div class="card rounded-2xl p-4 cursor-pointer" data-go="tiffins"><div class="text-xs text-slate-400">Tiffins</div><div id="statTiffins" class="text-2xl font-bold mt-1">0</div></div>
+          <div class="card rounded-2xl p-4 cursor-pointer" data-go="libraries"><div class="text-xs text-slate-400">Libraries</div><div id="statLibraries" class="text-2xl font-bold mt-1">0</div></div>
+          <div class="card rounded-2xl p-4 cursor-pointer" data-go="cafes"><div class="text-xs text-slate-400">Cafes</div><div id="statCafes" class="text-2xl font-bold mt-1">0</div></div>
+        </div>
+
+        <div class="card rounded-2xl p-5">
+          <h3 class="font-bold">System status</h3>
+          <div class="grid sm:grid-cols-3 gap-3 mt-4 text-xs">
+            <div class="bg-navy-850 rounded-xl p-3"><span class="text-slate-400">Database</span><div id="dbStatus" class="text-amber-300 mt-1">Checking...</div></div>
+            <div class="bg-navy-850 rounded-xl p-3"><span class="text-slate-400">Authenticated as</span><div id="authUser" class="text-white mt-1 truncate">—</div></div>
+            <div class="bg-navy-850 rounded-xl p-3"><span class="text-slate-400">Last sync</span><div id="lastSync" class="text-white mt-1">—</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDENTS -->
+      <section id="section-students" class="section hidden space-y-5">
+        <div class="flex flex-wrap gap-3 justify-between items-center">
+          <div><h2 class="text-xl font-bold">Students</h2><p class="text-xs text-slate-400">Registered student profiles.</p></div>
+          <input id="studentFilter" class="input max-w-xs" placeholder="Filter students...">
+        </div>
+        <div class="card rounded-2xl table-wrap">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-navy-950 text-gold-300">
+              <tr><th class="p-4">Name</th><th class="p-4">Phone</th><th class="p-4">Email</th><th class="p-4">Status</th><th class="p-4 text-right">Action</th></tr>
+            </thead>
+            <tbody id="studentBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- OWNERS -->
+      <section id="section-owners" class="section hidden space-y-5">
+        <div><h2 class="text-xl font-bold">Verified Owners</h2><p class="text-xs text-slate-400">Only profiles with role = owner are shown. Admin is excluded.</p></div>
+        <div class="card rounded-2xl table-wrap">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-navy-950 text-gold-300">
+              <tr><th class="p-4">Owner</th><th class="p-4">Phone</th><th class="p-4">Email</th><th class="p-4">Status</th><th class="p-4 text-right">Actions</th></tr>
+            </thead>
+            <tbody id="ownerBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="section-hostels" class="section hidden space-y-5"></section>
+      <section id="section-tiffins" class="section hidden space-y-5"></section>
+      <section id="section-libraries" class="section hidden space-y-5"></section>
+      <section id="section-cafes" class="section hidden space-y-5"></section>
+
+      <!-- ADMIN -->
+      <section id="section-admin" class="section hidden space-y-5 max-w-2xl">
+        <div><h2 class="text-xl font-bold">Admin Profile & Security</h2><p class="text-xs text-slate-400">Supabase Auth controls the account password.</p></div>
+
+        <div class="card rounded-3xl p-6">
+          <div class="flex justify-between gap-4">
+            <div>
+              <h3 class="text-2xl font-display font-extrabold gold-gradient-text">SATPAL SWAMI</h3>
+              <p class="text-[10px] uppercase tracking-widest text-slate-400">Managing Director — StudentHubHelp</p>
+            </div>
+            <img src="logo.png" class="w-14 h-14 rounded-xl object-cover border border-gold-500/50" onerror="this.style.display='none'">
+          </div>
+          <div class="border-t border-navy-800 mt-4 pt-4 text-xs space-y-2">
+            <div><i class="fa-solid fa-phone text-gold-400 w-5"></i> +91 99297 18264</div>
+            <div><i class="fa-solid fa-envelope text-gold-400 w-5"></i> satpalswami22742@gmail.com</div>
+            <div><i class="fa-solid fa-location-dot text-gold-400 w-5"></i> Piprali Road, Sikar (Raj.)</div>
+          </div>
+        </div>
+
+        <div class="card rounded-3xl p-6">
+          <h3 class="font-bold"><i class="fa-solid fa-key text-gold-400 mr-2"></i>Change Password</h3>
+          <form id="passwordForm" class="space-y-3 mt-4">
+            <input id="newPassword" class="input" type="password" minlength="8" placeholder="New password (minimum 8 characters)" required>
+            <input id="confirmPassword" class="input" type="password" minlength="8" placeholder="Confirm new password" required>
+            <button class="w-full py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Update Supabase Password</button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ================= VIEW MODAL ================= -->
+<div id="propertyModal" class="modal fixed inset-0 z-[80] hidden items-center justify-center p-3">
+  <div class="card rounded-3xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
+    <div class="relative h-48 bg-navy-950">
+      <img id="viewImage" class="w-full h-full object-cover" src="hostel-banner.png">
+      <div class="absolute inset-0 bg-gradient-to-t from-navy-900 to-transparent"></div>
+      <button class="absolute top-3 right-3 w-10 h-10 rounded-full bg-navy-950/80" data-close="propertyModal"><i class="fa-solid fa-xmark"></i></button>
+      <div class="absolute bottom-4 left-5">
+        <span id="viewCategory" class="text-[10px] bg-gold-500/20 text-gold-300 px-2 py-1 rounded"></span>
+        <h2 id="viewName" class="text-2xl font-bold"></h2>
+        <p id="viewAddress" class="text-xs text-slate-300"></p>
+      </div>
+    </div>
+    <div class="p-5 overflow-auto space-y-3 text-sm">
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Phone</b><div id="viewPhone"></div></div>
+        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Area</b><div id="viewArea"></div></div>
+        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Timing</b><div id="viewTiming"></div></div>
+        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Rating</b><div id="viewRating"></div></div>
+      </div>
+      <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Facilities / Menu / Description</b><div id="viewFacilities" class="mt-1 whitespace-pre-wrap"></div></div>
+    </div>
+    <div class="p-4 border-t border-navy-800 flex gap-2">
+      <a id="viewCall" class="flex-1 text-center py-3 rounded-xl border border-gold-500/40 text-gold-300">Call</a>
+      <a id="viewWhatsapp" target="_blank" rel="noopener" class="flex-1 text-center py-3 rounded-xl bg-emerald-600 text-white">WhatsApp</a>
+      <button id="viewEdit" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FORM MODAL ================= -->
+<div id="formModal" class="modal fixed inset-0 z-[90] hidden items-center justify-center p-3">
+  <div class="card rounded-3xl w-full max-w-2xl max-h-[94vh] overflow-auto p-6 relative">
+    <button class="absolute top-4 right-4 w-9 h-9 rounded-full bg-navy-850" data-close="formModal"><i class="fa-solid fa-xmark"></i></button>
+    <h2 id="formTitle" class="text-xl font-bold pr-10">Property</h2>
+    <form id="propertyForm" class="grid sm:grid-cols-2 gap-3 mt-5">
+      <input id="formId" type="hidden"><input id="formType" type="hidden">
+      <div class="sm:col-span-2"><label class="text-xs font-bold">Name *</label><input id="fName" class="input mt-1" required></div>
+      <div><label class="text-xs font-bold">Category *</label><input id="fCategory" class="input mt-1" required></div>
+      <div><label class="text-xs font-bold">Phone *</label><input id="fPhone" class="input mt-1" type="tel" required></div>
+      <div><label class="text-xs font-bold">Area / Locality *</label><input id="fArea" class="input mt-1" required></div>
+      <div><label class="text-xs font-bold">Rating</label><input id="fRating" class="input mt-1" type="number" min="0" max="5" step="0.1" value="5"></div>
+      <div class="sm:col-span-2"><label class="text-xs font-bold">Full Address *</label><input id="fAddress" class="input mt-1" required></div>
+      <div><label class="text-xs font-bold">Timing / Hours</label><input id="fTiming" class="input mt-1"></div>
+      <div><label class="text-xs font-bold">Image URL</label><input id="fImage" class="input mt-1" type="url"></div>
+      <div class="sm:col-span-2"><label class="text-xs font-bold">Facilities / Menu / Description</label><textarea id="fFacilities" class="input mt-1" rows="4"></textarea></div>
+      <div class="sm:col-span-2 flex gap-2">
+        <button type="button" class="flex-1 py-3 rounded-xl bg-navy-800" data-close="formModal">Cancel</button>
+        <button id="savePropertyBtn" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Save Live</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-5 right-5 z-[200] hidden max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   SUPABASE CONFIG
+   This is the public ANON key. Never put service_role here.
+   ========================================================= */
+const SUPABASE_URL="https://idurlccrarznnnqixxsd.supabase.co";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+const ADMIN_EMAIL="satpalswami22742@gmail.com";
+
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+const state={
+  user:null,profile:null,
+  students:[],owners:[],
+  hostels:[],tiffins:[],libraries:[],cafes:[],
+  currentView:null
+};
+
+const propertyConfig={
+  hostels:{title:"Hostels & PGs",singular:"Hostel / PG",category:"Hostel",icon:"fa-hotel"},
+  tiffins:{title:"Tiffin & Mess Services",singular:"Tiffin / Mess",category:"Tiffin",icon:"fa-bowl-food"},
+  libraries:{title:"24/7 Study Libraries",singular:"Library",category:"Library",icon:"fa-book-open"},
+  cafes:{title:"Student Cafes",singular:"Cafe",category:"Cafe",icon:"fa-mug-hot"}
+};
+
+const $=id=>document.getElementById(id);
+const text=v=>String(v??"").trim();
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+
+function toast(msg,error=false){
+  const el=$("toast");
+  el.textContent=msg;
+  el.className=`fixed bottom-5 right-5 z-[200] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl ${error?"bg-red-600 text-white":"bg-emerald-600 text-white"}`;
+  setTimeout(()=>el.classList.add("hidden"),3500);
+}
+
+function setBusy(btn,busy,label){
+  if(!btn)return;
+  btn.disabled=busy;
+  if(busy){
+    btn.dataset.old=btn.innerHTML;
+    btn.innerHTML='<i class="fa-solid fa-spinner fa-spin mr-1"></i> Please wait...';
+  }else{
+    btn.innerHTML=label||btn.dataset.old||"Save";
+  }
+}
+
+/* ================= AUTH ================= */
+
+async function signIn(){
+  const email=text($("loginEmail").value).toLowerCase();
+  const password=$("loginPassword").value;
+  $("authMessage").textContent="";
+  setBusy($("loginBtn"),true);
+
+  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+
+  setBusy($("loginBtn"),false,'<i class="fa-solid fa-shield-halved mr-1"></i> Sign In Securely');
+
+  if(error){
+    $("authMessage").textContent=error.message;
+    return;
+  }
+
+  await handleSession(data.session);
+}
+
+$("loginForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  signIn();
+});
+
+async function handleSession(session){
+  if(!session){
+    state.user=null;
+    state.profile=null;
+    $("app").classList.add("hidden");
+    $("authScreen").classList.remove("hidden");
+    return;
+  }
+
+  state.user=session.user;
+
+  /* Exact Director email check */
+  if((state.user.email||"").toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
+    await supabaseClient.auth.signOut();
+    $("authMessage").textContent="This account is not authorized as Director Admin.";
+    return;
+  }
+
+  /*
+    Your real profiles table is:
+    id, full_name, phone, role, created_at
+    and allowed roles are:
+    student, owner, admin
+  */
+  const {data:profile,error}=await supabaseClient
+    .from("profiles")
+    .select("id,full_name,phone,role,created_at")
+    .eq("id",state.user.id)
+    .maybeSingle();
+
+  if(error){
+    toast("Could not verify admin profile: "+error.message,true);
+    await supabaseClient.auth.signOut();
+    return;
+  }
+
+  if(!profile){
+    toast("Admin profile not found. Run the Admin profile SQL setup first.",true);
+    await supabaseClient.auth.signOut();
+    return;
+  }
+
+  if(String(profile.role||"").toLowerCase()!=="admin"){
+    await supabaseClient.auth.signOut();
+    $("authMessage").textContent="This account exists, but its profiles.role is not 'admin'.";
+    return;
+  }
+
+  state.profile=profile;
+  $("authScreen").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("authUser").textContent=state.user.email||"—";
+
+  showSection("overview");
+  await loadAll();
+}
+
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+  if(event==="SIGNED_OUT")handleSession(null);
+});
+
+$("logoutBtn").addEventListener("click",async()=>{
+  await supabaseClient.auth.signOut();
+});
+
+/* ================= NAVIGATION ================= */
+
+function showSection(name){
+  document.querySelectorAll(".section").forEach(s=>s.classList.add("hidden"));
+  const target=$("section-"+name);
+  if(target)target.classList.remove("hidden");
+
+  document.querySelectorAll(".nav").forEach(b=>{
+    const active=b.dataset.section===name;
+    b.className=active
+      ?"nav w-full p-3 rounded-xl text-left text-gold-300 bg-gold-500/10 border border-gold-500/30"
+      :"nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850";
+  });
+
+  $("searchResults").classList.add("hidden");
+}
+
+document.querySelectorAll(".nav").forEach(b=>{
+  b.addEventListener("click",()=>showSection(b.dataset.section));
+});
+
+document.querySelectorAll("[data-go]").forEach(x=>{
+  x.addEventListener("click",()=>showSection(x.dataset.go));
+});
+
+/* ================= DATA LOADING ================= */
+
+async function loadAll(){
+  $("dbStatus").textContent="Syncing...";
+  $("dbStatus").className="text-amber-300 mt-1";
+
+  try{
+    const results=await Promise.all([
+      supabaseClient.from("hostels").select("*").order("id",{ascending:true}),
+      supabaseClient.from("tiffins").select("*").order("id",{ascending:true}),
+      supabaseClient.from("libraries").select("*").order("id",{ascending:true}),
+      supabaseClient.from("cafes").select("*").order("id",{ascending:true}),
+      supabaseClient.from("profiles").select("id,full_name,phone,role,created_at")
+    ]);
+
+    const [h,t,l,c,p]=results;
+    const firstError=[h,t,l,c,p].find(x=>x.error);
+    if(firstError)throw firstError.error;
+
+    state.hostels=h.data||[];
+    state.tiffins=t.data||[];
+    state.libraries=l.data||[];
+    state.cafes=c.data||[];
+
+    const profiles=p.data||[];
+
+    state.students=profiles.filter(x=>String(x.role||"").toLowerCase()==="student");
+
+    /* Important: only owner role. Admin can never appear here. */
+    state.owners=profiles.filter(x=>String(x.role||"").toLowerCase()==="owner");
+
+    renderAll();
+
+    $("dbStatus").textContent="Connected";
+    $("dbStatus").className="text-emerald-400 mt-1";
+    $("lastSync").textContent=new Date().toLocaleString();
+
+  }catch(e){
+    console.error(e);
+    $("dbStatus").textContent="Error";
+    $("dbStatus").className="text-red-400 mt-1";
+    toast("Database sync failed: "+e.message,true);
+  }
+}
+
+$("refreshBtn").addEventListener("click",loadAll);
+
+function updateStats(){
+  $("statStudents").textContent=state.students.length;
+  $("statOwners").textContent=state.owners.length;
+  $("statHostels").textContent=state.hostels.length;
+  $("statTiffins").textContent=state.tiffins.length;
+  $("statLibraries").textContent=state.libraries.length;
+  $("statCafes").textContent=state.cafes.length;
+}
+
+function emptyRow(cols,msg="No records found."){
+  return `<tr><td colspan="${cols}" class="p-6 text-center text-slate-400">${esc(msg)}</td></tr>`;
+}
+
+/* ================= STUDENTS ================= */
+
+function renderStudents(filter=""){
+  const q=filter.toLowerCase();
+
+  const arr=state.students.filter(s=>
+    `${s.full_name||""} ${s.phone||""} ${s.id||""}`.toLowerCase().includes(q)
+  );
+
+  $("studentBody").innerHTML=arr.length?arr.map(s=>{
+    const active=true;
+    return `<tr class="border-t border-navy-800">
+      <td class="p-4 font-bold">${esc(s.full_name||"Student")}</td>
+      <td class="p-4 font-mono">${esc(s.phone||"—")}</td>
+      <td class="p-4 text-slate-400" title="Email is stored in Supabase Auth, not in public.profiles">Supabase Auth</td>
+      <td class="p-4"><span class="text-emerald-400">${active?"Active":"Inactive"}</span></td>
+      <td class="p-4 text-right">
+        <button class="p-2 rounded bg-red-500/10 text-red-300" data-delete-profile="${esc(s.id)}" title="Delete profile">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join(""):emptyRow(5);
+
+  $("studentFilter").dataset.count=arr.length;
+}
+
+$("studentFilter").addEventListener("input",e=>renderStudents(e.target.value));
+
+/* ================= OWNERS ================= */
+
+function renderOwners(){
+  $("ownerBody").innerHTML=state.owners.length?state.owners.map(o=>`
+    <tr class="border-t border-navy-800">
+      <td class="p-4 font-bold">${esc(o.full_name||"Owner")}</td>
+      <td class="p-4 font-mono">${esc(o.phone||"—")}</td>
+      <td class="p-4 text-slate-400">Supabase Auth</td>
+      <td class="p-4 text-emerald-400">Verified</td>
+      <td class="p-4 text-right">
+        <button class="p-2 rounded bg-navy-800 text-gold-300" data-edit-owner="${esc(o.id)}" title="Edit owner">
+          <i class="fa-solid fa-pen"></i>
+        </button>
+        <button class="p-2 rounded bg-red-500/10 text-red-300 ml-1" data-delete-profile="${esc(o.id)}" title="Delete profile">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join(""):emptyRow(5,"No verified owners found.");
+}
+
+/* ================= PROPERTIES ================= */
+
+function renderProperty(type){
+  const cfg=propertyConfig[type];
+  const arr=state[type]||[];
+
+  $("section-"+type).innerHTML=`
+    <div class="flex flex-wrap justify-between gap-3 items-center">
+      <div>
+        <h2 class="text-xl font-bold">${cfg.title}</h2>
+        <p class="text-xs text-slate-400">Standardized live Supabase records.</p>
+      </div>
+      <button class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold" data-add="${type}">
+        <i class="fa-solid fa-plus mr-1"></i>Add ${cfg.singular}
+      </button>
+    </div>
+
+    <div class="card rounded-2xl table-wrap">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-navy-950 text-gold-300">
+          <tr>
+            <th class="p-4">SN</th>
+            <th class="p-4">Name</th>
+            <th class="p-4">Category</th>
+            <th class="p-4">Area</th>
+            <th class="p-4">Phone</th>
+            <th class="p-4">Address</th>
+            <th class="p-4">Timing</th>
+            <th class="p-4">Rating</th>
+            <th class="p-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${arr.length?arr.map((x,i)=>`
+            <tr class="border-t border-navy-800 hover:bg-navy-850 cursor-pointer" data-view="${type}" data-index="${i}">
+              <td class="p-4 font-mono">#${i+1}</td>
+              <td class="p-4 font-bold">${esc(x.name||cfg.singular)}</td>
+              <td class="p-4">${esc(x.category||cfg.category)}</td>
+              <td class="p-4">${esc(x.area||"—")}</td>
+              <td class="p-4 font-mono">${esc(x.phone||"—")}</td>
+              <td class="p-4 max-w-xs">${esc(x.address||"—")}</td>
+              <td class="p-4">${esc(x.timing||"—")}</td>
+              <td class="p-4 text-gold-300">${esc(x.rating??"—")}</td>
+              <td class="p-4 text-right whitespace-nowrap">
+                <button class="p-2 bg-navy-800 rounded text-gold-300" data-edit="${type}" data-index="${i}" title="Edit">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="p-2 bg-red-500/10 rounded text-red-300 ml-1" data-delete="${type}" data-id="${esc(x.id)}" title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `).join(""):emptyRow(9)}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderAll(){
+  updateStats();
+  renderStudents($("studentFilter").value);
+  renderOwners();
+  Object.keys(propertyConfig).forEach(renderProperty);
+}
+
+/* ================= CLICK HANDLERS ================= */
+
+document.addEventListener("click",async e=>{
+  const close=e.target.closest("[data-close]");
+  if(close){closeModal(close.dataset.close);return}
+
+  const add=e.target.closest("[data-add]");
+  if(add){openCreate(add.dataset.add);return}
+
+  const edit=e.target.closest("[data-edit]");
+  if(edit){openEdit(edit.dataset.edit,Number(edit.dataset.index));return}
+
+  const del=e.target.closest("[data-delete]");
+  if(del){deleteProperty(del.dataset.delete,del.dataset.id);return}
+
+  const dp=e.target.closest("[data-delete-profile]");
+  if(dp){deleteProfile(dp.dataset.deleteProfile);return}
+
+  const eo=e.target.closest("[data-edit-owner]");
+  if(eo){editOwner(eo.dataset.editOwner);return}
+
+  const row=e.target.closest("[data-view]");
+  if(row&&!e.target.closest("button")){
+    openView(row.dataset.view,Number(row.dataset.index));
+  }
+});
+
+/* ================= PROPERTY CREATE/EDIT ================= */
+
+function openCreate(type){
+  $("formTitle").textContent="Add "+propertyConfig[type].singular;
+  $("formId").value="";
+  $("formType").value=type;
+  $("fName").value="";
+  $("fCategory").value=propertyConfig[type].category;
+  $("fPhone").value="";
+  $("fArea").value="";
+  $("fAddress").value="";
+  $("fTiming").value=type==="libraries"?"24/7 Open":"";
+  $("fFacilities").value="";
+  $("fRating").value="5";
+  $("fImage").value="";
+  openModal("formModal");
+}
+
+function openEdit(type,index){
+  const x=state[type][index];
+  if(!x)return;
+
+  $("formTitle").textContent="Edit "+propertyConfig[type].singular;
+  $("formId").value=x.id;
+  $("formType").value=type;
+  $("fName").value=x.name||"";
+  $("fCategory").value=x.category||propertyConfig[type].category;
+  $("fPhone").value=x.phone||"";
+  $("fArea").value=x.area||"";
+  $("fAddress").value=x.address||"";
+  $("fTiming").value=x.timing||"";
+  $("fFacilities").value=x.facilities||"";
+  $("fRating").value=x.rating??"5";
+  $("fImage").value=x.image||"";
+
+  openModal("formModal");
+}
+
+$("propertyForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+
+  const type=$("formType").value;
+  const id=text($("formId").value);
+  const rating=Number($("fRating").value);
+
+  if(!propertyConfig[type]){
+    toast("Invalid property type.",true);
+    return;
+  }
+
+  if(!text($("fName").value)||!text($("fCategory").value)||!text($("fPhone").value)||!text($("fArea").value)||!text($("fAddress").value)){
+    toast("Please fill all required fields.",true);
+    return;
+  }
+
+  if(Number.isNaN(rating)||rating<0||rating>5){
+    toast("Rating must be between 0 and 5.",true);
+    return;
+  }
+
+  const payload={
+    name:text($("fName").value),
+    category:text($("fCategory").value),
+    area:text($("fArea").value),
+    address:text($("fAddress").value),
+    phone:text($("fPhone").value),
+    timing:text($("fTiming").value),
+    facilities:text($("fFacilities").value),
+    rating,
+    image:text($("fImage").value)
+  };
+
+  const btn=$("savePropertyBtn");
+  setBusy(btn,true);
+
+  const result=id
+    ?await supabaseClient.from(type).update(payload).eq("id",id)
+    :await supabaseClient.from(type).insert(payload);
+
+  setBusy(btn,false,"Save Live");
+
+  if(result.error){
+    toast(result.error.message,true);
+    return;
+  }
+
+  closeModal("formModal");
+  toast(id?"Property updated successfully.":"Property added successfully.");
+  await loadAll();
+});
+
+async function deleteProperty(type,id){
+  if(!confirm("Delete this property permanently from Supabase?"))return;
+
+  const {error}=await supabaseClient.from(type).delete().eq("id",id);
+
+  if(error)toast(error.message,true);
+  else{
+    toast("Property deleted.");
+    await loadAll();
+  }
+}
+
+/* ================= PROFILE / OWNER ================= */
+
+async function deleteProfile(id){
+  if(String(id)===String(state.user?.id)){
+    toast("You cannot delete the currently logged-in Admin profile.",true);
+    return;
+  }
+
+  if(!confirm("Delete this profile record? This does not delete the Supabase Auth account."))return;
+
+  const {error}=await supabaseClient.from("profiles").delete().eq("id",id);
+
+  if(error)toast(error.message,true);
+  else{
+    toast("Profile deleted.");
+    await loadAll();
+  }
+}
+
+async function editOwner(id){
+  const o=state.owners.find(x=>String(x.id)===String(id));
+  if(!o)return;
+
+  const name=prompt("Owner name:",o.full_name||"");
+  if(name===null)return;
+
+  const phone=prompt("Owner phone:",o.phone||"");
+  if(phone===null)return;
+
+  const {error}=await supabaseClient
+    .from("profiles")
+    .update({full_name:text(name),phone:text(phone),role:"owner"})
+    .eq("id",id);
+
+  if(error)toast(error.message,true);
+  else{
+    toast("Owner updated.");
+    await loadAll();
+  }
+}
+
+/* ================= VIEW ================= */
+
+function openView(type,index){
+  const x=state[type][index];
+  if(!x)return;
+
+  state.currentView={type,index};
+
+  $("viewImage").src=x.image||"hostel-banner.png";
+  $("viewImage").onerror=()=>{$("viewImage").src="hostel-banner.png"};
+
+  $("viewCategory").textContent=(x.category||propertyConfig[type].category).toUpperCase();
+  $("viewName").textContent=x.name||propertyConfig[type].singular;
+  $("viewAddress").textContent=x.address||x.area||"Sikar";
+  $("viewPhone").textContent=x.phone||"—";
+  $("viewArea").textContent=x.area||"—";
+  $("viewTiming").textContent=x.timing||"—";
+  $("viewRating").textContent=x.rating??"—";
+  $("viewFacilities").textContent=x.facilities||"—";
+
+  $("viewCall").href=x.phone?"tel:"+x.phone:"#";
+
+  const digits=(x.phone||"").replace(/\D/g,"");
+  $("viewWhatsapp").href=digits
+    ?`https://wa.me/${digits}?text=${encodeURIComponent("Hello "+(x.name||""))}`
+    :"#";
+
+  openModal("propertyModal");
+}
+
+$("viewEdit").addEventListener("click",()=>{
+  if(state.currentView){
+    const {type,index}=state.currentView;
+    closeModal("propertyModal");
+    openEdit(type,index);
+  }
+});
+
+/* ================= MODALS ================= */
+
+function openModal(id){
+  $(id).classList.remove("hidden");
+  $(id).classList.add("flex");
+}
+
+function closeModal(id){
+  $(id).classList.add("hidden");
+  $(id).classList.remove("flex");
+}
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+    closeModal("propertyModal");
+    closeModal("formModal");
+    $("searchResults").classList.add("hidden");
+  }
+});
+
+/* ================= GLOBAL SEARCH ================= */
+
+function buildSearch(){
+  const q=text($("globalSearch").value).toLowerCase();
+  const box=$("searchResults");
+
+  if(!q){
+    box.classList.add("hidden");
+    box.innerHTML="";
+    return;
+  }
+
+  const out=[];
+
+  state.students.forEach(s=>{
+    if(`${s.full_name||""} ${s.phone||""} ${s.id||""}`.toLowerCase().includes(q)){
+      out.push({
+        title:s.full_name||"Student",
+        sub:`Student • ${s.phone||"No phone"}`,
+        section:"students"
+      });
+    }
+  });
+
+  state.owners.forEach(o=>{
+    if(`${o.full_name||""} ${o.phone||""} ${o.id||""}`.toLowerCase().includes(q)){
+      out.push({
+        title:o.full_name||"Owner",
+        sub:`Owner • ${o.phone||"No phone"}`,
+        section:"owners"
+      });
+    }
+  });
+
+  Object.keys(propertyConfig).forEach(type=>{
+    state[type].forEach((x,i)=>{
+      if(`${x.name||""} ${x.category||""} ${x.area||""} ${x.address||""} ${x.phone||""} ${x.facilities||""}`.toLowerCase().includes(q)){
+        out.push({
+          title:x.name||propertyConfig[type].singular,
+          sub:`${propertyConfig[type].singular} • ${x.area||""} • ${x.phone||""}`,
+          section:type,
+          index:i
+        });
+      }
+    });
+  });
+
+  box.innerHTML=out.length
+    ?out.slice(0,30).map(r=>`
+      <button class="w-full text-left p-3 rounded-xl hover:bg-navy-850"
+        data-search-section="${esc(r.section)}"
+        data-search-index="${r.index??""}">
+        <div class="font-bold">${esc(r.title)}</div>
+        <div class="text-[10px] text-slate-400">${esc(r.sub)}</div>
+      </button>
+    `).join("")
+    :`<div class="p-3 text-slate-400">No results found.</div>`;
+
+  box.classList.remove("hidden");
+}
+
+$("globalSearch").addEventListener("input",buildSearch);
+
+document.addEventListener("click",e=>{
+  const r=e.target.closest("[data-search-section]");
+  if(!r)return;
+
+  const section=r.dataset.searchSection;
+  const index=r.dataset.searchIndex;
+
+  $("searchResults").classList.add("hidden");
+  $("globalSearch").value="";
+  showSection(section);
+
+  if(index!=="")openView(section,Number(index));
+});
+
+/* ================= PASSWORD ================= */
+
+$("passwordForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+
+  const p1=$("newPassword").value;
+  const p2=$("confirmPassword").value;
+
+  if(p1!==p2){
+    toast("Passwords do not match.",true);
+    return;
+  }
+
+  if(p1.length<8){
+    toast("Password must be at least 8 characters.",true);
+    return;
+  }
+
+  const {error}=await supabaseClient.auth.updateUser({password:p1});
+
+  if(error){
+    toast(error.message,true);
+  }else{
+    $("passwordForm").reset();
+    toast("Supabase password updated successfully.");
+  }
+});
+
+/* ================= REALTIME ================= */
+const adminRealtimeChannels=[];
+['hostels','tiffins','libraries','cafes','profiles'].forEach(table=>{
+  const channel=supabaseClient.channel('admin-live-'+table)
+    .on('postgres_changes',{event:'*',schema:'public',table},async()=>{
+      if(state.user) await loadAll();
+    })
+    .subscribe();
+  adminRealtimeChannels.push(channel);
+});
+
+/* ================= BOOT ================= */
+
+(async function boot(){
+  const {data,error}=await supabaseClient.auth.getSession();
+
+  if(error){
+    console.error(error);
+    $("authMessage").textContent=error.message;
+    return;
+  }
+
+  if(data.session){
+    await handleSession(data.session);
+  }else{
+    $("authScreen").classList.remove("hidden");
+    $("app").classList.add("hidden");
+  }
+})();
+</script>
+</body>
+</html>

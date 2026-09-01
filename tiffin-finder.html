@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pure-Veg Tiffin & Mess Services in Sikar | StudentHubHelp</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 950: '#040814', 900: '#081026', 850: '#0D1838', 800: '#14224D', 700: '#1F316B' },
+                        gold: { 100: '#FFF7D6', 200: '#FDECB2', 300: '#F5DE88', 400: '#E6C65E', 500: '#D4AF37', 600: '#B89020', 700: '#8C6B10' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Cinzel', 'serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gold-gradient-text { background: linear-gradient(135deg, #FFF7D6 0%, #D4AF37 50%, #B89020 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gold-gradient-bg { background: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89020 100%); }
+        .gold-border-glow { border: 1px solid rgba(212, 175, 55, 0.25); box-shadow: 0 0 20px rgba(212, 175, 55, 0.06); }
+        .gold-border-glow:hover { border-color: rgba(212, 175, 55, 0.65); box-shadow: 0 0 25px rgba(212, 175, 55, 0.18); }
+    </style>
+</head>
+<body class="bg-navy-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-gold-500 selection:text-navy-950">
+
+    <nav class="bg-navy-900 border-b border-gold-500/15 px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md">
+        <a href="./" class="flex items-center gap-3">
+            <img src="logo.png" onerror="this.outerHTML='<div class=\'w-10 h-10 rounded-xl bg-gold-500 text-navy-950 font-display font-extrabold text-lg flex items-center justify-center\'>SH</div>'" class="w-10 h-10 rounded-xl object-cover border border-gold-500/40 shadow-md">
+            <div>
+                <span class="text-lg font-display font-bold gold-gradient-text">StudentHubHelp</span>
+                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Sikar Student Platform</span>
+            </div>
+        </a>
+        <div class="flex items-center gap-3 text-xs">
+            <a href="./" class="px-4 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 hover:bg-gold-500/20 transition flex items-center gap-1.5 font-bold">
+                <i class="fa-solid fa-home"></i> Home
+            </a>
+        </div>
+    </nav>
+
+    <header class="bg-gradient-to-b from-navy-900 to-navy-950 py-12 px-4 text-center border-b border-navy-800">
+        <div class="max-w-3xl mx-auto space-y-3">
+            <span class="text-[11px] font-bold px-3 py-1 rounded-full uppercase border bg-gold-500/10 text-gold-300 border-gold-500/30">
+                <i class="fa-solid fa-utensils mr-1"></i> Hygienic Home-Style Food
+            </span>
+            <h1 class="text-3xl sm:text-4xl font-display font-bold text-white">Pure-Veg Tiffin & Mess Services in Sikar</h1>
+            <p class="text-xs sm:text-sm text-slate-400">Find reliable mess and tiffin delivery services near your coaching institute.</p>
+            
+            <div class="pt-4 max-w-xl mx-auto relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gold-500"></i>
+                <input type="text" id="tiffinSearchInput" placeholder="Search tiffin service by name, area or address..." class="w-full bg-navy-850 border border-navy-700 rounded-2xl pl-11 pr-4 py-3.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-gold-500 shadow-xl">
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl w-full mx-auto px-4 sm:px-8 py-10 flex-1 space-y-6">
+        <div class="flex justify-between items-center">
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-bowl-food text-gold-400"></i> All Verified Tiffins (<span id="tiffinCountBadge">0</span>)
+            </h2>
+        </div>
+
+        <div id="tiffinsGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full py-16 text-center text-slate-400">
+                <i class="fa-solid fa-spinner fa-spin text-3xl text-gold-500 mb-2"></i>
+                <p class="text-xs">Loading live tiffins from Supabase database...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 6-TAB DETAIL MODAL -->
+    <div id="tiffinDetailModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
+            <button onclick="closeTiffinModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            
+            <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
+                <img id="modalTiffinImg" src="tiffin-banner.png" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
+                <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                    <div>
+                        <span id="modalTiffinCat" class="text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-gold-500/20 text-gold-300 border-gold-500/40">TIFFIN SERVICE</span>
+                        <h2 id="modalTiffinTitle" class="text-xl sm:text-2xl font-bold text-white mt-1 leading-snug">Tiffin Name</h2>
+                        <p id="modalTiffinAddress" class="text-xs text-slate-300 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-500"></i> Address</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-navy-850 px-4 py-2 border-b border-navy-800 flex gap-2 overflow-x-auto text-xs font-bold flex-shrink-0">
+                <button onclick="switchTiffinTab('overview')" id="tabBtn-t-overview" class="tiffin-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition">Overview</button>
+                <button onclick="switchTiffinTab('menu')" id="tabBtn-t-menu" class="tiffin-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Menu & Pricing</button>
+                <button onclick="switchTiffinTab('facilities')" id="tabBtn-t-facilities" class="tiffin-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Hygienic Standards</button>
+                <button onclick="switchTiffinTab('timing')" id="tabBtn-t-timing" class="tiffin-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Timing</button>
+                <button onclick="switchTiffinTab('reviews')" id="tabBtn-t-reviews" class="tiffin-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Reviews</button>
+                <button onclick="switchTiffinTab('location')" id="tabBtn-t-location" class="tiffin-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Location</button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-4 flex-1 text-xs text-slate-300 leading-relaxed">
+                <div id="tiffinTabContent" class="space-y-3"></div>
+            </div>
+
+            <div class="bg-navy-950 p-4 border-t border-navy-800 flex items-center justify-between gap-3 flex-shrink-0">
+                <a id="modalTiffinCallBtn" href="#" class="flex-1 py-3 bg-navy-850 border border-gold-500/40 text-gold-300 text-xs font-bold text-center rounded-xl hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-phone mr-1"></i> Call Mess</a>
+                <a id="modalTiffinWhatsAppBtn" href="#" target="_blank" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold text-center rounded-xl transition"><i class="fa-brands fa-whatsapp text-sm mr-1"></i> WhatsApp Inquiry</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-navy-900 border-t border-navy-800 py-6 text-slate-500 text-xs text-center">
+        <p>© 2026 StudentHubHelp (Shekhawati). Director: Satpal Swami (+91 63779 42096)</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let allTiffins = [];
+        let activeTiffin = null;
+
+        async function loadTiffins() {
+            try {
+                const { data, error } = await supabaseClient.from('tiffins').select('*');
+                if (error) throw error;
+                allTiffins = data || [];
+                renderTiffins(allTiffins);
+            } catch (err) {
+                console.error('Supabase fetch error:', err);
+                document.getElementById('tiffinsGridContainer').innerHTML = `<div class="col-span-full py-12 text-center text-red-400"><p class="text-xs">Failed to load tiffins from database.</p></div>`;
+            }
+        }
+
+        function renderTiffins(list) {
+            const container = document.getElementById('tiffinsGridContainer');
+            document.getElementById('tiffinCountBadge').textContent = list.length;
+            if (list.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">No tiffin services found matching your search.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map((t, index) => {
+                const name = t["Supplied Name"] || t.name || 'Tiffin Service';
+                const area = t["Category"] || t.area || 'Sikar';
+                const address = t["Verified / Live Name"] || t["Verified / Live Address"] || t.address || 'Sikar, Rajasthan';
+                const phone = t["Supplied Phone"] || t.phone || '6377942096';
+                const rating = t["Live Rating"] || t.rating || '4.8';
+                const reviews = t["Review Count"] || t.reviews || '15+';
+                const hours = t["Opening Hours"] || t.hours || '07:00 AM - 09:00 PM';
+                const image = t.image || 'tiffin-banner.png';
+
+                return `
+                <div onclick="openTiffinModal(${index})" class="bg-navy-900 border border-navy-800 rounded-3xl overflow-hidden gold-border-glow flex flex-col justify-between space-y-4 cursor-pointer hover:border-gold-500/60 transition">
+                    <div class="relative w-full h-40 bg-navy-950 overflow-hidden">
+                        <img src="${image}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
+                        <span class="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-gold-500/20 text-gold-300 border-gold-500/40">${area}</span>
+                        <span class="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-navy-950/80 backdrop-blur-md text-gold-300 border border-gold-500/30 flex items-center gap-1 shadow-md">
+                            <i class="fa-solid fa-star text-[10px]"></i> ${rating} (${reviews})
+                        </span>
+                    </div>
+                    <div class="px-6 space-y-2">
+                        <h3 class="text-base font-bold text-white leading-snug">${name}</h3>
+                        <p class="text-xs text-slate-300 flex items-start gap-1.5 leading-relaxed">
+                            <i class="fa-solid fa-location-dot text-gold-500 mt-0.5 flex-shrink-0"></i> 
+                            <span>${address}</span>
+                        </p>
+                        <div class="p-3 bg-navy-850 rounded-2xl border border-navy-700/60 text-xs flex items-center justify-between">
+                            <span class="text-slate-400"><i class="fa-solid fa-clock text-gold-400 mr-1"></i> Timings:</span>
+                            <span class="text-slate-200 font-semibold">${hours}</span>
+                        </div>
+                    </div>
+                    <div class="px-6 pb-6 pt-2 border-t border-navy-800 flex items-center justify-between gap-3 text-xs">
+                        <a href="tel:${phone}" onclick="event.stopPropagation()" class="flex-1 py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold hover:brightness-110 transition text-center shadow-md">
+                            <i class="fa-solid fa-phone"></i> Call Mess
+                        </a>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function openTiffinModal(index) {
+            activeTiffin = allTiffins[index];
+            if (!activeTiffin) return;
+
+            document.getElementById('modalTiffinTitle').textContent = activeTiffin["Supplied Name"] || activeTiffin.name || 'Tiffin Service';
+            document.getElementById('modalTiffinCat').textContent = activeTiffin["Category"] || 'TIFFIN SERVICE';
+            document.getElementById('modalTiffinAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${activeTiffin["Verified / Live Name"] || activeTiffin["Verified / Live Address"] || 'Sikar'}`;
+            document.getElementById('modalTiffinImg').src = activeTiffin.image || 'tiffin-banner.png';
+            
+            const phone = activeTiffin["Supplied Phone"] || '6377942096';
+            document.getElementById('modalTiffinCallBtn').href = `tel:${phone}`;
+            document.getElementById('modalTiffinWhatsAppBtn').href = `https://wa.me/91${phone.replace(/[^0-9]/g, '')}?text=Hi,%20I%20want%20tiffin%20service%20details%20from%20${encodeURIComponent(activeTiffin["Supplied Name"])}`;
+
+            switchTiffinTab('overview');
+            document.getElementById('tiffinDetailModal').classList.remove('hidden');
+        }
+
+        function closeTiffinModal() { document.getElementById('tiffinDetailModal').classList.add('hidden'); }
+
+        function switchTiffinTab(tabName) {
+            document.querySelectorAll('.tiffin-tab-btn').forEach(b => b.className = 'tiffin-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition');
+            const activeBtn = document.getElementById(`tabBtn-t-${tabName}`);
+            if (activeBtn) activeBtn.className = 'tiffin-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition font-bold shadow-md';
+
+            const contentBox = document.getElementById('tiffinTabContent');
+            if (!activeTiffin) return;
+
+            if (tabName === 'overview') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2"><strong class="text-gold-300 block">Tiffin Overview:</strong><p class="text-slate-200">${activeTiffin["Supplied Name"]} provides hygienic home-style pure-veg food for students in Sikar.</p></div><div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Rating:</strong><p class="text-slate-200">⭐ ${activeTiffin["Live Rating"]} / 5 (${activeTiffin["Review Count"]} Reviews)</p></div>`;
+            } else if (tabName === 'menu') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Monthly Mess Menu & Pricing:</strong><p class="text-slate-200">Roti, Dal, Sabzi, Rice & Salad with special Sunday meals.</p></div>`;
+            } else if (tabName === 'facilities') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Hygienic Standards:</strong><p class="text-slate-200">RO drinking water, clean cooking environment, and timely delivery.</p></div>`;
+            } else if (tabName === 'timing') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Delivery Timings:</strong><p class="text-slate-200">🕒 ${activeTiffin["Opening Hours"] || 'Lunch: 11 AM - 2 PM | Dinner: 7 PM - 10 PM'}</p></div>`;
+            } else if (tabName === 'reviews') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Student Feedback:</strong><p class="text-slate-200">Highly rated for homelike taste and consistent quality.</p></div>`;
+            } else if (tabName === 'location') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Location Details:</strong><p class="text-slate-200">📍 ${activeTiffin["Verified / Live Name"] || activeTiffin["Verified / Live Address"] || 'Sikar'}</p></div>`;
+            }
+        }
+
+        document.getElementById('tiffinSearchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const filtered = allTiffins.filter(t => (t["Supplied Name"] || '').toLowerCase().includes(query) || (t["Category"] || '').toLowerCase().includes(query));
+            renderTiffins(filtered);
+        });
+
+        window.addEventListener('DOMContentLoaded', loadTiffins);
+
+        // Supabase Realtime: Admin add/edit/delete appears here automatically.
+        const tiffinsRealtime = supabaseClient.channel('live-tiffins')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tiffins' }, async () => {
+                await loadTiffins();
+            })
+            .subscribe();
+    </script>
+</body>
+</html>
