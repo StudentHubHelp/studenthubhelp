@@ -28,11 +28,17 @@
         }
     </script>
 
-    <style>
+        <style>
+        /* Neem Karoli Baba Background Theme */
+        body {
+            background-image: linear-gradient(rgba(4, 8, 20, 0.90), rgba(4, 8, 20, 0.92)), url('ChatGPT Image Sep 1, 2026, 03_17_37 PM.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
         .gold-gradient-text { background: linear-gradient(135deg, #FFF7D6 0%, #D4AF37 50%, #B89020 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .gold-gradient-bg { background: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89020 100%); }
         .gold-border-glow { border: 1px solid rgba(212, 175, 55, 0.25); box-shadow: 0 0 15px rgba(212, 175, 55, 0.05); }
-        .gold-border-glow:hover { border-color: rgba(212, 175, 55, 0.65); box-shadow: 0 0 20px rgba(212, 175, 55, 0.15); }
     </style>
 </head>
 <body class="bg-navy-950 text-slate-100 font-sans antialiased min-h-screen selection:bg-gold-500 selection:text-navy-950">
@@ -537,24 +543,36 @@ function renderAllTables() {
                 </tr>`;
             }).join('');
             
+           // Hostels Data Fix
+            document.getElementById('hostelTableBody').innerHTML = hostelsData.map((h, i) => {
+                const name = h["Hostel Name (Supplied)"] || h["Hostel Name"] || h.name || h.Name || 'Hostel';
+                const cat = h["Category"] || h.cat || 'PG';
+                const phone = h["Contact (Verified)"] || h["Contact"] || h.phone || '--';
+                const addr = h["Verified / Live Address"] || h["Address"] || h.address || h["Area"] || 'Sikar';
+                return `<tr onclick="openAdminPropertyView('hostels', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4">${cat}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('hostels', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('hostels', ${h.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            }).join('');
+            
+            // Tiffins Data Fix
             document.getElementById('tiffinTableBody').innerHTML = tiffinsData.map((t, i) => {
-                const name = t["Supplied Name"] || t["name"] || t["Name"] || 'Tiffin';
-                const phone = t["Supplied Phone"] || t["phone"] || t["Contact"] || '--';
-                const addr = t["Verified / Live Address"] || t["address"] || t["Address"] || '--';
+                const name = t["Supplied Name"] || t["Tiffin Name"] || t.name || t.Name || 'Tiffin';
+                const phone = t["Supplied Phone"] || t["Phone"] || t.phone || t.Contact || '--';
+                const addr = t["Verified / Live Address"] || t["Verified / Live Name"] || t["Area"] || t.address || t.Address || 'Sikar';
                 return `<tr onclick="openAdminPropertyView('tiffins', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('tiffins', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('tiffins', ${t.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             }).join('');
             
+            // Libraries Data Fix
             document.getElementById('libraryTableBody').innerHTML = librariesData.map((l, i) => {
-                const name = l["Supplied Name"] || l["name"] || l["Name"] || 'Library';
-                const phone = l["Supplied Phone"] || l["phone"] || l["Contact"] || '--';
-                const addr = l["Verified / Live Address"] || l["address"] || l["Address"] || '--';
+                const name = l["Supplied Name"] || l["Library Name"] || l.name || l.Name || 'Library';
+                const phone = l["Supplied Phone"] || l["Phone"] || l.phone || l.Contact || '--';
+                const addr = l["Verified / Live Address"] || l["Area"] || l.address || l.Address || 'Sikar';
                 return `<tr onclick="openAdminPropertyView('libraries', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('libraries', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('libraries', ${l.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             }).join('');
             
+            // Cafes Data Fix
             document.getElementById('cafeTableBody').innerHTML = cafesData.map((c, i) => {
-                const name = c["Name"] || c["name"] || 'Cafe';
-                const phone = c["Contact"] || c["phone"] || '--';
-                const addr = c["Public/Exact Address"] || c["address"] || '--';
+                const name = c.Name || c.name || 'Cafe';
+                const phone = c.Contact || c.phone || '--';
+                const addr = c["Public/Exact Address"] || c.address || 'Sikar';
                 return `<tr onclick="openAdminPropertyView('cafes', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('cafes', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('cafes', ${c.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             }).join('');
         }
