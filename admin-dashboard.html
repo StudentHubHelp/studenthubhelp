@@ -657,8 +657,7 @@
             openAdminEditModal(currentInspectedType, currentInspectedIdx);
         };
 
-        // Edit Modal
-        window.openAdminEditModal = function(type, idx) {
+window.openAdminEditModal = function(type, idx) {
             let list = type === 'hostels' ? hostelsData : type === 'tiffins' ? tiffinsData : type === 'libraries' ? librariesData : cafesData;
             let item = list[idx];
             if (!item) return;
@@ -667,15 +666,17 @@
             document.getElementById('adminEditId').value = item.id;
             document.getElementById('adminEditItemTitle').textContent = item.name || '';
             document.getElementById('adminEditName').value = item.name || '';
+            document.getElementById('adminEditCategory').value = item.category || '';
             document.getElementById('adminEditPhone').value = item.phone || '';
             document.getElementById('adminEditArea').value = item.area || '';
             document.getElementById('adminEditAddress').value = item.address || '';
+            document.getElementById('adminEditTiming').value = item.timing || '';
             document.getElementById('adminEditAbout').value = item.facilities || '';
+            document.getElementById('adminEditRating').value = item.rating || 5.0;
+            document.getElementById('adminEditImage').value = item.image || '';
 
             document.getElementById('adminEditModal').classList.remove('hidden');
         };
-
-        window.closeAdminEditModal = function() { document.getElementById('adminEditModal').classList.add('hidden'); };
 
         document.getElementById('adminEditForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -684,15 +685,19 @@
             
             const payload = {
                 name: document.getElementById('adminEditName').value.trim(),
+                category: document.getElementById('adminEditCategory').value.trim(),
                 phone: document.getElementById('adminEditPhone').value.trim(),
                 area: document.getElementById('adminEditArea').value.trim(),
                 address: document.getElementById('adminEditAddress').value.trim(),
-                facilities: document.getElementById('adminEditAbout').value.trim()
+                timing: document.getElementById('adminEditTiming').value.trim(),
+                facilities: document.getElementById('adminEditAbout').value.trim(),
+                rating: parseFloat(document.getElementById('adminEditRating').value.trim()) || 5.0,
+                image: document.getElementById('adminEditImage').value.trim()
             };
 
             const { error } = await supabaseClient.from(type).update(payload).eq('id', id);
             if (error) alert('Error: ' + error.message);
-            else { alert('Successfully updated in Supabase!'); closeAdminEditModal(); initAllData(); }
+            else { alert('Successfully updated in Supabase live database!'); closeAdminEditModal(); initAllData(); }
         });
 
         window.deleteSupabaseItem = async function(type, id) {
