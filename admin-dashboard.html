@@ -30,9 +30,9 @@
 
       <style>
         /* Neem Karoli Baba Background Theme with Increased Brightness */
-        body {
-            /* यहाँ 0.90 की जगह 0.65 या 0.50 करने से बैकग्राउंड इमेज और अधिक ब्राइट/साफ दिखने लगेगी */
-            background-image: linear-gradient(rgba(4, 8, 20, 0.55), rgba(4, 8, 20, 0.60)), url('ChatGPT Image Sep 1, 2026, 03_17_37 PM.png');
+       body {
+            /* यहाँ ऑपिसिटी को 0.35 कर दिया है ताकि इमेज और अधिक ब्राइट और क्लियर दिखे */
+            background-image: linear-gradient(rgba(4, 8, 20, 0.35), rgba(4, 8, 20, 0.40)), url('ChatGPT Image Sep 1, 2026, 03_17_37 PM.png');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -579,17 +579,37 @@ function renderAllTables() {
         }
 
         // Universal Search Logic
-        const globalSearchInput = document.getElementById('globalAdminSearch');
+const globalSearchInput = document.getElementById('globalAdminSearch');
         const searchResultsBox = document.getElementById('universalSearchResults');
         if (globalSearchInput) {
             globalSearchInput.addEventListener('input', function(e) {
                 const query = e.target.value.toLowerCase().trim();
                 if (!query) { searchResultsBox.classList.add('hidden'); searchResultsBox.innerHTML = ''; return; }
                 let matches = [];
-                hostelsData.forEach((h, i) => { if ((h["Hostel Name (Supplied)"] || h.name || '').toLowerCase().includes(query)) matches.push({ title: h["Hostel Name (Supplied)"] || h.name, type: 'Hostel', cat: 'hostels', idx: i }); });
-                tiffinsData.forEach((t, i) => { if ((t["Supplied Name"] || t.name || '').toLowerCase().includes(query)) matches.push({ title: t["Supplied Name"] || t.name, type: 'Tiffin', cat: 'tiffins', idx: i }); });
-                librariesData.forEach((l, i) => { if ((l["Supplied Name"] || l.name || '').toLowerCase().includes(query)) matches.push({ title: l["Supplied Name"] || l.name, type: 'Library', cat: 'libraries', idx: i }); });
-                cafesData.forEach((c, i) => { if ((c.Name || c.name || '').toLowerCase().includes(query)) matches.push({ title: c.Name || c.name, type: 'Cafe', cat: 'cafes', idx: i }); });
+
+                // Hostels Search (Name, Phone, Address match)
+                hostelsData.forEach((h, i) => {
+                    const text = `${h["Hostel Name (Supplied)"] || h.name || ''} ${h["Contact (Verified)"] || h.phone || ''} ${h["Verified / Live Address"] || h.address || ''}`.toLowerCase();
+                    if (text.includes(query)) matches.push({ title: h["Hostel Name (Supplied)"] || h.name, type: 'Hostel', cat: 'hostels', idx: i });
+                });
+
+                // Tiffins Search
+                tiffinsData.forEach((t, i) => {
+                    const text = `${t["Supplied Name"] || t.name || ''} ${t["Supplied Phone"] || t.phone || ''} ${t["Verified / Live Address"] || t.address || ''}`.toLowerCase();
+                    if (text.includes(query)) matches.push({ title: t["Supplied Name"] || t.name, type: 'Tiffin', cat: 'tiffins', idx: i });
+                });
+
+                // Libraries Search
+                librariesData.forEach((l, i) => {
+                    const text = `${l["Supplied Name"] || l.name || ''} ${l["Supplied Phone"] || l.phone || ''} ${l["Verified / Live Address"] || l.address || ''}`.toLowerCase();
+                    if (text.includes(query)) matches.push({ title: l["Supplied Name"] || l.name, type: 'Library', cat: 'libraries', idx: i });
+                });
+
+                // Cafes Search
+                cafesData.forEach((c, i) => {
+                    const text = `${c.Name || c.name || ''} ${c.Contact || c.phone || ''} ${c["Public/Exact Address"] || c.address || ''}`.toLowerCase();
+                    if (text.includes(query)) matches.push({ title: c.Name || c.name, type: 'Cafe', cat: 'cafes', idx: i });
+                });
 
                 searchResultsBox.innerHTML = matches.length === 0 ? `<p class="text-slate-400 p-2">No results found</p>` : matches.map(m => `
                     <div onclick="handleGlobalSearchSelect('${m.cat}', ${m.idx})" class="p-2.5 hover:bg-navy-800 rounded-xl cursor-pointer flex justify-between items-center transition">
