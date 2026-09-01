@@ -304,6 +304,9 @@
     <div id="admin6TabModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
             <button onclick="closeAdmin6TabModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <button onclick="editCurrentAdminItemFromModal()" class="absolute top-4 right-16 z-20 px-3 py-1.5 rounded-full bg-navy-950/80 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold flex items-center gap-1.5 border border-gold-500/40 shadow-lg transition">
+    <i class="fa-solid fa-pen-to-square"></i> Edit Details
+</button>
             <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
                 <img id="adminModalBannerImg" src="hostel-banner.png" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
@@ -354,6 +357,13 @@
                     <label class="block text-slate-300 mb-1 font-bold">Full Address *</label>
                     <input type="text" id="adminEditAddress" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
                 </div>
+                <div class="p-3 bg-navy-850 rounded-xl border border-navy-700 space-y-2">
+    <label class="block text-gold-400 font-bold">Property Image (Upload File or Enter URL)</label>
+    <input type="file" id="adminImgFileInput" accept="image/*" class="w-full text-white text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:bg-gold-500 file:text-navy-950 cursor-pointer">
+    <input type="text" id="adminEditImage" placeholder="Or paste image URL (https://...)" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3.5 py-2 text-white text-xs">
+    <div id="adminImgPreviewBox" class="hidden w-full h-24 rounded-xl overflow-hidden border border-navy-700 mt-2">
+        <img id="adminImgPreview" class="w-full h-full object-cover">
+    </div>
                 <div>
                     <label class="block text-slate-300 mb-1 font-bold">Facilities / Menu / Overview Description</label>
                     <textarea id="adminEditAbout" rows="3" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></textarea>
@@ -841,7 +851,84 @@
             localStorage.setItem('studenthub_admin_pwd', p1);
             alert('Master Password updated successfully!');
         });
+  let currentInspectedType = 'hostels';
+        let currentInspectedIdx = 0;
 
+        window.openAdminPropertyView = function(type, idx) {
+            currentInspectedType = type;
+            currentInspectedIdx = idx;
+            let item = (type === 'hostels') ? hostelsData[idx] : (type === 'tiffins') ? tiffinsData[idx] : librariesData[idx];
+            if (!item) return;
+
+            document.getElementById('adminModalBannerImg').src = item.image || 'hostel-banner.png';
+            document.getElementById('adminModalTitle').textContent = item.name;
+            document.getElementById('adminModalAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${item.address || item.area || 'Sikar'}`;
+            document.getElementById('adminModalCatBadge').textContent = (item.cat || type).toUpperCase();
+            document.getElementById('adminModalAbout').innerHTML = `
+                <div class="space-y-3">
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700">
+                        <strong class="text-gold-300 block mb-1">Contact & Location:</strong>
+                        <p class="text-white">📞 ${item.phone || '--'} | 📍 ${item.address || item.area || 'Sikar'}</p>
+                    </div>
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700">
+                        <strong class="text-gold-300 block mb-1">Facilities / Menu / Overview:</strong>
+                        <p class="text-slate-200">${item.facilities || item.menu || item.about || 'Verified student accommodation in Sikar.'}</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('adminModalCallBtn').href = `tel:${item.phone || ''}`;
+            document.getElementById('adminModalWhatsAppBtn').href = `https://wa.me/${(item.phone || '').replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(item.name)}`;
+            document.getElementById('admin6TabModal').classList.remove('hidden');
+        };
+
+        window.editCurrentAdminItemFromModal = function() {
+            document.getElementById('admin6TabModal').classList.add('hidden');
+            openAdminEditModal(currentInspectedType, currentInspectedIdx);
+        };
+
+        const imgFileInput = document.getElementById('adminImgFileInput');
+        if (imgFileInput) {
+            imgFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        document.getElementById('adminEditImage').value = evt.target.result;
+                        document.getElementById('adminImgPreview').src = evt.target.result;
+                        document.getElementById('adminImgPreviewBox').classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        window.openAdminEditModal = function(type, idx) {
+            let item = (type === 'hostels') ? hostelsData[idx] : (type === 'tiffins') ? tiffinsData[idx] : librariesData[idx];
+            if (!item) return;
+
+            document.getElementById('adminEditType').value = type;
+            document.getElementById('adminEditIndex').value = idx;
+            document.getElementById('adminEditItemTitle').textContent = item.name;
+            document.getElementById('adminEditName').value = item.name || '';
+            document.getElementById('adminEditPhone').value = item.phone || '';
+            document.getElementById('adminEditArea').value = item.area || '';
+            document.getElementById('adminEditAddress').value = item.address || '';
+            document.getElementById('adminEditAbout').value = item.facilities || item.menu || item.about || '';
+            document.getElementById('adminEditImage').value = item.image || '';
+
+            if (item.image) {
+                document.getElementById('adminImgPreview').src = item.image;
+                document.getElementById('adminImgPreviewBox').classList.remove('hidden');
+            } else {
+                document.getElementById('adminImgPreviewBox').classList.add('hidden');
+            }
+
+            document.getElementById('adminEditModal').classList.remove('hidden');
+        };
+
+        window.closeAdminEditModal = function() {
+            document.getElementById('adminEditModal').classList.add('hidden');
+        };
         function initAllData() {
             fetchRealUsers();
         }
