@@ -117,130 +117,147 @@
     </footer>
 
     <script>
-        const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let allHostels = [];
-        let activeHostel = null;
+function esc(value) {
+  return String(value ?? "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+function clean(value){ return value == null ? "" : String(value).trim(); }
+function first(obj, keys, fallback="") {
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(obj,key) && clean(obj[key]) !== "") return obj[key];
+  }
+  const normalized = {};
+  Object.keys(obj || {}).forEach(k => normalized[k.toLowerCase().replace(/[^a-z0-9]/g,"")] = k);
+  for (const key of keys) {
+    const nk = key.toLowerCase().replace(/[^a-z0-9]/g,"");
+    if (normalized[nk] && clean(obj[normalized[nk]]) !== "") return obj[normalized[nk]];
+  }
+  return fallback;
+}
+function val(row, field){
+  const maps = {
+    name:["name","Name","Hostel Name (Supplied)","Supplied Name","title","Title","Library Name","Cafe Name","Tiffin Name"],
+    category:["category","Category","cat","type","Type"],
+    area:["area","Area","locality","Locality","location","Location"],
+    address:["address","Address","Verified / Live Address","Public/Exact Address","Exact Address","Full Address","Public Address"],
+    phone:["phone","Phone","Contact","Contact (Verified)","Supplied Phone","Phone Number","Contact Number"],
+    rating:["rating","Rating","Google Rating","Google/Maps Rating","Live Rating","Google Maps Rating"],
+    reviews:["review_count","Review Count","reviews","Reviews","Google Reviews","Review Count (Google)"],
+    timing:["timing","Timing","hours","Hours","Opening Hours","Opening/Closing Hours"],
+    facilities:["facilities","Facilities","amenities","Amenities","description","Description","Food Details","food_details","Menu","menu"],
+    image:["image","Image","image_url","Image URL","photo","Photo"]
+  };
+  return first(row, maps[field] || [field], "");
+}
+function showValue(v){ return clean(v) ? esc(v) : "—"; }
+function phoneHref(v){ const p=clean(v); return p ? `tel:${p}` : "#"; }
+function whatsappHref(v,name){ const digits=clean(v).replace(/\D/g,""); return digits ? `https://wa.me/${digits}?text=${encodeURIComponent("Hi, I want to know more about " + clean(name))}` : "#"; }
 
-        async function loadHostels() {
-            try {
-                const { data, error } = await supabaseClient.from('hostels').select('*');
-                if (error) throw error;
-                allHostels = data || [];
-                renderHostels(allHostels);
-            } catch (err) {
-                console.error('Supabase fetch error:', err);
-                document.getElementById('hostelsGridContainer').innerHTML = `<div class="col-span-full py-12 text-center text-red-400"><p class="text-xs">Failed to load hostels from database.</p></div>`;
-            }
-        }
+let allRecords=[]; let activeRecord=null; let liveChannel=null;
+const TABLE="hostels";
+const $id=id=>document.getElementById(id);
 
-        function renderHostels(list) {
-            const container = document.getElementById('hostelsGridContainer');
-            document.getElementById('hostelCountBadge').textContent = list.length;
-            if (list.length === 0) {
-                container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">No hostels found matching your search.</div>`;
-                return;
-            }
+async function loadRecords() {
+  try {
+    const {data,error}=await supabaseClient.from(TABLE).select("*");
+    if(error) throw error;
+    allRecords=data||[];
+    renderRecords(allRecords);
+  } catch(error) {
+    console.error(TABLE+" Supabase error:",error);
+    $id("hostelsGridContainer").innerHTML=`<div class="col-span-full py-16 text-center text-red-400"><i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i><p class="text-sm font-bold">Unable to load live hostels</p><p class="text-xs text-slate-500 mt-1">Supabase error: ${esc(error.message||"Unknown error")}</p></div>`;
+  }
+}
 
-            container.innerHTML = list.map((h, index) => {
-                const name = h["Hostel Name (Supplied)"] || h.name || 'Hostel / PG';
-                const cat = h["Category"] || h.cat || 'Boys/Girls PG';
-                const address = h["Verified / Live Address"] || h.address || 'Sikar, Rajasthan';
-                const contact = h["Contact (Verified)"] || h.phone || '6377942096';
-                const rating = h["Google/Maps Rating"] || h.rating || '4.8';
-                const reviews = h["Review Count"] || h.reviews || '25+';
-                const facilities = h["Facilities"] || h.facilities || 'RO Water, Wi-Fi, Security';
-                const image = h.image || 'hostel-banner.png';
+function renderRecords(list) {
+  const box=$id("hostelsGridContainer");
+  $id("hostelCountBadge").textContent=list.length;
+  if(!list.length) { box.innerHTML=`<div class="col-span-full py-16 text-center text-slate-400"><p class="text-sm">No records found.</p></div>`; return; }
+  box.innerHTML=list.map(row=>{
+    const name=val(row,"name"); const category=val(row,"category"); const area=val(row,"area");
+    const address=val(row,"address"); const phone=val(row,"phone"); const rating=val(row,"rating");
+    const reviews=val(row,"reviews"); const timing=val(row,"timing"); const facilities=val(row,"facilities");
+    const image=val(row,"image")||"hostel-banner.png"; const rid=String(row.id??"");
+    return `<article data-record-id="${esc(rid)}" class="bg-navy-900 border border-navy-800 rounded-3xl overflow-hidden gold-border-glow cursor-pointer transition hover:border-gold-500/60">
+      <div class="relative w-full h-40 bg-navy-950 overflow-hidden">
+        <img src="${esc(image)}" onerror="this.src='hostel-banner.png'" class="w-full h-full object-cover" alt="${esc(name||C['singular'])}">
+        <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
+        <span class="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-gold-500/20 text-gold-300 border-gold-500/40">${esc(category||C['singular'])}</span>
+        ${rating ? `<span class="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-navy-950/80 text-gold-300 border border-gold-500/30"><i class="fa-solid fa-star text-[10px]"></i> ${esc(rating)}${reviews?` (${esc(reviews)})` : ""}</span>` : ""}
+      </div>
+      <div class="px-6 py-5 space-y-3">
+        <h3 class="text-base font-bold text-white leading-snug">${esc(name||C['singular'])}</h3>
+        ${area?`<p class="text-[11px] text-gold-400"><i class="fa-solid fa-location-dot mr-1"></i>${esc(area)}</p>`:""}
+        <p class="text-xs text-slate-300"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i>${showValue(address)}</p>
+        <div class="p-3 bg-navy-850 rounded-2xl border border-navy-700/60 text-xs">
+          <span class="text-[10px] text-gold-400 font-bold uppercase">Facilities</span>
+          <p class="text-slate-200 mt-1">${showValue(facilities)}</p>
+        </div>
+      </div>
+      <div class="px-6 pb-6 pt-3 border-t border-navy-800 flex items-center justify-between gap-3">
+        <span class="text-[11px] text-slate-400">${timing?`<i class="fa-solid fa-clock text-gold-400 mr-1"></i>${esc(timing)}`:""}</span>
+        ${phone?`<a href="${phoneHref(phone)}" onclick="event.stopPropagation()" class="px-3.5 py-2 rounded-xl gold-gradient-bg text-navy-950 font-bold text-xs"><i class="fa-solid fa-phone"></i> Call Warden</a>`:""}
+      </div>
+    </article>`;
+  }).join("");
+  box.querySelectorAll("[data-record-id]").forEach(card=>card.addEventListener("click",()=>openRecord(card.dataset.recordId)));
+}
 
-                return `
-                <div onclick="openHostelModal(${index})" class="bg-navy-900 border border-navy-800 rounded-3xl overflow-hidden gold-border-glow flex flex-col justify-between space-y-4 cursor-pointer hover:border-gold-500/60 transition">
-                    <div class="relative w-full h-40 bg-navy-950 overflow-hidden">
-                        <img src="${image}" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
-                        <span class="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-gold-500/20 text-gold-300 border-gold-500/40">${cat}</span>
-                        <span class="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-navy-950/80 backdrop-blur-md text-gold-300 border border-gold-500/30 flex items-center gap-1 shadow-md">
-                            <i class="fa-solid fa-star text-[10px]"></i> ${rating} (${reviews})
-                        </span>
-                    </div>
-                    <div class="px-6 space-y-2">
-                        <h3 class="text-base font-bold text-white leading-snug">${name}</h3>
-                        <p class="text-xs text-slate-300 flex items-start gap-1.5 leading-relaxed">
-                            <i class="fa-solid fa-location-dot text-gold-500 mt-0.5 flex-shrink-0"></i> 
-                            <span>${address}</span>
-                        </p>
-                        <div class="p-3 bg-navy-850 rounded-2xl border border-navy-700/60 text-xs space-y-1">
-                            <span class="text-[10px] text-gold-400 font-bold uppercase tracking-wider block">Facilities:</span>
-                            <p class="text-slate-200">${facilities}</p>
-                        </div>
-                    </div>
-                    <div class="px-6 pb-6 pt-2 border-t border-navy-800 flex items-center justify-between gap-3 text-xs">
-                        <a href="tel:${contact}" onclick="event.stopPropagation()" class="flex-1 py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold hover:brightness-110 transition text-center shadow-md">
-                            <i class="fa-solid fa-phone"></i> Call Warden
-                        </a>
-                    </div>
-                </div>
-            `;
-            }).join('');
-        }
+function openRecord(id) {
+  activeRecord=allRecords.find(r=>String(r.id??"")===String(id));
+  if(!activeRecord) return;
+  const row=activeRecord;
+  const name=val(row,"name")||"Hostel / PG"; const address=val(row,"address"); const phone=val(row,"phone");
+  $id("modalHostelTitle").textContent=name;
+  document.getElementById("modalHostelCat").textContent = clean(val(row,"category")) || "HOSTEL / PG";
+  $id("modalHostelAddress").innerHTML=`<i class="fa-solid fa-location-dot text-gold-500"></i> ${showValue(address)}`;
+  $id("modalHostelImg").src=val(row,"image")||"hostel-banner.png";
+  $id("modalHostelImg").onerror=()=>{$id("modalHostelImg").src="hostel-banner.png"};
+  $id("modalHostelCallBtn").href=phoneHref(phone);
+  $id("modalHostelWhatsAppBtn").href=whatsappHref(phone,name);
+  switchTab("overview");
+  $id("hostelDetailModal").classList.remove("hidden");
+}
+function closeModal(){ $id("hostelDetailModal").classList.add("hidden"); activeRecord=null; }
 
-        function openHostelModal(index) {
-            activeHostel = allHostels[index];
-            if (!activeHostel) return;
+function switchTab(tab) {
+  document.querySelectorAll(".hostel-tab-btn").forEach(b=>b.className="hostel-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition");
+  const b=$id(`tabBtn-${tab}`);
+  if(b)b.className="hostel-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition font-bold shadow-md";
+  if(!activeRecord)return;
+  const r=activeRecord, name=val(r,"name")||"Hostel / PG";
+  const rating=val(r,"rating"), reviews=val(r,"reviews"), address=val(r,"address"), area=val(r,"area"), timing=val(r,"timing"), facilities=val(r,"facilities");
+  const content=$id("hostelTabContent");
+  const ratingBlock=rating?`<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Rating</strong><p class="text-slate-200 mt-1">⭐ ${esc(rating)} / 5${reviews?` (${esc(reviews)} Reviews)`:""}</p></div>`:"";
+  if(tab==="overview") content.innerHTML=`<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Overview</strong><p class="text-slate-200 mt-2">${esc(name)} is listed on StudentHubHelp. The details shown here are read directly from the live Supabase record.</p></div>${ratingBlock}`;
+  else if(tab==="location") content.innerHTML=`<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Exact Address</strong><p class="text-slate-200 mt-2">📍 ${showValue(address)}</p>${area?`<p class="text-slate-400 mt-1">Area: ${esc(area)}</p>`:""}</div>`;
+  else if(tab==="timing") content.innerHTML=`<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Opening / Service Hours</strong><p class="text-slate-200 mt-2">🕒 ${showValue(timing)}</p></div>`;
+  else if(tab==="reviews") content.innerHTML=`<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Reviews</strong><p class="text-slate-200 mt-2">${reviews?`${esc(reviews)} reviews`:"Review count is not available in this Supabase record."}</p></div>${ratingBlock}`;
+  else if(tab==="facilities" || tab==="food" || tab==="menu" || tab==="cabins") content.innerHTML=`<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Details</strong><p class="text-slate-200 mt-2 whitespace-pre-wrap">${showValue(facilities)}</p></div>`;
+  else content.innerHTML=`<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><p class="text-slate-200">No additional data is available.</p></div>`;
+}
 
-            document.getElementById('modalHostelTitle').textContent = activeHostel["Hostel Name (Supplied)"] || activeHostel.name || 'Hostel';
-            document.getElementById('modalHostelCat').textContent = activeHostel["Category"] || 'HOSTEL / PG';
-            document.getElementById('modalHostelAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${activeHostel["Verified / Live Address"] || 'Sikar'}`;
-            document.getElementById('modalHostelImg').src = activeHostel.image || 'hostel-banner.png';
-            
-            const phone = activeHostel["Contact (Verified)"] || '6377942096';
-            document.getElementById('modalHostelCallBtn').href = `tel:${phone}`;
-            document.getElementById('modalHostelWhatsAppBtn').href = `https://wa.me/91${phone.replace(/[^0-9]/g, '')}?text=Hi,%20I%20want%20to%20inquire%20about%20rooms%20at%20${encodeURIComponent(activeHostel["Hostel Name (Supplied)"])}`;
+$id("hostelSearchInput").addEventListener("input",e=>{
+  const q=e.target.value.toLowerCase().trim();
+  const filtered=allRecords.filter(r=>[val(r,"name"),val(r,"category"),val(r,"area"),val(r,"address"),val(r,"phone"),val(r,"facilities")].join(" ").toLowerCase().includes(q));
+  renderRecords(filtered);
+});
 
-            switchHostelTab('overview');
-            document.getElementById('hostelDetailModal').classList.remove('hidden');
-        }
-
-        function closeHostelModal() { document.getElementById('hostelDetailModal').classList.add('hidden'); }
-
-        function switchHostelTab(tabName) {
-            document.querySelectorAll('.hostel-tab-btn').forEach(b => b.className = 'hostel-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition');
-            const activeBtn = document.getElementById(`tabBtn-${tabName}`);
-            if (activeBtn) activeBtn.className = 'hostel-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition font-bold shadow-md';
-
-            const contentBox = document.getElementById('hostelTabContent');
-            if (!activeHostel) return;
-
-            if (tabName === 'overview') {
-                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2"><strong class="text-gold-300 block">Hostel Overview:</strong><p class="text-slate-200">${activeHostel["Hostel Name (Supplied)"]} is verified for students in Sikar with secure accommodation.</p></div><div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Rating:</strong><p class="text-slate-200">⭐ ${activeHostel["Google/Maps Rating"]} / 5 (${activeHostel["Review Count"]} Reviews)</p></div>`;
-            } else if (tabName === 'rooms') {
-                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Room Types & Rent:</strong><p class="text-slate-200">Single, Double & Triple sharing rooms available with mess facility.</p></div>`;
-            } else if (tabName === 'facilities') {
-                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Facilities:</strong><p class="text-slate-200">${activeHostel["Facilities"] || 'RO Water, Wi-Fi, CCTV, Power Backup'}</p></div>`;
-            } else if (tabName === 'timing') {
-                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Timing & Gate Rules:</strong><p class="text-slate-200">Standard student hostel timings with secure warden supervision.</p></div>`;
-            } else if (tabName === 'reviews') {
-                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Student Reviews:</strong><p class="text-slate-200">Highly rated by coaching students for peaceful study environment.</p></div>`;
-            } else if (tabName === 'location') {
-                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Address:</strong><p class="text-slate-200">📍 ${activeHostel["Verified / Live Address"]}</p></div>`;
-            }
-        }
-
-        document.getElementById('hostelSearchInput').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            const filtered = allHostels.filter(h => (h["Hostel Name (Supplied)"] || '').toLowerCase().includes(query) || (h["Verified / Live Address"] || '').toLowerCase().includes(query));
-            renderHostels(filtered);
-        });
-
-        window.addEventListener('DOMContentLoaded', loadHostels);
-
-        // Supabase Realtime: Admin add/edit/delete appears here automatically.
-        const hostelsRealtime = supabaseClient.channel('live-hostels')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'hostels' }, async () => {
-                await loadHostels();
-            })
-            .subscribe();
-    </script>
+function startRealtime() {
+  if(liveChannel) supabaseClient.removeChannel(liveChannel);
+  liveChannel=supabaseClient.channel("studenthubhelp-live-"+TABLE)
+    .on("postgres_changes",{event:"*",schema:"public",table:TABLE},()=>loadRecords())
+    .subscribe(status=>console.log(TABLE,"realtime:",status));
+}
+window.addEventListener("DOMContentLoaded",async()=>{await loadRecords();startRealtime();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+window.closeHostelModal=closeModal;
+window.switchHostelTab=switchTab;
+</script>
 </body>
 </html>

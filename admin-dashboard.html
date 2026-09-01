@@ -243,7 +243,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
       <div><label class="text-xs font-bold">Category *</label><input id="fCategory" class="input mt-1" required></div>
       <div><label class="text-xs font-bold">Phone *</label><input id="fPhone" class="input mt-1" type="tel" required></div>
       <div><label class="text-xs font-bold">Area / Locality *</label><input id="fArea" class="input mt-1" required></div>
-      <div><label class="text-xs font-bold">Rating</label><input id="fRating" class="input mt-1" type="number" min="0" max="5" step="0.1" value="5"></div>
+      <div><label class="text-xs font-bold">Rating</label><input id="fRating" class="input mt-1" type="number" min="0" max="5" step="0.1" placeholder="Leave blank if rating is unavailable"></div>
       <div class="sm:col-span-2"><label class="text-xs font-bold">Full Address *</label><input id="fAddress" class="input mt-1" required></div>
       <div><label class="text-xs font-bold">Timing / Hours</label><input id="fTiming" class="input mt-1"></div>
       <div><label class="text-xs font-bold">Image URL</label><input id="fImage" class="input mt-1" type="url"></div>
@@ -638,7 +638,7 @@ function openCreate(type){
   $("fAddress").value="";
   $("fTiming").value=type==="libraries"?"24/7 Open":"";
   $("fFacilities").value="";
-  $("fRating").value="5";
+  $("fRating").value="";
   $("fImage").value="";
   openModal("formModal");
 }
@@ -657,7 +657,7 @@ function openEdit(type,index){
   $("fAddress").value=x.address||"";
   $("fTiming").value=x.timing||"";
   $("fFacilities").value=x.facilities||"";
-  $("fRating").value=x.rating??"5";
+  $("fRating").value=x.rating??"";
   $("fImage").value=x.image||"";
 
   openModal("formModal");
@@ -668,7 +668,8 @@ $("propertyForm").addEventListener("submit",async e=>{
 
   const type=$("formType").value;
   const id=text($("formId").value);
-  const rating=Number($("fRating").value);
+  const ratingRaw=text($("fRating").value);
+  const rating=ratingRaw===""?null:Number(ratingRaw);
 
   if(!propertyConfig[type]){
     toast("Invalid property type.",true);
@@ -680,7 +681,7 @@ $("propertyForm").addEventListener("submit",async e=>{
     return;
   }
 
-  if(Number.isNaN(rating)||rating<0||rating>5){
+  if(rating!==null&&(Number.isNaN(rating)||rating<0||rating>5)){
     toast("Rating must be between 0 and 5.",true);
     return;
   }
