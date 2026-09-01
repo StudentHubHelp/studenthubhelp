@@ -507,10 +507,13 @@
             document.getElementById('studentTableBody').innerHTML = studentsData.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">No students found.</td></tr>` : studentsData.map(s => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white">${s.full_name || s.name || 'Student'}</td><td class="p-4 font-mono">${s.phone || '--'}</td><td class="p-4">${s.email || '--'}</td><td class="p-4 text-emerald-400">Active</td></tr>`).join('');
             
     
-           // --- Owners Table Render ---
+         // --- Owners Table Render (Filtering out Admin Satpal Swami) ---
             document.getElementById('ownerTableBody').innerHTML = ownersData.length === 0 ? 
                 `<tr><td colspan="4" class="p-4 text-center text-slate-400">No registered owners found in Supabase.</td></tr>` : 
                 ownersData.map((o, i) => {
+                    // Agar email admin ka hai, toh use Owners table mein show mat karo
+                    if (o.email && o.email.toLowerCase().includes('satpalswami22742@gmail.com')) return '';
+                    
                     return `<tr class="border-b border-navy-800">
                         <td class="p-4 font-bold text-white flex items-center gap-2"><i class="fa-solid fa-building text-gold-400"></i> ${o.full_name || o.name || 'Owner'}</td>
                         <td class="p-4 font-mono">${o.phone || '--'}</td>
