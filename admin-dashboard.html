@@ -934,9 +934,54 @@ document.getElementById('adminEditForm').addEventListener('submit', (e) => {
             document.getElementById('adminEditModal').classList.remove('hidden');
         };
 
-        window.closeAdminEditModal = function() {
+window.closeAdminEditModal = function() {
             document.getElementById('adminEditModal').classList.add('hidden');
         };
+
+        // 🌟 यह रहा वह 'Save Changes' वाला सबमिट इवेंट जो आपकी फाइल में मिसिंग था
+        const adminEditFormElement = document.getElementById('adminEditForm');
+        if (adminEditFormElement) {
+            adminEditFormElement.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const type = document.getElementById('adminEditType').value;
+                const idx = parseInt(document.getElementById('adminEditIndex').value);
+
+                const updatedData = {
+                    name: document.getElementById('adminEditName') ? document.getElementById('adminEditName').value.trim() : '',
+                    phone: document.getElementById('adminEditPhone') ? document.getElementById('adminEditPhone').value.trim() : '',
+                    area: document.getElementById('adminEditArea') ? document.getElementById('adminEditArea').value.trim() : '',
+                    address: document.getElementById('adminEditAddress') ? document.getElementById('adminEditAddress').value.trim() : '',
+                    facilities: document.getElementById('adminEditAbout') ? document.getElementById('adminEditAbout').value.trim() : '',
+                    about: document.getElementById('adminEditAbout') ? document.getElementById('adminEditAbout').value.trim() : '',
+                    image: document.getElementById('adminEditImage') ? document.getElementById('adminEditImage').value.trim() : 'hostel-banner.png'
+                };
+
+                if (type === 'hostels') {
+                    hostelsData[idx] = { ...hostelsData[idx], ...updatedData };
+                    localStorage.setItem('sh_hostels', JSON.stringify(hostelsData));
+
+                    // ओनर की पर्सनल लिंक्ड प्रॉपर्टी भी ऑटोमैटिक सिंक करें
+                    let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_satpalswami22742@gmail.com') || 'null');
+                    if (savedProp) {
+                        localStorage.setItem('sh_owner_prop_satpalswami22742@gmail.com', JSON.stringify(hostelsData[idx]));
+                    }
+                } else if (type === 'tiffins') {
+                    tiffinsData[idx] = { ...tiffinsData[idx], ...updatedData, menu: updatedData.facilities };
+                    localStorage.setItem('sh_tiffins', JSON.stringify(tiffinsData));
+                } else if (type === 'libraries') {
+                    librariesData[idx] = { ...librariesData[idx], ...updatedData };
+                    localStorage.setItem('sh_libraries', JSON.stringify(librariesData));
+                }
+
+                renderAllTables();
+                alert('प्रॉपर्टी की डिटेल्स सफलतापूर्वक अपडेट कर दी गई हैं!');
+                closeAdminEditModal();
+            });
+        }
+
+        function initAllData() {
+            fetchRealUsers();
+        }
         function initAllData() {
             fetchRealUsers();
         }
