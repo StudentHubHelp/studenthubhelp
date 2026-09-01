@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Property / Listing - StudentHubHelp Sikar</title>
+    <title>Submit Property Listing - StudentHubHelp Sikar</title>
     
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
         tailwind.config = {
@@ -22,7 +21,7 @@
                         navy: { 950: '#040814', 900: '#081026', 850: '#0D1838', 800: '#14224D', 700: '#1F316B' },
                         gold: { 100: '#FFF7D6', 200: '#FDECB2', 300: '#F5DE88', 400: '#E6C65E', 500: '#D4AF37', 600: '#B89020', 700: '#8C6B10' }
                     },
-                    fontFamily: { sans: ['Inter', 'Noto Sans Devanagari', 'sans-serif'], display: ['Cinzel', 'serif'] }
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Cinzel', 'serif'] }
                 }
             }
         }
@@ -54,65 +53,63 @@
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 gold-border-glow">
             
             <div class="text-center space-y-2">
-                <span class="text-[11px] font-bold px-3 py-1 rounded-full uppercase border bg-gold-500/10 text-gold-300 border-gold-500/30">Owner Portal</span>
-                <h1 class="text-2xl sm:text-3xl font-display font-bold text-white">Add Your Property in Sikar</h1>
-                <p class="text-xs text-slate-400">List your Hostel, Tiffin Service, Library, or Cafe directly into the Supabase live database.</p>
+                <span class="text-[11px] font-bold px-3 py-1 rounded-full uppercase border bg-gold-500/10 text-gold-300 border-gold-500/30">Owner Verification Portal</span>
+                <h1 class="text-2xl sm:text-3xl font-display font-bold text-white">Submit Property for Admin Approval</h1>
+                <p class="text-xs text-slate-400">Fill out the details below. It will automatically generate a WhatsApp message to Director Satpal Swami for verification.</p>
             </div>
 
-            <form id="addListingForm" onsubmit="submitListingData(event)" class="space-y-6 text-xs">
+            <form id="whatsappListingForm" onsubmit="sendListingToWhatsApp(event)" class="space-y-6 text-xs">
                 
                 <div class="space-y-1.5">
-                    <label class="block text-gold-400 font-bold uppercase tracking-wide">Select Category <span class="text-red-400">*</span></label>
-                    <select id="listingCategory" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500 font-medium">
-                        <option value="hostels">Hostel / PG (Boys & Girls)</option>
-                        <option value="tiffins">Tiffin & Mess Service</option>
-                        <option value="libraries">24/7 Study Library</option>
-                        <option value="cafes">Student Cafe / Food Spot</option>
+                    <label class="block text-gold-400 font-bold uppercase tracking-wide">Property Type <span class="text-red-400">*</span></label>
+                    <select id="listingType" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500 font-medium">
+                        <option value="Hostel / PG">Hostel / PG</option>
+                        <option value="Tiffin Service">Tiffin & Mess Service</option>
+                        <option value="Study Library">24/7 Study Library</option>
+                        <option value="Student Cafe">Student Cafe / Food Spot</option>
                     </select>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="space-y-1.5">
                         <label class="block text-gold-400 font-bold uppercase tracking-wide">Property / Business Name <span class="text-red-400">*</span></label>
-                        <input type="text" id="listingName" required placeholder="e.g. Royal Hostel / Tapovan Library" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
+                        <input type="text" id="listingName" required placeholder="e.g. Royal Hostel" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
                     </div>
                     <div class="space-y-1.5">
-                        <label class="block text-gold-400 font-bold uppercase tracking-wide">Sikar Area / Location <span class="text-red-400">*</span></label>
-                        <select id="listingArea" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
-                            <option value="Piprali Road">Piprali Road</option>
-                            <option value="Nawalgarh Road">Nawalgarh Road</option>
-                            <option value="Jat Colony">Jat Colony</option>
-                            <option value="Radhakishan Pura">Radhakishan Pura</option>
-                            <option value="Palwas Road">Palwas Road</option>
-                        </select>
+                        <label class="block text-gold-400 font-bold uppercase tracking-wide">Location / Area in Sikar <span class="text-red-400">*</span></label>
+                        <input type="text" id="listingLocation" required placeholder="e.g. Piprali Road" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
                     </div>
                 </div>
 
                 <div class="space-y-1.5">
-                    <label class="block text-gold-400 font-bold uppercase tracking-wide">Verified / Exact Address <span class="text-red-400">*</span></label>
-                    <input type="text" id="listingAddress" required placeholder="e.g. Near Matrix Coaching, Piprali Road, Sikar" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
+                    <label class="block text-gold-400 font-bold uppercase tracking-wide">Exact Address <span class="text-red-400">*</span></label>
+                    <input type="text" id="listingAddress" required placeholder="e.g. Near Matrix Coaching, Piprali Road" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="space-y-1.5">
-                        <label class="block text-gold-400 font-bold uppercase tracking-wide">Contact Number (WhatsApp) <span class="text-red-400">*</span></label>
-                        <input type="tel" id="listingPhone" required placeholder="e.g. +91 9929718264" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500 font-mono">
+                        <label class="block text-gold-400 font-bold uppercase tracking-wide">Price / Rent Details <span class="text-red-400">*</span></label>
+                        <input type="text" id="listingPrice" required placeholder="e.g. 5,000 - 7,000 INR per month" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
                     </div>
                     <div class="space-y-1.5">
-                        <label class="block text-gold-400 font-bold uppercase tracking-wide">Opening Hours / Timing</label>
-                        <input type="text" id="listingExtraField" placeholder="e.g. 24/7 Open or 07:00 AM - 09:00 PM" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
+                        <label class="block text-gold-400 font-bold uppercase tracking-wide">Owner Phone Number <span class="text-red-400">*</span></label>
+                        <input type="tel" id="listingPhone" required placeholder="e.g. 9929718264" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500 font-mono">
                     </div>
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="block text-gold-400 font-bold uppercase tracking-wide">Facilities / Menu / Speciality</label>
-                    <textarea id="listingFacilities" rows="3" placeholder="e.g. RO Water, Wi-Fi, AC/Cooler, Mess facility available" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500 resize-none"></textarea>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="block text-gold-400 font-bold uppercase tracking-wide">Owner Name <span class="text-red-400">*</span></label>
+                        <input type="text" id="listingOwnerName" required placeholder="e.g. Rajesh Kumar" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-gold-400 font-bold uppercase tracking-wide">Amenities / Facilities</label>
+                        <input type="text" id="listingAmenities" placeholder="e.g. RO Water, Wi-Fi, AC, Mess" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-gold-500">
+                    </div>
                 </div>
 
-                <div id="formAlertBox" class="hidden p-4 rounded-xl text-center font-bold text-xs"></div>
-
-                <button type="submit" id="submitBtn" class="w-full py-4 gold-gradient-bg text-navy-950 font-bold text-sm rounded-xl shadow-xl hover:brightness-110 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Publish Listing to Supabase Database
+                <button type="submit" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-xl transition flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-lg"></i> Send Listing via WhatsApp to Admin
                 </button>
             </form>
         </div>
@@ -123,99 +120,34 @@
     </footer>
 
     <script>
-        const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        async function submitListingData(e) {
+        function sendListingToWhatsApp(e) {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            const alertBox = document.getElementById('formAlertBox');
-            
-            const category = document.getElementById('listingCategory').value;
+
+            const type = document.getElementById('listingType').value;
             const name = document.getElementById('listingName').value.trim();
-            const area = document.getElementById('listingArea').value;
+            const location = document.getElementById('listingLocation').value.trim();
             const address = document.getElementById('listingAddress').value.trim();
+            const price = document.getElementById('listingPrice').value.trim();
+            const amenities = document.getElementById('listingAmenities').value.trim() || 'Standard Facilities';
+            const ownerName = document.getElementById('listingOwnerName').value.trim();
             const phone = document.getElementById('listingPhone').value.trim();
-            const extraField = document.getElementById('listingExtraField').value.trim();
-            const facilities = document.getElementById('listingFacilities').value.trim();
 
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving to Supabase...`;
+            const message = `New Listing Submission on StudentHub\n` +
+                            `Type: ${type}\n` +
+                            `Name: ${name}\n` +
+                            `Location: ${location}\n` +
+                            `Address: ${address}\n` +
+                            `Price/Rent: ${price}\n` +
+                            `Amenities: ${amenities}\n` +
+                            `Owner Name: ${ownerName}\n` +
+                            `Phone: ${phone}\n` +
+                            `Please verify and approve this listing for StudentHub.`;
 
-            try {
-                let payload = {};
+            // Director Satpal Swami WhatsApp Number (+91 9929718264)
+            const adminWhatsApp = "919929718264";
+            const encodedUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(message)}`;
 
-                if(category === 'hostels') {
-                    payload = {
-                        "Hostel Name (Supplied)": name,
-                        "Category": "Hostel/PG",
-                        "Verified / Live Address": `${address}, ${area}`,
-                        "Contact (Verified)": phone,
-                        "Google/Maps Rating": "5.0",
-                        "Review Count": "1",
-                        "Facilities": facilities || "Verified Student Hostel",
-                        "image": "hostel-banner.png"
-                    };
-                } else if(category === 'tiffins') {
-                    payload = {
-                        "Supplied Name": name,
-                        "Category": "Tiffin Service",
-                        "Area": area,
-                        "Verified / Live Address": address,
-                        "Supplied Phone": phone,
-                        "Opening Hours": extraField || "07:00 AM - 09:00 PM",
-                        "Live Rating": "5.0",
-                        "Review Count": "1",
-                        "image": "tiffin-banner.png"
-                    };
-                } else if(category === 'libraries') {
-                    payload = {
-                        "Supplied Name": name,
-                        "Category": "Study Library",
-                        "Area": area,
-                        "Verified / Live Address": address,
-                        "Supplied Phone": phone,
-                        "Opening Hours": extraField || "24/7 Open",
-                        "Live Rating": "5.0",
-                        "Review Count": "1",
-                        "image": "library-banner.png"
-                    };
-                } else if(category === 'cafes') {
-                    payload = {
-                        "Name": name,
-                        "Public/Exact Address": `${address}, ${area}`,
-                        "Google Rating": 5.0,
-                        "Review Count": 1,
-                        "Food Details": facilities || "Student Cafe Snacks & Beverages",
-                        "Opening Hours": extraField || "09:00 AM - 09:00 PM",
-                        "Contact": phone,
-                        "image": "cafe-banner.png"
-                    };
-                }
-
-                const { error } = await supabaseClient
-                    .from(category)
-                    .insert([payload]);
-
-                if (error) throw error;
-
-                alertBox.className = "p-4 rounded-xl text-center font-bold text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
-                alertBox.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Success! Your property has been published live in Supabase.`;
-                alertBox.classList.remove('hidden');
-                
-                document.getElementById('addListingForm').reset();
-                setTimeout(() => alertBox.classList.add('hidden'), 6000);
-
-            } catch (err) {
-                console.error(err);
-                alertBox.className = "p-4 rounded-xl text-center font-bold text-xs bg-red-500/20 text-red-300 border border-red-500/30";
-                alertBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Error: ${err.message}`;
-                alertBox.classList.remove('hidden');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Publish Listing to Supabase Database`;
-            }
+            window.open(encodedUrl, '_blank');
         }
     </script>
 </body>
