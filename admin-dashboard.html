@@ -29,7 +29,6 @@
     </script>
 
     <style>
-        /* Neem Karoli Baba Background Theme with High Brightness */
         body {
             background-image: linear-gradient(rgba(4, 8, 20, 0.35), rgba(4, 8, 20, 0.40)), url('ChatGPT Image Sep 1, 2026, 03_17_37 PM.png');
             background-size: cover;
@@ -382,12 +381,12 @@
                         <input type="text" id="createRating" value="5.0" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
                     </div>
                     <div>
-                        <label class="block text-slate-300 mb-1 font-bold">Review Count (e.g. 20+)</label>
-                        <input type="text" id="createReviews" value="10+" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
+                        <label class="block text-slate-300 mb-1 font-bold">Timing / Hours</label>
+                        <input type="text" id="createTiming" value="24/7 Open" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-slate-300 mb-1 font-bold">Facilities / Menu / Overview Description</label>
+                    <label class="block text-slate-300 mb-1 font-bold">Facilities / Menu / Description</label>
                     <textarea id="createAbout" rows="2" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></textarea>
                 </div>
                 <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold rounded-xl shadow-lg mt-2">
@@ -437,10 +436,10 @@
         async function initAllData() {
             try {
                 const [hRes, tRes, lRes, cRes, pRes] = await Promise.all([
-                    supabaseClient.from('hostels').select('*'),
-                    supabaseClient.from('tiffins').select('*'),
-                    supabaseClient.from('libraries').select('*'),
-                    supabaseClient.from('cafes').select('*'),
+                    supabaseClient.from('hostels').select('*').order('id', { ascending: true }),
+                    supabaseClient.from('tiffins').select('*').order('id', { ascending: true }),
+                    supabaseClient.from('libraries').select('*').order('id', { ascending: true }),
+                    supabaseClient.from('cafes').select('*').order('id', { ascending: true }),
                     supabaseClient.from('profiles').select('*')
                 ]);
 
@@ -474,7 +473,7 @@
         function renderAllTables() {
             document.getElementById('studentTableBody').innerHTML = studentsData.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">No students found.</td></tr>` : studentsData.map(s => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white">${s.full_name || s.name || 'Student'}</td><td class="p-4 font-mono">${s.phone || '--'}</td><td class="p-4">${s.email || '--'}</td><td class="p-4 text-emerald-400">Active</td></tr>`).join('');
             
-            // --- Owners Table Render ---
+            // --- Owners Table ---
             document.getElementById('ownerTableBody').innerHTML = ownersData.length === 0 ? 
                 `<tr><td colspan="4" class="p-4 text-center text-slate-400">No registered owners found in Supabase.</td></tr>` : 
                 ownersData.map((o, i) => {
@@ -490,41 +489,65 @@
                     </tr>`;
                 }).join('');
             
-           // Hostels Data Fix
+            // --- Hostels Table ---
             document.getElementById('hostelTableBody').innerHTML = hostelsData.map((h, i) => {
-                const name = h["Hostel Name (Supplied)"] || h["Hostel Name"] || h.name || h.Name || 'Hostel';
-                const cat = h["Category"] || h.cat || 'PG';
-                const phone = h["Contact (Verified)"] || h["Contact"] || h.phone || '--';
-                const addr = h["Verified / Live Address"] || h["Address"] || h.address || h["Area"] || 'Sikar';
-                return `<tr onclick="openAdminPropertyView('hostels', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4">${cat}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('hostels', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('hostels', ${h.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                return `<tr onclick="openAdminPropertyView('hostels', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition">
+                    <td class="p-4 font-mono">#${i+1}</td>
+                    <td class="p-4 font-bold text-white">${h.name || 'Hostel'}</td>
+                    <td class="p-4">${h.category || 'PG'}</td>
+                    <td class="p-4 font-mono">${h.phone || '--'}</td>
+                    <td class="p-4">${h.address || h.area || 'Sikar'}</td>
+                    <td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()">
+                        <button onclick="openAdminEditModal('hostels', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteSupabaseItem('hostels', '${h.id}')" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
             }).join('');
             
-            // Tiffins Data Fix
+            // --- Tiffins Table ---
             document.getElementById('tiffinTableBody').innerHTML = tiffinsData.map((t, i) => {
-                const name = t["Supplied Name"] || t["Tiffin Name"] || t.name || t.Name || 'Tiffin';
-                const phone = t["Supplied Phone"] || t["Phone"] || t.phone || t.Contact || '--';
-                const addr = t["Supplied Address"] ? `${t["Supplied Address"]}, ${t["Area"] || ''}` : (t["Verified / Live Address"] || t["Area"] || t.address || 'Sikar');
-                return `<tr onclick="openAdminPropertyView('tiffins', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('tiffins', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('tiffins', ${t.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                return `<tr onclick="openAdminPropertyView('tiffins', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition">
+                    <td class="p-4 font-mono">#${i+1}</td>
+                    <td class="p-4 font-bold text-white">${t.name || 'Tiffin'}</td>
+                    <td class="p-4 font-mono">${t.phone || '--'}</td>
+                    <td class="p-4">${t.address || t.area || 'Sikar'}</td>
+                    <td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()">
+                        <button onclick="openAdminEditModal('tiffins', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteSupabaseItem('tiffins', '${t.id}')" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
             }).join('');
             
-            // Libraries Data Fix
+            // --- Libraries Table ---
             document.getElementById('libraryTableBody').innerHTML = librariesData.map((l, i) => {
-                const name = l["Supplied Name"] || l["Library Name"] || l.name || l.Name || 'Library';
-                const phone = l["Supplied Phone"] || l["Phone"] || l.phone || l.Contact || '--';
-                const addr = l["Verified / Live Address"] || l["Area"] || l.address || l.Address || 'Sikar';
-                return `<tr onclick="openAdminPropertyView('libraries', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('libraries', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('libraries', ${l.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                return `<tr onclick="openAdminPropertyView('libraries', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition">
+                    <td class="p-4 font-mono">#${i+1}</td>
+                    <td class="p-4 font-bold text-white">${l.name || 'Library'}</td>
+                    <td class="p-4 font-mono">${l.phone || '--'}</td>
+                    <td class="p-4">${l.address || l.area || 'Sikar'}</td>
+                    <td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()">
+                        <button onclick="openAdminEditModal('libraries', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteSupabaseItem('libraries', '${l.id}')" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
             }).join('');
             
-            // Cafes Data Fix
+            // --- Cafes Table ---
             document.getElementById('cafeTableBody').innerHTML = cafesData.map((c, i) => {
-                const name = c.Name || c.name || 'Cafe';
-                const phone = c.Contact || c.phone || '--';
-                const addr = c["Public/Exact Address"] || c.address || 'Sikar';
-                return `<tr onclick="openAdminPropertyView('cafes', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('cafes', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('cafes', ${c.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                return `<tr onclick="openAdminPropertyView('cafes', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition">
+                    <td class="p-4 font-mono">#${i+1}</td>
+                    <td class="p-4 font-bold text-white">${c.name || 'Cafe'}</td>
+                    <td class="p-4 font-mono">${c.phone || '--'}</td>
+                    <td class="p-4">${c.address || c.area || 'Sikar'}</td>
+                    <td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()">
+                        <button onclick="openAdminEditModal('cafes', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteSupabaseItem('cafes', '${c.id}')" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
             }).join('');
         }
 
-        // Universal Search Logic (Name, Phone, Address support)
+        // Universal Search Logic
         const globalSearchInput = document.getElementById('globalAdminSearch');
         const searchResultsBox = document.getElementById('universalSearchResults');
         if (globalSearchInput) {
@@ -534,23 +557,23 @@
                 let matches = [];
 
                 hostelsData.forEach((h, i) => {
-                    const text = `${h["Hostel Name (Supplied)"] || h.name || ''} ${h["Contact (Verified)"] || h.phone || ''} ${h["Verified / Live Address"] || h.address || ''}`.toLowerCase();
-                    if (text.includes(query)) matches.push({ title: h["Hostel Name (Supplied)"] || h.name, type: 'Hostel', cat: 'hostels', idx: i });
+                    const text = `${h.name || ''} ${h.phone || ''} ${h.address || ''} ${h.area || ''}`.toLowerCase();
+                    if (text.includes(query)) matches.push({ title: h.name, type: 'Hostel', cat: 'hostels', idx: i });
                 });
 
                 tiffinsData.forEach((t, i) => {
-                    const text = `${t["Supplied Name"] || t.name || ''} ${t["Supplied Phone"] || t.phone || ''} ${t["Verified / Live Address"] || t.address || ''}`.toLowerCase();
-                    if (text.includes(query)) matches.push({ title: t["Supplied Name"] || t.name, type: 'Tiffin', cat: 'tiffins', idx: i });
+                    const text = `${t.name || ''} ${t.phone || ''} ${t.address || ''} ${t.area || ''}`.toLowerCase();
+                    if (text.includes(query)) matches.push({ title: t.name, type: 'Tiffin', cat: 'tiffins', idx: i });
                 });
 
                 librariesData.forEach((l, i) => {
-                    const text = `${l["Supplied Name"] || l.name || ''} ${l["Supplied Phone"] || l.phone || ''} ${l["Verified / Live Address"] || l.address || ''}`.toLowerCase();
-                    if (text.includes(query)) matches.push({ title: l["Supplied Name"] || l.name, type: 'Library', cat: 'libraries', idx: i });
+                    const text = `${l.name || ''} ${l.phone || ''} ${l.address || ''} ${l.area || ''}`.toLowerCase();
+                    if (text.includes(query)) matches.push({ title: l.name, type: 'Library', cat: 'libraries', idx: i });
                 });
 
                 cafesData.forEach((c, i) => {
-                    const text = `${c.Name || c.name || ''} ${c.Contact || c.phone || ''} ${c["Public/Exact Address"] || c.address || ''}`.toLowerCase();
-                    if (text.includes(query)) matches.push({ title: c.Name || c.name, type: 'Cafe', cat: 'cafes', idx: i });
+                    const text = `${c.name || ''} ${c.phone || ''} ${c.address || ''} ${c.area || ''}`.toLowerCase();
+                    if (text.includes(query)) matches.push({ title: c.name, type: 'Cafe', cat: 'cafes', idx: i });
                 });
 
                 searchResultsBox.innerHTML = matches.length === 0 ? `<p class="text-slate-400 p-2">No results found</p>` : matches.map(m => `
@@ -569,7 +592,7 @@
             openAdminPropertyView(cat, idx);
         };
 
-        // Property View Modal & 6-Tab popup
+        // Property View Modal
         let currentInspectedType = 'hostels';
         let currentInspectedIdx = 0;
 
@@ -580,22 +603,18 @@
             let item = list[idx];
             if (!item) return;
 
-            const name = item["Hostel Name (Supplied)"] || item["Supplied Name"] || item.Name || item.name || 'Property';
-            const address = item["Verified / Live Address"] || item["Supplied Address"] || item["Public/Exact Address"] || item.address || 'Sikar';
-            const phone = item["Contact (Verified)"] || item["Supplied Phone"] || item.Contact || item.phone || '';
-
             document.getElementById('adminModalBannerImg').src = item.image || 'hostel-banner.png';
-            document.getElementById('adminModalTitle').textContent = name;
-            document.getElementById('adminModalAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${address}`;
-            document.getElementById('adminModalCatBadge').textContent = type.toUpperCase();
+            document.getElementById('adminModalTitle').textContent = item.name || 'Property';
+            document.getElementById('adminModalAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${item.address || item.area || 'Sikar'}`;
+            document.getElementById('adminModalCatBadge').textContent = (item.category || type).toUpperCase();
             document.getElementById('adminModalAbout').innerHTML = `
                 <div class="space-y-3">
-                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700"><strong class="text-gold-300 block mb-1">Contact & Location:</strong><p class="text-white">📞 ${phone} | 📍 ${address}</p></div>
-                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700"><strong class="text-gold-300 block mb-1">Details / Facilities:</strong><p class="text-slate-200">${item["Facilities"] || item["Food Details"] || item["Opening Hours"] || 'Verified student listing.'}</p></div>
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700"><strong class="text-gold-300 block mb-1">Contact & Location:</strong><p class="text-white">📞 ${item.phone || '--'} | 📍 ${item.address || ''}</p></div>
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700"><strong class="text-gold-300 block mb-1">Timing & Facilities:</strong><p class="text-slate-200">⏰ ${item.timing || 'N/A'}<br>✨ ${item.facilities || 'Verified student listing.'}</p></div>
                 </div>
             `;
-            document.getElementById('adminModalCallBtn').href = `tel:${phone}`;
-            document.getElementById('adminModalWhatsAppBtn').href = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(name)}`;
+            document.getElementById('adminModalCallBtn').href = `tel:${item.phone || ''}`;
+            document.getElementById('adminModalWhatsAppBtn').href = `https://wa.me/${(item.phone || '').replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(item.name || '')}`;
             document.getElementById('admin6TabModal').classList.remove('hidden');
         };
 
@@ -605,7 +624,7 @@
             openAdminEditModal(currentInspectedType, currentInspectedIdx);
         };
 
-        // Edit Modal Form Logic
+        // Edit Modal
         window.openAdminEditModal = function(type, idx) {
             let list = type === 'hostels' ? hostelsData : type === 'tiffins' ? tiffinsData : type === 'libraries' ? librariesData : cafesData;
             let item = list[idx];
@@ -613,15 +632,12 @@
 
             document.getElementById('adminEditType').value = type;
             document.getElementById('adminEditId').value = item.id;
-            const name = item["Hostel Name (Supplied)"] || item["Supplied Name"] || item.Name || item.name || '';
-            const phone = item["Contact (Verified)"] || item["Supplied Phone"] || item.Contact || item.phone || '';
-            const address = item["Verified / Live Address"] || item["Supplied Address"] || item["Public/Exact Address"] || item.address || '';
-
-            document.getElementById('adminEditItemTitle').textContent = name;
-            document.getElementById('adminEditName').value = name;
-            document.getElementById('adminEditPhone').value = phone;
-            document.getElementById('adminEditAddress').value = address;
-            document.getElementById('adminEditAbout').value = item["Facilities"] || item["Food Details"] || item["Opening Hours"] || '';
+            document.getElementById('adminEditItemTitle').textContent = item.name || '';
+            document.getElementById('adminEditName').value = item.name || '';
+            document.getElementById('adminEditPhone').value = item.phone || '';
+            document.getElementById('adminEditArea').value = item.area || '';
+            document.getElementById('adminEditAddress').value = item.address || '';
+            document.getElementById('adminEditAbout').value = item.facilities || '';
 
             document.getElementById('adminEditModal').classList.remove('hidden');
         };
@@ -632,20 +648,18 @@
             e.preventDefault();
             const type = document.getElementById('adminEditType').value;
             const id = document.getElementById('adminEditId').value;
-            const name = document.getElementById('adminEditName').value.trim();
-            const phone = document.getElementById('adminEditPhone').value.trim();
-            const address = document.getElementById('adminEditAddress').value.trim();
-            const about = document.getElementById('adminEditAbout').value.trim();
-
-            let payload = {};
-            if (type === 'hostels') payload = { "Hostel Name (Supplied)": name, "Contact (Verified)": phone, "Verified / Live Address": address, "Facilities": about };
-            else if (type === 'tiffins') payload = { "Supplied Name": name, "Supplied Phone": phone, "Supplied Address": address, "Opening Hours": about };
-            else if (type === 'libraries') payload = { "Supplied Name": name, "Supplied Phone": phone, "Supplied Address": address, "Opening Hours": about };
-            else if (type === 'cafes') payload = { "Name": name, "Contact": phone, "Public/Exact Address": address, "Food Details": about };
+            
+            const payload = {
+                name: document.getElementById('adminEditName').value.trim(),
+                phone: document.getElementById('adminEditPhone').value.trim(),
+                area: document.getElementById('adminEditArea').value.trim(),
+                address: document.getElementById('adminEditAddress').value.trim(),
+                facilities: document.getElementById('adminEditAbout').value.trim()
+            };
 
             const { error } = await supabaseClient.from(type).update(payload).eq('id', id);
             if (error) alert('Error: ' + error.message);
-            else { alert('Successfully updated in Supabase live database!'); closeAdminEditModal(); initAllData(); }
+            else { alert('Successfully updated in Supabase!'); closeAdminEditModal(); initAllData(); }
         });
 
         window.deleteSupabaseItem = async function(type, id) {
@@ -664,7 +678,7 @@
             }
         };
 
-        // Create New Property Modals
+        // Create New Property Modal
         window.openCreateModal = function(type) {
             document.getElementById('createTargetType').value = type;
             document.getElementById('createModalTypeTitle').textContent = type.slice(0, -1);
@@ -675,57 +689,17 @@
         document.getElementById('adminCreateForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const type = document.getElementById('createTargetType').value;
-            const name = document.getElementById('createName').value.trim();
-            const phone = document.getElementById('createPhone').value.trim();
-            const area = document.getElementById('createArea').value.trim();
-            const address = document.getElementById('createAddress').value.trim();
-            const rating = document.getElementById('createRating').value.trim();
-            const reviews = document.getElementById('createReviews').value.trim();
-            const about = document.getElementById('createAbout').value.trim();
-
-            let payload = {};
-            if (type === 'hostels') {
-                payload = { 
-                    "Hostel Name (Supplied)": name, 
-                    "Category": "Hostel/PG",
-                    "Contact (Verified)": phone, 
-                    "Verified / Live Address": `${address}, ${area}`,
-                    "Facilities": about,
-                    "Google/Maps Rating": rating,
-                    "Review Count": reviews
-                };
-            } else if (type === 'tiffins') {
-                payload = { 
-                    "Supplied Name": name, 
-                    "Category": "Tiffin Service",
-                    "Area": area,
-                    "Supplied Phone": phone, 
-                    "Supplied Address": address,
-                    "Opening Hours": about || "07:00 AM - 09:00 PM",
-                    "Live Rating": rating,
-                    "Review Count": reviews
-                };
-            } else if (type === 'libraries') {
-                payload = { 
-                    "Supplied Name": name, 
-                    "Category": "Study Library",
-                    "Area": area,
-                    "Supplied Phone": phone, 
-                    "Supplied Address": address,
-                    "Opening Hours": about || "24/7 Open",
-                    "Live Rating": rating,
-                    "Review Count": reviews
-                };
-            } else if (type === 'cafes') {
-                payload = { 
-                    "Name": name, 
-                    "Contact": phone, 
-                    "Public/Exact Address": `${address}, ${area}`,
-                    "Food Details": about || "Snacks & Beverages",
-                    "Google Rating": rating,
-                    "Review Count": reviews
-                };
-            }
+            
+            const payload = {
+                name: document.getElementById('createName').value.trim(),
+                category: type === 'hostels' ? 'Hostel' : type === 'tiffins' ? 'Tiffin' : type === 'libraries' ? 'Library' : 'Cafe',
+                area: document.getElementById('createArea').value.trim(),
+                address: document.getElementById('createAddress').value.trim(),
+                phone: document.getElementById('createPhone').value.trim(),
+                timing: document.getElementById('createTiming').value.trim(),
+                facilities: document.getElementById('createAbout').value.trim(),
+                rating: parseFloat(document.getElementById('createRating').value.trim()) || 5.0
+            };
 
             const { error } = await supabaseClient.from(type).insert([payload]);
             if (error) {
