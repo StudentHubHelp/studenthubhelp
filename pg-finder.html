@@ -4,16 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verified Hostels & PGs in Sikar | StudentHubHelp</title>
-    
     <link rel="icon" type="image/png" href="logo.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script>
         tailwind.config = {
             theme: {
@@ -22,7 +16,7 @@
                         navy: { 950: '#040814', 900: '#081026', 850: '#0D1838', 800: '#14224D', 700: '#1F316B' },
                         gold: { 100: '#FFF7D6', 200: '#FDECB2', 300: '#F5DE88', 400: '#E6C65E', 500: '#D4AF37', 600: '#B89020', 700: '#8C6B10' }
                     },
-                    fontFamily: { sans: ['Inter', 'Noto Sans Devanagari', 'sans-serif'], display: ['Cinzel', 'serif'] }
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Cinzel', 'serif'] }
                 }
             }
         }
@@ -81,6 +75,43 @@
         </div>
     </main>
 
+    <!-- 6-TAB DETAIL MODAL -->
+    <div id="hostelDetailModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
+            <button onclick="closeHostelModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            
+            <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
+                <img id="modalHostelImg" src="hostel-banner.png" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
+                <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                    <div>
+                        <span id="modalHostelCat" class="text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-gold-500/20 text-gold-300 border-gold-500/40">HOSTEL / PG</span>
+                        <h2 id="modalHostelTitle" class="text-xl sm:text-2xl font-bold text-white mt-1 leading-snug">Hostel Name</h2>
+                        <p id="modalHostelAddress" class="text-xs text-slate-300 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-500"></i> Address</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-navy-850 px-4 py-2 border-b border-navy-800 flex gap-2 overflow-x-auto text-xs font-bold flex-shrink-0">
+                <button onclick="switchHostelTab('overview')" id="tabBtn-overview" class="hostel-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition">Overview</button>
+                <button onclick="switchHostelTab('rooms')" id="tabBtn-rooms" class="hostel-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Rooms & Rent</button>
+                <button onclick="switchHostelTab('facilities')" id="tabBtn-facilities" class="hostel-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Facilities</button>
+                <button onclick="switchHostelTab('timing')" id="tabBtn-timing" class="hostel-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Timing & Gate</button>
+                <button onclick="switchHostelTab('reviews')" id="tabBtn-reviews" class="hostel-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Reviews</button>
+                <button onclick="switchHostelTab('location')" id="tabBtn-location" class="hostel-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Location</button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-4 flex-1 text-xs text-slate-300 leading-relaxed">
+                <div id="hostelTabContent" class="space-y-3"></div>
+            </div>
+
+            <div class="bg-navy-950 p-4 border-t border-navy-800 flex items-center justify-between gap-3 flex-shrink-0">
+                <a id="modalHostelCallBtn" href="#" class="flex-1 py-3 bg-navy-850 border border-gold-500/40 text-gold-300 text-xs font-bold text-center rounded-xl hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-phone mr-1"></i> Call Warden</a>
+                <a id="modalHostelWhatsAppBtn" href="#" target="_blank" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold text-center rounded-xl transition"><i class="fa-brands fa-whatsapp text-sm mr-1"></i> WhatsApp Inquiry</a>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-navy-900 border-t border-navy-800 py-6 text-slate-500 text-xs text-center">
         <p>© 2026 StudentHubHelp (Shekhawati). Director: Satpal Swami (+91 63779 42096)</p>
     </footer>
@@ -91,36 +122,29 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allHostels = [];
+        let activeHostel = null;
 
         async function loadHostels() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('hostels')
-                    .select('*');
-
+                const { data, error } = await supabaseClient.from('hostels').select('*');
                 if (error) throw error;
                 allHostels = data || [];
                 renderHostels(allHostels);
             } catch (err) {
                 console.error('Supabase fetch error:', err);
-                document.getElementById('hostelsGridContainer').innerHTML = `
-                    <div class="col-span-full py-12 text-center text-red-400">
-                        <p class="text-xs">Failed to load hostels from database.</p>
-                    </div>
-                `;
+                document.getElementById('hostelsGridContainer').innerHTML = `<div class="col-span-full py-12 text-center text-red-400"><p class="text-xs">Failed to load hostels from database.</p></div>`;
             }
         }
 
         function renderHostels(list) {
             const container = document.getElementById('hostelsGridContainer');
             document.getElementById('hostelCountBadge').textContent = list.length;
-
             if (list.length === 0) {
                 container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">No hostels found matching your search.</div>`;
                 return;
             }
 
-            container.innerHTML = list.map(h => {
+            container.innerHTML = list.map((h, index) => {
                 const name = h["Hostel Name (Supplied)"] || h.name || 'Hostel / PG';
                 const cat = h["Category"] || h.cat || 'Boys/Girls PG';
                 const address = h["Verified / Live Address"] || h.address || 'Sikar, Rajasthan';
@@ -131,9 +155,9 @@
                 const image = h.image || 'hostel-banner.png';
 
                 return `
-                <div class="bg-navy-900 border border-navy-800 rounded-3xl overflow-hidden gold-border-glow flex flex-col justify-between space-y-4">
+                <div onclick="openHostelModal(${index})" class="bg-navy-900 border border-navy-800 rounded-3xl overflow-hidden gold-border-glow flex flex-col justify-between space-y-4 cursor-pointer hover:border-gold-500/60 transition">
                     <div class="relative w-full h-40 bg-navy-950 overflow-hidden">
-                        <img src="${image}" class="w-full h-full object-cover" onerror="this.src='hostel-banner.png'">
+                        <img src="${image}" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
                         <span class="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-gold-500/20 text-gold-300 border-gold-500/40">${cat}</span>
                         <span class="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-navy-950/80 backdrop-blur-md text-gold-300 border border-gold-500/30 flex items-center gap-1 shadow-md">
@@ -152,10 +176,7 @@
                         </div>
                     </div>
                     <div class="px-6 pb-6 pt-2 border-t border-navy-800 flex items-center justify-between gap-3 text-xs">
-                        <a href="https://wa.me/91${contact.replace(/[^0-9]/g, '')}?text=Hi,%20I%20want%20to%20inquire%20about%20room%20availability%20at%20${encodeURIComponent(name)}" target="_blank" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition text-center shadow-md">
-                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                        </a>
-                        <a href="tel:${contact}" class="flex-1 py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold hover:brightness-110 transition text-center shadow-md">
+                        <a href="tel:${contact}" onclick="event.stopPropagation()" class="flex-1 py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold hover:brightness-110 transition text-center shadow-md">
                             <i class="fa-solid fa-phone"></i> Call Warden
                         </a>
                     </div>
@@ -164,14 +185,51 @@
             }).join('');
         }
 
+        function openHostelModal(index) {
+            activeHostel = allHostels[index];
+            if (!activeHostel) return;
+
+            document.getElementById('modalHostelTitle').textContent = activeHostel["Hostel Name (Supplied)"] || activeHostel.name || 'Hostel';
+            document.getElementById('modalHostelCat').textContent = activeHostel["Category"] || 'HOSTEL / PG';
+            document.getElementById('modalHostelAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${activeHostel["Verified / Live Address"] || 'Sikar'}`;
+            document.getElementById('modalHostelImg').src = activeHostel.image || 'hostel-banner.png';
+            
+            const phone = activeHostel["Contact (Verified)"] || '6377942096';
+            document.getElementById('modalHostelCallBtn').href = `tel:${phone}`;
+            document.getElementById('modalHostelWhatsAppBtn').href = `https://wa.me/91${phone.replace(/[^0-9]/g, '')}?text=Hi,%20I%20want%20to%20inquire%20about%20rooms%20at%20${encodeURIComponent(activeHostel["Hostel Name (Supplied)"])}`;
+
+            switchHostelTab('overview');
+            document.getElementById('hostelDetailModal').classList.remove('hidden');
+        }
+
+        function closeHostelModal() { document.getElementById('hostelDetailModal').classList.add('hidden'); }
+
+        function switchHostelTab(tabName) {
+            document.querySelectorAll('.hostel-tab-btn').forEach(b => b.className = 'hostel-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition');
+            const activeBtn = document.getElementById(`tabBtn-${tabName}`);
+            if (activeBtn) activeBtn.className = 'hostel-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition font-bold shadow-md';
+
+            const contentBox = document.getElementById('hostelTabContent');
+            if (!activeHostel) return;
+
+            if (tabName === 'overview') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2"><strong class="text-gold-300 block">Hostel Overview:</strong><p class="text-slate-200">${activeHostel["Hostel Name (Supplied)"]} is verified for students in Sikar with secure accommodation.</p></div><div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Rating:</strong><p class="text-slate-200">⭐ ${activeHostel["Google/Maps Rating"]} / 5 (${activeHostel["Review Count"]} Reviews)</p></div>`;
+            } else if (tabName === 'rooms') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Room Types & Rent:</strong><p class="text-slate-200">Single, Double & Triple sharing rooms available with mess facility.</p></div>`;
+            } else if (tabName === 'facilities') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Facilities:</strong><p class="text-slate-200">${activeHostel["Facilities"] || 'RO Water, Wi-Fi, CCTV, Power Backup'}</p></div>`;
+            } else if (tabName === 'timing') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Timing & Gate Rules:</strong><p class="text-slate-200">Standard student hostel timings with secure warden supervision.</p></div>`;
+            } else if (tabName === 'reviews') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Student Reviews:</strong><p class="text-slate-200">Highly rated by coaching students for peaceful study environment.</p></div>`;
+            } else if (tabName === 'location') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Address:</strong><p class="text-slate-200">📍 ${activeHostel["Verified / Live Address"]}</p></div>`;
+            }
+        }
+
         document.getElementById('hostelSearchInput').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
-            const filtered = allHostels.filter(h => {
-                const name = (h["Hostel Name (Supplied)"] || h.name || '').toLowerCase();
-                const address = (h["Verified / Live Address"] || h.address || '').toLowerCase();
-                const fac = (h["Facilities"] || h.facilities || '').toLowerCase();
-                return name.includes(query) || address.includes(query) || fac.includes(query);
-            });
+            const filtered = allHostels.filter(h => (h["Hostel Name (Supplied)"] || '').toLowerCase().includes(query) || (h["Verified / Live Address"] || '').toLowerCase().includes(query));
             renderHostels(filtered);
         });
 
