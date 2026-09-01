@@ -523,14 +523,18 @@ async function initAllData() {
 function renderAllTables() {
             document.getElementById('studentTableBody').innerHTML = studentsData.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">No students found.</td></tr>` : studentsData.map(s => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white">${s.full_name || s.name || 'Student'}</td><td class="p-4 font-mono">${s.phone || '--'}</td><td class="p-4">${s.email || '--'}</td><td class="p-4 text-emerald-400">Active</td></tr>`).join('');
             
-            document.getElementById('ownerTableBody').innerHTML = ownersData.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">No owners found.</td></tr>` : ownersData.map(o => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white flex items-center gap-2"><i class="fa-solid fa-building text-gold-400"></i> ${o.full_name || o.name || 'Owner'}</td><td class="p-4 font-mono">${o.phone || '--'}</td><td class="p-4">${o.email || '--'}</td><td class="p-4 text-right"><button onclick="deleteSupabaseUser('${o.id}')" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
-
-            document.getElementById('hostelTableBody').innerHTML = hostelsData.map((h, i) => {
-                const name = h["Hostel Name (Supplied)"] || h["name"] || h["Name"] || 'Hostel';
-                const cat = h["Category"] || h["cat"] || 'PG';
-                const phone = h["Contact (Verified)"] || h["phone"] || h["Contact"] || '--';
-                const addr = h["Verified / Live Address"] || h["address"] || h["Address"] || '--';
-                return `<tr onclick="openAdminPropertyView('hostels', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4">${cat}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('hostels', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('hostels', ${h.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+           document.getElementById('ownerTableBody').innerHTML = ownersData.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">No owners found.</td></tr>` : ownersData.map((o, i) => {
+                // Admin (Satpal Swami) ko Owners list se alag rakhne ke liye check
+                if(o.email === 'satpalswami22742@gmail.com') return ''; 
+                return `<tr class="border-b border-navy-800">
+                    <td class="p-4 font-bold text-white flex items-center gap-2"><i class="fa-solid fa-building text-gold-400"></i> ${o.full_name || o.name || 'Owner'}</td>
+                    <td class="p-4 font-mono">${o.phone || '--'}</td>
+                    <td class="p-4">${o.email || '--'}</td>
+                    <td class="p-4 text-right flex justify-end gap-2">
+                        <button onclick="openOwnerEditModal('${o.id}')" class="p-2 bg-navy-800 text-gold-300 rounded" title="Edit Owner"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteSupabaseUser('${o.id}')" class="p-2 bg-navy-800 text-red-400 rounded" title="Delete Owner"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
             }).join('');
             
             document.getElementById('tiffinTableBody').innerHTML = tiffinsData.map((t, i) => {
@@ -756,7 +760,18 @@ document.getElementById('adminCreateForm').addEventListener('submit', async (e) 
                 initAllData();
             }
         });
-
+window.openOwnerEditModal = async function(id) {
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', id).single();
+            if(error || !data) { alert('User data not found'); return; }
+            
+            const newName = prompt("Edit Owner Name:", data.full_name || data.name || '');
+            const newPhone = prompt("Edit Owner Phone:", data.phone || '');
+            if(newName !== null && newPhone !== null) {
+                const { error: updateErr } = await supabaseClient.from('profiles').update({ full_name: newName, phone: newPhone }).eq('id', id);
+                if(updateErr) alert('Error: ' + updateErr.message);
+                else { alert('Owner updated successfully!'); initAllData(); }
+            }
+        };
         document.getElementById('changePasswordForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const p1 = document.getElementById('newAdminPassword').value.trim();
