@@ -96,7 +96,7 @@
                             <label class="cursor-pointer">
                                 <input type="radio" name="regRole" value="student" checked class="peer sr-only">
                                 <div class="p-2.5 rounded-xl bg-navy-900 border border-navy-700 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 text-center text-xs font-semibold text-white transition">
-                                    👨🎓 Student
+                                    👨‍🎓 Student
                                 </div>
                             </label>
                             <label class="cursor-pointer">
@@ -166,7 +166,7 @@
             <h3 class="text-base font-bold text-white flex items-center gap-2">
                 <i class="fa-solid fa-envelope-open-text text-gold-400"></i> Reset Password
             </h3>
-            <p class="text-xs text-slate-300">Enter your registered email address. We will send you a secure one-time password reset link.</p>
+            <p class="text-xs text-slate-300">Enter your registered email address. We will send you a secure password reset link.</p>
             
             <form id="forgotPasswordForm" class="space-y-3.5 text-xs">
                 <div>
@@ -212,26 +212,15 @@
             document.getElementById('setNewPasswordContainer').style.display = 'block';
         }
 
-        // Listen for Supabase Recovery Event
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (event === 'PASSWORD_RECOVERY') {
                 showSetNewPasswordView();
             }
         });
 
-        // URL Hash & Param Checker
         window.addEventListener('DOMContentLoaded', () => {
             const hash = window.location.hash;
             const search = window.location.search;
-
-            if (hash.includes('error=') || search.includes('error=')) {
-                if (hash.includes('otp_expired') || search.includes('otp_expired')) {
-                    alert('⚠️ यह पासवर्ड रीसेट लिंक एक्सपायर (Expired) हो चुका है।\n\nकृपया "Forgot password?" पर क्लिक करके नया लिंक प्राप्त करें!');
-                    openForgotPasswordModal();
-                }
-                return;
-            }
-
             if (hash.includes('type=recovery') || search.includes('type=recovery') || hash.includes('access_token=')) {
                 showSetNewPasswordView();
             }
@@ -243,7 +232,6 @@
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const pass = document.getElementById('loginPassword').value.trim();
 
-            // Director Master Admin Login
             if (email === 'satpalswami22742@gmail.com' && (pass === (localStorage.getItem('studenthub_admin_pwd') || '18389555'))) {
                 sessionStorage.setItem('studenthub_admin_logged', 'true');
                 window.location.href = 'admin-dashboard.html';
@@ -270,7 +258,7 @@
                 let userPhone = data.user.user_metadata?.phone || '';
 
                 try {
-                    const { data: profData } = await supabaseClient.from('profiles').select('*').eq('id', data.user.id).single();
+                    const { data: profData } = await supabaseClient.from('profiles').select('*').eq('email', email).single();
                     if (profData) {
                         userRole = profData.role || userRole;
                         userName = profData.full_name || userName;
@@ -290,7 +278,7 @@
             }
         });
 
-        // 2. SIGN UP HANDLER (STRICT CLOUD & LOCAL STORAGE SYNC)
+        // 2. SIGN UP HANDLER (SUPABASE PROFILES SYNC)
         document.getElementById('signUpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const role = document.querySelector('input[name="regRole"]:checked').value;
@@ -324,33 +312,26 @@
                 return;
             }
 
-            const userId = data.user ? data.user.id : `user_${Date.now()}`;
-
-            // Save to Supabase 'profiles' table for Admin Dashboard Sync
+            // Save to Supabase 'profiles' table (Cloud Sync for Admin Dashboard)
             try {
-                await supabaseClient.from('profiles').upsert({
-                    id: data.user ? data.user.id : undefined,
+                await supabaseClient.from('profiles').insert([{
                     full_name: name,
                     phone: phoneFormatted,
                     email: email,
                     role: role
-                });
-            } catch(e) {}
+                }]);
+            } catch(err) {
+                console.error("Profile insert error:", err);
+            }
 
-            // Save locally for offline sync
             const newUser = {
-                id: userId,
+                id: data.user ? data.user.id : `user_${Date.now()}`,
                 name: name,
                 full_name: name,
                 phone: phoneFormatted,
                 email: email,
                 role: role
             };
-
-            let localUsers = JSON.parse(localStorage.getItem('sh_registered_users') || '[]');
-            localUsers = localUsers.filter(u => u.email !== email);
-            localUsers.push(newUser);
-            localStorage.setItem('sh_registered_users', JSON.stringify(localUsers));
 
             localStorage.setItem('sh_current_user', JSON.stringify(newUser));
             alert(`✅ Account created successfully! Welcome ${name}.`);
@@ -365,7 +346,6 @@
             document.getElementById('forgotPasswordModal').classList.add('hidden');
         };
 
-        // Send Reset Email
         document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('resetTargetEmail').value.trim().toLowerCase();
@@ -386,7 +366,7 @@
                 return;
             }
 
-            alert(`✅ Password reset link has been sent to "${email}".\n\nPlease check your Gmail Inbox and click the link to set your new password.`);
+            alert(`✅ Password reset link has been sent to "${email}". Check your inbox.`);
             closeForgotPasswordModal();
         });
 
@@ -396,14 +376,8 @@
             const p1 = document.getElementById('newPasswordInput').value.trim();
             const p2 = document.getElementById('confirmNewPasswordInput').value.trim();
 
-            if (p1.length < 6) {
-                alert('Password must be at least 6 characters long!');
-                return;
-            }
-            if (p1 !== p2) {
-                alert('Passwords do not match! Please check again.');
-                return;
-            }
+            if (p1.length < 6) { alert('Password must be at least 6 characters long!'); return; }
+            if (p1 !== p2) { alert('Passwords do not match!'); return; }
 
             const btn = document.getElementById('saveNewPassBtn');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Updating Password...';
@@ -414,25 +388,9 @@
             btn.innerHTML = 'Save New Password & Log In';
             btn.disabled = false;
 
-            if (error) {
-                alert('Error updating password: ' + error.message);
-                return;
-            }
+            if (error) { alert('Error: ' + error.message); return; }
 
-            alert('🎉 New password updated successfully! Redirecting to your dashboard...');
-
-            if (data && data.user) {
-                const meta = data.user.user_metadata || {};
-                const currentUser = {
-                    id: data.user.id,
-                    name: meta.full_name || data.user.email.split('@')[0],
-                    email: data.user.email,
-                    phone: meta.phone || '',
-                    role: meta.role || 'student'
-                };
-                localStorage.setItem('sh_current_user', JSON.stringify(currentUser));
-            }
-
+            alert('🎉 New password updated successfully!');
             window.location.href = 'user-dashboard.html';
         });
     </script>
