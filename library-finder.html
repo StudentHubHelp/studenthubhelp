@@ -4,16 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>24/7 Study Libraries in Sikar | StudentHubHelp</title>
-    
     <link rel="icon" type="image/png" href="logo.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script>
         tailwind.config = {
             theme: {
@@ -22,7 +16,7 @@
                         navy: { 950: '#040814', 900: '#081026', 850: '#0D1838', 800: '#14224D', 700: '#1F316B' },
                         gold: { 100: '#FFF7D6', 200: '#FDECB2', 300: '#F5DE88', 400: '#E6C65E', 500: '#D4AF37', 600: '#B89020', 700: '#8C6B10' }
                     },
-                    fontFamily: { sans: ['Inter', 'Noto Sans Devanagari', 'sans-serif'], display: ['Cinzel', 'serif'] }
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Cinzel', 'serif'] }
                 }
             }
         }
@@ -81,6 +75,43 @@
         </div>
     </main>
 
+    <!-- 6-TAB DETAIL MODAL -->
+    <div id="libraryDetailModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
+            <button onclick="closeLibraryModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            
+            <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
+                <img id="modalLibraryImg" src="library-banner.png" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
+                <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                    <div>
+                        <span id="modalLibraryCat" class="text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-gold-500/20 text-gold-300 border-gold-500/40">STUDY LIBRARY</span>
+                        <h2 id="modalLibraryTitle" class="text-xl sm:text-2xl font-bold text-white mt-1 leading-snug">Library Name</h2>
+                        <p id="modalLibraryAddress" class="text-xs text-slate-300 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-500"></i> Address</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-navy-850 px-4 py-2 border-b border-navy-800 flex gap-2 overflow-x-auto text-xs font-bold flex-shrink-0">
+                <button onclick="switchLibraryTab('overview')" id="tabBtn-l-overview" class="library-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition">Overview</button>
+                <button onclick="switchLibraryTab('cabins')" id="tabBtn-l-cabins" class="library-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Cabins & Seating</button>
+                <button onclick="switchLibraryTab('facilities')" id="tabBtn-l-facilities" class="library-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Facilities</button>
+                <button onclick="switchLibraryTab('timing')" id="tabBtn-l-timing" class="library-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Timing</button>
+                <button onclick="switchLibraryTab('reviews')" id="tabBtn-l-reviews" class="library-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Reviews</button>
+                <button onclick="switchLibraryTab('location')" id="tabBtn-l-location" class="library-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition">Location</button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-4 flex-1 text-xs text-slate-300 leading-relaxed">
+                <div id="libraryTabContent" class="space-y-3"></div>
+            </div>
+
+            <div class="bg-navy-950 p-4 border-t border-navy-800 flex items-center justify-between gap-3 flex-shrink-0">
+                <a id="modalLibraryCallBtn" href="#" class="flex-1 py-3 bg-navy-850 border border-gold-500/40 text-gold-300 text-xs font-bold text-center rounded-xl hover:bg-gold-500 hover:text-navy-950 transition"><i class="fa-solid fa-phone mr-1"></i> Call Library</a>
+                <a id="modalLibraryWhatsAppBtn" href="#" target="_blank" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold text-center rounded-xl transition"><i class="fa-brands fa-whatsapp text-sm mr-1"></i> WhatsApp Inquiry</a>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-navy-900 border-t border-navy-800 py-6 text-slate-500 text-xs text-center">
         <p>© 2026 StudentHubHelp (Shekhawati). Director: Satpal Swami (+91 63779 42096)</p>
     </footer>
@@ -91,36 +122,29 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allLibraries = [];
+        let activeLibrary = null;
 
         async function loadLibraries() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('libraries')
-                    .select('*');
-
+                const { data, error } = await supabaseClient.from('libraries').select('*');
                 if (error) throw error;
                 allLibraries = data || [];
                 renderLibraries(allLibraries);
             } catch (err) {
                 console.error('Supabase fetch error:', err);
-                document.getElementById('librariesGridContainer').innerHTML = `
-                    <div class="col-span-full py-12 text-center text-red-400">
-                        <p class="text-xs">Failed to load libraries from database.</p>
-                    </div>
-                `;
+                document.getElementById('librariesGridContainer').innerHTML = `<div class="col-span-full py-12 text-center text-red-400"><p class="text-xs">Failed to load libraries from database.</p></div>`;
             }
         }
 
         function renderLibraries(list) {
             const container = document.getElementById('librariesGridContainer');
             document.getElementById('libraryCountBadge').textContent = list.length;
-
             if (list.length === 0) {
                 container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">No libraries found matching your search.</div>`;
                 return;
             }
 
-            container.innerHTML = list.map(l => {
+            container.innerHTML = list.map((l, index) => {
                 const name = l["Supplied Name"] || l.name || 'Study Library';
                 const area = l["Area"] || l.area || 'Sikar';
                 const address = l["Verified / Live Address"] || l.address || 'Sikar, Rajasthan';
@@ -131,9 +155,9 @@
                 const image = l.image || 'library-banner.png';
 
                 return `
-                <div class="bg-navy-900 border border-navy-800 rounded-3xl overflow-hidden gold-border-glow flex flex-col justify-between space-y-4">
+                <div onclick="openLibraryModal(${index})" class="bg-navy-900 border border-navy-800 rounded-3xl overflow-hidden gold-border-glow flex flex-col justify-between space-y-4 cursor-pointer hover:border-gold-500/60 transition">
                     <div class="relative w-full h-40 bg-navy-950 overflow-hidden">
-                        <img src="${image}" class="w-full h-full object-cover" onerror="this.src='library-banner.png'">
+                        <img src="${image}" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
                         <span class="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-gold-500/20 text-gold-300 border-gold-500/40">${area}</span>
                         <span class="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-navy-950/80 backdrop-blur-md text-gold-300 border border-gold-500/30 flex items-center gap-1 shadow-md">
@@ -152,10 +176,7 @@
                         </div>
                     </div>
                     <div class="px-6 pb-6 pt-2 border-t border-navy-800 flex items-center justify-between gap-3 text-xs">
-                        <a href="https://wa.me/91${phone.replace(/[^0-9]/g, '')}?text=Hi,%20I%20want%20to%20reserve%20a%20seat%20at%20${encodeURIComponent(name)}" target="_blank" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition text-center shadow-md">
-                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                        </a>
-                        <a href="tel:${phone}" class="flex-1 py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold hover:brightness-110 transition text-center shadow-md">
+                        <a href="tel:${phone}" onclick="event.stopPropagation()" class="flex-1 py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold hover:brightness-110 transition text-center shadow-md">
                             <i class="fa-solid fa-phone"></i> Call Library
                         </a>
                     </div>
@@ -164,14 +185,51 @@
             }).join('');
         }
 
+        function openLibraryModal(index) {
+            activeLibrary = allLibraries[index];
+            if (!activeLibrary) return;
+
+            document.getElementById('modalLibraryTitle').textContent = activeLibrary["Supplied Name"] || activeLibrary.name || 'Library';
+            document.getElementById('modalLibraryCat').textContent = activeLibrary["Category"] || 'STUDY LIBRARY';
+            document.getElementById('modalLibraryAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${activeLibrary["Verified / Live Address"] || activeLibrary["Area"] || 'Sikar'}`;
+            document.getElementById('modalLibraryImg').src = activeLibrary.image || 'library-banner.png';
+            
+            const phone = activeLibrary["Supplied Phone"] || '6377942096';
+            document.getElementById('modalLibraryCallBtn').href = `tel:${phone}`;
+            document.getElementById('modalLibraryWhatsAppBtn').href = `https://wa.me/91${phone.replace(/[^0-9]/g, '')}?text=Hi,%20I%20want%20to%20reserve%20a%20seat%20at%20${encodeURIComponent(activeLibrary["Supplied Name"])}`;
+
+            switchLibraryTab('overview');
+            document.getElementById('libraryDetailModal').classList.remove('hidden');
+        }
+
+        function closeLibraryModal() { document.getElementById('libraryDetailModal').classList.add('hidden'); }
+
+        function switchLibraryTab(tabName) {
+            document.querySelectorAll('.library-tab-btn').forEach(b => b.className = 'library-tab-btn px-3 py-1.5 rounded-xl text-slate-300 hover:bg-navy-800 transition');
+            const activeBtn = document.getElementById(`tabBtn-l-${tabName}`);
+            if (activeBtn) activeBtn.className = 'library-tab-btn px-3 py-1.5 rounded-xl bg-gold-500 text-navy-950 transition font-bold shadow-md';
+
+            const contentBox = document.getElementById('libraryTabContent');
+            if (!activeLibrary) return;
+
+            if (tabName === 'overview') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700 space-y-2"><strong class="text-gold-300 block">Library Overview:</strong><p class="text-slate-200">${activeLibrary["Supplied Name"]} is a premier quiet study zone in Sikar equipped with modern amenities.</p></div><div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Rating:</strong><p class="text-slate-200">⭐ ${activeLibrary["Live Rating"]} / 5 (${activeLibrary["Review Count"]} Reviews)</p></div>`;
+            } else if (tabName === 'cabins') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Cabins & Seating:</strong><p class="text-slate-200">Fully partitioned comfortable wooden cabins with individual charging points and reading lights.</p></div>`;
+            } else if (tabName === 'facilities') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Facilities:</strong><p class="text-slate-200">High-speed Wi-Fi, Fully AC, RO Drinking Water, Discussion Room & Parking.</p></div>`;
+            } else if (tabName === 'timing') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Opening Hours:</strong><p class="text-slate-200">🕒 ${activeLibrary["Opening Hours"] || '24/7 Open'}</p></div>`;
+            } else if (tabName === 'reviews') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Aspirants Feedback:</strong><p class="text-slate-200">Highly recommended for NEET, JEE, and UPSC exam aspirants in Sikar.</p></div>`;
+            } else if (tabName === 'location') {
+                contentBox.innerHTML = `<div class="p-4 bg-navy-850 rounded-2xl border border-navy-700"><strong class="text-gold-300 block">Exact Address:</strong><p class="text-slate-200">📍 ${activeLibrary["Verified / Live Address"] || activeLibrary["Area"] || 'Sikar'}</p></div>`;
+            }
+        }
+
         document.getElementById('librarySearchInput').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
-            const filtered = allLibraries.filter(l => {
-                const name = (l["Supplied Name"] || l.name || '').toLowerCase();
-                const area = (l["Area"] || l.area || '').toLowerCase();
-                const address = (l["Verified / Live Address"] || l.address || '').toLowerCase();
-                return name.includes(query) || area.includes(query) || address.includes(query);
-            });
+            const filtered = allLibraries.filter(l => (l["Supplied Name"] || '').toLowerCase().includes(query) || (l["Area"] || '').toLowerCase().includes(query));
             renderLibraries(filtered);
         });
 
