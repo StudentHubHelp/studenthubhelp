@@ -53,7 +53,7 @@
             <form id="adminLoginForm" class="space-y-4 text-left">
                 <div>
                     <label class="block text-xs text-slate-300 mb-1 font-bold">Director Email</label>
-                    <input type="email" id="adminEmail" required placeholder="satpalswami22742@gmail.com" value="satpalswami22742@gmail.com" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gold-500">
+                    <input type="email" id="adminEmail" required value="satpalswami22742@gmail.com" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-gold-500">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-300 mb-1 font-bold">Director Password</label>
@@ -126,7 +126,7 @@
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col overflow-y-auto">
             
-            <!-- Header Topbar -->
+            <!-- Header Topbar with Universal Search -->
             <header class="bg-navy-900 border-b border-gold-500/20 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 sticky top-0 z-40">
                 <div class="relative flex-1 max-w-xl">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-500 text-sm"></i>
@@ -182,11 +182,12 @@
                 <section id="section-student" class="admin-section hidden space-y-6">
                     <div class="flex justify-between items-center pb-4 border-b border-navy-800">
                         <h3 class="text-xl font-bold text-white">Students Management</h3>
+                        <button onclick="openCreateModal('student')" class="px-4 py-2 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-md">+ Add Student</button>
                     </div>
                     <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
                         <table class="w-full text-left text-xs text-slate-300">
                             <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] border-b border-navy-700">
-                                <tr><th class="p-4">Name</th><th class="p-4">Phone</th><th class="p-4">Email</th><th class="p-4">Status</th></tr>
+                                <tr><th class="p-4">Name</th><th class="p-4">Phone</th><th class="p-4">Email</th><th class="p-4">Status</th><th class="p-4 text-right">Actions</th></tr>
                             </thead>
                             <tbody id="studentTableBody" class="divide-y divide-navy-800"></tbody>
                         </table>
@@ -197,11 +198,12 @@
                 <section id="section-owner" class="admin-section hidden space-y-6">
                     <div class="flex justify-between items-center pb-4 border-b border-navy-800">
                         <h3 class="text-xl font-bold text-white">Verified Property Owners</h3>
+                        <button onclick="openCreateModal('owner')" class="px-4 py-2 gold-gradient-bg text-navy-950 font-bold text-xs rounded-xl shadow-md">+ Add Owner</button>
                     </div>
                     <div class="bg-navy-850 rounded-2xl gold-border-glow overflow-x-auto">
                         <table class="w-full text-left text-xs text-slate-300">
                             <thead class="bg-navy-900 text-gold-400 uppercase text-[10px] border-b border-navy-700">
-                                <tr><th class="p-4">Owner Name</th><th class="p-4">Phone</th><th class="p-4">Email</th><th class="p-4">Verification</th></tr>
+                                <tr><th class="p-4">Owner Name</th><th class="p-4">Phone</th><th class="p-4">Email</th><th class="p-4">Verification</th><th class="p-4 text-right">Actions</th></tr>
                             </thead>
                             <tbody id="ownerTableBody" class="divide-y divide-navy-800"></tbody>
                         </table>
@@ -291,17 +293,70 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- ================= MODALS ================= -->
+    <!-- 6-Tab Details Modal -->
+    <div id="admin6TabModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
+            <button onclick="closeAdmin6TabModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-navy-950/80 text-slate-300 hover:text-white flex items-center justify-center border border-navy-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <button onclick="editCurrentAdminItemFromModal()" class="absolute top-4 right-16 z-20 px-3 py-1.5 rounded-full bg-navy-950/80 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold flex items-center gap-1.5 border border-gold-500/40 shadow-lg transition">
+                <i class="fa-solid fa-pen-to-square"></i> Edit Details
+            </button>
+            <div class="relative w-full h-44 sm:h-52 flex-shrink-0 bg-navy-950 overflow-hidden border-b border-navy-800">
+                <img id="adminModalBannerImg" src="hostel-banner.png" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
+                <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                    <div>
+                        <span id="adminModalCatBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded uppercase border bg-blue-500/20 text-blue-300 border-blue-500/40">PROPERTY</span>
+                        <h2 id="adminModalTitle" class="text-xl sm:text-2xl font-bold text-white mt-1 leading-snug">Title</h2>
+                        <p id="adminModalAddress" class="text-xs text-slate-300 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-500"></i> Address</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-4 flex-1 text-xs text-slate-300 leading-relaxed">
+                <p id="adminModalAbout">Details...</p>
+            </div>
+            <div class="bg-navy-950 p-4 border-t border-navy-800 flex items-center justify-between gap-3 flex-shrink-0">
+                <a id="adminModalCallBtn" href="#" class="flex-1 py-3 bg-navy-850 border border-gold-500/40 text-gold-300 text-xs font-bold text-center rounded-xl"><i class="fa-solid fa-phone"></i> Call</a>
+                <a id="adminModalWhatsAppBtn" href="#" target="_blank" class="flex-1 py-3 bg-emerald-600 text-white text-xs font-bold text-center rounded-xl"><i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Property Details Modal -->
     <div id="adminEditModal" class="fixed inset-0 z-50 bg-navy-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
-        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative">
-            <button onclick="closeAdminEditModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-base font-bold text-white mb-3">Edit Property Details</h3>
-            <form id="adminEditForm" class="space-y-3 text-xs text-slate-300">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col p-6 shadow-2xl relative">
+            <button onclick="closeAdminEditModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-base font-bold text-white flex items-center gap-2 pb-3 border-b border-navy-800">
+                <i class="fa-solid fa-pen-to-square text-gold-400"></i> Edit Property Details (<span id="adminEditItemTitle" class="text-gold-300">Property</span>)
+            </h3>
+            <form id="adminEditForm" class="space-y-3.5 overflow-y-auto flex-1 pr-1 text-xs text-slate-300 mt-3">
                 <input type="hidden" id="adminEditType"><input type="hidden" id="adminEditId">
-                <div><label class="block mb-1 font-bold">Name *</label><input type="text" id="adminEditName" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
-                <div><label class="block mb-1 font-bold">Phone *</label><input type="tel" id="adminEditPhone" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
-                <div><label class="block mb-1 font-bold">Address *</label><input type="text" id="adminEditAddress" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
-                <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl shadow-lg mt-2">Save Live Changes</button>
+                <div><label class="block text-slate-300 mb-1 font-bold">Property / Business Name *</label><input type="text" id="adminEditName" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-slate-300 mb-1 font-bold">Phone Number *</label><input type="tel" id="adminEditPhone" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
+                    <div><label class="block text-slate-300 mb-1 font-bold">Area / Locality *</label><input type="text" id="adminEditArea" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
+                </div>
+                <div><label class="block text-slate-300 mb-1 font-bold">Full Address *</label><input type="text" id="adminEditAddress" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
+                <div><label class="block text-slate-300 mb-1 font-bold">Facilities / Menu / Overview Description</label><textarea id="adminEditAbout" rows="3" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></textarea></div>
+                <div><label class="block text-slate-300 mb-1 font-bold">Image URL</label><input type="text" id="adminEditImage" placeholder="https://..." class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
+                <button type="submit" class="w-full py-3.5 gold-gradient-bg text-navy-950 font-bold rounded-xl shadow-lg mt-2">Save Property Changes Live in Supabase</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create New Item Modal -->
+    <div id="adminCreateModal" class="fixed inset-0 z-50 bg-navy-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+            <button onclick="closeCreateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-base font-bold text-white flex items-center gap-2 pb-2 border-b border-navy-800">
+                <i class="fa-solid fa-plus text-gold-400"></i> Add New <span id="createModalTypeTitle" class="text-gold-300 capitalize">Item</span> to Supabase
+            </h3>
+            <form id="adminCreateForm" class="space-y-3 text-xs">
+                <input type="hidden" id="createTargetType">
+                <div><label class="block text-slate-300 mb-1 font-bold">Name / Title *</label><input type="text" id="createName" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
+                <div><label class="block text-slate-300 mb-1 font-bold">Phone Number *</label><input type="tel" id="createPhone" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
+                <div><label class="block text-slate-300 mb-1 font-bold">Address / Area *</label><input type="text" id="createAddress" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></div>
+                <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl shadow-md mt-2">Publish Live to Database</button>
             </form>
         </div>
     </div>
@@ -327,7 +382,7 @@
                 document.getElementById('adminAuthLock').classList.add('hidden');
                 document.getElementById('adminInterface').classList.remove('hidden');
                 initAllData();
-            } else { alert('Invalid Credentials!'); }
+            } else { alert('Invalid Master Credentials!'); }
         });
 
         document.getElementById('adminLogoutBtn').addEventListener('click', () => { sessionStorage.removeItem('studenthub_admin_logged'); location.reload(); });
@@ -344,10 +399,10 @@
         async function initAllData() {
             try {
                 const [hRes, tRes, lRes, cRes] = await Promise.all([
-                    supabaseClient.from('hostels').select('*'),
-                    supabaseClient.from('tiffins').select('*'),
-                    supabaseClient.from('libraries').select('*'),
-                    supabaseClient.from('cafes').select('*')
+                    supabaseClient.from('hostels').select('*').order('id', { ascending: true }),
+                    supabaseClient.from('tiffins').select('*').order('id', { ascending: true }),
+                    supabaseClient.from('libraries').select('*').order('id', { ascending: true }),
+                    supabaseClient.from('cafes').select('*').order('id', { ascending: true })
                 ]);
 
                 hostelsData = hRes.data || [];
@@ -374,28 +429,114 @@
         }
 
         function renderAllTables() {
-            document.getElementById('studentTableBody').innerHTML = studentsData.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">No students found.</td></tr>` : studentsData.map(s => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white">${s.name}</td><td class="p-4 font-mono">${s.phone}</td><td class="p-4">${s.email}</td><td class="p-4 text-emerald-400">Active</td></tr>`).join('');
-            document.getElementById('ownerTableBody').innerHTML = ownersData.map(o => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white">${o.name}</td><td class="p-4 font-mono">${o.phone}</td><td class="p-4">${o.email}</td><td class="p-4 text-emerald-400">Verified</td></tr>`).join('');
+            document.getElementById('studentTableBody').innerHTML = studentsData.length === 0 ? `<tr><td colspan="5" class="p-4 text-center text-slate-400">No students found.</td></tr>` : studentsData.map((s, i) => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white">${s.name || s.full_name}</td><td class="p-4 font-mono">${s.phone}</td><td class="p-4">${s.email}</td><td class="p-4 text-emerald-400">Active</td><td class="p-4 text-right"><button onclick="deleteLocalItem('students', ${i})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+            
+            document.getElementById('ownerTableBody').innerHTML = ownersData.map((o, i) => `<tr onclick="openOwnerPropertyModal('${o.email}', '${o.name}', '${o.phone}')" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-bold text-white flex items-center gap-2"><i class="fa-solid fa-building text-gold-400"></i> ${o.name}</td><td class="p-4 font-mono">${o.phone}</td><td class="p-4">${o.email}</td><td class="p-4 text-emerald-400">Verified</td><td class="p-4 text-right"><button onclick="deleteLocalItem('owners', ${i}); event.stopPropagation();" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
 
-            document.getElementById('hostelTableBody').innerHTML = hostelsData.map((h, i) => `<tr class="border-b border-navy-800"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${h["Hostel Name (Supplied)"] || h.name}</td><td class="p-4">${h["Category"] || 'PG'}</td><td class="p-4 font-mono">${h["Contact (Verified)"] || h.phone}</td><td class="p-4">${h["Verified / Live Address"] || h.address}</td><td class="p-4 text-right"><button onclick="openAdminEditModal('hostels', ${h.id})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button> <button onclick="deleteSupabaseItem('hostels', ${h.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+            document.getElementById('hostelTableBody').innerHTML = hostelsData.map((h, i) => `<tr onclick="openAdminPropertyView('hostels', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${h["Hostel Name (Supplied)"] || h.name}</td><td class="p-4">${h["Category"] || 'PG'}</td><td class="p-4 font-mono">${h["Contact (Verified)"] || h.phone}</td><td class="p-4">${h["Verified / Live Address"] || h.address}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('hostels', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('hostels', ${h.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
             
-            document.getElementById('tiffinTableBody').innerHTML = tiffinsData.map((t, i) => `<tr class="border-b border-navy-800"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${t["Supplied Name"] || t.name}</td><td class="p-4 font-mono">${t["Supplied Phone"] || t.phone}</td><td class="p-4">${t["Verified / Live Address"] || t.address}</td><td class="p-4 text-right"><button onclick="openAdminEditModal('tiffins', ${t.id})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button> <button onclick="deleteSupabaseItem('tiffins', ${t.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+            document.getElementById('tiffinTableBody').innerHTML = tiffinsData.map((t, i) => `<tr onclick="openAdminPropertyView('tiffins', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${t["Supplied Name"] || t.name}</td><td class="p-4 font-mono">${t["Supplied Phone"] || t.phone}</td><td class="p-4">${t["Verified / Live Address"] || t.address}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('tiffins', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('tiffins', ${t.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
             
-            document.getElementById('libraryTableBody').innerHTML = librariesData.map((l, i) => `<tr class="border-b border-navy-800"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${l["Supplied Name"] || l.name}</td><td class="p-4 font-mono">${l["Supplied Phone"] || l.phone}</td><td class="p-4">${l["Verified / Live Address"] || l.address}</td><td class="p-4 text-right"><button onclick="openAdminEditModal('libraries', ${l.id})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button> <button onclick="deleteSupabaseItem('libraries', ${l.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+            document.getElementById('libraryTableBody').innerHTML = librariesData.map((l, i) => `<tr onclick="openAdminPropertyView('libraries', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${l["Supplied Name"] || l.name}</td><td class="p-4 font-mono">${l["Supplied Phone"] || l.phone}</td><td class="p-4">${l["Verified / Live Address"] || l.address}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('libraries', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('libraries', ${l.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
             
-            document.getElementById('cafeTableBody').innerHTML = cafesData.map((c, i) => `<tr class="border-b border-navy-800"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${c.Name || c.name}</td><td class="p-4 font-mono">${c.Contact || c.phone}</td><td class="p-4">${c["Public/Exact Address"] || c.address}</td><td class="p-4 text-right"><button onclick="openAdminEditModal('cafes', ${c.id})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button> <button onclick="deleteSupabaseItem('cafes', ${c.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+            document.getElementById('cafeTableBody').innerHTML = cafesData.map((c, i) => `<tr onclick="openAdminPropertyView('cafes', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${c.Name || c.name}</td><td class="p-4 font-mono">${c.Contact || c.phone}</td><td class="p-4">${c["Public/Exact Address"] || c.address}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('cafes', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('cafes', ${c.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
         }
 
-        window.openAdminEditModal = function(type, id) {
+        // Universal Search Logic
+        const globalSearchInput = document.getElementById('globalAdminSearch');
+        const searchResultsBox = document.getElementById('universalSearchResults');
+        if (globalSearchInput) {
+            globalSearchInput.addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase().trim();
+                if (!query) { searchResultsBox.classList.add('hidden'); searchResultsBox.innerHTML = ''; return; }
+                let matches = [];
+                hostelsData.forEach((h, i) => { if ((h["Hostel Name (Supplied)"] || h.name || '').toLowerCase().includes(query)) matches.push({ title: h["Hostel Name (Supplied)"] || h.name, type: 'Hostel', cat: 'hostels', idx: i }); });
+                tiffinsData.forEach((t, i) => { if ((t["Supplied Name"] || t.name || '').toLowerCase().includes(query)) matches.push({ title: t["Supplied Name"] || t.name, type: 'Tiffin', cat: 'tiffins', idx: i }); });
+                librariesData.forEach((l, i) => { if ((l["Supplied Name"] || l.name || '').toLowerCase().includes(query)) matches.push({ title: l["Supplied Name"] || l.name, type: 'Library', cat: 'libraries', idx: i }); });
+                cafesData.forEach((c, i) => { if ((c.Name || c.name || '').toLowerCase().includes(query)) matches.push({ title: c.Name || c.name, type: 'Cafe', cat: 'cafes', idx: i }); });
+
+                searchResultsBox.innerHTML = matches.length === 0 ? `<p class="text-slate-400 p-2">No results found</p>` : matches.map(m => `
+                    <div onclick="handleGlobalSearchSelect('${m.cat}', ${m.idx})" class="p-2.5 hover:bg-navy-800 rounded-xl cursor-pointer flex justify-between items-center transition">
+                        <span class="font-bold text-white text-xs">${m.title}</span><span class="text-[10px] px-2 py-0.5 bg-gold-500/20 text-gold-300 rounded font-bold">${m.type}</span>
+                    </div>
+                `).join('');
+                searchResultsBox.classList.remove('hidden');
+            });
+        }
+
+        window.handleGlobalSearchSelect = function(cat, idx) {
+            searchResultsBox.classList.add('hidden');
+            globalSearchInput.value = '';
+            setSection(cat === 'hostels' ? 'hostel' : cat === 'tiffins' ? 'tiffin' : cat === 'libraries' ? 'library' : 'cafe');
+            openAdminPropertyView(cat, idx);
+        };
+
+        // Property View Modal & 6-Tab popup
+        let currentInspectedType = 'hostels';
+        let currentInspectedIdx = 0;
+
+        window.openAdminPropertyView = function(type, idx) {
+            currentInspectedType = type;
+            currentInspectedIdx = idx;
             let list = type === 'hostels' ? hostelsData : type === 'tiffins' ? tiffinsData : type === 'libraries' ? librariesData : cafesData;
-            let item = list.find(x => x.id === id);
+            let item = list[idx];
+            if (!item) return;
+
+            const name = item["Hostel Name (Supplied)"] || item["Supplied Name"] || item.Name || item.name || 'Property';
+            const address = item["Verified / Live Address"] || item["Public/Exact Address"] || item.address || 'Sikar';
+            const phone = item["Contact (Verified)"] || item["Supplied Phone"] || item.Contact || item.phone || '';
+
+            document.getElementById('adminModalBannerImg').src = item.image || 'hostel-banner.png';
+            document.getElementById('adminModalTitle').textContent = name;
+            document.getElementById('adminModalAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500"></i> ${address}`;
+            document.getElementById('adminModalCatBadge').textContent = type.toUpperCase();
+            document.getElementById('adminModalAbout').innerHTML = `
+                <div class="space-y-3">
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700"><strong class="text-gold-300 block mb-1">Contact & Location:</strong><p class="text-white">📞 ${phone} | 📍 ${address}</p></div>
+                    <div class="p-3 bg-navy-850 rounded-xl border border-navy-700"><strong class="text-gold-300 block mb-1">Details / Facilities:</strong><p class="text-slate-200">${item["Facilities"] || item["Food Details"] || item["Opening Hours"] || 'Verified student listing.'}</p></div>
+                </div>
+            `;
+            document.getElementById('adminModalCallBtn').href = `tel:${phone}`;
+            document.getElementById('adminModalWhatsAppBtn').href = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(name)}`;
+            document.getElementById('admin6TabModal').classList.remove('hidden');
+        };
+
+        window.closeAdmin6TabModal = function() { document.getElementById('admin6TabModal').classList.add('hidden'); };
+        window.editCurrentAdminItemFromModal = function() {
+            document.getElementById('admin6TabModal').classList.add('hidden');
+            openAdminEditModal(currentInspectedType, currentInspectedIdx);
+        };
+
+        // Owner click matching property
+        window.openOwnerPropertyModal = function(ownerEmail, ownerName, ownerPhone) {
+            let matched = hostelsData.find(h => (h["Contact (Verified)"] || '').includes(ownerPhone.replace(/[^0-9]/g, ''))) || hostelsData[0];
+            if (matched) {
+                let idx = hostelsData.indexOf(matched);
+                openAdminPropertyView('hostels', idx);
+            } else {
+                alert(`No property linked with ${ownerName}`);
+            }
+        };
+
+        // Edit Modal Form Logic
+        window.openAdminEditModal = function(type, idx) {
+            let list = type === 'hostels' ? hostelsData : type === 'tiffins' ? tiffinsData : type === 'libraries' ? librariesData : cafesData;
+            let item = list[idx];
             if (!item) return;
 
             document.getElementById('adminEditType').value = type;
-            document.getElementById('adminEditId').value = id;
-            document.getElementById('adminEditName').value = item["Hostel Name (Supplied)"] || item["Supplied Name"] || item.Name || item.name || '';
-            document.getElementById('adminEditPhone').value = item["Contact (Verified)"] || item["Supplied Phone"] || item.Contact || item.phone || '';
-            document.getElementById('adminEditAddress').value = item["Verified / Live Address"] || item["Public/Exact Address"] || item.address || '';
+            document.getElementById('adminEditId').value = item.id;
+            const name = item["Hostel Name (Supplied)"] || item["Supplied Name"] || item.Name || item.name || '';
+            const phone = item["Contact (Verified)"] || item["Supplied Phone"] || item.Contact || item.phone || '';
+            const address = item["Verified / Live Address"] || item["Public/Exact Address"] || item.address || '';
+
+            document.getElementById('adminEditItemTitle').textContent = name;
+            document.getElementById('adminEditName').value = name;
+            document.getElementById('adminEditPhone').value = phone;
+            document.getElementById('adminEditAddress').value = address;
+            document.getElementById('adminEditAbout').value = item["Facilities"] || item["Food Details"] || item["Opening Hours"] || '';
+            document.getElementById('adminEditImage').value = item.image || '';
+
             document.getElementById('adminEditModal').classList.remove('hidden');
         };
 
@@ -408,20 +549,22 @@
             const name = document.getElementById('adminEditName').value.trim();
             const phone = document.getElementById('adminEditPhone').value.trim();
             const address = document.getElementById('adminEditAddress').value.trim();
+            const about = document.getElementById('adminEditAbout').value.trim();
+            const image = document.getElementById('adminEditImage').value.trim();
 
             let payload = {};
-            if (type === 'hostels') payload = { "Hostel Name (Supplied)": name, "Contact (Verified)": phone, "Verified / Live Address": address };
-            else if (type === 'tiffins') payload = { "Supplied Name": name, "Supplied Phone": phone, "Verified / Live Address": address };
-            else if (type === 'libraries') payload = { "Supplied Name": name, "Supplied Phone": phone, "Verified / Live Address": address };
-            else if (type === 'cafes') payload = { "Name": name, "Contact": phone, "Public/Exact Address": address };
+            if (type === 'hostels') payload = { "Hostel Name (Supplied)": name, "Contact (Verified)": phone, "Verified / Live Address": address, "Facilities": about, "image": image };
+            else if (type === 'tiffins') payload = { "Supplied Name": name, "Supplied Phone": phone, "Verified / Live Address": address, "Opening Hours": about, "image": image };
+            else if (type === 'libraries') payload = { "Supplied Name": name, "Supplied Phone": phone, "Verified / Live Address": address, "Opening Hours": about, "image": image };
+            else if (type === 'cafes') payload = { "Name": name, "Contact": phone, "Public/Exact Address": address, "Food Details": about, "image": image };
 
             const { error } = await supabaseClient.from(type).update(payload).eq('id', id);
             if (error) alert('Error: ' + error.message);
-            else { alert('Successfully updated in Supabase!'); closeAdminEditModal(); initAllData(); }
+            else { alert('Successfully updated in Supabase live database!'); closeAdminEditModal(); initAllData(); }
         });
 
         window.deleteSupabaseItem = async function(type, id) {
-            if (confirm('Delete this item live from database?')) {
+            if (confirm('Delete this item live from Supabase?')) {
                 const { error } = await supabaseClient.from(type).delete().eq('id', id);
                 if (error) alert('Error: ' + error.message);
                 else { alert('Deleted successfully!'); initAllData(); }
@@ -429,8 +572,29 @@
         };
 
         window.openCreateModal = function(type) {
-            alert('Use the Add Listing page on the website to add new properties directly to Supabase.');
+            document.getElementById('createTargetType').value = type === 'hostel' ? 'hostels' : type === 'tiffin' ? 'tiffins' : type === 'library' ? 'libraries' : 'cafes';
+            document.getElementById('createModalTypeTitle').textContent = type;
+            document.getElementById('adminCreateModal').classList.remove('hidden');
         };
+        window.closeCreateModal = function() { document.getElementById('adminCreateModal').classList.add('hidden'); };
+
+        document.getElementById('adminCreateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const tableName = document.getElementById('createTargetType').value;
+            const name = document.getElementById('createName').value.trim();
+            const phone = document.getElementById('createPhone').value.trim();
+            const address = document.getElementById('createAddress').value.trim();
+
+            let payload = {};
+            if (tableName === 'hostels') payload = { "Hostel Name (Supplied)": name, "Verified / Live Address": address, "Contact (Verified)": phone };
+            else if (tableName === 'tiffins') payload = { "Supplied Name": name, "Verified / Live Address": address, "Supplied Phone": phone };
+            else if (tableName === 'libraries') payload = { "Supplied Name": name, "Verified / Live Address": address, "Supplied Phone": phone };
+            else if (tableName === 'cafes') payload = { "Name": name, "Public/Exact Address": address, "Contact": phone };
+
+            const { error } = await supabaseClient.from(tableName).insert([payload]);
+            if (error) alert('Error: ' + error.message);
+            else { alert('Successfully added to Supabase!'); closeCreateModal(); initAllData(); }
+        });
     </script>
 </body>
 </html>
