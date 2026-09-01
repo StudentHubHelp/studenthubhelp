@@ -96,7 +96,7 @@
         <p>© 2026 StudentHubHelp (Shekhawati). Director: Satpal Swami (+919929718264)</p>
     </footer>
 
-    <!-- ================= JAVASCRIPT ================= -->
+   <!-- ================= JAVASCRIPT ================= -->
     <script>
         const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
@@ -108,17 +108,17 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('cafes')
-                    .select('*')
-                    .order('Rank', { ascending: true });
+                    .select('*');
 
                 if (error) throw error;
                 allCafes = data || [];
+                console.log("Loaded Cafes:", allCafes); // कंसोल में चेक करने के लिए
                 renderCafes(allCafes);
             } catch (err) {
                 console.error('Supabase fetch error:', err);
                 document.getElementById('cafesGridContainer').innerHTML = `
                     <div class="col-span-full py-12 text-center text-red-400">
-                        <p class="text-xs">Failed to load cafes from database. Please check connection.</p>
+                        <p class="text-xs">Failed to load cafes from database. Error: ${err.message}</p>
                     </div>
                 `;
             }
@@ -129,46 +129,58 @@
             document.getElementById('cafeCountBadge').textContent = list.length;
 
             if (list.length === 0) {
-                container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">No cafes found matching your search.</div>`;
+                container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">No cafes found in database.</div>`;
                 return;
             }
 
-            container.innerHTML = list.map(c => `
+            container.innerHTML = list.map(c => {
+                // सुरक्षित रूप से अलग-अलग कॉलम नाम हैंडल करने के लिए
+                const cafeName = c.Name || c.name || 'Cafe';
+                const cafeAddress = c["Public/Exact Address"] || c.address || 'Sikar, Rajasthan';
+                const cafeRating = c["Google Rating"] || c.google_rating || '4.5';
+                const cafeReviews = c["Review Count"] || c.review_count || '10+';
+                const cafeFood = c["Food Details"] || c.food_details || 'Snacks & Coffee';
+                const cafeHours = c["Opening Hours"] || c.opening_hours || '09:00 AM - 09:00 PM';
+                const cafeContact = c["Contact"] || c.contact || '6377942096';
+
+                return `
                 <div class="bg-navy-900 border border-navy-800 rounded-3xl p-6 gold-border-glow flex flex-col justify-between space-y-4">
                     <div class="space-y-3">
                         <div class="flex justify-between items-start gap-2">
-                            <h3 class="text-base font-bold text-white leading-snug">${c.Name || 'Cafe'}</h3>
+                            <h3 class="text-base font-bold text-white leading-snug">${cafeName}</h3>
                             <span class="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-gold-500/10 text-gold-300 border border-gold-500/30 flex items-center gap-1 flex-shrink-0">
-                                <i class="fa-solid fa-star text-[10px]"></i> ${c["Google Rating"] || '4.5'} (${c["Review Count"] || '10+'})
+                                <i class="fa-solid fa-star text-[10px]"></i> ${cafeRating} (${cafeReviews})
                             </span>
                         </div>
                         <p class="text-xs text-slate-300 flex items-start gap-1.5 leading-relaxed">
                             <i class="fa-solid fa-location-dot text-gold-500 mt-0.5 flex-shrink-0"></i> 
-                            <span>${c["Public/Exact Address"] || 'Sikar, Rajasthan'}</span>
+                            <span>${cafeAddress}</span>
                         </p>
                         <div class="p-3 bg-navy-850 rounded-2xl border border-navy-700/60 text-xs space-y-1">
                             <span class="text-[10px] text-gold-400 font-bold uppercase tracking-wider block">Speciality / Food:</span>
-                            <p class="text-slate-200">${c["Food Details"] || 'Snacks, Coffee & Beverages'}</p>
+                            <p class="text-slate-200">${cafeFood}</p>
                         </div>
                     </div>
                     <div class="pt-3 border-t border-navy-800 flex items-center justify-between gap-3 text-xs">
-                        <span class="text-slate-400 text-[11px]"><i class="fa-solid fa-clock text-gold-400 mr-1"></i> ${c["Opening Hours"] || '09:00 AM - 09:00 PM'}</span>
-                        <a href="tel:${c["Contact"] && c["Contact"] !== 'Not publicly listed' ? c["Contact"] : '6377942096'}" class="px-3.5 py-2 rounded-xl gold-gradient-bg text-navy-950 font-bold hover:brightness-110 transition shadow-md flex items-center gap-1">
+                        <span class="text-slate-400 text-[11px]"><i class="fa-solid fa-clock text-gold-400 mr-1"></i> ${cafeHours}</span>
+                        <a href="tel:${cafeContact && cafeContact !== 'Not publicly listed' ? cafeContact : '6377942096'}" class="px-3.5 py-2 rounded-xl gold-gradient-bg text-navy-950 font-bold hover:brightness-110 transition shadow-md flex items-center gap-1">
                             <i class="fa-solid fa-phone"></i> Call
                         </a>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         // Search Filter
         document.getElementById('cafeSearchInput').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
-            const filtered = allCafes.filter(c => 
-                (c.Name && c.Name.toLowerCase().includes(query)) ||
-                (c["Public/Exact Address"] && c["Public/Exact Address"].toLowerCase().includes(query)) ||
-                (c["Food Details"] && c["Food Details"].toLowerCase().includes(query))
-            );
+            const filtered = allCafes.filter(c => {
+                const name = (c.Name || c.name || '').toLowerCase();
+                const address = (c["Public/Exact Address"] || c.address || '').toLowerCase();
+                const food = (c["Food Details"] || c.food_details || '').toLowerCase();
+                return name.includes(query) || address.includes(query) || food.includes(query);
+            });
             renderCafes(filtered);
         });
 
