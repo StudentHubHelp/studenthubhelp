@@ -557,7 +557,7 @@ function renderAllTables() {
             document.getElementById('tiffinTableBody').innerHTML = tiffinsData.map((t, i) => {
                 const name = t["Supplied Name"] || t["Tiffin Name"] || t.name || t.Name || 'Tiffin';
                 const phone = t["Supplied Phone"] || t["Phone"] || t.phone || t.Contact || '--';
-                const addr = t["Verified / Live Address"] || t["Verified / Live Name"] || t["Area"] || t.address || t.Address || 'Sikar';
+                const addr = t["Supplied Address"] ? `${t["Supplied Address"]}, ${t["Area"] || ''}` : (t["Verified / Live Address"] || t["Area"] || t.address || 'Sikar');
                 return `<tr onclick="openAdminPropertyView('tiffins', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('tiffins', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('tiffins', ${t.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             }).join('');
             
