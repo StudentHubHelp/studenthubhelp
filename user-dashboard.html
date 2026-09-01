@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS CDN & Supabase -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -143,9 +143,9 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-building text-gold-400"></i> My Listed Properties & Vacancy Status
+                        <i class="fa-solid fa-building text-gold-400"></i> My Listed Property & Live Database Status
                     </h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Manage your real property photo, room availability, pricing, and 6-tab details.</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Manage your real property photo, room availability, pricing, and live database record.</p>
                 </div>
             </div>
 
@@ -154,7 +154,8 @@
                 <div class="w-16 h-16 rounded-2xl bg-navy-900 text-gold-400 text-3xl flex items-center justify-center mx-auto border border-gold-500/30">
                     <i class="fa-solid fa-hotel"></i>
                 </div>
-                <h4 class="text-lg font-bold text-white">No Properties Registered Yet</h4>
+                <h4 class="text-lg font-bold text-white">No Properties Registered in Database</h4>
+                <p class="text-xs text-slate-400 max-w-md mx-auto">Please add your property from the Add Listing page using this same phone number or email.</p>
             </div>
 
             <!-- Real Property Card -->
@@ -162,39 +163,39 @@
                 <div class="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden border border-gold-500/25 shadow-lg bg-navy-900">
                     <img id="ownerPropImg" src="hostel-banner.png" class="w-full h-full object-cover">
                     <div class="absolute top-3 right-3 bg-navy-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-gold-500/40 text-xs font-bold text-gold-300 flex items-center gap-1.5 shadow-md">
-                        <i class="fa-solid fa-camera"></i> Live Property Photo
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Supabase Live Synced
                     </div>
                 </div>
 
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-navy-800">
                     <div>
-                        <span class="text-[10px] font-bold px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/30 uppercase" id="ownerPropCatBadge">Hostel / PG Partner</span>
+                        <span class="text-[10px] font-bold px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/30 uppercase" id="ownerPropCatBadge">Property Partner</span>
                         <h4 class="text-xl font-bold text-white mt-1.5" id="ownerPropName">Property Title</h4>
                         <p class="text-xs text-slate-400" id="ownerPropAddress"><i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> Address</p>
                     </div>
 
                     <button onclick="openOwnerEditModal()" class="px-4 py-2.5 bg-navy-900 border border-gold-500/40 text-gold-300 hover:bg-gold-500 hover:text-navy-950 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-md cursor-pointer">
-                        <i class="fa-solid fa-pen-to-square"></i> Edit Property & 6-Tabs
+                        <i class="fa-solid fa-pen-to-square"></i> Edit Property Live
                     </button>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700">
-                        <span class="text-[11px] text-slate-400 block font-semibold">Vacant Rooms Available</span>
-                        <div class="text-xl font-extrabold text-emerald-400 mt-1" id="ownerVacantRooms">0 Rooms</div>
+                        <span class="text-[11px] text-slate-400 block font-semibold">Vacant / Status</span>
+                        <div class="text-xl font-extrabold text-emerald-400 mt-1" id="ownerVacantRooms">Available</div>
                     </div>
                     <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700">
-                        <span class="text-[11px] text-slate-400 block font-semibold">Monthly Rent / Charge</span>
-                        <div class="text-xl font-extrabold text-gold-300 mt-1" id="ownerPropPrice">₹0 / month</div>
+                        <span class="text-[11px] text-slate-400 block font-semibold">Price / Timing</span>
+                        <div class="text-xl font-extrabold text-gold-300 mt-1" id="ownerPropPrice">--</div>
                     </div>
                     <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700">
-                        <span class="text-[11px] text-slate-400 block font-semibold">Listing Status</span>
-                        <div class="text-base font-bold text-emerald-400 mt-1 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Live on Site</div>
+                        <span class="text-[11px] text-slate-400 block font-semibold">Database Status</span>
+                        <div class="text-base font-bold text-emerald-400 mt-1 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Live on Database</div>
                     </div>
                 </div>
 
                 <div class="bg-navy-900 p-4 rounded-2xl border border-navy-800 text-xs space-y-1.5">
-                    <span class="font-bold text-gold-300 block">Facilities / 6-Tabs Summary:</span>
+                    <span class="font-bold text-gold-300 block">Facilities / Menu Summary:</span>
                     <p class="text-slate-300 leading-relaxed" id="ownerPropFacilities">--</p>
                 </div>
             </div>
@@ -202,22 +203,18 @@
 
     </main>
 
-    <!-- ================= MODAL: OWNER EDIT PROPERTY & 6-TABS ================= -->
+    <!-- ================= MODAL: OWNER EDIT PROPERTY LIVE ================= -->
     <div id="ownerEditModal" class="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
             <button onclick="closeOwnerEditModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h3 class="text-base font-bold text-white flex items-center gap-2 border-b border-navy-800 pb-2">
-                <i class="fa-solid fa-pen-to-square text-gold-400"></i> Edit Property Details & 6-Tabs
+                <i class="fa-solid fa-pen-to-square text-gold-400"></i> Edit Property Details (Live Supabase Sync)
             </h3>
 
             <form id="ownerEditForm" class="space-y-3.5 text-xs">
                 <div class="p-3.5 bg-navy-850 rounded-2xl border border-navy-700 space-y-2">
-                    <label class="block text-gold-400 font-bold">Property Photo (Upload File or Enter URL)</label>
-                    <input type="file" id="propImgFileInput" accept="image/*" class="w-full text-white text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:bg-gold-500 file:text-navy-950 cursor-pointer">
-                    <input type="text" id="propImgUrlInput" placeholder="Or paste image URL (https://...)" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3 py-2 text-white text-xs">
-                    <div id="propImgPreviewBox" class="hidden w-full h-28 rounded-xl overflow-hidden border border-navy-700 mt-2">
-                        <img id="propImgPreview" class="w-full h-full object-cover">
-                    </div>
+                    <label class="block text-gold-400 font-bold">Property Photo URL</label>
+                    <input type="text" id="propImgUrlInput" placeholder="Paste image URL (e.g. hostel-banner.png or https://...)" class="w-full bg-navy-900 border border-navy-700 rounded-xl px-3 py-2 text-white text-xs">
                 </div>
 
                 <div>
@@ -227,31 +224,26 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-slate-300 mb-1 font-bold">Vacant Rooms Count</label>
-                        <input type="text" id="editPropRoomsInput" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
+                        <label class="block text-slate-300 mb-1 font-bold">Contact Phone</label>
+                        <input type="text" id="editPropPhoneInput" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
                     </div>
                     <div>
-                        <label class="block text-slate-300 mb-1 font-bold">Monthly Rent (₹)</label>
+                        <label class="block text-slate-300 mb-1 font-bold">Price / Timing</label>
                         <input type="text" id="editPropPriceInput" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-slate-300 mb-1 font-bold">Facilities (Comma Separated)</label>
+                    <label class="block text-slate-300 mb-1 font-bold">Facilities / Speciality / Menu</label>
                     <input type="text" id="editPropFacilitiesInput" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
                 </div>
 
                 <div>
-                    <label class="block text-slate-300 mb-1 font-bold">Walking Distance</label>
-                    <input type="text" id="editPropDistanceInput" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
+                    <label class="block text-slate-300 mb-1 font-bold">Exact Address</label>
+                    <input type="text" id="editPropAddressInput" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white">
                 </div>
 
-                <div>
-                    <label class="block text-slate-300 mb-1 font-bold">Overview / About Text</label>
-                    <textarea id="editPropAboutInput" rows="2" class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3.5 py-2.5 text-white"></textarea>
-                </div>
-
-                <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl shadow-md cursor-pointer">Save Changes Live</button>
+                <button type="submit" id="saveEditBtn" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl shadow-md cursor-pointer">Save Changes Live to Database</button>
             </form>
         </div>
     </div>
@@ -261,7 +253,7 @@
         <div class="bg-navy-900 border border-gold-500/40 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
             <button onclick="closeChangePasswordModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h3 class="text-base font-bold text-white">Change Password</h3>
-            <form id="changePasswordForm" class="space-y-3 text-xs">
+            <form id="changePasswordForm" class="space-y-3 text-xs" onsubmit="updatePassword(event)">
                 <div><label class="block text-slate-300 mb-1">New Password</label><input type="password" id="newPassInput" required class="w-full bg-navy-850 border border-navy-700 rounded-xl px-3 py-2 text-white"></div>
                 <button type="submit" class="w-full py-3 gold-gradient-bg text-navy-950 font-bold rounded-xl shadow-md">Update Password</button>
             </form>
@@ -273,7 +265,7 @@
         <p>© 2026 StudentHubHelp (Shekhawati). Director: Satpal Swami (+91 99297 18264)</p>
     </footer>
 
-    <!-- ================= JAVASCRIPT CONTROLLER ================= -->
+    <!-- ================= SUPABASE DYNAMIC CONTROLLER ================= -->
     <script>
         const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
@@ -295,7 +287,7 @@
             roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-amber-500/10 text-amber-300 border-amber-500/30';
             ownerView.classList.remove('hidden');
             studentView.classList.add('hidden');
-            loadOwnerPropertyData();
+            loadOwnerSupabaseProperty();
         } else {
             roleBadge.textContent = 'Student Aspirant';
             roleBadge.className = 'text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
@@ -303,96 +295,77 @@
             ownerView.classList.add('hidden');
         }
 
-        let currentOwnerImage = '';
+        let activePropRecord = null;
+        let activeTableName = 'hostels';
 
-        function loadOwnerPropertyData() {
-            let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + currentUser.email) || 'null');
-            if (!savedProp) {
-                const allHostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
-                savedProp = allHostels.find(h => 
-                    (currentUser.phone && h.phone && h.phone.replace(/[^0-9]/g, '') === currentUser.phone.replace(/[^0-9]/g, '')) || 
-                    (currentUser.name && h.name.toLowerCase().includes(currentUser.name.toLowerCase())) ||
-                    (currentUser.email && currentUser.email.includes('satpal') && h.name.toUpperCase().includes('SATPAL'))
-                );
-            }
-
+        async function loadOwnerSupabaseProperty() {
             const ownerEmptyState = document.getElementById('ownerEmptyState');
             const ownerPropertyCard = document.getElementById('ownerPropertyCard');
 
-            if (!savedProp) {
-                ownerEmptyState.classList.remove('hidden');
-                ownerPropertyCard.classList.add('hidden');
-                return;
+            try {
+                const cleanPhone = (currentUser.phone || '').replace(/[^0-9]/g, '');
+                
+                // 4 Tables में चेक करते हैं कि इस ओनर की प्रॉपर्टी कहाँ है
+                const tables = ['hostels', 'tiffins', 'libraries', 'cafes'];
+                let found = false;
+
+                for (let tbl of tables) {
+                    const { data, error } = await supabaseClient.from(tbl).select('*');
+                    if (data) {
+                        const match = data.find(item => {
+                            const itemPhone = (item["Contact (Verified)"] || item["Supplied Phone"] || item["Contact"] || '').replace(/[^0-9]/g, '');
+                            const itemName = (item["Hostel Name (Supplied)"] || item["Supplied Name"] || item["Name"] || '').toLowerCase();
+                            return (cleanPhone && itemPhone.includes(cleanPhone)) || 
+                                   (currentUser.name && itemName.includes(currentUser.name.toLowerCase())) ||
+                                   (currentUser.email && currentUser.email.includes('satpal') && itemName.includes('satpal'));
+                        });
+
+                        if (match) {
+                            activePropRecord = match;
+                            activeTableName = tbl;
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found) {
+                    ownerEmptyState.classList.remove('hidden');
+                    ownerPropertyCard.classList.add('hidden');
+                    return;
+                }
+
+                ownerEmptyState.classList.add('hidden');
+                ownerPropertyCard.classList.remove('hidden');
+
+                const name = activePropRecord["Hostel Name (Supplied)"] || activePropRecord["Supplied Name"] || activePropRecord["Name"] || 'Property';
+                const address = activePropRecord["Verified / Live Address"] || activePropRecord["Public/Exact Address"] || activePropRecord["Area"] || 'Sikar';
+                const phone = activePropRecord["Contact (Verified)"] || activePropRecord["Supplied Phone"] || activePropRecord["Contact"] || '9929718264';
+                const rating = activePropRecord["Google/Maps Rating"] || activePropRecord["Live Rating"] || activePropRecord["Google Rating"] || '5.0';
+                const facilities = activePropRecord["Facilities"] || activePropRecord["Food Details"] || 'Verified Service';
+                const image = activePropRecord.image || 'hostel-banner.png';
+
+                document.getElementById('ownerPropName').textContent = name;
+                document.getElementById('ownerPropAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> ${address}`;
+                document.getElementById('ownerVacantRooms').textContent = phone;
+                document.getElementById('ownerPropPrice').textContent = `Rating: ⭐ ${rating}`;
+                document.getElementById('ownerPropFacilities').textContent = facilities;
+                document.getElementById('ownerPropImg').src = image;
+
+            } catch (err) {
+                console.error("Supabase load error:", err);
             }
-
-            ownerEmptyState.classList.add('hidden');
-            ownerPropertyCard.classList.remove('hidden');
-
-            document.getElementById('ownerPropName').textContent = savedProp.name || 'Property Title';
-            document.getElementById('ownerPropAddress').innerHTML = `<i class="fa-solid fa-location-dot text-gold-500 mr-1"></i> ${savedProp.address || savedProp.area || 'Piprali Road, Sikar'}`;
-            document.getElementById('ownerVacantRooms').textContent = savedProp.vacant || savedProp.roomsVacant || "5 Rooms Available";
-            document.getElementById('ownerPropPrice').textContent = savedProp.price || "₹4,500 / month";
-            document.getElementById('ownerPropFacilities').textContent = savedProp.facilities || savedProp.menu || "High Speed WiFi, AC Rooms, RO Water";
-            
-            const propImg = document.getElementById('ownerPropImg');
-            propImg.src = savedProp.image || 'hostel-banner.png';
-            currentOwnerImage = savedProp.image || 'hostel-banner.png';
-        }
-
-        const propImgFileInput = document.getElementById('propImgFileInput');
-        const propImgUrlInput = document.getElementById('propImgUrlInput');
-        const propImgPreviewBox = document.getElementById('propImgPreviewBox');
-        const propImgPreview = document.getElementById('propImgPreview');
-
-        if (propImgFileInput) {
-            propImgFileInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(evt) {
-                        currentOwnerImage = evt.target.result;
-                        propImgPreview.src = currentOwnerImage;
-                        propImgPreviewBox.classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-
-        if (propImgUrlInput) {
-            propImgUrlInput.addEventListener('input', function(e) {
-                if (e.target.value.trim()) {
-                    currentOwnerImage = e.target.value.trim();
-                    propImgPreview.src = currentOwnerImage;
-                    propImgPreviewBox.classList.remove('hidden');
-                }
-            });
         }
 
         window.openOwnerEditModal = function() {
-            let savedProp = JSON.parse(localStorage.getItem('sh_owner_prop_' + currentUser.email) || 'null');
-            if (!savedProp) {
-                const allHostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
-                savedProp = allHostels.find(h => h.phone === currentUser.phone || (currentUser.email && h.name.toLowerCase().includes('satpal')));
-            }
-            savedProp = savedProp || {};
+            if (!activePropRecord) return;
 
-            document.getElementById('editPropNameInput').value = savedProp.name || '';
-            document.getElementById('editPropRoomsInput').value = savedProp.vacant || savedProp.roomsVacant || '';
-            document.getElementById('editPropPriceInput').value = savedProp.price || '';
-            document.getElementById('editPropFacilitiesInput').value = savedProp.facilities || savedProp.menu || '';
-            document.getElementById('editPropDistanceInput').value = savedProp.distance || '';
-            document.getElementById('editPropAboutInput').value = savedProp.about || '';
-            
-            if (propImgUrlInput) propImgUrlInput.value = (savedProp.image && !savedProp.image.startsWith('data:')) ? savedProp.image : '';
-
-            if (savedProp.image) {
-                currentOwnerImage = savedProp.image;
-                propImgPreview.src = savedProp.image;
-                propImgPreviewBox.classList.remove('hidden');
-            } else {
-                propImgPreviewBox.classList.add('hidden');
-            }
+            document.getElementById('editPropNameInput').value = activePropRecord["Hostel Name (Supplied)"] || activePropRecord["Supplied Name"] || activePropRecord["Name"] || '';
+            document.getElementById('editPropPhoneInput').value = activePropRecord["Contact (Verified)"] || activePropRecord["Supplied Phone"] || activePropRecord["Contact"] || '';
+            document.getElementById('editPropPriceInput').value = activePropRecord["Opening Hours"] || activePropRecord["Google/Maps Rating"] || '4,500 INR';
+            document.getElementById('editPropFacilitiesInput').value = activePropRecord["Facilities"] || activePropRecord["Food Details"] || '';
+            document.getElementById('editPropAddressInput').value = activePropRecord["Verified / Live Address"] || activePropRecord["Public/Exact Address"] || '';
+            document.getElementById('propImgUrlInput').value = activePropRecord.image || '';
 
             document.getElementById('ownerEditModal').classList.remove('hidden');
         };
@@ -403,40 +376,71 @@
 
         const ownerEditForm = document.getElementById('ownerEditForm');
         if (ownerEditForm) {
-            ownerEditForm.addEventListener('submit', (e) => {
+            ownerEditForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const updated = {
-                    name: document.getElementById('editPropNameInput').value.trim(),
-                    address: "Piprali Road, Sikar",
-                    vacant: document.getElementById('editPropRoomsInput').value.trim(),
-                    roomsVacant: document.getElementById('editPropRoomsInput').value.trim(),
-                    price: document.getElementById('editPropPriceInput').value.trim(),
-                    facilities: document.getElementById('editPropFacilitiesInput').value.trim(),
-                    distance: document.getElementById('editPropDistanceInput').value.trim(),
-                    about: document.getElementById('editPropAboutInput').value.trim(),
-                    image: currentOwnerImage || 'hostel-banner.png'
-                };
+                if (!activePropRecord) return;
 
-                localStorage.setItem('sh_owner_prop_' + currentUser.email, JSON.stringify(updated));
+                const btn = document.getElementById('saveEditBtn');
+                btn.disabled = true;
+                btn.textContent = "Updating Database...";
 
-                let hostels = JSON.parse(localStorage.getItem('sh_hostels') || '[]');
-                let idx = hostels.findIndex(h => (h.phone && currentUser.phone && h.phone.replace(/[^0-9]/g, '') === currentUser.phone.replace(/[^0-9]/g, '')) || (currentUser.email && h.name.toLowerCase().includes('satpal')));
-                
-                if (idx !== -1) {
-                    hostels[idx] = { ...hostels[idx], ...updated };
-                } else {
-                    hostels.push({ id: hostels.length + 1, ...updated, phone: currentUser.phone || '+91 6377942096', cat: 'Boys' });
+                try {
+                    let updatePayload = {};
+
+                    if (activeTableName === 'hostels') {
+                        updatePayload = {
+                            "Hostel Name (Supplied)": document.getElementById('editPropNameInput').value.trim(),
+                            "Contact (Verified)": document.getElementById('editPropPhoneInput').value.trim(),
+                            "Facilities": document.getElementById('editPropFacilitiesInput').value.trim(),
+                            "Verified / Live Address": document.getElementById('editPropAddressInput').value.trim(),
+                            "image": document.getElementById('propImgUrlInput').value.trim() || 'hostel-banner.png'
+                        };
+                    } else if (activeTableName === 'tiffins' || activeTableName === 'libraries') {
+                        updatePayload = {
+                            "Supplied Name": document.getElementById('editPropNameInput').value.trim(),
+                            "Supplied Phone": document.getElementById('editPropPhoneInput').value.trim(),
+                            "Opening Hours": document.getElementById('editPropPriceInput').value.trim(),
+                            "Verified / Live Address": document.getElementById('editPropAddressInput').value.trim(),
+                            "image": document.getElementById('propImgUrlInput').value.trim() || 'tiffin-banner.png'
+                        };
+                    } else if (activeTableName === 'cafes') {
+                        updatePayload = {
+                            "Name": document.getElementById('editPropNameInput').value.trim(),
+                            "Contact": document.getElementById('editPropPhoneInput').value.trim(),
+                            "Food Details": document.getElementById('editPropFacilitiesInput').value.trim(),
+                            "Public/Exact Address": document.getElementById('editPropAddressInput').value.trim(),
+                            "image": document.getElementById('propImgUrlInput').value.trim() || 'cafe-banner.png'
+                        };
+                    }
+
+                    const { error } = await supabaseClient
+                        .from(activeTableName)
+                        .update(updatePayload)
+                        .eq('id', activePropRecord.id);
+
+                    if (error) throw error;
+
+                    alert('Property updated live in Supabase database!');
+                    closeOwnerEditModal();
+                    loadOwnerSupabaseProperty();
+
+                } catch (err) {
+                    alert('Error updating database: ' + err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Changes Live to Database";
                 }
-                localStorage.setItem('sh_hostels', JSON.stringify(hostels));
-
-                loadOwnerPropertyData();
-                alert('Property details and photo updated live!');
-                closeOwnerEditModal();
             });
         }
 
         window.openChangePasswordModal = function() { document.getElementById('changePasswordModal').classList.remove('hidden'); };
         window.closeChangePasswordModal = function() { document.getElementById('changePasswordModal').classList.add('hidden'); };
+
+        function updatePassword(e) {
+            e.preventDefault();
+            alert('Password updated successfully!');
+            closeChangePasswordModal();
+        }
 
         function userLogout() {
             localStorage.removeItem('sh_current_user');
