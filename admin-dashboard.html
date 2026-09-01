@@ -390,13 +390,13 @@
 
         let hostelsData = [], tiffinsData = [], librariesData = [], cafesData = [], studentsData = [], ownersData = [];
 
-        async function initAllData() {
+async function initAllData() {
             try {
                 const [hRes, tRes, lRes, cRes, pRes] = await Promise.all([
-                    supabaseClient.from('hostels').select('*').order('id', { ascending: true }),
-                    supabaseClient.from('tiffins').select('*').order('id', { ascending: true }),
-                    supabaseClient.from('libraries').select('*').order('id', { ascending: true }),
-                    supabaseClient.from('cafes').select('*').order('id', { ascending: true }),
+                    supabaseClient.from('hostels').select('*'),
+                    supabaseClient.from('tiffins').select('*'),
+                    supabaseClient.from('libraries').select('*'),
+                    supabaseClient.from('cafes').select('*'),
                     supabaseClient.from('profiles').select('*')
                 ]);
 
@@ -427,18 +427,39 @@
             document.getElementById('statCafes').textContent = cafesData.length;
         }
 
-        function renderAllTables() {
-            document.getElementById('studentTableBody').innerHTML = studentsData.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">No students found in Supabase.</td></tr>` : studentsData.map(s => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white">${s.full_name || s.name || 'Student'}</td><td class="p-4 font-mono">${s.phone || '--'}</td><td class="p-4">${s.email || '--'}</td><td class="p-4 text-emerald-400">Active</td></tr>`).join('');
+ function renderAllTables() {
+            document.getElementById('studentTableBody').innerHTML = studentsData.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">No students found.</td></tr>` : studentsData.map(s => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white">${s.full_name || s.name || 'Student'}</td><td class="p-4 font-mono">${s.phone || '--'}</td><td class="p-4">${s.email || '--'}</td><td class="p-4 text-emerald-400">Active</td></tr>`).join('');
             
             document.getElementById('ownerTableBody').innerHTML = ownersData.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400">No owners found.</td></tr>` : ownersData.map(o => `<tr class="border-b border-navy-800"><td class="p-4 font-bold text-white flex items-center gap-2"><i class="fa-solid fa-building text-gold-400"></i> ${o.full_name || o.name || 'Owner'}</td><td class="p-4 font-mono">${o.phone || '--'}</td><td class="p-4">${o.email || '--'}</td><td class="p-4 text-right"><button onclick="deleteSupabaseUser('${o.id}')" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
 
-            document.getElementById('hostelTableBody').innerHTML = hostelsData.map((h, i) => `<tr onclick="openAdminPropertyView('hostels', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${h["Hostel Name (Supplied)"] || h.name}</td><td class="p-4">${h["Category"] || 'PG'}</td><td class="p-4 font-mono">${h["Contact (Verified)"] || h.phone}</td><td class="p-4">${h["Verified / Live Address"] || h.address}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('hostels', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('hostels', ${h.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+            document.getElementById('hostelTableBody').innerHTML = hostelsData.map((h, i) => {
+                const name = h["Hostel Name (Supplied)"] || h["name"] || h["Name"] || 'Hostel';
+                const cat = h["Category"] || h["cat"] || 'PG';
+                const phone = h["Contact (Verified)"] || h["phone"] || h["Contact"] || '--';
+                const addr = h["Verified / Live Address"] || h["address"] || h["Address"] || '--';
+                return `<tr onclick="openAdminPropertyView('hostels', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4">${cat}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('hostels', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('hostels', ${h.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            }).join('');
             
-            document.getElementById('tiffinTableBody').innerHTML = tiffinsData.map((t, i) => `<tr onclick="openAdminPropertyView('tiffins', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${t["Supplied Name"] || t.name}</td><td class="p-4 font-mono">${t["Supplied Phone"] || t.phone}</td><td class="p-4">${t["Verified / Live Address"] || t.address}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('tiffins', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('tiffins', ${t.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+            document.getElementById('tiffinTableBody').innerHTML = tiffinsData.map((t, i) => {
+                const name = t["Supplied Name"] || t["name"] || t["Name"] || 'Tiffin';
+                const phone = t["Supplied Phone"] || t["phone"] || t["Contact"] || '--';
+                const addr = t["Verified / Live Address"] || t["address"] || t["Address"] || '--';
+                return `<tr onclick="openAdminPropertyView('tiffins', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('tiffins', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('tiffins', ${t.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            }).join('');
             
-            document.getElementById('libraryTableBody').innerHTML = librariesData.map((l, i) => `<tr onclick="openAdminPropertyView('libraries', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${l["Supplied Name"] || l.name}</td><td class="p-4 font-mono">${l["Supplied Phone"] || l.phone}</td><td class="p-4">${l["Verified / Live Address"] || l.address}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('libraries', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('libraries', ${l.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+            document.getElementById('libraryTableBody').innerHTML = librariesData.map((l, i) => {
+                const name = l["Supplied Name"] || l["name"] || l["Name"] || 'Library';
+                const phone = l["Supplied Phone"] || l["phone"] || l["Contact"] || '--';
+                const addr = l["Verified / Live Address"] || l["address"] || l["Address"] || '--';
+                return `<tr onclick="openAdminPropertyView('libraries', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('libraries', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('libraries', ${l.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            }).join('');
             
-            document.getElementById('cafeTableBody').innerHTML = cafesData.map((c, i) => `<tr onclick="openAdminPropertyView('cafes', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${c.Name || c.name}</td><td class="p-4 font-mono">${c.Contact || c.phone}</td><td class="p-4">${c["Public/Exact Address"] || c.address}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('cafes', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('cafes', ${c.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+            document.getElementById('cafeTableBody').innerHTML = cafesData.map((c, i) => {
+                const name = c["Name"] || c["name"] || 'Cafe';
+                const phone = c["Contact"] || c["phone"] || '--';
+                const addr = c["Public/Exact Address"] || c["address"] || '--';
+                return `<tr onclick="openAdminPropertyView('cafes', ${i})" class="border-b border-navy-800 cursor-pointer hover:bg-navy-900/80 transition"><td class="p-4 font-mono">#${i+1}</td><td class="p-4 font-bold text-white">${name}</td><td class="p-4 font-mono">${phone}</td><td class="p-4">${addr}</td><td class="p-4 text-right flex justify-end gap-2" onclick="event.stopPropagation()"><button onclick="openAdminEditModal('cafes', ${i})" class="p-2 bg-navy-800 text-gold-300 rounded"><i class="fa-solid fa-pen"></i></button><button onclick="deleteSupabaseItem('cafes', ${c.id})" class="p-2 bg-navy-800 text-red-400 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            }).join('');
         }
 
         // Universal Search Logic
