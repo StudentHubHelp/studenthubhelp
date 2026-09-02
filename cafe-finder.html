@@ -4,202 +4,942 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cafe Finder | StudentHubHelp</title>
-<meta name="description" content="Discover cafes for study breaks, food and student meetups. StudentHubHelp live directory.">
-<link rel="icon" type="image/png" href="logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.tailwindcss.com"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-tailwind.config = {
-  theme: { extend: {
-    colors: {
-      navy: {950:'#040814',900:'#081026',850:'#0D1838',800:'#14224D',700:'#1F316B'},
-      gold: {300:'#F5DE88',400:'#E6C65E',500:'#D4AF37',600:'#B89020'}
-    },
-    fontFamily: {sans:['Inter','sans-serif'],display:['Cinzel','serif']}
-  }}
-};
-</script>
+
 <style>
-.gold-gradient-text{background:linear-gradient(135deg,#FFF7D6,#D4AF37,#B89020);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.gold-gradient-bg{background:linear-gradient(135deg,#D4AF37,#F5DE88,#B89020)}
-.card{border:1px solid rgba(212,175,55,.20);box-shadow:0 8px 30px rgba(0,0,0,.20)}
-.card:hover{border-color:rgba(212,175,55,.60);transform:translateY(-2px)}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+:root{
+  --navy:#071426;
+  --navy2:#0d1f36;
+  --gold:#d6a84f;
+  --gold2:#f2cf7b;
+  --white:#fff;
+  --muted:#91a0b5;
+  --card:#10233b;
+  --border:rgba(255,255,255,.09);
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:
+    radial-gradient(circle at top right,rgba(214,168,79,.12),transparent 30%),
+    linear-gradient(135deg,#06111f,#0b1d32 55%,#071426);
+  color:var(--white);
+  min-height:100vh;
+}
+
+a{
+  color:inherit;
+  text-decoration:none;
+}
+
+/* NAVBAR */
+.navbar{
+  position:sticky;
+  top:0;
+  z-index:100;
+  backdrop-filter:blur(18px);
+  background:rgba(5,15,28,.88);
+  border-bottom:1px solid var(--border);
+}
+
+.nav-inner{
+  max-width:1200px;
+  margin:auto;
+  padding:16px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.logo{
+  font-size:21px;
+  font-weight:800;
+  color:var(--gold2);
+  white-space:nowrap;
+}
+
+.logo span{
+  color:#fff;
+}
+
+.nav-links{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.nav-links a{
+  padding:9px 13px;
+  border-radius:10px;
+  color:#cbd5e1;
+  font-size:14px;
+  transition:.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active{
+  background:rgba(214,168,79,.14);
+  color:var(--gold2);
+}
+
+/* HERO */
+.hero{
+  max-width:1200px;
+  margin:auto;
+  padding:65px 20px 35px;
+}
+
+.badge{
+  display:inline-flex;
+  padding:8px 13px;
+  border:1px solid rgba(214,168,79,.3);
+  border-radius:999px;
+  background:rgba(214,168,79,.08);
+  color:var(--gold2);
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:18px;
+}
+
+.hero h1{
+  font-size:clamp(36px,6vw,64px);
+  line-height:1.05;
+  margin-bottom:15px;
+}
+
+.hero h1 span{
+  color:var(--gold2);
+}
+
+.hero p{
+  max-width:700px;
+  color:var(--muted);
+  line-height:1.7;
+  font-size:16px;
+}
+
+/* SEARCH */
+.search-wrap{
+  max-width:1200px;
+  margin:0 auto 25px;
+  padding:0 20px;
+}
+
+.search-box{
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:14px;
+  display:flex;
+  gap:12px;
+  box-shadow:0 15px 50px rgba(0,0,0,.18);
+}
+
+.search-box input{
+  flex:1;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#fff;
+  font-size:16px;
+  padding:12px;
+}
+
+.search-box input::placeholder{
+  color:#74849b;
+}
+
+.search-btn{
+  border:0;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#071426;
+  font-weight:800;
+  padding:0 22px;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+/* STATUS */
+.status{
+  max-width:1200px;
+  margin:auto;
+  padding:0 20px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
+}
+
+.count{
+  color:#cbd5e1;
+  font-size:14px;
+}
+
+.live{
+  color:#78e08f;
+  font-size:13px;
+  font-weight:700;
+}
+
+/* GRID */
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:0 20px 70px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:22px;
+}
+
+/* CARD */
+.card{
+  overflow:hidden;
+  border-radius:20px;
+  background:linear-gradient(145deg,rgba(16,35,59,.98),rgba(9,25,43,.98));
+  border:1px solid var(--border);
+  box-shadow:0 18px 45px rgba(0,0,0,.24);
+  transition:.25s;
+}
+
+.card:hover{
+  transform:translateY(-5px);
+  border-color:rgba(214,168,79,.35);
+  box-shadow:0 25px 60px rgba(0,0,0,.34);
+}
+
+.card-top{
+  height:155px;
+  position:relative;
+  overflow:hidden;
+  background:
+    linear-gradient(135deg,rgba(214,168,79,.2),rgba(7,20,38,.8)),
+    radial-gradient(circle at 80% 20%,rgba(255,205,100,.25),transparent 35%);
+}
+
+.cafe-icon{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:65px;
+}
+
+.category{
+  position:absolute;
+  top:14px;
+  left:14px;
+  padding:7px 11px;
+  background:rgba(5,15,28,.8);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;
+  font-size:12px;
+  color:var(--gold2);
+  font-weight:700;
+}
+
+.card-body{
+  padding:20px;
+}
+
+.card-title{
+  font-size:20px;
+  font-weight:800;
+  margin-bottom:9px;
+}
+
+.area{
+  color:var(--gold2);
+  font-size:13px;
+  margin-bottom:13px;
+}
+
+.info{
+  display:flex;
+  gap:8px;
+  color:#aab8ca;
+  font-size:13px;
+  margin:9px 0;
+  line-height:1.5;
+}
+
+.rating{
+  color:#ffd36a;
+  font-weight:800;
+}
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:17px;
+}
+
+.btn{
+  border:0;
+  padding:11px 10px;
+  border-radius:11px;
+  cursor:pointer;
+  font-weight:700;
+  font-size:13px;
+  text-align:center;
+}
+
+.btn-main{
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#071426;
+}
+
+.btn-dark{
+  background:rgba(255,255,255,.06);
+  color:#e5e7eb;
+  border:1px solid var(--border);
+}
+
+/* EMPTY / LOADING */
+.message{
+  grid-column:1/-1;
+  padding:50px 20px;
+  text-align:center;
+  border:1px dashed rgba(255,255,255,.13);
+  border-radius:18px;
+  color:var(--muted);
+}
+
+.loader{
+  width:38px;
+  height:38px;
+  margin:0 auto 15px;
+  border:3px solid rgba(255,255,255,.12);
+  border-top-color:var(--gold2);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+/* MODAL */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:500;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(8px);
+  padding:20px;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  width:min(620px,100%);
+  max-height:90vh;
+  overflow:auto;
+  background:#0b1d32;
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:25px;
+  box-shadow:0 30px 90px rgba(0,0,0,.5);
+  position:relative;
+}
+
+.close{
+  position:absolute;
+  right:18px;
+  top:15px;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  cursor:pointer;
+  font-size:20px;
+}
+
+.modal h2{
+  padding-right:45px;
+  color:var(--gold2);
+  margin-bottom:7px;
+}
+
+.modal-area{
+  color:#9eacc0;
+  margin-bottom:22px;
+}
+
+.detail{
+  padding:14px 0;
+  border-bottom:1px solid var(--border);
+}
+
+.detail b{
+  display:block;
+  color:#fff;
+  margin-bottom:6px;
+}
+
+.detail span{
+  color:#aebdce;
+  line-height:1.6;
+}
+
+.modal-actions{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:20px;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+  .grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:650px){
+  .nav-inner{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .nav-links{
+    width:100%;
+    overflow-x:auto;
+    justify-content:flex-start;
+    flex-wrap:nowrap;
+    padding-bottom:3px;
+  }
+
+  .hero{
+    padding-top:42px;
+  }
+
+  .search-box{
+    flex-direction:column;
+  }
+
+  .search-btn{
+    height:45px;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .modal-actions{
+    grid-template-columns:1fr;
+  }
+}
 </style>
 </head>
-<body class="bg-navy-950 text-slate-100 font-sans min-h-screen">
 
-<nav class="sticky top-0 z-40 bg-navy-900/95 backdrop-blur border-b border-gold-500/20">
-<div class="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
-<a href="./" class="flex items-center gap-3 min-w-0">
-<img src="logo.png" class="w-10 h-10 rounded-xl object-cover border border-gold-500/40" onerror="this.style.display='none'">
-<div><div class="text-lg font-display font-bold gold-gradient-text">StudentHubHelp</div>
-<div class="text-[10px] text-slate-400 uppercase tracking-wider">India Student Platform</div></div>
-</a>
-<div class="hidden md:flex items-center gap-5 text-xs font-bold">
-<a href="./" class="hover:text-gold-300">Home</a>
-<a href="pg-finder.html" class="hover:text-gold-300">Hostel / PG</a>
-<a href="tiffin-finder.html" class="hover:text-gold-300">Tiffin</a>
-<a href="library-finder.html" class="hover:text-gold-300">Library</a>
-<a href="cafe-finder.html" class="hover:text-gold-300">Cafe</a>
-</div>
-<a href="auth.html" class="px-3.5 py-2 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold whitespace-nowrap"><i class="fa-solid fa-user mr-1"></i> Login</a>
-</div>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">
+      StudentHub<span>Help</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="pg-finder.html">Hostel / PG</a>
+      <a href="tiffin-finder.html">Tiffin / Mess</a>
+      <a href="library-finder.html">Library</a>
+      <a href="cafe-finder.html" class="active">Cafe</a>
+    </div>
+  </div>
 </nav>
 
-<header class="relative overflow-hidden border-b border-navy-800 bg-gradient-to-b from-navy-900 to-navy-950">
-<div class="absolute inset-0 opacity-10 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:18px_18px]"></div>
-<div class="relative max-w-5xl mx-auto px-4 py-14 sm:py-20 text-center">
-<span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold-500/30 bg-gold-500/10 text-gold-300 text-[10px] font-bold uppercase tracking-widest">
-<i class="fa-solid fa-mug-hot"></i> CAFE
-</span>
-<h1 class="mt-5 text-3xl sm:text-5xl font-display font-extrabold text-white">Verified Student Cafes<br><span class="gold-gradient-text">Across India</span></h1>
-<p class="mt-4 text-sm text-slate-400 max-w-2xl mx-auto">Discover cafes for study breaks, food and student meetups.</p>
-<div class="mt-7 max-w-3xl mx-auto relative">
-<i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gold-500"></i>
-<input id="searchInput" type="search" placeholder="Search name, city, district, area, address, phone, timing or facilities..." class="w-full bg-navy-900 border border-gold-500/30 rounded-2xl pl-11 pr-4 py-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 shadow-2xl">
-</div>
-<div id="locationLabel" class="mt-3 text-xs text-gold-300 hidden"></div>
-</div>
-</header>
+<section class="hero">
+  <div class="badge">☕ LIVE CAFE DISCOVERY</div>
 
-<main class="max-w-7xl mx-auto px-4 sm:px-8 py-10">
-<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-<div><h2 class="text-lg font-bold text-white"><i class="fa-solid fa-mug-hot text-gold-400 mr-2"></i>Live Listings</h2>
-<p class="text-xs text-slate-500 mt-1">Live data from Supabase. No created_at dependency.</p></div>
-<div id="countBadge" class="px-3 py-1.5 rounded-xl bg-navy-900 border border-gold-500/30 text-gold-300 text-xs font-bold">0 listings</div>
+  <h1>
+    Find the Best
+    <span>Cafes</span>
+    Near You
+  </h1>
+
+  <p>
+    Search student-friendly cafes by city, district, area or locality.
+    Listings are loaded directly from the live StudentHubHelp database.
+  </p>
+</section>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <input
+      id="searchInput"
+      type="text"
+      placeholder="Search cafe, city, district, area or address..."
+      autocomplete="off"
+    >
+
+    <button class="search-btn" onclick="filterCafes()">
+      🔍 Search
+    </button>
+  </div>
 </div>
-<div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-<div class="col-span-full py-16 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-3xl text-gold-500"></i><p class="mt-3 text-sm">Loading live listings...</p></div>
+
+<div class="status">
+  <div class="count" id="countText">
+    Loading cafes...
+  </div>
+
+  <div class="live">
+    ● LIVE DATABASE
+  </div>
 </div>
+
+<main class="container">
+  <div id="cafeGrid" class="grid">
+    <div class="message">
+      <div class="loader"></div>
+      Loading live cafes...
+    </div>
+  </div>
 </main>
 
-<div id="modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm p-3 sm:p-6 items-center justify-center">
-<div class="bg-navy-900 border border-gold-500/30 rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-hidden shadow-2xl">
-<div class="relative h-48 sm:h-56">
-<img id="mImage" src="cafe-banner.png" class="w-full h-full object-cover">
-<div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
-<button onclick="closeModal()" class="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/60 text-white border border-white/10"><i class="fa-solid fa-xmark"></i></button>
-<div class="absolute bottom-4 left-5 right-14"><div id="mBadge" class="inline-block text-[10px] font-bold px-2 py-1 rounded bg-gold-500/20 text-gold-300 border border-gold-500/30"></div>
-<h2 id="mName" class="text-2xl font-bold text-white mt-1"></h2><p id="mArea" class="text-xs text-slate-300 mt-1"></p></div>
-</div>
-<div class="p-5 sm:p-6 overflow-y-auto max-h-[55vh] space-y-4">
-<div class="grid grid-cols-2 gap-3">
-<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase">Rating</div><div id="mRating" class="text-lg font-bold text-gold-300 mt-1"></div></div>
-<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase">Timing</div><div id="mTiming" class="text-sm font-semibold text-white mt-1"></div></div>
-</div>
-<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase mb-1">Full Address</div><div id="mAddress" class="text-sm text-slate-200"></div></div>
-<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase mb-1">Facilities</div><div id="mFacilities" class="text-sm text-slate-200 whitespace-pre-line"></div></div>
-<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase mb-1">Student Review</div><div id="mReview" class="text-sm text-slate-200 whitespace-pre-line"></div></div>
-</div>
-<div class="p-4 border-t border-navy-800 flex gap-3">
-<a id="mCall" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 text-center text-xs font-bold" href="#"><i class="fa-solid fa-phone mr-1"></i> Call Cafe</a>
-<a id="mWhatsApp" target="_blank" class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-center text-xs font-bold" href="#"><i class="fa-brands fa-whatsapp mr-1"></i> WhatsApp Cafe</a>
-<a id="mMap" target="_blank" class="hidden sm:block flex-1 py-3 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 text-center text-xs font-bold" href="#"><i class="fa-solid fa-map-location-dot mr-1"></i> Maps</a>
-</div>
-</div></div>
+<!-- MODAL -->
+<div class="modal" id="detailModal" onclick="closeOutside(event)">
+  <div class="modal-box">
 
-<footer class="border-t border-navy-800 bg-navy-900 py-8 text-center">
-<div class="flex justify-center flex-wrap gap-4 text-xs mb-3">
-<a href="pg-finder.html" class="text-slate-400 hover:text-gold-300">Hostel</a><a href="tiffin-finder.html" class="text-slate-400 hover:text-gold-300">Tiffin</a><a href="library-finder.html" class="text-slate-400 hover:text-gold-300">Library</a><a href="cafe-finder.html" class="text-slate-400 hover:text-gold-300">Cafe</a>
+    <button class="close" onclick="closeModal()">×</button>
+
+    <h2 id="modalName">Cafe</h2>
+
+    <div class="modal-area" id="modalArea"></div>
+
+    <div class="detail">
+      <b>⭐ Rating</b>
+      <span id="modalRating">Not available</span>
+    </div>
+
+    <div class="detail">
+      <b>📍 Address</b>
+      <span id="modalAddress">Not available</span>
+    </div>
+
+    <div class="detail">
+      <b>📞 Phone</b>
+      <span id="modalPhone">Not available</span>
+    </div>
+
+    <div class="detail">
+      <b>🕐 Timing</b>
+      <span id="modalTiming">Not available</span>
+    </div>
+
+    <div class="detail">
+      <b>✨ Facilities</b>
+      <span id="modalFacilities">Not available</span>
+    </div>
+
+    <div class="modal-actions">
+      <a id="callBtn" class="btn btn-main">📞 Call</a>
+      <a id="whatsappBtn" class="btn btn-dark" target="_blank">💬 WhatsApp</a>
+      <a id="mapBtn" class="btn btn-dark" target="_blank">📍 Maps</a>
+    </div>
+
+  </div>
 </div>
-<p class="text-[11px] text-slate-500">© 2026 StudentHubHelp • Live Supabase Directory</p>
-</footer>
 
 <script>
 const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const CONFIG = {table:"cafes", banner:"cafe-banner.png", badge:"CAFE"};
-let records=[], filteredRecords=[], active=null;
 
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-const text=(v,f="Not provided")=>String(v??"").trim()||f;
-const phone=v=>String(v??"").replace(/[^0-9+]/g,"");
-const digits=v=>String(v??"").replace(/\D/g,"").slice(-10);
-const mapUrl=a=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a||"");
+const SUPABASE_ANON_KEY =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCVJxJwjocFUeLB1yMA";
 
-function locationParam(){
- const p=new URLSearchParams(location.search);
- return (p.get("location")||p.get("area")||p.get("q")||"").trim();
-}
-function matches(r,q){
- if(!q)return true;
- const hay=[r.name,r.category,r.area,r.address,r.phone,r.timing,r.facilities,r.rating,r.review].map(v=>String(v??"").toLowerCase()).join(" ");
- return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w));
-}
-function render(list){
- filteredRecords=list;
- document.getElementById("countBadge").textContent=list.length+" listing"+(list.length===1?"":"s");
- const g=document.getElementById("grid");
- if(!list.length){
-  g.innerHTML='<div class="col-span-full py-16 text-center bg-navy-900 border border-navy-800 rounded-3xl"><i class="fa-solid fa-magnifying-glass text-3xl text-gold-500"></i><h3 class="mt-3 font-bold text-white">No listings found</h3><p class="mt-1 text-xs text-slate-500">Try another city, district, area or property name.</p></div>';
-  return;
- }
- g.innerHTML=list.map((r,i)=>`
- <article class="card bg-navy-900 rounded-3xl overflow-hidden transition duration-200 cursor-pointer" onclick="openModal(${i})">
-  <div class="relative h-44 bg-navy-950">
-   <img src="${CONFIG.banner}" loading="lazy" class="w-full h-full object-cover" alt="${esc(r.name||CONFIG.badge)}">
-   <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
-   <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-navy-950/85 border border-gold-500/30 text-[10px] font-bold text-gold-300">${esc(text(r.area,"Area not provided"))}</span>
-   <span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-navy-950/85 border border-gold-500/30 text-[11px] font-bold text-gold-300"><i class="fa-solid fa-star mr-1"></i>${esc(text(r.rating,"Not rated"))}</span>
-  </div>
-  <div class="p-5 space-y-3">
-   <div><h3 class="text-base font-bold text-white leading-snug">${esc(text(r.name,"Unnamed Listing"))}</h3><p class="text-[11px] text-gold-300 mt-1">${esc(text(r.category,CONFIG.badge))}</p></div>
-   <p class="text-xs text-slate-300 flex gap-2"><i class="fa-solid fa-location-dot text-gold-500 mt-0.5"></i><span>${esc(text(r.address,"Address not provided"))}</span></p>
-   <div class="bg-navy-850 border border-navy-700 rounded-xl p-3 text-xs"><span class="text-slate-500">Timing:</span><span class="text-slate-200 font-semibold ml-1">${esc(text(r.timing))}</span></div>
-   <button class="w-full py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold">View Details <i class="fa-solid fa-arrow-right ml-1"></i></button>
-  </div>
- </article>`).join("");
-}
-function applySearch(){render(records.filter(r=>matches(r,document.getElementById("searchInput").value.trim())));}
-function openModal(i){
- active=filteredRecords[i]; if(!active)return;
- const name=text(active.name,"Unnamed Listing"), area=text(active.area,"Area not provided"), address=text(active.address,area), p=phone(active.phone), d=digits(active.phone);
- document.getElementById("mImage").src=CONFIG.banner;
- document.getElementById("mBadge").textContent=text(active.category,CONFIG.badge);
- document.getElementById("mName").textContent=name;
- document.getElementById("mArea").textContent="📍 "+area;
- document.getElementById("mRating").textContent="⭐ "+text(active.rating,"Not rated");
- document.getElementById("mTiming").textContent=text(active.timing);
- document.getElementById("mAddress").textContent=address;
- document.getElementById("mFacilities").textContent=text(active.facilities);
- document.getElementById("mReview").textContent=text(active.review);
- document.getElementById("mCall").href=p?"tel:"+p:"#";
- document.getElementById("mWhatsApp").href=d?"https://wa.me/91"+d+"?text="+encodeURIComponent("Hi, I found "+name+" on StudentHubHelp. Please share details."):"#";
- document.getElementById("mMap").href=mapUrl(address);
- document.getElementById("modal").classList.remove("hidden"); document.getElementById("modal").classList.add("flex");
-}
-function closeModal(){document.getElementById("modal").classList.add("hidden");document.getElementById("modal").classList.remove("flex");active=null;}
+const { createClient } = supabase;
 
-async function loadRecords(){
- const g=document.getElementById("grid");
- try{
-  const {data,error}=await db.from(CONFIG.table).select("id,name,category,area,address,phone,timing,facilities,rating,review");
-  if(error)throw error;
-  records=Array.isArray(data)?data:[];
-  const loc=locationParam();
-  if(loc){
-   document.getElementById("searchInput").value=loc;
-   document.getElementById("locationLabel").textContent="Showing results for: "+loc;
-   document.getElementById("locationLabel").classList.remove("hidden");
-   render(records.filter(r=>matches(r,loc)));
-  }else render(records);
- }catch(err){
-  console.error("Supabase load error:",err);
-  g.innerHTML='<div class="col-span-full py-14 text-center bg-navy-900 border border-red-500/20 rounded-3xl"><i class="fa-solid fa-triangle-exclamation text-3xl text-red-400"></i><h3 class="mt-3 font-bold text-white">Unable to load live listings</h3><p class="mt-1 text-xs text-slate-400">'+esc(err.message||"Supabase request failed.")+'</p><button onclick="loadRecords()" class="mt-4 px-4 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 text-xs font-bold">Retry</button></div>';
- }
+const db = createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+let cafes = [];
+let filteredCafes = [];
+
+
+/* LOAD LIVE CAFES */
+async function loadCafes(){
+
+  const grid = document.getElementById("cafeGrid");
+
+  grid.innerHTML = `
+    <div class="message">
+      <div class="loader"></div>
+      Loading live cafes...
+    </div>
+  `;
+
+  const { data, error } = await db
+    .from("cafes")
+    .select(`
+      id,
+      name,
+      category,
+      area,
+      address,
+      phone,
+      timing,
+      facilities,
+      rating
+    `);
+
+  if(error){
+
+    console.error("Cafe loading error:", error);
+
+    grid.innerHTML = `
+      <div class="message">
+        <h3 style="color:#ffb4b4;margin-bottom:10px;">
+          Unable to load live cafes.
+        </h3>
+
+        <p>
+          ${escapeHtml(error.message || "Database error")}
+        </p>
+      </div>
+    `;
+
+    document.getElementById("countText").textContent =
+      "Unable to load cafes";
+
+    return;
+  }
+
+  cafes = Array.isArray(data) ? data : [];
+  filteredCafes = [...cafes];
+
+  renderCafes();
 }
-function subscribeRealtime(){
- db.channel("studenthub-"+CONFIG.table+"-live").on("postgres_changes",{event:"*",schema:"public",table:CONFIG.table},()=>loadRecords()).subscribe();
+
+
+/* RENDER */
+function renderCafes(){
+
+  const grid = document.getElementById("cafeGrid");
+
+  document.getElementById("countText").textContent =
+    `${filteredCafes.length} cafe${filteredCafes.length === 1 ? "" : "s"} found`;
+
+  if(!filteredCafes.length){
+
+    grid.innerHTML = `
+      <div class="message">
+        <div style="font-size:42px;margin-bottom:12px;">☕</div>
+
+        <h3 style="color:#fff;margin-bottom:8px;">
+          No cafes found
+        </h3>
+
+        <p>
+          Try another city, district, area or cafe name.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+  grid.innerHTML = filteredCafes.map(cafe => {
+
+    const phone = cleanPhone(cafe.phone);
+
+    return `
+      <article class="card">
+
+        <div class="card-top">
+          <div class="cafe-icon">☕</div>
+
+          <div class="category">
+            ${escapeHtml(cafe.category || "Cafe")}
+          </div>
+        </div>
+
+        <div class="card-body">
+
+          <div class="card-title">
+            ${escapeHtml(cafe.name || "Unnamed Cafe")}
+          </div>
+
+          <div class="area">
+            📍 ${escapeHtml(cafe.area || "Area not available")}
+          </div>
+
+          <div class="info">
+            ⭐
+            <span class="rating">
+              ${formatRating(cafe.rating)}
+            </span>
+          </div>
+
+          <div class="info">
+            🕐
+            <span>
+              ${escapeHtml(cafe.timing || "Timing not available")}
+            </span>
+          </div>
+
+          <div class="info">
+            📍
+            <span>
+              ${escapeHtml(cafe.address || "Address not available")}
+            </span>
+          </div>
+
+          <div class="actions">
+
+            <button
+              class="btn btn-main"
+              onclick="openDetails(${JSON.stringify(cafe).replace(/"/g,'&quot;')})">
+              View Details
+            </button>
+
+            ${
+              phone
+              ? `<a class="btn btn-dark" href="tel:${phone}">
+                   📞 Call
+                 </a>`
+              : `<button class="btn btn-dark" disabled>
+                   📞 Call
+                 </button>`
+            }
+
+          </div>
+
+        </div>
+      </article>
+    `;
+
+  }).join("");
 }
-document.getElementById("searchInput").addEventListener("input",applySearch);
-document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
-window.addEventListener("DOMContentLoaded",()=>{loadRecords();subscribeRealtime();});
+
+
+/* SEARCH */
+function filterCafes(){
+
+  const query =
+    document.getElementById("searchInput")
+      .value
+      .trim()
+      .toLowerCase();
+
+  if(!query){
+    filteredCafes = [...cafes];
+    renderCafes();
+    return;
+  }
+
+  filteredCafes = cafes.filter(cafe => {
+
+    const searchable = [
+      cafe.name,
+      cafe.category,
+      cafe.area,
+      cafe.address,
+      cafe.phone,
+      cafe.timing,
+      cafe.facilities
+    ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+    return searchable.includes(query);
+  });
+
+  renderCafes();
+}
+
+
+/* LIVE SEARCH */
+document
+  .getElementById("searchInput")
+  .addEventListener("input", filterCafes);
+
+
+/* DETAILS */
+function openDetails(cafe){
+
+  document.getElementById("modalName").textContent =
+    cafe.name || "Cafe";
+
+  document.getElementById("modalArea").textContent =
+    "📍 " + (cafe.area || "Area not available");
+
+  document.getElementById("modalRating").textContent =
+    formatRating(cafe.rating);
+
+  document.getElementById("modalAddress").textContent =
+    cafe.address || "Address not available";
+
+  document.getElementById("modalPhone").textContent =
+    cafe.phone || "Phone not available";
+
+  document.getElementById("modalTiming").textContent =
+    cafe.timing || "Timing not available";
+
+  document.getElementById("modalFacilities").textContent =
+    cafe.facilities || "Facilities not available";
+
+  const phone = cleanPhone(cafe.phone);
+
+  const callBtn =
+    document.getElementById("callBtn");
+
+  const whatsappBtn =
+    document.getElementById("whatsappBtn");
+
+  const mapBtn =
+    document.getElementById("mapBtn");
+
+  if(phone){
+
+    callBtn.href = "tel:" + phone;
+
+    whatsappBtn.href =
+      "https://wa.me/" +
+      phone.replace(/^0/,"");
+
+    callBtn.style.opacity = "1";
+    whatsappBtn.style.opacity = "1";
+
+  }else{
+
+    callBtn.removeAttribute("href");
+    whatsappBtn.removeAttribute("href");
+
+    callBtn.style.opacity = ".5";
+    whatsappBtn.style.opacity = ".5";
+  }
+
+  const mapQuery = [
+    cafe.name,
+    cafe.address,
+    cafe.area
+  ]
+  .filter(Boolean)
+  .join(", ");
+
+  mapBtn.href =
+    "https://www.google.com/maps/search/?api=1&query=" +
+    encodeURIComponent(mapQuery);
+
+  document
+    .getElementById("detailModal")
+    .classList.add("show");
+}
+
+
+/* CLOSE MODAL */
+function closeModal(){
+
+  document
+    .getElementById("detailModal")
+    .classList.remove("show");
+}
+
+function closeOutside(event){
+
+  if(event.target.id === "detailModal"){
+    closeModal();
+  }
+}
+
+document.addEventListener("keydown", event => {
+
+  if(event.key === "Escape"){
+    closeModal();
+  }
+
+});
+
+
+/* REALTIME */
+db
+  .channel("cafes-live")
+  .on(
+    "postgres_changes",
+    {
+      event:"*",
+      schema:"public",
+      table:"cafes"
+    },
+    () => {
+      loadCafes();
+    }
+  )
+  .subscribe();
+
+
+/* HELPERS */
+function cleanPhone(phone){
+
+  if(!phone) return "";
+
+  return String(phone)
+    .replace(/[^\d+]/g,"");
+}
+
+
+function formatRating(rating){
+
+  if(
+    rating === null ||
+    rating === undefined ||
+    rating === ""
+  ){
+    return "Rating not available";
+  }
+
+  const number = Number(rating);
+
+  if(Number.isNaN(number)){
+    return String(rating);
+  }
+
+  return `⭐ ${number.toFixed(1)} / 5`;
+}
+
+
+function escapeHtml(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+/* START */
+loadCafes();
+
 </script>
+
 </body>
 </html>
