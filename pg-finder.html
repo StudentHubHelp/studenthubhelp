@@ -1,1102 +1,205 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Best Hostels & PGs in India | StudentHubHelp</title>
-<meta name="description" content="Find hostels and PGs across India for students. Search by city, district, area, address and facilities with direct contact details.">
-
+<title>Hostel & PG Finder | StudentHubHelp</title>
+<meta name="description" content="Find student-friendly hostels and PGs by city, district, area or address. StudentHubHelp live directory.">
 <link rel="icon" type="image/png" href="logo.png">
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.tailwindcss.com"></script>
-
-<!-- FIXED SUPABASE CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<link rel="stylesheet" href="css/premium.css">
-
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      navy: {950:'#040814',900:'#081026',850:'#0D1838',800:'#14224D',700:'#1F316B'},
+      gold: {300:'#F5DE88',400:'#E6C65E',500:'#D4AF37',600:'#B89020'}
+    },
+    fontFamily: {sans:['Inter','sans-serif'],display:['Cinzel','serif']}
+  }}
+};
+</script>
 <style>
-body{
-    background:#040814;
-    color:#fff;
-}
-
-.gold-gradient-bg{
-    background:linear-gradient(135deg,#D4AF37,#F5DE88,#B89020);
-}
-
-.gold-border{
-    border:1px solid rgba(212,175,55,.28);
-}
-
-.gold-border:hover{
-    border-color:rgba(212,175,55,.75);
-    box-shadow:0 0 28px rgba(212,175,55,.12);
-}
-
-.nav-scroll{
-    scrollbar-width:none;
-}
-.nav-scroll::-webkit-scrollbar{
-    display:none;
-}
-
-.search-glow:focus{
-    border-color:#D4AF37;
-    box-shadow:0 0 0 3px rgba(212,175,55,.10);
-}
-
-.card-img{
-    transition:transform .45s ease;
-}
-
-.property-card:hover .card-img{
-    transform:scale(1.06);
-}
+.gold-gradient-text{background:linear-gradient(135deg,#FFF7D6,#D4AF37,#B89020);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gold-gradient-bg{background:linear-gradient(135deg,#D4AF37,#F5DE88,#B89020)}
+.card{border:1px solid rgba(212,175,55,.20);box-shadow:0 8px 30px rgba(0,0,0,.20)}
+.card:hover{border-color:rgba(212,175,55,.60);transform:translateY(-2px)}
 </style>
 </head>
+<body class="bg-navy-950 text-slate-100 font-sans min-h-screen">
 
-<body class="min-h-screen flex flex-col">
+<nav class="sticky top-0 z-40 bg-navy-900/95 backdrop-blur border-b border-gold-500/20">
+<div class="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
+<a href="./" class="flex items-center gap-3 min-w-0">
+<img src="logo.png" class="w-10 h-10 rounded-xl object-cover border border-gold-500/40" onerror="this.style.display='none'">
+<div><div class="text-lg font-display font-bold gold-gradient-text">StudentHubHelp</div>
+<div class="text-[10px] text-slate-400 uppercase tracking-wider">India Student Platform</div></div>
+</a>
+<div class="hidden md:flex items-center gap-5 text-xs font-bold">
+<a href="./" class="hover:text-gold-300">Home</a>
+<a href="pg-finder.html" class="hover:text-gold-300">Hostel / PG</a>
+<a href="tiffin-finder.html" class="hover:text-gold-300">Tiffin</a>
+<a href="library-finder.html" class="hover:text-gold-300">Library</a>
+<a href="cafe-finder.html" class="hover:text-gold-300">Cafe</a>
+</div>
+<a href="auth.html" class="px-3.5 py-2 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold whitespace-nowrap"><i class="fa-solid fa-user mr-1"></i> Login</a>
+</div>
+</nav>
 
-<!-- ================= HEADER ================= -->
-
-<header class="sticky top-0 z-40 bg-[#040814]/95 backdrop-blur-xl border-b border-white/10">
-
-    <div class="max-w-7xl mx-auto px-4">
-
-        <!-- TOP BAR -->
-
-        <div class="h-16 flex items-center justify-between gap-4">
-
-            <a href="index.html"
-               class="flex items-center gap-3 shrink-0">
-
-                <img src="logo.png"
-                     class="w-9 h-9 rounded-xl object-cover"
-                     onerror="this.style.display='none'">
-
-                <div>
-                    <div class="font-bold text-white text-sm sm:text-base">
-                        StudentHubHelp
-                    </div>
-
-                    <div class="text-[9px] text-slate-400 uppercase tracking-widest">
-                        India Student Network
-                    </div>
-                </div>
-
-            </a>
-
-            <!-- DESKTOP NAV -->
-
-            <nav class="hidden md:flex items-center gap-1">
-
-                <a href="index.html"
-                   class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5">
-                    <i class="fa-solid fa-house mr-1"></i>
-                    Home
-                </a>
-
-                <a href="pg-finder.html"
-                   class="px-3 py-2 rounded-xl text-xs font-bold bg-yellow-500/15 text-yellow-300 border border-yellow-500/20">
-                    <i class="fa-solid fa-hotel mr-1"></i>
-                    Hostel / PG
-                </a>
-
-                <a href="tiffin-finder.html"
-                   class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5">
-                    <i class="fa-solid fa-utensils mr-1"></i>
-                    Tiffin / Mess
-                </a>
-
-                <a href="library-finder.html"
-                   class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5">
-                    <i class="fa-solid fa-book mr-1"></i>
-                    Library
-                </a>
-
-                <a href="cafe-finder.html"
-                   class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5">
-                    <i class="fa-solid fa-mug-hot mr-1"></i>
-                    Cafe
-                </a>
-
-            </nav>
-
-            <a href="auth.html"
-               class="hidden sm:inline-flex px-4 py-2 rounded-xl border border-yellow-500/30 text-yellow-300 text-xs font-bold hover:bg-yellow-500/10">
-                Login
-            </a>
-
-        </div>
-
-        <!-- MOBILE NAV -->
-
-        <div class="md:hidden overflow-x-auto nav-scroll pb-3">
-
-            <div class="flex gap-2 min-w-max">
-
-                <a href="index.html"
-                   class="px-3 py-2 rounded-xl bg-white/5 text-slate-300 text-[11px] font-bold">
-                    <i class="fa-solid fa-house mr-1"></i>
-                    Home
-                </a>
-
-                <a href="pg-finder.html"
-                   class="px-3 py-2 rounded-xl bg-yellow-500/15 text-yellow-300 border border-yellow-500/20 text-[11px] font-bold">
-                    <i class="fa-solid fa-hotel mr-1"></i>
-                    Hostel / PG
-                </a>
-
-                <a href="tiffin-finder.html"
-                   class="px-3 py-2 rounded-xl bg-white/5 text-slate-300 text-[11px] font-bold">
-                    <i class="fa-solid fa-utensils mr-1"></i>
-                    Tiffin
-                </a>
-
-                <a href="library-finder.html"
-                   class="px-3 py-2 rounded-xl bg-white/5 text-slate-300 text-[11px] font-bold">
-                    <i class="fa-solid fa-book mr-1"></i>
-                    Library
-                </a>
-
-                <a href="cafe-finder.html"
-                   class="px-3 py-2 rounded-xl bg-white/5 text-slate-300 text-[11px] font-bold">
-                    <i class="fa-solid fa-mug-hot mr-1"></i>
-                    Cafe
-                </a>
-
-            </div>
-
-        </div>
-
-    </div>
+<header class="relative overflow-hidden border-b border-navy-800 bg-gradient-to-b from-navy-900 to-navy-950">
+<div class="absolute inset-0 opacity-10 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:18px_18px]"></div>
+<div class="relative max-w-5xl mx-auto px-4 py-14 sm:py-20 text-center">
+<span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold-500/30 bg-gold-500/10 text-gold-300 text-[10px] font-bold uppercase tracking-widest">
+<i class="fa-solid fa-hotel"></i> HOSTEL / PG
+</span>
+<h1 class="mt-5 text-3xl sm:text-5xl font-display font-extrabold text-white">Verified Hostels & PGs<br><span class="gold-gradient-text">Across India</span></h1>
+<p class="mt-4 text-sm text-slate-400 max-w-2xl mx-auto">Find student-friendly hostels and PGs by city, district, area or address.</p>
+<div class="mt-7 max-w-3xl mx-auto relative">
+<i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gold-500"></i>
+<input id="searchInput" type="search" placeholder="Search name, city, district, area, address, phone, timing or facilities..." class="w-full bg-navy-900 border border-gold-500/30 rounded-2xl pl-11 pr-4 py-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-gold-500 shadow-2xl">
+</div>
+<div id="locationLabel" class="mt-3 text-xs text-gold-300 hidden"></div>
+</div>
 </header>
 
-
-<!-- ================= HERO ================= -->
-
-<section class="border-b border-white/10 bg-gradient-to-b from-[#081026] to-[#040814]">
-
-    <div class="max-w-5xl mx-auto px-4 py-12 sm:py-16 text-center">
-
-        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full
-                     bg-yellow-500/10 border border-yellow-500/25
-                     text-yellow-300 text-[10px] font-bold uppercase tracking-wider">
-
-            <i class="fa-solid fa-location-dot"></i>
-            India Wide Student Accommodation
-
-        </span>
-
-        <h1 class="mt-5 text-3xl sm:text-5xl font-black tracking-tight">
-            Find the Best
-            <span class="text-yellow-400">Hostels & PGs</span>
-            in India
-        </h1>
-
-        <p class="mt-4 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
-            Search hostels and PGs by city, district, area, address or facilities.
-            Find live listings directly from StudentHubHelp.
-        </p>
-
-
-        <!-- SEARCH -->
-
-        <div class="mt-8 max-w-3xl mx-auto">
-
-            <div class="relative">
-
-                <i class="fa-solid fa-magnifying-glass
-                          absolute left-5 top-1/2 -translate-y-1/2
-                          text-yellow-400"></i>
-
-                <input
-                    id="hostelSearchInput"
-                    type="search"
-                    autocomplete="off"
-                    placeholder="Search city, district, area, hostel name, address or facilities..."
-                    class="search-glow w-full h-14
-                           bg-[#0D1838]
-                           border border-[#26345F]
-                           rounded-2xl
-                           pl-14 pr-5
-                           text-sm text-white
-                           placeholder-slate-500
-                           outline-none transition">
-
-            </div>
-
-            <div class="mt-3 flex flex-wrap justify-center gap-2 text-[10px] text-slate-500">
-
-                <span class="px-2.5 py-1 rounded-lg bg-white/5">
-                    City
-                </span>
-
-                <span class="px-2.5 py-1 rounded-lg bg-white/5">
-                    District
-                </span>
-
-                <span class="px-2.5 py-1 rounded-lg bg-white/5">
-                    Area
-                </span>
-
-                <span class="px-2.5 py-1 rounded-lg bg-white/5">
-                    Address
-                </span>
-
-                <span class="px-2.5 py-1 rounded-lg bg-white/5">
-                    Facilities
-                </span>
-
-            </div>
-
-        </div>
-
-    </div>
-</section>
-
-
-<!-- ================= LISTINGS ================= -->
-
-<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
-
-    <div class="flex flex-col sm:flex-row sm:items-center
-                justify-between gap-3 mb-6">
-
-        <div>
-
-            <h2 class="text-lg sm:text-xl font-bold text-white">
-                <i class="fa-solid fa-hotel text-yellow-400 mr-2"></i>
-                Hostels & PGs
-            </h2>
-
-            <p class="text-xs text-slate-500 mt-1">
-                Live listings from Supabase
-            </p>
-
-        </div>
-
-        <div class="px-3 py-2 rounded-xl
-                    bg-[#0D1838]
-                    border border-white/10
-                    text-xs text-slate-400">
-
-            <span id="hostelCountBadge">0</span>
-            listings found
-
-        </div>
-
-    </div>
-
-
-    <div id="hostelsGridContainer"
-         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-        <div class="col-span-full py-20 text-center">
-
-            <i class="fa-solid fa-spinner fa-spin
-                      text-3xl text-yellow-400"></i>
-
-            <p class="mt-4 text-xs text-slate-400">
-                Loading live hostels from Supabase database...
-            </p>
-
-        </div>
-
-    </div>
-
+<main class="max-w-7xl mx-auto px-4 sm:px-8 py-10">
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+<div><h2 class="text-lg font-bold text-white"><i class="fa-solid fa-hotel text-gold-400 mr-2"></i>Live Listings</h2>
+<p class="text-xs text-slate-500 mt-1">Live data from Supabase. No created_at dependency.</p></div>
+<div id="countBadge" class="px-3 py-1.5 rounded-xl bg-navy-900 border border-gold-500/30 text-gold-300 text-xs font-bold">0 listings</div>
+</div>
+<div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="col-span-full py-16 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-3xl text-gold-500"></i><p class="mt-3 text-sm">Loading live listings...</p></div>
+</div>
 </main>
 
-
-<!-- ================= MODAL ================= -->
-
-<div id="hostelDetailModal"
-     class="fixed inset-0 z-50 hidden items-center justify-center
-            bg-black/80 backdrop-blur-md p-3 sm:p-5">
-
-    <div class="w-full max-w-2xl max-h-[90vh]
-                bg-[#081026]
-                border border-yellow-500/30
-                rounded-3xl overflow-hidden
-                shadow-2xl flex flex-col">
-
-        <div class="relative h-48 sm:h-56 shrink-0">
-
-            <img id="modalHostelImg"
-                 src="hostel-banner.png"
-                 class="w-full h-full object-cover">
-
-            <div class="absolute inset-0 bg-gradient-to-t
-                        from-[#081026] via-transparent to-transparent"></div>
-
-            <button
-                onclick="closeHostelModal()"
-                class="absolute right-4 top-4
-                       w-10 h-10 rounded-full
-                       bg-black/60 border border-white/10
-                       text-white hover:bg-black/80">
-
-                <i class="fa-solid fa-xmark"></i>
-
-            </button>
-
-            <div class="absolute bottom-4 left-5 right-5">
-
-                <span id="modalHostelCat"
-                      class="inline-block px-2 py-1 rounded-lg
-                             bg-yellow-500/20
-                             border border-yellow-500/30
-                             text-yellow-300 text-[10px] font-bold">
-                    HOSTEL / PG
-                </span>
-
-                <h2 id="modalHostelTitle"
-                    class="text-xl sm:text-2xl font-bold text-white mt-2">
-                    Hostel Name
-                </h2>
-
-                <p id="modalHostelAddress"
-                   class="text-xs text-slate-300 mt-1">
-                    Address
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="p-5 overflow-y-auto flex-1">
-
-            <div id="hostelTabContent"
-                 class="space-y-4 text-sm text-slate-300">
-            </div>
-
-        </div>
-
-
-        <div class="p-4 bg-[#040814]
-                    border-t border-white/10
-                    flex gap-3">
-
-            <a id="modalHostelCallBtn"
-               href="#"
-               class="flex-1 text-center py-3 rounded-xl
-                      border border-yellow-500/30
-                      text-yellow-300
-                      text-xs font-bold">
-
-                <i class="fa-solid fa-phone mr-1"></i>
-                Call
-
-            </a>
-
-            <a id="modalHostelWhatsAppBtn"
-               href="#"
-               target="_blank"
-               rel="noopener"
-               class="flex-1 text-center py-3 rounded-xl
-                      bg-emerald-600
-                      hover:bg-emerald-500
-                      text-white
-                      text-xs font-bold">
-
-                <i class="fa-brands fa-whatsapp mr-1"></i>
-                WhatsApp
-
-            </a>
-
-        </div>
-
-    </div>
+<div id="modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm p-3 sm:p-6 items-center justify-center">
+<div class="bg-navy-900 border border-gold-500/30 rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-hidden shadow-2xl">
+<div class="relative h-48 sm:h-56">
+<img id="mImage" src="hostel-banner.png" class="w-full h-full object-cover">
+<div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
+<button onclick="closeModal()" class="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/60 text-white border border-white/10"><i class="fa-solid fa-xmark"></i></button>
+<div class="absolute bottom-4 left-5 right-14"><div id="mBadge" class="inline-block text-[10px] font-bold px-2 py-1 rounded bg-gold-500/20 text-gold-300 border border-gold-500/30"></div>
+<h2 id="mName" class="text-2xl font-bold text-white mt-1"></h2><p id="mArea" class="text-xs text-slate-300 mt-1"></p></div>
 </div>
+<div class="p-5 sm:p-6 overflow-y-auto max-h-[55vh] space-y-4">
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase">Rating</div><div id="mRating" class="text-lg font-bold text-gold-300 mt-1"></div></div>
+<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase">Timing</div><div id="mTiming" class="text-sm font-semibold text-white mt-1"></div></div>
+</div>
+<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase mb-1">Full Address</div><div id="mAddress" class="text-sm text-slate-200"></div></div>
+<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase mb-1">Facilities</div><div id="mFacilities" class="text-sm text-slate-200 whitespace-pre-line"></div></div>
+<div class="bg-navy-850 rounded-2xl p-4"><div class="text-[10px] text-slate-500 uppercase mb-1">Student Review</div><div id="mReview" class="text-sm text-slate-200 whitespace-pre-line"></div></div>
+</div>
+<div class="p-4 border-t border-navy-800 flex gap-3">
+<a id="mCall" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 text-center text-xs font-bold" href="#"><i class="fa-solid fa-phone mr-1"></i> Call Owner</a>
+<a id="mWhatsApp" target="_blank" class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-center text-xs font-bold" href="#"><i class="fa-brands fa-whatsapp mr-1"></i> WhatsApp Owner</a>
+<a id="mMap" target="_blank" class="hidden sm:block flex-1 py-3 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 text-center text-xs font-bold" href="#"><i class="fa-solid fa-map-location-dot mr-1"></i> Maps</a>
+</div>
+</div></div>
 
-
-<!-- ================= FOOTER ================= -->
-
-<footer class="border-t border-white/10 bg-[#081026]">
-
-    <div class="max-w-7xl mx-auto px-4 py-6
-                flex flex-col sm:flex-row
-                justify-between gap-3
-                text-[11px] text-slate-500">
-
-        <span>
-            © 2026 StudentHubHelp
-        </span>
-
-        <span>
-            India Student Network
-        </span>
-
-    </div>
-
+<footer class="border-t border-navy-800 bg-navy-900 py-8 text-center">
+<div class="flex justify-center flex-wrap gap-4 text-xs mb-3">
+<a href="pg-finder.html" class="text-slate-400 hover:text-gold-300">Hostel</a><a href="tiffin-finder.html" class="text-slate-400 hover:text-gold-300">Tiffin</a><a href="library-finder.html" class="text-slate-400 hover:text-gold-300">Library</a><a href="cafe-finder.html" class="text-slate-400 hover:text-gold-300">Cafe</a>
+</div>
+<p class="text-[11px] text-slate-500">© 2026 StudentHubHelp • Live Supabase Directory</p>
 </footer>
 
-
-<!-- ================= LIVE SUPABASE CODE ================= -->
-
 <script>
+const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const CONFIG = {table:"hostels", banner:"hostel-banner.png", badge:"HOSTEL / PG"};
+let records=[], filteredRecords=[], active=null;
 
-const SUPABASE_URL =
-"https://idurlccrarznnnqixxsd.supabase.co";
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+const text=(v,f="Not provided")=>String(v??"").trim()||f;
+const phone=v=>String(v??"").replace(/[^0-9+]/g,"");
+const digits=v=>String(v??"").replace(/\D/g,"").slice(-10);
+const mapUrl=a=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a||"");
 
-const SUPABASE_ANON_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-
-
-const db = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-);
-
-const TABLE = "hostels";
-
-let allRecords = [];
-let activeRecord = null;
-
-
-function clean(value){
-
-    return String(value ?? "")
-        .trim();
-
+function locationParam(){
+ const p=new URLSearchParams(location.search);
+ return (p.get("location")||p.get("area")||p.get("q")||"").trim();
 }
-
-
-function esc(value){
-
-    return String(value ?? "")
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
-
+function matches(r,q){
+ if(!q)return true;
+ const hay=[r.name,r.category,r.area,r.address,r.phone,r.timing,r.facilities,r.rating,r.review].map(v=>String(v??"").toLowerCase()).join(" ");
+ return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w));
 }
-
-
-function imageUrl(value){
-
-    const v = clean(value);
-
-    if(!v){
-        return "hostel-banner.png";
-    }
-
-    if(
-        v.startsWith("http://") ||
-        v.startsWith("https://") ||
-        v.startsWith("data:") ||
-        v.startsWith("blob:")
-    ){
-        return v;
-    }
-
-    return new URL(v, document.baseURI).href;
-
+function render(list){
+ filteredRecords=list;
+ document.getElementById("countBadge").textContent=list.length+" listing"+(list.length===1?"":"s");
+ const g=document.getElementById("grid");
+ if(!list.length){
+  g.innerHTML='<div class="col-span-full py-16 text-center bg-navy-900 border border-navy-800 rounded-3xl"><i class="fa-solid fa-magnifying-glass text-3xl text-gold-500"></i><h3 class="mt-3 font-bold text-white">No listings found</h3><p class="mt-1 text-xs text-slate-500">Try another city, district, area or property name.</p></div>';
+  return;
+ }
+ g.innerHTML=list.map((r,i)=>`
+ <article class="card bg-navy-900 rounded-3xl overflow-hidden transition duration-200 cursor-pointer" onclick="openModal(${i})">
+  <div class="relative h-44 bg-navy-950">
+   <img src="${CONFIG.banner}" loading="lazy" class="w-full h-full object-cover" alt="${esc(r.name||CONFIG.badge)}">
+   <div class="absolute inset-0 bg-gradient-to-t from-navy-900 via-transparent to-transparent"></div>
+   <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-navy-950/85 border border-gold-500/30 text-[10px] font-bold text-gold-300">${esc(text(r.area,"Area not provided"))}</span>
+   <span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-navy-950/85 border border-gold-500/30 text-[11px] font-bold text-gold-300"><i class="fa-solid fa-star mr-1"></i>${esc(text(r.rating,"Not rated"))}</span>
+  </div>
+  <div class="p-5 space-y-3">
+   <div><h3 class="text-base font-bold text-white leading-snug">${esc(text(r.name,"Unnamed Listing"))}</h3><p class="text-[11px] text-gold-300 mt-1">${esc(text(r.category,CONFIG.badge))}</p></div>
+   <p class="text-xs text-slate-300 flex gap-2"><i class="fa-solid fa-location-dot text-gold-500 mt-0.5"></i><span>${esc(text(r.address,"Address not provided"))}</span></p>
+   <div class="bg-navy-850 border border-navy-700 rounded-xl p-3 text-xs"><span class="text-slate-500">Timing:</span><span class="text-slate-200 font-semibold ml-1">${esc(text(r.timing))}</span></div>
+   <button class="w-full py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold">View Details <i class="fa-solid fa-arrow-right ml-1"></i></button>
+  </div>
+ </article>`).join("");
 }
-
-
-function whatsapp(phone,name){
-
-    const number = clean(phone).replace(/\D/g,"");
-
-    if(!number){
-        return "#";
-    }
-
-    let finalNumber = number;
-
-    if(finalNumber.length === 10){
-        finalNumber = "91" + finalNumber;
-    }
-
-    const text =
-        "Hello, I found " +
-        clean(name) +
-        " on StudentHubHelp. I want to know more details.";
-
-    return "https://wa.me/" +
-        finalNumber +
-        "?text=" +
-        encodeURIComponent(text);
-
+function applySearch(){render(records.filter(r=>matches(r,document.getElementById("searchInput").value.trim())));}
+function openModal(i){
+ active=filteredRecords[i]; if(!active)return;
+ const name=text(active.name,"Unnamed Listing"), area=text(active.area,"Area not provided"), address=text(active.address,area), p=phone(active.phone), d=digits(active.phone);
+ document.getElementById("mImage").src=CONFIG.banner;
+ document.getElementById("mBadge").textContent=text(active.category,CONFIG.badge);
+ document.getElementById("mName").textContent=name;
+ document.getElementById("mArea").textContent="📍 "+area;
+ document.getElementById("mRating").textContent="⭐ "+text(active.rating,"Not rated");
+ document.getElementById("mTiming").textContent=text(active.timing);
+ document.getElementById("mAddress").textContent=address;
+ document.getElementById("mFacilities").textContent=text(active.facilities);
+ document.getElementById("mReview").textContent=text(active.review);
+ document.getElementById("mCall").href=p?"tel:"+p:"#";
+ document.getElementById("mWhatsApp").href=d?"https://wa.me/91"+d+"?text="+encodeURIComponent("Hi, I found "+name+" on StudentHubHelp. Please share details."):"#";
+ document.getElementById("mMap").href=mapUrl(address);
+ document.getElementById("modal").classList.remove("hidden"); document.getElementById("modal").classList.add("flex");
 }
-
-
-function getLocation(){
-
-    const params = new URLSearchParams(
-        window.location.search
-    );
-
-    return clean(params.get("location")).toLowerCase();
-
-}
-
-
-function matches(record,query){
-
-    const text = [
-
-        record.name,
-        record.category,
-        record.area,
-        record.address,
-        record.phone,
-        record.timing,
-        record.facilities
-
-    ].map(clean)
-     .join(" ")
-     .toLowerCase();
-
-    return text.includes(query);
-
-}
-
+function closeModal(){document.getElementById("modal").classList.add("hidden");document.getElementById("modal").classList.remove("flex");active=null;}
 
 async function loadRecords(){
-
-    const box =
-        document.getElementById("hostelsGridContainer");
-
-    try{
-
-        const result = await db
-            .from(TABLE)
-            .select("*")
-            .order("created_at",{ascending:false});
-
-        if(result.error){
-
-            console.error(
-                "Supabase hostels error:",
-                result.error
-            );
-
-            box.innerHTML = `
-                <div class="col-span-full py-16 text-center">
-                    <i class="fa-solid fa-triangle-exclamation
-                              text-3xl text-red-400"></i>
-
-                    <p class="mt-4 text-sm text-red-300">
-                        Unable to load live hostels.
-                    </p>
-
-                    <p class="mt-2 text-[11px] text-slate-500">
-                        ${esc(result.error.message)}
-                    </p>
-                </div>
-            `;
-
-            return;
-        }
-
-        allRecords = result.data || [];
-
-        renderRecords();
-
-    }catch(error){
-
-        console.error(error);
-
-        box.innerHTML = `
-            <div class="col-span-full py-16 text-center">
-                <p class="text-red-300 text-sm">
-                    Database connection failed.
-                </p>
-            </div>
-        `;
-
-    }
-
+ const g=document.getElementById("grid");
+ try{
+  const {data,error}=await db.from(CONFIG.table).select("id,name,category,area,address,phone,timing,facilities,rating,review");
+  if(error)throw error;
+  records=Array.isArray(data)?data:[];
+  const loc=locationParam();
+  if(loc){
+   document.getElementById("searchInput").value=loc;
+   document.getElementById("locationLabel").textContent="Showing results for: "+loc;
+   document.getElementById("locationLabel").classList.remove("hidden");
+   render(records.filter(r=>matches(r,loc)));
+  }else render(records);
+ }catch(err){
+  console.error("Supabase load error:",err);
+  g.innerHTML='<div class="col-span-full py-14 text-center bg-navy-900 border border-red-500/20 rounded-3xl"><i class="fa-solid fa-triangle-exclamation text-3xl text-red-400"></i><h3 class="mt-3 font-bold text-white">Unable to load live listings</h3><p class="mt-1 text-xs text-slate-400">'+esc(err.message||"Supabase request failed.")+'</p><button onclick="loadRecords()" class="mt-4 px-4 py-2 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 text-xs font-bold">Retry</button></div>';
+ }
 }
-
-
-function renderRecords(){
-
-    const input =
-        document.getElementById("hostelSearchInput");
-
-    const query =
-        clean(input.value).toLowerCase();
-
-    const location =
-        getLocation();
-
-
-    let list = allRecords.filter(record => {
-
-        if(query && !matches(record,query)){
-            return false;
-        }
-
-        if(location){
-
-            const locationText = [
-
-                record.area,
-                record.address,
-                record.name
-
-            ].map(clean)
-             .join(" ")
-             .toLowerCase();
-
-            if(!locationText.includes(location)){
-                return false;
-            }
-
-        }
-
-        return true;
-
-    });
-
-
-    document.getElementById(
-        "hostelCountBadge"
-    ).textContent = list.length;
-
-
-    const box =
-        document.getElementById(
-            "hostelsGridContainer"
-        );
-
-
-    if(!list.length){
-
-        box.innerHTML = `
-            <div class="col-span-full py-20 text-center">
-
-                <i class="fa-solid fa-magnifying-glass
-                          text-3xl text-slate-600"></i>
-
-                <p class="mt-4 text-sm text-slate-400">
-                    No hostels or PGs found.
-                </p>
-
-                <p class="mt-2 text-xs text-slate-600">
-                    Try another city, area or hostel name.
-                </p>
-
-            </div>
-        `;
-
-        return;
-
-    }
-
-
-    box.innerHTML = list.map(record => {
-
-        const rating =
-            Number(record.rating);
-
-        const ratingHtml =
-            Number.isFinite(rating) &&
-            rating > 0
-            ?
-            `
-            <span class="absolute top-3 right-3
-                         px-2.5 py-1 rounded-xl
-                         bg-black/70
-                         border border-yellow-500/30
-                         text-yellow-300
-                         text-[11px] font-bold">
-
-                ★ ${rating.toFixed(1)}
-
-            </span>
-            `
-            :
-            "";
-
-
-        return `
-
-        <article
-            data-record-id="${esc(record.id)}"
-            class="property-card
-                   bg-[#081026]
-                   border border-[#1A2850]
-                   rounded-3xl overflow-hidden
-                   cursor-pointer
-                   gold-border
-                   transition">
-
-            <div class="relative h-48
-                        bg-[#040814]
-                        overflow-hidden">
-
-                <img
-                    src="${esc(imageUrl(record.image))}"
-                    loading="lazy"
-                    class="card-img w-full h-full object-cover"
-                    alt="${esc(record.name || "Hostel / PG")}"
-                    onerror="this.onerror=null;this.src='hostel-banner.png';">
-
-                <div class="absolute inset-0
-                            bg-gradient-to-t
-                            from-[#081026]
-                            via-transparent
-                            to-transparent">
-                </div>
-
-                <span class="absolute top-3 left-3
-                             px-2.5 py-1 rounded-lg
-                             bg-yellow-500/15
-                             border border-yellow-500/30
-                             text-yellow-300
-                             text-[10px] font-bold uppercase">
-
-                    ${esc(record.category || "Hostel / PG")}
-
-                </span>
-
-                ${ratingHtml}
-
-            </div>
-
-
-            <div class="p-5">
-
-                <h3 class="text-base font-bold text-white">
-                    ${esc(record.name || "Hostel / PG")}
-                </h3>
-
-
-                ${
-                    record.area
-                    ?
-                    `
-                    <p class="mt-2 text-xs text-yellow-400">
-                        <i class="fa-solid fa-location-dot mr-1"></i>
-                        ${esc(record.area)}
-                    </p>
-                    `
-                    :
-                    ""
-                }
-
-
-                <p class="mt-2 text-xs text-slate-400 line-clamp-2">
-                    ${esc(record.address || "Address not available")}
-                </p>
-
-
-                <div class="mt-4 p-3 rounded-2xl
-                            bg-[#0D1838]
-                            border border-white/5">
-
-                    <p class="text-[9px]
-                              uppercase
-                              tracking-wider
-                              text-yellow-400
-                              font-bold">
-                        Facilities
-                    </p>
-
-                    <p class="mt-1 text-xs text-slate-300 line-clamp-2">
-                        ${esc(record.facilities || "Details not available")}
-                    </p>
-
-                </div>
-
-
-                <div class="mt-4
-                            flex items-center
-                            justify-between gap-3">
-
-                    <span class="text-[10px] text-slate-500">
-
-                        ${
-                            record.timing
-                            ?
-                            `<i class="fa-regular fa-clock mr-1"></i>
-                             ${esc(record.timing)}`
-                            :
-                            ""
-                        }
-
-                    </span>
-
-
-                    ${
-                        record.phone
-                        ?
-                        `
-                        <a
-                            href="tel:${esc(record.phone)}"
-                            onclick="event.stopPropagation()"
-                            class="px-3.5 py-2
-                                   rounded-xl
-                                   gold-gradient-bg
-                                   text-[#040814]
-                                   text-[11px]
-                                   font-bold">
-
-                            <i class="fa-solid fa-phone mr-1"></i>
-                            Call
-
-                        </a>
-                        `
-                        :
-                        ""
-                    }
-
-                </div>
-
-            </div>
-
-        </article>
-
-        `;
-
-    }).join("");
-
-
-    box.querySelectorAll(
-        "[data-record-id]"
-    ).forEach(card => {
-
-        card.addEventListener(
-            "click",
-            () => openRecord(
-                card.dataset.recordId
-            )
-        );
-
-    });
-
+function subscribeRealtime(){
+ db.channel("studenthub-"+CONFIG.table+"-live").on("postgres_changes",{event:"*",schema:"public",table:CONFIG.table},()=>loadRecords()).subscribe();
 }
-
-
-async function openRecord(id){
-
-    activeRecord =
-        allRecords.find(
-            record =>
-                String(record.id) === String(id)
-        );
-
-
-    if(!activeRecord){
-        return;
-    }
-
-
-    const record =
-        activeRecord;
-
-
-    document.getElementById(
-        "modalHostelTitle"
-    ).textContent =
-        record.name || "Hostel / PG";
-
-
-    document.getElementById(
-        "modalHostelCat"
-    ).textContent =
-        record.category || "HOSTEL / PG";
-
-
-    document.getElementById(
-        "modalHostelAddress"
-    ).textContent =
-        record.address || "Address not available";
-
-
-    const modalImage =
-        document.getElementById(
-            "modalHostelImg"
-        );
-
-    modalImage.src =
-        imageUrl(record.image);
-
-    modalImage.onerror =
-        function(){
-
-            this.onerror = null;
-            this.src = "hostel-banner.png";
-
-        };
-
-
-    document.getElementById(
-        "modalHostelCallBtn"
-    ).href =
-        record.phone
-        ? "tel:" + record.phone
-        : "#";
-
-
-    document.getElementById(
-        "modalHostelWhatsAppBtn"
-    ).href =
-        whatsapp(
-            record.phone,
-            record.name
-        );
-
-
-    const rating =
-        Number(record.rating);
-
-
-    document.getElementById(
-        "hostelTabContent"
-    ).innerHTML = `
-
-        <div class="p-4 rounded-2xl
-                    bg-[#0D1838]
-                    border border-white/5">
-
-            <h3 class="text-yellow-300 font-bold">
-                Details
-            </h3>
-
-            <div class="mt-3 space-y-3 text-xs">
-
-                <p>
-                    <span class="text-slate-500">
-                        Area:
-                    </span>
-                    ${esc(record.area || "—")}
-                </p>
-
-                <p>
-                    <span class="text-slate-500">
-                        Address:
-                    </span>
-                    ${esc(record.address || "—")}
-                </p>
-
-                <p>
-                    <span class="text-slate-500">
-                        Timing:
-                    </span>
-                    ${esc(record.timing || "—")}
-                </p>
-
-                <p>
-                    <span class="text-slate-500">
-                        Facilities:
-                    </span>
-                    ${esc(record.facilities || "—")}
-                </p>
-
-                <p>
-                    <span class="text-slate-500">
-                        Phone:
-                    </span>
-                    ${esc(record.phone || "—")}
-                </p>
-
-            </div>
-
-        </div>
-
-
-        ${
-            Number.isFinite(rating) && rating > 0
-            ?
-            `
-            <div class="p-4 rounded-2xl
-                        bg-[#0D1838]
-                        border border-white/5">
-
-                <h3 class="text-yellow-300 font-bold">
-                    Rating
-                </h3>
-
-                <p class="mt-2 text-lg">
-                    ⭐ ${rating.toFixed(1)}
-                    <span class="text-xs text-slate-500">
-                        / 5
-                    </span>
-                </p>
-
-            </div>
-            `
-            :
-            ""
-        }
-
-    `;
-
-
-    const modal =
-        document.getElementById(
-            "hostelDetailModal"
-        );
-
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-
-}
-
-
-function closeHostelModal(){
-
-    const modal =
-        document.getElementById(
-            "hostelDetailModal"
-        );
-
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-
-    activeRecord = null;
-
-}
-
-
-document.getElementById(
-    "hostelSearchInput"
-).addEventListener(
-    "input",
-    renderRecords
-);
-
-
-loadRecords();
-
-
-// LIVE SUPABASE REALTIME
-
-db.channel("hostels-live")
-    .on(
-        "postgres_changes",
-        {
-            event:"*",
-            schema:"public",
-            table:"hostels"
-        },
-        () => {
-
-            loadRecords();
-
-        }
-    )
-    .subscribe();
-
-
-// GLOBAL MODAL FUNCTION
-
-window.closeHostelModal =
-    closeHostelModal;
-
+document.getElementById("searchInput").addEventListener("input",applySearch);
+document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+window.addEventListener("DOMContentLoaded",()=>{loadRecords();subscribeRealtime();});
 </script>
-
 </body>
 </html>
