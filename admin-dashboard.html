@@ -232,33 +232,6 @@ button:disabled{opacity:.55;cursor:not-allowed}
   </div>
 </div>
 
-<!-- ================= OWNER DETAILS MODAL ================= -->
-<div id="ownerDetailsModal" class="modal fixed inset-0 z-[85] hidden items-center justify-center p-3">
-  <div class="card rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col">
-    <div class="p-5 border-b border-navy-800 flex items-center justify-between">
-      <div>
-        <div class="text-[10px] uppercase tracking-wider text-gold-400 font-bold">Owner Details</div>
-        <h2 id="ownerDetailsName" class="text-2xl font-bold mt-1">Owner</h2>
-        <div id="ownerDetailsMeta" class="text-xs text-slate-400 mt-2"></div>
-      </div>
-      <button class="w-10 h-10 rounded-full bg-navy-850" data-close="ownerDetailsModal"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="p-5 overflow-auto space-y-5">
-      <div class="grid sm:grid-cols-2 gap-3">
-        <div class="bg-navy-850 p-4 rounded-xl"><b class="text-gold-300">Email</b><div id="ownerDetailsEmail" class="mt-1 break-all"></div></div>
-        <div class="bg-navy-850 p-4 rounded-xl"><b class="text-gold-300">Phone</b><div id="ownerDetailsPhone" class="mt-1"></div></div>
-      </div>
-      <div>
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-lg">Matched Properties</h3>
-          <span id="ownerDetailsCount" class="text-xs text-gold-300"></span>
-        </div>
-        <div id="ownerDetailsProperties" class="grid sm:grid-cols-2 gap-3"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ================= FORM MODAL ================= -->
 <div id="formModal" class="modal fixed inset-0 z-[90] hidden items-center justify-center p-3">
   <div class="card rounded-3xl w-full max-w-2xl max-h-[94vh] overflow-auto p-6 relative">
@@ -282,6 +255,8 @@ button:disabled{opacity:.55;cursor:not-allowed}
     </form>
   </div>
 </div>
+
+<div id="ownerDetailsModal" class="fixed inset-0 z-[190] hidden items-center justify-center bg-navy-950/90 backdrop-blur-md p-4"><div class="bg-navy-900 border border-gold-500/35 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"><div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4"><div><p class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">Owner Profile</p><h3 id="ownerDetailsName" class="text-xl font-bold text-white mt-1">Owner</h3><p id="ownerDetailsContact" class="text-xs text-slate-400 mt-1">—</p></div><button type="button" onclick="closeOwnerDetails()" class="w-9 h-9 rounded-full bg-navy-850 border border-navy-700 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 overflow-y-auto max-h-[calc(90vh-100px)] space-y-5"><div class="grid grid-cols-1 sm:grid-cols-3 gap-3"><div class="bg-navy-850 border border-navy-700 rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Email</div><div id="ownerDetailsEmail" class="text-sm text-white mt-1 break-all">—</div></div><div class="bg-navy-850 border border-navy-700 rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Phone</div><div id="ownerDetailsPhone" class="text-sm text-white mt-1">—</div></div><div class="bg-navy-850 border border-navy-700 rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Matched Listings</div><div id="ownerDetailsCount" class="text-sm text-gold-300 font-bold mt-1">0</div></div></div><div><div class="flex items-center justify-between gap-3 mb-3"><h4 class="font-bold text-white">Owner Properties</h4><span class="text-[10px] text-slate-500">Phone match • last 10 digits</span></div><div id="ownerDetailsProperties" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div></div></div></div>
 
 <div id="toast" class="fixed bottom-5 right-5 z-[200] hidden max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl"></div>
 
@@ -385,7 +360,7 @@ async function handleSession(session){
   */
   const {data:profile,error}=await supabaseClient
     .from("profiles")
-    .select("id,full_name,email,phone,role,created_at")
+    .select("id,full_name,phone,email,role,created_at")
     .eq("id",state.user.id)
     .maybeSingle();
 
@@ -461,7 +436,7 @@ async function loadAll(){
       supabaseClient.from("tiffins").select("*").order("id",{ascending:true}),
       supabaseClient.from("libraries").select("*").order("id",{ascending:true}),
       supabaseClient.from("cafes").select("*").order("id",{ascending:true}),
-      supabaseClient.from("profiles").select("id,full_name,email,phone,role,created_at")
+      supabaseClient.from("profiles").select("id,full_name,phone,email,role,created_at")
     ]);
 
     const [h,t,l,c,p]=results;
@@ -523,7 +498,7 @@ function renderStudents(filter=""){
     return `<tr class="border-t border-navy-800">
       <td class="p-4 font-bold">${esc(s.full_name||"Student")}</td>
       <td class="p-4 font-mono">${esc(s.phone||"—")}</td>
-      <td class="p-4 text-slate-300">${esc(s.email||"—")}</td>
+      <td class="p-4 text-slate-300 break-all">${esc(s.email||"—")}</td>
       <td class="p-4"><span class="text-emerald-400">${active?"Active":"Inactive"}</span></td>
       <td class="p-4 text-right">
         <button class="p-2 rounded bg-red-500/10 text-red-300" data-delete-profile="${esc(s.id)}" title="Delete profile">
@@ -540,45 +515,8 @@ $("studentFilter").addEventListener("input",e=>renderStudents(e.target.value));
 
 /* ================= OWNERS ================= */
 
-function normalizePhone(v){
-  const digits=text(v).replace(/\\D/g,"");
-  return digits.length>=10 ? digits.slice(-10) : digits;
-}
-
-function getOwnerProperties(owner){
-  const ownerPhone=normalizePhone(owner?.phone);
-  if(!ownerPhone) return [];
-  const result=[];
-  Object.keys(propertyConfig).forEach(type=>{
-    (state[type]||[]).forEach(property=>{
-      if(normalizePhone(property.phone)===ownerPhone){
-        result.push({type,property});
-      }
-    });
-  });
-  return result;
-}
-
 function renderOwners(){
-  $("ownerBody").innerHTML=state.owners.length?state.owners.map(o=>{
-    const matches=getOwnerProperties(o);
-    return `
-    <tr class="border-t border-navy-800 hover:bg-navy-850 cursor-pointer" data-owner="${esc(o.id)}">
-      <td class="p-4 font-bold">${esc(o.full_name||"Owner")}</td>
-      <td class="p-4 font-mono">${esc(o.phone||"—")}</td>
-      <td class="p-4 text-slate-300">${esc(o.email||"—")}</td>
-      <td class="p-4 text-emerald-400">Verified</td>
-      <td class="p-4 text-right whitespace-nowrap">
-        <span class="text-xs text-gold-300 mr-2">${matches.length} ${matches.length===1?"property":"properties"}</span>
-        <button class="p-2 rounded bg-navy-800 text-gold-300" data-edit-owner="${esc(o.id)}" title="Edit owner" onclick="event.stopPropagation()">
-          <i class="fa-solid fa-pen"></i>
-        </button>
-        <button class="p-2 rounded bg-red-500/10 text-red-300 ml-1" data-delete-profile="${esc(o.id)}" title="Delete owner" onclick="event.stopPropagation()">
-          <i class="fa-solid fa-trash"></i>
-        </button>
-      </td>
-    </tr>`;
-  }).join(""):emptyRow(5,"No verified owners found.");
+  $("ownerBody").innerHTML=state.owners.length?state.owners.map(o=>`<tr class="border-t border-navy-800 hover:bg-navy-850 transition cursor-pointer" data-owner-details="${esc(o.id)}"><td class="p-4 font-bold">${esc(o.full_name||"Owner")}</td><td class="p-4 font-mono">${esc(o.phone||"—")}</td><td class="p-4 text-slate-300 break-all">${esc(o.email||"—")}</td><td class="p-4 text-emerald-400">Registered</td><td class="p-4 text-right whitespace-nowrap"><button class="px-3 py-2 rounded bg-gold-500/10 text-gold-300 font-bold text-[11px]" data-owner-details="${esc(o.id)}"><i class="fa-solid fa-eye mr-1"></i>Details</button><button class="p-2 rounded bg-navy-800 text-gold-300 ml-1" data-edit-owner="${esc(o.id)}" title="Edit owner"><i class="fa-solid fa-pen"></i></button><button class="p-2 rounded bg-red-500/10 text-red-300 ml-1" data-delete-profile="${esc(o.id)}" title="Delete owner"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(""):emptyRow(5,"No registered owners found.");
 }
 
 /* ================= PROPERTIES ================= */
@@ -668,52 +606,14 @@ document.addEventListener("click",async e=>{
   const eo=e.target.closest("[data-edit-owner]");
   if(eo){editOwner(eo.dataset.editOwner);return}
 
-  const ownerRow=e.target.closest("[data-owner]");
-  if(ownerRow){openOwnerDetails(ownerRow.dataset.owner);return}
-
-  const ownerProperty=e.target.closest("[data-owner-property]");
-  if(ownerProperty){
-    closeModal("ownerDetailsModal");
-    openView(ownerProperty.dataset.ownerType,Number(ownerProperty.dataset.ownerIndex));
-    return;
-  }
+  const ownerProp=e.target.closest("[data-owner-property]");
+  if(ownerProp){const type=ownerProp.dataset.ownerProperty;const idx=(state[type]||[]).findIndex(x=>String(x.id)===String(ownerProp.dataset.ownerPropertyId));if(idx>=0){closeOwnerDetails();openView(type,idx);}return;}
 
   const row=e.target.closest("[data-view]");
   if(row&&!e.target.closest("button")){
     openView(row.dataset.view,Number(row.dataset.index));
   }
 });
-
-/* ================= OWNER DETAILS ================= */
-
-function openOwnerDetails(id){
-  const owner=state.owners.find(x=>String(x.id)===String(id));
-  if(!owner)return;
-
-  const matches=getOwnerProperties(owner);
-  $("ownerDetailsName").textContent=owner.full_name||"Owner";
-  $("ownerDetailsEmail").textContent=owner.email||"—";
-  $("ownerDetailsPhone").textContent=owner.phone||"—";
-  $("ownerDetailsMeta").textContent=`Role: owner • Phone-matched properties only`;
-  $("ownerDetailsCount").textContent=`${matches.length} ${matches.length===1?"property":"properties"}`;
-
-  $("ownerDetailsProperties").innerHTML=matches.length ? matches.map(({type,property})=>{
-    const cfg=propertyConfig[type];
-    return `
-      <button type="button" data-owner-property data-owner-type="${esc(type)}" data-owner-index="${esc((state[type]||[]).indexOf(property))}"
-        class="text-left bg-navy-850 border border-navy-700 rounded-2xl p-4 hover:border-gold-500/60 transition">
-        <div class="text-[10px] uppercase text-gold-400 font-bold">${esc(cfg.category)}</div>
-        <div class="font-bold text-white mt-1">${esc(property.name||cfg.singular)}</div>
-        <div class="text-xs text-slate-400 mt-2">${esc(property.address||"Address not available")}</div>
-        <div class="text-xs text-slate-300 mt-1"><i class="fa-solid fa-phone text-gold-400 mr-1"></i>${esc(property.phone||"—")}</div>
-      </button>`;
-  }).join("") : `
-    <div class="sm:col-span-2 p-5 rounded-2xl bg-navy-850 border border-navy-700 text-sm text-slate-400">
-      No property matches this owner's phone number. A property is linked to an owner when its phone matches the owner's phone (last 10 digits).
-    </div>`;
-
-  openModal("ownerDetailsModal");
-}
 
 /* ================= PROPERTY CREATE/EDIT ================= */
 
@@ -819,6 +719,10 @@ async function deleteProperty(type,id){
   }
 }
 
+function normalizePhone(v){const d=String(v??"").replace(/\D/g,"");return d.length>=10?d.slice(-10):d;}
+function openOwnerDetails(id){const owner=state.owners.find(x=>String(x.id)===String(id));if(!owner)return;const key=normalizePhone(owner.phone),matches=[];[["hostels","Hostel / PG","fa-hotel"],["tiffins","Tiffin / Mess","fa-bowl-food"],["libraries","Library","fa-book-open"],["cafes","Cafe","fa-mug-hot"]].forEach(([type,label,icon])=>(state[type]||[]).forEach(item=>{if(key&&key===normalizePhone(item.phone))matches.push({type,label,icon,item});}));$("ownerDetailsName").textContent=owner.full_name||"Owner";$("ownerDetailsEmail").textContent=owner.email||"—";$("ownerDetailsPhone").textContent=owner.phone||"—";$("ownerDetailsContact").textContent=`${owner.email||"No email"} • ${owner.phone||"No phone"}`;$("ownerDetailsCount").textContent=String(matches.length);$("ownerDetailsProperties").innerHTML=matches.length?matches.map(m=>{const x=m.item;return `<button type="button" class="text-left bg-navy-850 border border-navy-700 hover:border-gold-500/50 rounded-2xl p-4 transition" data-owner-property="${esc(m.type)}" data-owner-property-id="${esc(x.id)}"><div class="text-[10px] uppercase text-gold-400 font-bold"><i class="fa-solid ${m.icon} mr-1"></i>${esc(m.label)}</div><div class="font-bold text-white mt-1">${esc(x.name||m.label)}</div><div class="text-[11px] text-slate-400 mt-2">${esc(x.area||"Sikar")} • ${esc(x.phone||"—")}</div><div class="text-xs text-slate-300 mt-2">${esc(x.address||"Address not available")}</div></button>`}).join(""):"<div class='md:col-span-2 p-6 rounded-2xl bg-navy-850 border border-navy-700 text-center text-sm text-slate-400'>No property matched this owner phone number. Matching uses the last 10 digits.</div>";$("ownerDetailsModal").classList.remove("hidden");$("ownerDetailsModal").classList.add("flex");}
+function closeOwnerDetails(){$("ownerDetailsModal").classList.add("hidden");$("ownerDetailsModal").classList.remove("flex");}
+
 /* ================= PROFILE / OWNER ================= */
 
 async function deleteProfile(id){
@@ -914,6 +818,7 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){
     closeModal("propertyModal");
     closeModal("formModal");
+    closeOwnerDetails();
     $("searchResults").classList.add("hidden");
   }
 });
