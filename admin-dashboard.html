@@ -30,9 +30,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .table-wrap{overflow-x:auto}
 .toast{animation:toast .2s ease-out}@keyframes toast{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
 </style>
+<link rel="stylesheet" href="css/premium.css">
 </head>
 
-<body class="bg-navy-950 text-slate-100 font-sans min-h-screen">
+<body class="premium-grid bg-navy-950 text-slate-100 font-sans min-h-screen">
 
 <!-- ================= AUTH ================= -->
 <div id="authScreen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy-950/95 backdrop-blur-xl">
@@ -256,7 +257,39 @@ button:disabled{opacity:.55;cursor:not-allowed}
   </div>
 </div>
 
-<div id="ownerDetailsModal" class="fixed inset-0 z-[190] hidden items-center justify-center bg-navy-950/90 backdrop-blur-md p-4"><div class="bg-navy-900 border border-gold-500/35 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"><div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4"><div><p class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">Owner Profile</p><h3 id="ownerDetailsName" class="text-xl font-bold text-white mt-1">Owner</h3><p id="ownerDetailsContact" class="text-xs text-slate-400 mt-1">—</p></div><button type="button" onclick="closeOwnerDetails()" class="w-9 h-9 rounded-full bg-navy-850 border border-navy-700 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 overflow-y-auto max-h-[calc(90vh-100px)] space-y-5"><div class="grid grid-cols-1 sm:grid-cols-3 gap-3"><div class="bg-navy-850 border border-navy-700 rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Email</div><div id="ownerDetailsEmail" class="text-sm text-white mt-1 break-all">—</div></div><div class="bg-navy-850 border border-navy-700 rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Phone</div><div id="ownerDetailsPhone" class="text-sm text-white mt-1">—</div></div><div class="bg-navy-850 border border-navy-700 rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Matched Listings</div><div id="ownerDetailsCount" class="text-sm text-gold-300 font-bold mt-1">0</div></div></div><div><div class="flex items-center justify-between gap-3 mb-3"><h4 class="font-bold text-white">Owner Properties</h4><span class="text-[10px] text-slate-500">Phone match • last 10 digits</span></div><div id="ownerDetailsProperties" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div></div></div></div>
+<div id="ownerEditModal" class="fixed inset-0 z-[195] hidden items-center justify-center bg-navy-950/90 backdrop-blur-md p-4">
+  <div class="bg-navy-900 border border-gold-500/35 rounded-3xl max-w-4xl w-full max-h-[94vh] overflow-auto shadow-2xl">
+    <div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4">
+      <div><p class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">Owner Management</p>
+      <h3 class="text-xl font-bold text-white mt-1">Edit Owner</h3>
+      <p class="text-xs text-slate-400 mt-1">Name, phone, email, address and property details</p></div>
+      <button type="button" onclick="closeOwnerEdit()" class="w-9 h-9 rounded-full bg-navy-850 border border-navy-700"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-5 space-y-5">
+      <form id="ownerEditForm" class="grid sm:grid-cols-2 gap-3">
+        <input id="ownerEditId" type="hidden">
+        <div><label class="text-xs font-bold">Owner Name *</label><input id="ownerName" class="input mt-1" required></div>
+        <div><label class="text-xs font-bold">Phone Number *</label><input id="ownerPhone" class="input mt-1" type="tel" required></div>
+        <div><label class="text-xs font-bold">Email</label><input id="ownerEmail" class="input mt-1" type="email" placeholder="Owner email"></div>
+        <div><label class="text-xs font-bold">Owner Address</label><input id="ownerAddress" class="input mt-1" placeholder="Owner's address"></div>
+        <div><label class="text-xs font-bold">Property Type</label><select id="ownerPropertyType" class="input mt-1"><option value="hostels">Hostel / PG</option><option value="tiffins">Tiffin / Mess</option><option value="libraries">Library</option><option value="cafes">Cafe</option></select></div>
+        <div><label class="text-xs font-bold">Property / Business Name</label><input id="ownerProperty" class="input mt-1" placeholder="e.g. Shree Ram Hostel / Maa Tiffin"></div>
+        <div class="sm:col-span-2 flex gap-2 pt-2">
+          <button type="button" class="flex-1 py-3 rounded-xl bg-navy-800" onclick="closeOwnerEdit()">Cancel</button>
+          <button id="saveOwnerBtn" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Save Owner Live</button>
+        </div>
+      </form>
+      <div class="border-t border-navy-800 pt-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div><h4 class="font-bold">Add Live Property</h4><p class="text-xs text-slate-400">The owner's phone will be prefilled so the listing links to this owner.</p></div>
+          <button id="ownerAddPropertyBtn" type="button" class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i>Add Property</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="ownerDetailsModal" class="fixed inset-0 z-[190] hidden items-center justify-center bg-navy-950/90 backdrop-blur-md p-4"><div class="bg-navy-900 border border-gold-500/35 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"><div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4"><div><p class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">Owner Profile</p><h3 id="ownerDetailsName" class="text-xl font-bold text-white mt-1">Owner</h3><p id="ownerDetailsContact" class="text-xs text-slate-400 mt-1">—</p></div><button type="button" onclick="closeOwnerDetails()" class="w-9 h-9 rounded-full bg-navy-850 border border-navy-700 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 overflow-y-auto max-h-[calc(90vh-100px)] space-y-5"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Email</div><div id="ownerDetailsEmail" class="text-sm text-white mt-1 break-all">—</div></div><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Phone</div><div id="ownerDetailsPhone" class="text-sm text-white mt-1">—</div></div><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Address</div><div id="ownerDetailsAddress" class="text-sm text-white mt-1">—</div></div><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Matched Listings</div><div id="ownerDetailsCount" class="text-sm text-gold-300 font-bold mt-1">0</div></div></div><div><div class="flex items-center justify-between gap-3 mb-3"><h4 class="font-bold text-white">Owner Properties</h4><span class="text-[10px] text-slate-500">Phone match • last 10 digits</span></div><div id="ownerDetailsProperties" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div></div></div></div>
 
 <div id="toast" class="fixed bottom-5 right-5 z-[200] hidden max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl"></div>
 
@@ -693,7 +726,7 @@ $("propertyForm").addEventListener("submit",async e=>{
 
   const result=id
     ?await supabaseClient.from(type).update(payload).eq("id",id)
-    :await supabaseClient.from(type).insert(payload);
+    :await supabaseClient.from(type).insert({...payload,id:(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID():("00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0").slice(0,12))});
 
   setBusy(btn,false,"Save Live");
 
@@ -720,7 +753,7 @@ async function deleteProperty(type,id){
 }
 
 function normalizePhone(v){const d=String(v??"").replace(/\D/g,"");return d.length>=10?d.slice(-10):d;}
-function openOwnerDetails(id){const owner=state.owners.find(x=>String(x.id)===String(id));if(!owner)return;const key=normalizePhone(owner.phone),matches=[];[["hostels","Hostel / PG","fa-hotel"],["tiffins","Tiffin / Mess","fa-bowl-food"],["libraries","Library","fa-book-open"],["cafes","Cafe","fa-mug-hot"]].forEach(([type,label,icon])=>(state[type]||[]).forEach(item=>{if(key&&key===normalizePhone(item.phone))matches.push({type,label,icon,item});}));$("ownerDetailsName").textContent=owner.full_name||"Owner";$("ownerDetailsEmail").textContent=owner.email||"—";$("ownerDetailsPhone").textContent=owner.phone||"—";$("ownerDetailsContact").textContent=`${owner.email||"No email"} • ${owner.phone||"No phone"}`;$("ownerDetailsCount").textContent=String(matches.length);$("ownerDetailsProperties").innerHTML=matches.length?matches.map(m=>{const x=m.item;return `<button type="button" class="text-left bg-navy-850 border border-navy-700 hover:border-gold-500/50 rounded-2xl p-4 transition" data-owner-property="${esc(m.type)}" data-owner-property-id="${esc(x.id)}"><div class="text-[10px] uppercase text-gold-400 font-bold"><i class="fa-solid ${m.icon} mr-1"></i>${esc(m.label)}</div><div class="font-bold text-white mt-1">${esc(x.name||m.label)}</div><div class="text-[11px] text-slate-400 mt-2">${esc(x.area||"Sikar")} • ${esc(x.phone||"—")}</div><div class="text-xs text-slate-300 mt-2">${esc(x.address||"Address not available")}</div></button>`}).join(""):"<div class='md:col-span-2 p-6 rounded-2xl bg-navy-850 border border-navy-700 text-center text-sm text-slate-400'>No property matched this owner phone number. Matching uses the last 10 digits.</div>";$("ownerDetailsModal").classList.remove("hidden");$("ownerDetailsModal").classList.add("flex");}
+function openOwnerDetails(id){const owner=state.owners.find(x=>String(x.id)===String(id));if(!owner)return;const key=normalizePhone(owner.phone),matches=[];[["hostels","Hostel / PG","fa-hotel"],["tiffins","Tiffin / Mess","fa-bowl-food"],["libraries","Library","fa-book-open"],["cafes","Cafe","fa-mug-hot"]].forEach(([type,label,icon])=>(state[type]||[]).forEach(item=>{if(key&&key===normalizePhone(item.phone))matches.push({type,label,icon,item});}));$("ownerDetailsName").textContent=owner.full_name||"Owner";$("ownerDetailsEmail").textContent=owner.email||"—";$("ownerDetailsPhone").textContent=owner.phone||"—";$("ownerDetailsAddress").textContent=owner.address||"—";$("ownerDetailsContact").textContent=`${owner.email||"No email"} • ${owner.phone||"No phone"}`;$("ownerDetailsCount").textContent=String(matches.length);$("ownerDetailsProperties").innerHTML=matches.length?matches.map(m=>{const x=m.item;return `<button type="button" class="text-left bg-navy-850 border border-navy-700 hover:border-gold-500/50 rounded-2xl p-4 transition" data-owner-property="${esc(m.type)}" data-owner-property-id="${esc(x.id)}"><div class="text-[10px] uppercase text-gold-400 font-bold"><i class="fa-solid ${m.icon} mr-1"></i>${esc(m.label)}</div><div class="font-bold text-white mt-1">${esc(x.name||m.label)}</div><div class="text-[11px] text-slate-400 mt-2">${esc(x.area||"Sikar")} • ${esc(x.phone||"—")}</div><div class="text-xs text-slate-300 mt-2">${esc(x.address||"Address not available")}</div></button>`}).join(""):"<div class='md:col-span-2 p-6 rounded-2xl bg-navy-850 border border-navy-700 text-center text-sm text-slate-400'>No property matched this owner phone number. Matching uses the last 10 digits.</div>";$("ownerDetailsModal").classList.remove("hidden");$("ownerDetailsModal").classList.add("flex");}
 function closeOwnerDetails(){$("ownerDetailsModal").classList.add("hidden");$("ownerDetailsModal").classList.remove("flex");}
 
 /* ================= PROFILE / OWNER ================= */
@@ -745,24 +778,46 @@ async function deleteProfile(id){
 async function editOwner(id){
   const o=state.owners.find(x=>String(x.id)===String(id));
   if(!o)return;
-
-  const name=prompt("Owner name:",o.full_name||"");
-  if(name===null)return;
-
-  const phone=prompt("Owner phone:",o.phone||"");
-  if(phone===null)return;
-
-  const {error}=await supabaseClient
-    .from("profiles")
-    .update({full_name:text(name),phone:text(phone),role:"owner"})
-    .eq("id",id);
-
-  if(error)toast(error.message,true);
-  else{
-    toast("Owner updated.");
-    await loadAll();
-  }
+  $("ownerEditId").value=o.id||"";
+  $("ownerName").value=o.full_name||"";
+  $("ownerPhone").value=o.phone||"";
+  $("ownerEmail").value=o.email||"";
+  $("ownerAddress").value=o.address||"";
+  $("ownerProperty").value=o.property||"";
+  $("ownerPropertyType").value="hostels";
+  openModal("ownerEditModal");
 }
+
+function closeOwnerEdit(){closeModal("ownerEditModal");}
+
+$("ownerEditForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const id=text($("ownerEditId").value);
+  const name=text($("ownerName").value), phone=text($("ownerPhone").value);
+  if(!id||!name||!phone){toast("Owner name and phone are required.",true);return;}
+  const payload={
+    full_name:name, phone:phone, email:text($("ownerEmail").value)||null,
+    address:text($("ownerAddress").value)||null,
+    property:text($("ownerProperty").value)||null,
+    role:"owner"
+  };
+  const btn=$("saveOwnerBtn"); setBusy(btn,true);
+  const {error}=await supabaseClient.from("profiles").update(payload).eq("id",id);
+  setBusy(btn,false,"Save Owner Live");
+  if(error){toast(error.message,true);return;}
+  toast("Owner details saved live.");
+  await loadAll();
+});
+
+$("ownerAddPropertyBtn").addEventListener("click",()=>{
+  const phone=text($("ownerPhone").value);
+  if(!phone){toast("Owner phone is required before adding a property.",true);return;}
+  closeOwnerEdit();
+  openCreate($("ownerPropertyType").value||"hostels");
+  $("fPhone").value=phone;
+  $("fAddress").value=text($("ownerAddress").value);
+  $("fName").value=text($("ownerProperty").value);
+});
 
 /* ================= VIEW ================= */
 
@@ -819,6 +874,7 @@ document.addEventListener("keydown",e=>{
     closeModal("propertyModal");
     closeModal("formModal");
     closeOwnerDetails();
+    closeOwnerEdit();
     $("searchResults").classList.add("hidden");
   }
 });
