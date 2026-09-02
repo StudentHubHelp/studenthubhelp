@@ -1,1627 +1,1502 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>My Dashboard | StudentHubHelp</title>
+  <title>Owner Dashboard | StudentHubHelp</title>
 
-    <link rel="icon" type="image/png" href="logo.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(212,175,55,.12), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(59,130,246,.10), transparent 30%),
+        #07111f;
+      color: #f8fafc;
+      min-height: 100vh;
+    }
 
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    .glass {
+      background: rgba(15, 29, 48, .78);
+      border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    .gold {
+      color: #f5d76e;
+    }
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        navy: {
-                            950: '#040814',
-                            900: '#081026',
-                            850: '#0D1838',
-                            800: '#14224D',
-                            700: '#1F316B'
-                        },
-                        gold: {
-                            100: '#FFF7D6',
-                            200: '#FDECB2',
-                            300: '#F5DE88',
-                            400: '#E6C65E',
-                            500: '#D4AF37',
-                            600: '#B89020',
-                            700: '#8C6B10'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        display: ['Cinzel', 'serif']
-                    }
-                }
-            }
-        };
-    </script>
+    .gold-bg {
+      background: linear-gradient(135deg, #f5d76e, #c99a24);
+      color: #07111f;
+    }
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+    .property-card {
+      transition: .25s ease;
+    }
 
-        body {
-            background:
-                radial-gradient(circle at top left, rgba(212,175,55,.08), transparent 30%),
-                radial-gradient(circle at bottom right, rgba(31,49,107,.18), transparent 35%),
-                #040814;
-        }
+    .property-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(245,215,110,.35);
+      box-shadow: 0 25px 70px rgba(0,0,0,.35);
+    }
 
-        .gold-gradient-text {
-            background: linear-gradient(
-                135deg,
-                #FFF7D6 0%,
-                #D4AF37 50%,
-                #B89020 100%
-            );
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    .property-banner {
+      background:
+        linear-gradient(90deg, #f5d76e, #d5a928, #f5d76e);
+      color: #07111f;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
 
-        .gold-gradient-bg {
-            background: linear-gradient(
-                135deg,
-                #D4AF37 0%,
-                #F5DE88 50%,
-                #B89020 100%
-            );
-        }
+    .modal-bg {
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(8px);
+    }
 
-        .glass {
-            background: rgba(8,16,38,.72);
-            backdrop-filter: blur(18px);
-            border: 1px solid rgba(212,175,55,.18);
-        }
+    input {
+      outline: none;
+    }
 
-        .gold-border {
-            border: 1px solid rgba(212,175,55,.25);
-        }
+    input:focus {
+      border-color: rgba(245,215,110,.7) !important;
+      box-shadow: 0 0 0 3px rgba(245,215,110,.08);
+    }
 
-        .gold-border:hover {
-            border-color: rgba(212,175,55,.55);
-        }
+    .loader {
+      width: 22px;
+      height: 22px;
+      border: 3px solid rgba(255,255,255,.18);
+      border-top-color: #f5d76e;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      display: inline-block;
+    }
 
-        .property-card {
-            transition:
-                transform .2s ease,
-                border-color .2s ease,
-                box-shadow .2s ease;
-        }
-
-        .property-card:hover {
-            transform: translateY(-3px);
-            border-color: rgba(212,175,55,.5);
-            box-shadow: 0 15px 45px rgba(0,0,0,.25);
-        }
-
-        .loader {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255,255,255,.2);
-            border-top-color: #D4AF37;
-            border-radius: 50%;
-            animation: spin .7s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .toast {
-            animation: toastIn .25s ease;
-        }
-
-        @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 
-<body class="text-slate-100 font-sans antialiased min-h-screen">
+<body>
 
-    <!-- ================= TOP NAV ================= -->
+  <!-- HEADER -->
+  <header class="sticky top-0 z-50 glass border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
 
-    <header class="sticky top-0 z-50 bg-navy-950/90 backdrop-blur-xl border-b border-gold-500/15">
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-
-            <div class="flex items-center justify-between gap-4">
-
-                <a href="./" class="flex items-center gap-3 min-w-0">
-
-                    <div class="w-11 h-11 rounded-xl gold-gradient-bg
-                                flex items-center justify-center
-                                text-navy-950 font-display font-extrabold
-                                shadow-lg flex-shrink-0">
-
-                        SH
-
-                    </div>
-
-                    <div class="min-w-0">
-
-                        <div class="font-display font-bold text-lg gold-gradient-text truncate">
-                            StudentHubHelp
-                        </div>
-
-                        <div class="text-[10px] text-slate-400 uppercase tracking-widest">
-                            Student Dashboard
-                        </div>
-
-                    </div>
-
-                </a>
-
-
-                <div class="flex items-center gap-2">
-
-                    <a href="./add-listing.html"
-                       class="hidden sm:inline-flex items-center gap-2
-                              px-4 py-2.5 rounded-xl
-                              gold-gradient-bg text-navy-950
-                              text-xs font-bold">
-
-                        <i class="fa-solid fa-plus"></i>
-                        Add Listing
-
-                    </a>
-
-                    <button id="logoutBtn"
-                            class="inline-flex items-center gap-2
-                                   px-3 py-2.5 rounded-xl
-                                   bg-red-500/10 border border-red-500/20
-                                   text-red-300 hover:bg-red-500/20
-                                   text-xs font-bold">
-
-                        <i class="fa-solid fa-right-from-bracket"></i>
-
-                        <span class="hidden sm:inline">
-                            Logout
-                        </span>
-
-                    </button>
-
-                </div>
-
-            </div>
-
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl gold-bg flex items-center justify-center shadow-lg">
+          <i class="fa-solid fa-store text-lg"></i>
         </div>
 
-    </header>
+        <div>
+          <div class="font-extrabold text-lg">
+            StudentHub<span class="gold">Help</span>
+          </div>
+          <div class="text-xs text-slate-400">
+            Owner Dashboard
+          </div>
+        </div>
+      </div>
+
+      <button id="logoutBtn"
+              class="px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition text-sm font-semibold">
+        <i class="fa-solid fa-right-from-bracket mr-1"></i>
+        Logout
+      </button>
+
+    </div>
+  </header>
 
 
-    <!-- ================= MAIN ================= -->
+  <!-- MAIN -->
+  <main class="max-w-6xl mx-auto px-4 py-8">
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- PROFILE -->
+    <section class="glass rounded-3xl p-5 md:p-7 mb-7">
 
-        <!-- Loading -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
 
-        <div id="loadingScreen"
-             class="min-h-[60vh] flex flex-col items-center justify-center">
+        <div class="flex items-center gap-4">
 
-            <div class="loader mb-4"></div>
+          <div id="profileAvatar"
+               class="w-16 h-16 rounded-2xl gold-bg flex items-center justify-center text-2xl font-black">
+            O
+          </div>
 
-            <p class="text-sm text-slate-400">
-                Loading your dashboard...
+          <div>
+            <p class="text-xs uppercase tracking-widest text-slate-400 mb-1">
+              Owner Account
             </p>
 
-        </div>
-
-
-        <!-- Dashboard -->
-
-        <div id="dashboard"
-             class="hidden space-y-8">
-
-
-            <!-- ================= WELCOME ================= -->
-
-            <section class="glass rounded-3xl p-6 sm:p-8">
-
-                <div class="flex flex-col lg:flex-row
-                            lg:items-center
-                            lg:justify-between
-                            gap-6">
-
-                    <div>
-
-                        <div class="text-[11px] uppercase tracking-[.25em]
-                                    text-gold-400 font-bold mb-2">
-
-                            Welcome back
-
-                        </div>
-
-                        <h1 id="userName"
-                            class="text-3xl sm:text-4xl
-                                   font-display font-extrabold
-                                   gold-gradient-text">
-
-                            —
-
-                        </h1>
-
-                        <p id="userEmail"
-                           class="text-sm text-slate-400 mt-2">
-
-                            —
-
-                        </p>
-
-                    </div>
-
-
-                    <div class="flex flex-wrap gap-3">
-
-                        <div class="bg-navy-850 rounded-2xl
-                                    border border-navy-700
-                                    px-5 py-4">
-
-                            <div class="text-[10px] uppercase
-                                        tracking-widest
-                                        text-slate-500">
-
-                                Account
-
-                            </div>
-
-                            <div id="userRole"
-                                 class="text-sm font-bold text-emerald-400 mt-1">
-
-                                —
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="bg-navy-850 rounded-2xl
-                                    border border-navy-700
-                                    px-5 py-4">
-
-                            <div class="text-[10px] uppercase
-                                        tracking-widest
-                                        text-slate-500">
-
-                                My Listings
-
-                            </div>
-
-                            <div id="listingCount"
-                                 class="text-xl font-extrabold
-                                        text-gold-300 mt-1">
-
-                                0
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- ================= PROFILE ================= -->
-
-            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <div class="glass rounded-3xl p-6">
-
-                    <div class="flex items-center gap-3 mb-5">
-
-                        <div class="w-11 h-11 rounded-xl
-                                    bg-gold-500/10
-                                    border border-gold-500/20
-                                    flex items-center justify-center
-                                    text-gold-400">
-
-                            <i class="fa-solid fa-user"></i>
-
-                        </div>
-
-                        <div>
-
-                            <h2 class="font-bold">
-                                My Profile
-                            </h2>
-
-                            <p class="text-[11px] text-slate-500">
-                                Live profile from Supabase
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="space-y-4 text-sm">
-
-                        <div>
-                            <div class="text-[10px] uppercase
-                                        tracking-widest
-                                        text-slate-500 mb-1">
-                                Name
-                            </div>
-
-                            <div id="profileName"
-                                 class="font-semibold">
-                                —
-                            </div>
-                        </div>
-
-
-                        <div>
-                            <div class="text-[10px] uppercase
-                                        tracking-widest
-                                        text-slate-500 mb-1">
-                                Email
-                            </div>
-
-                            <div id="profileEmail"
-                                 class="font-semibold break-all">
-                                —
-                            </div>
-                        </div>
-
-
-                        <div>
-                            <div class="text-[10px] uppercase
-                                        tracking-widest
-                                        text-slate-500 mb-1">
-                                Phone
-                            </div>
-
-                            <div id="profilePhone"
-                                 class="font-semibold">
-                                —
-                            </div>
-                        </div>
-
-
-                        <div>
-                            <div class="text-[10px] uppercase
-                                        tracking-widest
-                                        text-slate-500 mb-1">
-                                Address
-                            </div>
-
-                            <div id="profileAddress"
-                                 class="font-semibold text-slate-300">
-                                —
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- ================= STATUS ================= -->
-
-                <div class="lg:col-span-2 glass rounded-3xl p-6">
-
-                    <div class="flex items-center justify-between gap-4 mb-5">
-
-                        <div>
-
-                            <h2 class="font-bold">
-                                Account Status
-                            </h2>
-
-                            <p class="text-[11px] text-slate-500 mt-1">
-                                Current Supabase connection
-                            </p>
-
-                        </div>
-
-                        <span id="dbStatus"
-                              class="px-3 py-1.5 rounded-full
-                                     bg-slate-500/10
-                                     text-slate-400
-                                     text-[10px] font-bold">
-
-                            Checking...
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                        <div class="bg-navy-850 rounded-2xl
-                                    border border-navy-700 p-5">
-
-                            <div class="text-gold-400 mb-3">
-                                <i class="fa-solid fa-database"></i>
-                            </div>
-
-                            <div class="font-bold text-sm">
-                                Live Database
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-1">
-                                Listings are loaded directly from Supabase.
-                            </p>
-
-                        </div>
-
-
-                        <div class="bg-navy-850 rounded-2xl
-                                    border border-navy-700 p-5">
-
-                            <div class="text-emerald-400 mb-3">
-                                <i class="fa-solid fa-arrows-rotate"></i>
-                            </div>
-
-                            <div class="font-bold text-sm">
-                                Live Sync
-                            </div>
-
-                            <p class="text-xs text-slate-500 mt-1">
-                                New or updated matching listings refresh automatically.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- ================= MY LISTINGS ================= -->
-
-            <section>
-
-                <div class="flex flex-col sm:flex-row
-                            sm:items-end
-                            sm:justify-between
-                            gap-4 mb-5">
-
-                    <div>
-
-                        <div class="text-[10px] uppercase
-                                    tracking-[.25em]
-                                    text-gold-400 font-bold mb-1">
-
-                            Owner Area
-
-                        </div>
-
-                        <h2 class="text-2xl sm:text-3xl
-                                   font-display font-bold">
-
-                            My Listings
-
-                        </h2>
-
-                        <p class="text-xs text-slate-500 mt-1">
-
-                            Properties linked to your registered phone number.
-
-                        </p>
-
-                    </div>
-
-
-                    <a href="./add-listing.html"
-                       class="inline-flex items-center justify-center
-                              gap-2 px-5 py-3 rounded-xl
-                              gold-gradient-bg
-                              text-navy-950
-                              text-xs font-bold">
-
-                        <i class="fa-solid fa-plus"></i>
-
-                        Add New Property
-
-                    </a>
-
-                </div>
-
-
-                <!-- Listings -->
-
-                <div id="listingsGrid"
-                     class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-
-                </div>
-
-
-                <!-- Empty -->
-
-                <div id="emptyListings"
-                     class="hidden glass rounded-3xl p-10 text-center">
-
-                    <div class="w-16 h-16 mx-auto rounded-2xl
-                                bg-gold-500/10
-                                border border-gold-500/20
-                                flex items-center justify-center
-                                text-gold-400 text-2xl">
-
-                        <i class="fa-solid fa-building-circle-xmark"></i>
-
-                    </div>
-
-                    <h3 class="font-bold text-lg mt-5">
-                        No matching listings found
-                    </h3>
-
-                    <p class="text-sm text-slate-500 max-w-md mx-auto mt-2">
-
-                        We could not find a property in Hostels, Tiffins,
-                        Libraries or Cafes with your registered phone number.
-
-                    </p>
-
-                    <a href="./add-listing.html"
-                       class="inline-flex items-center gap-2
-                              mt-5 px-5 py-3 rounded-xl
-                              gold-gradient-bg
-                              text-navy-950
-                              text-xs font-bold">
-
-                        <i class="fa-solid fa-plus"></i>
-
-                        Add Your Property
-
-                    </a>
-
-                </div>
-
-            </section>
+            <h1 id="profileName"
+                class="text-2xl md:text-3xl font-extrabold">
+              Owner
+            </h1>
+
+            <p id="profileEmail"
+               class="text-sm text-slate-400 mt-1">
+              —
+            </p>
+          </div>
 
         </div>
 
-    </main>
+        <button id="editProfileBtn"
+                class="gold-bg px-5 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition">
+          <i class="fa-solid fa-pen-to-square mr-1"></i>
+          Edit Profile
+        </button>
+
+      </div>
 
 
-    <!-- ================= TOAST ================= -->
+      <!-- PROFILE INFO -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-7">
 
-    <div id="toast"
-         class="hidden fixed bottom-5 right-5 z-[100]
-                max-w-sm rounded-xl
-                px-4 py-3 text-sm font-semibold
-                shadow-2xl">
+        <div class="rounded-2xl bg-white/[.04] border border-white/10 p-4">
+          <div class="text-xs text-slate-400 mb-1">
+            Name
+          </div>
+          <div id="profileNameInfo"
+               class="font-semibold">
+            —
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-white/[.04] border border-white/10 p-4">
+          <div class="text-xs text-slate-400 mb-1">
+            Phone
+          </div>
+          <div id="profilePhoneInfo"
+               class="font-semibold">
+            —
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-white/[.04] border border-white/10 p-4 md:col-span-2">
+          <div class="text-xs text-slate-400 mb-1">
+            Address
+          </div>
+          <div id="profileAddressInfo"
+               class="font-semibold">
+            —
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- LISTINGS HEADER -->
+    <section class="mb-5">
+
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+
+        <div>
+          <p class="text-xs uppercase tracking-[.2em] text-slate-500 mb-1">
+            Property Management
+          </p>
+
+          <h2 class="text-2xl md:text-3xl font-extrabold">
+            Your <span class="gold">Listings</span>
+          </h2>
+
+          <p class="text-sm text-slate-400 mt-2">
+            Properties connected with your registered owner phone number.
+          </p>
+        </div>
+
+        <div id="listingCount"
+             class="text-sm text-slate-400">
+          0 Listings
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- LISTINGS -->
+    <section id="listingsContainer"
+             class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+      <div class="glass rounded-3xl p-8 text-center md:col-span-2">
+        <span class="loader"></span>
+        <p class="text-slate-400 mt-4">
+          Loading your listings...
+        </p>
+      </div>
+
+    </section>
+
+
+    <!-- NO LISTING MESSAGE -->
+    <section id="noListing"
+             class="hidden glass rounded-3xl p-8 md:p-12 text-center mt-5">
+
+      <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mx-auto flex items-center justify-center">
+        <i class="fa-solid fa-building-circle-xmark text-2xl text-slate-500"></i>
+      </div>
+
+      <h3 class="text-xl font-bold mt-5">
+        No Property Found
+      </h3>
+
+      <p class="text-slate-400 text-sm max-w-lg mx-auto mt-2">
+        Your owner phone number is not currently matching any live
+        Hostel, PG, Tiffin, Library or Cafe listing.
+      </p>
+
+    </section>
+
+  </main>
+
+
+  <!-- EDIT PROFILE MODAL -->
+  <div id="profileModal"
+       class="hidden fixed inset-0 z-[100] modal-bg items-center justify-center p-4">
+
+    <div class="glass rounded-3xl w-full max-w-lg p-6 md:p-7">
+
+      <div class="flex items-center justify-between mb-6">
+
+        <div>
+          <h2 class="text-xl font-extrabold">
+            Edit Profile
+          </h2>
+
+          <p class="text-sm text-slate-400 mt-1">
+            Update your owner name and address.
+          </p>
+        </div>
+
+        <button id="closeProfileModal"
+                class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+      </div>
+
+
+      <form id="profileForm">
+
+        <label class="block text-sm font-semibold mb-2">
+          Owner Name
+        </label>
+
+        <input id="editName"
+               type="text"
+               required
+               class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white mb-5"
+               placeholder="Enter your name">
+
+
+        <label class="block text-sm font-semibold mb-2">
+          Address
+        </label>
+
+        <textarea id="editAddress"
+                  rows="4"
+                  class="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white resize-none mb-6"
+                  placeholder="Enter your address"></textarea>
+
+
+        <div class="flex gap-3">
+
+          <button type="button"
+                  id="cancelProfileBtn"
+                  class="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 font-semibold">
+            Cancel
+          </button>
+
+          <button type="submit"
+                  id="saveProfileBtn"
+                  class="flex-1 px-4 py-3 rounded-xl gold-bg font-bold">
+            Save Changes
+          </button>
+
+        </div>
+
+      </form>
 
     </div>
 
+  </div>
+
+
+  <!-- TOAST -->
+  <div id="toast"
+       class="hidden fixed bottom-5 right-5 z-[200] max-w-sm px-5 py-4 rounded-2xl shadow-2xl text-sm font-semibold">
+  </div>
+
 
 <script>
-
 "use strict";
-
 
 /* =========================================================
    SUPABASE
-========================================================= */
+   ========================================================= */
 
 const SUPABASE_URL =
-    "https://idurlccrarznnnqixxsd.supabase.co";
+  "https://idurlccrarznnnqixxsd.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
-const supabaseClient =
-    supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-    );
-
-
-/* =========================================================
-   IMPORTANT ADMIN EXCLUSION
-   These values are ONLY used to make sure the Director
-   account can NEVER be treated as an owner/listing owner.
-========================================================= */
 
 const ADMIN_EMAIL =
-    "satpalswami22742@gmail.com";
+  "satpalswami22742@gmail.com";
 
-const ADMIN_PHONE =
-    "9929718264";
+
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 
 
 /* =========================================================
    STATE
-========================================================= */
+   ========================================================= */
 
 const state = {
-    user: null,
-    profile: null,
-    listings: [],
-    realtimeChannels: []
+  user: null,
+  profile: null,
+  listings: [],
+  realtimeChannels: []
 };
 
 
 /* =========================================================
    HELPERS
-========================================================= */
+   ========================================================= */
 
 function $(id) {
-    return document.getElementById(id);
+  return document.getElementById(id);
 }
 
 
-function escapeHtml(value) {
-
-    return String(value ?? "")
-        .replace(/[&<>"']/g, function(char) {
-
-            return {
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#039;"
-            }[char];
-
-        });
-
+function text(value) {
+  return String(value ?? "").trim();
 }
 
 
+function esc(value) {
+  return String(value ?? "")
+    .replace(/[&<>"']/g, c => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[c]));
+}
+
+
+/*
+  Phone matching:
+  +91 99297 18264
+  9929718264
+  91-9929718264
+
+  All become:
+  9929718264
+*/
 function normalizePhone(value) {
 
-    return String(value ?? "")
-        .replace(/\D/g, "")
-        .slice(-10);
+  const digits =
+    String(value ?? "").replace(/\D/g, "");
 
+  if (digits.length >= 10) {
+    return digits.slice(-10);
+  }
+
+  return digits;
 }
 
 
-function isAdminAccount(profile, user) {
+function showValue(value) {
 
-    const email =
-        String(
-            profile?.email ||
-            user?.email ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
+  const v = text(value);
 
-    const phone =
-        normalizePhone(
-            profile?.phone ||
-            user?.user_metadata?.phone ||
-            ""
-        );
-
-    return (
-        email === ADMIN_EMAIL.toLowerCase() ||
-        phone === ADMIN_PHONE
-    );
-
+  return v ? esc(v) : "—";
 }
 
 
 function showToast(message, error = false) {
 
-    const el = $("toast");
+  const el = $("toast");
 
-    el.textContent = message;
+  el.textContent = message;
 
-    el.className =
-        "fixed bottom-5 right-5 z-[100] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl toast " +
-        (
-            error
-                ? "bg-red-600 text-white"
-                : "bg-emerald-600 text-white"
-        );
+  el.className =
+    "fixed bottom-5 right-5 z-[200] max-w-sm px-5 py-4 rounded-2xl shadow-2xl text-sm font-semibold " +
+    (error
+      ? "bg-red-600 text-white"
+      : "bg-emerald-600 text-white");
 
-    setTimeout(() => {
-
-        el.classList.add("hidden");
-
-    }, 3200);
-
+  setTimeout(() => {
+    el.classList.add("hidden");
+  }, 3500);
 }
 
 
-/* =========================================================
-   AUTH SESSION
-========================================================= */
+function setButtonLoading(button, loading) {
 
-async function getCurrentSession() {
+  if (!button) return;
 
-    const {
-        data,
-        error
-    } = await supabaseClient.auth.getSession();
+  if (loading) {
 
-    if (error) {
+    button.disabled = true;
 
-        throw error;
+    button.dataset.oldText =
+      button.innerHTML;
 
-    }
+    button.innerHTML =
+      '<span class="loader" style="width:18px;height:18px;border-width:2px;"></span>';
 
-    return data?.session || null;
+  } else {
 
-}
+    button.disabled = false;
 
-
-/* =========================================================
-   LOAD PROFILE
-========================================================= */
-
-async function loadProfile(user) {
-
-    /*
-       First priority:
-       Auth user UUID -> profiles.id
-
-       This prevents accidentally selecting another
-       user's profile just because an email/phone matches.
-    */
-
-    let {
-        data,
-        error
-    } = await supabaseClient
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-    if (error) {
-
-        throw error;
-
-    }
-
-
-    /*
-       Compatibility fallback for older profile rows.
-
-       Still protected by matching the authenticated
-       user's email.
-    */
-
-    if (!data && user.email) {
-
-        const fallback =
-            await supabaseClient
-                .from("profiles")
-                .select("*")
-                .eq(
-                    "email",
-                    user.email.toLowerCase()
-                )
-                .maybeSingle();
-
-        if (fallback.error) {
-
-            throw fallback.error;
-
-        }
-
-        data = fallback.data || null;
-
-    }
-
-
-    return data;
-
+    button.innerHTML =
+      button.dataset.oldText || "Save Changes";
+  }
 }
 
 
 /* =========================================================
    PROFILE UI
-========================================================= */
+   ========================================================= */
 
 function renderProfile() {
 
-    const profile = state.profile;
-    const user = state.user;
+  const p = state.profile;
 
-    const name =
-        profile?.full_name ||
-        user?.user_metadata?.full_name ||
-        "User";
+  if (!p) return;
 
-    const email =
-        profile?.email ||
-        user?.email ||
-        "—";
+  const name =
+    text(p.full_name) || "Owner";
 
-    const phone =
-        profile?.phone ||
-        user?.user_metadata?.phone ||
-        "—";
+  const email =
+    text(state.user?.email) || text(p.email) || "—";
 
-    const address =
-        profile?.address ||
-        "—";
+  const phone =
+    text(p.phone) || "—";
 
-    const role =
-        String(
-            profile?.role ||
-            user?.user_metadata?.role ||
-            "student"
-        );
+  const address =
+    text(p.address) || "—";
 
 
-    $("userName").textContent = name;
-    $("userEmail").textContent = email;
+  $("profileName").textContent =
+    name;
 
-    $("profileName").textContent = name;
-    $("profileEmail").textContent = email;
-    $("profilePhone").textContent = phone;
-    $("profileAddress").textContent = address;
+  $("profileNameInfo").textContent =
+    name;
 
-    $("userRole").textContent =
-        role.toUpperCase();
+  $("profileEmail").textContent =
+    email;
 
+  $("profilePhoneInfo").textContent =
+    phone;
+
+  $("profileAddressInfo").textContent =
+    address;
+
+
+  $("profileAvatar").textContent =
+    name.charAt(0).toUpperCase();
+
+
+  $("editName").value =
+    text(p.full_name);
+
+  $("editAddress").value =
+    text(p.address);
 }
 
 
 /* =========================================================
+   LOAD CURRENT PROFILE
+   ========================================================= */
+
+async function loadProfile(user) {
+
+  /*
+    IMPORTANT:
+    Profile is loaded by AUTH UUID first.
+    We do NOT connect the Director account with owner data.
+  */
+
+  const { data, error } =
+    await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  let profile = data;
+
+
+  /*
+    Fallback only if profile ID record does not exist.
+  */
+  if (!profile && user.email) {
+
+    const result =
+      await supabaseClient
+        .from("profiles")
+        .select("*")
+        .eq("email", user.email)
+        .maybeSingle();
+
+    if (!result.error) {
+      profile = result.data;
+    }
+  }
+
+
+  if (!profile) {
+    throw new Error(
+      "Owner profile not found in Supabase."
+    );
+  }
+
+
+  const role =
+    String(profile.role || "").toLowerCase();
+
+
+  if (!["owner", "property_owner"].includes(role)) {
+
+    throw new Error(
+      "This account is not registered as an owner."
+    );
+  }
+
+
+  /*
+    Director protection.
+    Admin account is NEVER treated as owner.
+  */
+  if (
+    String(user.email || "").toLowerCase() ===
+    ADMIN_EMAIL.toLowerCase()
+  ) {
+
+    window.location.href =
+      "admin-dashboard.html";
+
+    return null;
+  }
+
+
+  state.profile = profile;
+
+  renderProfile();
+
+  return profile;
+}
+
+
+/* =========================================================
+   PROPERTY CONFIG
+   ========================================================= */
+
+const propertyConfig = {
+
+  hostels: {
+    label: "Hostel / PG",
+    icon: "fa-hotel"
+  },
+
+  tiffins: {
+    label: "Tiffin / Mess",
+    icon: "fa-bowl-food"
+  },
+
+  libraries: {
+    label: "Library",
+    icon: "fa-book-open"
+  },
+
+  cafes: {
+    label: "Cafe",
+    icon: "fa-mug-hot"
+  }
+
+};
+
+
+/* =========================================================
    LOAD OWNER LISTINGS
-========================================================= */
+   ========================================================= */
 
 async function loadOwnerListings() {
 
+  const ownerPhone =
+    normalizePhone(state.profile?.phone);
+
+
+  $("listingsContainer").innerHTML = `
+    <div class="glass rounded-3xl p-8 text-center md:col-span-2">
+      <span class="loader"></span>
+      <p class="text-slate-400 mt-4">
+        Loading your properties...
+      </p>
+    </div>
+  `;
+
+
+  $("noListing").classList.add("hidden");
+
+
+  if (!ownerPhone) {
+
     state.listings = [];
-
-    const profile = state.profile;
-    const user = state.user;
-
-
-    /*
-       ADMIN MUST NEVER BE CONNECTED
-       TO OWNER LISTINGS.
-    */
-
-    if (isAdminAccount(profile, user)) {
-
-        console.warn(
-            "Director account detected. Owner listings disabled."
-        );
-
-        renderListings();
-
-        return;
-
-    }
-
-
-    const role =
-        String(
-            profile?.role ||
-            user?.user_metadata?.role ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-    /*
-       Only owner accounts can see
-       their owner listings.
-    */
-
-    if (
-        role !== "owner" &&
-        role !== "property_owner"
-    ) {
-
-        renderListings();
-
-        return;
-
-    }
-
-
-    const ownerPhone =
-        normalizePhone(
-            profile?.phone ||
-            user?.user_metadata?.phone ||
-            ""
-        );
-
-
-    if (!ownerPhone) {
-
-        renderListings();
-
-        return;
-
-    }
-
-
-    /*
-       Load all four property directories.
-
-       We intentionally load the real Supabase rows
-       and match the owner phone locally using the
-       normalized last 10 digits.
-    */
-
-    const results =
-        await Promise.all([
-
-            supabaseClient
-                .from("hostels")
-                .select("*"),
-
-            supabaseClient
-                .from("tiffins")
-                .select("*"),
-
-            supabaseClient
-                .from("libraries")
-                .select("*"),
-
-            supabaseClient
-                .from("cafes")
-                .select("*")
-
-        ]);
-
-
-    const firstError =
-        results.find(result => result.error);
-
-    if (firstError) {
-
-        throw firstError.error;
-
-    }
-
-
-    const categories = [
-
-        {
-            type: "hostels",
-            label: "Hostel / PG",
-            icon: "fa-hotel",
-            data: results[0].data || []
-        },
-
-        {
-            type: "tiffins",
-            label: "Tiffin / Mess",
-            icon: "fa-bowl-food",
-            data: results[1].data || []
-        },
-
-        {
-            type: "libraries",
-            label: "Library",
-            icon: "fa-book-open",
-            data: results[2].data || []
-        },
-
-        {
-            type: "cafes",
-            label: "Cafe",
-            icon: "fa-mug-hot",
-            data: results[3].data || []
-        }
-
-    ];
-
-
-    const matched = [];
-
-
-    categories.forEach(category => {
-
-        category.data.forEach(item => {
-
-            const propertyPhone =
-                normalizePhone(item.phone);
-
-
-            /*
-               CORE LINKING RULE:
-
-               owner phone
-                    ==
-               property phone
-
-               after normalization.
-            */
-
-            if (
-                propertyPhone &&
-                propertyPhone === ownerPhone
-            ) {
-
-                matched.push({
-
-                    ...item,
-
-                    _type: category.type,
-                    _label: category.label,
-                    _icon: category.icon
-
-                });
-
-            }
-
-        });
-
-    });
-
-
-    state.listings = matched;
 
     renderListings();
 
+    return;
+  }
+
+
+  const tables = [
+    "hostels",
+    "tiffins",
+    "libraries",
+    "cafes"
+  ];
+
+
+  const results =
+    await Promise.all(
+
+      tables.map(table =>
+        supabaseClient
+          .from(table)
+          .select("*")
+      )
+
+    );
+
+
+  const allListings = [];
+
+
+  results.forEach((result, index) => {
+
+    if (result.error) {
+
+      console.error(
+        tables[index],
+        result.error
+      );
+
+      return;
+    }
+
+
+    const rows =
+      result.data || [];
+
+
+    rows.forEach(row => {
+
+      const propertyPhone =
+        normalizePhone(row.phone);
+
+
+      /*
+        IMPORTANT:
+        Property belongs to owner when
+        normalized phone numbers match.
+      */
+
+      if (
+        propertyPhone &&
+        propertyPhone === ownerPhone
+      ) {
+
+        allListings.push({
+
+          ...row,
+
+          propertyType:
+            tables[index],
+
+          propertyLabel:
+            propertyConfig[tables[index]].label,
+
+          propertyIcon:
+            propertyConfig[tables[index]].icon
+
+        });
+
+      }
+
+    });
+
+  });
+
+
+  state.listings = allListings;
+
+  renderListings();
 }
 
 
 /* =========================================================
    RENDER LISTINGS
-========================================================= */
+   ========================================================= */
 
 function renderListings() {
 
-    const grid = $("listingsGrid");
-    const empty = $("emptyListings");
+  const container =
+    $("listingsContainer");
 
-    const listings = state.listings || [];
-
-    $("listingCount").textContent =
-        listings.length;
+  const listings =
+    state.listings || [];
 
 
-    if (!listings.length) {
+  $("listingCount").textContent =
+    `${listings.length} ${listings.length === 1 ? "Listing" : "Listings"}`;
 
-        grid.innerHTML = "";
 
-        empty.classList.remove("hidden");
+  if (!listings.length) {
 
-        return;
+    container.innerHTML = "";
 
+    $("noListing").classList.remove("hidden");
+
+    return;
+  }
+
+
+  $("noListing").classList.add("hidden");
+
+
+  container.innerHTML =
+    listings.map((item, index) => {
+
+      const image =
+        text(item.image);
+
+
+      const name =
+        text(item.name) ||
+        item.propertyLabel ||
+        "Property";
+
+
+      const category =
+        text(item.category) ||
+        item.propertyLabel;
+
+
+      const area =
+        text(item.area);
+
+
+      const address =
+        text(item.address);
+
+
+      const phone =
+        text(item.phone);
+
+
+      const timing =
+        text(item.timing);
+
+
+      const facilities =
+        text(item.facilities);
+
+
+      const rating =
+        item.rating !== null &&
+        item.rating !== undefined &&
+        text(item.rating) !== ""
+          ? item.rating
+          : "—";
+
+
+      const digits =
+        normalizePhone(phone);
+
+
+      return `
+
+        <article class="property-card glass rounded-3xl overflow-hidden border border-white/10">
+
+          <!-- OWNER BANNER -->
+          <div class="property-banner px-4 py-2.5 text-xs">
+            <i class="fa-solid fa-crown mr-2"></i>
+            Your Property • आपकी Property
+          </div>
+
+
+          <!-- IMAGE -->
+          <div class="relative h-48 bg-slate-900 overflow-hidden">
+
+            ${
+              image
+              ? `
+                <img
+                  src="${esc(image)}"
+                  alt="${esc(name)}"
+                  class="w-full h-full object-cover"
+                  onerror="this.style.display='none';this.nextElementSibling.classList.remove('hidden');"
+                >
+
+                <div class="hidden absolute inset-0 flex items-center justify-center bg-slate-900">
+                  <i class="fa-solid ${esc(item.propertyIcon)} text-4xl text-slate-600"></i>
+                </div>
+              `
+              : `
+                <div class="w-full h-full flex items-center justify-center bg-slate-900">
+                  <i class="fa-solid ${esc(item.propertyIcon)} text-4xl text-slate-600"></i>
+                </div>
+              `
+            }
+
+
+            <!-- TYPE -->
+            <div class="absolute top-3 left-3">
+              <span class="px-3 py-1.5 rounded-full bg-black/70 backdrop-blur text-xs font-bold">
+                <i class="fa-solid ${esc(item.propertyIcon)} mr-1"></i>
+                ${esc(item.propertyLabel)}
+              </span>
+            </div>
+
+          </div>
+
+
+          <!-- CONTENT -->
+          <div class="p-5">
+
+            <div class="flex items-start justify-between gap-3">
+
+              <div>
+
+                <h3 class="text-xl font-extrabold">
+                  ${showValue(name)}
+                </h3>
+
+                <p class="text-xs text-slate-400 mt-1">
+                  ${showValue(category)}
+                </p>
+
+              </div>
+
+
+              <div class="px-2.5 py-1 rounded-lg bg-yellow-400/10 text-yellow-300 text-xs font-bold">
+                ★ ${showValue(rating)}
+              </div>
+
+            </div>
+
+
+            <!-- DETAILS -->
+            <div class="mt-5 space-y-3 text-sm">
+
+              <div class="flex gap-3">
+
+                <i class="fa-solid fa-location-dot text-slate-500 mt-1"></i>
+
+                <div>
+                  <div class="text-slate-500 text-xs">
+                    Area
+                  </div>
+                  <div class="text-slate-200">
+                    ${showValue(area)}
+                  </div>
+                </div>
+
+              </div>
+
+
+              <div class="flex gap-3">
+
+                <i class="fa-solid fa-map-location-dot text-slate-500 mt-1"></i>
+
+                <div>
+                  <div class="text-slate-500 text-xs">
+                    Address
+                  </div>
+                  <div class="text-slate-200">
+                    ${showValue(address)}
+                  </div>
+                </div>
+
+              </div>
+
+
+              <div class="flex gap-3">
+
+                <i class="fa-solid fa-phone text-slate-500 mt-1"></i>
+
+                <div>
+                  <div class="text-slate-500 text-xs">
+                    Phone
+                  </div>
+                  <div class="text-slate-200">
+                    ${showValue(phone)}
+                  </div>
+                </div>
+
+              </div>
+
+
+              <div class="flex gap-3">
+
+                <i class="fa-solid fa-clock text-slate-500 mt-1"></i>
+
+                <div>
+                  <div class="text-slate-500 text-xs">
+                    Timing
+                  </div>
+                  <div class="text-slate-200">
+                    ${showValue(timing)}
+                  </div>
+                </div>
+
+              </div>
+
+
+              <div class="flex gap-3">
+
+                <i class="fa-solid fa-list-check text-slate-500 mt-1"></i>
+
+                <div>
+                  <div class="text-slate-500 text-xs">
+                    Facilities
+                  </div>
+                  <div class="text-slate-200">
+                    ${showValue(facilities)}
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+            <div class="grid grid-cols-2 gap-3 mt-6">
+
+              ${
+                phone
+                ? `
+                  <a
+                    href="tel:${esc(phone)}"
+                    class="py-3 rounded-xl bg-white/5 border border-white/10 text-center text-sm font-bold hover:bg-white/10 transition"
+                  >
+                    <i class="fa-solid fa-phone mr-1"></i>
+                    Call
+                  </a>
+                `
+                : `
+                  <button
+                    disabled
+                    class="py-3 rounded-xl bg-white/5 border border-white/10 text-center text-sm font-bold opacity-40"
+                  >
+                    <i class="fa-solid fa-phone mr-1"></i>
+                    Call
+                  </button>
+                `
+              }
+
+
+              ${
+                digits
+                ? `
+                  <a
+                    target="_blank"
+                    rel="noopener"
+                    href="https://wa.me/91${digits}?text=${encodeURIComponent("Hello " + name)}"
+                    class="py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-center text-sm font-bold hover:bg-emerald-500/20 transition"
+                  >
+                    <i class="fa-brands fa-whatsapp mr-1"></i>
+                    WhatsApp
+                  </a>
+                `
+                : `
+                  <button
+                    disabled
+                    class="py-3 rounded-xl bg-white/5 border border-white/10 text-center text-sm font-bold opacity-40"
+                  >
+                    WhatsApp
+                  </button>
+                `
+              }
+
+            </div>
+
+          </div>
+
+        </article>
+
+      `;
+
+    }).join("");
+}
+
+
+/* =========================================================
+   EDIT PROFILE
+   ========================================================= */
+
+function openProfileModal() {
+
+  renderProfile();
+
+  $("profileModal")
+    .classList.remove("hidden");
+
+  $("profileModal")
+    .classList.add("flex");
+}
+
+
+function closeProfileModal() {
+
+  $("profileModal")
+    .classList.add("hidden");
+
+  $("profileModal")
+    .classList.remove("flex");
+}
+
+
+/* =========================================================
+   SAVE PROFILE
+   ========================================================= */
+
+async function saveProfile(e) {
+
+  e.preventDefault();
+
+
+  if (!state.user || !state.profile) {
+    return;
+  }
+
+
+  const name =
+    text($("editName").value);
+
+
+  const address =
+    text($("editAddress").value);
+
+
+  if (!name) {
+
+    showToast(
+      "Name is required.",
+      true
+    );
+
+    return;
+  }
+
+
+  const button =
+    $("saveProfileBtn");
+
+
+  setButtonLoading(
+    button,
+    true
+  );
+
+
+  try {
+
+    /*
+      Only owner profile is updated.
+      Phone/email are NOT changed here.
+      Admin profile is never touched.
+    */
+
+    const { data, error } =
+      await supabaseClient
+        .from("profiles")
+        .update({
+          full_name: name,
+          address: address
+        })
+        .eq("id", state.user.id)
+        .select("*")
+        .single();
+
+
+    if (error) {
+      throw error;
     }
 
 
-    empty.classList.add("hidden");
+    state.profile = data;
 
 
-    grid.innerHTML =
-        listings.map(item => {
+    renderProfile();
 
-            const name =
-                item.name || "—";
+    closeProfileModal();
 
-            const category =
-                item.category ||
-                item._label ||
-                "—";
 
-            const area =
-                item.area || "—";
+    showToast(
+      "Profile updated successfully."
+    );
 
-            const address =
-                item.address || "—";
 
-            const phone =
-                item.phone || "—";
+  } catch (error) {
 
-            const timing =
-                item.timing || "—";
+    console.error(error);
 
-            const facilities =
-                item.facilities || "—";
+    showToast(
+      "Profile update failed: " +
+      error.message,
+      true
+    );
 
-            const rating =
-                item.rating === null ||
-                item.rating === undefined ||
-                item.rating === ""
-                    ? "—"
-                    : item.rating;
+  } finally {
 
-            const image =
-                item.image || "";
+    setButtonLoading(
+      button,
+      false
+    );
+  }
+}
 
 
-            return `
+/* =========================================================
+   AUTH / INITIALIZATION
+   ========================================================= */
 
-                <article
-                    class="property-card glass rounded-3xl overflow-hidden">
+async function initializeDashboard() {
 
-                    <div class="relative h-44 bg-navy-850">
+  try {
 
-                        ${
-                            image
-                            ? `
-                                <img
-                                    src="${escapeHtml(image)}"
-                                    alt="${escapeHtml(name)}"
-                                    class="w-full h-full object-cover"
-                                    onerror="this.style.display='none';"
-                                >
-                              `
-                            : `
-                                <div class="w-full h-full
-                                            flex items-center justify-center
-                                            text-gold-400 text-4xl">
-                                    <i class="fa-solid ${item._icon}"></i>
-                                </div>
-                              `
-                        }
+    const {
+      data: sessionData,
+      error: sessionError
+    } =
+      await supabaseClient.auth.getSession();
 
-                        <div class="absolute top-3 left-3">
 
-                            <span
-                                class="px-3 py-1.5 rounded-full
-                                       bg-navy-950/85
-                                       border border-gold-500/30
-                                       text-gold-300
-                                       text-[10px]
-                                       font-bold">
+    if (sessionError) {
+      throw sessionError;
+    }
 
-                                ${escapeHtml(category)}
 
-                            </span>
+    const session =
+      sessionData?.session;
 
-                        </div>
 
-                    </div>
+    if (!session?.user) {
 
+      window.location.href =
+        "auth.html";
 
-                    <div class="p-5">
+      return;
+    }
 
-                        <h3 class="font-bold text-lg leading-tight">
 
-                            ${escapeHtml(name)}
+    state.user =
+      session.user;
 
-                        </h3>
 
+    /*
+      ADMIN ACCOUNT PROTECTION
+    */
 
-                        <div class="space-y-3 mt-4 text-xs">
+    if (
+      String(state.user.email || "").toLowerCase() ===
+      ADMIN_EMAIL.toLowerCase()
+    ) {
 
-                            <div class="flex gap-3">
+      window.location.href =
+        "admin-dashboard.html";
 
-                                <i class="fa-solid fa-location-dot
-                                          text-gold-400 mt-0.5"></i>
+      return;
+    }
 
-                                <span class="text-slate-300">
 
-                                    ${escapeHtml(address)}
+    const profile =
+      await loadProfile(state.user);
 
-                                </span>
 
-                            </div>
+    if (!profile) return;
 
 
-                            <div class="flex gap-3">
+    await loadOwnerListings();
 
-                                <i class="fa-solid fa-map-pin
-                                          text-gold-400 mt-0.5"></i>
 
-                                <span class="text-slate-300">
+    setupRealtime();
 
-                                    ${escapeHtml(area)}
 
-                                </span>
+  } catch (error) {
 
-                            </div>
+    console.error(error);
 
+    $("listingsContainer").innerHTML = `
+      <div class="glass rounded-3xl p-8 text-center md:col-span-2">
 
-                            <div class="flex gap-3">
+        <div class="w-14 h-14 rounded-2xl bg-red-500/10 text-red-300 mx-auto flex items-center justify-center">
+          <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+        </div>
 
-                                <i class="fa-solid fa-phone
-                                          text-gold-400 mt-0.5"></i>
+        <h3 class="text-lg font-bold mt-4">
+          Dashboard Error
+        </h3>
 
-                                <span class="text-slate-300">
+        <p class="text-sm text-slate-400 mt-2">
+          ${esc(error.message || "Unable to load dashboard.")}
+        </p>
 
-                                    ${escapeHtml(phone)}
+      </div>
+    `;
 
-                                </span>
-
-                            </div>
-
-
-                            <div class="flex gap-3">
-
-                                <i class="fa-solid fa-clock
-                                          text-gold-400 mt-0.5"></i>
-
-                                <span class="text-slate-300">
-
-                                    ${escapeHtml(timing)}
-
-                                </span>
-
-                            </div>
-
-
-                            <div class="flex gap-3">
-
-                                <i class="fa-solid fa-star
-                                          text-gold-400 mt-0.5"></i>
-
-                                <span class="text-slate-300">
-
-                                    ${escapeHtml(rating)}
-
-                                </span>
-
-                            </div>
-
-
-                            <div class="flex gap-3">
-
-                                <i class="fa-solid fa-list-check
-                                          text-gold-400 mt-0.5"></i>
-
-                                <span class="text-slate-300">
-
-                                    ${escapeHtml(facilities)}
-
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="grid grid-cols-2 gap-2 mt-5">
-
-                            ${
-                                phone !== "—"
-                                ? `
-                                    <a
-                                        href="tel:${escapeHtml(phone)}"
-                                        class="flex items-center
-                                               justify-center gap-2
-                                               rounded-xl
-                                               bg-navy-850
-                                               border border-navy-700
-                                               py-3
-                                               text-xs font-bold
-                                               text-slate-200
-                                               hover:border-gold-500/40">
-
-                                        <i class="fa-solid fa-phone"></i>
-                                        Call
-
-                                    </a>
-                                  `
-                                : `
-                                    <button
-                                        disabled
-                                        class="rounded-xl
-                                               bg-navy-850
-                                               border border-navy-800
-                                               py-3
-                                               text-xs font-bold
-                                               text-slate-600">
-
-                                        No Phone
-
-                                    </button>
-                                  `
-                            }
-
-
-                            ${
-                                phone !== "—"
-                                ? `
-                                    <a
-                                        target="_blank"
-                                        rel="noopener"
-                                        href="https://wa.me/${normalizePhone(phone)}"
-                                        class="flex items-center
-                                               justify-center gap-2
-                                               rounded-xl
-                                               gold-gradient-bg
-                                               py-3
-                                               text-xs font-bold
-                                               text-navy-950">
-
-                                        <i class="fa-brands fa-whatsapp"></i>
-                                        WhatsApp
-
-                                    </a>
-                                  `
-                                : `
-                                    <button
-                                        disabled
-                                        class="rounded-xl
-                                               bg-navy-850
-                                               border border-navy-800
-                                               py-3
-                                               text-xs font-bold
-                                               text-slate-600">
-
-                                        No WhatsApp
-
-                                    </button>
-                                  `
-                            }
-
-                        </div>
-
-                    </div>
-
-                </article>
-
-            `;
-
-        }).join("");
-
+  }
 }
 
 
 /* =========================================================
    REALTIME
-========================================================= */
+   ========================================================= */
 
 function setupRealtime() {
 
-    /*
-       Any change in any directory table causes
-       the owner's live listings to be recalculated.
-    */
+  /*
+    Any change in property tables causes
+    owner listings to reload.
 
-    const tables = [
-        "hostels",
-        "tiffins",
-        "libraries",
-        "cafes"
-    ];
+    Initial loading still works even if
+    Realtime publication has not been enabled.
+  */
 
-
-    tables.forEach(table => {
-
-        const channel =
-            supabaseClient
-                .channel(
-                    "owner-dashboard-" + table
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table: table
-                    },
-                    async () => {
-
-                        try {
-
-                            await loadOwnerListings();
-
-                        } catch (error) {
-
-                            console.error(
-                                "Realtime listing refresh error:",
-                                error
-                            );
-
-                        }
-
-                    }
-                )
-                .subscribe();
+  const tables = [
+    "hostels",
+    "tiffins",
+    "libraries",
+    "cafes"
+  ];
 
 
-        state.realtimeChannels.push(channel);
+  tables.forEach(table => {
 
-    });
+    const channel =
+      supabaseClient
+        .channel(
+          "owner-dashboard-" + table
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table
+          },
+          async () => {
 
+            await loadOwnerListings();
+
+          }
+        )
+        .subscribe();
+
+
+    state.realtimeChannels.push(
+      channel
+    );
+
+  });
+
+
+  /*
+    Profile changes also refresh
+    the dashboard.
+  */
+
+  const profileChannel =
+    supabaseClient
+      .channel(
+        "owner-dashboard-profile"
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+          filter:
+            `id=eq.${state.user.id}`
+        },
+        async () => {
+
+          await loadProfile(
+            state.user
+          );
+
+          await loadOwnerListings();
+
+        }
+      )
+      .subscribe();
+
+
+  state.realtimeChannels.push(
+    profileChannel
+  );
 }
 
 
 /* =========================================================
    LOGOUT
-========================================================= */
+   ========================================================= */
 
-$("logoutBtn").addEventListener(
+async function logout() {
+
+  try {
+
+    state.realtimeChannels.forEach(
+      channel => {
+        supabaseClient.removeChannel(
+          channel
+        );
+      }
+    );
+
+
+    await supabaseClient.auth.signOut();
+
+
+    window.location.href =
+      "auth.html";
+
+  } catch (error) {
+
+    console.error(error);
+
+    window.location.href =
+      "auth.html";
+  }
+}
+
+
+/* =========================================================
+   EVENTS
+   ========================================================= */
+
+$("editProfileBtn")
+  .addEventListener(
     "click",
-    async function() {
+    openProfileModal
+  );
 
-        try {
 
-            await supabaseClient.auth.signOut();
+$("closeProfileModal")
+  .addEventListener(
+    "click",
+    closeProfileModal
+  );
 
-        } catch (error) {
 
-            console.error(error);
+$("cancelProfileBtn")
+  .addEventListener(
+    "click",
+    closeProfileModal
+  );
 
-        }
 
-        window.location.href =
-            "auth.html";
+$("profileForm")
+  .addEventListener(
+    "submit",
+    saveProfile
+  );
+
+
+$("logoutBtn")
+  .addEventListener(
+    "click",
+    logout
+  );
+
+
+$("profileModal")
+  .addEventListener(
+    "click",
+    e => {
+
+      if (
+        e.target ===
+        $("profileModal")
+      ) {
+
+        closeProfileModal();
+
+      }
 
     }
-);
+  );
 
 
 /* =========================================================
    AUTH STATE
-========================================================= */
+   ========================================================= */
 
 supabaseClient.auth.onAuthStateChange(
-    async function(event, session) {
+  async (event, session) => {
 
-        if (event === "SIGNED_OUT") {
+    if (event === "SIGNED_OUT") {
 
-            window.location.href =
-                "auth.html";
-
-        }
+      window.location.href =
+        "auth.html";
 
     }
+
+  }
 );
 
 
 /* =========================================================
-   BOOT
-========================================================= */
+   START
+   ========================================================= */
 
-async function boot() {
-
-    try {
-
-        const session =
-            await getCurrentSession();
-
-
-        if (!session || !session.user) {
-
-            window.location.href =
-                "auth.html";
-
-            return;
-
-        }
-
-
-        state.user =
-            session.user;
-
-
-        state.profile =
-            await loadProfile(
-                state.user
-            );
-
-
-        /*
-           ADMIN SAFETY:
-
-           Never allow Director account
-           to be treated as an owner.
-        */
-
-        if (
-            isAdminAccount(
-                state.profile,
-                state.user
-            )
-        ) {
-
-            window.location.href =
-                "admin-dashboard.html";
-
-            return;
-
-        }
-
-
-        renderProfile();
-
-
-        await loadOwnerListings();
-
-
-        setupRealtime();
-
-
-        $("dbStatus").textContent =
-            "Connected";
-
-        $("dbStatus").className =
-            "px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold";
-
-
-        $("loadingScreen").classList.add(
-            "hidden"
-        );
-
-        $("dashboard").classList.remove(
-            "hidden"
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Dashboard boot error:",
-            error
-        );
-
-
-        $("loadingScreen").innerHTML = `
-
-            <div class="glass rounded-3xl
-                        max-w-md w-full
-                        p-8 text-center">
-
-                <div class="w-14 h-14 mx-auto
-                            rounded-2xl
-                            bg-red-500/10
-                            border border-red-500/20
-                            flex items-center justify-center
-                            text-red-400 text-xl">
-
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-
-                </div>
-
-                <h2 class="font-bold text-lg mt-5">
-
-                    Dashboard could not load
-
-                </h2>
-
-                <p class="text-xs text-slate-500 mt-2">
-
-                    ${escapeHtml(
-                        error?.message ||
-                        "Unable to connect to Supabase."
-                    )}
-
-                </p>
-
-                <button
-                    onclick="location.reload()"
-                    class="mt-5 px-5 py-3
-                           rounded-xl
-                           gold-gradient-bg
-                           text-navy-950
-                           text-xs font-bold">
-
-                    Try Again
-
-                </button>
-
-            </div>
-
-        `;
-
-    }
-
-}
-
-
-boot();
+document.addEventListener(
+  "DOMContentLoaded",
+  initializeDashboard
+);
 
 </script>
 
