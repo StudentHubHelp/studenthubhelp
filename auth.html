@@ -1,572 +1,2305 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
 
-<title>StudentHubHelp | Secure Login</title>
-<meta name="description" content="Secure StudentHubHelp login and account creation for students and property owners.">
-<meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-<link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
+    <meta name="robots" content="noindex, nofollow, noarchive">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>Login / Sign Up | StudentHubHelp</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
 
-<script>
-tailwind.config={
- theme:{extend:{
-  colors:{
-   navy:{950:"#040814",900:"#081026",850:"#0D1838",800:"#14224D",700:"#1F316B"},
-   gold:{100:"#FFF7D6",200:"#FDECB2",300:"#F5DE88",400:"#E6C65E",500:"#D4AF37",600:"#B89020",700:"#8C6B10"}
-  },
-  fontFamily:{sans:["Inter","sans-serif"],display:["Cinzel","serif"]}
- }}
-};
-</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-<style>
-*{box-sizing:border-box}
-body{background:#040814}
-.goldText{
- background:linear-gradient(135deg,#fff7d6,#d4af37,#b89020);
- -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent
-}
-.goldBg{background:linear-gradient(135deg,#d4af37,#f5de88,#b89020)}
-.glass{background:rgba(13,24,56,.88);backdrop-filter:blur(18px)}
-.input:focus{border-color:#d4af37;box-shadow:0 0 0 3px rgba(212,175,55,.08)}
-.toast{transform:translateY(-15px);opacity:0;pointer-events:none;transition:.3s}
-.toast.show{transform:translateY(0);opacity:1;pointer-events:auto}
-.spin{animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
+          rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- IMPORTANT: lowercase @supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            950: '#020817',
+                            900: '#071225',
+                            850: '#0b1930',
+                            800: '#10213d',
+                            700: '#193052'
+                        },
+                        gold: {
+                            300: '#f3d98b',
+                            400: '#e7c45d',
+                            500: '#d4af37',
+                            600: '#b99321'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(212,175,55,.10), transparent 35%),
+                radial-gradient(circle at bottom right, rgba(30,64,175,.12), transparent 35%),
+                #020817;
+            color: #fff;
+        }
+
+        .glass {
+            background: rgba(7,18,37,.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(212,175,55,.18);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(
+                135deg,
+                #b99321 0%,
+                #d4af37 45%,
+                #f3d98b 100%
+            );
+        }
+
+        .gold-text {
+            background: linear-gradient(
+                135deg,
+                #d4af37,
+                #f3d98b
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .input-box {
+            transition: .2s ease;
+        }
+
+        .input-box:focus {
+            border-color: rgba(212,175,55,.75);
+            box-shadow: 0 0 0 3px rgba(212,175,55,.08);
+        }
+
+        .auth-tab {
+            transition: .2s ease;
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(
+                135deg,
+                #b99321,
+                #d4af37
+            );
+            color: #020817;
+            box-shadow: 0 8px 25px rgba(212,175,55,.16);
+        }
+
+        .role-card {
+            transition: .2s ease;
+            cursor: pointer;
+        }
+
+        .role-card:hover {
+            border-color: rgba(212,175,55,.45);
+            transform: translateY(-1px);
+        }
+
+        .role-radio:checked + .role-card {
+            border-color: #d4af37;
+            background: rgba(212,175,55,.08);
+            box-shadow: 0 0 0 1px rgba(212,175,55,.20);
+        }
+
+        .loader {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(2,8,23,.25);
+            border-top-color: #020817;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn .35s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .toast {
+            animation: toastIn .3s ease;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .password-toggle {
+            cursor: pointer;
+        }
+    </style>
 </head>
 
-<body class="min-h-screen text-slate-100 font-sans">
+<body>
 
-<nav class="border-b border-gold-500/15 bg-navy-900/95">
- <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
-  <a href="./" class="flex items-center gap-3">
-   <img src="logo.png" alt="StudentHubHelp" class="w-11 h-11 rounded-xl border border-gold-500/30 object-cover"
-        onerror="this.style.display='none'">
-   <div>
-    <div class="font-display text-xl font-bold goldText">StudentHubHelp</div>
-    <div class="text-[9px] uppercase tracking-[.18em] text-gold-400">Student Discovery Platform</div>
-   </div>
-  </a>
-  <a href="./" class="px-4 py-2 rounded-xl border border-gold-500/20 bg-navy-850 text-xs text-gold-300">
-   <i class="fa-solid fa-arrow-left mr-1"></i> Home
-  </a>
- </div>
+<!-- =========================================================
+     TOP NAV
+========================================================= -->
+
+<nav class="border-b border-white/5 bg-navy-950/80 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+
+        <div class="flex items-center justify-between">
+
+            <a href="index.html"
+               class="flex items-center gap-3">
+
+                <div class="w-11 h-11 rounded-xl overflow-hidden border border-gold-500/40 bg-navy-900 flex items-center justify-center shadow-lg">
+                    <img src="logo.png"
+                         alt="StudentHubHelp"
+                         class="w-full h-full object-cover"
+                         onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fa-solid fa-graduation-cap text-gold-400 text-xl\'></i>';">
+                </div>
+
+                <div>
+                    <div class="font-extrabold text-white tracking-tight">
+                        Student<span class="gold-text">Hub</span>Help
+                    </div>
+
+                    <div class="text-[10px] text-slate-500 uppercase tracking-widest">
+                        Student Discovery Platform
+                    </div>
+                </div>
+            </a>
+
+            <a href="index.html"
+               class="text-xs font-semibold text-slate-400 hover:text-gold-300 transition">
+                <i class="fa-solid fa-arrow-left mr-1"></i>
+                Back to Home
+            </a>
+
+        </div>
+    </div>
 </nav>
 
-<main class="min-h-[calc(100vh-145px)] flex items-center justify-center px-4 py-10">
- <div class="w-full max-w-5xl grid lg:grid-cols-2 gap-6">
 
-  <section class="hidden lg:flex rounded-3xl bg-navy-900 border border-gold-500/15 p-10 flex-col justify-between">
-   <div>
-    <span class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 bg-gold-500/10 border border-gold-500/20 text-gold-300 text-[10px] font-bold">
-     <i class="fa-solid fa-shield-halved"></i> SECURE SUPABASE AUTH
-    </span>
-    <h1 class="font-display text-4xl font-bold leading-tight mt-7">
-     One account.<br><span class="goldText">Everything you need.</span>
-    </h1>
-    <p class="text-sm text-slate-400 leading-7 mt-5">
-     Discover hostels & PGs, tiffin services, libraries and cafes.
-     Property owners can manage their listings securely.
-    </p>
-   </div>
+<!-- =========================================================
+     MAIN
+========================================================= -->
 
-   <div class="space-y-3 mt-10">
-    <div class="p-4 rounded-2xl bg-navy-850 border border-navy-800 flex items-center gap-3">
-     <div class="w-10 h-10 rounded-xl goldBg text-navy-950 flex items-center justify-center">
-      <i class="fa-solid fa-user-graduate"></i>
-     </div>
-     <div><b class="text-sm">Student</b><p class="text-xs text-slate-500">Find and review listings</p></div>
+<main class="min-h-[calc(100vh-150px)] px-4 py-10 sm:py-16">
+
+    <div class="max-w-6xl mx-auto">
+
+        <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+
+            <!-- LEFT SIDE -->
+            <section class="hidden lg:block">
+
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full
+                            bg-gold-500/10 border border-gold-500/20
+                            text-gold-300 text-xs font-bold uppercase tracking-widest">
+
+                    <i class="fa-solid fa-shield-halved"></i>
+
+                    Secure Student Platform
+                </div>
+
+                <h1 class="mt-6 text-5xl xl:text-6xl font-display font-extrabold leading-tight">
+                    One Login.
+                    <br>
+                    <span class="gold-text">Every Student Need.</span>
+                </h1>
+
+                <p class="mt-6 max-w-xl text-slate-400 leading-relaxed">
+                    Access Hostels, PGs, Tiffin & Mess services,
+                    Study Libraries and Cafes from one connected
+                    StudentHubHelp account.
+                </p>
+
+                <div class="grid grid-cols-2 gap-4 mt-8">
+
+                    <div class="glass rounded-2xl p-5">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10
+                                    flex items-center justify-center">
+                            <i class="fa-solid fa-building text-blue-300"></i>
+                        </div>
+
+                        <div class="mt-4 font-bold">
+                            Hostels & PGs
+                        </div>
+
+                        <div class="text-xs text-slate-500 mt-1">
+                            Find your stay
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-2xl p-5">
+                        <div class="w-10 h-10 rounded-xl bg-orange-500/10
+                                    flex items-center justify-center">
+                            <i class="fa-solid fa-utensils text-orange-300"></i>
+                        </div>
+
+                        <div class="mt-4 font-bold">
+                            Tiffin & Mess
+                        </div>
+
+                        <div class="text-xs text-slate-500 mt-1">
+                            Daily food services
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-2xl p-5">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10
+                                    flex items-center justify-center">
+                            <i class="fa-solid fa-book-open text-purple-300"></i>
+                        </div>
+
+                        <div class="mt-4 font-bold">
+                            Libraries
+                        </div>
+
+                        <div class="text-xs text-slate-500 mt-1">
+                            Study spaces
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-2xl p-5">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10
+                                    flex items-center justify-center">
+                            <i class="fa-solid fa-mug-hot text-emerald-300"></i>
+                        </div>
+
+                        <div class="mt-4 font-bold">
+                            Cafes
+                        </div>
+
+                        <div class="text-xs text-slate-500 mt-1">
+                            Student-friendly spots
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="mt-8 flex items-center gap-3 text-xs text-slate-500">
+                    <i class="fa-solid fa-lock text-gold-400"></i>
+                    Your authentication is handled securely by Supabase.
+                </div>
+
+            </section>
+
+
+            <!-- RIGHT AUTH CARD -->
+            <section>
+
+                <div class="glass rounded-3xl shadow-2xl overflow-hidden">
+
+                    <!-- HEADER -->
+                    <div class="p-6 sm:p-8 border-b border-white/5">
+
+                        <div class="text-center">
+
+                            <div class="lg:hidden mx-auto mb-5 w-14 h-14 rounded-2xl
+                                        border border-gold-500/30
+                                        bg-navy-900
+                                        flex items-center justify-center">
+
+                                <i class="fa-solid fa-graduation-cap
+                                          text-gold-400 text-2xl"></i>
+
+                            </div>
+
+                            <h2 class="text-2xl sm:text-3xl font-display font-extrabold">
+                                Welcome to
+                                <span class="gold-text">StudentHubHelp</span>
+                            </h2>
+
+                            <p class="text-xs text-slate-500 mt-2">
+                                Login or create your student account
+                            </p>
+
+                        </div>
+
+
+                        <!-- TABS -->
+                        <div id="authTabsHeader"
+                             class="mt-7 grid grid-cols-2 gap-2 p-1
+                                    bg-navy-950 rounded-2xl border border-white/5">
+
+                            <button type="button"
+                                    id="signInTab"
+                                    class="auth-tab active rounded-xl py-3 text-xs font-extrabold"
+                                    onclick="showSignIn()">
+
+                                <i class="fa-solid fa-right-to-bracket mr-1"></i>
+                                Sign In
+                            </button>
+
+                            <button type="button"
+                                    id="signUpTab"
+                                    class="auth-tab rounded-xl py-3 text-xs font-extrabold
+                                           text-slate-400"
+                                    onclick="showSignUp()">
+
+                                <i class="fa-solid fa-user-plus mr-1"></i>
+                                Create Account
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         SIGN IN
+                    ================================================== -->
+
+                    <div id="signInContainer"
+                         class="p-6 sm:p-8 fade-in">
+
+                        <form id="signInForm"
+                              class="space-y-5">
+
+                            <div>
+
+                                <label class="block text-[11px] uppercase
+                                              tracking-wider font-bold
+                                              text-gold-400 mb-2">
+
+                                    Email Address
+                                </label>
+
+                                <div class="relative">
+
+                                    <i class="fa-solid fa-envelope
+                                              absolute left-4 top-1/2
+                                              -translate-y-1/2
+                                              text-slate-500"></i>
+
+                                    <input
+                                        id="loginEmail"
+                                        type="email"
+                                        autocomplete="email"
+                                        required
+                                        placeholder="you@example.com"
+                                        class="input-box w-full bg-navy-950
+                                               border border-navy-700
+                                               rounded-xl pl-11 pr-4 py-3.5
+                                               text-sm text-white
+                                               placeholder:text-slate-600
+                                               outline-none">
+
+                                </div>
+
+                            </div>
+
+
+                            <div>
+
+                                <div class="flex items-center justify-between mb-2">
+
+                                    <label class="block text-[11px] uppercase
+                                                  tracking-wider font-bold
+                                                  text-gold-400">
+
+                                        Password
+                                    </label>
+
+                                    <button type="button"
+                                            onclick="openForgotPasswordModal()"
+                                            class="text-[11px] text-slate-500
+                                                   hover:text-gold-300 transition">
+
+                                        Forgot Password?
+                                    </button>
+
+                                </div>
+
+                                <div class="relative">
+
+                                    <i class="fa-solid fa-lock
+                                              absolute left-4 top-1/2
+                                              -translate-y-1/2
+                                              text-slate-500"></i>
+
+                                    <input
+                                        id="loginPassword"
+                                        type="password"
+                                        autocomplete="current-password"
+                                        required
+                                        placeholder="Enter your password"
+                                        class="input-box w-full bg-navy-950
+                                               border border-navy-700
+                                               rounded-xl pl-11 pr-12 py-3.5
+                                               text-sm text-white
+                                               placeholder:text-slate-600
+                                               outline-none">
+
+                                    <button type="button"
+                                            onclick="togglePassword('loginPassword','loginEye')"
+                                            class="password-toggle absolute right-4
+                                                   top-1/2 -translate-y-1/2
+                                                   text-slate-500 hover:text-gold-300">
+
+                                        <i id="loginEye"
+                                           class="fa-solid fa-eye"></i>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <label class="flex items-center gap-2 cursor-pointer">
+
+                                <input id="rememberMe"
+                                       type="checkbox"
+                                       class="accent-yellow-500">
+
+                                <span class="text-xs text-slate-500">
+                                    Keep me signed in
+                                </span>
+
+                            </label>
+
+
+                            <button
+                                id="signInSubmitBtn"
+                                type="submit"
+                                class="w-full gold-gradient
+                                       text-navy-950
+                                       rounded-xl py-3.5
+                                       font-extrabold text-sm
+                                       shadow-lg
+                                       hover:brightness-110
+                                       active:scale-[.99]
+                                       transition">
+
+                                <span id="signInBtnText">
+                                    <i class="fa-solid fa-right-to-bracket mr-1"></i>
+                                    Sign In
+                                </span>
+
+                                <span id="signInBtnLoading"
+                                      class="hidden items-center justify-center gap-2">
+
+                                    <span class="loader"></span>
+                                    Signing In...
+                                </span>
+
+                            </button>
+
+
+                            <div class="relative py-2">
+
+                                <div class="absolute inset-0 flex items-center">
+                                    <div class="w-full border-t border-white/5"></div>
+                                </div>
+
+                                <div class="relative flex justify-center">
+                                    <span class="bg-navy-900 px-3
+                                                 text-[10px] uppercase
+                                                 tracking-widest
+                                                 text-slate-600">
+
+                                        Secure Login
+                                    </span>
+                                </div>
+
+                            </div>
+
+
+                            <p class="text-center text-[11px] text-slate-600 leading-relaxed">
+
+                                By signing in, you agree to use
+                                StudentHubHelp responsibly.
+
+                            </p>
+
+                        </form>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         SIGN UP
+                    ================================================== -->
+
+                    <div id="signUpContainer"
+                         class="p-6 sm:p-8 hidden fade-in">
+
+                        <form id="signUpForm"
+                              class="space-y-5">
+
+
+                            <!-- ROLE -->
+                            <div>
+
+                                <label class="block text-[11px] uppercase
+                                              tracking-wider font-bold
+                                              text-gold-400 mb-3">
+
+                                    Account Type
+                                </label>
+
+                                <div class="grid grid-cols-2 gap-3">
+
+                                    <label class="block">
+
+                                        <input
+                                            type="radio"
+                                            name="regRole"
+                                            value="student"
+                                            checked
+                                            class="role-radio sr-only">
+
+                                        <div class="role-card bg-navy-950
+                                                    border border-navy-700
+                                                    rounded-xl p-4">
+
+                                            <div class="flex items-center gap-3">
+
+                                                <div class="w-9 h-9 rounded-lg
+                                                            bg-blue-500/10
+                                                            flex items-center
+                                                            justify-center">
+
+                                                    <i class="fa-solid fa-user-graduate
+                                                              text-blue-300"></i>
+
+                                                </div>
+
+                                                <div>
+                                                    <div class="text-xs font-bold">
+                                                        Student
+                                                    </div>
+
+                                                    <div class="text-[10px] text-slate-600">
+                                                        Find services
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </label>
+
+
+                                    <label class="block">
+
+                                        <input
+                                            type="radio"
+                                            name="regRole"
+                                            value="owner"
+                                            class="role-radio sr-only">
+
+                                        <div class="role-card bg-navy-950
+                                                    border border-navy-700
+                                                    rounded-xl p-4">
+
+                                            <div class="flex items-center gap-3">
+
+                                                <div class="w-9 h-9 rounded-lg
+                                                            bg-emerald-500/10
+                                                            flex items-center
+                                                            justify-center">
+
+                                                    <i class="fa-solid fa-store
+                                                              text-emerald-300"></i>
+
+                                                </div>
+
+                                                <div>
+                                                    <div class="text-xs font-bold">
+                                                        Owner
+                                                    </div>
+
+                                                    <div class="text-[10px] text-slate-600">
+                                                        List property
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- NAME -->
+                            <div>
+
+                                <label class="block text-[11px] uppercase
+                                              tracking-wider font-bold
+                                              text-gold-400 mb-2">
+
+                                    Full Name
+                                </label>
+
+                                <div class="relative">
+
+                                    <i class="fa-solid fa-user
+                                              absolute left-4 top-1/2
+                                              -translate-y-1/2
+                                              text-slate-500"></i>
+
+                                    <input
+                                        id="regName"
+                                        type="text"
+                                        autocomplete="name"
+                                        required
+                                        placeholder="Enter your full name"
+                                        class="input-box w-full bg-navy-950
+                                               border border-navy-700
+                                               rounded-xl pl-11 pr-4 py-3.5
+                                               text-sm text-white
+                                               placeholder:text-slate-600
+                                               outline-none">
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- PHONE -->
+                            <div>
+
+                                <label class="block text-[11px] uppercase
+                                              tracking-wider font-bold
+                                              text-gold-400 mb-2">
+
+                                    Mobile Number
+                                </label>
+
+                                <div class="relative">
+
+                                    <i class="fa-solid fa-phone
+                                              absolute left-4 top-1/2
+                                              -translate-y-1/2
+                                              text-slate-500"></i>
+
+                                    <input
+                                        id="regPhone"
+                                        type="tel"
+                                        autocomplete="tel"
+                                        required
+                                        maxlength="15"
+                                        placeholder="9876543210"
+                                        class="input-box w-full bg-navy-950
+                                               border border-navy-700
+                                               rounded-xl pl-11 pr-4 py-3.5
+                                               text-sm text-white
+                                               placeholder:text-slate-600
+                                               outline-none">
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- EMAIL -->
+                            <div>
+
+                                <label class="block text-[11px] uppercase
+                                              tracking-wider font-bold
+                                              text-gold-400 mb-2">
+
+                                    Email Address
+                                </label>
+
+                                <div class="relative">
+
+                                    <i class="fa-solid fa-envelope
+                                              absolute left-4 top-1/2
+                                              -translate-y-1/2
+                                              text-slate-500"></i>
+
+                                    <input
+                                        id="regEmail"
+                                        type="email"
+                                        autocomplete="email"
+                                        required
+                                        placeholder="you@example.com"
+                                        class="input-box w-full bg-navy-950
+                                               border border-navy-700
+                                               rounded-xl pl-11 pr-4 py-3.5
+                                               text-sm text-white
+                                               placeholder:text-slate-600
+                                               outline-none">
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- PASSWORD -->
+                            <div>
+
+                                <label class="block text-[11px] uppercase
+                                              tracking-wider font-bold
+                                              text-gold-400 mb-2">
+
+                                    Password
+                                </label>
+
+                                <div class="relative">
+
+                                    <i class="fa-solid fa-lock
+                                              absolute left-4 top-1/2
+                                              -translate-y-1/2
+                                              text-slate-500"></i>
+
+                                    <input
+                                        id="regPassword"
+                                        type="password"
+                                        autocomplete="new-password"
+                                        required
+                                        minlength="6"
+                                        placeholder="Minimum 6 characters"
+                                        class="input-box w-full bg-navy-950
+                                               border border-navy-700
+                                               rounded-xl pl-11 pr-12 py-3.5
+                                               text-sm text-white
+                                               placeholder:text-slate-600
+                                               outline-none">
+
+                                    <button type="button"
+                                            onclick="togglePassword('regPassword','regEye')"
+                                            class="password-toggle absolute right-4
+                                                   top-1/2 -translate-y-1/2
+                                                   text-slate-500 hover:text-gold-300">
+
+                                        <i id="regEye"
+                                           class="fa-solid fa-eye"></i>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <button
+                                id="signUpSubmitBtn"
+                                type="submit"
+                                class="w-full gold-gradient
+                                       text-navy-950
+                                       rounded-xl py-3.5
+                                       font-extrabold text-sm
+                                       shadow-lg
+                                       hover:brightness-110
+                                       active:scale-[.99]
+                                       transition">
+
+                                <span id="signUpBtnText">
+                                    <i class="fa-solid fa-user-plus mr-1"></i>
+                                    Create Account
+                                </span>
+
+                                <span id="signUpBtnLoading"
+                                      class="hidden items-center justify-center gap-2">
+
+                                    <span class="loader"></span>
+                                    Creating Account...
+                                </span>
+
+                            </button>
+
+
+                            <p class="text-center text-[11px] text-slate-600 leading-relaxed">
+                                Director/Admin accounts are controlled separately
+                                through secure Supabase roles.
+                            </p>
+
+                        </form>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         RESET PASSWORD
+                    ================================================== -->
+
+                    <div id="setNewPasswordContainer"
+                         class="p-6 sm:p-8 hidden fade-in">
+
+                        <div class="text-center mb-7">
+
+                            <div class="mx-auto w-14 h-14 rounded-2xl
+                                        bg-gold-500/10
+                                        border border-gold-500/20
+                                        flex items-center justify-center">
+
+                                <i class="fa-solid fa-key
+                                          text-gold-400 text-xl"></i>
+
+                            </div>
+
+                            <h3 class="mt-5 text-xl font-bold">
+                                Set New Password
+                            </h3>
+
+                            <p class="text-xs text-slate-500 mt-2">
+                                Enter a new secure password for your account.
+                            </p>
+
+                        </div>
+
+
+                        <form id="setNewPasswordForm"
+                              class="space-y-5">
+
+                            <div>
+
+                                <label class="block text-[11px] uppercase
+                                              tracking-wider font-bold
+                                              text-gold-400 mb-2">
+
+                                    New Password
+                                </label>
+
+                                <div class="relative">
+
+                                    <input
+                                        id="newPasswordInput"
+                                        type="password"
+                                        required
+                                        minlength="6"
+                                        placeholder="Minimum 6 characters"
+                                        class="input-box w-full bg-navy-950
+                                               border border-navy-700
+                                               rounded-xl px-4 pr-12 py-3.5
+                                               text-sm text-white
+                                               placeholder:text-slate-600
+                                               outline-none">
+
+                                    <button type="button"
+                                            onclick="togglePassword('newPasswordInput','newEye')"
+                                            class="password-toggle absolute right-4
+                                                   top-1/2 -translate-y-1/2
+                                                   text-slate-500">
+
+                                        <i id="newEye"
+                                           class="fa-solid fa-eye"></i>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <div>
+
+                                <label class="block text-[11px] uppercase
+                                              tracking-wider font-bold
+                                              text-gold-400 mb-2">
+
+                                    Confirm Password
+                                </label>
+
+                                <input
+                                    id="confirmNewPasswordInput"
+                                    type="password"
+                                    required
+                                    minlength="6"
+                                    placeholder="Repeat your password"
+                                    class="input-box w-full bg-navy-950
+                                           border border-navy-700
+                                           rounded-xl px-4 py-3.5
+                                           text-sm text-white
+                                           placeholder:text-slate-600
+                                           outline-none">
+
+                            </div>
+
+
+                            <button
+                                id="updatePasswordBtn"
+                                type="submit"
+                                class="w-full gold-gradient
+                                       text-navy-950
+                                       rounded-xl py-3.5
+                                       font-extrabold text-sm
+                                       shadow-lg
+                                       hover:brightness-110 transition">
+
+                                Update Password
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mt-5 text-center text-[10px] text-slate-600">
+                    <i class="fa-solid fa-shield-halved mr-1"></i>
+                    Authentication powered by Supabase
+                </div>
+
+            </section>
+
+        </div>
+
     </div>
-    <div class="p-4 rounded-2xl bg-navy-850 border border-navy-800 flex items-center gap-3">
-     <div class="w-10 h-10 rounded-xl bg-gold-500/10 text-gold-300 flex items-center justify-center">
-      <i class="fa-solid fa-building"></i>
-     </div>
-     <div><b class="text-sm">Property Owner</b><p class="text-xs text-slate-500">Manage your properties</p></div>
-    </div>
-   </div>
-  </section>
 
-  <section class="glass rounded-3xl border border-gold-500/20 p-5 sm:p-8 shadow-2xl">
-
-   <div id="tabs" class="flex rounded-xl bg-navy-900 p-1.5 border border-navy-800 mb-6">
-    <button id="loginTab" onclick="showLogin()" class="flex-1 py-2.5 rounded-lg text-xs font-bold goldBg text-navy-950">
-     Sign In
-    </button>
-    <button id="signupTab" onclick="showSignup()" class="flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-400">
-     Create Account
-    </button>
-   </div>
-
-   <div id="loginView">
-    <p class="text-[10px] uppercase tracking-[.18em] text-gold-400 font-bold">Welcome back</p>
-    <h2 class="text-2xl font-bold mt-1">Sign in to your account</h2>
-    <p class="text-xs text-slate-500 mt-2 mb-6">Authentication and account data are handled by Supabase.</p>
-
-    <form id="loginForm" class="space-y-4">
-     <div>
-      <label class="block text-xs font-semibold mb-1.5 text-slate-300">Email Address</label>
-      <div class="input flex items-center rounded-xl border border-navy-700 bg-navy-900">
-       <i class="fa-solid fa-envelope ml-4 text-slate-500"></i>
-       <input id="loginEmail" type="email" required autocomplete="email" placeholder="name@example.com"
-        class="w-full bg-transparent px-3 py-3 text-sm outline-none">
-      </div>
-     </div>
-
-     <div>
-      <label class="block text-xs font-semibold mb-1.5 text-slate-300">Password</label>
-      <div class="input flex items-center rounded-xl border border-navy-700 bg-navy-900">
-       <i class="fa-solid fa-lock ml-4 text-slate-500"></i>
-       <input id="loginPassword" type="password" required autocomplete="current-password" placeholder="Your password"
-        class="w-full bg-transparent px-3 py-3 text-sm outline-none">
-       <button type="button" onclick="togglePass('loginPassword','loginEye')" class="px-4 text-slate-500">
-        <i id="loginEye" class="fa-solid fa-eye"></i>
-       </button>
-      </div>
-     </div>
-
-     <div class="flex justify-end">
-      <button type="button" onclick="openForgot()" class="text-xs text-gold-400 hover:underline">Forgot password?</button>
-     </div>
-
-     <button id="loginBtn" type="submit" class="w-full py-3.5 rounded-xl goldBg text-navy-950 font-bold text-sm">
-      <i class="fa-solid fa-right-to-bracket mr-1"></i> Sign In
-     </button>
-    </form>
-   </div>
-
-   <div id="signupView" class="hidden">
-    <p class="text-[10px] uppercase tracking-[.18em] text-gold-400 font-bold">Join StudentHubHelp</p>
-    <h2 class="text-2xl font-bold mt-1">Create your account</h2>
-    <p class="text-xs text-slate-500 mt-2 mb-5">Director/Admin accounts are not created through public signup.</p>
-
-    <form id="signupForm" class="space-y-3.5">
-     <div>
-      <label class="block text-xs font-semibold mb-1.5">Account Type</label>
-      <div class="grid grid-cols-2 gap-2">
-       <label class="cursor-pointer">
-        <input type="radio" name="role" value="student" checked class="peer sr-only">
-        <div class="p-3 text-center text-xs font-semibold rounded-xl border border-navy-700 bg-navy-900 peer-checked:border-gold-500 peer-checked:bg-gold-500/10">👨‍🎓 Student</div>
-       </label>
-       <label class="cursor-pointer">
-        <input type="radio" name="role" value="owner" class="peer sr-only">
-        <div class="p-3 text-center text-xs font-semibold rounded-xl border border-navy-700 bg-navy-900 peer-checked:border-gold-500 peer-checked:bg-gold-500/10">🏢 Owner</div>
-       </label>
-      </div>
-     </div>
-
-     <input id="name" required autocomplete="name" placeholder="Full name"
-      class="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-2.5 text-sm outline-none focus:border-gold-500">
-
-     <input id="phone" required autocomplete="tel" inputmode="numeric" placeholder="10 digit mobile number"
-      class="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-2.5 text-sm outline-none focus:border-gold-500">
-
-     <input id="email" required type="email" autocomplete="email" placeholder="Email address"
-      class="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-2.5 text-sm outline-none focus:border-gold-500">
-
-     <div class="flex items-center rounded-xl border border-navy-700 bg-navy-900">
-      <input id="password" required minlength="6" type="password" autocomplete="new-password" placeholder="Create password"
-       class="w-full bg-transparent px-4 py-2.5 text-sm outline-none">
-      <button type="button" onclick="togglePass('password','signupEye')" class="px-4 text-slate-500">
-       <i id="signupEye" class="fa-solid fa-eye"></i>
-      </button>
-     </div>
-
-     <button id="signupBtn" type="submit" class="w-full py-3.5 rounded-xl goldBg text-navy-950 font-bold text-sm">
-      <i class="fa-solid fa-user-plus mr-1"></i> Create Account
-     </button>
-    </form>
-   </div>
-
-   <div id="recoveryView" class="hidden">
-    <div class="w-14 h-14 rounded-2xl goldBg text-navy-950 flex items-center justify-center mx-auto mb-4">
-     <i class="fa-solid fa-lock-open text-xl"></i>
-    </div>
-    <h2 class="text-xl font-bold text-center">Set New Password</h2>
-    <p class="text-xs text-slate-500 text-center mt-2 mb-6">Create a new password for your Supabase account.</p>
-
-    <form id="recoveryForm" class="space-y-4">
-     <input id="newPassword" required minlength="6" type="password" autocomplete="new-password" placeholder="New password"
-      class="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-3 text-sm outline-none focus:border-gold-500">
-     <input id="confirmPassword" required minlength="6" type="password" autocomplete="new-password" placeholder="Confirm password"
-      class="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-3 text-sm outline-none focus:border-gold-500">
-     <button id="savePasswordBtn" type="submit" class="w-full py-3.5 rounded-xl goldBg text-navy-950 font-bold text-sm">
-      Save New Password
-     </button>
-    </form>
-   </div>
-
-  </section>
- </div>
 </main>
 
-<div id="forgotModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
- <div class="w-full max-w-md rounded-3xl bg-navy-900 border border-gold-500/25 p-6 shadow-2xl relative">
-  <button onclick="closeForgot()" class="absolute right-5 top-5 text-slate-400 hover:text-white">
-   <i class="fa-solid fa-xmark text-xl"></i>
-  </button>
-  <div class="w-11 h-11 rounded-xl bg-gold-500/10 text-gold-300 flex items-center justify-center mb-4">
-   <i class="fa-solid fa-envelope-open-text"></i>
-  </div>
-  <h3 class="text-lg font-bold">Reset Password</h3>
-  <p class="text-xs text-slate-400 mt-2 mb-5">Enter your registered email. Supabase will send a secure reset link.</p>
-  <form id="forgotForm" class="space-y-4">
-   <input id="resetEmail" required type="email" placeholder="name@example.com"
-    class="w-full rounded-xl border border-navy-700 bg-navy-850 px-4 py-3 text-sm outline-none focus:border-gold-500">
-   <button id="resetBtn" class="w-full py-3 rounded-xl goldBg text-navy-950 font-bold text-sm">Send Reset Link</button>
-  </form>
- </div>
+
+<!-- =========================================================
+     FORGOT PASSWORD MODAL
+========================================================= -->
+
+<div id="forgotPasswordModal"
+     class="fixed inset-0 z-50 hidden">
+
+    <div class="absolute inset-0 bg-black/75 backdrop-blur-sm"
+         onclick="closeForgotPasswordModal()"></div>
+
+    <div class="relative min-h-full flex items-center justify-center p-4">
+
+        <div class="glass w-full max-w-md rounded-3xl shadow-2xl
+                    border border-gold-500/20">
+
+            <div class="p-6 sm:p-7">
+
+                <div class="flex items-start justify-between">
+
+                    <div>
+
+                        <div class="w-11 h-11 rounded-xl
+                                    bg-gold-500/10
+                                    flex items-center justify-center">
+
+                            <i class="fa-solid fa-envelope-open-text
+                                      text-gold-400"></i>
+
+                        </div>
+
+                        <h3 class="mt-4 text-xl font-bold">
+                            Reset Password
+                        </h3>
+
+                        <p class="text-xs text-slate-500 mt-1">
+                            We will send a secure reset link to your email.
+                        </p>
+
+                    </div>
+
+                    <button type="button"
+                            onclick="closeForgotPasswordModal()"
+                            class="w-9 h-9 rounded-lg
+                                   bg-white/5 text-slate-400
+                                   hover:text-white transition">
+
+                        <i class="fa-solid fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+
+                <form id="forgotPasswordForm"
+                      class="mt-6 space-y-4">
+
+                    <div>
+
+                        <label class="block text-[11px] uppercase
+                                      tracking-wider font-bold
+                                      text-gold-400 mb-2">
+
+                            Account Email
+                        </label>
+
+                        <input
+                            id="resetTargetEmail"
+                            type="email"
+                            required
+                            placeholder="you@example.com"
+                            class="input-box w-full bg-navy-950
+                                   border border-navy-700
+                                   rounded-xl px-4 py-3.5
+                                   text-sm text-white
+                                   placeholder:text-slate-600
+                                   outline-none">
+
+                    </div>
+
+
+                    <button
+                        id="sendResetBtn"
+                        type="submit"
+                        class="w-full gold-gradient
+                               text-navy-950
+                               rounded-xl py-3.5
+                               font-extrabold text-sm
+                               hover:brightness-110 transition">
+
+                        Send Reset Link
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
 </div>
 
-<div id="toast" class="toast fixed top-5 right-5 z-[80] max-w-sm">
- <div id="toastContent" class="rounded-2xl border px-4 py-3 bg-navy-900 shadow-2xl text-xs font-semibold"></div>
+
+<!-- =========================================================
+     TOAST
+========================================================= -->
+
+<div id="toastContainer"
+     class="fixed top-5 right-5 z-[100] w-[calc(100%-40px)]
+            sm:w-auto max-w-sm">
 </div>
 
-<footer class="border-t border-navy-900 py-6 text-center text-xs text-slate-500">
- <p>© 2026 StudentHubHelp</p>
- <p class="mt-1">
-  Director: <strong class="text-slate-300">SATPAL SWAMI</strong> ·
-  <a href="tel:+919929718264" class="hover:text-gold-400">+91 9929718264</a> ·
-  <a href="mailto:satpalswami22742@gmail.com" class="hover:text-gold-400">satpalswami22742@gmail.com</a>
- </p>
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer class="border-t border-white/5 bg-navy-950 py-6">
+
+    <div class="max-w-7xl mx-auto px-4 text-center">
+
+        <p class="text-[11px] text-slate-600">
+            © 2026 StudentHubHelp.
+            Secure Student Discovery Platform.
+        </p>
+
+        <p class="text-[10px] text-slate-700 mt-1">
+            Director: Satpal Swami
+        </p>
+
+    </div>
+
 </footer>
 
+
 <script>
-const SUPABASE_URL="https://idurlccrarznnnqixxsd.supabase.co";
 
-/*
- IMPORTANT:
- Keep the same WORKING Supabase anon key that is already working
- in your current auth.html / tiffin-finder.html.
- Do not put a service_role key here.
-*/
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+/* =========================================================
+   SUPABASE CONFIG
+========================================================= */
 
-if(!SUPABASE_ANON_KEY){
- console.warn("Supabase anon key is not configured in auth.html.");
+const SUPABASE_URL =
+    "https://idurlccrarznnnqixxsd.supabase.co";
+
+const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+
+/* =========================================================
+   DIRECTOR IDENTITY
+========================================================= */
+
+const DIRECTOR_EMAIL =
+    "satpalswami22742@gmail.com";
+
+
+/* =========================================================
+   UI HELPERS
+========================================================= */
+
+function showToast(message, type = "info") {
+
+    const container =
+        document.getElementById("toastContainer");
+
+    const colors = {
+        success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+        error: "border-red-500/30 bg-red-500/10 text-red-300",
+        info: "border-blue-500/30 bg-blue-500/10 text-blue-300"
+    };
+
+    const icons = {
+        success: "fa-circle-check",
+        error: "fa-circle-exclamation",
+        info: "fa-circle-info"
+    };
+
+    const toast = document.createElement("div");
+
+    toast.className =
+        `toast mb-3 rounded-2xl border ${colors[type] || colors.info}
+         px-4 py-3 shadow-2xl backdrop-blur-xl`;
+
+    toast.innerHTML = `
+        <div class="flex items-start gap-3">
+
+            <i class="fa-solid ${icons[type] || icons.info} mt-0.5"></i>
+
+            <div class="text-xs font-semibold leading-relaxed">
+                ${escapeHtml(message)}
+            </div>
+
+        </div>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = "0";
+
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+
+    }, 4500);
 }
 
-const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-let toastTimer;
 
-function toast(message,type="info"){
- const box=document.getElementById("toast");
- const content=document.getElementById("toastContent");
- const icon=type==="success"?"fa-circle-check":type==="error"?"fa-circle-exclamation":"fa-circle-info";
- content.innerHTML='<i class="fa-solid '+icon+' mr-2"></i>'+escapeHtml(message);
- content.className="rounded-2xl border px-4 py-3 shadow-2xl text-xs font-semibold "+
-  (type==="success"?"bg-emerald-950 border-emerald-500/30 text-emerald-200":
-   type==="error"?"bg-red-950 border-red-500/30 text-red-200":
-   "bg-navy-900 border-gold-500/25 text-slate-200");
- box.classList.add("show");
- clearTimeout(toastTimer);
- toastTimer=setTimeout(()=>box.classList.remove("show"),4500);
+function escapeHtml(value) {
+
+    return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
-function escapeHtml(v){
- return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+
+function togglePassword(inputId, iconId) {
+
+    const input =
+        document.getElementById(inputId);
+
+    const icon =
+        document.getElementById(iconId);
+
+    if (!input) return;
+
+    if (input.type === "password") {
+
+        input.type = "text";
+
+        if (icon) {
+            icon.className = "fa-solid fa-eye-slash";
+        }
+
+    } else {
+
+        input.type = "password";
+
+        if (icon) {
+            icon.className = "fa-solid fa-eye";
+        }
+
+    }
 }
 
-function loading(btn,on,text){
- if(on){
-  btn.disabled=true;
-  btn.dataset.oldText=btn.innerHTML;
-  btn.innerHTML='<i class="fa-solid fa-spinner spin mr-2"></i>'+text;
- }else{
-  btn.disabled=false;
-  btn.innerHTML=btn.dataset.oldText||text;
- }
+
+/* =========================================================
+   AUTH TABS
+========================================================= */
+
+function showSignIn() {
+
+    document.getElementById("signInContainer")
+        .classList.remove("hidden");
+
+    document.getElementById("signUpContainer")
+        .classList.add("hidden");
+
+    document.getElementById("setNewPasswordContainer")
+        .classList.add("hidden");
+
+    document.getElementById("signInTab")
+        .classList.add("active");
+
+    document.getElementById("signUpTab")
+        .classList.remove("active");
 }
 
-function showLogin(){
- document.getElementById("loginView").classList.remove("hidden");
- document.getElementById("signupView").classList.add("hidden");
- document.getElementById("recoveryView").classList.add("hidden");
- document.getElementById("tabs").classList.remove("hidden");
- document.getElementById("loginTab").className="flex-1 py-2.5 rounded-lg text-xs font-bold goldBg text-navy-950";
- document.getElementById("signupTab").className="flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-400";
+
+function showSignUp() {
+
+    document.getElementById("signInContainer")
+        .classList.add("hidden");
+
+    document.getElementById("signUpContainer")
+        .classList.remove("hidden");
+
+    document.getElementById("setNewPasswordContainer")
+        .classList.add("hidden");
+
+    document.getElementById("signInTab")
+        .classList.remove("active");
+
+    document.getElementById("signUpTab")
+        .classList.add("active");
 }
 
-function showSignup(){
- document.getElementById("loginView").classList.add("hidden");
- document.getElementById("signupView").classList.remove("hidden");
- document.getElementById("recoveryView").classList.add("hidden");
- document.getElementById("tabs").classList.remove("hidden");
- document.getElementById("signupTab").className="flex-1 py-2.5 rounded-lg text-xs font-bold goldBg text-navy-950";
- document.getElementById("loginTab").className="flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-400";
+
+function showSetNewPasswordView() {
+
+    document.getElementById("signInContainer")
+        .classList.add("hidden");
+
+    document.getElementById("signUpContainer")
+        .classList.add("hidden");
+
+    document.getElementById("authTabsHeader")
+        .classList.add("hidden");
+
+    document.getElementById("setNewPasswordContainer")
+        .classList.remove("hidden");
 }
 
-function showRecovery(){
- document.getElementById("loginView").classList.add("hidden");
- document.getElementById("signupView").classList.add("hidden");
- document.getElementById("recoveryView").classList.remove("hidden");
- document.getElementById("tabs").classList.add("hidden");
+
+/* =========================================================
+   BUTTON STATES
+========================================================= */
+
+function setSignInLoading(loading) {
+
+    const btn =
+        document.getElementById("signInSubmitBtn");
+
+    const text =
+        document.getElementById("signInBtnText");
+
+    const spinner =
+        document.getElementById("signInBtnLoading");
+
+    btn.disabled = loading;
+
+    if (loading) {
+
+        text.classList.add("hidden");
+
+        spinner.classList.remove("hidden");
+        spinner.classList.add("flex");
+
+    } else {
+
+        text.classList.remove("hidden");
+
+        spinner.classList.add("hidden");
+        spinner.classList.remove("flex");
+
+    }
 }
 
-function togglePass(id,iconId){
- const input=document.getElementById(id);
- const icon=document.getElementById(iconId);
- input.type=input.type==="password"?"text":"password";
- icon.className=input.type==="password"?"fa-solid fa-eye":"fa-solid fa-eye-slash";
+
+function setSignUpLoading(loading) {
+
+    const btn =
+        document.getElementById("signUpSubmitBtn");
+
+    const text =
+        document.getElementById("signUpBtnText");
+
+    const spinner =
+        document.getElementById("signUpBtnLoading");
+
+    btn.disabled = loading;
+
+    if (loading) {
+
+        text.classList.add("hidden");
+
+        spinner.classList.remove("hidden");
+        spinner.classList.add("flex");
+
+    } else {
+
+        text.classList.remove("hidden");
+
+        spinner.classList.add("hidden");
+        spinner.classList.remove("flex");
+
+    }
 }
 
-function openForgot(){
- const modal=document.getElementById("forgotModal");
- modal.classList.remove("hidden");
- modal.classList.add("flex");
+
+/* =========================================================
+   ROLE NORMALIZATION
+========================================================= */
+
+function normalizeRole(role) {
+
+    return String(role || "")
+        .trim()
+        .toLowerCase();
 }
 
-function closeForgot(){
- const modal=document.getElementById("forgotModal");
- modal.classList.add("hidden");
- modal.classList.remove("flex");
+
+/* =========================================================
+   GET PROFILE FROM SUPABASE
+========================================================= */
+
+async function getUserProfile(userId) {
+
+    if (!userId) {
+        return null;
+    }
+
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("profiles")
+        .select("id, full_name, phone, role")
+        .eq("id", userId)
+        .maybeSingle();
+
+    if (error) {
+
+        console.error(
+            "Profile load error:",
+            error
+        );
+
+        return null;
+    }
+
+    return data || null;
 }
 
-async function getProfile(user){
- const {data,error}=await supabaseClient
-  .from("profiles")
-  .select("id,full_name,phone,email,role,address")
-  .eq("id",user.id)
-  .maybeSingle();
 
- if(error){
-  console.warn("Profile error:",error.message);
-  return null;
- }
- return data||null;
+/* =========================================================
+   ROLE-BASED REDIRECT
+========================================================= */
+
+async function redirectByRole(user) {
+
+    if (!user || !user.id) {
+
+        showToast(
+            "Unable to verify your account.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const email =
+        String(user.email || "")
+            .trim()
+            .toLowerCase();
+
+
+    /*
+       IMPORTANT:
+
+       Role is taken from Supabase profiles.
+
+       We do NOT trust localStorage.
+       We do NOT trust a password shortcut.
+    */
+
+    const profile =
+        await getUserProfile(user.id);
+
+
+    if (!profile) {
+
+        await supabaseClient.auth.signOut();
+
+        showToast(
+            "Your account profile could not be verified. Please contact support.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const role =
+        normalizeRole(profile.role);
+
+
+    /* =====================================================
+       DIRECTOR / ADMIN
+    ===================================================== */
+
+    if (
+        role === "admin" &&
+        email === DIRECTOR_EMAIL
+    ) {
+
+        showToast(
+            "Director account verified. Opening Admin Dashboard...",
+            "success"
+        );
+
+        setTimeout(() => {
+
+            window.location.href =
+                "admin-dashboard.html";
+
+        }, 350);
+
+        return;
+    }
+
+
+    /* =====================================================
+       NEVER SEND NON-DIRECTOR TO ADMIN
+    ===================================================== */
+
+    if (role === "admin") {
+
+        await supabaseClient.auth.signOut();
+
+        showToast(
+            "Admin access is restricted to the authorized Director account.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    /* =====================================================
+       STUDENT
+    ===================================================== */
+
+    if (role === "student") {
+
+        showToast(
+            "Student account verified. Opening your dashboard...",
+            "success"
+        );
+
+        setTimeout(() => {
+
+            window.location.href =
+                "user-dashboard.html";
+
+        }, 350);
+
+        return;
+    }
+
+
+    /* =====================================================
+       OWNER
+    ===================================================== */
+
+    if (role === "owner") {
+
+        showToast(
+            "Owner account verified. Opening your dashboard...",
+            "success"
+        );
+
+        setTimeout(() => {
+
+            window.location.href =
+                "user-dashboard.html";
+
+        }, 350);
+
+        return;
+    }
+
+
+    /* =====================================================
+       UNKNOWN ROLE
+    ===================================================== */
+
+    await supabaseClient.auth.signOut();
+
+    showToast(
+        "Your account role could not be verified.",
+        "error"
+    );
 }
 
-async function routeUser(user,profile){
- const email=String(user.email||"").trim().toLowerCase();
- const pEmail=String(profile?.email||"").trim().toLowerCase();
 
- /*
-  Director identity is fixed to the registered Supabase account.
-  Public signup cannot create Director/Admin role.
- */
- if(email==="satpalswami22742@gmail.com" || pEmail==="satpalswami22742@gmail.com"){
-  location.href="admin-dashboard.html";
-  return;
- }
+/* =========================================================
+   SIGN IN
+========================================================= */
 
- const role=String(profile?.role||user.user_metadata?.role||"student").toLowerCase();
+document
+    .getElementById("signInForm")
+    .addEventListener("submit", async function(e) {
 
- if(role==="owner"){
-  /*
-   Current project uses user-dashboard.html for the authenticated
-   owner area. Keep this route until a dedicated owner dashboard exists.
-  */
-  location.href="user-dashboard.html";
-  return;
- }
+        e.preventDefault();
 
- location.href="user-dashboard.html";
+        const email =
+            document
+                .getElementById("loginEmail")
+                .value
+                .trim()
+                .toLowerCase();
+
+        const password =
+            document
+                .getElementById("loginPassword")
+                .value;
+
+
+        if (!email || !password) {
+
+            showToast(
+                "Please enter your email and password.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        setSignInLoading(true);
+
+
+        try {
+
+            /*
+                ONLY Supabase Auth login.
+                No hardcoded password.
+                No localStorage admin shortcut.
+            */
+
+            const {
+                data,
+                error
+            } = await supabaseClient.auth
+                .signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+
+            if (error) {
+
+                console.error(
+                    "Supabase login error:",
+                    error
+                );
+
+                showToast(
+                    error.message || "Invalid email or password.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            if (!data || !data.user) {
+
+                showToast(
+                    "Login succeeded but account information was not returned.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            await redirectByRole(data.user);
+
+        } catch (error) {
+
+            console.error(
+                "Unexpected login error:",
+                error
+            );
+
+            showToast(
+                "Something went wrong while signing in.",
+                "error"
+            );
+
+        } finally {
+
+            setSignInLoading(false);
+
+        }
+
+    });
+
+
+/* =========================================================
+   SIGN UP
+========================================================= */
+
+document
+    .getElementById("signUpForm")
+    .addEventListener("submit", async function(e) {
+
+        e.preventDefault();
+
+
+        const roleElement =
+            document.querySelector(
+                'input[name="regRole"]:checked'
+            );
+
+
+        const role =
+            roleElement
+                ? roleElement.value
+                : "student";
+
+
+        /*
+            IMPORTANT:
+            Public signup can ONLY create:
+            student / owner
+
+            Nobody can create admin from this page.
+        */
+
+        if (
+            role !== "student" &&
+            role !== "owner"
+        ) {
+
+            showToast(
+                "Invalid account type.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const name =
+            document
+                .getElementById("regName")
+                .value
+                .trim();
+
+        const phoneRaw =
+            document
+                .getElementById("regPhone")
+                .value
+                .trim();
+
+        const email =
+            document
+                .getElementById("regEmail")
+                .value
+                .trim()
+                .toLowerCase();
+
+        const password =
+            document
+                .getElementById("regPassword")
+                .value;
+
+
+        if (name.length < 2) {
+
+            showToast(
+                "Please enter your full name.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const phone =
+            phoneRaw.replace(/\D/g, "");
+
+
+        if (phone.length < 10) {
+
+            showToast(
+                "Please enter a valid mobile number.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (password.length < 6) {
+
+            showToast(
+                "Password must be at least 6 characters.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        setSignUpLoading(true);
+
+
+        try {
+
+            /*
+                Supabase Auth account
+            */
+
+            const {
+                data,
+                error
+            } = await supabaseClient.auth
+                .signUp({
+
+                    email: email,
+
+                    password: password,
+
+                    options: {
+
+                        data: {
+                            full_name: name,
+                            phone: "+91 " + phone,
+                            role: role
+                        }
+
+                    }
+
+                });
+
+
+            if (error) {
+
+                console.error(
+                    "Signup error:",
+                    error
+                );
+
+                showToast(
+                    error.message || "Unable to create account.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            /*
+                Supabase profile
+
+                IMPORTANT:
+                profiles table currently uses:
+                id
+                full_name
+                phone
+                role
+
+                Email remains in Supabase Auth.
+            */
+
+            if (data && data.user) {
+
+                const {
+                    error: profileError
+                } = await supabaseClient
+                    .from("profiles")
+                    .upsert(
+                        {
+                            id: data.user.id,
+                            full_name: name,
+                            phone: "+91 " + phone,
+                            role: role
+                        },
+                        {
+                            onConflict: "id"
+                        }
+                    );
+
+
+                if (profileError) {
+
+                    console.error(
+                        "Profile sync error:",
+                        profileError
+                    );
+
+                    /*
+                        Auth account exists, but profile
+                        could not be created.
+
+                        Sign out so incomplete accounts
+                        cannot continue into dashboards.
+                    */
+
+                    await supabaseClient.auth.signOut();
+
+                    showToast(
+                        "Account was created, but profile setup failed. Please try again.",
+                        "error"
+                    );
+
+                    return;
+                }
+            }
+
+
+            /*
+                Email confirmation may be enabled
+                in Supabase.
+            */
+
+            if (
+                data &&
+                data.session
+            ) {
+
+                showToast(
+                    "Account created successfully. Opening your dashboard...",
+                    "success"
+                );
+
+
+                setTimeout(() => {
+
+                    redirectByRole(data.user);
+
+                }, 500);
+
+            } else {
+
+                showToast(
+                    "Account created. Please check your email to verify your account before signing in.",
+                    "success"
+                );
+
+                setTimeout(() => {
+
+                    showSignIn();
+
+                    document
+                        .getElementById("loginEmail")
+                        .value = email;
+
+                }, 700);
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                "Unexpected signup error:",
+                error
+            );
+
+            showToast(
+                "Something went wrong while creating your account.",
+                "error"
+            );
+
+        } finally {
+
+            setSignUpLoading(false);
+
+        }
+
+    });
+
+
+/* =========================================================
+   FORGOT PASSWORD MODAL
+========================================================= */
+
+function openForgotPasswordModal() {
+
+    document
+        .getElementById("forgotPasswordModal")
+        .classList.remove("hidden");
 }
 
-async function checkSession(){
- const {data:{session}}=await supabaseClient.auth.getSession();
- if(session?.user){
-  const profile=await getProfile(session.user);
-  await routeUser(session.user,profile);
- }
+
+function closeForgotPasswordModal() {
+
+    document
+        .getElementById("forgotPasswordModal")
+        .classList.add("hidden");
 }
 
-supabaseClient.auth.onAuthStateChange(async(event,session)=>{
- if(event==="PASSWORD_RECOVERY"){
-  showRecovery();
- }
- if(event==="SIGNED_OUT"){
-  showLogin();
- }
-});
 
-document.getElementById("loginForm").addEventListener("submit",async e=>{
- e.preventDefault();
+document
+    .getElementById("forgotPasswordForm")
+    .addEventListener("submit", async function(e) {
 
- const email=document.getElementById("loginEmail").value.trim().toLowerCase();
- const password=document.getElementById("loginPassword").value;
- const btn=document.getElementById("loginBtn");
+        e.preventDefault();
 
- loading(btn,true,"Signing In...");
 
- const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+        const email =
+            document
+                .getElementById("resetTargetEmail")
+                .value
+                .trim()
+                .toLowerCase();
 
- if(error){
-  loading(btn,false);
-  toast(error.message||"Unable to sign in.","error");
-  return;
- }
 
- if(!data?.user){
-  loading(btn,false);
-  toast("No authenticated user session was returned.","error");
-  return;
- }
+        const btn =
+            document.getElementById("sendResetBtn");
 
- toast("Login successful. Loading your account...","success");
- const profile=await getProfile(data.user);
- await routeUser(data.user,profile);
-});
 
-document.getElementById("signupForm").addEventListener("submit",async e=>{
- e.preventDefault();
+        btn.disabled = true;
 
- const role=document.querySelector('input[name="role"]:checked')?.value||"student";
- const name=document.getElementById("name").value.trim();
- const rawPhone=document.getElementById("phone").value.trim();
- const email=document.getElementById("email").value.trim().toLowerCase();
- const password=document.getElementById("password").value;
- const phoneDigits=rawPhone.replace(/\D/g,"");
+        btn.innerHTML =
+            `<span class="inline-flex items-center gap-2">
+                <span class="loader"></span>
+                Sending...
+             </span>`;
 
- if(name.length<2){
-  toast("Please enter your full name.","error");return;
- }
- if(phoneDigits.length!==10){
-  toast("Please enter a valid 10 digit mobile number.","error");return;
- }
- if(password.length<6){
-  toast("Password must be at least 6 characters.","error");return;
- }
 
- const btn=document.getElementById("signupBtn");
- loading(btn,true,"Creating Account...");
+        try {
 
- const {data,error}=await supabaseClient.auth.signUp({
-  email,
-  password,
-  options:{
-   data:{
-    full_name:name,
-    phone:"+91 "+phoneDigits,
-    role:role
-   }
-  }
- });
+            const {
+                error
+            } = await supabaseClient.auth
+                .resetPasswordForEmail(
+                    email,
+                    {
+                        redirectTo:
+                            "https://studenthubhelp.github.io/studenthubhelp/auth.html"
+                    }
+                );
 
- if(error){
-  loading(btn,false);
-  toast(error.message||"Registration failed.","error");
-  return;
- }
 
- /*
-  Profile is stored in Supabase public.profiles.
-  If RLS/trigger already creates the profile, this upsert simply
-  synchronizes the same authenticated user's data.
- */
- if(data?.user?.id){
-  const {error:profileError}=await supabaseClient
-   .from("profiles")
-   .upsert([{
-    id:data.user.id,
-    full_name:name,
-    phone:"+91 "+phoneDigits,
-    email:email,
-    role:role
-   }],{onConflict:"id"});
+            if (error) {
 
-  if(profileError) console.warn("Profile sync:",profileError.message);
- }
+                showToast(
+                    error.message,
+                    "error"
+                );
 
- loading(btn,false);
+                return;
+            }
 
- if(!data?.session){
-  document.getElementById("loginEmail").value=email;
-  showLogin();
-  toast("Account created. Please confirm your email, then sign in.","success");
-  return;
- }
 
- toast("Account created successfully.","success");
- const profile=await getProfile(data.user);
- await routeUser(data.user,profile);
-});
+            showToast(
+                "Password reset link has been sent to your email.",
+                "success"
+            );
 
-document.getElementById("forgotForm").addEventListener("submit",async e=>{
- e.preventDefault();
 
- const email=document.getElementById("resetEmail").value.trim().toLowerCase();
- const btn=document.getElementById("resetBtn");
+            closeForgotPasswordModal();
 
- loading(btn,true,"Sending...");
 
- const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{
-  redirectTo:"https://studenthubhelp.github.io/studenthubhelp/auth.html"
- });
+        } catch (error) {
 
- loading(btn,false);
+            console.error(error);
 
- if(error){
-  toast(error.message||"Unable to send reset link.","error");
-  return;
- }
+            showToast(
+                "Unable to send password reset email.",
+                "error"
+            );
 
- closeForgot();
- toast("Password reset link sent. Check your email.","success");
-});
+        } finally {
 
-document.getElementById("recoveryForm").addEventListener("submit",async e=>{
- e.preventDefault();
+            btn.disabled = false;
 
- const p1=document.getElementById("newPassword").value;
- const p2=document.getElementById("confirmPassword").value;
- const btn=document.getElementById("savePasswordBtn");
+            btn.innerHTML =
+                "Send Reset Link";
 
- if(p1.length<6){
-  toast("Password must be at least 6 characters.","error");return;
- }
- if(p1!==p2){
-  toast("Passwords do not match.","error");return;
- }
+        }
 
- loading(btn,true,"Updating...");
+    });
 
- const {error}=await supabaseClient.auth.updateUser({password:p1});
 
- if(error){
-  loading(btn,false);
-  toast(error.message||"Unable to update password.","error");
-  return;
- }
+/* =========================================================
+   UPDATE PASSWORD
+========================================================= */
 
- toast("Password updated successfully.","success");
+document
+    .getElementById("setNewPasswordForm")
+    .addEventListener("submit", async function(e) {
 
- const {data:{user}}=await supabaseClient.auth.getUser();
- if(user){
-  const profile=await getProfile(user);
-  await routeUser(user,profile);
- }else{
-  showLogin();
- }
-});
+        e.preventDefault();
 
-window.addEventListener("DOMContentLoaded",async()=>{
- const recovery=location.hash.includes("type=recovery") ||
-                location.search.includes("type=recovery");
 
- if(recovery){
-  showRecovery();
-  return;
- }
+        const p1 =
+            document
+                .getElementById("newPasswordInput")
+                .value;
 
- await checkSession();
-});
+        const p2 =
+            document
+                .getElementById("confirmNewPasswordInput")
+                .value;
 
-window.addEventListener("keydown",e=>{
- if(e.key==="Escape") closeForgot();
-});
+
+        if (p1.length < 6) {
+
+            showToast(
+                "Password must be at least 6 characters.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (p1 !== p2) {
+
+            showToast(
+                "Passwords do not match.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const btn =
+            document.getElementById("updatePasswordBtn");
+
+
+        btn.disabled = true;
+
+        btn.innerHTML =
+            `<span class="inline-flex items-center gap-2">
+                <span class="loader"></span>
+                Updating...
+             </span>`;
+
+
+        try {
+
+            const {
+                data,
+                error
+            } = await supabaseClient.auth
+                .updateUser({
+                    password: p1
+                });
+
+
+            if (error) {
+
+                showToast(
+                    error.message,
+                    "error"
+                );
+
+                return;
+            }
+
+
+            showToast(
+                "Password updated successfully. Please sign in again.",
+                "success"
+            );
+
+
+            await supabaseClient.auth.signOut();
+
+
+            setTimeout(() => {
+
+                window.location.href =
+                    "auth.html";
+
+            }, 900);
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            showToast(
+                "Unable to update password.",
+                "error"
+            );
+
+        } finally {
+
+            btn.disabled = false;
+
+            btn.innerHTML =
+                "Update Password";
+
+        }
+
+    });
+
+
+/* =========================================================
+   AUTH STATE
+========================================================= */
+
+supabaseClient.auth.onAuthStateChange(
+    async function(event, session) {
+
+        console.log(
+            "Supabase Auth Event:",
+            event
+        );
+
+
+        if (
+            event === "PASSWORD_RECOVERY"
+        ) {
+
+            showSetNewPasswordView();
+
+            return;
+        }
+
+    }
+);
+
+
+/* =========================================================
+   PAGE LOAD
+========================================================= */
+
+window.addEventListener(
+    "DOMContentLoaded",
+    async function() {
+
+        const hash =
+            window.location.hash || "";
+
+        const search =
+            window.location.search || "";
+
+
+        /*
+            Password recovery URL
+        */
+
+        if (
+            hash.includes("type=recovery") ||
+            search.includes("type=recovery") ||
+            hash.includes("access_token=")
+        ) {
+
+            showSetNewPasswordView();
+
+            return;
+        }
+
+
+        /*
+            If an old Supabase session already exists,
+            verify it properly through Supabase.
+        */
+
+        try {
+
+            const {
+                data
+            } = await supabaseClient.auth
+                .getSession();
+
+
+            if (
+                data &&
+                data.session &&
+                data.session.user
+            ) {
+
+                /*
+                    We don't blindly redirect.
+                    Role is checked again from Supabase.
+                */
+
+                await redirectByRole(
+                    data.session.user
+                );
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Session check error:",
+                error
+            );
+
+        }
+
+    });
+
+
+/* =========================================================
+   ENTER KEY / ESC MODAL
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(e) {
+
+        if (e.key === "Escape") {
+
+            closeForgotPasswordModal();
+
+        }
+
+    }
+);
+
 </script>
 
 </body>
