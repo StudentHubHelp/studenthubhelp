@@ -1,1238 +1,750 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-
-    <meta name="robots" content="noindex, nofollow, noarchive">
-
-    <title>Login / Sign Up | StudentHubHelp</title>
-
-    <link rel="icon" type="image/png" href="logo.png">
-    <link rel="apple-touch-icon" href="logo.png">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
-          rel="stylesheet">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-    <!-- IMPORTANT: lowercase @supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        navy: {
-                            950: '#020817',
-                            900: '#071225',
-                            850: '#0b1930',
-                            800: '#10213d',
-                            700: '#193052'
-                        },
-                        gold: {
-                            300: '#f3d98b',
-                            400: '#e7c45d',
-                            500: '#d4af37',
-                            600: '#b99321'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        display: ['Playfair Display', 'serif']
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: Inter, sans-serif;
-            background:
-                radial-gradient(circle at top left, rgba(212,175,55,.10), transparent 35%),
-                radial-gradient(circle at bottom right, rgba(30,64,175,.12), transparent 35%),
-                #020817;
-            color: #fff;
-        }
-
-        .glass {
-            background: rgba(7,18,37,.82);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(212,175,55,.18);
-        }
-
-        .gold-gradient {
-            background: linear-gradient(
-                135deg,
-                #b99321 0%,
-                #d4af37 45%,
-                #f3d98b 100%
-            );
-        }
-
-        .gold-text {
-            background: linear-gradient(
-                135deg,
-                #d4af37,
-                #f3d98b
-            );
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .input-box {
-            transition: .2s ease;
-        }
-
-        .input-box:focus {
-            border-color: rgba(212,175,55,.75);
-            box-shadow: 0 0 0 3px rgba(212,175,55,.08);
-        }
-
-        .auth-tab {
-            transition: .2s ease;
-        }
-
-        .auth-tab.active {
-            background: linear-gradient(
-                135deg,
-                #b99321,
-                #d4af37
-            );
-            color: #020817;
-            box-shadow: 0 8px 25px rgba(212,175,55,.16);
-        }
-
-        .role-card {
-            transition: .2s ease;
-            cursor: pointer;
-        }
-
-        .role-card:hover {
-            border-color: rgba(212,175,55,.45);
-            transform: translateY(-1px);
-        }
-
-        .role-radio:checked + .role-card {
-            border-color: #d4af37;
-            background: rgba(212,175,55,.08);
-            box-shadow: 0 0 0 1px rgba(212,175,55,.20);
-        }
-
-        .loader {
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(2,8,23,.25);
-            border-top-color: #020817;
-            border-radius: 50%;
-            animation: spin .7s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .fade-in {
-            animation: fadeIn .35s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .toast {
-            animation: toastIn .3s ease;
-        }
-
-        @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateY(-12px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .password-toggle {
-            cursor: pointer;
-        }
-    </style>
-</head>
-
-<body>
-
-<!-- =========================================================
-     TOP NAV
-========================================================= -->
-
-<nav class="border-b border-white/5 bg-navy-950/80 backdrop-blur-xl">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-
-        <div class="flex items-center justify-between">
-
-            <a href="index.html"
-               class="flex items-center gap-3">
-
-                <div class="w-11 h-11 rounded-xl overflow-hidden border border-gold-500/40 bg-navy-900 flex items-center justify-center shadow-lg">
-                    <img src="logo.png"
-                         alt="StudentHubHelp"
-                         class="w-full h-full object-cover"
-                         onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fa-solid fa-graduation-cap text-gold-400 text-xl\'></i>';">
-                </div>
-
-                <div>
-                    <div class="font-extrabold text-white tracking-tight">
-                        Student<span class="gold-text">Hub</span>Help
-                    </div>
-
-                    <div class="text-[10px] text-slate-500 uppercase tracking-widest">
-                        Student Discovery Platform
-                    </div>
-                </div>
-            </a>
-
-            <a href="index.html"
-               class="text-xs font-semibold text-slate-400 hover:text-gold-300 transition">
-                <i class="fa-solid fa-arrow-left mr-1"></i>
-                Back to Home
-            </a>
-
-        </div>
-    </div>
-</nav>
-
-
-<!-- =========================================================
-     MAIN
-========================================================= -->
-
-<main class="min-h-[calc(100vh-150px)] px-4 py-10 sm:py-16">
-
-    <div class="max-w-6xl mx-auto">
-
-        <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-
-            <!-- LEFT SIDE -->
-            <section class="hidden lg:block">
-
-                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full
-                            bg-gold-500/10 border border-gold-500/20
-                            text-gold-300 text-xs font-bold uppercase tracking-widest">
-
-                    <i class="fa-solid fa-shield-halved"></i>
-
-                    Secure Student Platform
-                </div>
-
-                <h1 class="mt-6 text-5xl xl:text-6xl font-display font-extrabold leading-tight">
-                    One Login.
-                    <br>
-                    <span class="gold-text">Every Student Need.</span>
-                </h1>
-
-                <p class="mt-6 max-w-xl text-slate-400 leading-relaxed">
-                    Access Hostels, PGs, Tiffin & Mess services,
-                    Study Libraries and Cafes from one connected
-                    StudentHubHelp account.
-                </p>
-
-                <div class="grid grid-cols-2 gap-4 mt-8">
-
-                    <div class="glass rounded-2xl p-5">
-                        <div class="w-10 h-10 rounded-xl bg-blue-500/10
-                                    flex items-center justify-center">
-                            <i class="fa-solid fa-building text-blue-300"></i>
-                        </div>
-
-                        <div class="mt-4 font-bold">
-                            Hostels & PGs
-                        </div>
-
-                        <div class="text-xs text-slate-500 mt-1">
-                            Find your stay
-                        </div>
-                    </div>
-
-                    <div class="glass rounded-2xl p-5">
-                        <div class="w-10 h-10 rounded-xl bg-orange-500/10
-                                    flex items-center justify-center">
-                            <i class="fa-solid fa-utensils text-orange-300"></i>
-                        </div>
-
-                        <div class="mt-4 font-bold">
-                            Tiffin & Mess
-                        </div>
-
-                        <div class="text-xs text-slate-500 mt-1">
-                            Daily food services
-                        </div>
-                    </div>
-
-                    <div class="glass rounded-2xl p-5">
-                        <div class="w-10 h-10 rounded-xl bg-purple-500/10
-                                    flex items-center justify-center">
-                            <i class="fa-solid fa-book-open text-purple-300"></i>
-                        </div>
-
-                        <div class="mt-4 font-bold">
-                            Libraries
-                        </div>
-
-                        <div class="text-xs text-slate-500 mt-1">
-                            Study spaces
-                        </div>
-                    </div>
-
-                    <div class="glass rounded-2xl p-5">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10
-                                    flex items-center justify-center">
-                            <i class="fa-solid fa-mug-hot text-emerald-300"></i>
-                        </div>
-
-                        <div class="mt-4 font-bold">
-                            Cafes
-                        </div>
-
-                        <div class="text-xs text-slate-500 mt-1">
-                            Student-friendly spots
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="mt-8 flex items-center gap-3 text-xs text-slate-500">
-                    <i class="fa-solid fa-lock text-gold-400"></i>
-                    Your authentication is handled securely by Supabase.
-                </div>
-
-            </section>
-
-
-            <!-- RIGHT AUTH CARD -->
-            <section>
-
-                <div class="glass rounded-3xl shadow-2xl overflow-hidden">
-
-                    <!-- HEADER -->
-                    <div class="p-6 sm:p-8 border-b border-white/5">
-
-                        <div class="text-center">
-
-                            <div class="lg:hidden mx-auto mb-5 w-14 h-14 rounded-2xl
-                                        border border-gold-500/30
-                                        bg-navy-900
-                                        flex items-center justify-center">
-
-                                <i class="fa-solid fa-graduation-cap
-                                          text-gold-400 text-2xl"></i>
-
-                            </div>
-
-                            <h2 class="text-2xl sm:text-3xl font-display font-extrabold">
-                                Welcome to
-                                <span class="gold-text">StudentHubHelp</span>
-                            </h2>
-
-                            <p class="text-xs text-slate-500 mt-2">
-                                Login or create your student account
-                            </p>
-
-                        </div>
-
-
-                        <!-- TABS -->
-                        <div id="authTabsHeader"
-                             class="mt-7 grid grid-cols-2 gap-2 p-1
-                                    bg-navy-950 rounded-2xl border border-white/5">
-
-                            <button type="button"
-                                    id="signInTab"
-                                    class="auth-tab active rounded-xl py-3 text-xs font-extrabold"
-                                    onclick="showSignIn()">
-
-                                <i class="fa-solid fa-right-to-bracket mr-1"></i>
-                                Sign In
-                            </button>
-
-                            <button type="button"
-                                    id="signUpTab"
-                                    class="auth-tab rounded-xl py-3 text-xs font-extrabold
-                                           text-slate-400"
-                                    onclick="showSignUp()">
-
-                                <i class="fa-solid fa-user-plus mr-1"></i>
-                                Create Account
-                            </button>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- =================================================
-                         SIGN IN
-                    ================================================== -->
-
-                    <div id="signInContainer"
-                         class="p-6 sm:p-8 fade-in">
-
-                        <form id="signInForm"
-                              class="space-y-5">
-
-                            <div>
-
-                                <label class="block text-[11px] uppercase
-                                              tracking-wider font-bold
-                                              text-gold-400 mb-2">
-
-                                    Email Address
-                                </label>
-
-                                <div class="relative">
-
-                                    <i class="fa-solid fa-envelope
-                                              absolute left-4 top-1/2
-                                              -translate-y-1/2
-                                              text-slate-500"></i>
-
-                                    <input
-                                        id="loginEmail"
-                                        type="email"
-                                        autocomplete="email"
-                                        required
-                                        placeholder="you@example.com"
-                                        class="input-box w-full bg-navy-950
-                                               border border-navy-700
-                                               rounded-xl pl-11 pr-4 py-3.5
-                                               text-sm text-white
-                                               placeholder:text-slate-600
-                                               outline-none">
-
-                                </div>
-
-                            </div>
-
-
-                            <div>
-
-                                <div class="flex items-center justify-between mb-2">
-
-                                    <label class="block text-[11px] uppercase
-                                                  tracking-wider font-bold
-                                                  text-gold-400">
-
-                                        Password
-                                    </label>
-
-                                    <button type="button"
-                                            onclick="openForgotPasswordModal()"
-                                            class="text-[11px] text-slate-500
-                                                   hover:text-gold-300 transition">
-
-                                        Forgot Password?
-                                    </button>
-
-                                </div>
-
-                                <div class="relative">
-
-                                    <i class="fa-solid fa-lock
-                                              absolute left-4 top-1/2
-                                              -translate-y-1/2
-                                              text-slate-500"></i>
-
-                                    <input
-                                        id="loginPassword"
-                                        type="password"
-                                        autocomplete="current-password"
-                                        required
-                                        placeholder="Enter your password"
-                                        class="input-box w-full bg-navy-950
-                                               border border-navy-700
-                                               rounded-xl pl-11 pr-12 py-3.5
-                                               text-sm text-white
-                                               placeholder:text-slate-600
-                                               outline-none">
-
-                                    <button type="button"
-                                            onclick="togglePassword('loginPassword','loginEye')"
-                                            class="password-toggle absolute right-4
-                                                   top-1/2 -translate-y-1/2
-                                                   text-slate-500 hover:text-gold-300">
-
-                                        <i id="loginEye"
-                                           class="fa-solid fa-eye"></i>
-
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-
-                            <label class="flex items-center gap-2 cursor-pointer">
-
-                                <input id="rememberMe"
-                                       type="checkbox"
-                                       class="accent-yellow-500">
-
-                                <span class="text-xs text-slate-500">
-                                    Keep me signed in
-                                </span>
-
-                            </label>
-
-
-                            <button
-                                id="signInSubmitBtn"
-                                type="submit"
-                                class="w-full gold-gradient
-                                       text-navy-950
-                                       rounded-xl py-3.5
-                                       font-extrabold text-sm
-                                       shadow-lg
-                                       hover:brightness-110
-                                       active:scale-[.99]
-                                       transition">
-
-                                <span id="signInBtnText">
-                                    <i class="fa-solid fa-right-to-bracket mr-1"></i>
-                                    Sign In
-                                </span>
-
-                                <span id="signInBtnLoading"
-                                      class="hidden items-center justify-center gap-2">
-
-                                    <span class="loader"></span>
-                                    Signing In...
-                                </span>
-
-                            </button>
-
-
-                            <div class="relative py-2">
-
-                                <div class="absolute inset-0 flex items-center">
-                                    <div class="w-full border-t border-white/5"></div>
-                                </div>
-
-                                <div class="relative flex justify-center">
-                                    <span class="bg-navy-900 px-3
-                                                 text-[10px] uppercase
-                                                 tracking-widest
-                                                 text-slate-600">
-
-                                        Secure Login
-                                    </span>
-                                </div>
-
-                            </div>
-
-
-                            <p class="text-center text-[11px] text-slate-600 leading-relaxed">
-
-                                By signing in, you agree to use
-                                StudentHubHelp responsibly.
-
-                            </p>
-
-                        </form>
-
-                    </div>
-
-
-                    <!-- =================================================
-                         SIGN UP
-                    ================================================== -->
-
-                    <div id="signUpContainer"
-                         class="p-6 sm:p-8 hidden fade-in">
-
-                        <form id="signUpForm"
-                              class="space-y-5">
-
-
-                            <!-- ROLE -->
-                            <div>
-
-                                <label class="block text-[11px] uppercase
-                                              tracking-wider font-bold
-                                              text-gold-400 mb-3">
-
-                                    Account Type
-                                </label>
-
-                                <div class="grid grid-cols-2 gap-3">
-
-                                    <label class="block">
-
-                                        <input
-                                            type="radio"
-                                            name="regRole"
-                                            value="student"
-                                            checked
-                                            class="role-radio sr-only">
-
-                                        <div class="role-card bg-navy-950
-                                                    border border-navy-700
-                                                    rounded-xl p-4">
-
-                                            <div class="flex items-center gap-3">
-
-                                                <div class="w-9 h-9 rounded-lg
-                                                            bg-blue-500/10
-                                                            flex items-center
-                                                            justify-center">
-
-                                                    <i class="fa-solid fa-user-graduate
-                                                              text-blue-300"></i>
-
-                                                </div>
-
-                                                <div>
-                                                    <div class="text-xs font-bold">
-                                                        Student
-                                                    </div>
-
-                                                    <div class="text-[10px] text-slate-600">
-                                                        Find services
-                                                    </div>
-                                                </div>
-
-                                            </div>
-
-                                        </div>
-
-                                    </label>
-
-
-                                    <label class="block">
-
-                                        <input
-                                            type="radio"
-                                            name="regRole"
-                                            value="owner"
-                                            class="role-radio sr-only">
-
-                                        <div class="role-card bg-navy-950
-                                                    border border-navy-700
-                                                    rounded-xl p-4">
-
-                                            <div class="flex items-center gap-3">
-
-                                                <div class="w-9 h-9 rounded-lg
-                                                            bg-emerald-500/10
-                                                            flex items-center
-                                                            justify-center">
-
-                                                    <i class="fa-solid fa-store
-                                                              text-emerald-300"></i>
-
-                                                </div>
-
-                                                <div>
-                                                    <div class="text-xs font-bold">
-                                                        Owner
-                                                    </div>
-
-                                                    <div class="text-[10px] text-slate-600">
-                                                        List property
-                                                    </div>
-                                                </div>
-
-                                            </div>
-
-                                        </div>
-
-                                    </label>
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- NAME -->
-                            <div>
-
-                                <label class="block text-[11px] uppercase
-                                              tracking-wider font-bold
-                                              text-gold-400 mb-2">
-
-                                    Full Name
-                                </label>
-
-                                <div class="relative">
-
-                                    <i class="fa-solid fa-user
-                                              absolute left-4 top-1/2
-                                              -translate-y-1/2
-                                              text-slate-500"></i>
-
-                                    <input
-                                        id="regName"
-                                        type="text"
-                                        autocomplete="name"
-                                        required
-                                        placeholder="Enter your full name"
-                                        class="input-box w-full bg-navy-950
-                                               border border-navy-700
-                                               rounded-xl pl-11 pr-4 py-3.5
-                                               text-sm text-white
-                                               placeholder:text-slate-600
-                                               outline-none">
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- PHONE -->
-                            <div>
-
-                                <label class="block text-[11px] uppercase
-                                              tracking-wider font-bold
-                                              text-gold-400 mb-2">
-
-                                    Mobile Number
-                                </label>
-
-                                <div class="relative">
-
-                                    <i class="fa-solid fa-phone
-                                              absolute left-4 top-1/2
-                                              -translate-y-1/2
-                                              text-slate-500"></i>
-
-                                    <input
-                                        id="regPhone"
-                                        type="tel"
-                                        autocomplete="tel"
-                                        required
-                                        maxlength="15"
-                                        placeholder="9876543210"
-                                        class="input-box w-full bg-navy-950
-                                               border border-navy-700
-                                               rounded-xl pl-11 pr-4 py-3.5
-                                               text-sm text-white
-                                               placeholder:text-slate-600
-                                               outline-none">
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- EMAIL -->
-                            <div>
-
-                                <label class="block text-[11px] uppercase
-                                              tracking-wider font-bold
-                                              text-gold-400 mb-2">
-
-                                    Email Address
-                                </label>
-
-                                <div class="relative">
-
-                                    <i class="fa-solid fa-envelope
-                                              absolute left-4 top-1/2
-                                              -translate-y-1/2
-                                              text-slate-500"></i>
-
-                                    <input
-                                        id="regEmail"
-                                        type="email"
-                                        autocomplete="email"
-                                        required
-                                        placeholder="you@example.com"
-                                        class="input-box w-full bg-navy-950
-                                               border border-navy-700
-                                               rounded-xl pl-11 pr-4 py-3.5
-                                               text-sm text-white
-                                               placeholder:text-slate-600
-                                               outline-none">
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- PASSWORD -->
-                            <div>
-
-                                <label class="block text-[11px] uppercase
-                                              tracking-wider font-bold
-                                              text-gold-400 mb-2">
-
-                                    Password
-                                </label>
-
-                                <div class="relative">
-
-                                    <i class="fa-solid fa-lock
-                                              absolute left-4 top-1/2
-                                              -translate-y-1/2
-                                              text-slate-500"></i>
-
-                                    <input
-                                        id="regPassword"
-                                        type="password"
-                                        autocomplete="new-password"
-                                        required
-                                        minlength="6"
-                                        placeholder="Minimum 6 characters"
-                                        class="input-box w-full bg-navy-950
-                                               border border-navy-700
-                                               rounded-xl pl-11 pr-12 py-3.5
-                                               text-sm text-white
-                                               placeholder:text-slate-600
-                                               outline-none">
-
-                                    <button type="button"
-                                            onclick="togglePassword('regPassword','regEye')"
-                                            class="password-toggle absolute right-4
-                                                   top-1/2 -translate-y-1/2
-                                                   text-slate-500 hover:text-gold-300">
-
-                                        <i id="regEye"
-                                           class="fa-solid fa-eye"></i>
-
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-
-                            <button
-                                id="signUpSubmitBtn"
-                                type="submit"
-                                class="w-full gold-gradient
-                                       text-navy-950
-                                       rounded-xl py-3.5
-                                       font-extrabold text-sm
-                                       shadow-lg
-                                       hover:brightness-110
-                                       active:scale-[.99]
-                                       transition">
-
-                                <span id="signUpBtnText">
-                                    <i class="fa-solid fa-user-plus mr-1"></i>
-                                    Create Account
-                                </span>
-
-                                <span id="signUpBtnLoading"
-                                      class="hidden items-center justify-center gap-2">
-
-                                    <span class="loader"></span>
-                                    Creating Account...
-                                </span>
-
-                            </button>
-
-
-                            <p class="text-center text-[11px] text-slate-600 leading-relaxed">
-                                Director/Admin accounts are controlled separately
-                                through secure Supabase roles.
-                            </p>
-
-                        </form>
-
-                    </div>
-
-
-                    <!-- =================================================
-                         RESET PASSWORD
-                    ================================================== -->
-
-                    <div id="setNewPasswordContainer"
-                         class="p-6 sm:p-8 hidden fade-in">
-
-                        <div class="text-center mb-7">
-
-                            <div class="mx-auto w-14 h-14 rounded-2xl
-                                        bg-gold-500/10
-                                        border border-gold-500/20
-                                        flex items-center justify-center">
-
-                                <i class="fa-solid fa-key
-                                          text-gold-400 text-xl"></i>
-
-                            </div>
-
-                            <h3 class="mt-5 text-xl font-bold">
-                                Set New Password
-                            </h3>
-
-                            <p class="text-xs text-slate-500 mt-2">
-                                Enter a new secure password for your account.
-                            </p>
-
-                        </div>
-
-
-                        <form id="setNewPasswordForm"
-                              class="space-y-5">
-
-                            <div>
-
-                                <label class="block text-[11px] uppercase
-                                              tracking-wider font-bold
-                                              text-gold-400 mb-2">
-
-                                    New Password
-                                </label>
-
-                                <div class="relative">
-
-                                    <input
-                                        id="newPasswordInput"
-                                        type="password"
-                                        required
-                                        minlength="6"
-                                        placeholder="Minimum 6 characters"
-                                        class="input-box w-full bg-navy-950
-                                               border border-navy-700
-                                               rounded-xl px-4 pr-12 py-3.5
-                                               text-sm text-white
-                                               placeholder:text-slate-600
-                                               outline-none">
-
-                                    <button type="button"
-                                            onclick="togglePassword('newPasswordInput','newEye')"
-                                            class="password-toggle absolute right-4
-                                                   top-1/2 -translate-y-1/2
-                                                   text-slate-500">
-
-                                        <i id="newEye"
-                                           class="fa-solid fa-eye"></i>
-
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-
-                            <div>
-
-                                <label class="block text-[11px] uppercase
-                                              tracking-wider font-bold
-                                              text-gold-400 mb-2">
-
-                                    Confirm Password
-                                </label>
-
-                                <input
-                                    id="confirmNewPasswordInput"
-                                    type="password"
-                                    required
-                                    minlength="6"
-                                    placeholder="Repeat your password"
-                                    class="input-box w-full bg-navy-950
-                                           border border-navy-700
-                                           rounded-xl px-4 py-3.5
-                                           text-sm text-white
-                                           placeholder:text-slate-600
-                                           outline-none">
-
-                            </div>
-
-
-                            <button
-                                id="updatePasswordBtn"
-                                type="submit"
-                                class="w-full gold-gradient
-                                       text-navy-950
-                                       rounded-xl py-3.5
-                                       font-extrabold text-sm
-                                       shadow-lg
-                                       hover:brightness-110 transition">
-
-                                Update Password
-
-                            </button>
-
-                        </form>
-
-                    </div>
-
-                </div>
-
-
-                <div class="mt-5 text-center text-[10px] text-slate-600">
-                    <i class="fa-solid fa-shield-halved mr-1"></i>
-                    Authentication powered by Supabase
-                </div>
-
-            </section>
-
-        </div>
-
-    </div>
-
-</main>
-
-
-<!-- =========================================================
-     FORGOT PASSWORD MODAL
-========================================================= -->
-
-<div id="forgotPasswordModal"
-     class="fixed inset-0 z-50 hidden">
-
-    <div class="absolute inset-0 bg-black/75 backdrop-blur-sm"
-         onclick="closeForgotPasswordModal()"></div>
-
-    <div class="relative min-h-full flex items-center justify-center p-4">
-
-        <div class="glass w-full max-w-md rounded-3xl shadow-2xl
-                    border border-gold-500/20">
-
-            <div class="p-6 sm:p-7">
-
-                <div class="flex items-start justify-between">
-
-                    <div>
-
-                        <div class="w-11 h-11 rounded-xl
-                                    bg-gold-500/10
-                                    flex items-center justify-center">
-
-                            <i class="fa-solid fa-envelope-open-text
-                                      text-gold-400"></i>
-
-                        </div>
-
-                        <h3 class="mt-4 text-xl font-bold">
-                            Reset Password
-                        </h3>
-
-                        <p class="text-xs text-slate-500 mt-1">
-                            We will send a secure reset link to your email.
-                        </p>
-
-                    </div>
-
-                    <button type="button"
-                            onclick="closeForgotPasswordModal()"
-                            class="w-9 h-9 rounded-lg
-                                   bg-white/5 text-slate-400
-                                   hover:text-white transition">
-
-                        <i class="fa-solid fa-xmark"></i>
-
-                    </button>
-
-                </div>
-
-
-                <form id="forgotPasswordForm"
-                      class="mt-6 space-y-4">
-
-                    <div>
-
-                        <label class="block text-[11px] uppercase
-                                      tracking-wider font-bold
-                                      text-gold-400 mb-2">
-
-                            Account Email
-                        </label>
-
-                        <input
-                            id="resetTargetEmail"
-                            type="email"
-                            required
-                            placeholder="you@example.com"
-                            class="input-box w-full bg-navy-950
-                                   border border-navy-700
-                                   rounded-xl px-4 py-3.5
-                                   text-sm text-white
-                                   placeholder:text-slate-600
-                                   outline-none">
-
-                    </div>
-
-
-                    <button
-                        id="sendResetBtn"
-                        type="submit"
-                        class="w-full gold-gradient
-                               text-navy-950
-                               rounded-xl py-3.5
-                               font-extrabold text-sm
-                               hover:brightness-110 transition">
-
-                        Send Reset Link
-
-                    </button>
-
-                </form>
-
-            </div>
-
-        </div>
-
-    </div>
-</div>
-
-
-<!-- =========================================================
-     TOAST
-========================================================= -->
-
-<div id="toastContainer"
-     class="fixed top-5 right-5 z-[100] w-[calc(100%-40px)]
-            sm:w-auto max-w-sm">
-</div>
-
-
-<!-- =========================================================
-     FOOTER
-========================================================= -->
-
-<footer class="border-t border-white/5 bg-navy-950 py-6">
-
-    <div class="max-w-7xl mx-auto px-4 text-center">
-
-        <p class="text-[11px] text-slate-600">
-            © 2026 StudentHubHelp.
-            Secure Student Discovery Platform.
-        </p>
-
-        <p class="text-[10px] text-slate-700 mt-1">
-            Director: Satpal Swami
-        </p>
-
-    </div>
-
-</footer>
-
-
 <script>
-
 /* =========================================================
-   SUPABASE CONFIG
-========================================================= */
+   STUDENTHUB AUTH — SUPABASE ONLY
+   ========================================================= */
 
-const SUPABASE_URL =
-    "https://idurlccrarznnnqixxsd.supabase.co";
+const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
-const supabaseClient =
-    supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
+const DIRECTOR_EMAIL = "satpalswami22742@gmail.com";
+
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
+
+/* =========================================================
+   IMPORTANT:
+   OLD LOCAL ADMIN FLAGS MUST NOT CONTROL LOGIN
+   ========================================================= */
+
+try {
+    sessionStorage.removeItem("studenthub_admin_logged");
+} catch (e) {}
+
+try {
+    localStorage.removeItem("studenthub_admin_logged");
+    localStorage.removeItem("studenthub_admin_pwd");
+} catch (e) {}
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function normalizeRole(role) {
+    return String(role || "")
+        .trim()
+        .toLowerCase();
+}
+
+
+function showLoading(button, text) {
+    if (!button) return;
+
+    button.disabled = true;
+    button.dataset.originalText = button.innerHTML;
+
+    button.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin mr-2"></i>' + text;
+}
+
+
+function hideLoading(button) {
+    if (!button) return;
+
+    button.disabled = false;
+
+    if (button.dataset.originalText) {
+        button.innerHTML = button.dataset.originalText;
+    }
+}
+
+
+/* =========================================================
+   ROLE-BASED REDIRECT
+   ========================================================= */
+
+async function redirectAfterLogin(user) {
+
+    if (!user || !user.id) {
+        throw new Error("Supabase user session not found.");
+    }
+
+    const authEmail =
+        String(user.email || "").trim().toLowerCase();
+
+    /*
+       IMPORTANT:
+       Role is read from profiles using AUTH USER ID.
+       Never trust localStorage or user-entered role.
+    */
+
+    const { data: profile, error } = await supabaseClient
+        .from("profiles")
+        .select("id, full_name, phone, role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+    if (error) {
+        console.error("Profile verification error:", error);
+        throw new Error(
+            "Unable to verify your account role from Supabase."
+        );
+    }
+
+    if (!profile) {
+        throw new Error(
+            "Your Supabase profile was not found. Please contact support."
+        );
+    }
+
+    const role = normalizeRole(profile.role);
+
+
+    /* =====================================================
+       ADMIN SECURITY CHECK
+       BOTH conditions are mandatory:
+       1. profiles.role = admin
+       2. Auth email = Director email
+       ===================================================== */
+
+    if (role === "admin") {
+
+        if (authEmail !== DIRECTOR_EMAIL) {
+
+            await supabaseClient.auth.signOut();
+
+            throw new Error(
+                "Admin access is restricted to the authorized Director account."
+            );
+        }
+
+        /*
+           ONLY verified Director can reach admin dashboard.
+        */
+
+        window.location.replace("admin-dashboard.html");
+        return;
+    }
+
+
+    /* =====================================================
+       STUDENT
+       ===================================================== */
+
+    if (role === "student") {
+
+        window.location.replace("user-dashboard.html");
+        return;
+    }
+
+
+    /* =====================================================
+       OWNER
+       ===================================================== */
+
+    if (role === "owner") {
+
+        window.location.replace("user-dashboard.html");
+        return;
+    }
+
+
+    /* =====================================================
+       UNKNOWN / INVALID ROLE
+       ===================================================== */
+
+    await supabaseClient.auth.signOut();
+
+    throw new Error(
+        "Your account role is invalid or not configured. Please contact support."
+    );
+}
+
+
+/* =========================================================
+   SIGN IN
+   ========================================================= */
+
+const signInForm = document.getElementById("signInForm");
+
+if (signInForm) {
+
+    signInForm.addEventListener("submit", async function (e) {
+
+        e.preventDefault();
+
+        const emailInput =
+            document.getElementById("loginEmail");
+
+        const passwordInput =
+            document.getElementById("loginPassword");
+
+        const button =
+            document.getElementById("signInSubmitBtn");
+
+        const email =
+            String(emailInput?.value || "")
+                .trim()
+                .toLowerCase();
+
+        const password =
+            String(passwordInput?.value || "");
+
+        if (!email || !password) {
+            alert("Please enter email and password.");
+            return;
+        }
+
+        showLoading(button, "Verifying...");
+
+        try {
+
+            /*
+               IMPORTANT:
+               No hardcoded admin password.
+               No localStorage password.
+               No admin shortcut.
+            */
+
+            const { data, error } =
+                await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+
+            if (error) {
+
+                console.error("Supabase login error:", error);
+
+                throw new Error(
+                    "Invalid email or password."
+                );
+            }
+
+
+            if (!data || !data.user) {
+
+                throw new Error(
+                    "Supabase did not return a valid user session."
+                );
+            }
+
+
+            /*
+               Role verification happens AFTER
+               successful Supabase Auth login.
+            */
+
+            await redirectAfterLogin(data.user);
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert(
+                error.message ||
+                "Login failed. Please try again."
+            );
+
+        } finally {
+
+            hideLoading(button);
+        }
+    });
+}
+
+
+/* =========================================================
+   SIGN UP
+   ========================================================= */
+
+const signUpForm = document.getElementById("signUpForm");
+
+if (signUpForm) {
+
+    signUpForm.addEventListener("submit", async function (e) {
+
+        e.preventDefault();
+
+        const roleElement =
+            document.querySelector(
+                'input[name="regRole"]:checked'
+            );
+
+        const name =
+            document.getElementById("regName")?.value.trim();
+
+        const phone =
+            document.getElementById("regPhone")?.value.trim();
+
+        const email =
+            document.getElementById("regEmail")?.value
+                .trim()
+                .toLowerCase();
+
+        const password =
+            document.getElementById("regPassword")?.value || "";
+
+        const button =
+            document.getElementById("signUpSubmitBtn");
+
+        const role =
+            normalizeRole(roleElement?.value);
+
+
+        if (!["student", "owner"].includes(role)) {
+
+            alert("Only Student or Owner accounts can be created.");
+            return;
+        }
+
+
+        if (!name || !phone || !email || !password) {
+
+            alert("Please fill all required fields.");
+            return;
+        }
+
+
+        if (password.length < 6) {
+
+            alert("Password must be at least 6 characters.");
+            return;
+        }
+
+
+        showLoading(button, "Creating Account...");
+
+
+        try {
+
+            const { data, error } =
+                await supabaseClient.auth.signUp({
+
+                    email: email,
+
+                    password: password,
+
+                    options: {
+                        data: {
+                            full_name: name,
+                            phone: phone,
+                            role: role
+                        }
+                    }
+                });
+
+
+            if (error) {
+                throw error;
+            }
+
+
+            if (!data?.user) {
+                throw new Error(
+                    "Account creation failed."
+                );
+            }
+
+
+            /*
+               Profile is connected to the same
+               Supabase Auth user ID.
+            */
+
+            const { error: profileError } =
+                await supabaseClient
+                    .from("profiles")
+                    .upsert(
+                        {
+                            id: data.user.id,
+                            full_name: name,
+                            phone: phone,
+                            role: role
+                        },
+                        {
+                            onConflict: "id"
+                        }
+                    );
+
+
+            if (profileError) {
+
+                console.error(
+                    "Profile save error:",
+                    profileError
+                );
+
+                /*
+                   Do not silently pretend everything
+                   is fine if profile creation failed.
+                */
+
+                throw new Error(
+                    "Account created, but profile setup failed. Please contact support."
+                );
+            }
+
+
+            /*
+               If email confirmation is enabled,
+               Supabase may return no active session.
+            */
+
+            if (!data.session) {
+
+                alert(
+                    "Account created successfully. Please verify your email and then sign in."
+                );
+
+                showSignInTab();
+
+                return;
+            }
+
+
+            await redirectAfterLogin(data.user);
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert(
+                error.message ||
+                "Registration failed."
+            );
+
+        } finally {
+
+            hideLoading(button);
+        }
+    });
+}
+
+
+/* =========================================================
+   FORGOT PASSWORD
+   ========================================================= */
+
+window.openForgotPasswordModal = function () {
+
+    const modal =
+        document.getElementById("forgotPasswordModal");
+
+    if (modal) {
+        modal.classList.remove("hidden");
+    }
+};
+
+
+window.closeForgotPasswordModal = function () {
+
+    const modal =
+        document.getElementById("forgotPasswordModal");
+
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+};
+
+
+const forgotPasswordForm =
+    document.getElementById("forgotPasswordForm");
+
+if (forgotPasswordForm) {
+
+    forgotPasswordForm.addEventListener(
+        "submit",
+        async function (e) {
+
+            e.preventDefault();
+
+            const email =
+                document.getElementById(
+                    "resetTargetEmail"
+                )?.value
+                    .trim()
+                    .toLowerCase();
+
+            const button =
+                document.getElementById(
+                    "sendResetBtn"
+                );
+
+
+            if (!email) {
+
+                alert("Please enter your email.");
+                return;
+            }
+
+
+            showLoading(button, "Sending...");
+
+
+            try {
+
+                const { error } =
+                    await supabaseClient.auth
+                        .resetPasswordForEmail(
+                            email,
+                            {
+                                redirectTo:
+                                    "https://studenthubhelp.github.io/studenthubhelp/auth.html"
+                            }
+                        );
+
+
+                if (error) {
+                    throw error;
+                }
+
+
+                alert(
+                    "Password reset link has been sent to your email."
+                );
+
+                closeForgotPasswordModal();
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    error.message ||
+                    "Unable to send reset link."
+                );
+
+            } finally {
+
+                hideLoading(button);
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   PASSWORD RECOVERY / NEW PASSWORD
+   ========================================================= */
+
+function showSetNewPasswordView() {
+
+    const signIn =
+        document.getElementById(
+            "signInContainer"
+        );
+
+    const signUp =
+        document.getElementById(
+            "signUpContainer"
+        );
+
+    const tabs =
+        document.getElementById(
+            "authTabsHeader"
+        );
+
+    const reset =
+        document.getElementById(
+            "setNewPasswordContainer"
+        );
+
+
+    if (signIn) signIn.style.display = "none";
+
+    if (signUp) signUp.style.display = "none";
+
+    if (tabs) tabs.style.display = "none";
+
+    if (reset) reset.style.display = "block";
+}
+
+
+const setNewPasswordForm =
+    document.getElementById(
+        "setNewPasswordForm"
     );
 
+if (setNewPasswordForm) {
 
-/* =========================================================
-   DIRECTOR IDENTITY
-========================================================= */
+    setNewPasswordForm.addEventListener(
+        "submit",
+        async function (e) {
 
-const DIRECTOR_EMAIL =
-    "satpalswami22742@gmail.com";
+            e.preventDefault();
+
+            const password =
+                document.getElementById(
+                    "newPasswordInput"
+                )?.value || "";
+
+            const confirmPassword =
+                document.getElementById(
+                    "confirmNewPasswordInput"
+                )?.value || "";
+
+            const button =
+                document.getElementById(
+                    "saveNewPassBtn"
+                );
 
 
-/* =========================================================
-   UI HELPERS
-========================================================= */
+            if (password.length < 6) {
 
-function showToast(message, type = "info") {
+                alert(
+                    "Password must be at least 6 characters."
+                );
 
-    const container =
-        document.getElementById("toastContainer");
+                return;
+            }
 
-    const colors = {
-        success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-        error: "border-red-500/30 bg-red-500/10 text-red-300",
-        info: "border-blue-500/30 bg-blue-500/10 text-blue-300"
-    };
 
-    const icons = {
-        success: "fa-circle-check",
-        error: "fa-circle-exclamation",
-        info: "fa-circle-info"
-    };
+            if (password !== confirmPassword) {
 
-    const toast = document.createElement("div");
+                alert(
+                    "Passwords do not match."
+                );
 
-    toast.className =
-        `toast mb-3 rounded-2xl border ${colors[type] || colors.info}
-         px-4 py-3 shadow-2xl backdrop-blur-xl`;
+                return;
+            }
 
-    toast.innerHTML = `
-        <div class="flex items-start gap-3">
 
-            <i class="fa-solid ${icons[type] || icons.info} mt-0.5"></i>
+            showLoading(button, "Updating Password...");
 
-            <div class="text-xs font-semibold leading-relaxed">
-                ${escapeHtml(message)}
-            </div>
 
-        </div>
-    `;
+            try {
 
-    container.appendChild(toast);
+                const { error } =
+                    await supabaseClient.auth
+                        .updateUser({
+                            password: password
+                        });
 
-    setTimeout(() => {
-        toast.style.opacity = "0";
 
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
+                if (error) {
+                    throw error;
+                }
 
-    }, 4500);
+
+                alert(
+                    "Password updated successfully."
+                );
+
+
+                /*
+                   After password reset, verify the
+                   Supabase session and role again.
+                */
+
+                const {
+                    data: sessionData
+                } =
+                    await supabaseClient.auth
+                        .getSession();
+
+
+                if (
+                    sessionData?.session?.user
+                ) {
+
+                    await redirectAfterLogin(
+                        sessionData.session.user
+                    );
+
+                } else {
+
+                    window.location.replace(
+                        "auth.html"
+                    );
+                }
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    error.message ||
+                    "Unable to update password."
+                );
+
+            } finally {
+
+                hideLoading(button);
+            }
+        }
+    );
 }
 
 
-function escapeHtml(value) {
+/* =========================================================
+   AUTH STATE
+   ========================================================= */
 
-    return String(value || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
+supabaseClient.auth.onAuthStateChange(
+    function (event, session) {
+
+        /*
+           IMPORTANT:
+           DO NOT automatically redirect on
+           INITIAL_SESSION.
+
+           This prevents opening auth.html and
+           immediately jumping to admin dashboard.
+        */
+
+        if (event === "PASSWORD_RECOVERY") {
+
+            showSetNewPasswordView();
+        }
+    }
+);
 
 
-function togglePassword(inputId, iconId) {
+/* =========================================================
+   RECOVERY URL CHECK
+   ========================================================= */
+
+window.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const hash =
+            window.location.hash || "";
+
+        const search =
+            window.location.search || "";
+
+
+        if (
+            hash.includes("type=recovery") ||
+            search.includes("type=recovery") ||
+            hash.includes("access_token=")
+        ) {
+
+            showSetNewPasswordView();
+        }
+
+        /*
+           IMPORTANT:
+           No automatic dashboard redirect here.
+           Login button must perform authentication first.
+        */
+    }
+);
+
+
+/* =========================================================
+   SHOW / HIDE PASSWORD
+   ========================================================= */
+
+window.togglePassword = function (inputId, iconId) {
 
     const input =
         document.getElementById(inputId);
@@ -1242,12 +754,19 @@ function togglePassword(inputId, iconId) {
 
     if (!input) return;
 
+
     if (input.type === "password") {
 
         input.type = "text";
 
         if (icon) {
-            icon.className = "fa-solid fa-eye-slash";
+            icon.classList.remove(
+                "fa-eye"
+            );
+
+            icon.classList.add(
+                "fa-eye-slash"
+            );
         }
 
     } else {
@@ -1255,1052 +774,104 @@ function togglePassword(inputId, iconId) {
         input.type = "password";
 
         if (icon) {
-            icon.className = "fa-solid fa-eye";
+            icon.classList.remove(
+                "fa-eye-slash"
+            );
+
+            icon.classList.add(
+                "fa-eye"
+            );
         }
-
     }
-}
+};
 
 
 /* =========================================================
-   AUTH TABS
-========================================================= */
+   TAB FUNCTIONS
+   ========================================================= */
 
-function showSignIn() {
+window.showSignInTab = function () {
 
-    document.getElementById("signInContainer")
-        .classList.remove("hidden");
-
-    document.getElementById("signUpContainer")
-        .classList.add("hidden");
-
-    document.getElementById("setNewPasswordContainer")
-        .classList.add("hidden");
-
-    document.getElementById("signInTab")
-        .classList.add("active");
-
-    document.getElementById("signUpTab")
-        .classList.remove("active");
-}
-
-
-function showSignUp() {
-
-    document.getElementById("signInContainer")
-        .classList.add("hidden");
-
-    document.getElementById("signUpContainer")
-        .classList.remove("hidden");
-
-    document.getElementById("setNewPasswordContainer")
-        .classList.add("hidden");
-
-    document.getElementById("signInTab")
-        .classList.remove("active");
-
-    document.getElementById("signUpTab")
-        .classList.add("active");
-}
-
-
-function showSetNewPasswordView() {
-
-    document.getElementById("signInContainer")
-        .classList.add("hidden");
-
-    document.getElementById("signUpContainer")
-        .classList.add("hidden");
-
-    document.getElementById("authTabsHeader")
-        .classList.add("hidden");
-
-    document.getElementById("setNewPasswordContainer")
-        .classList.remove("hidden");
-}
-
-
-/* =========================================================
-   BUTTON STATES
-========================================================= */
-
-function setSignInLoading(loading) {
-
-    const btn =
-        document.getElementById("signInSubmitBtn");
-
-    const text =
-        document.getElementById("signInBtnText");
-
-    const spinner =
-        document.getElementById("signInBtnLoading");
-
-    btn.disabled = loading;
-
-    if (loading) {
-
-        text.classList.add("hidden");
-
-        spinner.classList.remove("hidden");
-        spinner.classList.add("flex");
-
-    } else {
-
-        text.classList.remove("hidden");
-
-        spinner.classList.add("hidden");
-        spinner.classList.remove("flex");
-
-    }
-}
-
-
-function setSignUpLoading(loading) {
-
-    const btn =
-        document.getElementById("signUpSubmitBtn");
-
-    const text =
-        document.getElementById("signUpBtnText");
-
-    const spinner =
-        document.getElementById("signUpBtnLoading");
-
-    btn.disabled = loading;
-
-    if (loading) {
-
-        text.classList.add("hidden");
-
-        spinner.classList.remove("hidden");
-        spinner.classList.add("flex");
-
-    } else {
-
-        text.classList.remove("hidden");
-
-        spinner.classList.add("hidden");
-        spinner.classList.remove("flex");
-
-    }
-}
-
-
-/* =========================================================
-   ROLE NORMALIZATION
-========================================================= */
-
-function normalizeRole(role) {
-
-    return String(role || "")
-        .trim()
-        .toLowerCase();
-}
-
-
-/* =========================================================
-   GET PROFILE FROM SUPABASE
-========================================================= */
-
-async function getUserProfile(userId) {
-
-    if (!userId) {
-        return null;
-    }
-
-    const {
-        data,
-        error
-    } = await supabaseClient
-        .from("profiles")
-        .select("id, full_name, phone, role")
-        .eq("id", userId)
-        .maybeSingle();
-
-    if (error) {
-
-        console.error(
-            "Profile load error:",
-            error
+    const signIn =
+        document.getElementById(
+            "signInContainer"
         );
 
-        return null;
-    }
-
-    return data || null;
-}
-
-
-/* =========================================================
-   ROLE-BASED REDIRECT
-========================================================= */
-
-async function redirectByRole(user) {
-
-    if (!user || !user.id) {
-
-        showToast(
-            "Unable to verify your account.",
-            "error"
+    const signUp =
+        document.getElementById(
+            "signUpContainer"
         );
 
-        return;
-    }
-
-
-    const email =
-        String(user.email || "")
-            .trim()
-            .toLowerCase();
-
-
-    /*
-       IMPORTANT:
-
-       Role is taken from Supabase profiles.
-
-       We do NOT trust localStorage.
-       We do NOT trust a password shortcut.
-    */
-
-    const profile =
-        await getUserProfile(user.id);
-
-
-    if (!profile) {
-
-        await supabaseClient.auth.signOut();
-
-        showToast(
-            "Your account profile could not be verified. Please contact support.",
-            "error"
+    const signInTab =
+        document.getElementById(
+            "signInTabBtn"
         );
 
-        return;
-    }
-
-
-    const role =
-        normalizeRole(profile.role);
-
-
-    /* =====================================================
-       DIRECTOR / ADMIN
-    ===================================================== */
-
-    if (
-        role === "admin" &&
-        email === DIRECTOR_EMAIL
-    ) {
-
-        showToast(
-            "Director account verified. Opening Admin Dashboard...",
-            "success"
-        );
-
-        setTimeout(() => {
-
-            window.location.href =
-                "admin-dashboard.html";
-
-        }, 350);
-
-        return;
-    }
-
-
-    /* =====================================================
-       NEVER SEND NON-DIRECTOR TO ADMIN
-    ===================================================== */
-
-    if (role === "admin") {
-
-        await supabaseClient.auth.signOut();
-
-        showToast(
-            "Admin access is restricted to the authorized Director account.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    /* =====================================================
-       STUDENT
-    ===================================================== */
-
-    if (role === "student") {
-
-        showToast(
-            "Student account verified. Opening your dashboard...",
-            "success"
-        );
-
-        setTimeout(() => {
-
-            window.location.href =
-                "user-dashboard.html";
-
-        }, 350);
-
-        return;
-    }
-
-
-    /* =====================================================
-       OWNER
-    ===================================================== */
-
-    if (role === "owner") {
-
-        showToast(
-            "Owner account verified. Opening your dashboard...",
-            "success"
-        );
-
-        setTimeout(() => {
-
-            window.location.href =
-                "user-dashboard.html";
-
-        }, 350);
-
-        return;
-    }
-
-
-    /* =====================================================
-       UNKNOWN ROLE
-    ===================================================== */
-
-    await supabaseClient.auth.signOut();
-
-    showToast(
-        "Your account role could not be verified.",
-        "error"
-    );
-}
-
-
-/* =========================================================
-   SIGN IN
-========================================================= */
-
-document
-    .getElementById("signInForm")
-    .addEventListener("submit", async function(e) {
-
-        e.preventDefault();
-
-        const email =
-            document
-                .getElementById("loginEmail")
-                .value
-                .trim()
-                .toLowerCase();
-
-        const password =
-            document
-                .getElementById("loginPassword")
-                .value;
-
-
-        if (!email || !password) {
-
-            showToast(
-                "Please enter your email and password.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        setSignInLoading(true);
-
-
-        try {
-
-            /*
-                ONLY Supabase Auth login.
-                No hardcoded password.
-                No localStorage admin shortcut.
-            */
-
-            const {
-                data,
-                error
-            } = await supabaseClient.auth
-                .signInWithPassword({
-                    email: email,
-                    password: password
-                });
-
-
-            if (error) {
-
-                console.error(
-                    "Supabase login error:",
-                    error
-                );
-
-                showToast(
-                    error.message || "Invalid email or password.",
-                    "error"
-                );
-
-                return;
-            }
-
-
-            if (!data || !data.user) {
-
-                showToast(
-                    "Login succeeded but account information was not returned.",
-                    "error"
-                );
-
-                return;
-            }
-
-
-            await redirectByRole(data.user);
-
-        } catch (error) {
-
-            console.error(
-                "Unexpected login error:",
-                error
-            );
-
-            showToast(
-                "Something went wrong while signing in.",
-                "error"
-            );
-
-        } finally {
-
-            setSignInLoading(false);
-
-        }
-
-    });
-
-
-/* =========================================================
-   SIGN UP
-========================================================= */
-
-document
-    .getElementById("signUpForm")
-    .addEventListener("submit", async function(e) {
-
-        e.preventDefault();
-
-
-        const roleElement =
-            document.querySelector(
-                'input[name="regRole"]:checked'
-            );
-
-
-        const role =
-            roleElement
-                ? roleElement.value
-                : "student";
-
-
-        /*
-            IMPORTANT:
-            Public signup can ONLY create:
-            student / owner
-
-            Nobody can create admin from this page.
-        */
-
-        if (
-            role !== "student" &&
-            role !== "owner"
-        ) {
-
-            showToast(
-                "Invalid account type.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const name =
-            document
-                .getElementById("regName")
-                .value
-                .trim();
-
-        const phoneRaw =
-            document
-                .getElementById("regPhone")
-                .value
-                .trim();
-
-        const email =
-            document
-                .getElementById("regEmail")
-                .value
-                .trim()
-                .toLowerCase();
-
-        const password =
-            document
-                .getElementById("regPassword")
-                .value;
-
-
-        if (name.length < 2) {
-
-            showToast(
-                "Please enter your full name.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const phone =
-            phoneRaw.replace(/\D/g, "");
-
-
-        if (phone.length < 10) {
-
-            showToast(
-                "Please enter a valid mobile number.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (password.length < 6) {
-
-            showToast(
-                "Password must be at least 6 characters.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        setSignUpLoading(true);
-
-
-        try {
-
-            /*
-                Supabase Auth account
-            */
-
-            const {
-                data,
-                error
-            } = await supabaseClient.auth
-                .signUp({
-
-                    email: email,
-
-                    password: password,
-
-                    options: {
-
-                        data: {
-                            full_name: name,
-                            phone: "+91 " + phone,
-                            role: role
-                        }
-
-                    }
-
-                });
-
-
-            if (error) {
-
-                console.error(
-                    "Signup error:",
-                    error
-                );
-
-                showToast(
-                    error.message || "Unable to create account.",
-                    "error"
-                );
-
-                return;
-            }
-
-
-            /*
-                Supabase profile
-
-                IMPORTANT:
-                profiles table currently uses:
-                id
-                full_name
-                phone
-                role
-
-                Email remains in Supabase Auth.
-            */
-
-            if (data && data.user) {
-
-                const {
-                    error: profileError
-                } = await supabaseClient
-                    .from("profiles")
-                    .upsert(
-                        {
-                            id: data.user.id,
-                            full_name: name,
-                            phone: "+91 " + phone,
-                            role: role
-                        },
-                        {
-                            onConflict: "id"
-                        }
-                    );
-
-
-                if (profileError) {
-
-                    console.error(
-                        "Profile sync error:",
-                        profileError
-                    );
-
-                    /*
-                        Auth account exists, but profile
-                        could not be created.
-
-                        Sign out so incomplete accounts
-                        cannot continue into dashboards.
-                    */
-
-                    await supabaseClient.auth.signOut();
-
-                    showToast(
-                        "Account was created, but profile setup failed. Please try again.",
-                        "error"
-                    );
-
-                    return;
-                }
-            }
-
-
-            /*
-                Email confirmation may be enabled
-                in Supabase.
-            */
-
-            if (
-                data &&
-                data.session
-            ) {
-
-                showToast(
-                    "Account created successfully. Opening your dashboard...",
-                    "success"
-                );
-
-
-                setTimeout(() => {
-
-                    redirectByRole(data.user);
-
-                }, 500);
-
-            } else {
-
-                showToast(
-                    "Account created. Please check your email to verify your account before signing in.",
-                    "success"
-                );
-
-                setTimeout(() => {
-
-                    showSignIn();
-
-                    document
-                        .getElementById("loginEmail")
-                        .value = email;
-
-                }, 700);
-            }
-
-
-        } catch (error) {
-
-            console.error(
-                "Unexpected signup error:",
-                error
-            );
-
-            showToast(
-                "Something went wrong while creating your account.",
-                "error"
-            );
-
-        } finally {
-
-            setSignUpLoading(false);
-
-        }
-
-    });
-
-
-/* =========================================================
-   FORGOT PASSWORD MODAL
-========================================================= */
-
-function openForgotPasswordModal() {
-
-    document
-        .getElementById("forgotPasswordModal")
-        .classList.remove("hidden");
-}
-
-
-function closeForgotPasswordModal() {
-
-    document
-        .getElementById("forgotPasswordModal")
-        .classList.add("hidden");
-}
-
-
-document
-    .getElementById("forgotPasswordForm")
-    .addEventListener("submit", async function(e) {
-
-        e.preventDefault();
-
-
-        const email =
-            document
-                .getElementById("resetTargetEmail")
-                .value
-                .trim()
-                .toLowerCase();
-
-
-        const btn =
-            document.getElementById("sendResetBtn");
-
-
-        btn.disabled = true;
-
-        btn.innerHTML =
-            `<span class="inline-flex items-center gap-2">
-                <span class="loader"></span>
-                Sending...
-             </span>`;
-
-
-        try {
-
-            const {
-                error
-            } = await supabaseClient.auth
-                .resetPasswordForEmail(
-                    email,
-                    {
-                        redirectTo:
-                            "https://studenthubhelp.github.io/studenthubhelp/auth.html"
-                    }
-                );
-
-
-            if (error) {
-
-                showToast(
-                    error.message,
-                    "error"
-                );
-
-                return;
-            }
-
-
-            showToast(
-                "Password reset link has been sent to your email.",
-                "success"
-            );
-
-
-            closeForgotPasswordModal();
-
-
-        } catch (error) {
-
-            console.error(error);
-
-            showToast(
-                "Unable to send password reset email.",
-                "error"
-            );
-
-        } finally {
-
-            btn.disabled = false;
-
-            btn.innerHTML =
-                "Send Reset Link";
-
-        }
-
-    });
-
-
-/* =========================================================
-   UPDATE PASSWORD
-========================================================= */
-
-document
-    .getElementById("setNewPasswordForm")
-    .addEventListener("submit", async function(e) {
-
-        e.preventDefault();
-
-
-        const p1 =
-            document
-                .getElementById("newPasswordInput")
-                .value;
-
-        const p2 =
-            document
-                .getElementById("confirmNewPasswordInput")
-                .value;
-
-
-        if (p1.length < 6) {
-
-            showToast(
-                "Password must be at least 6 characters.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (p1 !== p2) {
-
-            showToast(
-                "Passwords do not match.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const btn =
-            document.getElementById("updatePasswordBtn");
-
-
-        btn.disabled = true;
-
-        btn.innerHTML =
-            `<span class="inline-flex items-center gap-2">
-                <span class="loader"></span>
-                Updating...
-             </span>`;
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient.auth
-                .updateUser({
-                    password: p1
-                });
-
-
-            if (error) {
-
-                showToast(
-                    error.message,
-                    "error"
-                );
-
-                return;
-            }
-
-
-            showToast(
-                "Password updated successfully. Please sign in again.",
-                "success"
-            );
-
-
-            await supabaseClient.auth.signOut();
-
-
-            setTimeout(() => {
-
-                window.location.href =
-                    "auth.html";
-
-            }, 900);
-
-
-        } catch (error) {
-
-            console.error(error);
-
-            showToast(
-                "Unable to update password.",
-                "error"
-            );
-
-        } finally {
-
-            btn.disabled = false;
-
-            btn.innerHTML =
-                "Update Password";
-
-        }
-
-    });
-
-
-/* =========================================================
-   AUTH STATE
-========================================================= */
-
-supabaseClient.auth.onAuthStateChange(
-    async function(event, session) {
-
-        console.log(
-            "Supabase Auth Event:",
-            event
+    const signUpTab =
+        document.getElementById(
+            "signUpTabBtn"
         );
 
 
-        if (
-            event === "PASSWORD_RECOVERY"
-        ) {
+    if (signIn) signIn.style.display = "block";
 
-            showSetNewPasswordView();
+    if (signUp) signUp.style.display = "none";
 
-            return;
-        }
 
+    if (signInTab) {
+
+        signInTab.className =
+            "flex-1 py-2.5 rounded-lg text-xs font-bold gold-gradient-bg text-navy-950 shadow-md transition";
     }
-);
 
 
-/* =========================================================
-   PAGE LOAD
-========================================================= */
+    if (signUpTab) {
 
-window.addEventListener(
-    "DOMContentLoaded",
-    async function() {
-
-        const hash =
-            window.location.hash || "";
-
-        const search =
-            window.location.search || "";
-
-
-        /*
-            Password recovery URL
-        */
-
-        if (
-            hash.includes("type=recovery") ||
-            search.includes("type=recovery") ||
-            hash.includes("access_token=")
-        ) {
-
-            showSetNewPasswordView();
-
-            return;
-        }
-
-
-        /*
-            If an old Supabase session already exists,
-            verify it properly through Supabase.
-        */
-
-        try {
-
-            const {
-                data
-            } = await supabaseClient.auth
-                .getSession();
-
-
-            if (
-                data &&
-                data.session &&
-                data.session.user
-            ) {
-
-                /*
-                    We don't blindly redirect.
-                    Role is checked again from Supabase.
-                */
-
-                await redirectByRole(
-                    data.session.user
-                );
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Session check error:",
-                error
-            );
-
-        }
-
-    });
-
-
-/* =========================================================
-   ENTER KEY / ESC MODAL
-========================================================= */
-
-document.addEventListener(
-    "keydown",
-    function(e) {
-
-        if (e.key === "Escape") {
-
-            closeForgotPasswordModal();
-
-        }
-
+        signUpTab.className =
+            "flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
     }
-);
+};
 
+
+window.showSignUpTab = function () {
+
+    const signIn =
+        document.getElementById(
+            "signInContainer"
+        );
+
+    const signUp =
+        document.getElementById(
+            "signUpContainer"
+        );
+
+    const signInTab =
+        document.getElementById(
+            "signInTabBtn"
+        );
+
+    const signUpTab =
+        document.getElementById(
+            "signUpTabBtn"
+        );
+
+
+    if (signIn) signIn.style.display = "none";
+
+    if (signUp) signUp.style.display = "block";
+
+
+    if (signUpTab) {
+
+        signUpTab.className =
+            "flex-1 py-2.5 rounded-lg text-xs font-bold gold-gradient-bg text-navy-950 shadow-md transition";
+    }
+
+
+    if (signInTab) {
+
+        signInTab.className =
+            "flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
+    }
+};
 </script>
-
-</body>
-</html>
