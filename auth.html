@@ -1,877 +1,1902 @@
-<script>
-/* =========================================================
-   STUDENTHUB AUTH — SUPABASE ONLY
-   ========================================================= */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
 
-const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-const SUPABASE_ANON_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+  <title>Login | StudentHubHelp</title>
 
-const DIRECTOR_EMAIL = "satpalswami22742@gmail.com";
+  <meta
+    name="description"
+    content="Secure StudentHubHelp login for students, property owners and authorized administrators."
+  >
 
-const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-);
+  <meta name="robots" content="noindex, nofollow, noarchive">
+
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --navy: #071426;
+      --navy2: #0d2038;
+      --gold: #d4af37;
+      --gold2: #f0d477;
+      --white: #ffffff;
+      --text: #172033;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #dc2626;
+      --success: #15803d;
+      --bg: #f5f7fb;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Inter", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(
+          circle at top left,
+          rgba(212,175,55,.12),
+          transparent 32%
+        ),
+        linear-gradient(
+          135deg,
+          #f8fafc 0%,
+          #eef2f7 100%
+        );
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .navbar {
+      width: 100%;
+      background: rgba(7,20,38,.97);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      color: white;
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: auto;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: white;
+      padding: 4px;
+    }
+
+    .brand-text h1 {
+      font-family: "Poppins", sans-serif;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .brand-text span {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+
+    .home-btn {
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: .2s;
+    }
+
+    .home-btn:hover {
+      background: rgba(255,255,255,.08);
+    }
+
+    .page {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 45px 18px;
+    }
+
+    .auth-wrapper {
+      width: 100%;
+      max-width: 470px;
+    }
+
+    .auth-card {
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(15,23,42,.08);
+      border-radius: 24px;
+      box-shadow:
+        0 25px 70px rgba(15,23,42,.12),
+        0 5px 20px rgba(15,23,42,.05);
+      overflow: hidden;
+    }
+
+    .auth-top {
+      background:
+        linear-gradient(
+          135deg,
+          var(--navy),
+          var(--navy2)
+        );
+      color: white;
+      padding: 30px 28px;
+      text-align: center;
+    }
+
+    .auth-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 15px;
+      border-radius: 18px;
+      background: rgba(212,175,55,.14);
+      border: 1px solid rgba(240,212,119,.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .auth-top h2 {
+      font-family: "Poppins", sans-serif;
+      font-size: 27px;
+      margin-bottom: 8px;
+    }
+
+    .auth-top p {
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .auth-body {
+      padding: 28px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 25px;
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      padding: 12px;
+      border-radius: 9px;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .tab.active {
+      background: white;
+      color: var(--navy);
+      box-shadow: 0 2px 8px rgba(15,23,42,.08);
+    }
+
+    .form-group {
+      margin-bottom: 17px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      opacity: .6;
+      pointer-events: none;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: #fff;
+      color: var(--text);
+      padding: 0 14px 0 42px;
+      outline: none;
+      font-size: 14px;
+      transition: .2s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212,175,55,.12);
+    }
+
+    .password-input {
+      padding-right: 45px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font-size: 17px;
+      opacity: .65;
+    }
+
+    .password-toggle:hover {
+      opacity: 1;
+    }
+
+    .forgot-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -7px;
+      margin-bottom: 20px;
+    }
+
+    .forgot-btn {
+      border: 0;
+      background: transparent;
+      color: #8b6d13;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .forgot-btn:hover {
+      text-decoration: underline;
+    }
+
+    .primary-btn {
+      width: 100%;
+      height: 50px;
+      border: 0;
+      border-radius: 11px;
+      background:
+        linear-gradient(
+          135deg,
+          #b99225,
+          var(--gold),
+          #e5c55e
+        );
+      color: #071426;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(212,175,55,.22);
+      transition: .2s;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 25px rgba(212,175,55,.28);
+    }
+
+    .primary-btn:disabled {
+      cursor: not-allowed;
+      opacity: .65;
+      transform: none;
+    }
+
+    .role-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 17px;
+    }
+
+    .role-option {
+      position: relative;
+    }
+
+    .role-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .role-label {
+      height: 70px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      font-size: 13px;
+      transition: .2s;
+      background: #fff;
+    }
+
+    .role-label strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .role-label small {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .role-option input:checked + .role-label {
+      border-color: var(--gold);
+      background: rgba(212,175,55,.08);
+      box-shadow: 0 0 0 2px rgba(212,175,55,.12);
+    }
+
+    .message {
+      display: none;
+      margin-bottom: 17px;
+      padding: 12px 13px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .message.success {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .security-note {
+      margin-top: 20px;
+      padding: 13px;
+      border-radius: 11px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #64748b;
+      text-align: center;
+    }
+
+    .recovery-panel {
+      display: none;
+    }
+
+    .recovery-panel.show {
+      display: block;
+    }
+
+    .login-panel.hidden,
+    .signup-panel.hidden {
+      display: none;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .footer strong {
+      color: #334155;
+    }
+
+    .director {
+      margin-top: 7px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 520px) {
+      .page {
+        padding: 25px 12px;
+      }
+
+      .auth-top {
+        padding: 25px 20px;
+      }
+
+      .auth-body {
+        padding: 22px 18px;
+      }
+
+      .auth-top h2 {
+        font-size: 23px;
+      }
+
+      .brand-text h1 {
+        font-size: 17px;
+      }
+
+      .home-btn {
+        padding: 8px 11px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="nav-inner">
+
+      <a href="index.html" class="brand">
+        <img src="logo.png" alt="StudentHubHelp Logo">
+
+        <div class="brand-text">
+          <h1>StudentHubHelp</h1>
+          <span>Student Discovery Platform</span>
+        </div>
+      </a>
+
+      <a href="index.html" class="home-btn">
+        ← Home
+      </a>
+
+    </div>
+  </header>
 
 
-/* =========================================================
-   IMPORTANT:
-   OLD LOCAL ADMIN FLAGS MUST NOT CONTROL LOGIN
-   ========================================================= */
+  <!-- MAIN -->
+  <main class="page">
 
-try {
-    sessionStorage.removeItem("studenthub_admin_logged");
-} catch (e) {}
+    <div class="auth-wrapper">
 
-try {
-    localStorage.removeItem("studenthub_admin_logged");
-    localStorage.removeItem("studenthub_admin_pwd");
-} catch (e) {}
+      <div class="auth-card">
+
+        <div class="auth-top">
+
+          <div class="auth-icon">
+            🔐
+          </div>
+
+          <h2>Welcome Back</h2>
+
+          <p>
+            Login securely to access your StudentHubHelp account.
+          </p>
+
+        </div>
 
 
-/* =========================================================
-   HELPERS
-   ========================================================= */
+        <div class="auth-body">
 
-function normalizeRole(role) {
-    return String(role || "")
+          <!-- TABS -->
+          <div class="tabs" id="tabs">
+
+            <button
+              type="button"
+              class="tab active"
+              id="loginTab"
+            >
+              Sign In
+            </button>
+
+            <button
+              type="button"
+              class="tab"
+              id="signupTab"
+            >
+              Create Account
+            </button>
+
+          </div>
+
+
+          <!-- MESSAGE -->
+          <div
+            id="message"
+            class="message"
+          ></div>
+
+
+          <!-- LOGIN PANEL -->
+          <section
+            id="loginPanel"
+            class="login-panel"
+          >
+
+            <form id="loginForm">
+
+              <div class="form-group">
+
+                <label for="loginEmail">
+                  Email Address
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="input-icon">✉️</span>
+
+                  <input
+                    id="loginEmail"
+                    type="email"
+                    autocomplete="username"
+                    placeholder="Enter your email"
+                    required
+                  >
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="loginPassword">
+                  Password
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="input-icon">🔒</span>
+
+                  <input
+                    id="loginPassword"
+                    class="password-input"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                    required
+                  >
+
+                  <button
+                    type="button"
+                    class="password-toggle"
+                    data-target="loginPassword"
+                    aria-label="Show password"
+                  >
+                    👁️
+                  </button>
+
+                </div>
+
+              </div>
+
+
+              <div class="forgot-row">
+
+                <button
+                  type="button"
+                  id="forgotButton"
+                  class="forgot-btn"
+                >
+                  Forgot Password?
+                </button>
+
+              </div>
+
+
+              <button
+                type="submit"
+                class="primary-btn"
+                id="loginButton"
+              >
+                Login
+              </button>
+
+            </form>
+
+
+            <div class="security-note">
+              🔒 Your login is verified through Supabase Authentication.
+              Account role and access are checked from your Supabase profile.
+            </div>
+
+          </section>
+
+
+          <!-- SIGNUP PANEL -->
+          <section
+            id="signupPanel"
+            class="signup-panel hidden"
+          >
+
+            <form id="signupForm">
+
+              <div class="form-group">
+
+                <label>
+                  Account Type
+                </label>
+
+                <div class="role-box">
+
+                  <div class="role-option">
+
+                    <input
+                      type="radio"
+                      id="roleStudent"
+                      name="role"
+                      value="student"
+                      checked
+                    >
+
+                    <label
+                      for="roleStudent"
+                      class="role-label"
+                    >
+                      <div>
+                        <strong>🎓 Student</strong>
+                        <small>Find student services</small>
+                      </div>
+                    </label>
+
+                  </div>
+
+
+                  <div class="role-option">
+
+                    <input
+                      type="radio"
+                      id="roleOwner"
+                      name="role"
+                      value="owner"
+                    >
+
+                    <label
+                      for="roleOwner"
+                      class="role-label"
+                    >
+                      <div>
+                        <strong>🏢 Owner</strong>
+                        <small>Manage your listings</small>
+                      </div>
+                    </label>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="signupName">
+                  Full Name
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="input-icon">👤</span>
+
+                  <input
+                    id="signupName"
+                    type="text"
+                    autocomplete="name"
+                    placeholder="Enter your full name"
+                    required
+                  >
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="signupPhone">
+                  Phone Number
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="input-icon">📱</span>
+
+                  <input
+                    id="signupPhone"
+                    type="tel"
+                    autocomplete="tel"
+                    placeholder="Enter your phone number"
+                    required
+                  >
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="signupEmail">
+                  Email Address
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="input-icon">✉️</span>
+
+                  <input
+                    id="signupEmail"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="Enter your email"
+                    required
+                  >
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="signupPassword">
+                  Password
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="input-icon">🔒</span>
+
+                  <input
+                    id="signupPassword"
+                    class="password-input"
+                    type="password"
+                    autocomplete="new-password"
+                    placeholder="Create a password"
+                    minlength="6"
+                    required
+                  >
+
+                  <button
+                    type="button"
+                    class="password-toggle"
+                    data-target="signupPassword"
+                    aria-label="Show password"
+                  >
+                    👁️
+                  </button>
+
+                </div>
+
+              </div>
+
+
+              <button
+                type="submit"
+                class="primary-btn"
+                id="signupButton"
+              >
+                Create Account
+              </button>
+
+            </form>
+
+
+            <div class="security-note">
+              Your account information is stored and managed through
+              Supabase Authentication and your Supabase profile.
+            </div>
+
+          </section>
+
+
+          <!-- PASSWORD RECOVERY -->
+          <section
+            id="recoveryPanel"
+            class="recovery-panel"
+          >
+
+            <form id="recoveryForm">
+
+              <div class="form-group">
+
+                <label for="recoveryPassword">
+                  New Password
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="input-icon">🔑</span>
+
+                  <input
+                    id="recoveryPassword"
+                    class="password-input"
+                    type="password"
+                    minlength="6"
+                    autocomplete="new-password"
+                    placeholder="Enter new password"
+                    required
+                  >
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="recoveryPasswordConfirm">
+                  Confirm Password
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="input-icon">🔐</span>
+
+                  <input
+                    id="recoveryPasswordConfirm"
+                    class="password-input"
+                    type="password"
+                    minlength="6"
+                    autocomplete="new-password"
+                    placeholder="Confirm new password"
+                    required
+                  >
+
+                </div>
+
+              </div>
+
+
+              <button
+                type="submit"
+                class="primary-btn"
+                id="recoveryButton"
+              >
+                Set New Password
+              </button>
+
+            </form>
+
+          </section>
+
+        </div>
+
+      </div>
+
+
+      <footer class="footer">
+
+        <div>
+          © 2026 <strong>StudentHubHelp</strong>. All rights reserved.
+        </div>
+
+        <div class="director">
+          Director: <strong>SATPAL SWAMI</strong><br>
+          📞 <a href="tel:+919929718264">+91 9929718264</a><br>
+          ✉️
+          <a href="mailto:satpalswami22742@gmail.com">
+            satpalswami22742@gmail.com
+          </a>
+        </div>
+
+      </footer>
+
+    </div>
+
+  </main>
+
+
+  <script>
+
+    /* =========================================================
+       SUPABASE CONFIG
+       ========================================================= */
+
+    const SUPABASE_URL =
+      "https://idurlccrarznnnqixxsd.supabase.co";
+
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+
+    const DIRECTOR_EMAIL =
+      "satpalswami22742@gmail.com";
+
+
+    /* =========================================================
+       CREATE SUPABASE CLIENT
+       ========================================================= */
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+
+    /* =========================================================
+       ELEMENTS
+       ========================================================= */
+
+    const loginTab =
+      document.getElementById("loginTab");
+
+    const signupTab =
+      document.getElementById("signupTab");
+
+    const loginPanel =
+      document.getElementById("loginPanel");
+
+    const signupPanel =
+      document.getElementById("signupPanel");
+
+    const recoveryPanel =
+      document.getElementById("recoveryPanel");
+
+    const loginForm =
+      document.getElementById("loginForm");
+
+    const signupForm =
+      document.getElementById("signupForm");
+
+    const recoveryForm =
+      document.getElementById("recoveryForm");
+
+    const messageBox =
+      document.getElementById("message");
+
+    const loginButton =
+      document.getElementById("loginButton");
+
+    const signupButton =
+      document.getElementById("signupButton");
+
+    const recoveryButton =
+      document.getElementById("recoveryButton");
+
+
+    /* =========================================================
+       MESSAGE
+       ========================================================= */
+
+    function showMessage(text, type = "error") {
+
+      messageBox.textContent = text;
+
+      messageBox.className =
+        "message show " + type;
+
+    }
+
+
+    function clearMessage() {
+
+      messageBox.textContent = "";
+
+      messageBox.className =
+        "message";
+
+    }
+
+
+    /* =========================================================
+       TABS
+       ========================================================= */
+
+    function showLogin() {
+
+      loginTab.classList.add("active");
+      signupTab.classList.remove("active");
+
+      loginPanel.classList.remove("hidden");
+      signupPanel.classList.add("hidden");
+
+      recoveryPanel.classList.remove("show");
+
+      clearMessage();
+    }
+
+
+    function showSignup() {
+
+      signupTab.classList.add("active");
+      loginTab.classList.remove("active");
+
+      signupPanel.classList.remove("hidden");
+      loginPanel.classList.add("hidden");
+
+      recoveryPanel.classList.remove("show");
+
+      clearMessage();
+    }
+
+
+    function showRecovery() {
+
+      loginPanel.classList.add("hidden");
+      signupPanel.classList.add("hidden");
+
+      loginTab.classList.remove("active");
+      signupTab.classList.remove("active");
+
+      recoveryPanel.classList.add("show");
+
+      clearMessage();
+    }
+
+
+    loginTab.addEventListener(
+      "click",
+      showLogin
+    );
+
+    signupTab.addEventListener(
+      "click",
+      showSignup
+    );
+
+
+    /* =========================================================
+       PASSWORD SHOW / HIDE
+       ========================================================= */
+
+    document
+      .querySelectorAll(".password-toggle")
+      .forEach(button => {
+
+        button.addEventListener("click", () => {
+
+          const targetId =
+            button.dataset.target;
+
+          const input =
+            document.getElementById(targetId);
+
+          if (!input) return;
+
+          if (input.type === "password") {
+
+            input.type = "text";
+
+            button.textContent = "🙈";
+
+          } else {
+
+            input.type = "password";
+
+            button.textContent = "👁️";
+
+          }
+
+        });
+
+      });
+
+
+    /* =========================================================
+       NORMALIZE ROLE
+       ========================================================= */
+
+    function normalizeRole(role) {
+
+      return String(role || "")
         .trim()
         .toLowerCase();
-}
 
-
-function showLoading(button, text) {
-    if (!button) return;
-
-    button.disabled = true;
-    button.dataset.originalText = button.innerHTML;
-
-    button.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin mr-2"></i>' + text;
-}
-
-
-function hideLoading(button) {
-    if (!button) return;
-
-    button.disabled = false;
-
-    if (button.dataset.originalText) {
-        button.innerHTML = button.dataset.originalText;
-    }
-}
-
-
-/* =========================================================
-   ROLE-BASED REDIRECT
-   ========================================================= */
-
-async function redirectAfterLogin(user) {
-
-    if (!user || !user.id) {
-        throw new Error("Supabase user session not found.");
     }
 
-    const authEmail =
-        String(user.email || "").trim().toLowerCase();
 
-    /*
-       IMPORTANT:
-       Role is read from profiles using AUTH USER ID.
-       Never trust localStorage or user-entered role.
-    */
+    /* =========================================================
+       GET USER PROFILE FROM SUPABASE
+       ========================================================= */
 
-    const { data: profile, error } = await supabaseClient
+    async function getProfile(user) {
+
+      if (!user?.id) {
+        return null;
+      }
+
+      const {
+        data,
+        error
+      } = await supabaseClient
         .from("profiles")
-        .select("id, full_name, phone, role")
+        .select(
+          "id, full_name, phone, role"
+        )
         .eq("id", user.id)
         .maybeSingle();
 
-    if (error) {
-        console.error("Profile verification error:", error);
-        throw new Error(
-            "Unable to verify your account role from Supabase."
+      if (error) {
+
+        console.error(
+          "Profile loading error:",
+          error
         );
+
+        throw new Error(
+          "Unable to load your account profile."
+        );
+
+      }
+
+      return data;
     }
 
-    if (!profile) {
+
+    /* =========================================================
+       ROLE BASED ROUTING
+       ========================================================= */
+
+    async function routeUser(
+      user,
+      profile
+    ) {
+
+      if (!user) {
+
         throw new Error(
-            "Your Supabase profile was not found. Please contact support."
+          "Login session was not found."
         );
+
+      }
+
+
+      const authEmail =
+        String(user.email || "")
+          .trim()
+          .toLowerCase();
+
+
+      const role =
+        normalizeRole(profile?.role);
+
+
+      console.log(
+        "Authenticated role:",
+        role
+      );
+
+
+      /* -------------------------------------------------------
+         STUDENT
+         ------------------------------------------------------- */
+
+      if (role === "student") {
+
+        window.location.replace(
+          "user-dashboard.html"
+        );
+
+        return;
+      }
+
+
+      /* -------------------------------------------------------
+         OWNER
+         ------------------------------------------------------- */
+
+      if (role === "owner") {
+
+        window.location.replace(
+          "user-dashboard.html"
+        );
+
+        return;
+      }
+
+
+      /* -------------------------------------------------------
+         ADMIN
+         ------------------------------------------------------- */
+
+      if (role === "admin") {
+
+        /*
+          Admin access is ONLY allowed when:
+          1. Supabase profile role = admin
+          2. Supabase Auth email = authorized Director email
+        */
+
+        if (
+          authEmail ===
+          DIRECTOR_EMAIL
+        ) {
+
+          window.location.replace(
+            "admin-dashboard.html"
+          );
+
+          return;
+        }
+
+
+        /*
+          Any other account marked admin
+          is immediately signed out.
+        */
+
+        await supabaseClient.auth.signOut();
+
+        throw new Error(
+          "Admin access is restricted to the authorized Director account."
+        );
+      }
+
+
+      /* -------------------------------------------------------
+         INVALID / UNKNOWN ROLE
+         ------------------------------------------------------- */
+
+      await supabaseClient.auth.signOut();
+
+      throw new Error(
+        "Your account role is not valid. Please contact StudentHubHelp."
+      );
     }
 
-    const role = normalizeRole(profile.role);
+
+    /* =========================================================
+       LOGIN
+       ========================================================= */
+
+    loginForm.addEventListener(
+      "submit",
+      async function(event) {
+
+        event.preventDefault();
+
+        clearMessage();
+
+        const email =
+          document
+            .getElementById("loginEmail")
+            .value
+            .trim()
+            .toLowerCase();
+
+        const password =
+          document
+            .getElementById("loginPassword")
+            .value;
 
 
-    /* =====================================================
-       ADMIN SECURITY CHECK
-       BOTH conditions are mandatory:
-       1. profiles.role = admin
-       2. Auth email = Director email
-       ===================================================== */
+        if (!email || !password) {
 
-    if (role === "admin") {
+          showMessage(
+            "Please enter your email and password."
+          );
 
-        if (authEmail !== DIRECTOR_EMAIL) {
+          return;
+        }
+
+
+        loginButton.disabled = true;
+
+        loginButton.textContent =
+          "Checking login...";
+
+
+        try {
+
+          /* -----------------------------------------------
+             SUPABASE AUTHENTICATION
+             ----------------------------------------------- */
+
+          const {
+            data,
+            error
+          } = await supabaseClient.auth
+            .signInWithPassword({
+              email: email,
+              password: password
+            });
+
+
+          /* -----------------------------------------------
+             INVALID LOGIN
+             ----------------------------------------------- */
+
+          if (error) {
+
+            console.error(
+              "Login error:",
+              error
+            );
+
+            throw new Error(
+              "Invalid email or password."
+            );
+          }
+
+
+          const user =
+            data?.user;
+
+
+          if (!user) {
+
+            throw new Error(
+              "Login failed. User account was not returned."
+            );
+
+          }
+
+
+          /* -----------------------------------------------
+             GET PROFILE FROM SUPABASE
+             ----------------------------------------------- */
+
+          const profile =
+            await getProfile(user);
+
+
+          if (!profile) {
 
             await supabaseClient.auth.signOut();
 
             throw new Error(
-                "Admin access is restricted to the authorized Director account."
+              "Your account profile was not found. Please contact StudentHubHelp."
             );
-        }
 
-        /*
-           ONLY verified Director can reach admin dashboard.
-        */
-
-        window.location.replace("admin-dashboard.html");
-        return;
-    }
+          }
 
 
-    /* =====================================================
-       STUDENT
-       ===================================================== */
+          /* -----------------------------------------------
+             CHECK ROLE + REDIRECT
+             ----------------------------------------------- */
 
-    if (role === "student") {
-
-        window.location.replace("user-dashboard.html");
-        return;
-    }
-
-
-    /* =====================================================
-       OWNER
-       ===================================================== */
-
-    if (role === "owner") {
-
-        window.location.replace("user-dashboard.html");
-        return;
-    }
-
-
-    /* =====================================================
-       UNKNOWN / INVALID ROLE
-       ===================================================== */
-
-    await supabaseClient.auth.signOut();
-
-    throw new Error(
-        "Your account role is invalid or not configured. Please contact support."
-    );
-}
-
-
-/* =========================================================
-   SIGN IN
-   ========================================================= */
-
-const signInForm = document.getElementById("signInForm");
-
-if (signInForm) {
-
-    signInForm.addEventListener("submit", async function (e) {
-
-        e.preventDefault();
-
-        const emailInput =
-            document.getElementById("loginEmail");
-
-        const passwordInput =
-            document.getElementById("loginPassword");
-
-        const button =
-            document.getElementById("signInSubmitBtn");
-
-        const email =
-            String(emailInput?.value || "")
-                .trim()
-                .toLowerCase();
-
-        const password =
-            String(passwordInput?.value || "");
-
-        if (!email || !password) {
-            alert("Please enter email and password.");
-            return;
-        }
-
-        showLoading(button, "Verifying...");
-
-        try {
-
-            /*
-               IMPORTANT:
-               No hardcoded admin password.
-               No localStorage password.
-               No admin shortcut.
-            */
-
-            const { data, error } =
-                await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-
-
-            if (error) {
-
-                console.error("Supabase login error:", error);
-
-                throw new Error(
-                    "Invalid email or password."
-                );
-            }
-
-
-            if (!data || !data.user) {
-
-                throw new Error(
-                    "Supabase did not return a valid user session."
-                );
-            }
-
-
-            /*
-               Role verification happens AFTER
-               successful Supabase Auth login.
-            */
-
-            await redirectAfterLogin(data.user);
+          await routeUser(
+            user,
+            profile
+          );
 
         } catch (error) {
 
-            console.error(error);
+          console.error(
+            "Authentication error:",
+            error
+          );
 
-            alert(
-                error.message ||
-                "Login failed. Please try again."
-            );
+          showMessage(
+            error?.message ||
+            "Unable to login. Please try again."
+          );
 
         } finally {
 
-            hideLoading(button);
+          loginButton.disabled = false;
+
+          loginButton.textContent =
+            "Login";
+
         }
-    });
-}
+
+      }
+    );
 
 
-/* =========================================================
-   SIGN UP
-   ========================================================= */
+    /* =========================================================
+       CREATE ACCOUNT
+       ========================================================= */
 
-const signUpForm = document.getElementById("signUpForm");
+    signupForm.addEventListener(
+      "submit",
+      async function(event) {
 
-if (signUpForm) {
+        event.preventDefault();
 
-    signUpForm.addEventListener("submit", async function (e) {
-
-        e.preventDefault();
-
-        const roleElement =
-            document.querySelector(
-                'input[name="regRole"]:checked'
-            );
-
-        const name =
-            document.getElementById("regName")?.value.trim();
-
-        const phone =
-            document.getElementById("regPhone")?.value.trim();
-
-        const email =
-            document.getElementById("regEmail")?.value
-                .trim()
-                .toLowerCase();
-
-        const password =
-            document.getElementById("regPassword")?.value || "";
-
-        const button =
-            document.getElementById("signUpSubmitBtn");
+        clearMessage();
 
         const role =
-            normalizeRole(roleElement?.value);
+          document.querySelector(
+            'input[name="role"]:checked'
+          )?.value || "student";
+
+        const fullName =
+          document
+            .getElementById("signupName")
+            .value
+            .trim();
+
+        const phone =
+          document
+            .getElementById("signupPhone")
+            .value
+            .trim();
+
+        const email =
+          document
+            .getElementById("signupEmail")
+            .value
+            .trim()
+            .toLowerCase();
+
+        const password =
+          document
+            .getElementById("signupPassword")
+            .value;
 
 
-        if (!["student", "owner"].includes(role)) {
+        if (
+          !fullName ||
+          !phone ||
+          !email ||
+          !password
+        ) {
 
-            alert("Only Student or Owner accounts can be created.");
-            return;
-        }
+          showMessage(
+            "Please fill all required fields."
+          );
 
-
-        if (!name || !phone || !email || !password) {
-
-            alert("Please fill all required fields.");
-            return;
+          return;
         }
 
 
         if (password.length < 6) {
 
-            alert("Password must be at least 6 characters.");
-            return;
+          showMessage(
+            "Password must be at least 6 characters."
+          );
+
+          return;
         }
 
 
-        showLoading(button, "Creating Account...");
+        signupButton.disabled = true;
+
+        signupButton.textContent =
+          "Creating account...";
 
 
         try {
 
-            const { data, error } =
-                await supabaseClient.auth.signUp({
+          /* -----------------------------------------------
+             SUPABASE AUTH SIGNUP
+             ----------------------------------------------- */
 
-                    email: email,
+          const {
+            data,
+            error
+          } = await supabaseClient.auth
+            .signUp({
 
-                    password: password,
+              email: email,
 
-                    options: {
-                        data: {
-                            full_name: name,
-                            phone: phone,
-                            role: role
-                        }
-                    }
-                });
+              password: password,
 
+              options: {
 
-            if (error) {
-                throw error;
-            }
+                data: {
+                  full_name: fullName,
+                  phone: phone,
+                  role: role
+                }
 
+              }
 
-            if (!data?.user) {
-                throw new Error(
-                    "Account creation failed."
-                );
-            }
+            });
 
 
-            /*
-               Profile is connected to the same
-               Supabase Auth user ID.
-            */
+          if (error) {
 
-            const { error: profileError } =
-                await supabaseClient
-                    .from("profiles")
-                    .upsert(
-                        {
-                            id: data.user.id,
-                            full_name: name,
-                            phone: phone,
-                            role: role
-                        },
-                        {
-                            onConflict: "id"
-                        }
-                    );
+            throw error;
+          }
 
 
-            if (profileError) {
-
-                console.error(
-                    "Profile save error:",
-                    profileError
-                );
-
-                /*
-                   Do not silently pretend everything
-                   is fine if profile creation failed.
-                */
-
-                throw new Error(
-                    "Account created, but profile setup failed. Please contact support."
-                );
-            }
+          const user =
+            data?.user;
 
 
-            /*
-               If email confirmation is enabled,
-               Supabase may return no active session.
-            */
+          if (!user) {
 
-            if (!data.session) {
+            throw new Error(
+              "Account could not be created."
+            );
 
-                alert(
-                    "Account created successfully. Please verify your email and then sign in."
-                );
-
-                showSignInTab();
-
-                return;
-            }
+          }
 
 
-            await redirectAfterLogin(data.user);
+          /* -----------------------------------------------
+             SAVE PROFILE IN SUPABASE
+             ----------------------------------------------- */
+
+          const {
+            error: profileError
+          } = await supabaseClient
+            .from("profiles")
+            .upsert(
+              {
+                id: user.id,
+                full_name: fullName,
+                phone: phone,
+                role: role
+              },
+              {
+                onConflict: "id"
+              }
+            );
+
+
+          if (profileError) {
+
+            console.error(
+              "Profile error:",
+              profileError
+            );
+
+            throw new Error(
+              "Account was created but profile could not be saved."
+            );
+
+          }
+
+
+          /* -----------------------------------------------
+             EMAIL CONFIRMATION
+             ----------------------------------------------- */
+
+          if (!data.session) {
+
+            showMessage(
+              "Account created successfully. Please verify your email, then login.",
+              "success"
+            );
+
+            signupForm.reset();
+
+            document.getElementById(
+              "roleStudent"
+            ).checked = true;
+
+            showLogin();
+
+            return;
+          }
+
+
+          /* -----------------------------------------------
+             IF SESSION EXISTS, GET PROFILE + ROUTE
+             ----------------------------------------------- */
+
+          const profile =
+            await getProfile(user);
+
+
+          await routeUser(
+            user,
+            profile
+          );
 
         } catch (error) {
 
-            console.error(error);
+          console.error(
+            "Signup error:",
+            error
+          );
 
-            alert(
-                error.message ||
-                "Registration failed."
-            );
+          showMessage(
+            error?.message ||
+            "Unable to create account."
+          );
 
         } finally {
 
-            hideLoading(button);
+          signupButton.disabled = false;
+
+          signupButton.textContent =
+            "Create Account";
+
         }
-    });
-}
+
+      }
+    );
 
 
-/* =========================================================
-   FORGOT PASSWORD
-   ========================================================= */
+    /* =========================================================
+       FORGOT PASSWORD
+       ========================================================= */
 
-window.openForgotPasswordModal = function () {
+    document
+      .getElementById("forgotButton")
+      .addEventListener(
+        "click",
+        async function() {
 
-    const modal =
-        document.getElementById("forgotPasswordModal");
+          clearMessage();
 
-    if (modal) {
-        modal.classList.remove("hidden");
+          const email =
+            document
+              .getElementById("loginEmail")
+              .value
+              .trim()
+              .toLowerCase();
+
+
+          if (!email) {
+
+            showMessage(
+              "Enter your email address first, then click Forgot Password."
+            );
+
+            document
+              .getElementById("loginEmail")
+              .focus();
+
+            return;
+          }
+
+
+          try {
+
+            const {
+              error
+            } = await supabaseClient.auth
+              .resetPasswordForEmail(
+                email,
+                {
+                  redirectTo:
+                    "https://studenthubhelp.github.io/studenthubhelp/auth.html"
+                }
+              );
+
+
+            if (error) {
+
+              throw error;
+            }
+
+
+            showMessage(
+              "Password reset link has been sent to your email.",
+              "success"
+            );
+
+          } catch (error) {
+
+            console.error(
+              "Password reset error:",
+              error
+            );
+
+            showMessage(
+              error?.message ||
+              "Unable to send password reset email."
+            );
+
+          }
+
+        }
+      );
+
+
+    /* =========================================================
+       PASSWORD RECOVERY
+       ========================================================= */
+
+    recoveryForm.addEventListener(
+      "submit",
+      async function(event) {
+
+        event.preventDefault();
+
+        clearMessage();
+
+        const password =
+          document
+            .getElementById("recoveryPassword")
+            .value;
+
+        const confirmPassword =
+          document
+            .getElementById("recoveryPasswordConfirm")
+            .value;
+
+
+        if (password.length < 6) {
+
+          showMessage(
+            "Password must be at least 6 characters."
+          );
+
+          return;
+        }
+
+
+        if (password !== confirmPassword) {
+
+          showMessage(
+            "Passwords do not match."
+          );
+
+          return;
+        }
+
+
+        recoveryButton.disabled = true;
+
+        recoveryButton.textContent =
+          "Updating password...";
+
+
+        try {
+
+          const {
+            error
+          } = await supabaseClient.auth
+            .updateUser({
+              password: password
+            });
+
+
+          if (error) {
+
+            throw error;
+          }
+
+
+          showMessage(
+            "Password updated successfully. Please login again.",
+            "success"
+          );
+
+
+          await supabaseClient.auth.signOut();
+
+
+          setTimeout(
+            () => {
+              showLogin();
+            },
+            1200
+          );
+
+        } catch (error) {
+
+          console.error(
+            "Password update error:",
+            error
+          );
+
+          showMessage(
+            error?.message ||
+            "Unable to update password."
+          );
+
+        } finally {
+
+          recoveryButton.disabled = false;
+
+          recoveryButton.textContent =
+            "Set New Password";
+
+        }
+
+      }
+    );
+
+
+    /* =========================================================
+       IMPORTANT:
+       DO NOT AUTOMATICALLY REDIRECT EXISTING SESSIONS
+       =========================================================
+
+       Opening auth.html must ALWAYS show the login page.
+
+       We intentionally do NOT do:
+
+       getSession()
+       routeUser()
+       localStorage role checks
+       sessionStorage admin checks
+
+       This prevents an old logged-in admin session from
+       automatically opening admin-dashboard.html.
+       ========================================================= */
+
+
+    /* =========================================================
+       RECOVERY LINK DETECTION
+       ========================================================= */
+
+    function isRecoveryRequest() {
+
+      const hash =
+        window.location.hash || "";
+
+      const search =
+        window.location.search || "";
+
+      return (
+        hash.includes("type=recovery") ||
+        search.includes("type=recovery")
+      );
+
     }
-};
 
 
-window.closeForgotPasswordModal = function () {
+    /* =========================================================
+       INITIAL PAGE LOAD
+       ========================================================= */
 
-    const modal =
-        document.getElementById("forgotPasswordModal");
-
-    if (modal) {
-        modal.classList.add("hidden");
-    }
-};
-
-
-const forgotPasswordForm =
-    document.getElementById("forgotPasswordForm");
-
-if (forgotPasswordForm) {
-
-    forgotPasswordForm.addEventListener(
-        "submit",
-        async function (e) {
-
-            e.preventDefault();
-
-            const email =
-                document.getElementById(
-                    "resetTargetEmail"
-                )?.value
-                    .trim()
-                    .toLowerCase();
-
-            const button =
-                document.getElementById(
-                    "sendResetBtn"
-                );
-
-
-            if (!email) {
-
-                alert("Please enter your email.");
-                return;
-            }
-
-
-            showLoading(button, "Sending...");
-
-
-            try {
-
-                const { error } =
-                    await supabaseClient.auth
-                        .resetPasswordForEmail(
-                            email,
-                            {
-                                redirectTo:
-                                    "https://studenthubhelp.github.io/studenthubhelp/auth.html"
-                            }
-                        );
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                alert(
-                    "Password reset link has been sent to your email."
-                );
-
-                closeForgotPasswordModal();
-
-            } catch (error) {
-
-                console.error(error);
-
-                alert(
-                    error.message ||
-                    "Unable to send reset link."
-                );
-
-            } finally {
-
-                hideLoading(button);
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   PASSWORD RECOVERY / NEW PASSWORD
-   ========================================================= */
-
-function showSetNewPasswordView() {
-
-    const signIn =
-        document.getElementById(
-            "signInContainer"
-        );
-
-    const signUp =
-        document.getElementById(
-            "signUpContainer"
-        );
-
-    const tabs =
-        document.getElementById(
-            "authTabsHeader"
-        );
-
-    const reset =
-        document.getElementById(
-            "setNewPasswordContainer"
-        );
-
-
-    if (signIn) signIn.style.display = "none";
-
-    if (signUp) signUp.style.display = "none";
-
-    if (tabs) tabs.style.display = "none";
-
-    if (reset) reset.style.display = "block";
-}
-
-
-const setNewPasswordForm =
-    document.getElementById(
-        "setNewPasswordForm"
-    );
-
-if (setNewPasswordForm) {
-
-    setNewPasswordForm.addEventListener(
-        "submit",
-        async function (e) {
-
-            e.preventDefault();
-
-            const password =
-                document.getElementById(
-                    "newPasswordInput"
-                )?.value || "";
-
-            const confirmPassword =
-                document.getElementById(
-                    "confirmNewPasswordInput"
-                )?.value || "";
-
-            const button =
-                document.getElementById(
-                    "saveNewPassBtn"
-                );
-
-
-            if (password.length < 6) {
-
-                alert(
-                    "Password must be at least 6 characters."
-                );
-
-                return;
-            }
-
-
-            if (password !== confirmPassword) {
-
-                alert(
-                    "Passwords do not match."
-                );
-
-                return;
-            }
-
-
-            showLoading(button, "Updating Password...");
-
-
-            try {
-
-                const { error } =
-                    await supabaseClient.auth
-                        .updateUser({
-                            password: password
-                        });
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                alert(
-                    "Password updated successfully."
-                );
-
-
-                /*
-                   After password reset, verify the
-                   Supabase session and role again.
-                */
-
-                const {
-                    data: sessionData
-                } =
-                    await supabaseClient.auth
-                        .getSession();
-
-
-                if (
-                    sessionData?.session?.user
-                ) {
-
-                    await redirectAfterLogin(
-                        sessionData.session.user
-                    );
-
-                } else {
-
-                    window.location.replace(
-                        "auth.html"
-                    );
-                }
-
-            } catch (error) {
-
-                console.error(error);
-
-                alert(
-                    error.message ||
-                    "Unable to update password."
-                );
-
-            } finally {
-
-                hideLoading(button);
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   AUTH STATE
-   ========================================================= */
-
-supabaseClient.auth.onAuthStateChange(
-    function (event, session) {
+    document.addEventListener(
+      "DOMContentLoaded",
+      function() {
 
         /*
-           IMPORTANT:
-           DO NOT automatically redirect on
-           INITIAL_SESSION.
+          No automatic dashboard routing here.
 
-           This prevents opening auth.html and
-           immediately jumping to admin dashboard.
+          Normal visit:
+          auth.html -> Login form
+
+          Password recovery:
+          auth.html -> New Password form
         */
 
-        if (event === "PASSWORD_RECOVERY") {
+        if (isRecoveryRequest()) {
 
-            showSetNewPasswordView();
-        }
-    }
-);
+          showRecovery();
 
+        } else {
 
-/* =========================================================
-   RECOVERY URL CHECK
-   ========================================================= */
+          showLogin();
 
-window.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        const hash =
-            window.location.hash || "";
-
-        const search =
-            window.location.search || "";
-
-
-        if (
-            hash.includes("type=recovery") ||
-            search.includes("type=recovery") ||
-            hash.includes("access_token=")
-        ) {
-
-            showSetNewPasswordView();
         }
 
-        /*
-           IMPORTANT:
-           No automatic dashboard redirect here.
-           Login button must perform authentication first.
-        */
-    }
-);
+      }
+    );
 
+  </script>
 
-/* =========================================================
-   SHOW / HIDE PASSWORD
-   ========================================================= */
-
-window.togglePassword = function (inputId, iconId) {
-
-    const input =
-        document.getElementById(inputId);
-
-    const icon =
-        document.getElementById(iconId);
-
-    if (!input) return;
-
-
-    if (input.type === "password") {
-
-        input.type = "text";
-
-        if (icon) {
-            icon.classList.remove(
-                "fa-eye"
-            );
-
-            icon.classList.add(
-                "fa-eye-slash"
-            );
-        }
-
-    } else {
-
-        input.type = "password";
-
-        if (icon) {
-            icon.classList.remove(
-                "fa-eye-slash"
-            );
-
-            icon.classList.add(
-                "fa-eye"
-            );
-        }
-    }
-};
-
-
-/* =========================================================
-   TAB FUNCTIONS
-   ========================================================= */
-
-window.showSignInTab = function () {
-
-    const signIn =
-        document.getElementById(
-            "signInContainer"
-        );
-
-    const signUp =
-        document.getElementById(
-            "signUpContainer"
-        );
-
-    const signInTab =
-        document.getElementById(
-            "signInTabBtn"
-        );
-
-    const signUpTab =
-        document.getElementById(
-            "signUpTabBtn"
-        );
-
-
-    if (signIn) signIn.style.display = "block";
-
-    if (signUp) signUp.style.display = "none";
-
-
-    if (signInTab) {
-
-        signInTab.className =
-            "flex-1 py-2.5 rounded-lg text-xs font-bold gold-gradient-bg text-navy-950 shadow-md transition";
-    }
-
-
-    if (signUpTab) {
-
-        signUpTab.className =
-            "flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
-    }
-};
-
-
-window.showSignUpTab = function () {
-
-    const signIn =
-        document.getElementById(
-            "signInContainer"
-        );
-
-    const signUp =
-        document.getElementById(
-            "signUpContainer"
-        );
-
-    const signInTab =
-        document.getElementById(
-            "signInTabBtn"
-        );
-
-    const signUpTab =
-        document.getElementById(
-            "signUpTabBtn"
-        );
-
-
-    if (signIn) signIn.style.display = "none";
-
-    if (signUp) signUp.style.display = "block";
-
-
-    if (signUpTab) {
-
-        signUpTab.className =
-            "flex-1 py-2.5 rounded-lg text-xs font-bold gold-gradient-bg text-navy-950 shadow-md transition";
-    }
-
-
-    if (signInTab) {
-
-        signInTab.className =
-            "flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
-    }
-};
-</script>
+</body>
+</html>
