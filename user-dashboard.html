@@ -1,10 +1,992 @@
-<!DOCTYPE html><html lang="en" class="scroll-smooth"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>My Dashboard | StudentHubHelp</title><link rel="icon" href="logo.png"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/studenthub-core.js"></script><link rel="stylesheet" href="css/premium.css"><meta name="robots" content="noindex, nofollow, noarchive">
-</head><body class="bg-navy-950 text-slate-100 min-h-screen font-sans"><nav data-sh-nav></nav><main class="max-w-6xl mx-auto px-4 py-8 space-y-6"><section class="glass rounded-3xl p-6 flex flex-col sm:flex-row justify-between gap-5"><div><span id="role" class="text-[10px] uppercase font-bold px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-300">Member</span><h1 id="name" class="text-3xl font-display font-bold mt-3">User</h1><p id="contact" class="text-sm text-slate-400 mt-1">—</p></div><div class="flex gap-2"><button id="editBtn" class="px-4 py-2.5 rounded-xl bg-navy-800 border border-gold-500/30 text-gold-300 font-bold text-xs">Edit Profile</button><a id="addBtn" href="add-listing.html" class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-bold text-xs hidden">+ Add Property</a><button id="logout" class="px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 font-bold text-xs">Logout</button></div></section><section id="ownerSection" class="hidden space-y-4"><div class="flex items-center justify-between"><div><h2 class="text-xl font-bold">My Properties</h2><p class="text-xs text-slate-500">Live listings linked to your owner account.</p></div><span id="propertyCount" class="text-xs text-gold-300"></span></div><div id="properties" class="grid md:grid-cols-2 gap-4"></div></section><section id="studentHint" class="glass rounded-3xl p-6 hidden"><h2 class="text-xl font-bold">Find student essentials</h2><p class="text-sm text-slate-400 mt-2">Explore hostels, tiffins, libraries and cafes across India from the main site.</p><a href="./" class="inline-block mt-4 px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold">Explore Listings</a></section></main><div id="editModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 p-4 z-50"><div class="glass rounded-3xl p-6 w-full max-w-lg"><h2 class="text-xl font-bold">Edit Profile</h2><label class="block text-xs font-bold mt-4">Name</label><input id="editName" class="premium-input w-full rounded-xl px-4 py-3 mt-1"><label class="block text-xs font-bold mt-4">Address</label><textarea id="editAddress" rows="3" class="premium-input w-full rounded-xl px-4 py-3 mt-1"></textarea><div class="flex gap-3 mt-5"><button id="cancelEdit" class="flex-1 py-3 rounded-xl bg-navy-800">Cancel</button><button id="saveEdit" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Save Live</button></div><p id="editMsg" class="text-xs mt-3"></p></div></div><script>
-const SUPABASE_URL='https://idurlccrarznnnqixxsd.supabase.co';const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA';const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const $=id=>document.getElementById(id);const esc=StudentHub.esc,clean=StudentHub.clean;let user,profile;
-StudentHub.injectNav('');
-function norm(v){const d=clean(v).replace(/\D/g,'');return d.length>=10?d.slice(-10):d}
-async function boot(){const {data,error}=await db.auth.getSession();if(error||!data.session){location.href='auth.html';return}user=data.session.user;if((user.email||'').toLowerCase()==='satpalswami22742@gmail.com'){location.href='admin-dashboard.html';return}const {data:p}=await db.from('profiles').select('*').eq('id',user.id).maybeSingle();profile=p;if(!p){location.href='auth.html';return}if(String(p.role).toLowerCase()==='admin'){location.href='admin-dashboard.html';return}$('name').textContent=p.full_name||'User';$('contact').textContent=[p.email||user.email,p.phone].filter(Boolean).join(' • ')||'—';$('role').textContent=p.role||'Member';$('editName').value=p.full_name||'';$('editAddress').value=p.address||'';if(String(p.role).toLowerCase()==='owner'){ $('ownerSection').classList.remove('hidden');$('addBtn').classList.remove('hidden');await loadOwnerProperties()}else $('studentHint').classList.remove('hidden')}
-async function loadOwnerProperties(){const tables=['hostels','tiffins','libraries','cafes'];const results=await Promise.all(tables.map(async t=>{const {data}=await db.from(t).select('*').order('created_at',{ascending:false});return (data||[]).map(x=>({...x,_table:t})).filter(x=>String(x.owner_id||'')===String(user.id)||norm(x.phone)===norm(profile.phone))}));const rows=results.flat();$('propertyCount').textContent=rows.length+' listing(s)';if(!rows.length){$('properties').innerHTML='<div class="md:col-span-2 p-6 rounded-2xl bg-navy-900 border border-navy-800 text-sm text-slate-500">No property linked to this owner yet.</div>';return}const reviewSets=await Promise.all(rows.map(x=>StudentHub.getReviews(db,x.id)));$('properties').innerHTML=rows.map((x,i)=>{const rr=reviewSets[i].data||[];const agg=StudentHub.aggregateReviews(rr,x.rating);return `<article class="glass rounded-3xl overflow-hidden"><div class="relative h-44 bg-navy-900"><img src="${esc(StudentHub.imageUrl(x.image,({hostels:'hostel-banner.png',tiffins:'tiffin-banner.png',libraries:'library-banner.png',cafes:'cafe-banner.png'})[x._table]))}" class="w-full h-full object-cover" loading="lazy" onerror="this.src='${x._table==='hostels'?'hostel-banner.png':x._table==='tiffins'?'tiffin-banner.png':x._table==='libraries'?'library-banner.png':'cafe-banner.png'}'"><div class="absolute inset-0 bg-gradient-to-t from-navy-950 to-transparent"></div><span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-400/20 text-[10px] font-bold">YOUR PROPERTY</span></div><div class="p-5"><h3 class="font-bold text-lg">${esc(x.name||'Property')}</h3><p class="text-xs text-gold-300 mt-1">${esc(x.area||'—')}</p><p class="text-xs text-slate-400 mt-2">${esc(x.address||'—')}</p><div class="mt-4 flex items-center justify-between"><span class="text-sm">⭐ ${agg.rating!=null?agg.rating.toFixed(1):'—'} <span class="text-xs text-slate-500">(${agg.count} reviews)</span></span><span class="text-[10px] uppercase text-slate-500">${esc(x._table)}</span></div><div class="mt-4 space-y-2">${rr.slice(0,3).map(r=>`<div class="p-3 rounded-xl bg-navy-950 border border-navy-800"><div class="text-gold-400 text-xs">${StudentHub.stars(r.rating)}</div><p class="text-xs text-slate-300 mt-1">${esc(r.review)}</p></div>`).join('')||'<p class="text-xs text-slate-500">No reviews yet.</p>'}</div></div></article>`}).join('')}
-$('editBtn').onclick=()=>{$('editModal').classList.remove('hidden');$('editModal').classList.add('flex')};$('cancelEdit').onclick=()=>{$('editModal').classList.add('hidden');$('editModal').classList.remove('flex')};$('saveEdit').onclick=async()=>{const {error}=await db.from('profiles').update({full_name:clean($('editName').value)||null,address:clean($('editAddress').value)||null}).eq('id',user.id);if(error){$('editMsg').textContent=error.message;$('editMsg').className='text-xs mt-3 text-red-300';return}profile.full_name=clean($('editName').value);profile.address=clean($('editAddress').value);$('name').textContent=profile.full_name||'User';$('editModal').classList.add('hidden');$('editModal').classList.remove('flex')};$('logout').onclick=async()=>{await db.auth.signOut();location.href='auth.html'};
-['hostels','tiffins','libraries','cafes','profiles','reviews'].forEach(table=>db.channel('user-live-'+table).on('postgres_changes',{event:'*',schema:'public',table},()=>{if(user)boot()}).subscribe());boot();
-</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>StudentHubHelp — User Dashboard</title>
+  <meta name="description" content="StudentHubHelp student and owner dashboard. Find student services and submit property listing requests.">
+
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --navy:#08172b;
+      --navy2:#0d2340;
+      --gold:#d6a84f;
+      --gold2:#f1ce78;
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --text:#152238;
+      --muted:#66758a;
+      --border:#e5eaf1;
+      --success:#138a58;
+      --danger:#c94141;
+      --shadow:0 18px 45px rgba(8,23,43,.10);
+      --radius:22px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    a{text-decoration:none;color:inherit}
+
+    .topbar{
+      min-height:72px;
+      background:linear-gradient(135deg,var(--navy),var(--navy2));
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 5%;
+      position:sticky;
+      top:0;
+      z-index:50;
+      box-shadow:0 8px 25px rgba(0,0,0,.16);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .brand img{
+      width:43px;height:43px;object-fit:contain;border-radius:12px;background:#fff;
+    }
+    .brand small{display:block;color:#b9c7d9;font-weight:500;font-size:11px;margin-top:2px}
+    .top-actions{display:flex;align-items:center;gap:10px}
+    .user-chip{
+      display:flex;align-items:center;gap:9px;
+      padding:8px 12px;border:1px solid rgba(255,255,255,.15);
+      border-radius:999px;background:rgba(255,255,255,.06);
+      font-size:13px;
+    }
+    .avatar{
+      width:30px;height:30px;border-radius:50%;
+      display:grid;place-items:center;background:var(--gold);color:var(--navy);
+      font-weight:900;
+    }
+    .logout{
+      border:1px solid rgba(255,255,255,.2);
+      background:transparent;color:#fff;border-radius:12px;padding:10px 14px;
+    }
+
+    .layout{max-width:1400px;margin:auto;display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 72px)}
+    .sidebar{
+      background:#fff;border-right:1px solid var(--border);padding:24px 16px;
+    }
+    .nav-title{font-size:11px;text-transform:uppercase;color:#8b98a9;font-weight:800;letter-spacing:1px;padding:10px 12px}
+    .nav-btn{
+      width:100%;border:0;background:transparent;text-align:left;
+      padding:13px 14px;border-radius:13px;color:#536276;font-weight:700;
+      margin:3px 0;transition:.2s;
+    }
+    .nav-btn:hover,.nav-btn.active{background:#eef3f9;color:var(--navy)}
+    .nav-btn.active{box-shadow:inset 3px 0 var(--gold)}
+    .sidebar-note{
+      margin:25px 8px 0;padding:16px;border-radius:18px;
+      background:linear-gradient(145deg,#0b1d35,#15355b);color:#fff;
+    }
+    .sidebar-note strong{display:block;margin-bottom:6px}
+    .sidebar-note p{font-size:12px;color:#c4d0df;line-height:1.55;margin:0}
+
+    main{padding:30px;min-width:0}
+    .page{display:none}
+    .page.active{display:block}
+
+    .hero{
+      background:
+        radial-gradient(circle at 90% 20%,rgba(214,168,79,.24),transparent 25%),
+        linear-gradient(135deg,#091a31,#12375f);
+      color:#fff;border-radius:28px;padding:32px;
+      box-shadow:var(--shadow);margin-bottom:24px;
+    }
+    .hero h1{margin:0 0 8px;font-size:clamp(26px,4vw,40px)}
+    .hero p{margin:0;color:#c9d6e6;max-width:760px;line-height:1.65}
+    .hero-badge{
+      display:inline-flex;padding:7px 11px;border-radius:999px;
+      background:rgba(214,168,79,.16);border:1px solid rgba(214,168,79,.35);
+      color:var(--gold2);font-size:12px;font-weight:800;margin-bottom:14px;
+    }
+
+    .section-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:0 0 15px}
+    .section-head h2{margin:0;font-size:21px}
+    .section-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .btn{
+      border:0;border-radius:13px;padding:11px 16px;font-weight:800;
+      background:var(--navy);color:#fff;
+    }
+    .btn.gold{background:linear-gradient(135deg,var(--gold),#b98627);color:#fff}
+    .btn.light{background:#edf2f7;color:var(--navy)}
+    .btn.danger{background:#fff0f0;color:var(--danger)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:28px}
+    .stat{
+      background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px;
+      box-shadow:0 7px 24px rgba(8,23,43,.05)
+    }
+    .stat-label{font-size:12px;color:var(--muted);font-weight:700}
+    .stat-value{font-size:29px;font-weight:900;margin-top:7px;color:var(--navy)}
+
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .service{
+      background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px;
+      transition:.2s;box-shadow:0 7px 24px rgba(8,23,43,.04)
+    }
+    .service:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+    .service-icon{font-size:28px}
+    .service h3{margin:12px 0 6px}
+    .service p{color:var(--muted);font-size:13px;line-height:1.5}
+    .service button{margin-top:8px}
+
+    .card{
+      background:#fff;border:1px solid var(--border);border-radius:22px;
+      padding:22px;box-shadow:0 7px 24px rgba(8,23,43,.04);margin-bottom:18px;
+    }
+    .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+    .field{margin-bottom:15px}
+    label{display:block;font-size:12px;font-weight:800;color:#516074;margin-bottom:7px}
+    input,select,textarea{
+      width:100%;border:1px solid #dce3ec;background:#fbfcfe;
+      padding:12px 13px;border-radius:12px;outline:none;color:var(--text);
+    }
+    input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,168,79,.12)}
+    textarea{min-height:105px;resize:vertical}
+    .full{grid-column:1/-1}
+
+    .listing-form{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px}
+    .form-note{
+      padding:13px 15px;background:#fff9e9;border:1px solid #f2dfad;
+      border-radius:13px;color:#765b1d;font-size:13px;line-height:1.55;margin-bottom:18px
+    }
+
+    .request-list{display:grid;gap:13px}
+    .request{
+      border:1px solid var(--border);border-radius:17px;padding:17px;
+      display:flex;justify-content:space-between;gap:15px;align-items:center;
+    }
+    .request h3{margin:0 0 5px;font-size:16px}
+    .request p{margin:3px 0;color:var(--muted);font-size:12px}
+    .status{
+      white-space:nowrap;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:900;
+      text-transform:uppercase;letter-spacing:.5px
+    }
+    .status.pending{background:#fff5d8;color:#8b6612}
+    .status.approved{background:#e6f8ef;color:#087345}
+    .status.rejected{background:#ffeded;color:#ad3030}
+
+    .empty{text-align:center;padding:35px;color:var(--muted)}
+    .message{display:none;padding:12px 14px;border-radius:12px;font-size:13px;margin-bottom:15px}
+    .message.show{display:block}
+    .message.success{background:#e9f8f0;color:#087345}
+    .message.error{background:#ffeded;color:#a82d2d}
+    .message.info{background:#edf4ff;color:#24588f}
+
+    .loading{padding:30px;text-align:center;color:var(--muted)}
+    .spinner{
+      width:25px;height:25px;border:3px solid #e6ebf1;border-top-color:var(--gold);
+      border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .review-box{background:#f8fafc;border-radius:15px;padding:15px;margin-top:12px}
+    .stars{letter-spacing:2px;color:#d19c31}
+
+    .modal-backdrop{
+      display:none;position:fixed;inset:0;background:rgba(2,12,25,.62);
+      z-index:100;padding:20px;align-items:center;justify-content:center
+    }
+    .modal-backdrop.show{display:flex}
+    .modal{
+      width:min(680px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:23px;padding:25px;
+      box-shadow:0 25px 80px rgba(0,0,0,.28)
+    }
+    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .close{border:0;background:#edf1f5;width:38px;height:38px;border-radius:50%;font-size:20px}
+    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+    @media(max-width:1050px){
+      .stats{grid-template-columns:repeat(3,1fr)}
+      .layout{grid-template-columns:210px 1fr}
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:760px){
+      .stats{grid-template-columns:1fr 1fr}
+      .topbar{padding:11px 4%}
+      .user-chip span{display:none}
+      .layout{display:block}
+      .sidebar{
+        border-right:0;border-bottom:1px solid var(--border);
+        padding:8px;display:flex;overflow-x:auto;gap:5px;position:sticky;top:72px;z-index:40
+      }
+      .nav-title,.sidebar-note{display:none}
+      .nav-btn{width:auto;white-space:nowrap;margin:0}
+      main{padding:18px 14px}
+      .hero{padding:24px;border-radius:22px}
+      .stats,.grid{grid-template-columns:1fr 1fr}
+      .profile-grid,.listing-form{grid-template-columns:1fr}
+      .full{grid-column:auto}
+    }
+    @media(max-width:480px){
+      .stats,.grid{grid-template-columns:1fr}
+      .request{align-items:flex-start;flex-direction:column}
+      .section-head{align-items:flex-start;flex-direction:column}
+    }
+  </style>
+</head>
+
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <img src="logo.png" alt="StudentHubHelp">
+    <div>StudentHubHelp<small>India Student Discovery Platform</small></div>
+  </a>
+  <div class="top-actions">
+    <div class="user-chip">
+      <div class="avatar" id="topAvatar">U</div>
+      <span id="topUserName">Loading...</span>
+    </div>
+    <button class="logout" id="logoutBtn">Logout</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-title">Dashboard</div>
+    <button class="nav-btn active" data-page="home">🏠 Overview</button>
+    <button class="nav-btn" data-page="profile">👤 My Profile</button>
+    <button class="nav-btn" data-page="find">🔎 Find Services</button>
+    <button class="nav-btn owner-only" data-page="listing">➕ Add Listing</button>
+    <button class="nav-btn owner-only" data-page="requests">📋 My Requests</button>
+    <button class="nav-btn owner-only" data-page="properties">🏢 Live Properties</button>
+    <button class="nav-btn" data-page="reviews">⭐ My Reviews</button>
+
+    <div class="sidebar-note">
+      <strong>StudentHubHelp</strong>
+      <p>Your data and listing requests are handled through Supabase.</p>
+    </div>
+  </aside>
+
+  <main>
+    <!-- OVERVIEW -->
+    <section class="page active" id="page-home">
+      <div class="hero">
+        <div class="hero-badge">SECURE USER DASHBOARD</div>
+        <h1>Welcome, <span id="heroName">User</span> 👋</h1>
+        <p id="heroText">Manage your profile, discover student services across India and keep track of your activity.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-label">ACCOUNT ROLE</div><div class="stat-value" id="statRole">—</div></div>
+        <div class="stat"><div class="stat-label">MY REQUESTS</div><div class="stat-value" id="statRequests">0</div></div>
+        <div class="stat"><div class="stat-label">APPROVED</div><div class="stat-value" id="statApproved">0</div></div>
+<div class="stat"><div class="stat-label">LIVE PROPERTIES</div><div class="stat-value" id="statLive">0</div></div>
+        <div class="stat"><div class="stat-label">REVIEWS</div><div class="stat-value" id="statReviews">0</div></div>
+      </div>
+
+      <div class="section-head">
+        <div><h2>Quick Access</h2><p>Choose what you want to do today.</p></div>
+      </div>
+
+      <div class="grid">
+        <div class="service">
+          <div class="service-icon">🏠</div><h3>Hostel / PG</h3>
+          <p>Find student accommodation by city, district or area.</p>
+          <button class="btn light" onclick="goToFinder('pg-finder.html')">Explore</button>
+        </div>
+        <div class="service">
+          <div class="service-icon">🍱</div><h3>Tiffin / Mess</h3>
+          <p>Discover food services suitable for students.</p>
+          <button class="btn light" onclick="goToFinder('tiffin-finder.html')">Explore</button>
+        </div>
+        <div class="service">
+          <div class="service-icon">📚</div><h3>Library</h3>
+          <p>Find libraries and study spaces near your location.</p>
+          <button class="btn light" onclick="goToFinder('library-finder.html')">Explore</button>
+        </div>
+        <div class="service">
+          <div class="service-icon">☕</div><h3>Cafe</h3>
+          <p>Find cafes and student-friendly places to study or relax.</p>
+          <button class="btn light" onclick="goToFinder('cafe-finder.html')">Explore</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="page" id="page-profile">
+      <div class="section-head">
+        <div><h2>My Profile</h2><p>Your profile information from Supabase.</p></div>
+      </div>
+      <div id="profileMessage" class="message"></div>
+      <div class="card">
+        <div class="profile-grid">
+          <div class="field"><label>FULL NAME</label><input id="profileName"></div>
+          <div class="field"><label>PHONE</label><input id="profilePhone" type="tel"></div>
+          <div class="field"><label>EMAIL</label><input id="profileEmail" type="email" disabled></div>
+          <div class="field"><label>ROLE</label><input id="profileRole" disabled></div>
+          <div class="field full"><label>ADDRESS</label><textarea id="profileAddress"></textarea></div>
+        </div>
+        <button class="btn gold" id="saveProfileBtn">Save Profile</button>
+      </div>
+    </section>
+
+    <!-- FIND -->
+    <section class="page" id="page-find">
+      <div class="section-head">
+        <div><h2>Find Student Services</h2><p>Live finder pages connected to the platform.</p></div>
+      </div>
+      <div class="grid">
+        <div class="service"><div class="service-icon">🏠</div><h3>Hostel / PG</h3><p>Accommodation listings.</p><button class="btn" onclick="goToFinder('pg-finder.html')">Open Finder</button></div>
+        <div class="service"><div class="service-icon">🍱</div><h3>Tiffin / Mess</h3><p>Food and mess listings.</p><button class="btn" onclick="goToFinder('tiffin-finder.html')">Open Finder</button></div>
+        <div class="service"><div class="service-icon">📚</div><h3>Library</h3><p>Study and library listings.</p><button class="btn" onclick="goToFinder('library-finder.html')">Open Finder</button></div>
+        <div class="service"><div class="service-icon">☕</div><h3>Cafe</h3><p>Cafe and study-friendly listings.</p><button class="btn" onclick="goToFinder('cafe-finder.html')">Open Finder</button></div>
+      </div>
+    </section>
+
+    <!-- OWNER LISTING -->
+    <section class="page" id="page-listing">
+      <div class="section-head">
+        <div><h2>Submit a New Listing</h2><p>Owner listing request — final publishing is handled by Director Admin.</p></div>
+      </div>
+
+      <div id="listingMessage" class="message"></div>
+
+      <div class="card">
+        <div class="form-note">
+          <strong>How it works:</strong> Submit your property details here. Your request will be saved in Supabase as <strong>Pending</strong>. The Admin verifies the information and publishes the property on StudentHubHelp after approval.
+        </div>
+
+        <form id="listingForm" class="listing-form">
+          <div class="field">
+            <label>PROPERTY / BUSINESS NAME *</label>
+            <input id="listingName" required placeholder="Example: Sunrise Boys PG">
+          </div>
+
+          <div class="field">
+            <label>PROPERTY TYPE *</label>
+            <select id="listingCategory" required>
+              <option value="">Select type</option>
+              <option value="hostel">Hostel / PG</option>
+              <option value="tiffin">Tiffin / Mess</option>
+              <option value="library">Library</option>
+              <option value="cafe">Cafe</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>AREA / CITY / DISTRICT / STATE *</label>
+            <input id="listingArea" required placeholder="Example: Hisar, Haryana">
+          </div>
+
+          <div class="field">
+            <label>PHONE *</label>
+            <input id="listingPhone" type="tel" required placeholder="Property contact number">
+          </div>
+
+          <div class="field full">
+            <label>FULL ADDRESS *</label>
+            <textarea id="listingAddress" required placeholder="Complete property address"></textarea>
+          </div>
+
+          <div class="field">
+            <label>TIMING</label>
+            <input id="listingTiming" placeholder="Example: 7 AM - 10 PM">
+          </div>
+
+          <div class="field">
+            <label>IMAGE URL</label>
+            <input id="listingImage" type="url" placeholder="https://...">
+          </div>
+
+          <div class="field full">
+            <label>FACILITIES</label>
+            <textarea id="listingFacilities" placeholder="Wi-Fi, AC, parking, meals, study table, etc."></textarea>
+          </div>
+
+          <div class="field full">
+            <button class="btn gold" type="submit" id="submitListingBtn">Submit Listing Request</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- REQUESTS -->
+    <section class="page" id="page-requests">
+      <div class="section-head">
+        <div><h2>My Listing Requests</h2><p>Track requests submitted from your account.</p></div>
+        <button class="btn light" onclick="loadRequests()">Refresh</button>
+      </div>
+      <div class="card">
+        <div id="requestsContainer" class="request-list">
+          <div class="loading"><div class="spinner"></div>Loading requests...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE PROPERTIES -->
+    <section class="page" id="page-properties">
+      <div class="section-head">
+        <div>
+          <h2>My Live Properties</h2>
+          <p>Properties published by Director Admin and linked to your registered owner phone.</p>
+        </div>
+        <button class="btn light" onclick="loadLiveProperties()">Refresh</button>
+      </div>
+
+      <div class="form-note">
+        <strong>Admin approval connection:</strong>
+        Your submitted request stays pending until Director Admin verifies it.
+        Once approved and published, the property becomes live on StudentHubHelp
+        and appears here automatically.
+      </div>
+
+      <div class="card">
+        <div id="livePropertiesContainer" class="request-list">
+          <div class="loading"><div class="spinner"></div>Loading live properties...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVIEWS -->
+    <section class="page" id="page-reviews">
+      <div class="section-head">
+        <div><h2>My Reviews</h2><p>Reviews submitted using your student account.</p></div>
+      </div>
+      <div class="card">
+        <div id="reviewsContainer" class="request-list">
+          <div class="empty">Reviews will appear here when available.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">Details</h2>
+      <button class="close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+</script>
+
+<script>
+/*
+  IMPORTANT:
+  The anon key above is replaced below with the exact key configured for
+  this project if the first constant is edited incorrectly.
+*/
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let currentProfile = null;
+let requestChannel = null;
+
+function $(id){ return document.getElementById(id); }
+
+function showMessage(id, text, type="info"){
+  const el = $(id);
+  if(!el) return;
+  el.className = "message show " + type;
+  el.textContent = text;
+}
+
+function hideMessage(id){
+  const el = $(id);
+  if(el) el.className = "message";
+}
+
+function roleName(role){
+  const r = String(role || "").toLowerCase();
+  if(r === "owner") return "OWNER";
+  if(r === "student") return "STUDENT";
+  if(r === "admin") return "ADMIN";
+  return "USER";
+}
+
+function initials(name){
+  return String(name || "User").trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase() || "U";
+}
+
+function normalizePhone(phone){
+  return String(phone || "").replace(/\D/g,"").slice(-10);
+}
+
+async function boot(){
+  const {data:{session}, error} = await sb.auth.getSession();
+
+  if(error || !session){
+    window.location.href = "auth.html";
+    return;
+  }
+
+  currentUser = session.user;
+
+  await loadProfile();
+  configureRoleUI();
+  await loadRequests();
+  await loadLiveProperties();
+  await loadReviews();
+  subscribeRealtime();
+}
+
+async function loadProfile(){
+  const {data, error} = await sb
+    .from("profiles")
+    .select("id,full_name,phone,email,address,role")
+    .eq("id", currentUser.id)
+    .maybeSingle();
+
+  if(error){
+    console.error(error);
+    currentProfile = {
+      id: currentUser.id,
+      full_name: currentUser.user_metadata?.full_name || "User",
+      phone: "",
+      email: currentUser.email || "",
+      address: "",
+      role: "student"
+    };
+  } else {
+    currentProfile = data || {
+      id: currentUser.id,
+      full_name: currentUser.user_metadata?.full_name || "User",
+      phone: "",
+      email: currentUser.email || "",
+      address: "",
+      role: "student"
+    };
+  }
+
+  const name = currentProfile.full_name || "User";
+
+  $("topUserName").textContent = name;
+  $("topAvatar").textContent = initials(name);
+  $("heroName").textContent = name;
+  $("statRole").textContent = roleName(currentProfile.role);
+
+  $("profileName").value = currentProfile.full_name || "";
+  $("profilePhone").value = currentProfile.phone || "";
+  $("profileEmail").value = currentProfile.email || currentUser.email || "";
+  $("profileRole").value = roleName(currentProfile.role);
+  $("profileAddress").value = currentProfile.address || "";
+
+  $("heroText").textContent =
+    String(currentProfile.role).toLowerCase() === "owner"
+      ? "Manage your owner profile, submit property listing requests and track approval status."
+      : "Find student services across India, manage your profile and keep track of your reviews.";
+}
+
+function configureRoleUI(){
+  const isOwner = String(currentProfile?.role || "").toLowerCase() === "owner";
+  document.querySelectorAll(".owner-only").forEach(el=>{
+    el.style.display = isOwner ? "" : "none";
+  });
+}
+
+async function saveProfile(){
+  const btn = $("saveProfileBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+
+  const payload = {
+    full_name: $("profileName").value.trim(),
+    phone: $("profilePhone").value.trim(),
+    address: $("profileAddress").value.trim()
+  };
+
+  const {error} = await sb.from("profiles").update(payload).eq("id", currentUser.id);
+
+  if(error){
+    showMessage("profileMessage", error.message, "error");
+  }else{
+    currentProfile = {...currentProfile, ...payload};
+    $("topUserName").textContent = payload.full_name || "User";
+    $("topAvatar").textContent = initials(payload.full_name);
+    $("heroName").textContent = payload.full_name || "User";
+    showMessage("profileMessage", "Profile saved successfully.", "success");
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Save Profile";
+}
+
+async function submitListing(e){
+  e.preventDefault();
+
+  const btn = $("submitListingBtn");
+  btn.disabled = true;
+  btn.textContent = "Submitting...";
+
+  hideMessage("listingMessage");
+
+  const ownerPhone = currentProfile?.phone || "";
+  const listingPhone = $("listingPhone").value.trim();
+
+  if(!normalizePhone(ownerPhone)){
+    showMessage("listingMessage", "Please add your registered owner phone number in My Profile first.", "error");
+    btn.disabled = false;
+    btn.textContent = "Submit Listing Request";
+    return;
+  }
+
+  const payload = {
+    owner_id: currentUser.id,
+    owner_name: currentProfile?.full_name || currentUser.email || "Owner",
+    owner_phone: ownerPhone,
+    name: $("listingName").value.trim(),
+    category: $("listingCategory").value,
+    area: $("listingArea").value.trim(),
+    address: $("listingAddress").value.trim(),
+    phone: listingPhone,
+    timing: $("listingTiming").value.trim() || null,
+    facilities: $("listingFacilities").value.trim() || null,
+    image: $("listingImage").value.trim() || null,
+    rating: null,
+    status: "pending"
+  };
+
+  const {error} = await sb.from("listing_requests").insert(payload);
+
+  if(error){
+    console.error(error);
+    showMessage("listingMessage", error.message, "error");
+  }else{
+    showMessage("listingMessage", "Listing request submitted successfully. It is now pending Admin verification.", "success");
+    $("listingForm").reset();
+    $("listingPhone").value = currentProfile?.phone || "";
+    await loadRequests();
+    updateRequestStats();
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Submit Listing Request";
+}
+
+async function loadRequests(){
+  if(!currentUser) return;
+
+  const box = $("requestsContainer");
+  box.innerHTML = '<div class="loading"><div class="spinner"></div>Loading requests...</div>';
+
+  const {data, error} = await sb
+    .from("listing_requests")
+    .select("id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at")
+    .eq("owner_id", currentUser.id)
+    .order("created_at", {ascending:false});
+
+  if(error){
+    box.innerHTML = '<div class="empty">Unable to load requests right now.</div>';
+    console.error(error);
+    $("statRequests").textContent = "—";
+    $("statApproved").textContent = "—";
+    return;
+  }
+
+  const rows = data || [];
+  $("statRequests").textContent = rows.length;
+  $("statApproved").textContent = rows.filter(x=>x.status==="approved").length;
+
+  if(!rows.length){
+    box.innerHTML = '<div class="empty">No listing requests yet.</div>';
+    return;
+  }
+
+  box.innerHTML = rows.map(r=>`
+    <div class="request">
+      <div>
+        <h3>${escapeHtml(r.name || "Unnamed listing")}</h3>
+        <p>${escapeHtml(formatCategory(r.category))} • ${escapeHtml(r.area || "Area not provided")}</p>
+        <p>Submitted: ${formatDate(r.created_at)}</p>
+        ${r.admin_note ? `<p><strong>Admin note:</strong> ${escapeHtml(r.admin_note)}</p>` : ""}
+      </div>
+      <div>
+        <span class="status ${escapeHtml(r.status)}">${escapeHtml(r.status)}</span>
+        <button class="btn light" style="margin-left:7px" onclick="viewRequest('${r.id}')">View</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function viewRequest(id){
+  const {data, error} = await sb
+    .from("listing_requests")
+    .select("id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at")
+    .eq("id", id)
+    .eq("owner_id", currentUser.id)
+    .maybeSingle();
+
+  if(error || !data) return;
+
+  $("modalTitle").textContent = data.name || "Listing Details";
+  $("modalBody").innerHTML = `
+    <div class="review-box">
+      <p><strong>Status:</strong> <span class="status ${escapeHtml(data.status)}">${escapeHtml(data.status)}</span></p>
+      <p><strong>Type:</strong> ${escapeHtml(formatCategory(data.category))}</p>
+      <p><strong>Area:</strong> ${escapeHtml(data.area || "—")}</p>
+      <p><strong>Address:</strong> ${escapeHtml(data.address || "—")}</p>
+      <p><strong>Phone:</strong> ${escapeHtml(data.phone || "—")}</p>
+      <p><strong>Timing:</strong> ${escapeHtml(data.timing || "—")}</p>
+      <p><strong>Facilities:</strong><br>${escapeHtml(data.facilities || "—")}</p>
+      ${data.image ? `<p><strong>Image:</strong><br><a href="${safeUrl(data.image)}" target="_blank" rel="noopener">Open image</a></p>` : ""}
+      ${data.admin_note ? `<p><strong>Admin Note:</strong><br>${escapeHtml(data.admin_note)}</p>` : ""}
+    </div>
+  `;
+  $("modalBackdrop").classList.add("show");
+}
+
+function closeModal(){
+  $("modalBackdrop").classList.remove("show");
+}
+
+async function loadReviews(){
+  if(!currentUser) return;
+
+  const box = $("reviewsContainer");
+
+  const {data, error} = await sb
+    .from("reviews")
+    .select("id,property_id,rating,review,status,created_at")
+    .eq("student_id", currentUser.id)
+    .order("created_at", {ascending:false});
+
+  if(error){
+    console.warn("Reviews unavailable:", error.message);
+    box.innerHTML = '<div class="empty">No reviews available yet.</div>';
+    $("statReviews").textContent = "0";
+    return;
+  }
+
+  const rows = data || [];
+  $("statReviews").textContent = rows.length;
+
+  if(!rows.length){
+    box.innerHTML = '<div class="empty">You have not submitted any reviews yet.</div>';
+    return;
+  }
+
+  box.innerHTML = rows.map(r=>`
+    <div class="request">
+      <div>
+        <h3>Property #${escapeHtml(r.property_id || "—")}</h3>
+        <p class="stars">${"★".repeat(Number(r.rating)||0)}${"☆".repeat(5-(Number(r.rating)||0))}</p>
+        <p>${escapeHtml(r.review || "No review text")}</p>
+        <p>${formatDate(r.created_at)}</p>
+      </div>
+      <span class="status ${r.status === "approved" ? "approved" : "pending"}">${escapeHtml(r.status || "pending")}</span>
+    </div>
+  `).join("");
+}
+
+function updateRequestStats(){
+  loadRequests();
+}
+
+
+async function loadLiveProperties(){
+  if(!currentUser) return;
+
+  const box = $("livePropertiesContainer");
+  if(box) box.innerHTML = '<div class="loading"><div class="spinner"></div>Loading live properties...</div>';
+
+  const phone = normalizePhone(currentProfile?.phone);
+  if(!phone){
+    if(box) box.innerHTML = '<div class="empty">Add your registered phone number in My Profile to see linked live properties.</div>';
+    $("statLive").textContent = "0";
+    return;
+  }
+
+  const tables = [
+    {table:"hostels", label:"Hostel / PG", icon:"🏠"},
+    {table:"tiffins", label:"Tiffin / Mess", icon:"🍱"},
+    {table:"libraries", label:"Library", icon:"📚"},
+    {table:"cafes", label:"Cafe", icon:"☕"}
+  ];
+
+  const results = await Promise.all(tables.map(async item=>{
+    const {data, error} = await sb
+      .from(item.table)
+      .select("id,name,category,area,address,phone,timing,facilities,rating")
+      .eq("phone", currentProfile.phone);
+
+    return {
+      ...item,
+      data: error ? [] : (data || []),
+      error
+    };
+  }));
+
+  const live = results.flatMap(r => r.data.map(x => ({...x, _table:r.table, _label:r.label, _icon:r.icon})));
+
+  // Some existing records may have formatting differences in phone numbers.
+  // Fetch a small fallback set and normalize client-side without exposing
+  // unrelated data in the UI.
+  if(live.length === 0){
+    const fallbackResults = await Promise.all(tables.map(async item=>{
+      const {data, error} = await sb
+        .from(item.table)
+        .select("id,name,category,area,address,phone,timing,facilities,rating");
+      return {...item, data: error ? [] : (data || [])};
+    }));
+
+    fallbackResults.forEach(r=>{
+      r.data.forEach(x=>{
+        if(normalizePhone(x.phone) === phone){
+          live.push({...x, _table:r.table, _label:r.label, _icon:r.icon});
+        }
+      });
+    });
+  }
+
+  $("statLive").textContent = live.length;
+
+  if(!box) return;
+
+  if(!live.length){
+    box.innerHTML = '<div class="empty">No approved live property is linked to your registered phone yet.</div>';
+    return;
+  }
+
+  box.innerHTML = live.map(p=>`
+    <div class="request">
+      <div>
+        <h3>${escapeHtml(p._icon + " " + (p.name || "Unnamed property"))}</h3>
+        <p>${escapeHtml(p._label)} • ${escapeHtml(p.area || "Area not provided")}</p>
+        <p>${escapeHtml(p.address || "Address not provided")}</p>
+        <p>📞 ${escapeHtml(p.phone || "—")} ${p.rating != null ? ` • ⭐ ${escapeHtml(p.rating)}` : ""}</p>
+      </div>
+      <button class="btn light" onclick='viewLiveProperty(${JSON.stringify(p).replace(/'/g,"&#39;")})'>View</button>
+    </div>
+  `).join("");
+}
+
+function viewLiveProperty(p){
+  $("modalTitle").textContent = p.name || "Live Property";
+  $("modalBody").innerHTML = `
+    <div class="review-box">
+      <p><strong>Type:</strong> ${escapeHtml(p._label || formatCategory(p.category))}</p>
+      <p><strong>Area:</strong> ${escapeHtml(p.area || "—")}</p>
+      <p><strong>Address:</strong> ${escapeHtml(p.address || "—")}</p>
+      <p><strong>Phone:</strong> ${escapeHtml(p.phone || "—")}</p>
+      <p><strong>Timing:</strong> ${escapeHtml(p.timing || "—")}</p>
+      <p><strong>Facilities:</strong><br>${escapeHtml(p.facilities || "—")}</p>
+      ${p.rating != null ? `<p><strong>Rating:</strong> ⭐ ${escapeHtml(p.rating)}</p>` : ""}
+    </div>
+  `;
+  $("modalBackdrop").classList.add("show");
+}
+
+function subscribeRealtime(){
+  if(requestChannel) sb.removeChannel(requestChannel);
+
+  requestChannel = sb
+    .channel("user-dashboard-listing-requests-" + currentUser.id)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "listing_requests",
+        filter: "owner_id=eq." + currentUser.id
+      },
+      () => {
+        loadRequests();
+        loadLiveProperties();
+      }
+    )
+    .subscribe();
+}
+
+function goToFinder(url){
+  window.location.href = url;
+}
+
+function formatCategory(v){
+  const s = String(v || "").toLowerCase();
+  const map = {
+    hostel:"Hostel",
+    pg:"PG",
+    tiffin:"Tiffin",
+    mess:"Mess",
+    library:"Library",
+    cafe:"Cafe"
+  };
+  return map[s] || v || "—";
+}
+
+function formatDate(v){
+  if(!v) return "—";
+  const d = new Date(v);
+  if(Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
+}
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function safeUrl(value){
+  try{
+    const u = new URL(value, window.location.href);
+    if(["http:","https:"].includes(u.protocol)) return u.href;
+  }catch(e){}
+  return "#";
+}
+
+document.querySelectorAll(".nav-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const page = btn.dataset.page;
+    document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+    $("page-" + page).classList.add("active");
+
+    if(page === "requests") loadRequests();
+    if(page === "properties") loadLiveProperties();
+    if(page === "reviews") loadReviews();
+  });
+});
+
+$("saveProfileBtn").addEventListener("click", saveProfile);
+$("listingForm").addEventListener("submit", submitListing);
+
+$("logoutBtn").addEventListener("click", async ()=>{
+  await sb.auth.signOut();
+  window.location.href = "auth.html";
+});
+
+$("modalBackdrop").addEventListener("click", e=>{
+  if(e.target.id === "modalBackdrop") closeModal();
+});
+
+window.addEventListener("beforeunload", ()=>{
+  if(requestChannel) sb.removeChannel(requestChannel);
+});
+
+boot();
+</script>
+</body>
+</html>
