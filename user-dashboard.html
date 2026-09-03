@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/png" href="logo.png">
+
+  <link rel="icon" type="image/png" href="logo.png">
+
   <title>User Dashboard | StudentHubHelp</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,6 +14,10 @@
   <style>
     * {
       box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
@@ -36,62 +42,66 @@
     }
 
     .sidebar {
-      width: 260px;
-      background: #0b1730;
+      width: 270px;
+      background:
+        linear-gradient(180deg, #08142d 0%, #0b1730 100%);
     }
 
     .nav-item {
       transition: all .2s ease;
-      color: rgba(255,255,255,.68);
+      color: rgba(255,255,255,.66);
     }
 
     .nav-item:hover {
       color: #fff;
       background: rgba(255,255,255,.07);
+      transform: translateX(2px);
     }
 
     .nav-item.active {
       color: #fff;
-      background: rgba(255,255,255,.11);
+      background: rgba(255,255,255,.12);
       box-shadow: inset 3px 0 0 #fff;
     }
 
     .card {
       background: #fff;
-      border: 1px solid #e7eaf0;
-      border-radius: 18px;
+      border: 1px solid #e8ebf1;
+      border-radius: 20px;
+      box-shadow: 0 5px 20px rgba(15,23,42,.025);
     }
 
     .stat-card {
       background: #fff;
-      border: 1px solid #e7eaf0;
-      border-radius: 18px;
+      border: 1px solid #e8ebf1;
+      border-radius: 20px;
       transition: .2s ease;
     }
 
     .stat-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 30px rgba(15,23,42,.06);
+      box-shadow: 0 14px 35px rgba(15,23,42,.07);
     }
 
     .service-card {
       background: #fff;
-      border: 1px solid #e7eaf0;
-      border-radius: 18px;
-      transition: .2s ease;
+      border: 1px solid #e8ebf1;
+      border-radius: 20px;
+      transition: .22s ease;
       cursor: pointer;
     }
 
     .service-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 14px 35px rgba(15,23,42,.08);
+      transform: translateY(-4px);
+      box-shadow: 0 18px 40px rgba(15,23,42,.08);
+      border-color: #d7dce5;
     }
 
     .input {
       width: 100%;
-      padding: 12px 14px;
+      padding: 13px 15px;
       border: 1px solid #dfe3ea;
-      border-radius: 12px;
+      border-radius: 13px;
       outline: none;
       background: #fff;
       transition: .2s;
@@ -99,7 +109,7 @@
 
     .input:focus {
       border-color: #0b1730;
-      box-shadow: 0 0 0 3px rgba(11,23,48,.06);
+      box-shadow: 0 0 0 4px rgba(11,23,48,.06);
     }
 
     .input:disabled {
@@ -111,23 +121,24 @@
     .btn-primary {
       background: #0b1730;
       color: #fff;
-      border-radius: 12px;
-      padding: 11px 18px;
-      font-weight: 600;
+      border-radius: 13px;
+      padding: 12px 18px;
+      font-weight: 700;
       transition: .2s;
     }
 
     .btn-primary:hover {
       background: #14264a;
+      transform: translateY(-1px);
     }
 
     .btn-secondary {
       background: #fff;
       color: #172033;
       border: 1px solid #dfe3ea;
-      border-radius: 12px;
-      padding: 10px 16px;
-      font-weight: 600;
+      border-radius: 13px;
+      padding: 11px 17px;
+      font-weight: 700;
       transition: .2s;
     }
 
@@ -135,13 +146,23 @@
       background: #f6f7f9;
     }
 
+    .btn-danger {
+      background: #fff;
+      color: #b42323;
+      border: 1px solid #f1cccc;
+      border-radius: 13px;
+      padding: 11px 17px;
+      font-weight: 700;
+    }
+
     .badge {
       display: inline-flex;
       align-items: center;
-      padding: 5px 10px;
+      gap: 5px;
+      padding: 6px 11px;
       border-radius: 999px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .badge-pending {
@@ -164,9 +185,14 @@
       color: #187345;
     }
 
+    .badge-owner {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
     .modal-backdrop {
-      background: rgba(5, 12, 28, .55);
-      backdrop-filter: blur(4px);
+      background: rgba(5, 12, 28, .62);
+      backdrop-filter: blur(7px);
     }
 
     .mobile-sidebar {
@@ -178,11 +204,60 @@
       transform: translateX(0);
     }
 
+    .property-banner {
+      width: 100%;
+      height: 175px;
+      background-size: cover !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .property-banner::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(5,12,28,.08),
+          rgba(5,12,28,.58)
+        );
+    }
+
+    .property-banner-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .empty-state {
+      padding: 55px 20px;
+      text-align: center;
+      color: #8a92a2;
+    }
+
+    .hero-owner {
+      background:
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,.12), transparent 35%),
+        linear-gradient(135deg, #0b1730, #172d55);
+      color: #fff;
+      border-radius: 24px;
+    }
+
+    .hero-student {
+      background:
+        radial-gradient(circle at 80% 20%, rgba(59,130,246,.12), transparent 35%),
+        linear-gradient(135deg, #0b1730, #172d55);
+      color: #fff;
+      border-radius: 24px;
+    }
+
     .timeline-line {
       position: absolute;
       left: 11px;
-      top: 24px;
-      bottom: -22px;
+      top: 25px;
+      bottom: -25px;
       width: 1px;
       background: #dfe3ea;
     }
@@ -191,21 +266,46 @@
       display: none;
     }
 
-    .property-banner {
-      width: 100%;
-      height: 160px;
-      background-size: cover !important;
-      background-position: center !important;
-      background-repeat: no-repeat !important;
+    .search-wrap {
       position: relative;
-      overflow: hidden;
     }
-    
 
-    .empty-state {
-      padding: 45px 20px;
-      text-align: center;
-      color: #8a92a2;
+    .search-wrap span {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9aa2b1;
+    }
+
+    .search-wrap input {
+      padding-left: 42px;
+    }
+
+    .claim-card {
+      transition: .2s ease;
+    }
+
+    .claim-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(15,23,42,.07);
+    }
+
+    .category-chip {
+      border: 1px solid #dfe3ea;
+      background: #fff;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: .2s;
+    }
+
+    .category-chip:hover,
+    .category-chip.active {
+      background: #0b1730;
+      color: #fff;
+      border-color: #0b1730;
     }
 
     @media (max-width: 1023px) {
@@ -220,54 +320,43 @@
 
 <body>
 
-<!-- =====================================================
-     MOBILE OVERLAY
-===================================================== -->
-
 <div
   id="sidebarOverlay"
   class="fixed inset-0 z-[90] hidden modal-backdrop lg:hidden">
 </div>
 
 
-<!-- =====================================================
-     APP
-===================================================== -->
-
 <div class="min-h-screen flex">
 
 
-  <!-- ===================================================
+  <!-- =====================================================
        SIDEBAR
-  ==================================================== -->
+  ====================================================== -->
 
   <aside
     id="sidebar"
     class="sidebar fixed lg:static inset-y-0 left-0 z-[100]
            flex flex-col mobile-sidebar lg:translate-x-0">
 
-    <!-- BRAND -->
-    <div class="px-6 py-6 border-b border-white/10">
+    <div class="px-5 py-6 border-b border-white/10">
 
       <div class="flex items-center gap-3">
 
         <div
           class="w-11 h-11 rounded-xl bg-white
                  text-[#0b1730] flex items-center justify-center
-                 font-bold">
+                 font-extrabold">
           SH
         </div>
 
         <div>
-
           <div class="text-white font-bold text-lg">
             StudentHubHelp
           </div>
 
           <div class="text-xs text-white/40">
-            Student Discovery Platform
+            India Student Discovery
           </div>
-
         </div>
 
       </div>
@@ -275,13 +364,81 @@
     </div>
 
 
-    <!-- NAVIGATION -->
     <nav class="flex-1 px-3 py-5 overflow-y-auto">
 
+      <!-- COMMON -->
+
+      <div class="px-4 mb-2 text-[10px] uppercase
+                  tracking-[.18em] text-white/35">
+        Dashboard
+      </div>
+
+      <div class="space-y-1">
+
+        <button
+          data-section="overview"
+          class="nav-item active w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">⌂</span>
+          <span>Overview</span>
+
+        </button>
 
 
-      <!-- OWNER ONLY -->
-      <div id="ownerNavigation" class="hidden mt-7">
+        <button
+          data-section="profile"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">◉</span>
+          <span>My Profile</span>
+
+        </button>
+
+
+        <button
+          data-section="services"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">⌕</span>
+          <span>Explore Services</span>
+
+        </button>
+
+
+        <button
+          id="studentReviewsNav"
+          data-section="reviews"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">★</span>
+          <span>My Reviews</span>
+
+        </button>
+
+
+        <button
+          id="activityNav"
+          data-section="activity"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">↗</span>
+          <span>My Activity</span>
+
+        </button>
+
+      </div>
+
+
+      <!-- OWNER -->
+
+      <div
+        id="ownerNavigation"
+        class="hidden mt-8">
 
         <div class="px-4 mb-2 text-[10px] uppercase
                     tracking-[.18em] text-white/35">
@@ -309,6 +466,17 @@
 
             <span class="w-5 text-center">＋</span>
             <span>Add Listing</span>
+
+          </button>
+
+
+          <button
+            data-section="claimProperty"
+            class="nav-item w-full flex items-center
+                   gap-3 px-4 py-3 rounded-xl text-left">
+
+            <span class="w-5 text-center">⌂</span>
+            <span>Claim Property</span>
 
           </button>
 
@@ -352,7 +520,6 @@
     </nav>
 
 
-    <!-- LOGOUT -->
     <div class="border-t border-white/10 p-3">
 
       <button
@@ -370,14 +537,15 @@
   </aside>
 
 
-  <!-- ===================================================
+  <!-- =====================================================
        MAIN
-  ==================================================== -->
+  ====================================================== -->
 
   <main class="flex-1 min-w-0">
 
 
     <!-- TOPBAR -->
+
     <header
       class="h-[76px] bg-white border-b border-gray-200
              sticky top-0 z-50 flex items-center
@@ -388,7 +556,7 @@
         <button
           id="mobileMenuBtn"
           class="lg:hidden w-10 h-10 rounded-xl
-                 border border-gray-200">
+                 border border-gray-200 bg-white">
 
           ☰
 
@@ -412,7 +580,6 @@
       </div>
 
 
-      <!-- USER -->
       <div class="flex items-center gap-3">
 
         <div class="hidden sm:block text-right">
@@ -438,9 +605,7 @@
                  bg-[#0b1730] text-white
                  flex items-center justify-center
                  font-bold">
-
           U
-
         </div>
 
       </div>
@@ -448,59 +613,66 @@
     </header>
 
 
-    <!-- PAGE CONTENT -->
-    <div
-      class="max-w-[1500px] mx-auto p-5 md:p-8">
+    <div class="max-w-[1500px] mx-auto p-5 md:p-8">
 
 
       <!-- =================================================
-           STUDENT / COMMON OVERVIEW
+           OVERVIEW
       ================================================== -->
 
       <section
         id="section-overview"
         class="dashboard-section">
 
-        <!-- HEADER -->
-        <div class="mb-7">
+        <div
+          id="overviewHero"
+          class="hero-student p-6 md:p-8 mb-7">
 
-          <div class="text-sm text-gray-400 mb-1">
-            Welcome back
+          <div class="max-w-3xl">
+
+            <div
+              id="overviewEyebrow"
+              class="text-white/55 text-sm mb-2">
+              Welcome back
+            </div>
+
+            <h2
+              id="welcomeName"
+              class="text-3xl md:text-4xl font-extrabold">
+              User
+            </h2>
+
+            <p
+              id="overviewDescription"
+              class="text-white/65 mt-3 max-w-2xl">
+              Your StudentHubHelp dashboard.
+            </p>
+
           </div>
-
-          <h2
-            id="welcomeName"
-            class="text-2xl md:text-3xl font-bold">
-            User
-          </h2>
-
-          <p class="text-gray-500 mt-2">
-            Your StudentHubHelp dashboard.
-          </p>
 
         </div>
 
 
         <!-- STUDENT STATS -->
+
         <div
           id="studentStats"
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          class="grid grid-cols-1 sm:grid-cols-2
+                 lg:grid-cols-4 gap-5">
 
           <div class="stat-card p-5">
-
             <div class="text-xs text-gray-400">
               Account
             </div>
 
-            <div class="font-bold text-xl mt-2">
+            <div
+              class="font-bold text-xl mt-2">
               Student
             </div>
-
           </div>
 
 
           <div class="stat-card p-5">
-
             <div class="text-xs text-gray-400">
               My Reviews
             </div>
@@ -510,12 +682,10 @@
               class="font-bold text-3xl mt-2">
               0
             </div>
-
           </div>
 
 
           <div class="stat-card p-5">
-
             <div class="text-xs text-gray-400">
               Profile
             </div>
@@ -525,32 +695,31 @@
               class="font-bold text-xl mt-2">
               Active
             </div>
-
           </div>
 
 
           <div class="stat-card p-5">
-
             <div class="text-xs text-gray-400">
               Platform
             </div>
 
-            <div class="font-bold text-xl mt-2">
+            <div
+              class="font-bold text-xl mt-2">
               India
             </div>
-
           </div>
 
         </div>
 
 
         <!-- OWNER STATS -->
+
         <div
           id="ownerStats"
-          class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          class="hidden grid-cols-1 sm:grid-cols-2
+                 lg:grid-cols-3 gap-5">
 
           <div class="stat-card p-5">
-
             <div class="text-xs text-gray-400">
               Total Listings
             </div>
@@ -560,12 +729,10 @@
               class="font-bold text-3xl mt-2">
               0
             </div>
-
           </div>
 
 
           <div class="stat-card p-5">
-
             <div class="text-xs text-gray-400">
               Pending Requests
             </div>
@@ -575,12 +742,10 @@
               class="font-bold text-3xl mt-2">
               0
             </div>
-
           </div>
 
 
           <div class="stat-card p-5">
-
             <div class="text-xs text-gray-400">
               Live Properties
             </div>
@@ -590,20 +755,19 @@
               class="font-bold text-3xl mt-2">
               0
             </div>
-
           </div>
 
         </div>
 
 
         <!-- PROFILE SUMMARY -->
+
         <div class="card mt-6 p-6">
 
           <div class="flex items-center
                       justify-between gap-4 mb-6">
 
             <div>
-
               <h3 class="font-bold text-lg">
                 Profile Summary
               </h3>
@@ -611,13 +775,11 @@
               <p class="text-sm text-gray-400 mt-1">
                 Your account information
               </p>
-
             </div>
-
 
             <button
               onclick="showSection('profile')"
-              class="text-sm font-semibold">
+              class="text-sm font-bold">
               Edit Profile →
             </button>
 
@@ -629,7 +791,6 @@
                    gap-x-8 gap-y-5">
 
             <div>
-
               <div class="text-xs text-gray-400">
                 Full Name
               </div>
@@ -639,12 +800,10 @@
                 class="font-semibold mt-1">
                 —
               </div>
-
             </div>
 
 
             <div>
-
               <div class="text-xs text-gray-400">
                 Email
               </div>
@@ -654,12 +813,10 @@
                 class="font-semibold mt-1 break-all">
                 —
               </div>
-
             </div>
 
 
             <div>
-
               <div class="text-xs text-gray-400">
                 Phone
               </div>
@@ -669,12 +826,10 @@
                 class="font-semibold mt-1">
                 —
               </div>
-
             </div>
 
 
             <div>
-
               <div class="text-xs text-gray-400">
                 Address
               </div>
@@ -684,7 +839,6 @@
                 class="font-semibold mt-1">
                 —
               </div>
-
             </div>
 
           </div>
@@ -693,6 +847,7 @@
 
 
         <!-- QUICK ACCESS -->
+
         <div class="mt-8">
 
           <div class="mb-5">
@@ -716,9 +871,7 @@
               onclick="goFinder('pg-finder.html')"
               class="service-card p-5">
 
-              <div class="text-3xl mb-4">
-                🏠
-              </div>
+              <div class="text-3xl mb-4">🏠</div>
 
               <h4 class="font-bold">
                 Hostel / PG
@@ -735,9 +888,7 @@
               onclick="goFinder('tiffin-finder.html')"
               class="service-card p-5">
 
-              <div class="text-3xl mb-4">
-                🍱
-              </div>
+              <div class="text-3xl mb-4">🍱</div>
 
               <h4 class="font-bold">
                 Tiffin / Mess
@@ -754,9 +905,7 @@
               onclick="goFinder('library-finder.html')"
               class="service-card p-5">
 
-              <div class="text-3xl mb-4">
-                📚
-              </div>
+              <div class="text-3xl mb-4">📚</div>
 
               <h4 class="font-bold">
                 Library
@@ -773,9 +922,7 @@
               onclick="goFinder('cafe-finder.html')"
               class="service-card p-5">
 
-              <div class="text-3xl mb-4">
-                ☕
-              </div>
+              <div class="text-3xl mb-4">☕</div>
 
               <h4 class="font-bold">
                 Cafe
@@ -792,9 +939,7 @@
               onclick="goFinder('bookstore-finder.html')"
               class="service-card p-5">
 
-              <div class="text-3xl mb-4">
-                📖
-              </div>
+              <div class="text-3xl mb-4">📖</div>
 
               <h4 class="font-bold">
                 Book Store
@@ -836,11 +981,11 @@
 
         <div class="card p-6 max-w-3xl">
 
-          <form id="profileForm"
-                class="space-y-5">
+          <form
+            id="profileForm"
+            class="space-y-5">
 
             <div>
-
               <label class="text-sm font-semibold">
                 Full Name
               </label>
@@ -849,12 +994,10 @@
                 id="profileName"
                 class="input mt-2"
                 required>
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Phone
               </label>
@@ -863,12 +1006,10 @@
                 id="profilePhone"
                 class="input mt-2"
                 type="tel">
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Email
               </label>
@@ -878,12 +1019,10 @@
                 class="input mt-2"
                 type="email"
                 disabled>
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Account Role
               </label>
@@ -892,12 +1031,10 @@
                 id="profileRole"
                 class="input mt-2"
                 disabled>
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Address
               </label>
@@ -906,7 +1043,6 @@
                 id="profileAddress"
                 class="input mt-2"
                 rows="4"></textarea>
-
             </div>
 
 
@@ -915,9 +1051,7 @@
               <button
                 type="submit"
                 class="btn-primary">
-
                 Save Changes
-
               </button>
 
               <span
@@ -935,7 +1069,7 @@
 
 
       <!-- =================================================
-           FIND SERVICES
+           SERVICES
       ================================================== -->
 
       <section
@@ -945,7 +1079,7 @@
         <div class="mb-7">
 
           <h2 class="text-2xl font-bold">
-            Find / Explore Services
+            Explore Services
           </h2>
 
           <p class="text-gray-500 mt-1">
@@ -963,9 +1097,7 @@
             onclick="goFinder('pg-finder.html')"
             class="service-card p-6">
 
-            <div class="text-4xl mb-5">
-              🏠
-            </div>
+            <div class="text-4xl mb-5">🏠</div>
 
             <h3 class="font-bold text-lg">
               Hostel / PG
@@ -982,9 +1114,7 @@
             onclick="goFinder('tiffin-finder.html')"
             class="service-card p-6">
 
-            <div class="text-4xl mb-5">
-              🍱
-            </div>
+            <div class="text-4xl mb-5">🍱</div>
 
             <h3 class="font-bold text-lg">
               Tiffin / Mess
@@ -1001,9 +1131,7 @@
             onclick="goFinder('library-finder.html')"
             class="service-card p-6">
 
-            <div class="text-4xl mb-5">
-              📚
-            </div>
+            <div class="text-4xl mb-5">📚</div>
 
             <h3 class="font-bold text-lg">
               Library
@@ -1020,9 +1148,7 @@
             onclick="goFinder('cafe-finder.html')"
             class="service-card p-6">
 
-            <div class="text-4xl mb-5">
-              ☕
-            </div>
+            <div class="text-4xl mb-5">☕</div>
 
             <h3 class="font-bold text-lg">
               Cafe
@@ -1039,9 +1165,7 @@
             onclick="goFinder('bookstore-finder.html')"
             class="service-card p-6">
 
-            <div class="text-4xl mb-5">
-              📖
-            </div>
+            <div class="text-4xl mb-5">📖</div>
 
             <h3 class="font-bold text-lg">
               Book Store
@@ -1117,7 +1241,7 @@
           id="activityContainer"
           class="space-y-4">
 
-          <div class="card p-6">
+          <div class="card empty-state">
             Loading activity...
           </div>
 
@@ -1141,26 +1265,34 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Your business profile and listing overview.
+            Manage your owner account and property presence.
           </p>
 
         </div>
 
 
-        <!-- OWNER PROFILE -->
         <div class="card p-6">
 
-          <div class="flex items-center
-                      justify-between mb-6">
+          <div class="flex flex-col md:flex-row
+                      md:items-center md:justify-between gap-5">
 
             <div>
 
-              <h3 class="font-bold text-lg">
-                Owner Profile
-              </h3>
+              <div class="flex items-center gap-2">
 
-              <p class="text-sm text-gray-400 mt-1">
-                Information associated with your owner account.
+                <h3 class="font-bold text-xl">
+                  Owner Profile
+                </h3>
+
+                <span class="badge badge-owner">
+                  Verified Role
+                </span>
+
+              </div>
+
+              <p class="text-sm text-gray-400 mt-2">
+                Your owner identity is securely linked to
+                your Supabase account.
               </p>
 
             </div>
@@ -1170,10 +1302,9 @@
 
           <div
             class="grid grid-cols-1 md:grid-cols-2
-                   gap-6">
+                   gap-6 mt-7">
 
             <div>
-
               <div class="text-xs text-gray-400">
                 Owner Name
               </div>
@@ -1183,12 +1314,10 @@
                 class="font-semibold mt-1">
                 —
               </div>
-
             </div>
 
 
             <div>
-
               <div class="text-xs text-gray-400">
                 Phone
               </div>
@@ -1198,27 +1327,23 @@
                 class="font-semibold mt-1">
                 —
               </div>
-
             </div>
 
 
             <div>
-
               <div class="text-xs text-gray-400">
                 Email
               </div>
 
               <div
                 id="ownerCentreEmail"
-                class="font-semibold mt-1">
+                class="font-semibold mt-1 break-all">
                 —
               </div>
-
             </div>
 
 
             <div>
-
               <div class="text-xs text-gray-400">
                 Address
               </div>
@@ -1228,7 +1353,6 @@
                 class="font-semibold mt-1">
                 —
               </div>
-
             </div>
 
           </div>
@@ -1236,17 +1360,16 @@
         </div>
 
 
-        <!-- LISTING STATUS -->
         <div class="card p-6 mt-6">
 
           <div class="mb-6">
 
             <h3 class="font-bold text-lg">
-              Listing Status Summary
+              Listing Status
             </h3>
 
             <p class="text-sm text-gray-400 mt-1">
-              Current status of your submitted listings.
+              Overview of your listing requests.
             </p>
 
           </div>
@@ -1255,9 +1378,7 @@
           <div
             class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-            <div
-              class="rounded-2xl bg-yellow-50 p-5">
-
+            <div class="rounded-2xl bg-yellow-50 p-5">
               <div class="text-xs text-yellow-700">
                 Pending
               </div>
@@ -1267,13 +1388,10 @@
                 class="text-3xl font-bold mt-2 text-yellow-800">
                 0
               </div>
-
             </div>
 
 
-            <div
-              class="rounded-2xl bg-green-50 p-5">
-
+            <div class="rounded-2xl bg-green-50 p-5">
               <div class="text-xs text-green-700">
                 Approved
               </div>
@@ -1283,13 +1401,10 @@
                 class="text-3xl font-bold mt-2 text-green-800">
                 0
               </div>
-
             </div>
 
 
-            <div
-              class="rounded-2xl bg-red-50 p-5">
-
+            <div class="rounded-2xl bg-red-50 p-5">
               <div class="text-xs text-red-700">
                 Rejected
               </div>
@@ -1299,7 +1414,6 @@
                 class="text-3xl font-bold mt-2 text-red-800">
                 0
               </div>
-
             </div>
 
           </div>
@@ -1320,11 +1434,11 @@
         <div class="mb-7">
 
           <h2 class="text-2xl font-bold">
-            Add Listing
+            Add New Listing
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Submit your property for admin review.
+            Submit your property for admin approval.
           </p>
 
         </div>
@@ -1336,9 +1450,7 @@
             id="listingForm"
             class="space-y-5">
 
-
             <div>
-
               <label class="text-sm font-semibold">
                 Property Name
               </label>
@@ -1347,12 +1459,10 @@
                 id="listingName"
                 class="input mt-2"
                 required>
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Category
               </label>
@@ -1387,12 +1497,10 @@
                 </option>
 
               </select>
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Area
               </label>
@@ -1401,12 +1509,10 @@
                 id="listingArea"
                 class="input mt-2"
                 required>
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Address
               </label>
@@ -1416,12 +1522,10 @@
                 class="input mt-2"
                 rows="3"
                 required></textarea>
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Contact Phone
               </label>
@@ -1431,12 +1535,10 @@
                 class="input mt-2"
                 type="tel"
                 required>
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Timing
               </label>
@@ -1444,12 +1546,10 @@
               <input
                 id="listingTiming"
                 class="input mt-2">
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Facilities
               </label>
@@ -1458,12 +1558,10 @@
                 id="listingFacilities"
                 class="input mt-2"
                 rows="4"></textarea>
-
             </div>
 
 
             <div>
-
               <label class="text-sm font-semibold">
                 Image URL
               </label>
@@ -1473,7 +1571,6 @@
                 class="input mt-2"
                 type="url"
                 placeholder="Optional">
-
             </div>
 
 
@@ -1482,9 +1579,7 @@
               <button
                 type="submit"
                 class="btn-primary">
-
                 Submit Listing Request
-
               </button>
 
               <span
@@ -1502,7 +1597,183 @@
 
 
       <!-- =================================================
-           MY REQUESTS
+           CLAIM PROPERTY
+      ================================================== -->
+
+      <section
+        id="section-claimProperty"
+        class="dashboard-section hidden">
+
+        <div class="mb-7">
+
+          <div
+            class="flex flex-col md:flex-row
+                   md:items-end md:justify-between gap-4">
+
+            <div>
+
+              <div
+                class="text-xs font-bold uppercase
+                       tracking-[.18em] text-gray-400 mb-2">
+                Ownership
+              </div>
+
+              <h2 class="text-2xl font-bold">
+                Claim Existing Property
+              </h2>
+
+              <p class="text-gray-500 mt-1 max-w-2xl">
+                Already listed on StudentHubHelp?
+                Find the property and submit an ownership claim.
+              </p>
+
+            </div>
+
+
+            <div class="badge badge-owner">
+              🔐 Admin Verification Required
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- CLAIM SEARCH -->
+
+        <div class="card p-5 md:p-6">
+
+          <div
+            class="flex flex-col lg:flex-row
+                   lg:items-center gap-4">
+
+            <div class="search-wrap flex-1">
+
+              <span>⌕</span>
+
+              <input
+                id="claimSearch"
+                class="input"
+                placeholder="Search by property name, area or phone...">
+
+            </div>
+
+
+            <button
+              onclick="searchClaimProperties()"
+              class="btn-primary">
+
+              Search Properties
+
+            </button>
+
+          </div>
+
+
+          <div
+            id="claimCategoryFilters"
+            class="flex flex-wrap gap-2 mt-5">
+
+            <button
+              class="category-chip active"
+              data-claim-category="all">
+              All
+            </button>
+
+            <button
+              class="category-chip"
+              data-claim-category="hostels">
+              🏠 Hostel / PG
+            </button>
+
+            <button
+              class="category-chip"
+              data-claim-category="tiffins">
+              🍱 Tiffin / Mess
+            </button>
+
+            <button
+              class="category-chip"
+              data-claim-category="libraries">
+              📚 Library
+            </button>
+
+            <button
+              class="category-chip"
+              data-claim-category="cafes">
+              ☕ Cafe
+            </button>
+
+            <button
+              class="category-chip"
+              data-claim-category="bookstores">
+              📖 Book Store
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="claimResults"
+          class="grid grid-cols-1 md:grid-cols-2
+                 xl:grid-cols-3 gap-5 mt-6">
+
+          <div
+            class="card empty-state
+                   md:col-span-2 xl:col-span-3">
+
+            <div class="text-4xl mb-4">
+              ⌂
+            </div>
+
+            <h3 class="font-bold text-gray-800">
+              Find Your Property
+            </h3>
+
+            <p class="mt-2">
+              Search above to find public properties
+              that are available to claim.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="card p-5 mt-6 bg-blue-50 border-blue-100">
+
+          <div class="flex gap-4">
+
+            <div class="text-2xl">
+              🛡️
+            </div>
+
+            <div>
+
+              <div class="font-bold text-blue-900">
+                How ownership linking works
+              </div>
+
+              <p class="text-sm text-blue-800/80 mt-1">
+                Your claim does not immediately change ownership.
+                An administrator verifies the claim first.
+                After approval, the property is securely linked
+                to your account using your owner UUID.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           REQUESTS
       ================================================== -->
 
       <section
@@ -1516,7 +1787,7 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Track your listing approval process.
+            Track listing and ownership request status.
           </p>
 
         </div>
@@ -1528,6 +1799,34 @@
 
           <div class="card empty-state">
             Loading requests...
+          </div>
+
+        </div>
+
+
+        <div class="mt-8">
+
+          <div class="mb-5">
+
+            <h3 class="text-xl font-bold">
+              Property Claim Requests
+            </h3>
+
+            <p class="text-sm text-gray-400 mt-1">
+              Existing property ownership claims.
+            </p>
+
+          </div>
+
+
+          <div
+            id="claimRequestsContainer"
+            class="space-y-4">
+
+            <div class="card empty-state">
+              Loading claim requests...
+            </div>
+
           </div>
 
         </div>
@@ -1545,13 +1844,27 @@
 
         <div class="mb-7">
 
-          <h2 class="text-2xl font-bold">
-            Live Properties
-          </h2>
+          <div
+            class="flex flex-col md:flex-row
+                   md:items-end md:justify-between gap-4">
 
-          <p class="text-gray-500 mt-1">
-            Approved properties currently visible to students.
-          </p>
+            <div>
+
+              <h2 class="text-2xl font-bold">
+                Live Properties
+              </h2>
+
+              <p class="text-gray-500 mt-1">
+                Properties securely linked to your owner account.
+              </p>
+
+            </div>
+
+            <span class="badge badge-live">
+              ● Live
+            </span>
+
+          </div>
 
         </div>
 
@@ -1561,7 +1874,9 @@
           class="grid grid-cols-1 md:grid-cols-2
                  xl:grid-cols-3 gap-5">
 
-          <div class="card empty-state">
+          <div
+            class="card empty-state
+                   md:col-span-2 xl:col-span-3">
             Loading live properties...
           </div>
 
@@ -1585,7 +1900,7 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Reviews received from students.
+            Student reviews received on your properties.
           </p>
 
         </div>
@@ -1612,20 +1927,21 @@
 
 <!-- =====================================================
      PROPERTY DETAILS MODAL
-===================================================== -->
+====================================================== -->
 
 <div
   id="propertyModal"
   class="fixed inset-0 z-[200] hidden
-         items-center justify-center p-5 modal-backdrop">
+         items-center justify-center p-4 md:p-6
+         modal-backdrop">
 
   <div
-    class="bg-white rounded-2xl w-full max-w-2xl
-           max-h-[90vh] overflow-y-auto">
+    class="bg-white rounded-3xl w-full max-w-3xl
+           max-h-[92vh] overflow-y-auto shadow-2xl">
 
     <div
       class="flex items-center justify-between
-             p-5 border-b">
+             p-5 md:p-6 border-b">
 
       <div>
 
@@ -1643,11 +1959,9 @@
 
       <button
         onclick="closePropertyModal()"
-        class="w-9 h-9 rounded-lg
-               bg-gray-100">
-
+        class="w-10 h-10 rounded-xl bg-gray-100
+               hover:bg-gray-200">
         ×
-
       </button>
 
     </div>
@@ -1655,7 +1969,7 @@
 
     <div
       id="propertyModalBody"
-      class="p-6">
+      class="p-5 md:p-6">
     </div>
 
   </div>
@@ -1664,16 +1978,143 @@
 
 
 <!-- =====================================================
+     CLAIM MODAL
+====================================================== -->
+
+<div
+  id="claimModal"
+  class="fixed inset-0 z-[220] hidden
+         items-center justify-center p-4
+         modal-backdrop">
+
+  <div
+    class="bg-white rounded-3xl w-full max-w-xl
+           shadow-2xl overflow-hidden">
+
+    <div class="p-6 border-b">
+
+      <div class="flex items-center
+                  justify-between gap-4">
+
+        <div>
+
+          <div class="text-xs text-gray-400">
+            Ownership Request
+          </div>
+
+          <h3
+            id="claimModalTitle"
+            class="font-bold text-xl mt-1">
+            Claim Property
+          </h3>
+
+        </div>
+
+        <button
+          onclick="closeClaimModal()"
+          class="w-10 h-10 rounded-xl bg-gray-100">
+          ×
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <form
+      id="claimForm"
+      class="p-6 space-y-5">
+
+      <input
+        id="claimPropertyId"
+        type="hidden">
+
+      <input
+        id="claimPropertyType"
+        type="hidden">
+
+
+      <div
+        id="claimPropertyPreview"
+        class="rounded-2xl bg-gray-50
+               border border-gray-100 p-5">
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Why do you own/manage this property?
+        </label>
+
+        <textarea
+          id="claimMessage"
+          class="input mt-2"
+          rows="4"
+          required
+          placeholder="Tell the administrator how this property is connected to you..."></textarea>
+
+      </div>
+
+
+      <div
+        class="rounded-2xl bg-blue-50
+               border border-blue-100 p-4">
+
+        <div class="font-bold text-sm text-blue-900">
+          Verification Notice
+        </div>
+
+        <div class="text-xs text-blue-800/80 mt-1">
+          This claim will be reviewed by an administrator.
+          The property will remain unclaimed until approval.
+        </div>
+
+      </div>
+
+
+      <div
+        id="claimMessageBox"
+        class="hidden text-sm">
+      </div>
+
+
+      <div class="flex gap-3">
+
+        <button
+          type="submit"
+          class="btn-primary flex-1">
+          Submit Claim
+        </button>
+
+        <button
+          type="button"
+          onclick="closeClaimModal()"
+          class="btn-secondary">
+          Cancel
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
      EDIT REQUEST MODAL
-===================================================== -->
+====================================================== -->
 
 <div
   id="editRequestModal"
-  class="fixed inset-0 z-[200] hidden
-         items-center justify-center p-5 modal-backdrop">
+  class="fixed inset-0 z-[220] hidden
+         items-center justify-center p-4
+         modal-backdrop">
 
   <div
-    class="bg-white rounded-2xl w-full max-w-2xl
+    class="bg-white rounded-3xl w-full max-w-2xl
            max-h-[92vh] overflow-y-auto">
 
     <div
@@ -1694,10 +2135,8 @@
 
       <button
         onclick="closeEditRequestModal()"
-        class="w-9 h-9 rounded-lg bg-gray-100">
-
+        class="w-10 h-10 rounded-xl bg-gray-100">
         ×
-
       </button>
 
     </div>
@@ -1712,22 +2151,14 @@
         type="hidden">
 
       <input
-        id="editPropertyCategory"
+        id="editPropertyTable"
         type="hidden">
 
 
-      <div class="rounded-xl bg-gray-50 p-4">
-
-        <div class="text-xs text-gray-400">
-          Property
-        </div>
-
-        <div
-          id="editPropertyName"
-          class="font-semibold mt-1">
-          —
-        </div>
-
+      <div
+        id="editPropertyPreview"
+        class="rounded-2xl bg-gray-50
+               border border-gray-100 p-5">
       </div>
 
 
@@ -1869,40 +2300,19 @@
       </div>
 
 
-      <div class="rounded-xl bg-blue-50
-                  border border-blue-100 p-4">
+      <div
+        class="rounded-2xl bg-blue-50
+               border border-blue-100 p-4">
 
-        <div class="text-sm font-semibold text-blue-900">
+        <div class="font-bold text-sm text-blue-900">
           Secure Edit Workflow
         </div>
 
-        <div class="text-xs text-blue-700 mt-1">
-          Your requested changes will be sent for admin
-          review. Live property data will not be changed
-          directly from this dashboard.
+        <div class="text-xs text-blue-800/80 mt-1">
+          Live property data will not be changed directly.
+          Your requested changes will be sent to the administrator
+          for review.
         </div>
-
-      </div>
-
-
-      <div class="flex gap-3 pt-2">
-
-        <button
-          type="submit"
-          class="btn-primary">
-
-          Send Edit Request
-
-        </button>
-
-        <button
-          type="button"
-          onclick="closeEditRequestModal()"
-          class="btn-secondary">
-
-          Cancel
-
-        </button>
 
       </div>
 
@@ -1910,6 +2320,24 @@
       <div
         id="editRequestMessage"
         class="hidden text-sm">
+      </div>
+
+
+      <div class="flex gap-3">
+
+        <button
+          type="submit"
+          class="btn-primary">
+          Send Edit Request
+        </button>
+
+        <button
+          type="button"
+          onclick="closeEditRequestModal()"
+          class="btn-secondary">
+          Cancel
+        </button>
+
       </div>
 
     </form>
@@ -1927,6 +2355,14 @@
 
 const SUPABASE_URL =
   "https://idurlccrarznnnqixxsd.supabase.co";
+
+/*
+  IMPORTANT:
+  Paste the SAME anon key that is currently present
+  in your existing user-dashboard.html.
+
+  NEVER use service_role key here.
+*/
 
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
@@ -1947,23 +2383,63 @@ let currentProfile = null;
 let currentRole = null;
 
 let ownerRequests = [];
+let ownerClaimRequests = [];
 let ownerLiveProperties = [];
+
+let claimProperties = [];
+let activeClaimCategory = "all";
 
 
 /* =========================================================
-   CONSTANTS
+   PROPERTY CONFIG
 ========================================================= */
 
-const PROPERTY_TABLES = [
-  "hostels",
-  "tiffins",
-  "libraries",
-  "cafes",
-  "bookstores"
-];
+const PROPERTY_CONFIG = {
+
+  hostels: {
+    table: "hostels",
+    label: "Hostel / PG",
+    icon: "🏠",
+    banner: "hostel-banner.png"
+  },
+
+  tiffins: {
+    table: "tiffins",
+    label: "Tiffin / Mess",
+    icon: "🍱",
+    banner: "tiffin-banner.png"
+  },
+
+  libraries: {
+    table: "libraries",
+    label: "Library",
+    icon: "📚",
+    banner: "library-banner.png"
+  },
+
+  cafes: {
+    table: "cafes",
+    label: "Cafe",
+    icon: "☕",
+    banner: "cafe-banner.png"
+  },
+
+  bookstores: {
+    table: "bookstores",
+    label: "Book Store",
+    icon: "📖",
+    banner: "bookstore-banner.png"
+  }
+
+};
 
 
-const PROPERTY_COLUMNS = `
+/*
+  Bookstores does NOT currently have image column,
+  so it intentionally uses only these common columns.
+*/
+
+const STANDARD_PROPERTY_COLUMNS = `
   id,
   name,
   category,
@@ -1972,7 +2448,22 @@ const PROPERTY_COLUMNS = `
   phone,
   timing,
   facilities,
-  rating
+  rating,
+  image,
+  owner_id
+`;
+
+const BOOKSTORE_COLUMNS = `
+  id,
+  name,
+  category,
+  area,
+  address,
+  phone,
+  timing,
+  facilities,
+  rating,
+  owner_id
 `;
 
 
@@ -1982,15 +2473,6 @@ const PROPERTY_COLUMNS = `
 
 function $(id) {
   return document.getElementById(id);
-}
-
-
-function normalizePhone(value) {
-
-  return String(value || "")
-    .replace(/\D/g, "")
-    .slice(-10);
-
 }
 
 
@@ -2006,12 +2488,28 @@ function escapeHTML(value) {
 }
 
 
+function normalize(value) {
+
+  return String(value || "")
+    .toLowerCase()
+    .trim();
+
+}
+
+
+function normalizePhone(value) {
+
+  return String(value || "")
+    .replace(/\D/g, "")
+    .slice(-10);
+
+}
+
+
 function formatRole(role) {
 
   const value =
-    String(role || "")
-      .toLowerCase()
-      .trim();
+    normalize(role);
 
   if (value === "student") return "Student";
   if (value === "owner") return "Owner";
@@ -2025,9 +2523,7 @@ function formatRole(role) {
 function formatCategory(value) {
 
   const category =
-    String(value || "")
-      .toLowerCase()
-      .trim();
+    normalize(value);
 
   if (
     category.includes("hostel") ||
@@ -2066,10 +2562,7 @@ function formatCategory(value) {
 function statusBadge(status) {
 
   const value =
-    String(status || "pending")
-      .toLowerCase()
-      .trim();
-
+    normalize(status || "pending");
 
   if (value === "approved") {
 
@@ -2081,7 +2574,6 @@ function statusBadge(status) {
 
   }
 
-
   if (value === "rejected") {
 
     return `
@@ -2092,7 +2584,6 @@ function statusBadge(status) {
 
   }
 
-
   return `
     <span class="badge badge-pending">
       🟡 Pending
@@ -2102,17 +2593,79 @@ function statusBadge(status) {
 }
 
 
+function getPropertyConfig(table) {
+
+  return PROPERTY_CONFIG[table] ||
+    PROPERTY_CONFIG.hostels;
+
+}
+
+
+function getPropertyImage(property) {
+
+  const config =
+    getPropertyConfig(
+      property.property_table
+    );
+
+  if (
+    property.image &&
+    String(property.image).trim()
+  ) {
+    return property.image;
+  }
+
+  return config.banner;
+
+}
+
+
 function getPropertyIcon(table) {
 
-  const icons = {
-    hostels: "🏠",
-    tiffins: "🍱",
-    libraries: "📚",
-    cafes: "☕",
-    bookstores: "📖"
-  };
+  return getPropertyConfig(table).icon;
 
-  return icons[table] || "●";
+}
+
+
+function formatDate(value) {
+
+  if (!value) return "—";
+
+  try {
+
+    return new Date(value)
+      .toLocaleDateString(
+        undefined,
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
+        }
+      );
+
+  } catch {
+
+    return "—";
+
+  }
+
+}
+
+
+function formatDateTime(value) {
+
+  if (!value) return "—";
+
+  try {
+
+    return new Date(value)
+      .toLocaleString();
+
+  } catch {
+
+    return "—";
+
+  }
 
 }
 
@@ -2125,16 +2678,13 @@ function showSection(section) {
 
   document
     .querySelectorAll(".dashboard-section")
-    .forEach(sectionElement => {
-
-      sectionElement.classList.add("hidden");
-
+    .forEach(element => {
+      element.classList.add("hidden");
     });
 
 
   const target =
     $("section-" + section);
-
 
   if (!target) return;
 
@@ -2151,9 +2701,7 @@ function showSection(section) {
       if (
         button.dataset.section === section
       ) {
-
         button.classList.add("active");
-
       }
 
     });
@@ -2165,7 +2713,7 @@ function showSection(section) {
 
     profile: "My Profile",
 
-    services: "Find / Explore Services",
+    services: "Explore Services",
 
     reviews: "My Reviews",
 
@@ -2173,7 +2721,9 @@ function showSection(section) {
 
     ownerCentre: "Owner Centre",
 
-    addListing: "Add Listing",
+    addListing: "Add New Listing",
+
+    claimProperty: "Claim Existing Property",
 
     requests: "My Requests",
 
@@ -2192,43 +2742,35 @@ function showSection(section) {
 
 
   if (section === "reviews") {
-
     loadStudentReviews();
-
   }
-
 
   if (section === "activity") {
-
     loadActivity();
-
   }
-
 
   if (section === "requests") {
-
     loadOwnerRequests();
-
+    loadOwnerClaimRequests();
   }
 
+  if (section === "claimProperty") {
+    loadClaimProperties();
+  }
 
   if (section === "liveProperties") {
-
     loadLiveProperties();
-
   }
 
-
   if (section === "ownerReviews") {
-
     loadOwnerReviews();
-
   }
 
 }
 
 
-window.showSection = showSection;
+window.showSection =
+  showSection;
 
 
 function goFinder(page) {
@@ -2238,7 +2780,8 @@ function goFinder(page) {
 }
 
 
-window.goFinder = goFinder;
+window.goFinder =
+  goFinder;
 
 
 /* =========================================================
@@ -2308,7 +2851,7 @@ $("sidebarOverlay")
 
 
 /* =========================================================
-   LOAD AUTH + PROFILE
+   AUTH + PROFILE
 ========================================================= */
 
 async function initializeDashboard() {
@@ -2377,9 +2920,7 @@ async function initializeDashboard() {
 
 
   /*
-    Role is ALWAYS taken from Supabase.
-    No localStorage role.
-    No hardcoded owner.
+    Supabase profile role is the ONLY source of truth.
   */
 
   if (
@@ -2401,13 +2942,13 @@ async function initializeDashboard() {
 
 
   currentRole =
-    String(profile.role)
-      .toLowerCase()
-      .trim();
+    normalize(
+      profile.role
+    );
 
 
   /*
-    Admin has separate dashboard.
+    Admin uses separate dashboard.
   */
 
   if (
@@ -2423,10 +2964,6 @@ async function initializeDashboard() {
 
   }
 
-
-  /*
-    Only Student / Owner.
-  */
 
   if (
     currentRole !== "student" &&
@@ -2469,13 +3006,14 @@ function showFatalError(message) {
 
   document.body.innerHTML = `
 
-    <div class="min-h-screen flex items-center
-                justify-center p-6 bg-[#f5f7fb]">
+    <div
+      class="min-h-screen flex items-center
+             justify-center p-6 bg-[#f5f7fb]">
 
       <div class="card max-w-md w-full p-8 text-center">
 
         <div class="text-4xl mb-4">
-          ⚠
+          ⚠️
         </div>
 
         <h2 class="text-xl font-bold">
@@ -2568,13 +3106,13 @@ function applyProfileUI() {
     "—";
 
   $("ownerCentreAddress").textContent =
-    currentProfile.address || "";
+    currentProfile.address || "—";
 
 }
 
 
 /* =========================================================
-   STUDENT MODE
+   STUDENT / OWNER UI
 ========================================================= */
 
 function enableStudentMode() {
@@ -2583,32 +3121,34 @@ function enableStudentMode() {
     .classList
     .add("hidden");
 
-
   $("studentStats")
     .classList
     .remove("hidden");
-
 
   $("studentStats")
     .classList
     .add("grid");
 
-
   $("ownerStats")
     .classList
     .add("hidden");
-
 
   $("ownerStats")
     .classList
     .remove("grid");
 
+  $("overviewHero")
+    .className =
+    "hero-student p-6 md:p-8 mb-7";
+
+  $("overviewEyebrow").textContent =
+    "Welcome back";
+
+  $("overviewDescription").textContent =
+    "Explore student services, manage your profile and keep track of your reviews.";
+
 }
 
-
-/* =========================================================
-   OWNER MODE
-========================================================= */
 
 function enableOwnerMode() {
 
@@ -2616,25 +3156,31 @@ function enableOwnerMode() {
     .classList
     .remove("hidden");
 
-
   $("studentStats")
     .classList
     .add("hidden");
-
 
   $("studentStats")
     .classList
     .remove("grid");
 
-
   $("ownerStats")
     .classList
     .remove("hidden");
 
-
   $("ownerStats")
     .classList
     .add("grid");
+
+  $("overviewHero")
+    .className =
+    "hero-owner p-6 md:p-8 mb-7";
+
+  $("overviewEyebrow").textContent =
+    "Owner Workspace";
+
+  $("overviewDescription").textContent =
+    "Manage listings, claim existing properties and monitor your live presence on StudentHubHelp.";
 
 }
 
@@ -2703,11 +3249,9 @@ async function loadStudentReviews() {
 
 
   container.innerHTML = `
-
     <div class="card empty-state">
       Loading reviews...
     </div>
-
   `;
 
 
@@ -2742,11 +3286,9 @@ async function loadStudentReviews() {
     console.error(error);
 
     container.innerHTML = `
-
       <div class="card p-6 text-red-600">
         Unable to load your reviews.
       </div>
-
     `;
 
     return;
@@ -2757,7 +3299,6 @@ async function loadStudentReviews() {
   if (!data?.length) {
 
     container.innerHTML = `
-
       <div class="card empty-state">
 
         <div class="text-4xl mb-4">
@@ -2773,7 +3314,6 @@ async function loadStudentReviews() {
         </p>
 
       </div>
-
     `;
 
     return;
@@ -2786,11 +3326,10 @@ async function loadStudentReviews() {
 
       <div class="card p-5">
 
-        <div class="flex flex-col
-                    sm:flex-row
-                    sm:items-center
-                    sm:justify-between
-                    gap-3">
+        <div
+          class="flex flex-col sm:flex-row
+                 sm:items-center
+                 sm:justify-between gap-3">
 
           <div>
 
@@ -2806,10 +3345,10 @@ async function loadStudentReviews() {
 
           </div>
 
-
           <div class="flex items-center gap-3">
 
-            <div class="font-semibold">
+            <div
+              class="font-bold text-amber-600">
               ★ ${escapeHTML(
                 review.rating ?? "—"
               )}
@@ -2823,7 +3362,7 @@ async function loadStudentReviews() {
 
 
         <div
-          class="mt-4 rounded-xl
+          class="mt-4 rounded-2xl
                  bg-gray-50 p-4">
 
           <div class="text-sm text-gray-700">
@@ -2836,15 +3375,7 @@ async function loadStudentReviews() {
 
 
         <div class="text-xs text-gray-400 mt-4">
-
-          ${
-            review.created_at
-              ? new Date(
-                  review.created_at
-                ).toLocaleDateString()
-              : ""
-          }
-
+          ${formatDate(review.created_at)}
         </div>
 
       </div>
@@ -2865,11 +3396,9 @@ async function loadActivity() {
 
 
   container.innerHTML = `
-
-    <div class="card p-6 text-gray-400">
+    <div class="card empty-state">
       Loading activity...
     </div>
-
   `;
 
 
@@ -2904,11 +3433,9 @@ async function loadActivity() {
     console.error(error);
 
     container.innerHTML = `
-
       <div class="card p-6 text-red-600">
         Unable to load recent activity.
       </div>
-
     `;
 
     return;
@@ -2919,7 +3446,6 @@ async function loadActivity() {
   if (!reviews?.length) {
 
     container.innerHTML = `
-
       <div class="card empty-state">
 
         <div class="text-4xl mb-4">
@@ -2935,7 +3461,6 @@ async function loadActivity() {
         </p>
 
       </div>
-
     `;
 
     return;
@@ -2943,20 +3468,17 @@ async function loadActivity() {
   }
 
 
-  container.innerHTML = reviews.map(
-    review => `
+  container.innerHTML =
+    reviews.map(review => `
 
       <div class="card p-5 flex gap-4">
 
         <div
-          class="w-10 h-10 rounded-full
+          class="w-11 h-11 rounded-full
                  bg-gray-100 flex-shrink-0
                  flex items-center justify-center">
-
           ★
-
         </div>
-
 
         <div class="flex-1">
 
@@ -2975,23 +3497,14 @@ async function loadActivity() {
           </div>
 
           <div class="text-xs text-gray-400 mt-2">
-
-            ${
-              review.created_at
-                ? new Date(
-                    review.created_at
-                  ).toLocaleString()
-                : ""
-            }
-
+            ${formatDateTime(review.created_at)}
           </div>
 
         </div>
 
       </div>
 
-    `
-  ).join("");
+    `).join("");
 
 }
 
@@ -3097,6 +3610,8 @@ async function loadOwnerDashboard() {
 
   await loadOwnerRequests();
 
+  await loadOwnerClaimRequests();
+
   ownerLiveProperties =
     await getOwnerLiveProperties();
 
@@ -3108,7 +3623,7 @@ async function loadOwnerDashboard() {
 
 
 /* =========================================================
-   OWNER REQUEST DATA
+   OWNER LISTING REQUESTS
 ========================================================= */
 
 async function loadOwnerRequests() {
@@ -3118,11 +3633,9 @@ async function loadOwnerRequests() {
 
 
   container.innerHTML = `
-
     <div class="card empty-state">
       Loading requests...
     </div>
-
   `;
 
 
@@ -3166,13 +3679,10 @@ async function loadOwnerRequests() {
 
     ownerRequests = [];
 
-
     container.innerHTML = `
-
       <div class="card p-6 text-red-600">
         Unable to load your listing requests.
       </div>
-
     `;
 
     return;
@@ -3192,7 +3702,6 @@ async function loadOwnerRequests() {
   if (!ownerRequests.length) {
 
     container.innerHTML = `
-
       <div class="card empty-state">
 
         <div class="text-4xl mb-4">
@@ -3200,7 +3709,7 @@ async function loadOwnerRequests() {
         </div>
 
         <h3 class="font-bold text-gray-800">
-          No Requests Yet
+          No Listing Requests Yet
         </h3>
 
         <p class="mt-2">
@@ -3208,7 +3717,6 @@ async function loadOwnerRequests() {
         </p>
 
       </div>
-
     `;
 
     return;
@@ -3217,10 +3725,11 @@ async function loadOwnerRequests() {
 
 
   container.innerHTML =
-    ownerRequests.map(
-      request =>
-        renderOwnerRequest(request)
-    ).join("");
+    ownerRequests
+      .map(
+        renderOwnerRequest
+      )
+      .join("");
 
 }
 
@@ -3231,40 +3740,38 @@ async function loadOwnerRequests() {
 
 function renderOwnerRequest(request) {
 
-  const status =
-    String(request.status || "pending")
-      .toLowerCase();
-
-
   return `
 
     <div class="card p-6">
 
       <div
-        class="flex flex-col
-               md:flex-row
+        class="flex flex-col md:flex-row
                md:items-start
-               md:justify-between
-               gap-4">
+               md:justify-between gap-4">
 
         <div>
 
           <h3 class="font-bold text-lg">
             ${escapeHTML(
-              request.name || "Unnamed Property"
+              request.name ||
+              "Unnamed Property"
             )}
           </h3>
 
-          <div class="text-sm text-gray-400 mt-1">
+          <div
+            class="text-sm text-gray-400 mt-1">
 
             ${escapeHTML(
-              formatCategory(request.category)
+              formatCategory(
+                request.category
+              )
             )}
 
             <span class="mx-1">•</span>
 
             ${escapeHTML(
-              request.area || "Area not provided"
+              request.area ||
+              "Area not provided"
             )}
 
           </div>
@@ -3272,21 +3779,16 @@ function renderOwnerRequest(request) {
         </div>
 
 
-        <div>
-          ${statusBadge(status)}
-        </div>
+        ${statusBadge(request.status)}
 
       </div>
 
-
-      <!-- APPROVAL TIMELINE -->
 
       <div class="mt-7">
 
         <div class="text-sm font-bold mb-5">
           Listing Approval Status
         </div>
-
 
         <div class="space-y-5">
 
@@ -3297,15 +3799,12 @@ function renderOwnerRequest(request) {
       </div>
 
 
-      <!-- PROPERTY DETAILS -->
-
       <div
         class="grid grid-cols-1 md:grid-cols-2
                gap-4 mt-7 pt-6
                border-t border-gray-100">
 
         <div>
-
           <div class="text-xs text-gray-400">
             Address
           </div>
@@ -3315,12 +3814,10 @@ function renderOwnerRequest(request) {
               request.address || "—"
             )}
           </div>
-
         </div>
 
 
         <div>
-
           <div class="text-xs text-gray-400">
             Phone
           </div>
@@ -3330,31 +3827,23 @@ function renderOwnerRequest(request) {
               request.phone || "—"
             )}
           </div>
-
         </div>
 
 
         <div>
-
           <div class="text-xs text-gray-400">
             Submitted
           </div>
 
           <div class="text-sm font-medium mt-1">
-            ${
+            ${formatDate(
               request.created_at
-                ? new Date(
-                    request.created_at
-                  ).toLocaleDateString()
-                : "—"
-            }
+            )}
           </div>
-
         </div>
 
 
         <div>
-
           <div class="text-xs text-gray-400">
             Timing
           </div>
@@ -3364,7 +3853,6 @@ function renderOwnerRequest(request) {
               request.timing || "—"
             )}
           </div>
-
         </div>
 
       </div>
@@ -3373,35 +3861,27 @@ function renderOwnerRequest(request) {
       ${
         request.admin_note
           ? `
-
             <div
-              class="mt-5 rounded-xl
+              class="mt-5 rounded-2xl
                      bg-blue-50
                      border border-blue-100
                      p-4">
 
               <div
-                class="text-xs
-                       font-bold
+                class="text-xs font-bold
                        text-blue-700">
-
                 📝 Admin Note
-
               </div>
 
               <div
-                class="text-sm
-                       text-blue-900
-                       mt-1">
-
+                class="text-sm text-blue-900
+                       mt-1 whitespace-pre-line">
                 ${escapeHTML(
                   request.admin_note
                 )}
-
               </div>
 
             </div>
-
           `
           : ""
       }
@@ -3414,17 +3894,18 @@ function renderOwnerRequest(request) {
 
 
 /* =========================================================
-   APPROVAL TIMELINE
+   TIMELINE
 ========================================================= */
 
 function renderTimeline(request) {
 
   const status =
-    String(request.status || "pending")
-      .toLowerCase();
+    normalize(
+      request.status
+    );
 
 
-  let reviewActive =
+  const finalState =
     status === "approved" ||
     status === "rejected";
 
@@ -3436,13 +3917,10 @@ function renderTimeline(request) {
       <div
         class="absolute left-0 top-1
                w-6 h-6 rounded-full
-               bg-[#0b1730]
-               text-white text-xs
-               flex items-center justify-center
-               z-10">
-
+               bg-[#0b1730] text-white
+               text-xs flex items-center
+               justify-center z-10">
         ✓
-
       </div>
 
       <div class="timeline-line"></div>
@@ -3454,15 +3932,7 @@ function renderTimeline(request) {
         </div>
 
         <div class="text-xs text-gray-400 mt-1">
-
-          ${
-            request.created_at
-              ? new Date(
-                  request.created_at
-                ).toLocaleDateString()
-              : "Request submitted"
-          }
-
+          ${formatDate(request.created_at)}
         </div>
 
       </div>
@@ -3476,15 +3946,14 @@ function renderTimeline(request) {
         class="absolute left-0 top-1
                w-6 h-6 rounded-full
                ${
-                 reviewActive
+                 finalState
                    ? "bg-[#0b1730] text-white"
                    : "bg-gray-200 text-gray-400"
                }
-               text-xs
-               flex items-center justify-center
-               z-10">
+               text-xs flex items-center
+               justify-center z-10">
 
-        ${reviewActive ? "✓" : "2"}
+        ${finalState ? "✓" : "2"}
 
       </div>
 
@@ -3517,9 +3986,8 @@ function renderTimeline(request) {
                      ? "bg-red-600 text-white"
                      : "bg-gray-200 text-gray-400"
                }
-               text-xs
-               flex items-center justify-center
-               z-10">
+               text-xs flex items-center
+               justify-center z-10">
 
         ${
           status === "approved"
@@ -3547,9 +4015,9 @@ function renderTimeline(request) {
 
           ${
             status === "approved"
-              ? "Property approved and eligible to go live."
+              ? "Request approved."
               : status === "rejected"
-                ? "Request was rejected by admin."
+                ? "Request rejected by admin."
                 : "Waiting for admin decision."
           }
 
@@ -3573,29 +4041,30 @@ function updateOwnerStats() {
   const pending =
     ownerRequests.filter(
       item =>
-        String(item.status || "")
-          .toLowerCase() === "pending"
+        normalize(item.status) ===
+        "pending"
     ).length;
 
 
   const approved =
     ownerRequests.filter(
       item =>
-        String(item.status || "")
-          .toLowerCase() === "approved"
+        normalize(item.status) ===
+        "approved"
     ).length;
 
 
   const rejected =
     ownerRequests.filter(
       item =>
-        String(item.status || "")
-          .toLowerCase() === "rejected"
+        normalize(item.status) ===
+        "rejected"
     ).length;
 
 
   $("totalListings").textContent =
-    approved;
+    approved +
+    ownerLiveProperties.length;
 
 
   $("pendingRequests").textContent =
@@ -3627,10 +4096,12 @@ function updateOwnerStats() {
 function updateOwnerCentre() {
 
   $("ownerCentreName").textContent =
-    currentProfile.full_name || "—";
+    currentProfile.full_name ||
+    "—";
 
   $("ownerCentrePhone").textContent =
-    currentProfile.phone || "—";
+    currentProfile.phone ||
+    "—";
 
   $("ownerCentreEmail").textContent =
     currentProfile.email ||
@@ -3638,7 +4109,8 @@ function updateOwnerCentre() {
     "—";
 
   $("ownerCentreAddress").textContent =
-    currentProfile.address || "";
+    currentProfile.address ||
+    "—";
 
 }
 
@@ -3718,7 +4190,8 @@ $("listingForm")
         image:
           $("listingImage")
             .value
-            .trim() || null,
+            .trim() ||
+          null,
 
         rating:
           null,
@@ -3761,6 +4234,7 @@ $("listingForm")
       message.textContent =
         "Listing request submitted successfully.";
 
+
       await loadOwnerRequests();
 
     }
@@ -3769,27 +4243,15 @@ $("listingForm")
 
 /* =========================================================
    GET OWNER LIVE PROPERTIES
+   IMPORTANT:
+   Uses owner_id directly.
+   No phone-based full-table download.
 ========================================================= */
 
 async function getOwnerLiveProperties() {
 
-  if (!currentProfile?.phone) {
-
+  if (!currentUser?.id) {
     return [];
-
-  }
-
-
-  const ownerPhone =
-    normalizePhone(
-      currentProfile.phone
-    );
-
-
-  if (!ownerPhone) {
-
-    return [];
-
   }
 
 
@@ -3797,8 +4259,16 @@ async function getOwnerLiveProperties() {
 
 
   for (
-    const table of PROPERTY_TABLES
+    const table of Object.keys(
+      PROPERTY_CONFIG
+    )
   ) {
+
+    const columns =
+      table === "bookstores"
+        ? BOOKSTORE_COLUMNS
+        : STANDARD_PROPERTY_COLUMNS;
+
 
     const {
       data,
@@ -3806,19 +4276,17 @@ async function getOwnerLiveProperties() {
     } =
       await supabaseClient
         .from(table)
-        .select(
-          PROPERTY_COLUMNS
+        .select(columns)
+        .eq(
+          "owner_id",
+          currentUser.id
         );
 
 
     if (error) {
 
-      /*
-        Some environments may not yet have
-        every table. Continue safely.
-      */
-
       console.warn(
+        "Owner property query:",
         table,
         error.message
       );
@@ -3828,13 +4296,8 @@ async function getOwnerLiveProperties() {
     }
 
 
-    (data || []).forEach(property => {
-
-      if (
-        normalizePhone(
-          property.phone
-        ) === ownerPhone
-      ) {
+    (data || []).forEach(
+      property => {
 
         properties.push({
 
@@ -3846,8 +4309,7 @@ async function getOwnerLiveProperties() {
         });
 
       }
-
-    });
+    );
 
   }
 
@@ -3868,11 +4330,12 @@ async function loadLiveProperties() {
 
 
   container.innerHTML = `
-
-    <div class="card empty-state">
+    <div
+      class="card empty-state
+             md:col-span-2
+             xl:col-span-3">
       Loading live properties...
     </div>
-
   `;
 
 
@@ -3886,7 +4349,6 @@ async function loadLiveProperties() {
   if (!ownerLiveProperties.length) {
 
     container.innerHTML = `
-
       <div
         class="card empty-state
                md:col-span-2
@@ -3897,16 +4359,31 @@ async function loadLiveProperties() {
         </div>
 
         <h3 class="font-bold text-gray-800">
-          No Live Properties
+          No Live Properties Yet
         </h3>
 
-        <p class="mt-2">
-          Approved properties matching your owner account
-          will appear here.
+        <p class="mt-2 max-w-lg mx-auto">
+          Approved properties linked to your owner account
+          will appear here automatically.
         </p>
 
-      </div>
+        <div class="flex justify-center gap-3 mt-6">
 
+          <button
+            onclick="showSection('claimProperty')"
+            class="btn-primary">
+            Claim Existing Property
+          </button>
+
+          <button
+            onclick="showSection('addListing')"
+            class="btn-secondary">
+            Add New Listing
+          </button>
+
+        </div>
+
+      </div>
     `;
 
     return;
@@ -3917,8 +4394,7 @@ async function loadLiveProperties() {
   container.innerHTML =
     ownerLiveProperties
       .map(
-        property =>
-          renderLivePropertyCard(property)
+        renderLivePropertyCard
       )
       .join("");
 
@@ -3930,168 +4406,373 @@ async function loadLiveProperties() {
 ========================================================= */
 
 function renderLivePropertyCard(property) {
-  const table = property.property_table || "hostels";
-  const categoryStr = String(property.category || "").toLowerCase();
 
-  // गिटहब पर मौजूद आपके लोकल बैनर्स के नाम (प्रॉपर्टी की कैटेगरी के अनुसार)
-  let githubBanner = "hostel-banner.png"; // डिफ़ॉल्ट
+  const config =
+    getPropertyConfig(
+      property.property_table
+    );
 
-  if (categoryStr.includes("hostel") || categoryStr.includes("pg") || table === "hostels") {
-    githubBanner = "hostel-banner.png";
-  } else if (categoryStr.includes("tiffin") || categoryStr.includes("mess") || table === "tiffins") {
-    githubBanner = "tiffin-banner.png";
-  } else if (categoryStr.includes("library") || table === "libraries") {
-    githubBanner = "library-banner.png";
-  } else if (categoryStr.includes("cafe") || table === "cafes") {
-    githubBanner = "cafe-banner.png";
-  } else if (categoryStr.includes("book") || categoryStr.includes("store") || table === "bookstores") {
-    githubBanner = "bookstore-banner.png";
-  }
 
-  // अगर ओनर ने Supabase में कोई इमेज दी है तो वो यूज़ होगी, वरना गिटहब वाला सही बैनर दिखेगा
-  let bgImg = (property.image && property.image.trim() !== "") 
-    ? property.image 
-    : githubBanner;
+  const image =
+    getPropertyImage(property);
 
-  const icon = getPropertyIcon(table);
 
   return `
+
     <div class="card overflow-hidden">
-      <div class="property-banner flex items-center justify-center relative" style="background: url('${escapeHTML(bgImg)}') center/cover no-repeat;">
-        <div style="position: absolute; inset: 0; background: rgba(11,23,48,0.35);"></div>
-        <div class="text-white text-4xl relative z-10 drop-shadow-lg">${icon}</div>
+
+      <div
+        class="property-banner"
+        style="
+          background-image:
+            url('${escapeHTML(image)}');
+        ">
+
+        <div
+          class="property-banner-content
+                 absolute inset-0
+                 flex items-end p-5">
+
+          <div>
+
+            <div class="text-3xl mb-2">
+              ${config.icon}
+            </div>
+
+            <div
+              class="text-white text-xl
+                     font-extrabold drop-shadow">
+              ${escapeHTML(
+                property.name ||
+                "Property"
+              )}
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
+
 
       <div class="p-5">
-        <div class="flex items-start justify-between gap-3">
+
+        <div
+          class="flex items-start
+                 justify-between gap-3">
+
           <div>
-            <h3 class="font-bold text-lg text-gray-800">${escapeHTML(property.name || "Property")}</h3>
-            <div class="text-sm text-gray-400 mt-1">${escapeHTML(formatCategory(property.category))}</div>
+
+            <div
+              class="text-xs font-bold
+                     text-gray-400 uppercase
+                     tracking-wider">
+
+              ${escapeHTML(
+                config.label
+              )}
+
+            </div>
+
+            <div
+              class="text-sm text-gray-500 mt-1">
+
+              ${escapeHTML(
+                property.area ||
+                "Area not provided"
+              )}
+
+            </div>
+
           </div>
-          <div class="font-semibold text-sm whitespace-nowrap text-amber-600">
-            ★ ${escapeHTML(property.rating ?? "4.0")}
+
+
+          <div
+            class="font-bold text-amber-600
+                   whitespace-nowrap">
+
+            ★ ${escapeHTML(
+              property.rating ??
+              "—"
+            )}
+
           </div>
+
         </div>
 
-        <div class="mt-4 space-y-2 text-sm text-gray-600">
+
+        <div
+          class="mt-4 space-y-2
+                 text-sm text-gray-600">
+
           <div>
-            <span class="text-gray-400 font-medium">Area:</span> ${escapeHTML(property.area || "—")}
+            <span class="text-gray-400">
+              Address:
+            </span>
+            ${escapeHTML(
+              property.address || "—"
+            )}
           </div>
+
           <div>
-            <span class="text-gray-400 font-medium">Address:</span> ${escapeHTML(property.address || "—")}
+            <span class="text-gray-400">
+              Phone:
+            </span>
+            ${escapeHTML(
+              property.phone || "—"
+            )}
           </div>
-          <div>
-            <span class="text-gray-400 font-medium">Phone:</span> ${escapeHTML(property.phone || "—")}
-          </div>
+
         </div>
 
-        <div class="flex gap-2 mt-5">
-          <button onclick="viewProperty('${encodeURIComponent(JSON.stringify(property))}')" class="btn-primary flex-1">
+
+        <div
+          class="flex flex-col sm:flex-row
+                 gap-2 mt-5">
+
+          <button
+            onclick="viewPropertyByIndex(
+              ${ownerLiveProperties.indexOf(property)}
+            )"
+            class="btn-primary flex-1">
+
             View Details
+
           </button>
-          <button onclick="openEditRequest('${encodeURIComponent(JSON.stringify(property))}')" class="btn-secondary">
+
+
+          <button
+            onclick="openEditRequestByIndex(
+              ${ownerLiveProperties.indexOf(property)}
+            )"
+            class="btn-secondary">
+
             Request Edit
+
           </button>
+
         </div>
+
       </div>
+
     </div>
+
   `;
+
 }
+
 
 /* =========================================================
    PROPERTY DETAILS
 ========================================================= */
 
-window.viewProperty = function(encodedProperty) {
-  const property = JSON.parse(decodeURIComponent(encodedProperty));
+function viewPropertyByIndex(index) {
 
-  $("propertyModalTitle").textContent = property.name || "Property";
+  const property =
+    ownerLiveProperties[index];
 
-  const table = property.property_table || "hostels";
-  const categoryStr = String(property.category || "").toLowerCase();
+  if (!property) return;
 
-  // कैटेगरी के अनुसार गिटहब वाला सही बैनर तय करें
-  let githubBanner = "hostel-banner.png";
-  if (categoryStr.includes("hostel") || categoryStr.includes("pg") || table === "hostels") {
-    githubBanner = "hostel-banner.png";
-  } else if (categoryStr.includes("tiffin") || categoryStr.includes("mess") || table === "tiffins") {
-    githubBanner = "tiffin-banner.png";
-  } else if (categoryStr.includes("library") || table === "libraries") {
-    githubBanner = "library-banner.png";
-  } else if (categoryStr.includes("cafe") || table === "cafes") {
-    githubBanner = "cafe-banner.png";
-  } else if (categoryStr.includes("book") || categoryStr.includes("store") || table === "bookstores") {
-    githubBanner = "bookstore-banner.png";
-  }
 
-  let bgImg = (property.image && property.image.trim() !== "") 
-    ? property.image 
-    : githubBanner;
+  const config =
+    getPropertyConfig(
+      property.property_table
+    );
 
-  const icon = getPropertyIcon(table);
+
+  const image =
+    getPropertyImage(property);
+
+
+  $("propertyModalTitle").textContent =
+    property.name ||
+    "Property";
+
 
   $("propertyModalBody").innerHTML = `
+
     <div class="space-y-6">
-      <!-- यहाँ नीले बॉक्स की जगह अब सही बैनर इमेज बैकग्राउंड में दिखेगी -->
-      <div class="rounded-2xl p-8 text-white text-center relative overflow-hidden shadow-md" style="background: url('${escapeHTML(bgImg)}') center/cover no-repeat; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <div style="position: absolute; inset: 0; background: rgba(11,23,48,0.45);"></div>
-        <div style="position: relative; z-index: 10;">
-          <div class="text-5xl mb-2 drop-shadow-md">${icon}</div>
-          <h3 class="text-2xl font-extrabold tracking-wide drop-shadow-md">${escapeHTML(property.name || "Property")}</h3>
-          <div class="text-white/90 text-sm mt-1 font-medium">${escapeHTML(formatCategory(property.category))}</div>
-        </div>
-      </div>
 
-      <!-- बाकी डिटेल्स बॉक्सेज -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
-          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Category</div>
-          <div class="font-bold text-lg mt-1 text-gray-800">${escapeHTML(formatCategory(property.category))}</div>
-        </div>
+      <div
+        class="property-banner
+               rounded-2xl"
+        style="
+          background-image:
+            url('${escapeHTML(image)}');
+          height:230px;
+        ">
 
-        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
-          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Rating</div>
-          <div class="font-bold text-lg mt-1 text-gray-800 flex items-center gap-1">
-            <span style="color: #f59e0b;">★</span> ${escapeHTML(property.rating ?? "4.0")} / 5
+        <div
+          class="property-banner-content
+                 absolute inset-0
+                 flex flex-col
+                 items-center
+                 justify-center
+                 text-center
+                 p-6">
+
+          <div class="text-5xl mb-3">
+            ${config.icon}
           </div>
+
+          <div
+            class="text-white text-2xl
+                   md:text-3xl
+                   font-extrabold">
+
+            ${escapeHTML(
+              property.name ||
+              "Property"
+            )}
+
+          </div>
+
+          <div
+            class="text-white/85
+                   text-sm mt-2">
+
+            ${escapeHTML(
+              config.label
+            )}
+
+          </div>
+
         </div>
 
-        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
-          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Area</div>
-          <div class="font-bold text-lg mt-1 text-gray-800">${escapeHTML(property.area || "—")}</div>
+      </div>
+
+
+      <div
+        class="grid grid-cols-1
+               md:grid-cols-2 gap-4">
+
+        ${detailBox(
+          "Category",
+          config.label
+        )}
+
+        ${detailBox(
+          "Rating",
+          "★ " +
+          (property.rating ?? "—") +
+          " / 5"
+        )}
+
+        ${detailBox(
+          "Area",
+          property.area
+        )}
+
+        ${detailBox(
+          "Timing",
+          property.timing
+        )}
+
+      </div>
+
+
+      ${detailBox(
+        "Full Address",
+        property.address
+      )}
+
+
+      ${detailBox(
+        "Contact Phone",
+        property.phone
+      )}
+
+
+      ${detailBox(
+        "Facilities",
+        property.facilities
+      )}
+
+
+      <div
+        class="rounded-2xl
+               bg-green-50
+               border border-green-100
+               p-5">
+
+        <div
+          class="font-bold
+                 text-green-900">
+
+          ✓ Owner Linked
+
         </div>
 
-        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
-          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Timing</div>
-          <div class="font-bold text-lg mt-1 text-gray-800">${escapeHTML(property.timing || "—")}</div>
+        <div
+          class="text-xs
+                 text-green-800/80
+                 mt-1">
+
+          This property is securely linked
+          to your owner account.
+
         </div>
+
       </div>
 
-      <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
-        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Full Address</div>
-        <div class="font-bold text-base mt-1 text-gray-800">${escapeHTML(property.address || "—")}</div>
-      </div>
-
-      <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
-        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Phone</div>
-        <div class="font-bold text-base mt-1 text-gray-800">${escapeHTML(property.phone || "—")}</div>
-      </div>
-
-      <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
-        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Facilities</div>
-        <div class="font-bold text-sm mt-1 text-gray-700 leading-relaxed">${escapeHTML(property.facilities || "—")}</div>
-      </div>
-
-      <div class="rounded-xl bg-blue-50 border border-blue-100 p-4">
-        <div class="font-semibold text-blue-900 text-sm">Live Property Verification</div>
-        <div class="text-xs text-blue-700 mt-1">This property is active and successfully published on the StudentHubHelp platform.</div>
-      </div>
     </div>
+
   `;
 
-  $("propertyModal").classList.remove("hidden");
-  $("propertyModal").classList.add("flex");
-};
+
+  $("propertyModal")
+    .classList
+    .remove("hidden");
+
+  $("propertyModal")
+    .classList
+    .add("flex");
+
+}
+
+
+window.viewPropertyByIndex =
+  viewPropertyByIndex;
+
+
+function detailBox(label, value) {
+
+  return `
+
+    <div
+      class="rounded-2xl
+             bg-gray-50
+             border border-gray-100
+             p-5">
+
+      <div
+        class="text-xs
+               font-bold
+               text-gray-400
+               uppercase
+               tracking-wider">
+
+        ${escapeHTML(label)}
+
+      </div>
+
+      <div
+        class="font-semibold
+               text-gray-800
+               mt-2
+               whitespace-pre-line">
+
+        ${escapeHTML(
+          value || "—"
+        )}
+
+      </div>
+
+    </div>
+
+  `;
+
+}
 
 
 function closePropertyModal() {
@@ -4112,80 +4793,1130 @@ window.closePropertyModal =
 
 
 /* =========================================================
+   CLAIM PROPERTY
+========================================================= */
+
+async function loadClaimProperties() {
+
+  const container =
+    $("claimResults");
+
+
+  container.innerHTML = `
+    <div
+      class="card empty-state
+             md:col-span-2
+             xl:col-span-3">
+
+      Loading available properties...
+
+    </div>
+  `;
+
+
+  const results = [];
+
+
+  for (
+    const table of Object.keys(
+      PROPERTY_CONFIG
+    )
+  ) {
+
+    const columns =
+      table === "bookstores"
+        ? BOOKSTORE_COLUMNS
+        : STANDARD_PROPERTY_COLUMNS;
+
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from(table)
+        .select(columns)
+        .is(
+          "owner_id",
+          null
+        );
+
+
+    if (error) {
+
+      console.warn(
+        "Claim search:",
+        table,
+        error.message
+      );
+
+      continue;
+
+    }
+
+
+    (data || []).forEach(
+      property => {
+
+        results.push({
+
+          ...property,
+
+          property_table:
+            table
+
+        });
+
+      }
+    );
+
+  }
+
+
+  claimProperties =
+    results;
+
+
+  searchClaimProperties();
+
+}
+
+
+function searchClaimProperties() {
+
+  const search =
+    normalize(
+      $("claimSearch").value
+    );
+
+
+  let results =
+    claimProperties.filter(
+      property => {
+
+        if (
+          activeClaimCategory !==
+          "all" &&
+          property.property_table !==
+          activeClaimCategory
+        ) {
+          return false;
+        }
+
+
+        if (!search) {
+          return true;
+        }
+
+
+        const haystack =
+          [
+            property.name,
+            property.area,
+            property.address,
+            property.phone,
+            property.category
+          ]
+          .map(normalize)
+          .join(" ");
+
+
+        return haystack.includes(
+          search
+        );
+
+      }
+    );
+
+
+  renderClaimResults(
+    results
+  );
+
+}
+
+
+window.searchClaimProperties =
+  searchClaimProperties;
+
+
+$("claimSearch")
+  .addEventListener(
+    "input",
+    searchClaimProperties
+  );
+
+
+document
+  .querySelectorAll(
+    "[data-claim-category]"
+  )
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        document
+          .querySelectorAll(
+            "[data-claim-category]"
+          )
+          .forEach(
+            item =>
+              item.classList.remove(
+                "active"
+              )
+          );
+
+
+        button.classList.add(
+          "active"
+        );
+
+
+        activeClaimCategory =
+          button.dataset
+            .claimCategory;
+
+
+        searchClaimProperties();
+
+      }
+    );
+
+  });
+
+
+function renderClaimResults(
+  properties
+) {
+
+  const container =
+    $("claimResults");
+
+
+  if (!properties.length) {
+
+    container.innerHTML = `
+      <div
+        class="card empty-state
+               md:col-span-2
+               xl:col-span-3">
+
+        <div class="text-4xl mb-4">
+          ⌕
+        </div>
+
+        <h3 class="font-bold text-gray-800">
+          No Available Property Found
+        </h3>
+
+        <p class="mt-2">
+          Try another property name, area or phone number.
+        </p>
+
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  container.innerHTML =
+    properties
+      .map(
+        renderClaimCard
+      )
+      .join("");
+
+}
+
+
+function renderClaimCard(
+  property
+) {
+
+  const config =
+    getPropertyConfig(
+      property.property_table
+    );
+
+
+  const image =
+    getPropertyImage(property);
+
+
+  const index =
+    claimProperties.indexOf(
+      property
+    );
+
+
+  return `
+
+    <div
+      class="card claim-card
+             overflow-hidden">
+
+      <div
+        class="property-banner"
+        style="
+          background-image:
+            url('${escapeHTML(image)}');
+        ">
+
+        <div
+          class="property-banner-content
+                 absolute inset-0
+                 flex items-end p-5">
+
+          <div>
+
+            <div class="text-3xl">
+              ${config.icon}
+            </div>
+
+            <div
+              class="text-white
+                     text-lg
+                     font-extrabold
+                     mt-1">
+
+              ${escapeHTML(
+                property.name ||
+                "Property"
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="p-5">
+
+        <div
+          class="flex items-start
+                 justify-between gap-3">
+
+          <div>
+
+            <div
+              class="text-xs
+                     font-bold
+                     text-gray-400
+                     uppercase">
+
+              ${escapeHTML(
+                config.label
+              )}
+
+            </div>
+
+            <div
+              class="text-sm
+                     text-gray-500 mt-1">
+
+              ${escapeHTML(
+                property.area ||
+                "Area not provided"
+              )}
+
+            </div>
+
+          </div>
+
+
+          <span
+            class="badge badge-pending">
+
+            Unclaimed
+
+          </span>
+
+        </div>
+
+
+        <div
+          class="mt-4
+                 space-y-2
+                 text-sm
+                 text-gray-600">
+
+          <div>
+            <span class="text-gray-400">
+              Address:
+            </span>
+            ${escapeHTML(
+              property.address ||
+              "—"
+            )}
+          </div>
+
+          <div>
+            <span class="text-gray-400">
+              Phone:
+            </span>
+            ${escapeHTML(
+              property.phone ||
+              "—"
+            )}
+          </div>
+
+        </div>
+
+
+        <div
+          class="flex gap-2 mt-5">
+
+          <button
+            onclick="openClaimModalByIndex(
+              ${index}
+            )"
+            class="btn-primary flex-1">
+
+            Claim This Property
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+function openClaimModalByIndex(
+  index
+) {
+
+  const property =
+    claimProperties[index];
+
+  if (!property) return;
+
+
+  const config =
+    getPropertyConfig(
+      property.property_table
+    );
+
+
+  $("claimPropertyId").value =
+    String(property.id);
+
+
+  $("claimPropertyType").value =
+    property.property_table;
+
+
+  $("claimModalTitle").textContent =
+    "Claim " +
+    (property.name ||
+     "Property");
+
+
+  $("claimPropertyPreview").innerHTML = `
+
+    <div class="flex items-start gap-4">
+
+      <div
+        class="w-12 h-12 rounded-xl
+               bg-white
+               border border-gray-200
+               flex items-center
+               justify-center
+               text-2xl">
+
+        ${config.icon}
+
+      </div>
+
+      <div>
+
+        <div class="font-bold text-lg">
+          ${escapeHTML(
+            property.name ||
+            "Property"
+          )}
+        </div>
+
+        <div class="text-sm text-gray-500 mt-1">
+          ${escapeHTML(
+            config.label
+          )}
+          •
+          ${escapeHTML(
+            property.area ||
+            "Area not provided"
+          )}
+        </div>
+
+        <div class="text-xs text-gray-400 mt-2">
+          Property ID:
+          ${escapeHTML(
+            property.id
+          )}
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  $("claimMessage").value =
+    "";
+
+
+  $("claimMessageBox")
+    .className =
+    "hidden text-sm";
+
+
+  $("claimModal")
+    .classList
+    .remove("hidden");
+
+  $("claimModal")
+    .classList
+    .add("flex");
+
+}
+
+
+window.openClaimModalByIndex =
+  openClaimModalByIndex;
+
+
+function closeClaimModal() {
+
+  $("claimModal")
+    .classList
+    .add("hidden");
+
+  $("claimModal")
+    .classList
+    .remove("flex");
+
+}
+
+
+window.closeClaimModal =
+  closeClaimModal;
+
+
+/* =========================================================
+   CLAIM SUBMIT
+========================================================= */
+
+$("claimForm")
+  .addEventListener(
+    "submit",
+    async event => {
+
+      event.preventDefault();
+
+
+      const propertyId =
+        $("claimPropertyId")
+          .value;
+
+      const propertyType =
+        $("claimPropertyType")
+          .value;
+
+      const messageBox =
+        $("claimMessageBox");
+
+
+      messageBox.className =
+        "text-sm text-gray-500";
+
+      messageBox.textContent =
+        "Submitting claim...";
+
+      messageBox.classList.remove(
+        "hidden"
+      );
+
+
+      /*
+        Check existing pending claim first.
+        This gives the owner a cleaner UI message.
+      */
+
+      const {
+        data: existing,
+        error: existingError
+      } =
+        await supabaseClient
+          .from("claim_requests")
+          .select("id,status")
+          .eq(
+            "owner_id",
+            currentUser.id
+          )
+          .eq(
+            "property_type",
+            propertyType
+          )
+          .eq(
+            "property_id",
+            String(propertyId)
+          )
+          .eq(
+            "status",
+            "pending"
+          )
+          .limit(1);
+
+
+      if (
+        existingError
+      ) {
+
+        console.error(
+          existingError
+        );
+
+      }
+
+
+      if (existing?.length) {
+
+        messageBox.className =
+          "text-sm text-red-600";
+
+        messageBox.textContent =
+          "You already have a pending claim for this property.";
+
+        return;
+
+      }
+
+
+      const property =
+        claimProperties.find(
+          item =>
+            item.property_table ===
+              propertyType &&
+            String(item.id) ===
+              String(propertyId)
+        );
+
+
+      const payload = {
+
+        property_id:
+          String(propertyId),
+
+        property_type:
+          propertyType,
+
+        owner_id:
+          currentUser.id,
+
+        owner_name:
+          currentProfile.full_name ||
+          "",
+
+        owner_phone:
+          currentProfile.phone ||
+          "",
+
+        message:
+          $("claimMessage")
+            .value
+            .trim(),
+
+        status:
+          "pending"
+
+      };
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("claim_requests")
+          .insert(
+            payload
+          );
+
+
+      if (error) {
+
+        console.error(error);
+
+        messageBox.className =
+          "text-sm text-red-600";
+
+        if (
+          error.code ===
+          "23505"
+        ) {
+
+          messageBox.textContent =
+            "A pending claim already exists for this property.";
+
+        } else {
+
+          messageBox.textContent =
+            "Unable to submit the claim request.";
+
+        }
+
+        return;
+
+      }
+
+
+      messageBox.className =
+        "text-sm text-green-600";
+
+      messageBox.textContent =
+        "Claim submitted successfully. Admin verification is pending.";
+
+
+      await loadOwnerClaimRequests();
+
+
+      setTimeout(
+        closeClaimModal,
+        1000
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   OWNER CLAIM REQUESTS
+========================================================= */
+
+async function loadOwnerClaimRequests() {
+
+  const container =
+    $("claimRequestsContainer");
+
+
+  container.innerHTML = `
+    <div class="card empty-state">
+      Loading claim requests...
+    </div>
+  `;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("claim_requests")
+      .select(`
+        id,
+        property_id,
+        property_type,
+        owner_name,
+        owner_phone,
+        message,
+        status,
+        admin_note,
+        created_at,
+        updated_at
+      `)
+      .eq(
+        "owner_id",
+        currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (error) {
+
+    console.error(error);
+
+    ownerClaimRequests = [];
+
+    container.innerHTML = `
+      <div class="card p-6 text-red-600">
+        Unable to load claim requests.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  ownerClaimRequests =
+    data || [];
+
+
+  if (!ownerClaimRequests.length) {
+
+    container.innerHTML = `
+      <div class="card empty-state">
+
+        <div class="text-4xl mb-4">
+          ⌂
+        </div>
+
+        <h3 class="font-bold text-gray-800">
+          No Claim Requests
+        </h3>
+
+        <p class="mt-2">
+          Properties you claim will appear here.
+        </p>
+
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  container.innerHTML =
+    ownerClaimRequests
+      .map(
+        renderClaimRequestCard
+      )
+      .join("");
+
+}
+
+
+function renderClaimRequestCard(
+  request
+) {
+
+  const config =
+    getPropertyConfig(
+      request.property_type
+    );
+
+
+  return `
+
+    <div class="card p-5">
+
+      <div
+        class="flex flex-col
+               md:flex-row
+               md:items-start
+               md:justify-between
+               gap-4">
+
+        <div>
+
+          <div
+            class="flex items-center gap-3">
+
+            <div
+              class="w-11 h-11
+                     rounded-xl
+                     bg-gray-50
+                     flex items-center
+                     justify-center
+                     text-2xl">
+
+              ${config.icon}
+
+            </div>
+
+            <div>
+
+              <div
+                class="font-bold">
+
+                ${escapeHTML(
+                  config.label
+                )}
+
+              </div>
+
+              <div
+                class="text-xs
+                       text-gray-400
+                       mt-1">
+
+                Property ID:
+                ${escapeHTML(
+                  request.property_id
+                )}
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        ${statusBadge(
+          request.status
+        )}
+
+      </div>
+
+
+      <div
+        class="mt-5
+               grid grid-cols-1
+               md:grid-cols-2
+               gap-4">
+
+        <div>
+
+          <div class="text-xs text-gray-400">
+            Submitted
+          </div>
+
+          <div class="font-medium text-sm mt-1">
+            ${formatDate(
+              request.created_at
+            )}
+          </div>
+
+        </div>
+
+
+        <div>
+
+          <div class="text-xs text-gray-400">
+            Last Updated
+          </div>
+
+          <div class="font-medium text-sm mt-1">
+            ${formatDate(
+              request.updated_at
+            )}
+          </div>
+
+        </div>
+
+      </div>
+
+
+      ${
+        request.message
+          ? `
+            <div
+              class="mt-5
+                     rounded-2xl
+                     bg-gray-50
+                     p-4">
+
+              <div
+                class="text-xs
+                       font-bold
+                       text-gray-400
+                       uppercase">
+
+                Your Message
+
+              </div>
+
+              <div
+                class="text-sm
+                       text-gray-700
+                       mt-2
+                       whitespace-pre-line">
+
+                ${escapeHTML(
+                  request.message
+                )}
+
+              </div>
+
+            </div>
+          `
+          : ""
+      }
+
+
+      ${
+        request.admin_note
+          ? `
+            <div
+              class="mt-4
+                     rounded-2xl
+                     bg-blue-50
+                     border
+                     border-blue-100
+                     p-4">
+
+              <div
+                class="text-xs
+                       font-bold
+                       text-blue-700">
+
+                📝 Admin Note
+
+              </div>
+
+              <div
+                class="text-sm
+                       text-blue-900
+                       mt-2
+                       whitespace-pre-line">
+
+                ${escapeHTML(
+                  request.admin_note
+                )}
+
+              </div>
+
+            </div>
+          `
+          : ""
+      }
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
    EDIT REQUEST
 ========================================================= */
 
-window.openEditRequest =
-  function(encodedProperty) {
+function openEditRequestByIndex(
+  index
+) {
 
-    const property =
-      JSON.parse(
-        decodeURIComponent(
-          encodedProperty
-        )
-      );
+  const property =
+    ownerLiveProperties[index];
 
-
-    $("editPropertyId").value =
-      String(property.id);
+  if (!property) return;
 
 
-    $("editPropertyCategory").value =
-      property.property_table || "";
+  const config =
+    getPropertyConfig(
+      property.property_table
+    );
 
 
-    $("editPropertyName").textContent =
-      property.name || "Property";
+  $("editPropertyId").value =
+    String(property.id);
+
+  $("editPropertyTable").value =
+    property.property_table;
 
 
-    $("editName").value =
-      property.name || "";
+  $("editPropertyPreview").innerHTML = `
+
+    <div class="flex items-center gap-4">
+
+      <div
+        class="w-12 h-12 rounded-xl
+               bg-white border
+               flex items-center
+               justify-center
+               text-2xl">
+
+        ${config.icon}
+
+      </div>
+
+      <div>
+
+        <div class="font-bold">
+          ${escapeHTML(
+            property.name ||
+            "Property"
+          )}
+        </div>
+
+        <div
+          class="text-xs text-gray-400 mt-1">
+
+          ${escapeHTML(
+            config.label
+          )}
+
+          •
+
+          Property ID:
+          ${escapeHTML(
+            property.id
+          )}
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
 
 
-    $("editCategory").value =
-      formatCategory(
-        property.category
-      );
+  $("editName").value =
+    property.name || "";
+
+  $("editCategory").value =
+    formatCategory(
+      property.category
+    );
+
+  $("editArea").value =
+    property.area || "";
+
+  $("editAddress").value =
+    property.address || "";
+
+  $("editPhone").value =
+    property.phone || "";
+
+  $("editTiming").value =
+    property.timing || "";
+
+  $("editFacilities").value =
+    property.facilities || "";
+
+  $("editRating").value =
+    property.rating ?? "";
 
 
-    $("editArea").value =
-      property.area || "";
+  $("editRequestMessage")
+    .className =
+    "hidden text-sm";
 
 
-    $("editAddress").value =
-      property.address || "";
+  $("editRequestModal")
+    .classList
+    .remove("hidden");
+
+  $("editRequestModal")
+    .classList
+    .add("flex");
+
+}
 
 
-    $("editPhone").value =
-      property.phone || "";
-
-
-    $("editTiming").value =
-      property.timing || "";
-
-
-    $("editFacilities").value =
-      property.facilities || "";
-
-
-    $("editRating").value =
-      property.rating ?? "";
-
-
-    $("editRequestMessage")
-      .className =
-      "hidden text-sm";
-
-
-    $("editRequestModal")
-      .classList
-      .remove("hidden");
-
-    $("editRequestModal")
-      .classList
-      .add("flex");
-
-  };
+window.openEditRequestByIndex =
+  openEditRequestByIndex;
 
 
 function closeEditRequestModal() {
@@ -4205,9 +5936,15 @@ window.closeEditRequestModal =
   closeEditRequestModal;
 
 
-/* =========================================================
-   EDIT REQUEST SUBMIT
-========================================================= */
+/*
+  IMPORTANT:
+  Current listing_requests schema does not have
+  a dedicated property_id / request_type column.
+
+  Therefore edit target information is included
+  in admin_note until a dedicated edit-request
+  schema is intentionally introduced later.
+*/
 
 $("editRequestForm")
   .addEventListener(
@@ -4232,65 +5969,68 @@ $("editRequestForm")
       );
 
 
-      /*
-        IMPORTANT:
-        Existing listing_requests schema does not
-        expose a dedicated request_type/property_id
-        field in the known schema.
-
-        Therefore this request is stored safely as
-        a listing request with an admin note describing
-        the requested edit workflow.
-
-        No live property table is edited directly.
-      */
-
       const propertyId =
-        $("editPropertyId").value;
+        $("editPropertyId")
+          .value;
 
-
-      const sourceTable =
-        $("editPropertyCategory").value;
+      const propertyTable =
+        $("editPropertyTable")
+          .value;
 
 
       const requestedChanges = [
 
+        "EDIT REQUEST",
+
         `Property ID: ${propertyId}`,
 
-        `Source table: ${sourceTable}`,
-
-        `EDIT REQUEST`,
+        `Source table: ${propertyTable}`,
 
         `Requested Name: ${
-          $("editName").value.trim()
+          $("editName")
+            .value
+            .trim()
         }`,
 
         `Requested Category: ${
-          $("editCategory").value
+          $("editCategory")
+            .value
         }`,
 
         `Requested Area: ${
-          $("editArea").value.trim()
+          $("editArea")
+            .value
+            .trim()
         }`,
 
         `Requested Address: ${
-          $("editAddress").value.trim()
+          $("editAddress")
+            .value
+            .trim()
         }`,
 
         `Requested Phone: ${
-          $("editPhone").value.trim()
+          $("editPhone")
+            .value
+            .trim()
         }`,
 
         `Requested Timing: ${
-          $("editTiming").value.trim()
+          $("editTiming")
+            .value
+            .trim()
         }`,
 
         `Requested Facilities: ${
-          $("editFacilities").value.trim()
+          $("editFacilities")
+            .value
+            .trim()
         }`,
 
         `Requested Rating: ${
-          $("editRating").value.trim()
+          $("editRating")
+            .value
+            .trim()
         }`
 
       ].join("\n");
@@ -4302,10 +6042,12 @@ $("editRequestForm")
           currentUser.id,
 
         owner_name:
-          currentProfile.full_name || "",
+          currentProfile.full_name ||
+          "",
 
         owner_phone:
-          currentProfile.phone || "",
+          currentProfile.phone ||
+          "",
 
         name:
           $("editName")
@@ -4361,7 +6103,9 @@ $("editRequestForm")
       } =
         await supabaseClient
           .from("listing_requests")
-          .insert(payload);
+          .insert(
+            payload
+          );
 
 
       if (error) {
@@ -4383,7 +6127,7 @@ $("editRequestForm")
         "text-sm text-green-600";
 
       message.textContent =
-        "Edit request sent to admin for review.";
+        "Edit request sent to admin.";
 
 
       await loadOwnerRequests();
@@ -4403,7 +6147,10 @@ $("editRequestForm")
 ========================================================= */
 
 async function loadOwnerReviews() {
-  const container = $("ownerReviewsContainer");
+
+  const container =
+    $("ownerReviewsContainer");
+
 
   container.innerHTML = `
     <div class="card empty-state">
@@ -4411,87 +6158,237 @@ async function loadOwnerReviews() {
     </div>
   `;
 
-  try {
-    ownerLiveProperties = await getOwnerLiveProperties();
 
-    if (!ownerLiveProperties.length) {
-      container.innerHTML = `
-        <div class="card empty-state">
-          <div class="text-4xl mb-4">★</div>
-          <h3 class="font-bold text-gray-800">No Live Properties</h3>
-          <p class="mt-2">Reviews will appear here after your properties become live.</p>
-        </div>
-      `;
-      return;
-    }
+  ownerLiveProperties =
+    await getOwnerLiveProperties();
 
-    const propertyIds = ownerLiveProperties.map(property => String(property.id));
 
-    const { data, error } = await supabaseClient
-      .from("reviews")
-      .select("id, property_id, rating, review_text, status, created_at")
-      .in("property_id", propertyIds)
-      .order("created_at", { ascending: false });
+  if (!ownerLiveProperties.length) {
 
-    if (error) {
-      console.warn("Reviews table query warning:", error.message);
-      container.innerHTML = `
-        <div class="card empty-state">
-          <div class="text-4xl mb-4">★</div>
-          <h3 class="font-bold text-gray-800">No Reviews Yet</h3>
-          <p class="mt-2">No student reviews have been posted for your properties yet.</p>
-        </div>
-      `;
-      return;
-    }
-
-    if (!data?.length) {
-      container.innerHTML = `
-        <div class="card empty-state">
-          <div class="text-4xl mb-4">★</div>
-          <h3 class="font-bold text-gray-800">No Reviews Yet</h3>
-          <p class="mt-2">Student reviews on your properties will appear here.</p>
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = data.map(review => {
-      const property = ownerLiveProperties.find(
-        item => String(item.id) === String(review.property_id)
-      );
-
-      return `
-        <div class="card p-5">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <div class="font-bold">${escapeHTML(property?.name || "Property")}</div>
-              <div class="text-xs text-gray-400 mt-1">Property ID: ${escapeHTML(review.property_id)}</div>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="font-semibold text-amber-600">★ ${escapeHTML(review.rating ?? "—")}</div>
-              ${statusBadge(review.status)}
-            </div>
-          </div>
-          <div class="mt-4 rounded-xl bg-gray-50 p-4">
-            <p class="text-sm text-gray-700">${escapeHTML(review.review_text || "")}</p>
-          </div>
-          <div class="text-xs text-gray-400 mt-4">
-            ${review.created_at ? new Date(review.created_at).toLocaleDateString() : ""}
-          </div>
-        </div>
-      `;
-    }).join("");
-
-  } catch (err) {
-    console.error(err);
     container.innerHTML = `
-      <div class="card p-6 text-gray-500 text-center">
-        No reviews data available at the moment.
+      <div class="card empty-state">
+
+        <div class="text-4xl mb-4">
+          ★
+        </div>
+
+        <h3 class="font-bold text-gray-800">
+          No Live Properties
+        </h3>
+
+        <p class="mt-2">
+          Reviews will appear here after properties
+          are linked to your owner account.
+        </p>
+
       </div>
     `;
+
+    return;
+
   }
+
+
+  const propertyIds =
+    ownerLiveProperties.map(
+      property =>
+        String(property.id)
+    );
+
+
+  if (!propertyIds.length) {
+    return;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("reviews")
+      .select(`
+        id,
+        property_id,
+        rating,
+        review_text,
+        status,
+        created_at
+      `)
+      .in(
+        "property_id",
+        propertyIds
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (error) {
+
+    console.warn(
+      "Owner reviews:",
+      error.message
+    );
+
+    container.innerHTML = `
+      <div class="card empty-state">
+
+        <div class="text-4xl mb-4">
+          ★
+        </div>
+
+        <h3 class="font-bold text-gray-800">
+          No Reviews Yet
+        </h3>
+
+        <p class="mt-2">
+          Student reviews will appear here.
+        </p>
+
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  if (!data?.length) {
+
+    container.innerHTML = `
+      <div class="card empty-state">
+
+        <div class="text-4xl mb-4">
+          ★
+        </div>
+
+        <h3 class="font-bold text-gray-800">
+          No Reviews Yet
+        </h3>
+
+        <p class="mt-2">
+          Student reviews on your properties
+          will appear here.
+        </p>
+
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  container.innerHTML =
+    data.map(
+      review => {
+
+        const property =
+          ownerLiveProperties.find(
+            item =>
+              String(item.id) ===
+              String(review.property_id)
+          );
+
+
+        return `
+
+          <div class="card p-5">
+
+            <div
+              class="flex flex-col
+                     sm:flex-row
+                     sm:items-center
+                     sm:justify-between
+                     gap-3">
+
+              <div>
+
+                <div class="font-bold">
+                  ${escapeHTML(
+                    property?.name ||
+                    "Property"
+                  )}
+                </div>
+
+                <div
+                  class="text-xs text-gray-400 mt-1">
+
+                  Property ID:
+                  ${escapeHTML(
+                    review.property_id
+                  )}
+
+                </div>
+
+              </div>
+
+
+              <div
+                class="flex items-center gap-3">
+
+                <div
+                  class="font-bold
+                         text-amber-600">
+
+                  ★ ${escapeHTML(
+                    review.rating ?? "—"
+                  )}
+
+                </div>
+
+                ${statusBadge(
+                  review.status
+                )}
+
+              </div>
+
+            </div>
+
+
+            <div
+              class="mt-4 rounded-2xl
+                     bg-gray-50 p-4">
+
+              <p
+                class="text-sm
+                       text-gray-700
+                       whitespace-pre-line">
+
+                ${escapeHTML(
+                  review.review_text ||
+                  ""
+                )}
+
+              </p>
+
+            </div>
+
+
+            <div
+              class="text-xs
+                     text-gray-400
+                     mt-4">
+
+              ${formatDate(
+                review.created_at
+              )}
+
+            </div>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
 }
+
 
 /* =========================================================
    REALTIME
@@ -4499,7 +6396,9 @@ async function loadOwnerReviews() {
 
 function setupRealtime() {
 
-  if (!currentUser) return;
+  if (!currentUser) {
+    return;
+  }
 
 
   supabaseClient
@@ -4510,6 +6409,7 @@ function setupRealtime() {
 
 
     /* LISTING REQUESTS */
+
     .on(
       "postgres_changes",
       {
@@ -4523,16 +6423,17 @@ function setupRealtime() {
       async () => {
 
         if (
-          currentRole !== "owner"
-        ) return;
+          currentRole !==
+          "owner"
+        ) {
+          return;
+        }
 
 
         await loadOwnerRequests();
 
-
         ownerLiveProperties =
           await getOwnerLiveProperties();
-
 
         updateOwnerStats();
 
@@ -4540,7 +6441,49 @@ function setupRealtime() {
     )
 
 
+    /* CLAIM REQUESTS */
+
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "claim_requests",
+        filter:
+          "owner_id=eq." +
+          currentUser.id
+      },
+      async () => {
+
+        if (
+          currentRole !==
+          "owner"
+        ) {
+          return;
+        }
+
+
+        await loadOwnerClaimRequests();
+
+        ownerLiveProperties =
+          await getOwnerLiveProperties();
+
+        updateOwnerStats();
+
+        if (
+          !$("section-liveProperties")
+            .classList
+            .contains("hidden")
+        ) {
+          await loadLiveProperties();
+        }
+
+      }
+    )
+
+
     /* REVIEWS */
+
     .on(
       "postgres_changes",
       {
@@ -4548,41 +6491,26 @@ function setupRealtime() {
         schema: "public",
         table: "reviews"
       },
-      async payload => {
+      async () => {
 
         if (
-          currentRole === "student"
+          currentRole ===
+          "student"
         ) {
 
           await loadStudentReviewCount();
 
-
-          if (
-            !$("section-reviews")
-              .classList
-              .contains("hidden")
-          ) {
-
-            await loadStudentReviews();
-
-          }
+          await loadStudentReviews();
 
         }
 
 
         if (
-          currentRole === "owner"
+          currentRole ===
+          "owner"
         ) {
 
-          if (
-            !$("section-ownerReviews")
-              .classList
-              .contains("hidden")
-          ) {
-
-            await loadOwnerReviews();
-
-          }
+          await loadOwnerReviews();
 
         }
 
@@ -4604,22 +6532,9 @@ $("logoutBtn")
     "click",
     async () => {
 
-      const {
-        error
-      } =
-        await supabaseClient
-          .auth
-          .signOut();
-
-
-      if (error) {
-
-        console.error(error);
-
-        return;
-
-      }
-
+      await supabaseClient
+        .auth
+        .signOut();
 
       window.location.href =
         "login.html";
@@ -4629,47 +6544,7 @@ $("logoutBtn")
 
 
 /* =========================================================
-   MODAL OUTSIDE CLICK
-========================================================= */
-
-$("propertyModal")
-  .addEventListener(
-    "click",
-    event => {
-
-      if (
-        event.target ===
-        $("propertyModal")
-      ) {
-
-        closePropertyModal();
-
-      }
-
-    }
-  );
-
-
-$("editRequestModal")
-  .addEventListener(
-    "click",
-    event => {
-
-      if (
-        event.target ===
-        $("editRequestModal")
-      ) {
-
-        closeEditRequestModal();
-
-      }
-
-    }
-  );
-
-
-/* =========================================================
-   INIT
+   INITIALIZE
 ========================================================= */
 
 initializeDashboard();
