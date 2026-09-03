@@ -3929,316 +3929,138 @@ async function loadLiveProperties() {
 ========================================================= */
 
 function renderLivePropertyCard(property) {
-
-  const icon =
-    getPropertyIcon(
-      property.property_table
-    );
-
+  const icon = getPropertyIcon(property.property_table);
+  
+  // यदि ओनर ने इमेज यूआरएल दिया है तो वो दिखाएं, नहीं तो कैटेगरी का डिफ़ॉल्ट बैनर दिखाएं
+  let bannerBg = `linear-gradient(135deg, #0b1730, #203a68)`;
+  let bannerContent = `<div class="text-5xl">${icon}</div>`;
+  
+  if (property.image && property.image.trim() !== "") {
+    bannerBg = `url('${escapeHTML(property.image)}') center/cover no-repeat`;
+    bannerContent = "";
+  }
 
   return `
-
     <div class="card overflow-hidden">
-
-      <div class="property-banner
-                  flex items-center
-                  justify-center">
-
-        <div class="text-5xl">
-          ${icon}
-        </div>
-
+      <div class="property-banner flex items-center justify-center relative" style="background: ${bannerBg};">
+        ${bannerContent}
       </div>
-
 
       <div class="p-5">
-
-        <div
-          class="flex items-start
-                 justify-between
-                 gap-3">
-
+        <div class="flex items-start justify-between gap-3">
           <div>
-
-            <h3 class="font-bold text-lg">
-              ${escapeHTML(
-                property.name || "Property"
-              )}
-            </h3>
-
-            <div class="text-sm text-gray-400 mt-1">
-              ${escapeHTML(
-                formatCategory(
-                  property.category
-                )
-              )}
-            </div>
-
+            <h3 class="font-bold text-lg">${escapeHTML(property.name || "Property")}</h3>
+            <div class="text-sm text-gray-400 mt-1">${escapeHTML(formatCategory(property.category))}</div>
           </div>
-
-
-          <div
-            class="font-semibold text-sm
-                   whitespace-nowrap">
-
-            ★ ${escapeHTML(
-              property.rating ?? "—"
-            )}
-
+          <div class="font-semibold text-sm whitespace-nowrap">
+            ★ ${escapeHTML(property.rating ?? "—")}
           </div>
-
         </div>
-
 
         <div class="mt-4 space-y-2 text-sm">
-
           <div>
-
-            <span class="text-gray-400">
-              Area:
-            </span>
-
-            ${escapeHTML(
-              property.area || "—"
-            )}
-
+            <span class="text-gray-400">Area:</span> ${escapeHTML(property.area || "—")}
           </div>
-
-
           <div>
-
-            <span class="text-gray-400">
-              Address:
-            </span>
-
-            ${escapeHTML(
-              property.address || "—"
-            )}
-
+            <span class="text-gray-400">Address:</span> ${escapeHTML(property.address || "—")}
           </div>
-
+          <div>
+            <span class="text-gray-400">Phone:</span> ${escapeHTML(property.phone || "—")}
+          </div>
         </div>
-
 
         <div class="flex gap-2 mt-5">
-
-          <button
-            onclick="viewProperty('${encodeURIComponent(
-              JSON.stringify(property)
-            )}')"
-            class="btn-primary flex-1">
-
+          <button onclick="viewProperty('${encodeURIComponent(JSON.stringify(property))}')" class="btn-primary flex-1">
             View Details
-
           </button>
-
-
-          <button
-            onclick="openEditRequest('${encodeURIComponent(
-              JSON.stringify(property)
-            )}')"
-            class="btn-secondary">
-
+          <button onclick="openEditRequest('${encodeURIComponent(JSON.stringify(property))}')" class="btn-secondary">
             Request Edit
-
           </button>
-
         </div>
-
       </div>
-
     </div>
-
   `;
-
 }
-
 
 /* =========================================================
    PROPERTY DETAILS
 ========================================================= */
 
-window.viewProperty =
-  function(encodedProperty) {
+window.viewProperty = function(encodedProperty) {
+  const property = JSON.parse(decodeURIComponent(encodedProperty));
 
-    const property =
-      JSON.parse(
-        decodeURIComponent(
-          encodedProperty
-        )
-      );
+  $("propertyModalTitle").textContent = property.name || "Property";
 
+  let bannerBg = `linear-gradient(135deg, #0b1730, #203a68)`;
+  let bannerContent = `<div class="text-6xl mb-3">${getPropertyIcon(property.property_table)}</div>`;
 
-    $("propertyModalTitle")
-      .textContent =
-      property.name || "Property";
+  if (property.image && property.image.trim() !== "") {
+    bannerBg = `url('${escapeHTML(property.image)}') center/cover no-repeat`;
+    bannerContent = "";
+  }
 
-
-    $("propertyModalBody").innerHTML = `
-
-      <div class="space-y-5">
-
-        <div
-          class="rounded-2xl
-                 bg-[#0b1730]
-                 p-7 text-white
-                 text-center">
-
-          <div class="text-5xl mb-3">
-            ${getPropertyIcon(
-              property.property_table
-            )}
-          </div>
-
-          <h3 class="text-xl font-bold">
-            ${escapeHTML(
-              property.name || "Property"
-            )}
-          </h3>
-
-          <div class="text-white/60 text-sm mt-1">
-            ${escapeHTML(
-              formatCategory(
-                property.category
-              )
-            )}
-          </div>
-
+  $("propertyModalBody").innerHTML = `
+    <div class="space-y-6">
+      <!-- टॉप बैनर या हेडर -->
+      <div class="rounded-2xl p-8 text-white text-center relative overflow-hidden shadow-md" style="background: ${bannerBg}; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="position: absolute; inset: 0; background: rgba(11,23,48,0.4);"></div>
+        <div style="position: relative; z-index: 10;">
+          ${bannerContent}
+          <h3 class="text-2xl font-extrabold tracking-wide drop-shadow-md">${escapeHTML(property.name || "Property")}</h3>
+          <div class="text-white/80 text-sm mt-1 font-medium">${escapeHTML(formatCategory(property.category))}</div>
         </div>
-
-
-        <div
-          class="grid grid-cols-1 md:grid-cols-2
-                 gap-5">
-
-          <div>
-
-            <div class="text-xs text-gray-400">
-              Area
-            </div>
-
-            <div class="font-semibold mt-1">
-              ${escapeHTML(
-                property.area || "—"
-              )}
-            </div>
-
-          </div>
-
-
-          <div>
-
-            <div class="text-xs text-gray-400">
-              Rating
-            </div>
-
-            <div class="font-semibold mt-1">
-              ★ ${escapeHTML(
-                property.rating ?? "—"
-              )}
-            </div>
-
-          </div>
-
-
-          <div>
-
-            <div class="text-xs text-gray-400">
-              Address
-            </div>
-
-            <div class="font-semibold mt-1">
-              ${escapeHTML(
-                property.address || "—"
-              )}
-            </div>
-
-          </div>
-
-
-          <div>
-
-            <div class="text-xs text-gray-400">
-              Contact
-            </div>
-
-            <div class="font-semibold mt-1">
-              ${escapeHTML(
-                property.phone || "—"
-              )}
-            </div>
-
-          </div>
-
-
-          <div>
-
-            <div class="text-xs text-gray-400">
-              Timing
-            </div>
-
-            <div class="font-semibold mt-1">
-              ${escapeHTML(
-                property.timing || "—"
-              )}
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div>
-
-          <div class="text-xs text-gray-400">
-            Facilities
-          </div>
-
-          <div
-            class="mt-2 rounded-xl
-                   bg-gray-50 p-4
-                   text-sm text-gray-700">
-
-            ${escapeHTML(
-              property.facilities || "—"
-            )}
-
-          </div>
-
-        </div>
-
-
-        <div
-          class="rounded-xl
-                 bg-blue-50
-                 border border-blue-100
-                 p-4">
-
-          <div class="font-semibold text-blue-900">
-            Live Property
-          </div>
-
-          <div class="text-sm text-blue-700 mt-1">
-            This property is currently available
-            through the StudentHubHelp discovery platform.
-          </div>
-
-        </div>
-
       </div>
 
-    `;
+      <!-- ग्रिड बॉक्सेज (जैसे आपके दूसरे स्क्रीनशॉट में हैं) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Category</div>
+          <div class="font-bold text-lg mt-1 text-gray-800">${escapeHTML(formatCategory(property.category))}</div>
+        </div>
 
+        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Rating</div>
+          <div class="font-bold text-lg mt-1 text-gray-800 flex items-center gap-1">
+            <span style="color: #f59e0b;">★</span> ${escapeHTML(property.rating ?? "4.0")} / 5
+          </div>
+        </div>
 
-    $("propertyModal")
-      .classList
-      .remove("hidden");
+        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Area</div>
+          <div class="font-bold text-lg mt-1 text-gray-800">${escapeHTML(property.area || "—")}</div>
+        </div>
 
-    $("propertyModal")
-      .classList
-      .add("flex");
+        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Timing</div>
+          <div class="font-bold text-lg mt-1 text-gray-800">${escapeHTML(property.timing || "—")}</div>
+        </div>
+      </div>
 
-  };
+      <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Full Address</div>
+        <div class="font-bold text-base mt-1 text-gray-800">${escapeHTML(property.address || "—")}</div>
+      </div>
+
+      <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Phone</div>
+        <div class="font-bold text-base mt-1 text-gray-800">${escapeHTML(property.phone || "—")}</div>
+      </div>
+
+      <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Facilities</div>
+        <div class="font-bold text-sm mt-1 text-gray-700 leading-relaxed">${escapeHTML(property.facilities || "—")}</div>
+      </div>
+
+      <div class="rounded-xl bg-blue-50 border border-blue-100 p-4">
+        <div class="font-semibold text-blue-900 text-sm">Live Property Verification</div>
+        <div class="text-xs text-blue-700 mt-1">This property is active and successfully published on the StudentHubHelp platform.</div>
+      </div>
+    </div>
+  `;
+
+  $("propertyModal").classList.remove("hidden");
+  $("propertyModal").classList.add("flex");
+};
 
 
 function closePropertyModal() {
