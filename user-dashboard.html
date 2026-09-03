@@ -4007,27 +4007,42 @@ window.viewProperty = function(encodedProperty) {
 
   $("propertyModalTitle").textContent = property.name || "Property";
 
-  let bannerBg = `linear-gradient(135deg, #0b1730, #203a68)`;
-  let bannerContent = `<div class="text-6xl mb-3">${getPropertyIcon(property.property_table)}</div>`;
+  const table = property.property_table || "hostels";
+  const categoryStr = String(property.category || "").toLowerCase();
 
-  if (property.image && property.image.trim() !== "") {
-    bannerBg = `url('${escapeHTML(property.image)}') center/cover no-repeat`;
-    bannerContent = "";
+  // कैटेगरी के अनुसार गिटहब वाला सही बैनर तय करें
+  let githubBanner = "hostel-banner.png";
+  if (categoryStr.includes("hostel") || categoryStr.includes("pg") || table === "hostels") {
+    githubBanner = "hostel-banner.png";
+  } else if (categoryStr.includes("tiffin") || categoryStr.includes("mess") || table === "tiffins") {
+    githubBanner = "tiffin-banner.png";
+  } else if (categoryStr.includes("library") || table === "libraries") {
+    githubBanner = "library-banner.png";
+  } else if (categoryStr.includes("cafe") || table === "cafes") {
+    githubBanner = "cafe-banner.png";
+  } else if (categoryStr.includes("book") || categoryStr.includes("store") || table === "bookstores") {
+    githubBanner = "bookstore-banner.png";
   }
+
+  let bgImg = (property.image && property.image.trim() !== "") 
+    ? property.image 
+    : githubBanner;
+
+  const icon = getPropertyIcon(table);
 
   $("propertyModalBody").innerHTML = `
     <div class="space-y-6">
-      <!-- टॉप बैनर या हेडर -->
-      <div class="rounded-2xl p-8 text-white text-center relative overflow-hidden shadow-md" style="background: ${bannerBg}; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <div style="position: absolute; inset: 0; background: rgba(11,23,48,0.4);"></div>
+      <!-- यहाँ नीले बॉक्स की जगह अब सही बैनर इमेज बैकग्राउंड में दिखेगी -->
+      <div class="rounded-2xl p-8 text-white text-center relative overflow-hidden shadow-md" style="background: url('${escapeHTML(bgImg)}') center/cover no-repeat; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="position: absolute; inset: 0; background: rgba(11,23,48,0.45);"></div>
         <div style="position: relative; z-index: 10;">
-          ${bannerContent}
+          <div class="text-5xl mb-2 drop-shadow-md">${icon}</div>
           <h3 class="text-2xl font-extrabold tracking-wide drop-shadow-md">${escapeHTML(property.name || "Property")}</h3>
-          <div class="text-white/80 text-sm mt-1 font-medium">${escapeHTML(formatCategory(property.category))}</div>
+          <div class="text-white/90 text-sm mt-1 font-medium">${escapeHTML(formatCategory(property.category))}</div>
         </div>
       </div>
 
-      <!-- ग्रिड बॉक्सेज (जैसे आपके दूसरे स्क्रीनशॉट में हैं) -->
+      <!-- बाकी डिटेल्स बॉक्सेज -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
           <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Category</div>
