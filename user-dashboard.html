@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Dashboard | StudentHubHelp</title>
+  <title>User Dashboard | StudentHubHelp</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -16,59 +16,157 @@
 
     body {
       margin: 0;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
-      background: #f6f8fc;
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      background: #f5f7fb;
       color: #172033;
     }
 
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
     .sidebar {
-      width: 250px;
+      width: 260px;
       background: #0b1730;
-      color: white;
     }
 
     .nav-item {
-      transition: .2s ease;
+      transition: all .2s ease;
+      color: rgba(255,255,255,.68);
     }
 
     .nav-item:hover {
-      background: rgba(255,255,255,.08);
+      color: #fff;
+      background: rgba(255,255,255,.07);
     }
 
     .nav-item.active {
-      background: rgba(255,255,255,.12);
+      color: #fff;
+      background: rgba(255,255,255,.11);
       box-shadow: inset 3px 0 0 #fff;
     }
 
-    .content-card {
-      background: white;
-      border: 1px solid #e8ebf2;
+    .card {
+      background: #fff;
+      border: 1px solid #e7eaf0;
       border-radius: 18px;
     }
 
     .stat-card {
-      background: white;
-      border: 1px solid #e8ebf2;
+      background: #fff;
+      border: 1px solid #e7eaf0;
       border-radius: 18px;
       transition: .2s ease;
     }
 
     .stat-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+      box-shadow: 0 12px 30px rgba(15,23,42,.06);
     }
 
     .service-card {
-      background: white;
-      border: 1px solid #e8ebf2;
+      background: #fff;
+      border: 1px solid #e7eaf0;
       border-radius: 18px;
       transition: .2s ease;
+      cursor: pointer;
     }
 
     .service-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 14px 32px rgba(15,23,42,.08);
+      box-shadow: 0 14px 35px rgba(15,23,42,.08);
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #dfe3ea;
+      border-radius: 12px;
+      outline: none;
+      background: #fff;
+      transition: .2s;
+    }
+
+    .input:focus {
+      border-color: #0b1730;
+      box-shadow: 0 0 0 3px rgba(11,23,48,.06);
+    }
+
+    .input:disabled {
+      background: #f5f6f8;
+      color: #8b93a3;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: #0b1730;
+      color: #fff;
+      border-radius: 12px;
+      padding: 11px 18px;
+      font-weight: 600;
+      transition: .2s;
+    }
+
+    .btn-primary:hover {
+      background: #14264a;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #172033;
+      border: 1px solid #dfe3ea;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-weight: 600;
+      transition: .2s;
+    }
+
+    .btn-secondary:hover {
+      background: #f6f7f9;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .badge-pending {
+      background: #fff7db;
+      color: #9a6a00;
+    }
+
+    .badge-approved {
+      background: #e8f8ef;
+      color: #187345;
+    }
+
+    .badge-rejected {
+      background: #fdecec;
+      color: #b42323;
+    }
+
+    .badge-live {
+      background: #e8f8ef;
+      color: #187345;
+    }
+
+    .modal-backdrop {
+      background: rgba(5, 12, 28, .55);
+      backdrop-filter: blur(4px);
     }
 
     .mobile-sidebar {
@@ -79,152 +177,249 @@
     .mobile-sidebar.open {
       transform: translateX(0);
     }
+
+    .timeline-line {
+      position: absolute;
+      left: 11px;
+      top: 24px;
+      bottom: -22px;
+      width: 1px;
+      background: #dfe3ea;
+    }
+
+    .timeline-item:last-child .timeline-line {
+      display: none;
+    }
+
+    .property-banner {
+      height: 150px;
+      background:
+        linear-gradient(
+          135deg,
+          #0b1730,
+          #203a68
+        );
+    }
+
+    .empty-state {
+      padding: 45px 20px;
+      text-align: center;
+      color: #8a92a2;
+    }
+
+    @media (max-width: 1023px) {
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 100;
+      }
+    }
   </style>
 </head>
 
 <body>
 
-<!-- MOBILE OVERLAY -->
+<!-- =====================================================
+     MOBILE OVERLAY
+===================================================== -->
+
 <div
   id="sidebarOverlay"
-  class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden">
+  class="fixed inset-0 z-[90] hidden modal-backdrop lg:hidden">
 </div>
+
+
+<!-- =====================================================
+     APP
+===================================================== -->
 
 <div class="min-h-screen flex">
 
-  <!-- SIDEBAR -->
+
+  <!-- ===================================================
+       SIDEBAR
+  ==================================================== -->
+
   <aside
     id="sidebar"
-    class="sidebar fixed lg:static inset-y-0 left-0 z-50
+    class="sidebar fixed lg:static inset-y-0 left-0 z-[100]
            flex flex-col mobile-sidebar lg:translate-x-0">
 
     <!-- BRAND -->
     <div class="px-6 py-6 border-b border-white/10">
+
       <div class="flex items-center gap-3">
+
         <div
-          class="w-10 h-10 rounded-xl bg-white text-[#0b1730]
-                 flex items-center justify-center font-bold text-lg">
+          class="w-11 h-11 rounded-xl bg-white
+                 text-[#0b1730] flex items-center justify-center
+                 font-bold">
           SH
         </div>
 
         <div>
-          <div class="font-bold text-lg leading-tight">
+
+          <div class="text-white font-bold text-lg">
             StudentHubHelp
           </div>
-          <div class="text-xs text-white/50">
+
+          <div class="text-xs text-white/40">
             Student Discovery Platform
           </div>
+
         </div>
+
       </div>
+
     </div>
 
-    <!-- NAV -->
-    <nav id="sidebarNav" class="flex-1 px-3 py-5 space-y-1">
 
-      <button
-        class="nav-item active w-full text-left px-4 py-3 rounded-xl
-               flex items-center gap-3"
-        data-section="overview">
-        <span>⌂</span>
-        <span>Overview</span>
-      </button>
+    <!-- NAVIGATION -->
+    <nav class="flex-1 px-3 py-5 overflow-y-auto">
 
-      <button
-        class="nav-item w-full text-left px-4 py-3 rounded-xl
-               flex items-center gap-3"
-        data-section="profile">
-        <span>◉</span>
-        <span>My Profile</span>
-      </button>
+      <!-- COMMON -->
+      <div class="space-y-1">
 
-      <button
-        class="nav-item w-full text-left px-4 py-3 rounded-xl
-               flex items-center gap-3"
-        data-section="services">
-        <span>⌕</span>
-        <span>Find Services</span>
-      </button>
+        <button
+          data-section="overview"
+          class="nav-item active w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
 
-      <button
-        class="nav-item w-full text-left px-4 py-3 rounded-xl
-               flex items-center gap-3"
-        data-section="reviews">
-        <span>★</span>
-        <span>My Reviews</span>
-      </button>
+          <span class="w-5 text-center">⌂</span>
+          <span>Overview</span>
 
-      <button
-        class="nav-item w-full text-left px-4 py-3 rounded-xl
-               flex items-center gap-3"
-        data-section="activity">
-        <span>↗</span>
-        <span>My Activity</span>
-      </button>
+        </button>
+
+
+        <button
+          data-section="profile"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">◉</span>
+          <span>My Profile</span>
+
+        </button>
+
+
+        <button
+          data-section="services"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">⌕</span>
+          <span>Find / Explore Services</span>
+
+        </button>
+
+
+        <button
+          data-section="reviews"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">★</span>
+          <span>My Reviews</span>
+
+        </button>
+
+
+        <button
+          data-section="activity"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">↗</span>
+          <span>My Activity</span>
+
+        </button>
+
+      </div>
+
 
       <!-- OWNER ONLY -->
-      <div id="ownerNav" class="hidden pt-5">
+      <div id="ownerNavigation" class="hidden mt-7">
 
-        <div class="px-4 mb-2 text-[10px] uppercase tracking-widest text-white/35">
+        <div class="px-4 mb-2 text-[10px] uppercase
+                    tracking-[.18em] text-white/35">
           Owner Centre
         </div>
 
-        <button
-          class="nav-item w-full text-left px-4 py-3 rounded-xl
-                 flex items-center gap-3"
-          data-section="owner">
-          <span>▣</span>
-          <span>Owner Centre</span>
-        </button>
 
-        <button
-          class="nav-item w-full text-left px-4 py-3 rounded-xl
-                 flex items-center gap-3"
-          data-section="addListing">
-          <span>＋</span>
-          <span>Add Listing</span>
-        </button>
+        <div class="space-y-1">
 
-        <button
-          class="nav-item w-full text-left px-4 py-3 rounded-xl
-                 flex items-center gap-3"
-          data-section="requests">
-          <span>◷</span>
-          <span>My Requests</span>
-        </button>
+          <button
+            data-section="ownerCentre"
+            class="nav-item w-full flex items-center
+                   gap-3 px-4 py-3 rounded-xl text-left">
 
-        <button
-          class="nav-item w-full text-left px-4 py-3 rounded-xl
-                 flex items-center gap-3"
-          data-section="liveProperties">
-          <span>●</span>
-          <span>Live Properties</span>
-        </button>
+            <span class="w-5 text-center">▣</span>
+            <span>Owner Centre</span>
 
-        <button
-          class="nav-item w-full text-left px-4 py-3 rounded-xl
-                 flex items-center gap-3"
-          data-section="ownerReviews">
-          <span>★</span>
-          <span>Owner Reviews</span>
-        </button>
+          </button>
+
+
+          <button
+            data-section="addListing"
+            class="nav-item w-full flex items-center
+                   gap-3 px-4 py-3 rounded-xl text-left">
+
+            <span class="w-5 text-center">＋</span>
+            <span>Add Listing</span>
+
+          </button>
+
+
+          <button
+            data-section="requests"
+            class="nav-item w-full flex items-center
+                   gap-3 px-4 py-3 rounded-xl text-left">
+
+            <span class="w-5 text-center">◷</span>
+            <span>My Requests</span>
+
+          </button>
+
+
+          <button
+            data-section="liveProperties"
+            class="nav-item w-full flex items-center
+                   gap-3 px-4 py-3 rounded-xl text-left">
+
+            <span class="w-5 text-center">●</span>
+            <span>Live Properties</span>
+
+          </button>
+
+
+          <button
+            data-section="ownerReviews"
+            class="nav-item w-full flex items-center
+                   gap-3 px-4 py-3 rounded-xl text-left">
+
+            <span class="w-5 text-center">★</span>
+            <span>Owner Reviews</span>
+
+          </button>
+
+        </div>
 
       </div>
 
     </nav>
 
-    <!-- ACCOUNT -->
-    <div class="px-3 pb-5 border-t border-white/10 pt-4">
 
-      <div class="px-4 mb-3 text-[10px] uppercase tracking-widest text-white/35">
-        Account
-      </div>
+    <!-- LOGOUT -->
+    <div class="border-t border-white/10 p-3">
 
       <button
         id="logoutBtn"
-        class="nav-item w-full text-left px-4 py-3 rounded-xl
-               flex items-center gap-3 text-red-200">
-        <span>↪</span>
+        class="nav-item w-full flex items-center
+               gap-3 px-4 py-3 rounded-xl text-left">
+
+        <span class="w-5 text-center">↪</span>
         <span>Logout</span>
+
       </button>
 
     </div>
@@ -232,57 +427,77 @@
   </aside>
 
 
-  <!-- MAIN -->
+  <!-- ===================================================
+       MAIN
+  ==================================================== -->
+
   <main class="flex-1 min-w-0">
+
 
     <!-- TOPBAR -->
     <header
-      class="h-20 bg-white border-b border-gray-200
-             flex items-center justify-between px-5 md:px-8 sticky top-0 z-30">
+      class="h-[76px] bg-white border-b border-gray-200
+             sticky top-0 z-50 flex items-center
+             justify-between px-5 md:px-8">
 
       <div class="flex items-center gap-4">
 
         <button
-          id="menuBtn"
-          class="lg:hidden w-10 h-10 rounded-xl border border-gray-200
-                 flex items-center justify-center">
+          id="mobileMenuBtn"
+          class="lg:hidden w-10 h-10 rounded-xl
+                 border border-gray-200">
+
           ☰
+
         </button>
 
+
         <div>
+
           <div class="text-xs text-gray-400">
-            Dashboard
+            Account Dashboard
           </div>
 
-          <h1 id="pageTitle"
-              class="font-semibold text-lg md:text-xl">
+          <h1
+            id="pageTitle"
+            class="text-lg md:text-xl font-bold">
             Overview
           </h1>
+
         </div>
 
       </div>
 
-      <!-- USER CHIP -->
+
+      <!-- USER -->
       <div class="flex items-center gap-3">
 
         <div class="hidden sm:block text-right">
-          <div id="topUserName"
-               class="text-sm font-semibold">
-            User
+
+          <div
+            id="topUserName"
+            class="font-semibold text-sm">
+            Loading...
           </div>
 
-          <div id="topUserRole"
-               class="text-xs text-gray-400">
-            Student
+          <div
+            id="topUserRole"
+            class="text-xs text-gray-400">
+            —
           </div>
+
         </div>
 
+
         <div
-          id="userInitial"
-          class="w-10 h-10 rounded-full bg-[#0b1730]
-                 text-white flex items-center justify-center
-                 font-semibold">
+          id="userAvatar"
+          class="w-10 h-10 rounded-full
+                 bg-[#0b1730] text-white
+                 flex items-center justify-center
+                 font-bold">
+
           U
+
         </div>
 
       </div>
@@ -290,128 +505,162 @@
     </header>
 
 
-    <!-- CONTENT -->
-    <div class="p-5 md:p-8 max-w-[1500px] mx-auto">
+    <!-- PAGE CONTENT -->
+    <div
+      class="max-w-[1500px] mx-auto p-5 md:p-8">
 
 
-      <!-- ================= OVERVIEW ================= -->
-      <section id="section-overview" class="dashboard-section">
+      <!-- =================================================
+           STUDENT / COMMON OVERVIEW
+      ================================================== -->
 
+      <section
+        id="section-overview"
+        class="dashboard-section">
+
+        <!-- HEADER -->
         <div class="mb-7">
 
           <div class="text-sm text-gray-400 mb-1">
             Welcome back
           </div>
 
-          <h2 class="text-2xl md:text-3xl font-bold">
-            <span id="welcomeName">User</span>
+          <h2
+            id="welcomeName"
+            class="text-2xl md:text-3xl font-bold">
+            User
           </h2>
 
           <p class="text-gray-500 mt-2">
-            Manage your StudentHubHelp account from one place.
+            Your StudentHubHelp dashboard.
           </p>
 
         </div>
 
 
         <!-- STUDENT STATS -->
-        <div id="studentStats"
-             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div
+          id="studentStats"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
           <div class="stat-card p-5">
-            <div class="text-sm text-gray-400">
-              Account Type
+
+            <div class="text-xs text-gray-400">
+              Account
             </div>
-            <div class="text-xl font-bold mt-2">
+
+            <div class="font-bold text-xl mt-2">
               Student
             </div>
+
           </div>
 
+
           <div class="stat-card p-5">
-            <div class="text-sm text-gray-400">
+
+            <div class="text-xs text-gray-400">
               My Reviews
             </div>
-            <div id="reviewCount"
-                 class="text-3xl font-bold mt-2">
+
+            <div
+              id="studentReviewCount"
+              class="font-bold text-3xl mt-2">
               0
             </div>
+
           </div>
 
+
           <div class="stat-card p-5">
-            <div class="text-sm text-gray-400">
+
+            <div class="text-xs text-gray-400">
               Profile
             </div>
-            <div id="profileStatus"
-                 class="text-xl font-bold mt-2">
+
+            <div
+              id="studentProfileStatus"
+              class="font-bold text-xl mt-2">
               Active
             </div>
+
           </div>
 
+
           <div class="stat-card p-5">
-            <div class="text-sm text-gray-400">
+
+            <div class="text-xs text-gray-400">
               Platform
             </div>
-            <div class="text-xl font-bold mt-2">
+
+            <div class="font-bold text-xl mt-2">
               India
             </div>
+
           </div>
 
         </div>
 
 
         <!-- OWNER STATS -->
-        <div id="ownerStats"
-             class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div
+          id="ownerStats"
+          class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
 
           <div class="stat-card p-5">
-            <div class="text-sm text-gray-400">
+
+            <div class="text-xs text-gray-400">
               Total Listings
             </div>
-            <div id="ownerListingCount"
-                 class="text-3xl font-bold mt-2">
+
+            <div
+              id="totalListings"
+              class="font-bold text-3xl mt-2">
               0
             </div>
+
           </div>
 
+
           <div class="stat-card p-5">
-            <div class="text-sm text-gray-400">
+
+            <div class="text-xs text-gray-400">
               Pending Requests
             </div>
-            <div id="ownerPendingCount"
-                 class="text-3xl font-bold mt-2">
+
+            <div
+              id="pendingRequests"
+              class="font-bold text-3xl mt-2">
               0
             </div>
+
           </div>
 
+
           <div class="stat-card p-5">
-            <div class="text-sm text-gray-400">
+
+            <div class="text-xs text-gray-400">
               Live Properties
             </div>
-            <div id="ownerLiveCount"
-                 class="text-3xl font-bold mt-2">
-              0
-            </div>
-          </div>
 
-          <div class="stat-card p-5">
-            <div class="text-sm text-gray-400">
-              Reviews
-            </div>
-            <div id="ownerReviewCount"
-                 class="text-3xl font-bold mt-2">
+            <div
+              id="livePropertyCount"
+              class="font-bold text-3xl mt-2">
               0
             </div>
+
           </div>
 
         </div>
 
 
         <!-- PROFILE SUMMARY -->
-        <div class="content-card mt-6 p-6">
+        <div class="card mt-6 p-6">
 
-          <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center
+                      justify-between gap-4 mb-6">
 
             <div>
+
               <h3 class="font-bold text-lg">
                 Profile Summary
               </h3>
@@ -419,57 +668,80 @@
               <p class="text-sm text-gray-400 mt-1">
                 Your account information
               </p>
+
             </div>
+
 
             <button
               onclick="showSection('profile')"
-              class="text-sm font-semibold text-[#0b1730]">
+              class="text-sm font-semibold">
               Edit Profile →
             </button>
 
           </div>
 
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div
+            class="grid grid-cols-1 md:grid-cols-2
+                   gap-x-8 gap-y-5">
 
             <div>
-              <div class="text-xs text-gray-400 mb-1">
+
+              <div class="text-xs text-gray-400">
                 Full Name
               </div>
-              <div id="summaryName"
-                   class="font-medium">
+
+              <div
+                id="summaryName"
+                class="font-semibold mt-1">
                 —
               </div>
+
             </div>
 
+
             <div>
-              <div class="text-xs text-gray-400 mb-1">
+
+              <div class="text-xs text-gray-400">
                 Email
               </div>
-              <div id="summaryEmail"
-                   class="font-medium">
+
+              <div
+                id="summaryEmail"
+                class="font-semibold mt-1 break-all">
                 —
               </div>
+
             </div>
 
+
             <div>
-              <div class="text-xs text-gray-400 mb-1">
+
+              <div class="text-xs text-gray-400">
                 Phone
               </div>
-              <div id="summaryPhone"
-                   class="font-medium">
+
+              <div
+                id="summaryPhone"
+                class="font-semibold mt-1">
                 —
               </div>
+
             </div>
 
+
             <div>
-              <div class="text-xs text-gray-400 mb-1">
+
+              <div class="text-xs text-gray-400">
                 Address
               </div>
-              <div id="summaryAddress"
-                   class="font-medium">
+
+              <div
+                id="summaryAddress"
+                class="font-semibold mt-1">
                 —
               </div>
+
             </div>
 
           </div>
@@ -481,101 +753,115 @@
         <div class="mt-8">
 
           <div class="mb-5">
+
             <h3 class="font-bold text-lg">
               Quick Access
             </h3>
 
             <p class="text-sm text-gray-400 mt-1">
-              Explore student services across India
+              Explore student services across India.
             </p>
+
           </div>
 
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2
+                   lg:grid-cols-5 gap-4">
 
-            <button
+            <div
               onclick="goFinder('pg-finder.html')"
-              class="service-card p-5 text-left">
+              class="service-card p-5">
 
-              <div class="text-2xl mb-4">🏠</div>
+              <div class="text-3xl mb-4">
+                🏠
+              </div>
 
-              <div class="font-bold">
+              <h4 class="font-bold">
                 Hostel / PG
-              </div>
+              </h4>
 
-              <div class="text-sm text-gray-400 mt-1">
+              <p class="text-sm text-gray-400 mt-1">
                 Find accommodation
-              </div>
+              </p>
 
-            </button>
+            </div>
 
 
-            <button
+            <div
               onclick="goFinder('tiffin-finder.html')"
-              class="service-card p-5 text-left">
+              class="service-card p-5">
 
-              <div class="text-2xl mb-4">🍱</div>
+              <div class="text-3xl mb-4">
+                🍱
+              </div>
 
-              <div class="font-bold">
+              <h4 class="font-bold">
                 Tiffin / Mess
-              </div>
+              </h4>
 
-              <div class="text-sm text-gray-400 mt-1">
+              <p class="text-sm text-gray-400 mt-1">
                 Find daily meals
-              </div>
+              </p>
 
-            </button>
+            </div>
 
 
-            <button
+            <div
               onclick="goFinder('library-finder.html')"
-              class="service-card p-5 text-left">
+              class="service-card p-5">
 
-              <div class="text-2xl mb-4">📚</div>
+              <div class="text-3xl mb-4">
+                📚
+              </div>
 
-              <div class="font-bold">
+              <h4 class="font-bold">
                 Library
-              </div>
+              </h4>
 
-              <div class="text-sm text-gray-400 mt-1">
+              <p class="text-sm text-gray-400 mt-1">
                 Find study spaces
-              </div>
+              </p>
 
-            </button>
+            </div>
 
 
-            <button
+            <div
               onclick="goFinder('cafe-finder.html')"
-              class="service-card p-5 text-left">
+              class="service-card p-5">
 
-              <div class="text-2xl mb-4">☕</div>
+              <div class="text-3xl mb-4">
+                ☕
+              </div>
 
-              <div class="font-bold">
+              <h4 class="font-bold">
                 Cafe
-              </div>
+              </h4>
 
-              <div class="text-sm text-gray-400 mt-1">
-                Find student cafes
-              </div>
+              <p class="text-sm text-gray-400 mt-1">
+                Find cafes
+              </p>
 
-            </button>
+            </div>
 
 
-            <button
+            <div
               onclick="goFinder('bookstore-finder.html')"
-              class="service-card p-5 text-left">
+              class="service-card p-5">
 
-              <div class="text-2xl mb-4">📖</div>
+              <div class="text-3xl mb-4">
+                📖
+              </div>
 
-              <div class="font-bold">
+              <h4 class="font-bold">
                 Book Store
-              </div>
+              </h4>
 
-              <div class="text-sm text-gray-400 mt-1">
+              <p class="text-sm text-gray-400 mt-1">
                 Find books & supplies
-              </div>
+              </p>
 
-            </button>
+            </div>
 
           </div>
 
@@ -584,9 +870,13 @@
       </section>
 
 
-      <!-- ================= PROFILE ================= -->
-      <section id="section-profile"
-               class="dashboard-section hidden">
+      <!-- =================================================
+           PROFILE
+      ================================================== -->
+
+      <section
+        id="section-profile"
+        class="dashboard-section hidden">
 
         <div class="mb-7">
 
@@ -595,104 +885,103 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Manage your personal account information.
+            Manage your personal information.
           </p>
 
         </div>
 
 
-        <div class="content-card p-6 max-w-3xl">
+        <div class="card p-6 max-w-3xl">
 
           <form id="profileForm"
                 class="space-y-5">
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Full Name
               </label>
 
               <input
                 id="profileName"
-                type="text"
-                required
-                class="w-full mt-2 px-4 py-3 rounded-xl
-                       border border-gray-200 outline-none
-                       focus:border-[#0b1730]" />
+                class="input mt-2"
+                required>
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Phone
               </label>
 
               <input
                 id="profilePhone"
-                type="tel"
-                class="w-full mt-2 px-4 py-3 rounded-xl
-                       border border-gray-200 outline-none
-                       focus:border-[#0b1730]" />
+                class="input mt-2"
+                type="tel">
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Email
               </label>
 
               <input
                 id="profileEmail"
+                class="input mt-2"
                 type="email"
-                disabled
-                class="w-full mt-2 px-4 py-3 rounded-xl
-                       border border-gray-200 bg-gray-50
-                       text-gray-500" />
+                disabled>
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
-                Role
+
+              <label class="text-sm font-semibold">
+                Account Role
               </label>
 
               <input
                 id="profileRole"
-                type="text"
-                disabled
-                class="w-full mt-2 px-4 py-3 rounded-xl
-                       border border-gray-200 bg-gray-50
-                       text-gray-500 capitalize" />
+                class="input mt-2"
+                disabled>
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Address
               </label>
 
               <textarea
                 id="profileAddress"
-                rows="4"
-                class="w-full mt-2 px-4 py-3 rounded-xl
-                       border border-gray-200 outline-none
-                       focus:border-[#0b1730]"></textarea>
+                class="input mt-2"
+                rows="4"></textarea>
+
             </div>
 
 
-            <div class="pt-2">
+            <div class="flex items-center gap-3 pt-2">
 
               <button
                 type="submit"
-                class="px-6 py-3 rounded-xl bg-[#0b1730]
-                       text-white font-semibold hover:bg-[#14264a]">
+                class="btn-primary">
+
                 Save Changes
+
               </button>
 
-            </div>
+              <span
+                id="profileMessage"
+                class="hidden text-sm">
+              </span>
 
-            <div
-              id="profileMessage"
-              class="text-sm hidden">
             </div>
 
           </form>
@@ -702,35 +991,45 @@
       </section>
 
 
-      <!-- ================= SERVICES ================= -->
-      <section id="section-services"
-               class="dashboard-section hidden">
+      <!-- =================================================
+           FIND SERVICES
+      ================================================== -->
+
+      <section
+        id="section-services"
+        class="dashboard-section hidden">
 
         <div class="mb-7">
 
           <h2 class="text-2xl font-bold">
-            Find Services
+            Find / Explore Services
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Discover student-friendly services anywhere in India.
+            Discover student-friendly services across India.
           </p>
 
         </div>
 
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2
+                 lg:grid-cols-5 gap-5">
 
           <div
             onclick="goFinder('pg-finder.html')"
-            class="service-card p-6 cursor-pointer">
+            class="service-card p-6">
 
-            <div class="text-3xl mb-5">🏠</div>
+            <div class="text-4xl mb-5">
+              🏠
+            </div>
+
             <h3 class="font-bold text-lg">
               Hostel / PG
             </h3>
-            <p class="text-sm text-gray-400 mt-2">
-              Find hostels and PG accommodations.
+
+            <p class="text-gray-400 text-sm mt-2">
+              Find accommodation near your study location.
             </p>
 
           </div>
@@ -738,14 +1037,18 @@
 
           <div
             onclick="goFinder('tiffin-finder.html')"
-            class="service-card p-6 cursor-pointer">
+            class="service-card p-6">
 
-            <div class="text-3xl mb-5">🍱</div>
+            <div class="text-4xl mb-5">
+              🍱
+            </div>
+
             <h3 class="font-bold text-lg">
               Tiffin / Mess
             </h3>
-            <p class="text-sm text-gray-400 mt-2">
-              Find affordable food options.
+
+            <p class="text-gray-400 text-sm mt-2">
+              Find affordable food and mess services.
             </p>
 
           </div>
@@ -753,13 +1056,17 @@
 
           <div
             onclick="goFinder('library-finder.html')"
-            class="service-card p-6 cursor-pointer">
+            class="service-card p-6">
 
-            <div class="text-3xl mb-5">📚</div>
+            <div class="text-4xl mb-5">
+              📚
+            </div>
+
             <h3 class="font-bold text-lg">
               Library
             </h3>
-            <p class="text-sm text-gray-400 mt-2">
+
+            <p class="text-gray-400 text-sm mt-2">
               Find libraries and study spaces.
             </p>
 
@@ -768,14 +1075,18 @@
 
           <div
             onclick="goFinder('cafe-finder.html')"
-            class="service-card p-6 cursor-pointer">
+            class="service-card p-6">
 
-            <div class="text-3xl mb-5">☕</div>
+            <div class="text-4xl mb-5">
+              ☕
+            </div>
+
             <h3 class="font-bold text-lg">
               Cafe
             </h3>
-            <p class="text-sm text-gray-400 mt-2">
-              Discover cafes suitable for students.
+
+            <p class="text-gray-400 text-sm mt-2">
+              Discover cafes for study and refreshment.
             </p>
 
           </div>
@@ -783,13 +1094,17 @@
 
           <div
             onclick="goFinder('bookstore-finder.html')"
-            class="service-card p-6 cursor-pointer">
+            class="service-card p-6">
 
-            <div class="text-3xl mb-5">📖</div>
+            <div class="text-4xl mb-5">
+              📖
+            </div>
+
             <h3 class="font-bold text-lg">
               Book Store
             </h3>
-            <p class="text-sm text-gray-400 mt-2">
+
+            <p class="text-gray-400 text-sm mt-2">
               Find books, stationery and study material.
             </p>
 
@@ -800,9 +1115,13 @@
       </section>
 
 
-      <!-- ================= REVIEWS ================= -->
-      <section id="section-reviews"
-               class="dashboard-section hidden">
+      <!-- =================================================
+           STUDENT REVIEWS
+      ================================================== -->
+
+      <section
+        id="section-reviews"
+        class="dashboard-section hidden">
 
         <div class="mb-7">
 
@@ -811,15 +1130,17 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Reviews and ratings submitted by you.
+            Reviews you have submitted.
           </p>
 
         </div>
 
-        <div id="reviewsContainer"
-             class="space-y-4">
 
-          <div class="content-card p-6 text-gray-400">
+        <div
+          id="studentReviewsContainer"
+          class="space-y-4">
+
+          <div class="card empty-state">
             Loading reviews...
           </div>
 
@@ -828,9 +1149,13 @@
       </section>
 
 
-      <!-- ================= ACTIVITY ================= -->
-      <section id="section-activity"
-               class="dashboard-section hidden">
+      <!-- =================================================
+           ACTIVITY
+      ================================================== -->
+
+      <section
+        id="section-activity"
+        class="dashboard-section hidden">
 
         <div class="mb-7">
 
@@ -839,34 +1164,32 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Your recent account activity.
+            Recent activity connected to your account.
           </p>
 
         </div>
 
-        <div class="content-card p-8 text-center">
 
-          <div class="text-4xl mb-4">
-            ↗
+        <div
+          id="activityContainer"
+          class="space-y-4">
+
+          <div class="card p-6">
+            Loading activity...
           </div>
-
-          <h3 class="font-bold text-lg">
-            Activity Tracking
-          </h3>
-
-          <p class="text-gray-400 mt-2 max-w-md mx-auto">
-            Your recent interactions and platform activity
-            will appear here.
-          </p>
 
         </div>
 
       </section>
 
 
-      <!-- ================= OWNER CENTRE ================= -->
-      <section id="section-owner"
-               class="dashboard-section hidden">
+      <!-- =================================================
+           OWNER CENTRE
+      ================================================== -->
+
+      <section
+        id="section-ownerCentre"
+        class="dashboard-section hidden">
 
         <div class="mb-7">
 
@@ -875,54 +1198,165 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Manage your business profile and listing activity.
+            Your business profile and listing overview.
           </p>
 
         </div>
 
 
-        <div class="content-card p-6">
+        <!-- OWNER PROFILE -->
+        <div class="card p-6">
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex items-center
+                      justify-between mb-6">
 
             <div>
+
+              <h3 class="font-bold text-lg">
+                Owner Profile
+              </h3>
+
+              <p class="text-sm text-gray-400 mt-1">
+                Information associated with your owner account.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="grid grid-cols-1 md:grid-cols-2
+                   gap-6">
+
+            <div>
+
               <div class="text-xs text-gray-400">
                 Owner Name
               </div>
-              <div id="ownerName"
-                   class="font-semibold mt-1">
+
+              <div
+                id="ownerCentreName"
+                class="font-semibold mt-1">
                 —
               </div>
+
             </div>
 
+
             <div>
+
               <div class="text-xs text-gray-400">
                 Phone
               </div>
-              <div id="ownerPhone"
-                   class="font-semibold mt-1">
+
+              <div
+                id="ownerCentrePhone"
+                class="font-semibold mt-1">
                 —
               </div>
+
             </div>
 
+
             <div>
+
               <div class="text-xs text-gray-400">
                 Email
               </div>
-              <div id="ownerEmail"
-                   class="font-semibold mt-1">
+
+              <div
+                id="ownerCentreEmail"
+                class="font-semibold mt-1">
                 —
               </div>
+
             </div>
 
+
             <div>
+
               <div class="text-xs text-gray-400">
                 Address
               </div>
-              <div id="ownerAddress"
-                   class="font-semibold mt-1">
+
+              <div
+                id="ownerCentreAddress"
+                class="font-semibold mt-1">
                 —
               </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- LISTING STATUS -->
+        <div class="card p-6 mt-6">
+
+          <div class="mb-6">
+
+            <h3 class="font-bold text-lg">
+              Listing Status Summary
+            </h3>
+
+            <p class="text-sm text-gray-400 mt-1">
+              Current status of your submitted listings.
+            </p>
+
+          </div>
+
+
+          <div
+            class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+            <div
+              class="rounded-2xl bg-yellow-50 p-5">
+
+              <div class="text-xs text-yellow-700">
+                Pending
+              </div>
+
+              <div
+                id="centrePending"
+                class="text-3xl font-bold mt-2 text-yellow-800">
+                0
+              </div>
+
+            </div>
+
+
+            <div
+              class="rounded-2xl bg-green-50 p-5">
+
+              <div class="text-xs text-green-700">
+                Approved
+              </div>
+
+              <div
+                id="centreApproved"
+                class="text-3xl font-bold mt-2 text-green-800">
+                0
+              </div>
+
+            </div>
+
+
+            <div
+              class="rounded-2xl bg-red-50 p-5">
+
+              <div class="text-xs text-red-700">
+                Rejected
+              </div>
+
+              <div
+                id="centreRejected"
+                class="text-3xl font-bold mt-2 text-red-800">
+                0
+              </div>
+
             </div>
 
           </div>
@@ -932,9 +1366,13 @@
       </section>
 
 
-      <!-- ================= ADD LISTING ================= -->
-      <section id="section-addListing"
-               class="dashboard-section hidden">
+      <!-- =================================================
+           ADD LISTING
+      ================================================== -->
+
+      <section
+        id="section-addListing"
+        class="dashboard-section hidden">
 
         <div class="mb-7">
 
@@ -943,119 +1381,175 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Submit your property for admin approval.
+            Submit your property for admin review.
           </p>
 
         </div>
 
 
-        <div class="content-card p-6 max-w-3xl">
+        <div class="card p-6 max-w-4xl">
 
-          <form id="listingForm"
-                class="space-y-5">
+          <form
+            id="listingForm"
+            class="space-y-5">
+
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Property Name
               </label>
 
               <input
                 id="listingName"
-                required
-                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200" />
+                class="input mt-2"
+                required>
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Category
               </label>
 
               <select
                 id="listingCategory"
-                required
-                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200">
+                class="input mt-2"
+                required>
 
-                <option value="">Select Category</option>
-                <option value="Hostel / PG">Hostel / PG</option>
-                <option value="Tiffin / Mess">Tiffin / Mess</option>
-                <option value="Library">Library</option>
-                <option value="Cafe">Cafe</option>
-                <option value="Book Store">Book Store</option>
+                <option value="">
+                  Select category
+                </option>
+
+                <option value="Hostel / PG">
+                  Hostel / PG
+                </option>
+
+                <option value="Tiffin / Mess">
+                  Tiffin / Mess
+                </option>
+
+                <option value="Library">
+                  Library
+                </option>
+
+                <option value="Cafe">
+                  Cafe
+                </option>
+
+                <option value="Book Store">
+                  Book Store
+                </option>
 
               </select>
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Area
               </label>
 
               <input
                 id="listingArea"
-                required
-                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200" />
+                class="input mt-2"
+                required>
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Address
               </label>
 
               <textarea
                 id="listingAddress"
+                class="input mt-2"
                 rows="3"
-                required
-                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200"></textarea>
+                required></textarea>
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
-                Phone
+
+              <label class="text-sm font-semibold">
+                Contact Phone
               </label>
 
               <input
                 id="listingPhone"
-                required
-                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200" />
+                class="input mt-2"
+                type="tel"
+                required>
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Timing
               </label>
 
               <input
                 id="listingTiming"
-                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200" />
+                class="input mt-2">
+
             </div>
 
 
             <div>
-              <label class="text-sm font-medium">
+
+              <label class="text-sm font-semibold">
                 Facilities
               </label>
 
               <textarea
                 id="listingFacilities"
-                rows="3"
-                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200"></textarea>
+                class="input mt-2"
+                rows="4"></textarea>
+
             </div>
 
 
-            <button
-              type="submit"
-              class="px-6 py-3 rounded-xl bg-[#0b1730]
-                     text-white font-semibold">
-              Submit Listing Request
-            </button>
+            <div>
 
-            <div id="listingMessage"
-                 class="hidden text-sm"></div>
+              <label class="text-sm font-semibold">
+                Image URL
+              </label>
+
+              <input
+                id="listingImage"
+                class="input mt-2"
+                type="url"
+                placeholder="Optional">
+
+            </div>
+
+
+            <div class="pt-2 flex items-center gap-4">
+
+              <button
+                type="submit"
+                class="btn-primary">
+
+                Submit Listing Request
+
+              </button>
+
+              <span
+                id="listingMessage"
+                class="hidden text-sm">
+              </span>
+
+            </div>
 
           </form>
 
@@ -1064,9 +1558,13 @@
       </section>
 
 
-      <!-- ================= REQUESTS ================= -->
-      <section id="section-requests"
-               class="dashboard-section hidden">
+      <!-- =================================================
+           MY REQUESTS
+      ================================================== -->
+
+      <section
+        id="section-requests"
+        class="dashboard-section hidden">
 
         <div class="mb-7">
 
@@ -1075,16 +1573,17 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Track your submitted listing requests.
+            Track your listing approval process.
           </p>
 
         </div>
 
 
-        <div id="requestsContainer"
-             class="space-y-4">
+        <div
+          id="requestsContainer"
+          class="space-y-5">
 
-          <div class="content-card p-6 text-gray-400">
+          <div class="card empty-state">
             Loading requests...
           </div>
 
@@ -1093,9 +1592,13 @@
       </section>
 
 
-      <!-- ================= LIVE PROPERTIES ================= -->
-      <section id="section-liveProperties"
-               class="dashboard-section hidden">
+      <!-- =================================================
+           LIVE PROPERTIES
+      ================================================== -->
+
+      <section
+        id="section-liveProperties"
+        class="dashboard-section hidden">
 
         <div class="mb-7">
 
@@ -1104,16 +1607,18 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Your approved properties currently visible to students.
+            Approved properties currently visible to students.
           </p>
 
         </div>
 
 
-        <div id="livePropertiesContainer"
-             class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div
+          id="livePropertiesContainer"
+          class="grid grid-cols-1 md:grid-cols-2
+                 xl:grid-cols-3 gap-5">
 
-          <div class="content-card p-6 text-gray-400">
+          <div class="card empty-state">
             Loading live properties...
           </div>
 
@@ -1122,9 +1627,13 @@
       </section>
 
 
-      <!-- ================= OWNER REVIEWS ================= -->
-      <section id="section-ownerReviews"
-               class="dashboard-section hidden">
+      <!-- =================================================
+           OWNER REVIEWS
+      ================================================== -->
+
+      <section
+        id="section-ownerReviews"
+        class="dashboard-section hidden">
 
         <div class="mb-7">
 
@@ -1133,16 +1642,17 @@
           </h2>
 
           <p class="text-gray-500 mt-1">
-            Student reviews received on your properties.
+            Reviews received from students.
           </p>
 
         </div>
 
 
-        <div id="ownerReviewsContainer"
-             class="space-y-4">
+        <div
+          id="ownerReviewsContainer"
+          class="space-y-4">
 
-          <div class="content-card p-6 text-gray-400">
+          <div class="card empty-state">
             Loading reviews...
           </div>
 
@@ -1157,21 +1667,326 @@
 </div>
 
 
+<!-- =====================================================
+     PROPERTY DETAILS MODAL
+===================================================== -->
+
+<div
+  id="propertyModal"
+  class="fixed inset-0 z-[200] hidden
+         items-center justify-center p-5 modal-backdrop">
+
+  <div
+    class="bg-white rounded-2xl w-full max-w-2xl
+           max-h-[90vh] overflow-y-auto">
+
+    <div
+      class="flex items-center justify-between
+             p-5 border-b">
+
+      <div>
+
+        <div class="text-xs text-gray-400">
+          Live Property
+        </div>
+
+        <h3
+          id="propertyModalTitle"
+          class="font-bold text-xl">
+          Property
+        </h3>
+
+      </div>
+
+      <button
+        onclick="closePropertyModal()"
+        class="w-9 h-9 rounded-lg
+               bg-gray-100">
+
+        ×
+
+      </button>
+
+    </div>
+
+
+    <div
+      id="propertyModalBody"
+      class="p-6">
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     EDIT REQUEST MODAL
+===================================================== -->
+
+<div
+  id="editRequestModal"
+  class="fixed inset-0 z-[200] hidden
+         items-center justify-center p-5 modal-backdrop">
+
+  <div
+    class="bg-white rounded-2xl w-full max-w-2xl
+           max-h-[92vh] overflow-y-auto">
+
+    <div
+      class="flex items-center justify-between
+             p-5 border-b">
+
+      <div>
+
+        <div class="text-xs text-gray-400">
+          Admin Review
+        </div>
+
+        <h3 class="font-bold text-xl">
+          Request Property Edit
+        </h3>
+
+      </div>
+
+      <button
+        onclick="closeEditRequestModal()"
+        class="w-9 h-9 rounded-lg bg-gray-100">
+
+        ×
+
+      </button>
+
+    </div>
+
+
+    <form
+      id="editRequestForm"
+      class="p-6 space-y-5">
+
+      <input
+        id="editPropertyId"
+        type="hidden">
+
+      <input
+        id="editPropertyCategory"
+        type="hidden">
+
+
+      <div class="rounded-xl bg-gray-50 p-4">
+
+        <div class="text-xs text-gray-400">
+          Property
+        </div>
+
+        <div
+          id="editPropertyName"
+          class="font-semibold mt-1">
+          —
+        </div>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Property Name
+        </label>
+
+        <input
+          id="editName"
+          class="input mt-2"
+          required>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Category
+        </label>
+
+        <select
+          id="editCategory"
+          class="input mt-2"
+          required>
+
+          <option value="Hostel / PG">
+            Hostel / PG
+          </option>
+
+          <option value="Tiffin / Mess">
+            Tiffin / Mess
+          </option>
+
+          <option value="Library">
+            Library
+          </option>
+
+          <option value="Cafe">
+            Cafe
+          </option>
+
+          <option value="Book Store">
+            Book Store
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Area
+        </label>
+
+        <input
+          id="editArea"
+          class="input mt-2"
+          required>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Address
+        </label>
+
+        <textarea
+          id="editAddress"
+          class="input mt-2"
+          rows="3"
+          required></textarea>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Contact Phone
+        </label>
+
+        <input
+          id="editPhone"
+          class="input mt-2"
+          type="tel"
+          required>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Timing
+        </label>
+
+        <input
+          id="editTiming"
+          class="input mt-2">
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Facilities
+        </label>
+
+        <textarea
+          id="editFacilities"
+          class="input mt-2"
+          rows="4"></textarea>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Rating
+        </label>
+
+        <input
+          id="editRating"
+          class="input mt-2"
+          type="number"
+          min="0"
+          max="5"
+          step="0.1">
+
+      </div>
+
+
+      <div class="rounded-xl bg-blue-50
+                  border border-blue-100 p-4">
+
+        <div class="text-sm font-semibold text-blue-900">
+          Secure Edit Workflow
+        </div>
+
+        <div class="text-xs text-blue-700 mt-1">
+          Your requested changes will be sent for admin
+          review. Live property data will not be changed
+          directly from this dashboard.
+        </div>
+
+      </div>
+
+
+      <div class="flex gap-3 pt-2">
+
+        <button
+          type="submit"
+          class="btn-primary">
+
+          Send Edit Request
+
+        </button>
+
+        <button
+          type="button"
+          onclick="closeEditRequestModal()"
+          class="btn-secondary">
+
+          Cancel
+
+        </button>
+
+      </div>
+
+
+      <div
+        id="editRequestMessage"
+        class="hidden text-sm">
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
 <script>
+
 /* =========================================================
-   SUPABASE
+   SUPABASE CONFIG
 ========================================================= */
 
 const SUPABASE_URL =
   "https://idurlccrarznnnqixxsd.supabase.co";
 
-/*
-  IMPORTANT:
-  Put your existing Supabase ANON key here.
-  Never put service_role key in frontend.
-*/
 const SUPABASE_ANON_KEY =
-  "YOUR_EXISTING_SUPABASE_ANON_KEY";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
 const supabaseClient =
   supabase.createClient(
@@ -1186,6 +2001,36 @@ const supabaseClient =
 
 let currentUser = null;
 let currentProfile = null;
+let currentRole = null;
+
+let ownerRequests = [];
+let ownerLiveProperties = [];
+
+
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+const PROPERTY_TABLES = [
+  "hostels",
+  "tiffins",
+  "libraries",
+  "cafes",
+  "bookstores"
+];
+
+
+const PROPERTY_COLUMNS = `
+  id,
+  name,
+  category,
+  area,
+  address,
+  phone,
+  timing,
+  facilities,
+  rating
+`;
 
 
 /* =========================================================
@@ -1198,76 +2043,245 @@ function $(id) {
 
 
 function normalizePhone(value) {
+
   return String(value || "")
     .replace(/\D/g, "")
     .slice(-10);
+
 }
 
 
-function capitalize(value) {
-  return String(value || "")
-    .charAt(0)
-    .toUpperCase() +
-    String(value || "").slice(1);
+function escapeHTML(value) {
+
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
 }
 
+
+function formatRole(role) {
+
+  const value =
+    String(role || "")
+      .toLowerCase()
+      .trim();
+
+  if (value === "student") return "Student";
+  if (value === "owner") return "Owner";
+  if (value === "admin") return "Admin";
+
+  return value || "Unknown";
+
+}
+
+
+function formatCategory(value) {
+
+  const category =
+    String(value || "")
+      .toLowerCase()
+      .trim();
+
+  if (
+    category.includes("hostel") ||
+    category.includes("pg")
+  ) {
+    return "Hostel / PG";
+  }
+
+  if (
+    category.includes("tiffin") ||
+    category.includes("mess")
+  ) {
+    return "Tiffin / Mess";
+  }
+
+  if (category.includes("library")) {
+    return "Library";
+  }
+
+  if (category.includes("cafe")) {
+    return "Cafe";
+  }
+
+  if (
+    category.includes("book") ||
+    category.includes("store")
+  ) {
+    return "Book Store";
+  }
+
+  return value || "Service";
+
+}
+
+
+function statusBadge(status) {
+
+  const value =
+    String(status || "pending")
+      .toLowerCase()
+      .trim();
+
+
+  if (value === "approved") {
+
+    return `
+      <span class="badge badge-approved">
+        🟢 Approved
+      </span>
+    `;
+
+  }
+
+
+  if (value === "rejected") {
+
+    return `
+      <span class="badge badge-rejected">
+        🔴 Rejected
+      </span>
+    `;
+
+  }
+
+
+  return `
+    <span class="badge badge-pending">
+      🟡 Pending
+    </span>
+  `;
+
+}
+
+
+function getPropertyIcon(table) {
+
+  const icons = {
+    hostels: "🏠",
+    tiffins: "🍱",
+    libraries: "📚",
+    cafes: "☕",
+    bookstores: "📖"
+  };
+
+  return icons[table] || "●";
+
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
 
 function showSection(section) {
 
   document
     .querySelectorAll(".dashboard-section")
-    .forEach(el => el.classList.add("hidden"));
+    .forEach(sectionElement => {
+
+      sectionElement.classList.add("hidden");
+
+    });
+
 
   const target =
     $("section-" + section);
 
-  if (target) {
-    target.classList.remove("hidden");
-  }
+
+  if (!target) return;
+
+
+  target.classList.remove("hidden");
+
 
   document
     .querySelectorAll(".nav-item")
-    .forEach(el => {
-      el.classList.remove("active");
+    .forEach(button => {
 
-      if (el.dataset.section === section) {
-        el.classList.add("active");
+      button.classList.remove("active");
+
+      if (
+        button.dataset.section === section
+      ) {
+
+        button.classList.add("active");
+
       }
+
     });
 
+
   const titles = {
+
     overview: "Overview",
+
     profile: "My Profile",
-    services: "Find Services",
+
+    services: "Find / Explore Services",
+
     reviews: "My Reviews",
+
     activity: "My Activity",
-    owner: "Owner Centre",
+
+    ownerCentre: "Owner Centre",
+
     addListing: "Add Listing",
+
     requests: "My Requests",
+
     liveProperties: "Live Properties",
+
     ownerReviews: "Owner Reviews"
+
   };
+
 
   $("pageTitle").textContent =
     titles[section] || "Dashboard";
 
+
   closeMobileSidebar();
 
+
   if (section === "reviews") {
+
     loadStudentReviews();
+
   }
+
+
+  if (section === "activity") {
+
+    loadActivity();
+
+  }
+
 
   if (section === "requests") {
+
     loadOwnerRequests();
+
   }
+
 
   if (section === "liveProperties") {
+
     loadLiveProperties();
+
   }
 
+
   if (section === "ownerReviews") {
+
     loadOwnerReviews();
+
   }
+
 }
 
 
@@ -1275,10 +2289,35 @@ window.showSection = showSection;
 
 
 function goFinder(page) {
+
   window.location.href = page;
+
 }
 
+
 window.goFinder = goFinder;
+
+
+/* =========================================================
+   NAV BUTTONS
+========================================================= */
+
+document
+  .querySelectorAll("[data-section]")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        showSection(
+          button.dataset.section
+        );
+
+      }
+    );
+
+  });
 
 
 /* =========================================================
@@ -1286,192 +2325,230 @@ window.goFinder = goFinder;
 ========================================================= */
 
 function openMobileSidebar() {
-  $("sidebar").classList.add("open");
-  $("sidebarOverlay").classList.remove("hidden");
+
+  $("sidebar")
+    .classList
+    .add("open");
+
+  $("sidebarOverlay")
+    .classList
+    .remove("hidden");
+
 }
 
 
 function closeMobileSidebar() {
-  $("sidebar").classList.remove("open");
-  $("sidebarOverlay").classList.add("hidden");
+
+  $("sidebar")
+    .classList
+    .remove("open");
+
+  $("sidebarOverlay")
+    .classList
+    .add("hidden");
+
 }
 
 
-$("menuBtn").addEventListener(
-  "click",
-  openMobileSidebar
-);
-
-$("sidebarOverlay").addEventListener(
-  "click",
-  closeMobileSidebar
-);
+$("mobileMenuBtn")
+  .addEventListener(
+    "click",
+    openMobileSidebar
+  );
 
 
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-document
-  .querySelectorAll(".nav-item")
-  .forEach(button => {
-
-    if (!button.dataset.section) return;
-
-    button.addEventListener(
-      "click",
-      () => showSection(button.dataset.section)
-    );
-
-  });
+$("sidebarOverlay")
+  .addEventListener(
+    "click",
+    closeMobileSidebar
+  );
 
 
 /* =========================================================
-   AUTH
+   LOAD AUTH + PROFILE
 ========================================================= */
 
-async function loadDashboard() {
+async function initializeDashboard() {
 
   const {
     data: {
       session
-    }
-  } = await supabaseClient.auth.getSession();
+    },
+    error: sessionError
+  } =
+    await supabaseClient
+      .auth
+      .getSession();
 
 
-  if (!session || !session.user) {
+  if (
+    sessionError ||
+    !session ||
+    !session.user
+  ) {
 
     window.location.href =
       "login.html";
 
     return;
+
   }
 
 
-  currentUser = session.user;
+  currentUser =
+    session.user;
 
-
-  /*
-    IMPORTANT:
-    Role comes ONLY from profiles.role.
-    No localStorage role.
-    No hardcoded owner.
-  */
 
   const {
     data: profile,
     error
-  } = await supabaseClient
-    .from("profiles")
-    .select(`
-      id,
-      full_name,
-      phone,
-      email,
-      address,
-      role
-    `)
-    .eq("id", currentUser.id)
-    .maybeSingle();
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select(`
+        id,
+        full_name,
+        phone,
+        email,
+        address,
+        role
+      `)
+      .eq(
+        "id",
+        currentUser.id
+      )
+      .maybeSingle();
 
 
   if (error) {
 
     console.error(error);
 
-    alert(
+    showFatalError(
       "Unable to load your profile."
     );
 
     return;
+
   }
-
-
-  if (!profile || !profile.role) {
-
-    document.body.innerHTML = `
-      <div class="min-h-screen flex items-center justify-center p-6">
-        <div class="max-w-md w-full bg-white border border-gray-200
-                    rounded-2xl p-8 text-center">
-          <div class="text-4xl mb-4">⚠</div>
-          <h2 class="text-xl font-bold">
-            Account Role Not Available
-          </h2>
-          <p class="text-gray-500 mt-3">
-            Your account role could not be verified.
-            Please contact the administrator.
-          </p>
-        </div>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  currentProfile = profile;
-
-
-  const role =
-    String(profile.role)
-      .trim()
-      .toLowerCase();
 
 
   /*
-    ADMIN IS NEVER SHOWN IN USER DASHBOARD.
+    Role is ALWAYS taken from Supabase.
+    No localStorage role.
+    No hardcoded owner.
   */
 
-  if (role === "admin" ||
-      role === "director" ||
-      role === "director_admin") {
+  if (
+    !profile ||
+    !profile.role
+  ) {
+
+    showFatalError(
+      "Your account role could not be verified. Please contact the administrator."
+    );
+
+    return;
+
+  }
+
+
+  currentProfile =
+    profile;
+
+
+  currentRole =
+    String(profile.role)
+      .toLowerCase()
+      .trim();
+
+
+  /*
+    Admin has separate dashboard.
+  */
+
+  if (
+    currentRole === "admin" ||
+    currentRole === "director" ||
+    currentRole === "director_admin"
+  ) {
 
     window.location.href =
       "admin-dashboard.html";
 
     return;
+
   }
 
+
+  /*
+    Only Student / Owner.
+  */
 
   if (
-    role !== "student" &&
-    role !== "owner"
+    currentRole !== "student" &&
+    currentRole !== "owner"
   ) {
 
-    document.body.innerHTML = `
-      <div class="min-h-screen flex items-center justify-center p-6">
-        <div class="max-w-md w-full bg-white border border-gray-200
-                    rounded-2xl p-8 text-center">
-          <h2 class="text-xl font-bold">
-            Invalid Account Role
-          </h2>
-          <p class="text-gray-500 mt-3">
-            Please contact the administrator.
-          </p>
-        </div>
-      </div>
-    `;
+    showFatalError(
+      "This account does not have a valid dashboard role."
+    );
 
     return;
+
   }
 
 
-  applyProfile(profile, role);
+  applyProfileUI();
 
 
-  if (role === "owner") {
+  if (currentRole === "owner") {
 
     enableOwnerMode();
 
-    await loadOwnerStats();
+    await loadOwnerDashboard();
 
   } else {
 
     enableStudentMode();
 
-    await loadStudentStats();
+    await loadStudentDashboard();
 
   }
+
+
+  setupRealtime();
+
+}
+
+
+function showFatalError(message) {
+
+  document.body.innerHTML = `
+
+    <div class="min-h-screen flex items-center
+                justify-center p-6 bg-[#f5f7fb]">
+
+      <div class="card max-w-md w-full p-8 text-center">
+
+        <div class="text-4xl mb-4">
+          ⚠
+        </div>
+
+        <h2 class="text-xl font-bold">
+          Dashboard Access Error
+        </h2>
+
+        <p class="text-gray-500 mt-3">
+          ${escapeHTML(message)}
+        </p>
+
+      </div>
+
+    </div>
+
+  `;
+
 }
 
 
@@ -1479,10 +2556,10 @@ async function loadDashboard() {
    PROFILE UI
 ========================================================= */
 
-function applyProfile(profile, role) {
+function applyProfileUI() {
 
   const name =
-    profile.full_name ||
+    currentProfile.full_name ||
     currentUser.email?.split("@")[0] ||
     "User";
 
@@ -1494,9 +2571,9 @@ function applyProfile(profile, role) {
     name;
 
   $("topUserRole").textContent =
-    capitalize(role);
+    formatRole(currentRole);
 
-  $("userInitial").textContent =
+  $("userAvatar").textContent =
     name
       .trim()
       .charAt(0)
@@ -1504,51 +2581,52 @@ function applyProfile(profile, role) {
 
 
   $("summaryName").textContent =
-    profile.full_name || "—";
+    currentProfile.full_name || "—";
 
   $("summaryEmail").textContent =
-    profile.email ||
+    currentProfile.email ||
     currentUser.email ||
     "—";
 
   $("summaryPhone").textContent =
-    profile.phone || "—";
+    currentProfile.phone || "—";
 
   $("summaryAddress").textContent =
-    profile.address || "—";
+    currentProfile.address || "—";
 
 
   $("profileName").value =
-    profile.full_name || "";
+    currentProfile.full_name || "";
 
   $("profilePhone").value =
-    profile.phone || "";
+    currentProfile.phone || "";
 
   $("profileEmail").value =
-    profile.email ||
+    currentProfile.email ||
     currentUser.email ||
     "";
 
   $("profileRole").value =
-    capitalize(role);
+    formatRole(currentRole);
 
   $("profileAddress").value =
-    profile.address || "";
+    currentProfile.address || "";
 
 
-  $("ownerName").textContent =
-    profile.full_name || "—";
+  $("ownerCentreName").textContent =
+    currentProfile.full_name || "—";
 
-  $("ownerPhone").textContent =
-    profile.phone || "—";
+  $("ownerCentrePhone").textContent =
+    currentProfile.phone || "—";
 
-  $("ownerEmail").textContent =
-    profile.email ||
+  $("ownerCentreEmail").textContent =
+    currentProfile.email ||
     currentUser.email ||
     "—";
 
-  $("ownerAddress").textContent =
-    profile.address || "";
+  $("ownerCentreAddress").textContent =
+    currentProfile.address || "";
+
 }
 
 
@@ -1558,19 +2636,30 @@ function applyProfile(profile, role) {
 
 function enableStudentMode() {
 
-  $("ownerNav").classList.add("hidden");
+  $("ownerNavigation")
+    .classList
+    .add("hidden");
 
-  $("ownerStats").classList.add("hidden");
-  $("ownerStats").classList.remove("grid");
 
-  $("studentStats").classList.remove("hidden");
-  $("studentStats").classList.add("grid");
+  $("studentStats")
+    .classList
+    .remove("hidden");
 
-  document
-    .querySelectorAll("#ownerNav button")
-    .forEach(btn => {
-      btn.disabled = true;
-    });
+
+  $("studentStats")
+    .classList
+    .add("grid");
+
+
+  $("ownerStats")
+    .classList
+    .add("hidden");
+
+
+  $("ownerStats")
+    .classList
+    .remove("grid");
+
 }
 
 
@@ -1580,39 +2669,387 @@ function enableStudentMode() {
 
 function enableOwnerMode() {
 
-  $("ownerNav").classList.remove("hidden");
+  $("ownerNavigation")
+    .classList
+    .remove("hidden");
 
-  $("studentStats").classList.add("hidden");
-  $("studentStats").classList.remove("grid");
 
-  $("ownerStats").classList.remove("hidden");
-  $("ownerStats").classList.add("grid");
+  $("studentStats")
+    .classList
+    .add("hidden");
+
+
+  $("studentStats")
+    .classList
+    .remove("grid");
+
+
+  $("ownerStats")
+    .classList
+    .remove("hidden");
+
+
+  $("ownerStats")
+    .classList
+    .add("grid");
+
 }
 
 
 /* =========================================================
-   STUDENT STATS
+   STUDENT DASHBOARD
 ========================================================= */
 
-async function loadStudentStats() {
+async function loadStudentDashboard() {
+
+  await loadStudentReviewCount();
+
+  await loadStudentReviews();
+
+}
+
+
+/* =========================================================
+   STUDENT REVIEW COUNT
+========================================================= */
+
+async function loadStudentReviewCount() {
 
   const {
     count,
     error
-  } = await supabaseClient
-    .from("reviews")
-    .select("*", {
-      count: "exact",
-      head: true
-    })
-    .eq("student_id", currentUser.id);
+  } =
+    await supabaseClient
+      .from("reviews")
+      .select(
+        "id",
+        {
+          count: "exact",
+          head: true
+        }
+      )
+      .eq(
+        "student_id",
+        currentUser.id
+      );
 
 
-  if (!error) {
+  if (error) {
 
-    $("reviewCount").textContent =
-      count || 0;
+    console.error(error);
+
+    return;
+
   }
+
+
+  $("studentReviewCount").textContent =
+    count || 0;
+
+}
+
+
+/* =========================================================
+   STUDENT REVIEWS
+========================================================= */
+
+async function loadStudentReviews() {
+
+  const container =
+    $("studentReviewsContainer");
+
+
+  container.innerHTML = `
+
+    <div class="card empty-state">
+      Loading reviews...
+    </div>
+
+  `;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("reviews")
+      .select(`
+        id,
+        property_id,
+        rating,
+        review_text,
+        status,
+        created_at
+      `)
+      .eq(
+        "student_id",
+        currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (error) {
+
+    console.error(error);
+
+    container.innerHTML = `
+
+      <div class="card p-6 text-red-600">
+        Unable to load your reviews.
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  if (!data?.length) {
+
+    container.innerHTML = `
+
+      <div class="card empty-state">
+
+        <div class="text-4xl mb-4">
+          ★
+        </div>
+
+        <h3 class="font-bold text-gray-800">
+          No Reviews Yet
+        </h3>
+
+        <p class="mt-2">
+          Reviews you submit will appear here.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  container.innerHTML =
+    data.map(review => `
+
+      <div class="card p-5">
+
+        <div class="flex flex-col
+                    sm:flex-row
+                    sm:items-center
+                    sm:justify-between
+                    gap-3">
+
+          <div>
+
+            <div class="text-xs text-gray-400">
+              Property
+            </div>
+
+            <div class="font-bold mt-1">
+              ${escapeHTML(
+                review.property_id || "—"
+              )}
+            </div>
+
+          </div>
+
+
+          <div class="flex items-center gap-3">
+
+            <div class="font-semibold">
+              ★ ${escapeHTML(
+                review.rating ?? "—"
+              )}
+            </div>
+
+            ${statusBadge(review.status)}
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="mt-4 rounded-xl
+                 bg-gray-50 p-4">
+
+          <div class="text-sm text-gray-700">
+            ${escapeHTML(
+              review.review_text || ""
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="text-xs text-gray-400 mt-4">
+
+          ${
+            review.created_at
+              ? new Date(
+                  review.created_at
+                ).toLocaleDateString()
+              : ""
+          }
+
+        </div>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+/* =========================================================
+   ACTIVITY
+========================================================= */
+
+async function loadActivity() {
+
+  const container =
+    $("activityContainer");
+
+
+  container.innerHTML = `
+
+    <div class="card p-6 text-gray-400">
+      Loading activity...
+    </div>
+
+  `;
+
+
+  const {
+    data: reviews,
+    error
+  } =
+    await supabaseClient
+      .from("reviews")
+      .select(`
+        id,
+        property_id,
+        rating,
+        review_text,
+        created_at
+      `)
+      .eq(
+        "student_id",
+        currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      )
+      .limit(10);
+
+
+  if (error) {
+
+    console.error(error);
+
+    container.innerHTML = `
+
+      <div class="card p-6 text-red-600">
+        Unable to load recent activity.
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  if (!reviews?.length) {
+
+    container.innerHTML = `
+
+      <div class="card empty-state">
+
+        <div class="text-4xl mb-4">
+          ↗
+        </div>
+
+        <h3 class="font-bold text-gray-800">
+          No Recent Activity
+        </h3>
+
+        <p class="mt-2">
+          Your recent reviews will appear here.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  container.innerHTML = reviews.map(
+    review => `
+
+      <div class="card p-5 flex gap-4">
+
+        <div
+          class="w-10 h-10 rounded-full
+                 bg-gray-100 flex-shrink-0
+                 flex items-center justify-center">
+
+          ★
+
+        </div>
+
+
+        <div class="flex-1">
+
+          <div class="font-semibold">
+            You reviewed property
+            ${escapeHTML(
+              review.property_id || "—"
+            )}
+          </div>
+
+          <div class="text-sm text-gray-500 mt-1">
+            Rating:
+            ${escapeHTML(
+              review.rating ?? "—"
+            )} / 5
+          </div>
+
+          <div class="text-xs text-gray-400 mt-2">
+
+            ${
+              review.created_at
+                ? new Date(
+                    review.created_at
+                  ).toLocaleString()
+                : ""
+            }
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `
+  ).join("");
+
 }
 
 
@@ -1623,9 +3060,9 @@ async function loadStudentStats() {
 $("profileForm")
   .addEventListener(
     "submit",
-    async e => {
+    async event => {
 
-      e.preventDefault();
+      event.preventDefault();
 
 
       const message =
@@ -1646,23 +3083,33 @@ $("profileForm")
       const updates = {
 
         full_name:
-          $("profileName").value.trim(),
+          $("profileName")
+            .value
+            .trim(),
 
         phone:
-          $("profilePhone").value.trim(),
+          $("profilePhone")
+            .value
+            .trim(),
 
         address:
-          $("profileAddress").value.trim()
+          $("profileAddress")
+            .value
+            .trim()
 
       };
 
 
       const {
         error
-      } = await supabaseClient
-        .from("profiles")
-        .update(updates)
-        .eq("id", currentUser.id);
+      } =
+        await supabaseClient
+          .from("profiles")
+          .update(updates)
+          .eq(
+            "id",
+            currentUser.id
+          );
 
 
       if (error) {
@@ -1676,6 +3123,7 @@ $("profileForm")
           "Unable to update profile.";
 
         return;
+
       }
 
 
@@ -1685,11 +3133,7 @@ $("profileForm")
       };
 
 
-      applyProfile(
-        currentProfile,
-        String(currentProfile.role)
-          .toLowerCase()
-      );
+      applyProfileUI();
 
 
       message.className =
@@ -1697,224 +3141,31 @@ $("profileForm")
 
       message.textContent =
         "Profile updated successfully.";
+
     }
   );
 
 
 /* =========================================================
-   STUDENT REVIEWS
+   OWNER DASHBOARD
 ========================================================= */
 
-async function loadStudentReviews() {
+async function loadOwnerDashboard() {
 
-  const container =
-    $("reviewsContainer");
+  await loadOwnerRequests();
 
-
-  container.innerHTML = `
-    <div class="content-card p-6 text-gray-400">
-      Loading reviews...
-    </div>
-  `;
-
-
-  const {
-    data,
-    error
-  } = await supabaseClient
-    .from("reviews")
-    .select(`
-      id,
-      property_id,
-      rating,
-      review_text,
-      status,
-      created_at
-    `)
-    .eq("student_id", currentUser.id)
-    .order("created_at", {
-      ascending: false
-    });
-
-
-  if (error) {
-
-    console.error(error);
-
-    container.innerHTML = `
-      <div class="content-card p-6 text-red-500">
-        Unable to load reviews.
-      </div>
-    `;
-
-    return;
-  }
-
-
-  if (!data || !data.length) {
-
-    container.innerHTML = `
-      <div class="content-card p-10 text-center">
-        <div class="text-4xl mb-3">★</div>
-        <h3 class="font-bold">
-          No Reviews Yet
-        </h3>
-        <p class="text-gray-400 mt-2">
-          Your submitted reviews will appear here.
-        </p>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  container.innerHTML =
-    data.map(review => `
-
-      <div class="content-card p-5">
-
-        <div class="flex flex-col md:flex-row
-                    md:items-center md:justify-between gap-3">
-
-          <div>
-
-            <div class="text-sm text-gray-400">
-              Property ID
-            </div>
-
-            <div class="font-semibold">
-              ${escapeHTML(review.property_id || "—")}
-            </div>
-
-          </div>
-
-
-          <div class="flex items-center gap-4">
-
-            <div class="font-semibold">
-              ${"★".repeat(
-                Math.max(
-                  0,
-                  Math.min(
-                    5,
-                    Number(review.rating) || 0
-                  )
-                )
-              )}
-            </div>
-
-            <span class="text-xs px-3 py-1 rounded-full
-                         bg-gray-100">
-              ${escapeHTML(review.status || "Pending")}
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <p class="text-gray-600 mt-4">
-          ${escapeHTML(
-            review.review_text || ""
-          )}
-        </p>
-
-
-        <div class="text-xs text-gray-400 mt-4">
-          ${review.created_at
-            ? new Date(review.created_at)
-                .toLocaleDateString()
-            : ""}
-        </div>
-
-      </div>
-
-    `).join("");
-}
-
-
-/* =========================================================
-   OWNER STATS
-========================================================= */
-
-async function loadOwnerStats() {
-
-  /*
-    Requests
-  */
-
-  const {
-    data: requests
-  } = await supabaseClient
-    .from("listing_requests")
-    .select("id,status")
-    .eq("owner_id", currentUser.id);
-
-
-  $("ownerListingCount").textContent =
-    requests?.filter(
-      r => String(r.status || "").toLowerCase() === "approved"
-    ).length || 0;
-
-
-  $("ownerPendingCount").textContent =
-    requests?.filter(
-      r => String(r.status || "").toLowerCase() === "pending"
-    ).length || 0;
-
-
-  /*
-    Live properties are loaded separately
-    because property tables are different.
-  */
-
-  const live =
+  ownerLiveProperties =
     await getOwnerLiveProperties();
 
+  updateOwnerStats();
 
-  $("ownerLiveCount").textContent =
-    live.length;
+  updateOwnerCentre();
 
-
-  /*
-    Owner reviews
-  */
-
-  const properties =
-    live.map(p => String(p.id));
-
-
-  if (!properties.length) {
-
-    $("ownerReviewCount").textContent =
-      "0";
-
-    return;
-  }
-
-
-  const {
-    count
-  } = await supabaseClient
-    .from("reviews")
-    .select("*", {
-      count: "exact",
-      head: true
-    })
-    .in(
-      "property_id",
-      properties
-    );
-
-
-  $("ownerReviewCount").textContent =
-    count || 0;
 }
 
 
 /* =========================================================
-   OWNER REQUESTS
+   OWNER REQUEST DATA
 ========================================================= */
 
 async function loadOwnerRequests() {
@@ -1924,159 +3175,229 @@ async function loadOwnerRequests() {
 
 
   container.innerHTML = `
-    <div class="content-card p-6 text-gray-400">
+
+    <div class="card empty-state">
       Loading requests...
     </div>
+
   `;
 
 
   const {
     data,
     error
-  } = await supabaseClient
-    .from("listing_requests")
-    .select(`
-      id,
-      name,
-      category,
-      area,
-      address,
-      phone,
-      timing,
-      facilities,
-      image,
-      rating,
-      status,
-      admin_note,
-      created_at,
-      updated_at
-    `)
-    .eq("owner_id", currentUser.id)
-    .order("created_at", {
-      ascending: false
-    });
+  } =
+    await supabaseClient
+      .from("listing_requests")
+      .select(`
+        id,
+        name,
+        category,
+        area,
+        address,
+        phone,
+        timing,
+        facilities,
+        image,
+        rating,
+        status,
+        admin_note,
+        created_at,
+        updated_at
+      `)
+      .eq(
+        "owner_id",
+        currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
 
 
   if (error) {
 
     console.error(error);
 
+    ownerRequests = [];
+
+
     container.innerHTML = `
-      <div class="content-card p-6 text-red-500">
-        Unable to load requests.
+
+      <div class="card p-6 text-red-600">
+        Unable to load your listing requests.
       </div>
+
     `;
 
     return;
+
   }
 
 
-  if (!data?.length) {
+  ownerRequests =
+    data || [];
+
+
+  updateOwnerStats();
+
+  updateOwnerCentre();
+
+
+  if (!ownerRequests.length) {
 
     container.innerHTML = `
-      <div class="content-card p-10 text-center">
-        <div class="text-4xl mb-3">◷</div>
-        <h3 class="font-bold">
+
+      <div class="card empty-state">
+
+        <div class="text-4xl mb-4">
+          ◷
+        </div>
+
+        <h3 class="font-bold text-gray-800">
           No Requests Yet
         </h3>
-        <p class="text-gray-400 mt-2">
-          Your listing requests will appear here.
+
+        <p class="mt-2">
+          Your submitted listing requests will appear here.
         </p>
+
       </div>
+
     `;
 
     return;
+
   }
 
 
   container.innerHTML =
-    data.map(request => {
+    ownerRequests.map(
+      request =>
+        renderOwnerRequest(request)
+    ).join("");
 
-      const status =
-        String(request.status || "pending")
-          .toLowerCase();
-
-
-      const statusClass =
-        status === "approved"
-          ? "bg-green-50 text-green-700"
-          : status === "rejected"
-            ? "bg-red-50 text-red-700"
-            : "bg-yellow-50 text-yellow-700";
+}
 
 
-      return `
+/* =========================================================
+   OWNER REQUEST CARD
+========================================================= */
 
-        <div class="content-card p-6">
+function renderOwnerRequest(request) {
 
-          <div class="flex flex-col md:flex-row
-                      md:items-start md:justify-between gap-4">
-
-            <div>
-
-              <h3 class="font-bold text-lg">
-                ${escapeHTML(request.name || "Unnamed Property")}
-              </h3>
-
-              <div class="text-sm text-gray-400 mt-1">
-                ${escapeHTML(request.category || "—")}
-                ·
-                ${escapeHTML(request.area || "—")}
-              </div>
-
-            </div>
+  const status =
+    String(request.status || "pending")
+      .toLowerCase();
 
 
-            <span class="px-3 py-1 rounded-full text-xs
-                         font-semibold ${statusClass}">
-              ${capitalize(status)}
-            </span>
+  return `
 
-          </div>
+    <div class="card p-6">
 
+      <div
+        class="flex flex-col
+               md:flex-row
+               md:items-start
+               md:justify-between
+               gap-4">
 
-          <div class="grid grid-cols-1 md:grid-cols-2
-                      gap-4 mt-5 text-sm">
+        <div>
 
-            <div>
-              <span class="text-gray-400">
-                Address
-              </span>
-              <div class="font-medium mt-1">
-                ${escapeHTML(request.address || "—")}
-              </div>
-            </div>
+          <h3 class="font-bold text-lg">
+            ${escapeHTML(
+              request.name || "Unnamed Property"
+            )}
+          </h3>
 
-            <div>
-              <span class="text-gray-400">
-                Phone
-              </span>
-              <div class="font-medium mt-1">
-                ${escapeHTML(request.phone || "—")}
-              </div>
-            </div>
+          <div class="text-sm text-gray-400 mt-1">
+
+            ${escapeHTML(
+              formatCategory(request.category)
+            )}
+
+            <span class="mx-1">•</span>
+
+            ${escapeHTML(
+              request.area || "Area not provided"
+            )}
 
           </div>
 
-
-          ${
-            request.admin_note
-              ? `
-                <div class="mt-5 p-4 rounded-xl bg-gray-50">
-                  <div class="text-xs text-gray-400">
-                    Admin Note
-                  </div>
-                  <div class="text-sm mt-1">
-                    ${escapeHTML(request.admin_note)}
-                  </div>
-                </div>
-              `
-              : ""
-          }
+        </div>
 
 
-          <div class="text-xs text-gray-400 mt-5">
-            Submitted:
+        <div>
+          ${statusBadge(status)}
+        </div>
+
+      </div>
+
+
+      <!-- APPROVAL TIMELINE -->
+
+      <div class="mt-7">
+
+        <div class="text-sm font-bold mb-5">
+          Listing Approval Status
+        </div>
+
+
+        <div class="space-y-5">
+
+          ${renderTimeline(request)}
+
+        </div>
+
+      </div>
+
+
+      <!-- PROPERTY DETAILS -->
+
+      <div
+        class="grid grid-cols-1 md:grid-cols-2
+               gap-4 mt-7 pt-6
+               border-t border-gray-100">
+
+        <div>
+
+          <div class="text-xs text-gray-400">
+            Address
+          </div>
+
+          <div class="text-sm font-medium mt-1">
+            ${escapeHTML(
+              request.address || "—"
+            )}
+          </div>
+
+        </div>
+
+
+        <div>
+
+          <div class="text-xs text-gray-400">
+            Phone
+          </div>
+
+          <div class="text-sm font-medium mt-1">
+            ${escapeHTML(
+              request.phone || "—"
+            )}
+          </div>
+
+        </div>
+
+
+        <div>
+
+          <div class="text-xs text-gray-400">
+            Submitted
+          </div>
+
+          <div class="text-sm font-medium mt-1">
             ${
               request.created_at
                 ? new Date(
@@ -2088,8 +3409,294 @@ async function loadOwnerRequests() {
 
         </div>
 
-      `;
-    }).join("");
+
+        <div>
+
+          <div class="text-xs text-gray-400">
+            Timing
+          </div>
+
+          <div class="text-sm font-medium mt-1">
+            ${escapeHTML(
+              request.timing || "—"
+            )}
+          </div>
+
+        </div>
+
+      </div>
+
+
+      ${
+        request.admin_note
+          ? `
+
+            <div
+              class="mt-5 rounded-xl
+                     bg-blue-50
+                     border border-blue-100
+                     p-4">
+
+              <div
+                class="text-xs
+                       font-bold
+                       text-blue-700">
+
+                📝 Admin Note
+
+              </div>
+
+              <div
+                class="text-sm
+                       text-blue-900
+                       mt-1">
+
+                ${escapeHTML(
+                  request.admin_note
+                )}
+
+              </div>
+
+            </div>
+
+          `
+          : ""
+      }
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   APPROVAL TIMELINE
+========================================================= */
+
+function renderTimeline(request) {
+
+  const status =
+    String(request.status || "pending")
+      .toLowerCase();
+
+
+  let reviewActive =
+    status === "approved" ||
+    status === "rejected";
+
+
+  return `
+
+    <div class="timeline-item relative pl-8">
+
+      <div
+        class="absolute left-0 top-1
+               w-6 h-6 rounded-full
+               bg-[#0b1730]
+               text-white text-xs
+               flex items-center justify-center
+               z-10">
+
+        ✓
+
+      </div>
+
+      <div class="timeline-line"></div>
+
+      <div>
+
+        <div class="font-semibold text-sm">
+          Submitted
+        </div>
+
+        <div class="text-xs text-gray-400 mt-1">
+
+          ${
+            request.created_at
+              ? new Date(
+                  request.created_at
+                ).toLocaleDateString()
+              : "Request submitted"
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="timeline-item relative pl-8">
+
+      <div
+        class="absolute left-0 top-1
+               w-6 h-6 rounded-full
+               ${
+                 reviewActive
+                   ? "bg-[#0b1730] text-white"
+                   : "bg-gray-200 text-gray-400"
+               }
+               text-xs
+               flex items-center justify-center
+               z-10">
+
+        ${reviewActive ? "✓" : "2"}
+
+      </div>
+
+      <div class="timeline-line"></div>
+
+      <div>
+
+        <div class="font-semibold text-sm">
+          Under Review
+        </div>
+
+        <div class="text-xs text-gray-400 mt-1">
+          Admin review stage
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="timeline-item relative pl-8">
+
+      <div
+        class="absolute left-0 top-1
+               w-6 h-6 rounded-full
+               ${
+                 status === "approved"
+                   ? "bg-green-600 text-white"
+                   : status === "rejected"
+                     ? "bg-red-600 text-white"
+                     : "bg-gray-200 text-gray-400"
+               }
+               text-xs
+               flex items-center justify-center
+               z-10">
+
+        ${
+          status === "approved"
+            ? "✓"
+            : status === "rejected"
+              ? "×"
+              : "3"
+        }
+
+      </div>
+
+      <div>
+
+        <div class="font-semibold text-sm">
+
+          ${
+            status === "rejected"
+              ? "Rejected"
+              : "Approved"
+          }
+
+        </div>
+
+        <div class="text-xs text-gray-400 mt-1">
+
+          ${
+            status === "approved"
+              ? "Property approved and eligible to go live."
+              : status === "rejected"
+                ? "Request was rejected by admin."
+                : "Waiting for admin decision."
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   OWNER STATS
+========================================================= */
+
+function updateOwnerStats() {
+
+  const pending =
+    ownerRequests.filter(
+      item =>
+        String(item.status || "")
+          .toLowerCase() === "pending"
+    ).length;
+
+
+  const approved =
+    ownerRequests.filter(
+      item =>
+        String(item.status || "")
+          .toLowerCase() === "approved"
+    ).length;
+
+
+  const rejected =
+    ownerRequests.filter(
+      item =>
+        String(item.status || "")
+          .toLowerCase() === "rejected"
+    ).length;
+
+
+  $("totalListings").textContent =
+    approved;
+
+
+  $("pendingRequests").textContent =
+    pending;
+
+
+  $("livePropertyCount").textContent =
+    ownerLiveProperties.length;
+
+
+  $("centrePending").textContent =
+    pending;
+
+
+  $("centreApproved").textContent =
+    approved;
+
+
+  $("centreRejected").textContent =
+    rejected;
+
+}
+
+
+/* =========================================================
+   OWNER CENTRE
+========================================================= */
+
+function updateOwnerCentre() {
+
+  $("ownerCentreName").textContent =
+    currentProfile.full_name || "—";
+
+  $("ownerCentrePhone").textContent =
+    currentProfile.phone || "—";
+
+  $("ownerCentreEmail").textContent =
+    currentProfile.email ||
+    currentUser.email ||
+    "—";
+
+  $("ownerCentreAddress").textContent =
+    currentProfile.address || "";
+
 }
 
 
@@ -2100,9 +3707,9 @@ async function loadOwnerRequests() {
 $("listingForm")
   .addEventListener(
     "submit",
-    async e => {
+    async event => {
 
-      e.preventDefault();
+      event.preventDefault();
 
 
       const message =
@@ -2132,25 +3739,46 @@ $("listingForm")
           currentProfile.phone || "",
 
         name:
-          $("listingName").value.trim(),
+          $("listingName")
+            .value
+            .trim(),
 
         category:
-          $("listingCategory").value,
+          $("listingCategory")
+            .value,
 
         area:
-          $("listingArea").value.trim(),
+          $("listingArea")
+            .value
+            .trim(),
 
         address:
-          $("listingAddress").value.trim(),
+          $("listingAddress")
+            .value
+            .trim(),
 
         phone:
-          $("listingPhone").value.trim(),
+          $("listingPhone")
+            .value
+            .trim(),
 
         timing:
-          $("listingTiming").value.trim(),
+          $("listingTiming")
+            .value
+            .trim(),
 
         facilities:
-          $("listingFacilities").value.trim(),
+          $("listingFacilities")
+            .value
+            .trim(),
+
+        image:
+          $("listingImage")
+            .value
+            .trim() || null,
+
+        rating:
+          null,
 
         status:
           "pending"
@@ -2160,9 +3788,10 @@ $("listingForm")
 
       const {
         error
-      } = await supabaseClient
-        .from("listing_requests")
-        .insert(payload);
+      } =
+        await supabaseClient
+          .from("listing_requests")
+          .insert(payload);
 
 
       if (error) {
@@ -2176,6 +3805,7 @@ $("listingForm")
           "Unable to submit listing request.";
 
         return;
+
       }
 
 
@@ -2188,40 +3818,22 @@ $("listingForm")
       message.textContent =
         "Listing request submitted successfully.";
 
+      await loadOwnerRequests();
+
     }
   );
 
 
 /* =========================================================
-   LIVE PROPERTY HELPERS
+   GET OWNER LIVE PROPERTIES
 ========================================================= */
-
-const PROPERTY_TABLES = [
-  "hostels",
-  "tiffins",
-  "libraries",
-  "cafes",
-  "bookstores"
-];
-
-
-const PROPERTY_COLUMNS = `
-  id,
-  name,
-  category,
-  area,
-  address,
-  phone,
-  timing,
-  facilities,
-  rating
-`;
-
 
 async function getOwnerLiveProperties() {
 
   if (!currentProfile?.phone) {
+
     return [];
+
   }
 
 
@@ -2231,7 +3843,14 @@ async function getOwnerLiveProperties() {
     );
 
 
-  const all = [];
+  if (!ownerPhone) {
+
+    return [];
+
+  }
+
+
+  const properties = [];
 
 
   for (
@@ -2241,33 +3860,46 @@ async function getOwnerLiveProperties() {
     const {
       data,
       error
-    } = await supabaseClient
-      .from(table)
-      .select(PROPERTY_COLUMNS);
+    } =
+      await supabaseClient
+        .from(table)
+        .select(
+          PROPERTY_COLUMNS
+        );
 
 
     if (error) {
 
+      /*
+        Some environments may not yet have
+        every table. Continue safely.
+      */
+
       console.warn(
-        "Property table:",
         table,
         error.message
       );
 
       continue;
+
     }
 
 
     (data || []).forEach(property => {
 
       if (
-        normalizePhone(property.phone) ===
-        ownerPhone
+        normalizePhone(
+          property.phone
+        ) === ownerPhone
       ) {
 
-        all.push({
+        properties.push({
+
           ...property,
-          property_table: table
+
+          property_table:
+            table
+
         });
 
       }
@@ -2277,12 +3909,13 @@ async function getOwnerLiveProperties() {
   }
 
 
-  return all;
+  return properties;
+
 }
 
 
 /* =========================================================
-   LIVE PROPERTIES UI
+   LIVE PROPERTIES
 ========================================================= */
 
 async function loadLiveProperties() {
@@ -2292,74 +3925,272 @@ async function loadLiveProperties() {
 
 
   container.innerHTML = `
-    <div class="content-card p-6 text-gray-400">
+
+    <div class="card empty-state">
       Loading live properties...
     </div>
+
   `;
 
 
-  const properties =
+  ownerLiveProperties =
     await getOwnerLiveProperties();
 
 
-  if (!properties.length) {
+  updateOwnerStats();
+
+
+  if (!ownerLiveProperties.length) {
 
     container.innerHTML = `
-      <div class="content-card p-10 text-center md:col-span-2 xl:col-span-3">
+
+      <div
+        class="card empty-state
+               md:col-span-2
+               xl:col-span-3">
 
         <div class="text-4xl mb-4">
           ●
         </div>
 
-        <h3 class="font-bold">
+        <h3 class="font-bold text-gray-800">
           No Live Properties
         </h3>
 
-        <p class="text-gray-400 mt-2">
-          Approved properties will appear here.
+        <p class="mt-2">
+          Approved properties matching your owner account
+          will appear here.
         </p>
 
       </div>
+
     `;
 
     return;
+
   }
 
 
   container.innerHTML =
-    properties.map(property => `
+    ownerLiveProperties
+      .map(
+        property =>
+          renderLivePropertyCard(property)
+      )
+      .join("");
 
-      <div class="content-card overflow-hidden">
+}
 
-        <div class="h-36 bg-[#0b1730]
-                    flex items-center justify-center">
 
-          <div class="text-white/80 text-4xl">
-            ${getPropertyIcon(property.property_table)}
+/* =========================================================
+   LIVE PROPERTY CARD
+========================================================= */
+
+function renderLivePropertyCard(property) {
+
+  const icon =
+    getPropertyIcon(
+      property.property_table
+    );
+
+
+  return `
+
+    <div class="card overflow-hidden">
+
+      <div class="property-banner
+                  flex items-center
+                  justify-center">
+
+        <div class="text-5xl">
+          ${icon}
+        </div>
+
+      </div>
+
+
+      <div class="p-5">
+
+        <div
+          class="flex items-start
+                 justify-between
+                 gap-3">
+
+          <div>
+
+            <h3 class="font-bold text-lg">
+              ${escapeHTML(
+                property.name || "Property"
+              )}
+            </h3>
+
+            <div class="text-sm text-gray-400 mt-1">
+              ${escapeHTML(
+                formatCategory(
+                  property.category
+                )
+              )}
+            </div>
+
+          </div>
+
+
+          <div
+            class="font-semibold text-sm
+                   whitespace-nowrap">
+
+            ★ ${escapeHTML(
+              property.rating ?? "—"
+            )}
+
           </div>
 
         </div>
 
 
-        <div class="p-5">
+        <div class="mt-4 space-y-2 text-sm">
 
-          <div class="flex items-start
-                      justify-between gap-3">
+          <div>
 
-            <div>
+            <span class="text-gray-400">
+              Area:
+            </span>
 
-              <h3 class="font-bold text-lg">
-                ${escapeHTML(property.name || "Property")}
-              </h3>
+            ${escapeHTML(
+              property.area || "—"
+            )}
 
-              <div class="text-sm text-gray-400 mt-1">
-                ${escapeHTML(property.category || "—")}
-              </div>
+          </div>
 
+
+          <div>
+
+            <span class="text-gray-400">
+              Address:
+            </span>
+
+            ${escapeHTML(
+              property.address || "—"
+            )}
+
+          </div>
+
+        </div>
+
+
+        <div class="flex gap-2 mt-5">
+
+          <button
+            onclick="viewProperty('${encodeURIComponent(
+              JSON.stringify(property)
+            )}')"
+            class="btn-primary flex-1">
+
+            View Details
+
+          </button>
+
+
+          <button
+            onclick="openEditRequest('${encodeURIComponent(
+              JSON.stringify(property)
+            )}')"
+            class="btn-secondary">
+
+            Request Edit
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   PROPERTY DETAILS
+========================================================= */
+
+window.viewProperty =
+  function(encodedProperty) {
+
+    const property =
+      JSON.parse(
+        decodeURIComponent(
+          encodedProperty
+        )
+      );
+
+
+    $("propertyModalTitle")
+      .textContent =
+      property.name || "Property";
+
+
+    $("propertyModalBody").innerHTML = `
+
+      <div class="space-y-5">
+
+        <div
+          class="rounded-2xl
+                 bg-[#0b1730]
+                 p-7 text-white
+                 text-center">
+
+          <div class="text-5xl mb-3">
+            ${getPropertyIcon(
+              property.property_table
+            )}
+          </div>
+
+          <h3 class="text-xl font-bold">
+            ${escapeHTML(
+              property.name || "Property"
+            )}
+          </h3>
+
+          <div class="text-white/60 text-sm mt-1">
+            ${escapeHTML(
+              formatCategory(
+                property.category
+              )
+            )}
+          </div>
+
+        </div>
+
+
+        <div
+          class="grid grid-cols-1 md:grid-cols-2
+                 gap-5">
+
+          <div>
+
+            <div class="text-xs text-gray-400">
+              Area
             </div>
 
+            <div class="font-semibold mt-1">
+              ${escapeHTML(
+                property.area || "—"
+              )}
+            </div>
 
-            <div class="text-sm font-semibold">
+          </div>
+
+
+          <div>
+
+            <div class="text-xs text-gray-400">
+              Rating
+            </div>
+
+            <div class="font-semibold mt-1">
               ★ ${escapeHTML(
                 property.rating ?? "—"
               )}
@@ -2368,89 +4199,408 @@ async function loadLiveProperties() {
           </div>
 
 
-          <div class="mt-4 space-y-2 text-sm">
+          <div>
 
-            <div>
-              <span class="text-gray-400">
-                Area:
-              </span>
-              ${escapeHTML(property.area || "—")}
+            <div class="text-xs text-gray-400">
+              Address
             </div>
 
-            <div>
-              <span class="text-gray-400">
-                Address:
-              </span>
-              ${escapeHTML(property.address || "—")}
+            <div class="font-semibold mt-1">
+              ${escapeHTML(
+                property.address || "—"
+              )}
             </div>
 
           </div>
 
 
-          <div class="flex gap-2 mt-5">
+          <div>
 
-            <button
-              onclick='viewProperty(${JSON.stringify(property)})'
-              class="flex-1 px-4 py-2.5 rounded-xl
-                     bg-[#0b1730] text-white text-sm
-                     font-semibold">
-              View Details
-            </button>
+            <div class="text-xs text-gray-400">
+              Contact
+            </div>
 
-            <button
-              onclick='requestPropertyEdit(${JSON.stringify(property)})'
-              class="px-4 py-2.5 rounded-xl
-                     border border-gray-200 text-sm
-                     font-semibold">
-              Request Edit
-            </button>
+            <div class="font-semibold mt-1">
+              ${escapeHTML(
+                property.phone || "—"
+              )}
+            </div>
 
+          </div>
+
+
+          <div>
+
+            <div class="text-xs text-gray-400">
+              Timing
+            </div>
+
+            <div class="font-semibold mt-1">
+              ${escapeHTML(
+                property.timing || "—"
+              )}
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div>
+
+          <div class="text-xs text-gray-400">
+            Facilities
+          </div>
+
+          <div
+            class="mt-2 rounded-xl
+                   bg-gray-50 p-4
+                   text-sm text-gray-700">
+
+            ${escapeHTML(
+              property.facilities || "—"
+            )}
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="rounded-xl
+                 bg-blue-50
+                 border border-blue-100
+                 p-4">
+
+          <div class="font-semibold text-blue-900">
+            Live Property
+          </div>
+
+          <div class="text-sm text-blue-700 mt-1">
+            This property is currently available
+            through the StudentHubHelp discovery platform.
           </div>
 
         </div>
 
       </div>
 
-    `).join("");
-}
+    `;
 
 
-function getPropertyIcon(table) {
+    $("propertyModal")
+      .classList
+      .remove("hidden");
 
-  const icons = {
-    hostels: "🏠",
-    tiffins: "🍱",
-    libraries: "📚",
-    cafes: "☕",
-    bookstores: "📖"
+    $("propertyModal")
+      .classList
+      .add("flex");
+
   };
 
-  return icons[table] || "●";
+
+function closePropertyModal() {
+
+  $("propertyModal")
+    .classList
+    .add("hidden");
+
+  $("propertyModal")
+    .classList
+    .remove("flex");
+
 }
 
 
-window.viewProperty = function(property) {
+window.closePropertyModal =
+  closePropertyModal;
 
-  alert(
-    `${property.name || "Property"}\n\n` +
-    `Category: ${property.category || "—"}\n` +
-    `Area: ${property.area || "—"}\n` +
-    `Address: ${property.address || "—"}\n` +
-    `Phone: ${property.phone || "—"}\n` +
-    `Timing: ${property.timing || "—"}\n` +
-    `Facilities: ${property.facilities || "—"}`
+
+/* =========================================================
+   EDIT REQUEST
+========================================================= */
+
+window.openEditRequest =
+  function(encodedProperty) {
+
+    const property =
+      JSON.parse(
+        decodeURIComponent(
+          encodedProperty
+        )
+      );
+
+
+    $("editPropertyId").value =
+      String(property.id);
+
+
+    $("editPropertyCategory").value =
+      property.property_table || "";
+
+
+    $("editPropertyName").textContent =
+      property.name || "Property";
+
+
+    $("editName").value =
+      property.name || "";
+
+
+    $("editCategory").value =
+      formatCategory(
+        property.category
+      );
+
+
+    $("editArea").value =
+      property.area || "";
+
+
+    $("editAddress").value =
+      property.address || "";
+
+
+    $("editPhone").value =
+      property.phone || "";
+
+
+    $("editTiming").value =
+      property.timing || "";
+
+
+    $("editFacilities").value =
+      property.facilities || "";
+
+
+    $("editRating").value =
+      property.rating ?? "";
+
+
+    $("editRequestMessage")
+      .className =
+      "hidden text-sm";
+
+
+    $("editRequestModal")
+      .classList
+      .remove("hidden");
+
+    $("editRequestModal")
+      .classList
+      .add("flex");
+
+  };
+
+
+function closeEditRequestModal() {
+
+  $("editRequestModal")
+    .classList
+    .add("hidden");
+
+  $("editRequestModal")
+    .classList
+    .remove("flex");
+
+}
+
+
+window.closeEditRequestModal =
+  closeEditRequestModal;
+
+
+/* =========================================================
+   EDIT REQUEST SUBMIT
+========================================================= */
+
+$("editRequestForm")
+  .addEventListener(
+    "submit",
+    async event => {
+
+      event.preventDefault();
+
+
+      const message =
+        $("editRequestMessage");
+
+
+      message.className =
+        "text-sm text-gray-500";
+
+      message.textContent =
+        "Sending edit request...";
+
+      message.classList.remove(
+        "hidden"
+      );
+
+
+      /*
+        IMPORTANT:
+        Existing listing_requests schema does not
+        expose a dedicated request_type/property_id
+        field in the known schema.
+
+        Therefore this request is stored safely as
+        a listing request with an admin note describing
+        the requested edit workflow.
+
+        No live property table is edited directly.
+      */
+
+      const propertyId =
+        $("editPropertyId").value;
+
+
+      const sourceTable =
+        $("editPropertyCategory").value;
+
+
+      const requestedChanges = [
+
+        `Property ID: ${propertyId}`,
+
+        `Source table: ${sourceTable}`,
+
+        `EDIT REQUEST`,
+
+        `Requested Name: ${
+          $("editName").value.trim()
+        }`,
+
+        `Requested Category: ${
+          $("editCategory").value
+        }`,
+
+        `Requested Area: ${
+          $("editArea").value.trim()
+        }`,
+
+        `Requested Address: ${
+          $("editAddress").value.trim()
+        }`,
+
+        `Requested Phone: ${
+          $("editPhone").value.trim()
+        }`,
+
+        `Requested Timing: ${
+          $("editTiming").value.trim()
+        }`,
+
+        `Requested Facilities: ${
+          $("editFacilities").value.trim()
+        }`,
+
+        `Requested Rating: ${
+          $("editRating").value.trim()
+        }`
+
+      ].join("\n");
+
+
+      const payload = {
+
+        owner_id:
+          currentUser.id,
+
+        owner_name:
+          currentProfile.full_name || "",
+
+        owner_phone:
+          currentProfile.phone || "",
+
+        name:
+          $("editName")
+            .value
+            .trim(),
+
+        category:
+          $("editCategory")
+            .value,
+
+        area:
+          $("editArea")
+            .value
+            .trim(),
+
+        address:
+          $("editAddress")
+            .value
+            .trim(),
+
+        phone:
+          $("editPhone")
+            .value
+            .trim(),
+
+        timing:
+          $("editTiming")
+            .value
+            .trim(),
+
+        facilities:
+          $("editFacilities")
+            .value
+            .trim(),
+
+        rating:
+          Number(
+            $("editRating")
+              .value
+          ) || null,
+
+        status:
+          "pending",
+
+        admin_note:
+          requestedChanges
+
+      };
+
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from("listing_requests")
+          .insert(payload);
+
+
+      if (error) {
+
+        console.error(error);
+
+        message.className =
+          "text-sm text-red-600";
+
+        message.textContent =
+          "Unable to send edit request.";
+
+        return;
+
+      }
+
+
+      message.className =
+        "text-sm text-green-600";
+
+      message.textContent =
+        "Edit request sent to admin for review.";
+
+
+      await loadOwnerRequests();
+
+
+      setTimeout(
+        closeEditRequestModal,
+        900
+      );
+
+    }
   );
-
-};
-
-
-window.requestPropertyEdit = function(property) {
-
-  alert(
-    "Edit request workflow will submit the requested changes to admin for approval."
-  );
-
-};
 
 
 /* =========================================================
@@ -2463,50 +4613,78 @@ async function loadOwnerReviews() {
     $("ownerReviewsContainer");
 
 
-  const properties =
+  container.innerHTML = `
+
+    <div class="card empty-state">
+      Loading reviews...
+    </div>
+
+  `;
+
+
+  ownerLiveProperties =
     await getOwnerLiveProperties();
 
 
-  if (!properties.length) {
+  if (!ownerLiveProperties.length) {
 
     container.innerHTML = `
-      <div class="content-card p-10 text-center">
-        <h3 class="font-bold">
-          No Reviews Yet
+
+      <div class="card empty-state">
+
+        <div class="text-4xl mb-4">
+          ★
+        </div>
+
+        <h3 class="font-bold text-gray-800">
+          No Live Properties
         </h3>
-        <p class="text-gray-400 mt-2">
-          Reviews received on your live properties will appear here.
+
+        <p class="mt-2">
+          Reviews will appear here after your properties
+          become live.
         </p>
+
       </div>
+
     `;
 
     return;
+
   }
 
 
-  const ids =
-    properties.map(
-      p => String(p.id)
+  const propertyIds =
+    ownerLiveProperties.map(
+      property =>
+        String(property.id)
     );
 
 
   const {
     data,
     error
-  } = await supabaseClient
-    .from("reviews")
-    .select(`
-      id,
-      property_id,
-      rating,
-      review_text,
-      status,
-      created_at
-    `)
-    .in("property_id", ids)
-    .order("created_at", {
-      ascending: false
-    });
+  } =
+    await supabaseClient
+      .from("reviews")
+      .select(`
+        id,
+        property_id,
+        rating,
+        review_text,
+        status,
+        created_at
+      `)
+      .in(
+        "property_id",
+        propertyIds
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
 
 
   if (error) {
@@ -2514,92 +4692,120 @@ async function loadOwnerReviews() {
     console.error(error);
 
     container.innerHTML = `
-      <div class="content-card p-6 text-red-500">
+
+      <div class="card p-6 text-red-600">
         Unable to load owner reviews.
       </div>
+
     `;
 
     return;
+
   }
 
 
   if (!data?.length) {
 
     container.innerHTML = `
-      <div class="content-card p-10 text-center">
-        <div class="text-4xl mb-3">
+
+      <div class="card empty-state">
+
+        <div class="text-4xl mb-4">
           ★
         </div>
-        <h3 class="font-bold">
+
+        <h3 class="font-bold text-gray-800">
           No Reviews Yet
         </h3>
-        <p class="text-gray-400 mt-2">
-          Student reviews will appear here.
+
+        <p class="mt-2">
+          Student reviews on your properties will appear here.
         </p>
+
       </div>
+
     `;
 
     return;
+
   }
 
 
   container.innerHTML =
-    data.map(review => {
+    data.map(
+      review => {
 
-      const property =
-        properties.find(
-          p =>
-            String(p.id) ===
-            String(review.property_id)
-        );
+        const property =
+          ownerLiveProperties.find(
+            item =>
+              String(item.id) ===
+              String(review.property_id)
+          );
 
 
-      return `
+        return `
 
-        <div class="content-card p-5">
+          <div class="card p-5">
 
-          <div class="flex flex-col md:flex-row
-                      md:items-center md:justify-between gap-3">
+            <div
+              class="flex flex-col
+                     sm:flex-row
+                     sm:items-center
+                     sm:justify-between
+                     gap-3">
 
-            <div>
+              <div>
 
-              <div class="font-bold">
-                ${escapeHTML(
-                  property?.name ||
-                  "Property"
-                )}
+                <div class="font-bold">
+                  ${escapeHTML(
+                    property?.name ||
+                    "Property"
+                  )}
+                </div>
+
+                <div class="text-xs text-gray-400 mt-1">
+                  Property ID:
+                  ${escapeHTML(
+                    review.property_id
+                  )}
+                </div>
+
               </div>
 
-              <div class="text-sm text-gray-400 mt-1">
-                Property ID:
-                ${escapeHTML(
-                  review.property_id
+
+              <div class="flex items-center gap-3">
+
+                <div class="font-semibold">
+                  ★ ${escapeHTML(
+                    review.rating ?? "—"
+                  )}
+                </div>
+
+                ${statusBadge(
+                  review.status
                 )}
+
               </div>
 
             </div>
 
 
-            <div class="font-semibold">
-              ★ ${escapeHTML(
-                review.rating
-              )}
+            <div
+              class="mt-4 rounded-xl
+                     bg-gray-50 p-4">
+
+              <p class="text-sm text-gray-700">
+                ${escapeHTML(
+                  review.review_text || ""
+                )}
+              </p>
+
             </div>
 
-          </div>
 
+            <div
+              class="text-xs text-gray-400 mt-4">
 
-          <p class="text-gray-600 mt-4">
-            ${escapeHTML(
-              review.review_text || ""
-            )}
-          </p>
-
-
-          <div class="flex justify-between
-                      text-xs text-gray-400 mt-4">
-
-            <span>
               ${
                 review.created_at
                   ? new Date(
@@ -2607,21 +4813,16 @@ async function loadOwnerReviews() {
                     ).toLocaleDateString()
                   : ""
               }
-            </span>
 
-            <span>
-              ${escapeHTML(
-                review.status || "—"
-              )}
-            </span>
+            </div>
 
           </div>
 
-        </div>
+        `;
 
-      `;
+      }
+    ).join("");
 
-    }).join("");
 }
 
 
@@ -2639,6 +4840,9 @@ function setupRealtime() {
       "user-dashboard-" +
       currentUser.id
     )
+
+
+    /* LISTING REQUESTS */
     .on(
       "postgres_changes",
       {
@@ -2652,24 +4856,24 @@ function setupRealtime() {
       async () => {
 
         if (
-          currentProfile &&
-          String(currentProfile.role)
-            .toLowerCase() === "owner"
-        ) {
+          currentRole !== "owner"
+        ) return;
 
-          await loadOwnerStats();
 
-          if (
-            !$("section-requests")
-              .classList.contains("hidden")
-          ) {
-            await loadOwnerRequests();
-          }
+        await loadOwnerRequests();
 
-        }
+
+        ownerLiveProperties =
+          await getOwnerLiveProperties();
+
+
+        updateOwnerStats();
 
       }
     )
+
+
+    /* REVIEWS */
     .on(
       "postgres_changes",
       {
@@ -2677,42 +4881,48 @@ function setupRealtime() {
         schema: "public",
         table: "reviews"
       },
-      async () => {
+      async payload => {
 
         if (
-          String(currentProfile?.role)
-            .toLowerCase() === "student"
+          currentRole === "student"
         ) {
 
-          await loadStudentStats();
+          await loadStudentReviewCount();
+
 
           if (
             !$("section-reviews")
-              .classList.contains("hidden")
+              .classList
+              .contains("hidden")
           ) {
+
             await loadStudentReviews();
+
           }
 
         }
 
-        if (
-          String(currentProfile?.role)
-            .toLowerCase() === "owner"
-        ) {
 
-          await loadOwnerStats();
+        if (
+          currentRole === "owner"
+        ) {
 
           if (
             !$("section-ownerReviews")
-              .classList.contains("hidden")
+              .classList
+              .contains("hidden")
           ) {
+
             await loadOwnerReviews();
+
           }
 
         }
 
       }
     )
+
+
     .subscribe();
 
 }
@@ -2727,7 +4937,22 @@ $("logoutBtn")
     "click",
     async () => {
 
-      await supabaseClient.auth.signOut();
+      const {
+        error
+      } =
+        await supabaseClient
+          .auth
+          .signOut();
+
+
+      if (error) {
+
+        console.error(error);
+
+        return;
+
+      }
+
 
       window.location.href =
         "login.html";
@@ -2737,31 +4962,51 @@ $("logoutBtn")
 
 
 /* =========================================================
-   ESCAPE HTML
+   MODAL OUTSIDE CLICK
 ========================================================= */
 
-function escapeHTML(value) {
+$("propertyModal")
+  .addEventListener(
+    "click",
+    event => {
 
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+      if (
+        event.target ===
+        $("propertyModal")
+      ) {
+
+        closePropertyModal();
+
+      }
+
+    }
+  );
+
+
+$("editRequestModal")
+  .addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target ===
+        $("editRequestModal")
+      ) {
+
+        closeEditRequestModal();
+
+      }
+
+    }
+  );
 
 
 /* =========================================================
-   START
+   INIT
 ========================================================= */
 
-(async function init() {
+initializeDashboard();
 
-  await loadDashboard();
-
-  setupRealtime();
-
-})();
 </script>
 
 </body>
