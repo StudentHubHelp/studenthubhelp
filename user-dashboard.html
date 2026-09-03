@@ -3931,26 +3931,34 @@ async function loadLiveProperties() {
 
 function renderLivePropertyCard(property) {
   const table = property.property_table || "hostels";
-  
-  // हर कैटेगरी के हिसाब से डिफ़ॉल्ट बैनर इमेज या रंग
-  let defaultImages = {
-    hostels: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=600&q=80",
-    tiffins: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80",
-    libraries: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=600&q=80",
-    cafes: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80",
-    bookstores: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=600&q=80"
-  };
+  const categoryStr = String(property.category || "").toLowerCase();
 
-  let bgImg = property.image && property.image.trim() !== "" 
+  // गिटहब पर मौजूद आपके लोकल बैनर्स के नाम (प्रॉपर्टी की कैटेगरी के अनुसार)
+  let githubBanner = "hostel-banner.png"; // डिफ़ॉल्ट
+
+  if (categoryStr.includes("hostel") || categoryStr.includes("pg") || table === "hostels") {
+    githubBanner = "hostel-banner.png";
+  } else if (categoryStr.includes("tiffin") || categoryStr.includes("mess") || table === "tiffins") {
+    githubBanner = "tiffin-banner.png";
+  } else if (categoryStr.includes("library") || table === "libraries") {
+    githubBanner = "library-banner.png";
+  } else if (categoryStr.includes("cafe") || table === "cafes") {
+    githubBanner = "cafe-banner.png";
+  } else if (categoryStr.includes("book") || categoryStr.includes("store") || table === "bookstores") {
+    githubBanner = "bookstore-banner.png";
+  }
+
+  // अगर ओनर ने Supabase में कोई इमेज दी है तो वो यूज़ होगी, वरना गिटहब वाला सही बैनर दिखेगा
+  let bgImg = (property.image && property.image.trim() !== "") 
     ? property.image 
-    : (defaultImages[table] || defaultImages.hostels);
+    : githubBanner;
 
   const icon = getPropertyIcon(table);
 
   return `
     <div class="card overflow-hidden">
       <div class="property-banner flex items-center justify-center relative" style="background: url('${escapeHTML(bgImg)}') center/cover no-repeat;">
-        <div style="position: absolute; inset: 0; background: rgba(11,23,48,0.3);"></div>
+        <div style="position: absolute; inset: 0; background: rgba(11,23,48,0.35);"></div>
         <div class="text-white text-4xl relative z-10 drop-shadow-lg">${icon}</div>
       </div>
 
