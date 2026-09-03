@@ -1,2400 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>StudentHubHelp — User Dashboard</title>
-  <meta name="description"
-        content="StudentHubHelp professional student and owner dashboard.">
+  <title>Dashboard | StudentHubHelp</title>
 
-  <link rel="icon" type="image/png" href="logo.png">
-  <link rel="apple-touch-icon" href="logo.png">
-
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    :root{
-      --navy:#071426;
-      --navy2:#0d2340;
-      --navy3:#132f52;
-
-      --gold:#d6a84f;
-      --gold2:#f1ce78;
-
-      --bg:#f4f7fb;
-      --card:#ffffff;
-      --text:#152238;
-      --muted:#718096;
-
-      --border:#e4eaf1;
-
-      --green:#139866;
-      --green-bg:#e8f8f0;
-
-      --orange:#b7791f;
-      --orange-bg:#fff6df;
-
-      --red:#c53b3b;
-      --red-bg:#ffeded;
-
-      --blue:#2563a8;
-      --blue-bg:#edf5ff;
-
-      --shadow:0 16px 45px rgba(7,20,38,.08);
-      --shadow2:0 8px 25px rgba(7,20,38,.06);
-
-      --radius:22px;
-    }
-
-    *{
-      box-sizing:border-box;
-    }
-
-    html{
-      scroll-behavior:smooth;
-    }
-
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:
-        Inter,
-        ui-sans-serif,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-    }
-
-    button,
-    input,
-    select,
-    textarea{
-      font:inherit;
-    }
-
-    button{
-      cursor:pointer;
-    }
-
-    a{
-      color:inherit;
-      text-decoration:none;
-    }
-
-    .hidden{
-      display:none !important;
-    }
-
-    /* =========================================================
-       TOPBAR
-    ========================================================= */
-
-    .topbar{
-      height:76px;
-      position:sticky;
-      top:0;
-      z-index:100;
-
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-
-      padding:0 28px;
-
-      color:#fff;
-
-      background:
-        radial-gradient(
-          circle at 90% 10%,
-          rgba(214,168,79,.18),
-          transparent 26%
-        ),
-        linear-gradient(
-          135deg,
-          var(--navy),
-          var(--navy2)
-        );
-
-      box-shadow:0 8px 30px rgba(0,0,0,.18);
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:13px;
-      min-width:0;
-    }
-
-    .brand img{
-      width:45px;
-      height:45px;
-      object-fit:contain;
-      border-radius:13px;
-      background:#fff;
-      padding:2px;
-      flex:none;
-    }
-
-    .brand-title{
-      font-size:18px;
-      font-weight:900;
-      letter-spacing:.2px;
-      line-height:1.1;
-    }
-
-    .brand-subtitle{
-      margin-top:4px;
-      color:#aebed1;
-      font-size:11px;
-      font-weight:600;
-    }
-
-    .top-actions{
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-
-    .live-sync{
-      display:flex;
-      align-items:center;
-      gap:8px;
-
-      padding:8px 12px;
-
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:999px;
-
-      background:rgba(255,255,255,.045);
-
-      color:#d8e3ef;
-      font-size:11px;
-      font-weight:800;
-    }
-
-    .live-dot{
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background:#18c77b;
-      box-shadow:0 0 0 4px rgba(24,199,123,.12);
-    }
-
-    .user-chip{
-      display:flex;
-      align-items:center;
-      gap:10px;
-
-      padding:7px 12px 7px 7px;
-
-      border:1px solid rgba(255,255,255,.13);
-      border-radius:999px;
-
-      background:rgba(255,255,255,.06);
-    }
-
-    .avatar{
-      width:36px;
-      height:36px;
-      display:grid;
-      place-items:center;
-
-      border-radius:50%;
-
-      background:linear-gradient(
-        135deg,
-        var(--gold2),
-        var(--gold)
-      );
-
-      color:var(--navy);
-      font-size:12px;
-      font-weight:950;
-    }
-
-    .user-chip-name{
-      font-size:12px;
-      font-weight:900;
-      line-height:1.1;
-    }
-
-    .user-chip-role{
-      margin-top:3px;
-      color:#b7c7d8;
-      font-size:9px;
-      font-weight:800;
-      letter-spacing:.7px;
-    }
-
-    .logout-btn{
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(255,255,255,.05);
-      color:#fff;
-
-      padding:10px 14px;
-      border-radius:12px;
-
-      font-size:12px;
-      font-weight:800;
-
-      transition:.2s;
-    }
-
-    .logout-btn:hover{
-      background:rgba(255,255,255,.12);
-    }
-
-    /* =========================================================
-       APP LAYOUT
-    ========================================================= */
-
-    .app-layout{
-      max-width:1500px;
-      margin:auto;
-
-      display:grid;
-      grid-template-columns:260px minmax(0,1fr);
-
-      min-height:calc(100vh - 76px);
-    }
-
-    .sidebar{
-      position:sticky;
-      top:76px;
-
-      height:calc(100vh - 76px);
-
-      overflow-y:auto;
-
-      padding:22px 14px;
-
-      background:#fff;
-      border-right:1px solid var(--border);
-    }
-
-    .nav-label{
-      padding:10px 12px 8px;
-
-      color:#9aa7b7;
-      font-size:10px;
-      font-weight:900;
-
-      letter-spacing:1.2px;
-      text-transform:uppercase;
-    }
-
-    .nav-group{
-      margin-bottom:20px;
-    }
-
-    .nav-btn{
-      width:100%;
-
-      display:flex;
-      align-items:center;
-      gap:12px;
-
-      border:0;
-      background:transparent;
-
-      padding:12px 13px;
-      margin:3px 0;
-
-      border-radius:13px;
-
-      color:#5b697d;
-      text-align:left;
-
-      font-size:12px;
-      font-weight:800;
-
-      transition:.2s;
-    }
-
-    .nav-btn .nav-icon{
-      width:28px;
-      height:28px;
-
-      display:grid;
-      place-items:center;
-
-      border-radius:9px;
-
-      background:#f2f5f8;
-
-      font-size:14px;
-    }
-
-    .nav-btn:hover{
-      background:#f3f6fa;
-      color:var(--navy);
-    }
-
-    .nav-btn.active{
-      color:var(--navy);
-
-      background:
-        linear-gradient(
-          90deg,
-          #eef4fb,
-          #f7f9fc
-        );
-
-      box-shadow:
-        inset 3px 0 var(--gold);
-    }
-
-    .nav-btn.active .nav-icon{
-      background:var(--navy);
-      color:#fff;
-    }
-
-    .sidebar-card{
-      margin:25px 7px 0;
-
-      padding:17px;
-
-      border-radius:18px;
-
-      background:
-        radial-gradient(
-          circle at 90% 10%,
-          rgba(214,168,79,.17),
-          transparent 28%
-        ),
-        linear-gradient(
-          145deg,
-          #091a30,
-          #15375e
-        );
-
-      color:#fff;
-    }
-
-    .sidebar-card-title{
-      font-size:12px;
-      font-weight:900;
-    }
-
-    .sidebar-card p{
-      margin:7px 0 0;
-
-      color:#c3d0df;
-      font-size:11px;
-      line-height:1.6;
-    }
-
-    /* =========================================================
-       MAIN
-    ========================================================= */
-
-    main{
-      min-width:0;
-      padding:30px;
-    }
-
-    .page{
-      display:none;
-      animation:pageIn .25s ease;
-    }
-
-    .page.active{
-      display:block;
-    }
-
-    @keyframes pageIn{
-      from{
-        opacity:0;
-        transform:translateY(5px);
-      }
-      to{
-        opacity:1;
-        transform:none;
-      }
-    }
-
-    /* =========================================================
-       HERO
-    ========================================================= */
-
-    .hero{
-      position:relative;
-      overflow:hidden;
-
-      padding:32px;
-
-      border-radius:28px;
-
-      color:#fff;
-
-      background:
-        radial-gradient(
-          circle at 85% 20%,
-          rgba(214,168,79,.25),
-          transparent 28%
-        ),
-        radial-gradient(
-          circle at 100% 100%,
-          rgba(41,113,185,.18),
-          transparent 34%
-        ),
-        linear-gradient(
-          135deg,
-          #08182d,
-          #123a63
-        );
-
-      box-shadow:var(--shadow);
-    }
-
-    .hero::after{
-      content:"";
-
-      position:absolute;
-
-      right:-80px;
-      bottom:-100px;
-
-      width:260px;
-      height:260px;
-
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:50%;
-    }
-
-    .hero-badge{
-      display:inline-flex;
-      align-items:center;
-      gap:7px;
-
-      padding:7px 11px;
-
-      border:1px solid rgba(241,206,120,.28);
-      border-radius:999px;
-
-      background:rgba(214,168,79,.12);
-
-      color:var(--gold2);
-
-      font-size:9px;
-      font-weight:900;
-
-      letter-spacing:1px;
-    }
-
-    .hero h1{
-      position:relative;
-      z-index:2;
-
-      margin:15px 0 8px;
-
-      font-size:clamp(27px,4vw,42px);
-      line-height:1.05;
-      font-weight:950;
-    }
-
-    .hero p{
-      position:relative;
-      z-index:2;
-
-      max-width:720px;
-
-      margin:0;
-
-      color:#c9d7e7;
-
-      font-size:13px;
-      line-height:1.7;
-    }
-
-    .hero-role{
-      margin-top:20px;
-
-      display:inline-flex;
-
-      padding:8px 12px;
-
-      border-radius:10px;
-
-      background:rgba(255,255,255,.07);
-
-      color:#e8eef5;
-
-      font-size:10px;
-      font-weight:900;
-      letter-spacing:.8px;
-    }
-
-    /* =========================================================
-       SECTION HEADER
-    ========================================================= */
-
-    .section-head{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:15px;
-
-      margin:28px 0 15px;
-    }
-
-    .section-title{
-      margin:0;
-
-      font-size:22px;
-      font-weight:950;
-
-      color:var(--navy);
-    }
-
-    .section-subtitle{
-      margin:5px 0 0;
-
-      color:var(--muted);
-
-      font-size:12px;
-      line-height:1.5;
-    }
-
-    /* =========================================================
-       STATS
-    ========================================================= */
-
-    .stats-grid{
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:15px;
-
-      margin-top:22px;
-    }
-
-    .stat-card{
-      position:relative;
-      overflow:hidden;
-
-      padding:19px;
-
-      background:#fff;
-
-      border:1px solid var(--border);
-      border-radius:19px;
-
-      box-shadow:var(--shadow2);
-
-      transition:.2s;
-    }
-
-    .stat-card:hover{
-      transform:translateY(-2px);
-      box-shadow:var(--shadow);
-    }
-
-    .stat-top{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-    }
-
-    .stat-icon{
-      width:38px;
-      height:38px;
-
-      display:grid;
-      place-items:center;
-
-      border-radius:12px;
-
-      background:#edf3fa;
-
-      font-size:17px;
-    }
-
-    .stat-label{
-      color:#7d8998;
-
-      font-size:9px;
-      font-weight:900;
-
-      letter-spacing:.7px;
-      text-transform:uppercase;
-    }
-
-    .stat-value{
-      margin-top:11px;
-
-      color:var(--navy);
-
-      font-size:27px;
-      line-height:1;
-      font-weight:950;
-    }
-
-    .stat-foot{
-      margin-top:8px;
-
-      color:#8c98a7;
-
-      font-size:10px;
-    }
-
-    /* =========================================================
-       SERVICE CARDS
-    ========================================================= */
-
-    .service-grid{
-      display:grid;
-      grid-template-columns:repeat(5,minmax(0,1fr));
-      gap:14px;
-    }
-
-    .service-card{
-      padding:19px;
-
-      background:#fff;
-
-      border:1px solid var(--border);
-      border-radius:19px;
-
-      box-shadow:var(--shadow2);
-
-      transition:.22s;
-    }
-
-    .service-card:hover{
-      transform:translateY(-4px);
-      box-shadow:var(--shadow);
-      border-color:#d6dee8;
-    }
-
-    .service-icon{
-      width:45px;
-      height:45px;
-
-      display:grid;
-      place-items:center;
-
-      border-radius:13px;
-
-      background:#f0f4f8;
-
-      font-size:21px;
-    }
-
-    .service-card h3{
-      margin:14px 0 6px;
-
-      color:var(--navy);
-
-      font-size:14px;
-      font-weight:900;
-    }
-
-    .service-card p{
-      min-height:45px;
-
-      margin:0;
-
-      color:var(--muted);
-
-      font-size:11px;
-      line-height:1.55;
-    }
-
-    /* =========================================================
-       BUTTONS
-    ========================================================= */
-
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:7px;
-
-      border:0;
-      border-radius:12px;
-
-      padding:11px 15px;
-
-      font-size:11px;
-      font-weight:900;
-
-      transition:.2s;
-    }
-
-    .btn-primary{
-      background:var(--navy);
-      color:#fff;
-    }
-
-    .btn-primary:hover{
-      background:#102d50;
-      transform:translateY(-1px);
-    }
-
-    .btn-gold{
-      background:linear-gradient(
-        135deg,
-        var(--gold2),
-        var(--gold)
-      );
-
-      color:#18283d;
-    }
-
-    .btn-gold:hover{
-      transform:translateY(-1px);
-      box-shadow:0 8px 20px rgba(214,168,79,.22);
-    }
-
-    .btn-light{
-      background:#eef3f7;
-      color:var(--navy);
-    }
-
-    .btn-light:hover{
-      background:#e5ebf1;
-    }
-
-    .btn-outline{
-      background:#fff;
-      color:var(--navy);
-      border:1px solid var(--border);
-    }
-
-    .btn-outline:hover{
-      border-color:#c9d3df;
-    }
-
-    .btn-danger{
-      background:var(--red-bg);
-      color:var(--red);
-    }
-
-    .btn:disabled{
-      opacity:.55;
-      cursor:not-allowed;
-      transform:none !important;
-    }
-
-    /* =========================================================
-       CARDS / FORMS
-    ========================================================= */
-
-    .card{
-      background:#fff;
-
-      border:1px solid var(--border);
-      border-radius:22px;
-
-      padding:22px;
-
-      box-shadow:var(--shadow2);
-    }
-
-    .profile-layout{
-      display:grid;
-      grid-template-columns:250px minmax(0,1fr);
-      gap:22px;
-    }
-
-    .profile-summary{
-      padding:20px;
-
-      border-radius:18px;
-
-      background:
-        linear-gradient(
-          145deg,
-          #091a30,
-          #15385e
-        );
-
-      color:#fff;
-    }
-
-    .profile-big-avatar{
-      width:65px;
-      height:65px;
-
-      display:grid;
-      place-items:center;
-
-      margin-bottom:15px;
-
-      border-radius:20px;
-
-      background:linear-gradient(
-        135deg,
-        var(--gold2),
-        var(--gold)
-      );
-
-      color:var(--navy);
-
-      font-size:19px;
-      font-weight:950;
-    }
-
-    .profile-summary h3{
-      margin:0;
-
-      font-size:17px;
-      font-weight:950;
-    }
-
-    .profile-summary p{
-      margin:6px 0 0;
-
-      color:#b8c8da;
-
-      font-size:11px;
-      line-height:1.5;
-    }
-
-    .profile-role-badge{
-      display:inline-flex;
-
-      margin-top:15px;
-
-      padding:7px 10px;
-
-      border:1px solid rgba(241,206,120,.22);
-      border-radius:999px;
-
-      background:rgba(214,168,79,.1);
-
-      color:var(--gold2);
-
-      font-size:9px;
-      font-weight:900;
-
-      letter-spacing:.8px;
-    }
-
-    .form-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:15px;
-    }
-
-    .field{
-      min-width:0;
-    }
-
-    .field.full{
-      grid-column:1/-1;
-    }
-
-    label{
-      display:block;
-
-      margin-bottom:7px;
-
-      color:#526174;
-
-      font-size:10px;
-      font-weight:900;
-
-      letter-spacing:.5px;
-      text-transform:uppercase;
-    }
-
-    input,
-    select,
-    textarea{
-      width:100%;
-
-      border:1px solid #dce4ec;
-      border-radius:12px;
-
-      background:#fbfcfe;
-
-      padding:12px 13px;
-
-      outline:none;
-
-      color:var(--text);
-
-      font-size:12px;
-
-      transition:.2s;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus{
-      border-color:var(--gold);
-
-      box-shadow:
-        0 0 0 3px rgba(214,168,79,.12);
-    }
-
-    input:disabled{
-      background:#f2f5f8;
-      color:#7b8796;
-      cursor:not-allowed;
-    }
-
-    textarea{
-      min-height:105px;
-      resize:vertical;
-    }
-
-    .form-actions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-
-      margin-top:18px;
-    }
-
-    .info-note{
-      margin-bottom:18px;
-
-      padding:13px 15px;
-
-      border:1px solid #ead8a7;
-      border-radius:13px;
-
-      background:#fff9e9;
-
-      color:#725719;
-
-      font-size:11px;
-      line-height:1.6;
-    }
-
-    /* =========================================================
-       OWNER CENTRE
-    ========================================================= */
-
-    .owner-profile-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:15px;
-
-      margin-bottom:20px;
-    }
-
-    .owner-profile-main{
-      display:flex;
-      align-items:center;
-      gap:14px;
-    }
-
-    .owner-profile-avatar{
-      width:58px;
-      height:58px;
-
-      display:grid;
-      place-items:center;
-
-      border-radius:18px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--gold2),
-          var(--gold)
-        );
-
-      color:var(--navy);
-
-      font-size:16px;
-      font-weight:950;
-    }
-
-    .owner-profile-main h3{
-      margin:0;
-
-      color:var(--navy);
-
-      font-size:18px;
-      font-weight:950;
-    }
-
-    .owner-profile-main p{
-      margin:4px 0 0;
-
-      color:var(--muted);
-
-      font-size:11px;
-    }
-
-    .owner-summary-grid{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:12px;
-    }
-
-    .summary-box{
-      padding:16px;
-
-      border:1px solid var(--border);
-      border-radius:15px;
-
-      background:#fafbfd;
-    }
-
-    .summary-box span{
-      display:block;
-
-      color:#8995a4;
-
-      font-size:9px;
-      font-weight:900;
-
-      text-transform:uppercase;
-      letter-spacing:.6px;
-    }
-
-    .summary-box strong{
-      display:block;
-
-      margin-top:6px;
-
-      color:var(--navy);
-
-      font-size:19px;
-      font-weight:950;
-    }
-
-    /* =========================================================
-       REQUEST LIST
-    ========================================================= */
-
-    .request-list{
-      display:grid;
-      gap:12px;
-    }
-
-    .request-card{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:15px;
-
-      padding:17px;
-
-      border:1px solid var(--border);
-      border-radius:17px;
-
-      background:#fff;
-
-      transition:.2s;
-    }
-
-    .request-card:hover{
-      border-color:#d4dde7;
-      box-shadow:var(--shadow2);
-    }
-
-    .request-main{
-      min-width:0;
-    }
-
-    .request-title{
-      margin:0;
-
-      color:var(--navy);
-
-      font-size:14px;
-      font-weight:950;
-    }
-
-    .request-meta{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px 12px;
-
-      margin-top:7px;
-
-      color:var(--muted);
-
-      font-size:10px;
-    }
-
-    .request-note{
-      margin-top:8px;
-
-      color:#687588;
-
-      font-size:10px;
-      line-height:1.5;
-    }
-
-    .request-actions{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex:none;
-    }
-
-    /* =========================================================
-       STATUS
-    ========================================================= */
-
-    .status{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-
-      padding:7px 10px;
-
-      border-radius:999px;
-
-      font-size:9px;
-      font-weight:950;
-
-      letter-spacing:.5px;
-      text-transform:uppercase;
-      white-space:nowrap;
-    }
-
-    .status.pending{
-      background:var(--orange-bg);
-      color:var(--orange);
-    }
-
-    .status.approved{
-      background:var(--green-bg);
-      color:var(--green);
-    }
-
-    .status.rejected{
-      background:var(--red-bg);
-      color:var(--red);
-    }
-
-    /* =========================================================
-       APPROVAL TIMELINE
-    ========================================================= */
-
-    .timeline{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:0;
-
-      margin-top:20px;
-    }
-
-    .timeline-step{
-      position:relative;
-
-      padding-right:25px;
-    }
-
-    .timeline-step:not(:last-child)::after{
-      content:"";
-
-      position:absolute;
-
-      top:15px;
-      left:33px;
-      right:10px;
-
-      height:2px;
-
-      background:#dfe5ec;
-    }
-
-    .timeline-dot{
-      position:relative;
-      z-index:2;
-
-      width:32px;
-      height:32px;
-
-      display:grid;
-      place-items:center;
-
-      border-radius:50%;
-
-      background:#eef2f6;
-      color:#8793a2;
-
-      font-size:11px;
-      font-weight:950;
-    }
-
-    .timeline-step.done .timeline-dot{
-      background:var(--navy);
-      color:#fff;
-    }
-
-    .timeline-step.current .timeline-dot{
-      background:var(--gold);
-      color:var(--navy);
-      box-shadow:0 0 0 5px rgba(214,168,79,.12);
-    }
-
-    .timeline-title{
-      margin-top:10px;
-
-      color:var(--navy);
-
-      font-size:11px;
-      font-weight:950;
-    }
-
-    .timeline-text{
-      margin-top:4px;
-
-      color:var(--muted);
-
-      font-size:9px;
-      line-height:1.45;
-    }
-
-    /* =========================================================
-       LIVE PROPERTY CARDS
-    ========================================================= */
-
-    .property-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:18px;
-    }
-
-    .property-card{
-      overflow:hidden;
-
-      background:#fff;
-
-      border:1px solid var(--border);
-      border-radius:21px;
-
-      box-shadow:var(--shadow2);
-
-      transition:.22s;
-    }
-
-    .property-card:hover{
-      transform:translateY(-3px);
-      box-shadow:var(--shadow);
-    }
-
-    .property-banner{
-      position:relative;
-
-      height:175px;
-
-      overflow:hidden;
-
-      background:#dce5ee;
-    }
-
-    .property-banner img{
-      width:100%;
-      height:100%;
-
-      object-fit:cover;
-
-      display:block;
-
-      transition:.35s;
-    }
-
-    .property-card:hover .property-banner img{
-      transform:scale(1.035);
-    }
-
-    .property-banner::after{
-      content:"";
-
-      position:absolute;
-      inset:0;
-
-      background:
-        linear-gradient(
-          180deg,
-          transparent 35%,
-          rgba(0,0,0,.48)
-        );
-    }
-
-    .live-label{
-      position:absolute;
-      z-index:3;
-
-      top:12px;
-      left:12px;
-
-      display:flex;
-      align-items:center;
-      gap:6px;
-
-      padding:7px 10px;
-
-      border-radius:999px;
-
-      background:rgba(5,18,34,.78);
-
-      color:#fff;
-
-      font-size:8px;
-      font-weight:950;
-
-      letter-spacing:.6px;
-    }
-
-    .live-label .live-dot{
-      width:6px;
-      height:6px;
-    }
-
-    .property-category{
-      position:absolute;
-      z-index:3;
-
-      right:12px;
-      top:12px;
-
-      padding:7px 10px;
-
-      border-radius:999px;
-
-      background:rgba(255,255,255,.92);
-
-      color:var(--navy);
-
-      font-size:8px;
-      font-weight:950;
-
-      text-transform:uppercase;
-    }
-
-    .property-banner-title{
-      position:absolute;
-      z-index:3;
-
-      left:15px;
-      right:15px;
-      bottom:13px;
-
-      color:#fff;
-
-      font-size:18px;
-      font-weight:950;
-
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .property-body{
-      padding:17px;
-    }
-
-    .property-info{
-      display:grid;
-      gap:8px;
-
-      margin-bottom:15px;
-    }
-
-    .property-row{
-      display:flex;
-      gap:9px;
-
-      color:#657286;
-
-      font-size:10px;
-      line-height:1.45;
-    }
-
-    .property-row-icon{
-      width:18px;
-      flex:none;
-
-      color:var(--gold);
-
-      font-size:11px;
-      text-align:center;
-    }
-
-    .property-actions{
-      display:flex;
-      gap:8px;
-    }
-
-    .property-actions .btn{
-      flex:1;
-    }
-
-    /* =========================================================
-       REVIEW CARDS
-    ========================================================= */
-
-    .review-card{
-      padding:17px;
-
-      border:1px solid var(--border);
-      border-radius:17px;
-
-      background:#fff;
-    }
-
-    .review-head{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-    }
-
-    .review-property{
-      color:var(--navy);
-      font-size:13px;
-      font-weight:950;
-    }
-
-    .stars{
-      margin-top:7px;
-
-      color:#d09a2f;
-
-      letter-spacing:2px;
-      font-size:13px;
-    }
-
-    .review-text{
-      margin:10px 0 0;
-
-      color:#637084;
-
-      font-size:11px;
-      line-height:1.65;
-    }
-
-    .review-date{
-      margin-top:10px;
-
-      color:#9aa4b1;
-
-      font-size:9px;
-    }
-
-    /* =========================================================
-       JOINED PROPERTY
-    ========================================================= */
-
-    .joined-card{
-      position:relative;
-      overflow:hidden;
-
-      display:grid;
-      grid-template-columns:145px minmax(0,1fr);
-
-      gap:20px;
-
-      padding:18px;
-
-      background:#fff;
-
-      border:1px solid var(--border);
-      border-radius:20px;
-
-      box-shadow:var(--shadow2);
-    }
-
-    .joined-visual{
-      min-height:150px;
-
-      display:grid;
-      place-items:center;
-
-      border-radius:16px;
-
-      background:
-        linear-gradient(
-          145deg,
-          #091b31,
-          #1b436b
-        );
-
-      color:#fff;
-
-      font-size:38px;
-    }
-
-    .joined-content h3{
-      margin:0;
-
-      color:var(--navy);
-
-      font-size:19px;
-      font-weight:950;
-    }
-
-    .joined-meta{
-      margin-top:7px;
-
-      color:var(--muted);
-
-      font-size:10px;
-    }
-
-    .rent-boxes{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
-
-      margin-top:18px;
-    }
-
-    .rent-box{
-      padding:13px;
-
-      border:1px solid var(--border);
-      border-radius:13px;
-
-      background:#fafbfd;
-    }
-
-    .rent-box span{
-      display:block;
-
-      color:#8c98a7;
-
-      font-size:8px;
-      font-weight:900;
-
-      text-transform:uppercase;
-    }
-
-    .rent-box strong{
-      display:block;
-
-      margin-top:5px;
-
-      color:var(--navy);
-
-      font-size:13px;
-      font-weight:950;
-    }
-
-    .joined-empty{
-      padding:30px;
-
-      border:1px dashed #d4dde7;
-      border-radius:18px;
-
-      background:#fafbfd;
-
-      text-align:center;
-    }
-
-    .joined-empty-icon{
-      font-size:30px;
-    }
-
-    .joined-empty h3{
-      margin:10px 0 5px;
-
-      color:var(--navy);
-
-      font-size:15px;
-      font-weight:950;
-    }
-
-    .joined-empty p{
-      max-width:500px;
-
-      margin:0 auto;
-
-      color:var(--muted);
-
-      font-size:11px;
-      line-height:1.6;
-    }
-
-    /* =========================================================
-       EMPTY / LOADING
-    ========================================================= */
-
-    .empty{
-      padding:45px 20px;
-
-      color:var(--muted);
-
-      text-align:center;
-    }
-
-    .empty-icon{
-      margin-bottom:10px;
-
-      font-size:30px;
-    }
-
-    .empty strong{
-      display:block;
-
-      color:var(--navy);
-
-      font-size:13px;
-    }
-
-    .empty p{
-      margin:6px auto 0;
-
-      max-width:500px;
-
-      font-size:10px;
-      line-height:1.6;
-    }
-
-    .loading{
-      padding:45px 20px;
-
-      color:var(--muted);
-
-      text-align:center;
-
-      font-size:11px;
-    }
-
-    .spinner{
-      width:28px;
-      height:28px;
-
-      margin:0 auto 10px;
-
-      border:3px solid #e5eaf0;
-      border-top-color:var(--gold);
-
-      border-radius:50%;
-
-      animation:spin .8s linear infinite;
-    }
-
-    @keyframes spin{
-      to{
-        transform:rotate(360deg);
-      }
-    }
-
-    /* =========================================================
-       MESSAGE
-    ========================================================= */
-
-    .message{
-      display:none;
-
-      margin-bottom:15px;
-
-      padding:12px 14px;
-
-      border-radius:12px;
-
-      font-size:11px;
-      line-height:1.5;
-    }
-
-    .message.show{
-      display:block;
-    }
-
-    .message.success{
-      background:var(--green-bg);
-      color:#087347;
-    }
-
-    .message.error{
-      background:var(--red-bg);
-      color:#a72d2d;
-    }
-
-    .message.info{
-      background:var(--blue-bg);
-      color:#24598e;
+    * {
+      box-sizing: border-box;
     }
 
-    /* =========================================================
-       MODAL
-    ========================================================= */
-
-    .modal-backdrop{
-      position:fixed;
-      inset:0;
-      z-index:500;
-
-      display:none;
-      align-items:center;
-      justify-content:center;
-
-      padding:20px;
-
-      background:rgba(2,11,24,.68);
-
-      backdrop-filter:blur(7px);
-    }
-
-    .modal-backdrop.show{
-      display:flex;
-    }
-
-    .modal{
-      width:min(760px,100%);
-      max-height:92vh;
-
-      overflow:auto;
-
-      background:#fff;
-
-      border-radius:25px;
-
-      box-shadow:
-        0 30px 100px rgba(0,0,0,.35);
-
-      animation:modalIn .22s ease;
-    }
-
-    @keyframes modalIn{
-      from{
-        opacity:0;
-        transform:translateY(12px) scale(.985);
-      }
-      to{
-        opacity:1;
-        transform:none;
-      }
-    }
-
-    .modal-head{
-      position:sticky;
-      top:0;
-      z-index:5;
-
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-
-      gap:15px;
-
-      padding:19px 21px;
-
-      background:#fff;
-
-      border-bottom:1px solid var(--border);
-    }
-
-    .modal-title{
-      margin:0;
-
-      color:var(--navy);
-
-      font-size:17px;
-      font-weight:950;
-    }
-
-    .modal-subtitle{
-      margin:4px 0 0;
-
-      color:var(--muted);
-
-      font-size:9px;
-    }
-
-    .close-btn{
-      width:36px;
-      height:36px;
-
-      display:grid;
-      place-items:center;
-
-      border:0;
-      border-radius:50%;
-
-      background:#eef2f6;
-
-      color:var(--navy);
-
-      font-size:18px;
-      font-weight:900;
-    }
-
-    .close-btn:hover{
-      background:#e5ebf1;
-    }
-
-    .modal-body{
-      padding:21px;
-    }
-
-    .detail-hero{
-      overflow:hidden;
-
-      border-radius:18px;
-
-      margin-bottom:18px;
-
-      background:#e9eef4;
-    }
-
-    .detail-hero img{
-      width:100%;
-      height:230px;
-
-      display:block;
-
-      object-fit:cover;
-    }
-
-    .detail-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:11px;
-    }
-
-    .detail-item{
-      padding:13px;
-
-      border:1px solid var(--border);
-      border-radius:13px;
-
-      background:#fafbfd;
-    }
-
-    .detail-item.full{
-      grid-column:1/-1;
-    }
-
-    .detail-label{
-      color:#8b97a5;
-
-      font-size:8px;
-      font-weight:900;
-
-      text-transform:uppercase;
-      letter-spacing:.6px;
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: #f6f8fc;
+      color: #172033;
     }
-
-    .detail-value{
-      margin-top:5px;
 
-      color:var(--navy);
-
-      font-size:11px;
-      line-height:1.55;
-      font-weight:800;
-
-      word-break:break-word;
+    .sidebar {
+      width: 250px;
+      background: #0b1730;
+      color: white;
     }
-
-    .modal-footer{
-      display:flex;
-      justify-content:flex-end;
-      gap:9px;
-
-      padding:15px 21px;
 
-      border-top:1px solid var(--border);
-      background:#fafbfd;
+    .nav-item {
+      transition: .2s ease;
     }
 
-    /* =========================================================
-       TOAST
-    ========================================================= */
-
-    .toast-container{
-      position:fixed;
-      right:20px;
-      bottom:20px;
-      z-index:900;
-
-      display:grid;
-      gap:9px;
-
-      width:min(360px,calc(100vw - 40px));
+    .nav-item:hover {
+      background: rgba(255,255,255,.08);
     }
-
-    .toast{
-      padding:13px 15px;
 
-      border:1px solid var(--border);
-      border-radius:14px;
-
-      background:#fff;
-
-      box-shadow:0 15px 40px rgba(0,0,0,.15);
-
-      color:var(--navy);
-
-      font-size:11px;
-      font-weight:800;
-
-      animation:toastIn .22s ease;
+    .nav-item.active {
+      background: rgba(255,255,255,.12);
+      box-shadow: inset 3px 0 0 #fff;
     }
 
-    .toast.success{
-      border-left:4px solid var(--green);
+    .content-card {
+      background: white;
+      border: 1px solid #e8ebf2;
+      border-radius: 18px;
     }
 
-    .toast.error{
-      border-left:4px solid var(--red);
+    .stat-card {
+      background: white;
+      border: 1px solid #e8ebf2;
+      border-radius: 18px;
+      transition: .2s ease;
     }
 
-    @keyframes toastIn{
-      from{
-        opacity:0;
-        transform:translateY(8px);
-      }
-      to{
-        opacity:1;
-        transform:none;
-      }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
     }
-
-    /* =========================================================
-       RESPONSIVE
-    ========================================================= */
 
-    @media(max-width:1200px){
-      .service-grid{
-        grid-template-columns:repeat(3,1fr);
-      }
-
-      .stats-grid{
-        grid-template-columns:repeat(2,1fr);
-      }
+    .service-card {
+      background: white;
+      border: 1px solid #e8ebf2;
+      border-radius: 18px;
+      transition: .2s ease;
     }
-
-    @media(max-width:950px){
-      .app-layout{
-        grid-template-columns:215px minmax(0,1fr);
-      }
 
-      main{
-        padding:22px;
-      }
-
-      .property-grid{
-        grid-template-columns:1fr;
-      }
-
-      .profile-layout{
-        grid-template-columns:1fr;
-      }
+    .service-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 32px rgba(15,23,42,.08);
     }
-
-    @media(max-width:760px){
-      .topbar{
-        height:68px;
-        padding:0 13px;
-      }
-
-      .brand img{
-        width:39px;
-        height:39px;
-      }
-
-      .brand-title{
-        font-size:15px;
-      }
-
-      .brand-subtitle{
-        font-size:9px;
-      }
-
-      .live-sync{
-        display:none;
-      }
-
-      .user-chip-name,
-      .user-chip-role{
-        display:none;
-      }
-
-      .logout-btn{
-        padding:9px 10px;
-        font-size:10px;
-      }
-
-      .app-layout{
-        display:block;
-      }
-
-      .sidebar{
-        position:sticky;
-        top:68px;
-        z-index:80;
-
-        width:100%;
-        height:auto;
-
-        display:flex;
-        gap:4px;
-
-        overflow-x:auto;
-        overflow-y:hidden;
-
-        padding:7px;
-
-        border-right:0;
-        border-bottom:1px solid var(--border);
-      }
 
-      .nav-group{
-        display:flex;
-        gap:4px;
-        margin:0;
-      }
-
-      .nav-label,
-      .sidebar-card{
-        display:none;
-      }
-
-      .nav-btn{
-        width:auto;
-        flex:none;
-
-        margin:0;
-
-        white-space:nowrap;
-        padding:9px 11px;
-
-        font-size:10px;
-      }
-
-      .nav-btn .nav-icon{
-        width:25px;
-        height:25px;
-      }
-
-      main{
-        padding:16px 13px 30px;
-      }
-
-      .hero{
-        padding:24px;
-        border-radius:22px;
-      }
-
-      .section-head{
-        align-items:flex-start;
-        flex-direction:column;
-      }
-
-      .service-grid{
-        grid-template-columns:repeat(2,1fr);
-      }
-
-      .form-grid{
-        grid-template-columns:1fr;
-      }
-
-      .field.full{
-        grid-column:auto;
-      }
-
-      .joined-card{
-        grid-template-columns:1fr;
-      }
-
-      .joined-visual{
-        min-height:110px;
-      }
-
-      .rent-boxes{
-        grid-template-columns:1fr;
-      }
-
-      .request-card{
-        align-items:flex-start;
-        flex-direction:column;
-      }
-
-      .request-actions{
-        width:100%;
-      }
-
-      .request-actions .btn{
-        flex:1;
-      }
-
-      .timeline{
-        grid-template-columns:1fr;
-        gap:18px;
-      }
-
-      .timeline-step{
-        padding-right:0;
-      }
-
-      .timeline-step:not(:last-child)::after{
-        left:15px;
-        top:32px;
-        width:2px;
-        height:30px;
-        right:auto;
-      }
-
-      .timeline-step{
-        display:grid;
-        grid-template-columns:32px 1fr;
-        column-gap:12px;
-      }
-
-      .timeline-title{
-        margin-top:0;
-      }
-
-      .detail-grid{
-        grid-template-columns:1fr;
-      }
-
-      .detail-item.full{
-        grid-column:auto;
-      }
-
-      .modal{
-        border-radius:20px;
-      }
+    .mobile-sidebar {
+      transform: translateX(-100%);
+      transition: .25s ease;
     }
-
-    @media(max-width:480px){
-      .stats-grid{
-        grid-template-columns:1fr;
-      }
-
-      .service-grid{
-        grid-template-columns:1fr;
-      }
-
-      .hero h1{
-        font-size:28px;
-      }
-
-      .property-banner{
-        height:155px;
-      }
-
-      .property-actions{
-        flex-direction:column;
-      }
-
-      .owner-summary-grid{
-        grid-template-columns:1fr;
-      }
-
-      .form-actions{
-        flex-direction:column;
-        align-items:stretch;
-      }
 
-      .modal-backdrop{
-        padding:8px;
-      }
+    .mobile-sidebar.open {
+      transform: translateX(0);
     }
   </style>
 </head>
 
 <body>
 
-<!-- =========================================================
-     TOPBAR
-========================================================= -->
+<!-- MOBILE OVERLAY -->
+<div
+  id="sidebarOverlay"
+  class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden">
+</div>
 
-<header class="topbar">
-
-  <a href="index.html" class="brand">
-    <img src="logo.png" alt="StudentHubHelp">
-
-    <div>
-      <div class="brand-title">StudentHubHelp</div>
-      <div class="brand-subtitle">
-        India Student Discovery Platform
-      </div>
-    </div>
-  </a>
-
-  <div class="top-actions">
-
-    <div class="live-sync">
-      <span class="live-dot"></span>
-      Live Sync
-    </div>
-
-    <div class="user-chip">
-      <div class="avatar" id="topAvatar">U</div>
-
-      <div>
-        <div class="user-chip-name" id="topUserName">
-          Loading...
-        </div>
-
-        <div class="user-chip-role" id="topUserRole">
-          USER
-        </div>
-      </div>
-    </div>
-
-    <button class="logout-btn" id="logoutBtn">
-      Logout
-    </button>
-
-  </div>
-
-</header>
-
-
-<!-- =========================================================
-     APP
-========================================================= -->
-
-<div class="app-layout">
+<div class="min-h-screen flex">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside
+    id="sidebar"
+    class="sidebar fixed lg:static inset-y-0 left-0 z-50
+           flex flex-col mobile-sidebar lg:translate-x-0">
 
-    <div class="nav-group">
+    <!-- BRAND -->
+    <div class="px-6 py-6 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 rounded-xl bg-white text-[#0b1730]
+                 flex items-center justify-center font-bold text-lg">
+          SH
+        </div>
 
-      <div class="nav-label">
-        Dashboard
+        <div>
+          <div class="font-bold text-lg leading-tight">
+            StudentHubHelp
+          </div>
+          <div class="text-xs text-white/50">
+            Student Discovery Platform
+          </div>
+        </div>
       </div>
+    </div>
 
-      <button class="nav-btn active"
-              data-page="overview">
+    <!-- NAV -->
+    <nav id="sidebarNav" class="flex-1 px-3 py-5 space-y-1">
 
-        <span class="nav-icon">⌂</span>
+      <button
+        class="nav-item active w-full text-left px-4 py-3 rounded-xl
+               flex items-center gap-3"
+        data-section="overview">
+        <span>⌂</span>
         <span>Overview</span>
-
       </button>
 
-      <button class="nav-btn"
-              data-page="profile">
-
-        <span class="nav-icon">◉</span>
+      <button
+        class="nav-item w-full text-left px-4 py-3 rounded-xl
+               flex items-center gap-3"
+        data-section="profile">
+        <span>◉</span>
         <span>My Profile</span>
-
       </button>
 
-      <button class="nav-btn student-only"
-              data-page="joined">
-
-        <span class="nav-icon">⌂</span>
-        <span>My Joined Property</span>
-
+      <button
+        class="nav-item w-full text-left px-4 py-3 rounded-xl
+               flex items-center gap-3"
+        data-section="services">
+        <span>⌕</span>
+        <span>Find Services</span>
       </button>
 
-      <button class="nav-btn"
-              data-page="find">
-
-        <span class="nav-icon">⌕</span>
-        <span>Explore Services</span>
-
-      </button>
-
-      <button class="nav-btn"
-              data-page="reviews">
-
-        <span class="nav-icon">★</span>
+      <button
+        class="nav-item w-full text-left px-4 py-3 rounded-xl
+               flex items-center gap-3"
+        data-section="reviews">
+        <span>★</span>
         <span>My Reviews</span>
-
       </button>
 
-      <button class="nav-btn student-only"
-              data-page="activity">
-
-        <span class="nav-icon">↗</span>
+      <button
+        class="nav-item w-full text-left px-4 py-3 rounded-xl
+               flex items-center gap-3"
+        data-section="activity">
+        <span>↗</span>
         <span>My Activity</span>
-
       </button>
 
-    </div>
+      <!-- OWNER ONLY -->
+      <div id="ownerNav" class="hidden pt-5">
 
+        <div class="px-4 mb-2 text-[10px] uppercase tracking-widest text-white/35">
+          Owner Centre
+        </div>
 
-    <!-- OWNER NAV -->
+        <button
+          class="nav-item w-full text-left px-4 py-3 rounded-xl
+                 flex items-center gap-3"
+          data-section="owner">
+          <span>▣</span>
+          <span>Owner Centre</span>
+        </button>
 
-    <div class="nav-group owner-only">
+        <button
+          class="nav-item w-full text-left px-4 py-3 rounded-xl
+                 flex items-center gap-3"
+          data-section="addListing">
+          <span>＋</span>
+          <span>Add Listing</span>
+        </button>
 
-      <div class="nav-label">
-        Owner Centre
+        <button
+          class="nav-item w-full text-left px-4 py-3 rounded-xl
+                 flex items-center gap-3"
+          data-section="requests">
+          <span>◷</span>
+          <span>My Requests</span>
+        </button>
+
+        <button
+          class="nav-item w-full text-left px-4 py-3 rounded-xl
+                 flex items-center gap-3"
+          data-section="liveProperties">
+          <span>●</span>
+          <span>Live Properties</span>
+        </button>
+
+        <button
+          class="nav-item w-full text-left px-4 py-3 rounded-xl
+                 flex items-center gap-3"
+          data-section="ownerReviews">
+          <span>★</span>
+          <span>Owner Reviews</span>
+        </button>
+
       </div>
 
-      <button class="nav-btn"
-              data-page="owner-centre">
+    </nav>
 
-        <span class="nav-icon">▦</span>
-        <span>Owner Centre</span>
+    <!-- ACCOUNT -->
+    <div class="px-3 pb-5 border-t border-white/10 pt-4">
 
-      </button>
-
-      <button class="nav-btn"
-              data-page="listing">
-
-        <span class="nav-icon">＋</span>
-        <span>Add Listing</span>
-
-      </button>
-
-      <button class="nav-btn"
-              data-page="requests">
-
-        <span class="nav-icon">▤</span>
-        <span>My Requests</span>
-
-      </button>
-
-      <button class="nav-btn"
-              data-page="approval">
-
-        <span class="nav-icon">✓</span>
-        <span>Approval Status</span>
-
-      </button>
-
-      <button class="nav-btn"
-              data-page="live-properties">
-
-        <span class="nav-icon">⌂</span>
-        <span>Live Properties</span>
-
-      </button>
-
-      <button class="nav-btn"
-              data-page="owner-reviews">
-
-        <span class="nav-icon">★</span>
-        <span>Owner Reviews</span>
-
-      </button>
-
-    </div>
-
-
-    <div class="nav-group">
-
-      <div class="nav-label">
+      <div class="px-4 mb-3 text-[10px] uppercase tracking-widest text-white/35">
         Account
       </div>
 
-      <button class="nav-btn"
-              id="logoutSideBtn">
-
-        <span class="nav-icon">↪</span>
+      <button
+        id="logoutBtn"
+        class="nav-item w-full text-left px-4 py-3 rounded-xl
+               flex items-center gap-3 text-red-200">
+        <span>↪</span>
         <span>Logout</span>
-
       </button>
-
-    </div>
-
-
-    <div class="sidebar-card">
-
-      <div class="sidebar-card-title">
-        StudentHubHelp
-      </div>
-
-      <p>
-        Your profile, requests and live platform data
-        stay connected with Supabase.
-      </p>
 
     </div>
 
@@ -2402,1376 +233,931 @@
 
 
   <!-- MAIN -->
-  <main>
-
-
-    <!-- =====================================================
-         OVERVIEW
-    ====================================================== -->
-
-    <section class="page active"
-             id="page-overview">
-
-      <div class="hero">
-
-        <span class="hero-badge">
-          ● SECURE USER DASHBOARD
-        </span>
-
-        <h1>
-          Welcome,
-          <span id="heroName">User</span> 👋
-        </h1>
-
-        <p id="heroText">
-          Manage your StudentHubHelp account and
-          discover useful student services across India.
-        </p>
-
-        <div class="hero-role"
-             id="heroRole">
-          STUDENT ACCOUNT
-        </div>
-
-      </div>
-
-
-      <!-- STUDENT STATS -->
-
-      <div class="stats-grid student-stats">
-
-        <div class="stat-card">
-
-          <div class="stat-top">
-
-            <div class="stat-label">
-              Account
-            </div>
-
-            <div class="stat-icon">
-              👤
-            </div>
-
-          </div>
-
-          <div class="stat-value"
-               id="studentStatRole">
-            STUDENT
-          </div>
-
-          <div class="stat-foot">
-            Verified account role
-          </div>
-
-        </div>
-
-
-        <div class="stat-card">
-
-          <div class="stat-top">
-
-            <div class="stat-label">
-              Reviews
-            </div>
-
-            <div class="stat-icon">
-              ★
-            </div>
-
-          </div>
-
-          <div class="stat-value"
-               id="studentStatReviews">
-            0
-          </div>
-
-          <div class="stat-foot">
-            Reviews submitted
-          </div>
-
-        </div>
-
-
-        <div class="stat-card">
-
-          <div class="stat-top">
-
-            <div class="stat-label">
-              Activity
-            </div>
-
-            <div class="stat-icon">
-              ↗
-            </div>
-
-          </div>
-
-          <div class="stat-value">
-            —
-          </div>
-
-          <div class="stat-foot">
-            Discovery activity
-          </div>
-
-        </div>
-
-
-        <div class="stat-card">
-
-          <div class="stat-top">
-
-            <div class="stat-label">
-              Services
-            </div>
-
-            <div class="stat-icon">
-              ◈
-            </div>
-
-          </div>
-
-          <div class="stat-value">
-            5
-          </div>
-
-          <div class="stat-foot">
-            Categories available
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- OWNER STATS -->
-
-      <div class="stats-grid owner-stats hidden">
-
-        <div class="stat-card">
-
-          <div class="stat-top">
-            <div class="stat-label">
-              Total Listings
-            </div>
-
-            <div class="stat-icon">
-              ⌂
-            </div>
-          </div>
-
-          <div class="stat-value"
-               id="ownerStatListings">
-            0
-          </div>
-
-          <div class="stat-foot">
-            Approved live properties
-          </div>
-
-        </div>
-
-
-        <div class="stat-card">
-
-          <div class="stat-top">
-            <div class="stat-label">
-              Pending Requests
-            </div>
-
-            <div class="stat-icon">
-              ◷
-            </div>
-          </div>
-
-          <div class="stat-value"
-               id="ownerStatPending">
-            0
-          </div>
-
-          <div class="stat-foot">
-            Awaiting review
-          </div>
-
-        </div>
-
-
-        <div class="stat-card">
-
-          <div class="stat-top">
-            <div class="stat-label">
-              Live Properties
-            </div>
-
-            <div class="stat-icon">
-              ✓
-            </div>
-          </div>
-
-          <div class="stat-value"
-               id="ownerStatLive">
-            0
-          </div>
-
-          <div class="stat-foot">
-            Currently visible
-          </div>
-
-        </div>
-
-
-        <div class="stat-card">
-
-          <div class="stat-top">
-            <div class="stat-label">
-              Reviews
-            </div>
-
-            <div class="stat-icon">
-              ★
-            </div>
-          </div>
-
-          <div class="stat-value"
-               id="ownerStatReviews">
-            0
-          </div>
-
-          <div class="stat-foot">
-            Student reviews
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- QUICK ACCESS -->
-
-      <div class="section-head">
+  <main class="flex-1 min-w-0">
+
+    <!-- TOPBAR -->
+    <header
+      class="h-20 bg-white border-b border-gray-200
+             flex items-center justify-between px-5 md:px-8 sticky top-0 z-30">
+
+      <div class="flex items-center gap-4">
+
+        <button
+          id="menuBtn"
+          class="lg:hidden w-10 h-10 rounded-xl border border-gray-200
+                 flex items-center justify-center">
+          ☰
+        </button>
 
         <div>
-          <h2 class="section-title">
-            Quick Access
+          <div class="text-xs text-gray-400">
+            Dashboard
+          </div>
+
+          <h1 id="pageTitle"
+              class="font-semibold text-lg md:text-xl">
+            Overview
+          </h1>
+        </div>
+
+      </div>
+
+      <!-- USER CHIP -->
+      <div class="flex items-center gap-3">
+
+        <div class="hidden sm:block text-right">
+          <div id="topUserName"
+               class="text-sm font-semibold">
+            User
+          </div>
+
+          <div id="topUserRole"
+               class="text-xs text-gray-400">
+            Student
+          </div>
+        </div>
+
+        <div
+          id="userInitial"
+          class="w-10 h-10 rounded-full bg-[#0b1730]
+                 text-white flex items-center justify-center
+                 font-semibold">
+          U
+        </div>
+
+      </div>
+
+    </header>
+
+
+    <!-- CONTENT -->
+    <div class="p-5 md:p-8 max-w-[1500px] mx-auto">
+
+
+      <!-- ================= OVERVIEW ================= -->
+      <section id="section-overview" class="dashboard-section">
+
+        <div class="mb-7">
+
+          <div class="text-sm text-gray-400 mb-1">
+            Welcome back
+          </div>
+
+          <h2 class="text-2xl md:text-3xl font-bold">
+            <span id="welcomeName">User</span>
           </h2>
 
-          <p class="section-subtitle">
-            Find the service you need quickly.
+          <p class="text-gray-500 mt-2">
+            Manage your StudentHubHelp account from one place.
           </p>
-        </div>
-
-      </div>
-
-
-      <div class="service-grid">
-
-        <div class="service-card">
-
-          <div class="service-icon">🏠</div>
-
-          <h3>
-            Hostel / PG
-          </h3>
-
-          <p>
-            Find student accommodation by
-            city, district or area.
-          </p>
-
-          <button class="btn btn-light"
-                  style="margin-top:13px"
-                  onclick="goFinder('pg-finder.html')">
-            Explore →
-          </button>
 
         </div>
 
 
-        <div class="service-card">
+        <!-- STUDENT STATS -->
+        <div id="studentStats"
+             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-          <div class="service-icon">🍱</div>
+          <div class="stat-card p-5">
+            <div class="text-sm text-gray-400">
+              Account Type
+            </div>
+            <div class="text-xl font-bold mt-2">
+              Student
+            </div>
+          </div>
 
-          <h3>
-            Tiffin / Mess
-          </h3>
+          <div class="stat-card p-5">
+            <div class="text-sm text-gray-400">
+              My Reviews
+            </div>
+            <div id="reviewCount"
+                 class="text-3xl font-bold mt-2">
+              0
+            </div>
+          </div>
 
-          <p>
-            Discover food and mess services
-            suitable for students.
-          </p>
+          <div class="stat-card p-5">
+            <div class="text-sm text-gray-400">
+              Profile
+            </div>
+            <div id="profileStatus"
+                 class="text-xl font-bold mt-2">
+              Active
+            </div>
+          </div>
 
-          <button class="btn btn-light"
-                  style="margin-top:13px"
-                  onclick="goFinder('tiffin-finder.html')">
-            Explore →
-          </button>
-
-        </div>
-
-
-        <div class="service-card">
-
-          <div class="service-icon">📚</div>
-
-          <h3>
-            Library
-          </h3>
-
-          <p>
-            Find libraries and study spaces
-            near your location.
-          </p>
-
-          <button class="btn btn-light"
-                  style="margin-top:13px"
-                  onclick="goFinder('library-finder.html')">
-            Explore →
-          </button>
-
-        </div>
-
-
-        <div class="service-card">
-
-          <div class="service-icon">☕</div>
-
-          <h3>
-            Cafe
-          </h3>
-
-          <p>
-            Find cafes and student-friendly
-            study places.
-          </p>
-
-          <button class="btn btn-light"
-                  style="margin-top:13px"
-                  onclick="goFinder('cafe-finder.html')">
-            Explore →
-          </button>
+          <div class="stat-card p-5">
+            <div class="text-sm text-gray-400">
+              Platform
+            </div>
+            <div class="text-xl font-bold mt-2">
+              India
+            </div>
+          </div>
 
         </div>
 
 
-        <div class="service-card">
+        <!-- OWNER STATS -->
+        <div id="ownerStats"
+             class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-          <div class="service-icon">📖</div>
+          <div class="stat-card p-5">
+            <div class="text-sm text-gray-400">
+              Total Listings
+            </div>
+            <div id="ownerListingCount"
+                 class="text-3xl font-bold mt-2">
+              0
+            </div>
+          </div>
 
-          <h3>
-            Book Store
-          </h3>
+          <div class="stat-card p-5">
+            <div class="text-sm text-gray-400">
+              Pending Requests
+            </div>
+            <div id="ownerPendingCount"
+                 class="text-3xl font-bold mt-2">
+              0
+            </div>
+          </div>
 
-          <p>
-            Find nearby book stores and
-            study material providers.
-          </p>
+          <div class="stat-card p-5">
+            <div class="text-sm text-gray-400">
+              Live Properties
+            </div>
+            <div id="ownerLiveCount"
+                 class="text-3xl font-bold mt-2">
+              0
+            </div>
+          </div>
 
-          <button class="btn btn-light"
-                  style="margin-top:13px"
-                  onclick="goFinder('bookstore-finder.html')">
-            Explore →
-          </button>
+          <div class="stat-card p-5">
+            <div class="text-sm text-gray-400">
+              Reviews
+            </div>
+            <div id="ownerReviewCount"
+                 class="text-3xl font-bold mt-2">
+              0
+            </div>
+          </div>
 
         </div>
 
-      </div>
 
-    </section>
+        <!-- PROFILE SUMMARY -->
+        <div class="content-card mt-6 p-6">
+
+          <div class="flex items-center justify-between mb-5">
+
+            <div>
+              <h3 class="font-bold text-lg">
+                Profile Summary
+              </h3>
+
+              <p class="text-sm text-gray-400 mt-1">
+                Your account information
+              </p>
+            </div>
+
+            <button
+              onclick="showSection('profile')"
+              class="text-sm font-semibold text-[#0b1730]">
+              Edit Profile →
+            </button>
+
+          </div>
 
 
-    <!-- =====================================================
-         PROFILE
-    ====================================================== -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-    <section class="page"
-             id="page-profile">
+            <div>
+              <div class="text-xs text-gray-400 mb-1">
+                Full Name
+              </div>
+              <div id="summaryName"
+                   class="font-medium">
+                —
+              </div>
+            </div>
 
-      <div class="section-head">
+            <div>
+              <div class="text-xs text-gray-400 mb-1">
+                Email
+              </div>
+              <div id="summaryEmail"
+                   class="font-medium">
+                —
+              </div>
+            </div>
 
-        <div>
-          <h2 class="section-title">
+            <div>
+              <div class="text-xs text-gray-400 mb-1">
+                Phone
+              </div>
+              <div id="summaryPhone"
+                   class="font-medium">
+                —
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs text-gray-400 mb-1">
+                Address
+              </div>
+              <div id="summaryAddress"
+                   class="font-medium">
+                —
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- QUICK ACCESS -->
+        <div class="mt-8">
+
+          <div class="mb-5">
+            <h3 class="font-bold text-lg">
+              Quick Access
+            </h3>
+
+            <p class="text-sm text-gray-400 mt-1">
+              Explore student services across India
+            </p>
+          </div>
+
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+            <button
+              onclick="goFinder('pg-finder.html')"
+              class="service-card p-5 text-left">
+
+              <div class="text-2xl mb-4">🏠</div>
+
+              <div class="font-bold">
+                Hostel / PG
+              </div>
+
+              <div class="text-sm text-gray-400 mt-1">
+                Find accommodation
+              </div>
+
+            </button>
+
+
+            <button
+              onclick="goFinder('tiffin-finder.html')"
+              class="service-card p-5 text-left">
+
+              <div class="text-2xl mb-4">🍱</div>
+
+              <div class="font-bold">
+                Tiffin / Mess
+              </div>
+
+              <div class="text-sm text-gray-400 mt-1">
+                Find daily meals
+              </div>
+
+            </button>
+
+
+            <button
+              onclick="goFinder('library-finder.html')"
+              class="service-card p-5 text-left">
+
+              <div class="text-2xl mb-4">📚</div>
+
+              <div class="font-bold">
+                Library
+              </div>
+
+              <div class="text-sm text-gray-400 mt-1">
+                Find study spaces
+              </div>
+
+            </button>
+
+
+            <button
+              onclick="goFinder('cafe-finder.html')"
+              class="service-card p-5 text-left">
+
+              <div class="text-2xl mb-4">☕</div>
+
+              <div class="font-bold">
+                Cafe
+              </div>
+
+              <div class="text-sm text-gray-400 mt-1">
+                Find student cafes
+              </div>
+
+            </button>
+
+
+            <button
+              onclick="goFinder('bookstore-finder.html')"
+              class="service-card p-5 text-left">
+
+              <div class="text-2xl mb-4">📖</div>
+
+              <div class="font-bold">
+                Book Store
+              </div>
+
+              <div class="text-sm text-gray-400 mt-1">
+                Find books & supplies
+              </div>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ================= PROFILE ================= -->
+      <section id="section-profile"
+               class="dashboard-section hidden">
+
+        <div class="mb-7">
+
+          <h2 class="text-2xl font-bold">
             My Profile
           </h2>
 
-          <p class="section-subtitle">
-            Your account information connected to Supabase.
+          <p class="text-gray-500 mt-1">
+            Manage your personal account information.
           </p>
-        </div>
-
-      </div>
-
-
-      <div id="profileMessage"
-           class="message">
-      </div>
-
-
-      <div class="card profile-layout">
-
-        <div class="profile-summary">
-
-          <div class="profile-big-avatar"
-               id="profileAvatar">
-            U
-          </div>
-
-          <h3 id="profileSummaryName">
-            User
-          </h3>
-
-          <p id="profileSummaryEmail">
-            —
-          </p>
-
-          <span class="profile-role-badge"
-                id="profileSummaryRole">
-            STUDENT
-          </span>
 
         </div>
 
 
-        <div>
+        <div class="content-card p-6 max-w-3xl">
 
-          <div class="form-grid">
+          <form id="profileForm"
+                class="space-y-5">
 
-            <div class="field">
-
-              <label>
+            <div>
+              <label class="text-sm font-medium">
                 Full Name
               </label>
 
               <input
                 id="profileName"
                 type="text"
-                placeholder="Your full name">
-
+                required
+                class="w-full mt-2 px-4 py-3 rounded-xl
+                       border border-gray-200 outline-none
+                       focus:border-[#0b1730]" />
             </div>
 
 
-            <div class="field">
-
-              <label>
+            <div>
+              <label class="text-sm font-medium">
                 Phone
               </label>
 
               <input
                 id="profilePhone"
                 type="tel"
-                placeholder="Your phone number">
-
+                class="w-full mt-2 px-4 py-3 rounded-xl
+                       border border-gray-200 outline-none
+                       focus:border-[#0b1730]" />
             </div>
 
 
-            <div class="field">
-
-              <label>
+            <div>
+              <label class="text-sm font-medium">
                 Email
               </label>
 
               <input
                 id="profileEmail"
                 type="email"
-                disabled>
-
+                disabled
+                class="w-full mt-2 px-4 py-3 rounded-xl
+                       border border-gray-200 bg-gray-50
+                       text-gray-500" />
             </div>
 
 
-            <div class="field">
-
-              <label>
+            <div>
+              <label class="text-sm font-medium">
                 Role
               </label>
 
               <input
                 id="profileRole"
-                disabled>
-
+                type="text"
+                disabled
+                class="w-full mt-2 px-4 py-3 rounded-xl
+                       border border-gray-200 bg-gray-50
+                       text-gray-500 capitalize" />
             </div>
 
 
-            <div class="field full">
-
-              <label>
+            <div>
+              <label class="text-sm font-medium">
                 Address
               </label>
 
               <textarea
                 id="profileAddress"
-                placeholder="Your address">
-              </textarea>
+                rows="4"
+                class="w-full mt-2 px-4 py-3 rounded-xl
+                       border border-gray-200 outline-none
+                       focus:border-[#0b1730]"></textarea>
+            </div>
+
+
+            <div class="pt-2">
+
+              <button
+                type="submit"
+                class="px-6 py-3 rounded-xl bg-[#0b1730]
+                       text-white font-semibold hover:bg-[#14264a]">
+                Save Changes
+              </button>
 
             </div>
 
-          </div>
+            <div
+              id="profileMessage"
+              class="text-sm hidden">
+            </div>
 
-
-          <div class="form-actions">
-
-            <button class="btn btn-gold"
-                    id="saveProfileBtn">
-              Save Profile
-            </button>
-
-          </div>
+          </form>
 
         </div>
 
-      </div>
-
-    </section>
+      </section>
 
 
-    <!-- =====================================================
-         STUDENT JOINED PROPERTY
-    ====================================================== -->
+      <!-- ================= SERVICES ================= -->
+      <section id="section-services"
+               class="dashboard-section hidden">
 
-    <section class="page student-only-page"
-             id="page-joined">
+        <div class="mb-7">
 
-      <div class="section-head">
-
-        <div>
-          <h2 class="section-title">
-            My Joined Property
+          <h2 class="text-2xl font-bold">
+            Find Services
           </h2>
 
-          <p class="section-subtitle">
-            Your accommodation and rent information.
-          </p>
-        </div>
-
-      </div>
-
-
-      <div class="joined-empty">
-
-        <div class="joined-empty-icon">
-          🏠
-        </div>
-
-        <h3>
-          No Joined Property Yet
-        </h3>
-
-        <p>
-          Once your student property membership/
-          joining information is connected with
-          the platform, your joining date, rent amount,
-          rent payment dates and payment history will
-          appear here.
-        </p>
-
-        <button class="btn btn-primary"
-                style="margin-top:14px"
-                onclick="goFinder('pg-finder.html')">
-          Find Hostel / PG
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         FIND
-    ====================================================== -->
-
-    <section class="page"
-             id="page-find">
-
-      <div class="section-head">
-
-        <div>
-          <h2 class="section-title">
-            Explore Student Services
-          </h2>
-
-          <p class="section-subtitle">
-            Explore five live discovery categories.
-          </p>
-        </div>
-
-      </div>
-
-
-      <div class="service-grid">
-
-        <div class="service-card">
-          <div class="service-icon">🏠</div>
-          <h3>Hostel / PG</h3>
-          <p>Accommodation and student living spaces.</p>
-          <button class="btn btn-primary"
-                  style="margin-top:13px"
-                  onclick="goFinder('pg-finder.html')">
-            Open Finder
-          </button>
-        </div>
-
-
-        <div class="service-card">
-          <div class="service-icon">🍱</div>
-          <h3>Tiffin / Mess</h3>
-          <p>Daily meals, tiffin and mess services.</p>
-          <button class="btn btn-primary"
-                  style="margin-top:13px"
-                  onclick="goFinder('tiffin-finder.html')">
-            Open Finder
-          </button>
-        </div>
-
-
-        <div class="service-card">
-          <div class="service-icon">📚</div>
-          <h3>Library</h3>
-          <p>Study libraries and focused learning spaces.</p>
-          <button class="btn btn-primary"
-                  style="margin-top:13px"
-                  onclick="goFinder('library-finder.html')">
-            Open Finder
-          </button>
-        </div>
-
-
-        <div class="service-card">
-          <div class="service-icon">☕</div>
-          <h3>Cafe</h3>
-          <p>Cafes and student-friendly places.</p>
-          <button class="btn btn-primary"
-                  style="margin-top:13px"
-                  onclick="goFinder('cafe-finder.html')">
-            Open Finder
-          </button>
-        </div>
-
-
-        <div class="service-card">
-          <div class="service-icon">📖</div>
-          <h3>Book Store</h3>
-          <p>Books, study material and book stores.</p>
-          <button class="btn btn-primary"
-                  style="margin-top:13px"
-                  onclick="goFinder('bookstore-finder.html')">
-            Open Finder
-          </button>
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         STUDENT REVIEWS
-    ====================================================== -->
-
-    <section class="page"
-             id="page-reviews">
-
-      <div class="section-head">
-
-        <div>
-          <h2 class="section-title">
-            My Reviews
-          </h2>
-
-          <p class="section-subtitle">
-            Reviews submitted from your student account.
-          </p>
-        </div>
-
-      </div>
-
-
-      <div class="card">
-
-        <div id="reviewsContainer"
-             class="request-list">
-
-          <div class="loading">
-            <div class="spinner"></div>
-            Loading reviews...
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         STUDENT ACTIVITY
-    ====================================================== -->
-
-    <section class="page"
-             id="page-activity">
-
-      <div class="section-head">
-
-        <div>
-          <h2 class="section-title">
-            My Activity
-          </h2>
-
-          <p class="section-subtitle">
-            Recent discovery activity and interactions.
+          <p class="text-gray-500 mt-1">
+            Discover student-friendly services anywhere in India.
           </p>
 
         </div>
 
-      </div>
 
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
 
-      <div class="joined-empty">
+          <div
+            onclick="goFinder('pg-finder.html')"
+            class="service-card p-6 cursor-pointer">
 
-        <div class="joined-empty-icon">
-          ↗
-        </div>
-
-        <h3>
-          Activity Tracking
-        </h3>
-
-        <p>
-          Your recent listing views and interactions
-          will appear here as activity tracking is
-          connected to the platform.
-        </p>
-
-      </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         OWNER CENTRE
-    ====================================================== -->
-
-    <section class="page owner-page"
-             id="page-owner-centre">
-
-      <div class="section-head">
-
-        <div>
-          <h2 class="section-title">
-            Owner Centre
-          </h2>
-
-          <p class="section-subtitle">
-            Your business profile and listing overview.
-          </p>
-        </div>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="owner-profile-header">
-
-          <div class="owner-profile-main">
-
-            <div class="owner-profile-avatar"
-                 id="ownerCentreAvatar">
-              O
-            </div>
-
-            <div>
-
-              <h3 id="ownerCentreName">
-                Owner
-              </h3>
-
-              <p id="ownerCentreContact">
-                —
-              </p>
-
-            </div>
-
-          </div>
-
-          <span class="status approved">
-            VERIFIED ACCOUNT
-          </span>
-
-        </div>
-
-
-        <div class="owner-summary-grid">
-
-          <div class="summary-box">
-
-            <span>
-              Owner Name
-            </span>
-
-            <strong id="ownerCentreName2">
-              —
-            </strong>
+            <div class="text-3xl mb-5">🏠</div>
+            <h3 class="font-bold text-lg">
+              Hostel / PG
+            </h3>
+            <p class="text-sm text-gray-400 mt-2">
+              Find hostels and PG accommodations.
+            </p>
 
           </div>
 
 
-          <div class="summary-box">
+          <div
+            onclick="goFinder('tiffin-finder.html')"
+            class="service-card p-6 cursor-pointer">
 
-            <span>
-              Phone
-            </span>
-
-            <strong id="ownerCentrePhone">
-              —
-            </strong>
-
-          </div>
-
-
-          <div class="summary-box">
-
-            <span>
-              Email
-            </span>
-
-            <strong id="ownerCentreEmail">
-              —
-            </strong>
+            <div class="text-3xl mb-5">🍱</div>
+            <h3 class="font-bold text-lg">
+              Tiffin / Mess
+            </h3>
+            <p class="text-sm text-gray-400 mt-2">
+              Find affordable food options.
+            </p>
 
           </div>
 
 
-          <div class="summary-box">
+          <div
+            onclick="goFinder('library-finder.html')"
+            class="service-card p-6 cursor-pointer">
 
-            <span>
-              Total Properties
-            </span>
-
-            <strong id="ownerCentreProperties">
-              0
-            </strong>
-
-          </div>
-
-
-          <div class="summary-box">
-
-            <span>
-              Live
-            </span>
-
-            <strong id="ownerCentreLive">
-              0
-            </strong>
+            <div class="text-3xl mb-5">📚</div>
+            <h3 class="font-bold text-lg">
+              Library
+            </h3>
+            <p class="text-sm text-gray-400 mt-2">
+              Find libraries and study spaces.
+            </p>
 
           </div>
 
 
-          <div class="summary-box">
+          <div
+            onclick="goFinder('cafe-finder.html')"
+            class="service-card p-6 cursor-pointer">
 
-            <span>
-              Pending
-            </span>
-
-            <strong id="ownerCentrePending">
-              0
-            </strong>
-
-          </div>
-
-        </div>
-
-
-        <div style="margin-top:18px">
-
-          <div class="summary-box">
-
-            <span>
-              Address
-            </span>
-
-            <strong id="ownerCentreAddress">
-              —
-            </strong>
+            <div class="text-3xl mb-5">☕</div>
+            <h3 class="font-bold text-lg">
+              Cafe
+            </h3>
+            <p class="text-sm text-gray-400 mt-2">
+              Discover cafes suitable for students.
+            </p>
 
           </div>
 
-        </div>
 
-      </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         OWNER ADD LISTING
-    ====================================================== -->
-
-    <section class="page owner-page"
-             id="page-listing">
-
-      <div class="section-head">
-
-        <div>
-          <h2 class="section-title">
-            Add Listing
-          </h2>
-
-          <p class="section-subtitle">
-            Submit a new property for Director Admin review.
-          </p>
-        </div>
-
-      </div>
-
-
-      <div id="listingMessage"
-           class="message">
-      </div>
-
-
-      <div class="card">
-
-        <div class="info-note">
-
-          <strong>
-            Approval process:
-          </strong>
-
-          Submit your property →
-          Admin Review →
-          Approved →
-          Live on StudentHubHelp.
-
-          <br>
-
-          Your listing will not directly modify a
-          live property until it is approved.
-
-        </div>
-
-
-        <form id="listingForm">
-
-          <div class="form-grid">
-
-            <div class="field">
-
-              <label>
-                Property / Business Name *
-              </label>
-
-              <input
-                id="listingName"
-                required
-                placeholder="Example: Sunrise Boys PG">
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Property Type *
-              </label>
-
-              <select id="listingCategory"
-                      required>
-
-                <option value="">
-                  Select property type
-                </option>
-
-                <option value="hostel">
-                  Hostel
-                </option>
-
-                <option value="pg">
-                  PG
-                </option>
-
-                <option value="tiffin">
-                  Tiffin
-                </option>
-
-                <option value="mess">
-                  Mess
-                </option>
-
-                <option value="library">
-                  Library
-                </option>
-
-                <option value="cafe">
-                  Cafe
-                </option>
-
-                <option value="bookstore">
-                  Book Store
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Area / City / District / State *
-              </label>
-
-              <input
-                id="listingArea"
-                required
-                placeholder="Example: Sikar, Rajasthan">
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Property Phone *
-              </label>
-
-              <input
-                id="listingPhone"
-                type="tel"
-                required
-                placeholder="Property contact number">
-
-            </div>
-
-
-            <div class="field full">
-
-              <label>
-                Full Address *
-              </label>
-
-              <textarea
-                id="listingAddress"
-                required
-                placeholder="Complete property address">
-              </textarea>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Timing
-              </label>
-
-              <input
-                id="listingTiming"
-                placeholder="Example: 7 AM - 10 PM">
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Image URL
-              </label>
-
-              <input
-                id="listingImage"
-                type="url"
-                placeholder="https://...">
-
-            </div>
-
-
-            <div class="field full">
-
-              <label>
-                Facilities
-              </label>
-
-              <textarea
-                id="listingFacilities"
-                placeholder="Wi-Fi, AC, parking, meals, study table, etc.">
-              </textarea>
-
-            </div>
-
-          </div>
-
-
-          <div class="form-actions">
-
-            <button
-              class="btn btn-gold"
-              type="submit"
-              id="submitListingBtn">
-
-              Submit Listing Request
-
-            </button>
-
-          </div>
-
-        </form>
-
-      </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         OWNER REQUESTS
-    ====================================================== -->
-
-    <section class="page owner-page"
-             id="page-requests">
-
-      <div class="section-head">
-
-        <div>
-          <h2 class="section-title">
-            My Requests
-          </h2>
-
-          <p class="section-subtitle">
-            Track all property listing and edit requests.
-          </p>
-
-        </div>
-
-        <button class="btn btn-light"
-                onclick="loadRequests()">
-          ↻ Refresh
-        </button>
-
-      </div>
-
-
-      <div class="card">
-
-        <div id="requestsContainer"
-             class="request-list">
-
-          <div class="loading">
-            <div class="spinner"></div>
-            Loading requests...
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         APPROVAL STATUS
-    ====================================================== -->
-
-    <section class="page owner-page"
-             id="page-approval">
-
-      <div class="section-head">
-
-        <div>
-          <h2 class="section-title">
-            Listing Approval Status
-          </h2>
-
-          <p class="section-subtitle">
-            Track your latest listing request.
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <div class="card">
-
-        <div id="approvalContainer">
-
-          <div class="empty">
-
-            <div class="empty-icon">
-              ✓
-            </div>
-
-            <strong>
-              No listing request yet
-            </strong>
-
-            <p>
-              Submit a listing from Add Listing
-              to start the approval process.
+          <div
+            onclick="goFinder('bookstore-finder.html')"
+            class="service-card p-6 cursor-pointer">
+
+            <div class="text-3xl mb-5">📖</div>
+            <h3 class="font-bold text-lg">
+              Book Store
+            </h3>
+            <p class="text-sm text-gray-400 mt-2">
+              Find books, stationery and study material.
             </p>
 
           </div>
 
         </div>
 
-      </div>
-
-    </section>
+      </section>
 
 
-    <!-- =====================================================
-         OWNER LIVE PROPERTIES
-    ====================================================== -->
+      <!-- ================= REVIEWS ================= -->
+      <section id="section-reviews"
+               class="dashboard-section hidden">
 
-    <section class="page owner-page"
-             id="page-live-properties">
+        <div class="mb-7">
 
-      <div class="section-head">
-
-        <div>
-
-          <h2 class="section-title">
-            Live Properties
+          <h2 class="text-2xl font-bold">
+            My Reviews
           </h2>
 
-          <p class="section-subtitle">
-            Your approved properties currently live on
-            StudentHubHelp.
+          <p class="text-gray-500 mt-1">
+            Reviews and ratings submitted by you.
           </p>
 
         </div>
 
-        <button class="btn btn-light"
-                onclick="loadLiveProperties()">
-          ↻ Refresh
-        </button>
+        <div id="reviewsContainer"
+             class="space-y-4">
 
-      </div>
+          <div class="content-card p-6 text-gray-400">
+            Loading reviews...
+          </div>
+
+        </div>
+
+      </section>
 
 
-      <div class="card">
+      <!-- ================= ACTIVITY ================= -->
+      <section id="section-activity"
+               class="dashboard-section hidden">
 
-        <div id="livePropertiesContainer"
-             class="property-grid">
+        <div class="mb-7">
 
-          <div class="loading"
-               style="grid-column:1/-1">
+          <h2 class="text-2xl font-bold">
+            My Activity
+          </h2>
 
-            <div class="spinner"></div>
+          <p class="text-gray-500 mt-1">
+            Your recent account activity.
+          </p>
 
-            Loading live properties...
+        </div>
+
+        <div class="content-card p-8 text-center">
+
+          <div class="text-4xl mb-4">
+            ↗
+          </div>
+
+          <h3 class="font-bold text-lg">
+            Activity Tracking
+          </h3>
+
+          <p class="text-gray-400 mt-2 max-w-md mx-auto">
+            Your recent interactions and platform activity
+            will appear here.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <!-- ================= OWNER CENTRE ================= -->
+      <section id="section-owner"
+               class="dashboard-section hidden">
+
+        <div class="mb-7">
+
+          <h2 class="text-2xl font-bold">
+            Owner Centre
+          </h2>
+
+          <p class="text-gray-500 mt-1">
+            Manage your business profile and listing activity.
+          </p>
+
+        </div>
+
+
+        <div class="content-card p-6">
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div>
+              <div class="text-xs text-gray-400">
+                Owner Name
+              </div>
+              <div id="ownerName"
+                   class="font-semibold mt-1">
+                —
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs text-gray-400">
+                Phone
+              </div>
+              <div id="ownerPhone"
+                   class="font-semibold mt-1">
+                —
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs text-gray-400">
+                Email
+              </div>
+              <div id="ownerEmail"
+                   class="font-semibold mt-1">
+                —
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs text-gray-400">
+                Address
+              </div>
+              <div id="ownerAddress"
+                   class="font-semibold mt-1">
+                —
+              </div>
+            </div>
 
           </div>
 
         </div>
 
-      </div>
-
-    </section>
+      </section>
 
 
-    <!-- =====================================================
-         OWNER REVIEWS
-    ====================================================== -->
+      <!-- ================= ADD LISTING ================= -->
+      <section id="section-addListing"
+               class="dashboard-section hidden">
 
-    <section class="page owner-page"
-             id="page-owner-reviews">
+        <div class="mb-7">
 
-      <div class="section-head">
+          <h2 class="text-2xl font-bold">
+            Add Listing
+          </h2>
 
-        <div>
+          <p class="text-gray-500 mt-1">
+            Submit your property for admin approval.
+          </p>
 
-          <h2 class="section-title">
+        </div>
+
+
+        <div class="content-card p-6 max-w-3xl">
+
+          <form id="listingForm"
+                class="space-y-5">
+
+            <div>
+              <label class="text-sm font-medium">
+                Property Name
+              </label>
+
+              <input
+                id="listingName"
+                required
+                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200" />
+            </div>
+
+
+            <div>
+              <label class="text-sm font-medium">
+                Category
+              </label>
+
+              <select
+                id="listingCategory"
+                required
+                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200">
+
+                <option value="">Select Category</option>
+                <option value="Hostel / PG">Hostel / PG</option>
+                <option value="Tiffin / Mess">Tiffin / Mess</option>
+                <option value="Library">Library</option>
+                <option value="Cafe">Cafe</option>
+                <option value="Book Store">Book Store</option>
+
+              </select>
+            </div>
+
+
+            <div>
+              <label class="text-sm font-medium">
+                Area
+              </label>
+
+              <input
+                id="listingArea"
+                required
+                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200" />
+            </div>
+
+
+            <div>
+              <label class="text-sm font-medium">
+                Address
+              </label>
+
+              <textarea
+                id="listingAddress"
+                rows="3"
+                required
+                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200"></textarea>
+            </div>
+
+
+            <div>
+              <label class="text-sm font-medium">
+                Phone
+              </label>
+
+              <input
+                id="listingPhone"
+                required
+                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200" />
+            </div>
+
+
+            <div>
+              <label class="text-sm font-medium">
+                Timing
+              </label>
+
+              <input
+                id="listingTiming"
+                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200" />
+            </div>
+
+
+            <div>
+              <label class="text-sm font-medium">
+                Facilities
+              </label>
+
+              <textarea
+                id="listingFacilities"
+                rows="3"
+                class="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200"></textarea>
+            </div>
+
+
+            <button
+              type="submit"
+              class="px-6 py-3 rounded-xl bg-[#0b1730]
+                     text-white font-semibold">
+              Submit Listing Request
+            </button>
+
+            <div id="listingMessage"
+                 class="hidden text-sm"></div>
+
+          </form>
+
+        </div>
+
+      </section>
+
+
+      <!-- ================= REQUESTS ================= -->
+      <section id="section-requests"
+               class="dashboard-section hidden">
+
+        <div class="mb-7">
+
+          <h2 class="text-2xl font-bold">
+            My Requests
+          </h2>
+
+          <p class="text-gray-500 mt-1">
+            Track your submitted listing requests.
+          </p>
+
+        </div>
+
+
+        <div id="requestsContainer"
+             class="space-y-4">
+
+          <div class="content-card p-6 text-gray-400">
+            Loading requests...
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ================= LIVE PROPERTIES ================= -->
+      <section id="section-liveProperties"
+               class="dashboard-section hidden">
+
+        <div class="mb-7">
+
+          <h2 class="text-2xl font-bold">
+            Live Properties
+          </h2>
+
+          <p class="text-gray-500 mt-1">
+            Your approved properties currently visible to students.
+          </p>
+
+        </div>
+
+
+        <div id="livePropertiesContainer"
+             class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+          <div class="content-card p-6 text-gray-400">
+            Loading live properties...
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ================= OWNER REVIEWS ================= -->
+      <section id="section-ownerReviews"
+               class="dashboard-section hidden">
+
+        <div class="mb-7">
+
+          <h2 class="text-2xl font-bold">
             Owner Reviews
           </h2>
 
-          <p class="section-subtitle">
+          <p class="text-gray-500 mt-1">
             Student reviews received on your properties.
           </p>
 
         </div>
 
-      </div>
-
-
-      <div class="card">
 
         <div id="ownerReviewsContainer"
-             class="request-list">
+             class="space-y-4">
 
-          <div class="loading">
-
-            <div class="spinner"></div>
-
-            Loading owner reviews...
-
+          <div class="content-card p-6 text-gray-400">
+            Loading reviews...
           </div>
 
         </div>
 
-      </div>
+      </section>
 
-    </section>
+    </div>
 
   </main>
 
 </div>
 
 
-<!-- =========================================================
-     MODAL
-========================================================= -->
-
-<div class="modal-backdrop"
-     id="modalBackdrop">
-
-  <div class="modal">
-
-    <div class="modal-head">
-
-      <div>
-
-        <h2 class="modal-title"
-            id="modalTitle">
-          Property Details
-        </h2>
-
-        <p class="modal-subtitle"
-           id="modalSubtitle">
-          StudentHubHelp
-        </p>
-
-      </div>
-
-      <button class="close-btn"
-              onclick="closeModal()">
-        ×
-      </button>
-
-    </div>
-
-
-    <div class="modal-body"
-         id="modalBody">
-    </div>
-
-    <div class="modal-footer"
-         id="modalFooter">
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- =========================================================
-     TOAST
-========================================================= -->
-
-<div class="toast-container"
-     id="toastContainer">
-</div>
-
-
 <script>
-
 /* =========================================================
    SUPABASE
 ========================================================= */
@@ -3779,11 +1165,16 @@
 const SUPABASE_URL =
   "https://idurlccrarznnnqixxsd.supabase.co";
 
+/*
+  IMPORTANT:
+  Put your existing Supabase ANON key here.
+  Never put service_role key in frontend.
+*/
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+  "YOUR_EXISTING_SUPABASE_ANON_KEY";
 
-const sb =
-  window.supabase.createClient(
+const supabaseClient =
+  supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
   );
@@ -3796,453 +1187,244 @@ const sb =
 let currentUser = null;
 let currentProfile = null;
 
-let listingRequests = [];
-let liveProperties = [];
-let ownerReviews = [];
-
-let realtimeChannels = [];
-
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
-function $(id){
+function $(id) {
   return document.getElementById(id);
 }
 
 
-function escapeHtml(value){
-
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-
-function initials(name){
-
-  return String(name || "User")
-    .trim()
-    .split(/\s+/)
-    .slice(0,2)
-    .map(x => x[0])
-    .join("")
-    .toUpperCase() || "U";
-}
-
-
-function normalizePhone(phone){
-
-  return String(phone || "")
-    .replace(/\D/g,"")
+function normalizePhone(value) {
+  return String(value || "")
+    .replace(/\D/g, "")
     .slice(-10);
 }
 
 
-function roleName(role){
-
-  const r =
-    String(role || "")
-      .toLowerCase();
-
-  if(r === "owner") return "OWNER";
-  if(r === "student") return "STUDENT";
-  if(r === "admin") return "ADMIN";
-
-  return "USER";
+function capitalize(value) {
+  return String(value || "")
+    .charAt(0)
+    .toUpperCase() +
+    String(value || "").slice(1);
 }
 
 
-function formatCategory(value){
+function showSection(section) {
 
-  const v =
-    String(value || "")
-      .toLowerCase();
+  document
+    .querySelectorAll(".dashboard-section")
+    .forEach(el => el.classList.add("hidden"));
 
-  const map = {
+  const target =
+    $("section-" + section);
 
-    hostel:"Hostel",
+  if (target) {
+    target.classList.remove("hidden");
+  }
 
-    pg:"PG",
+  document
+    .querySelectorAll(".nav-item")
+    .forEach(el => {
+      el.classList.remove("active");
 
-    tiffin:"Tiffin",
+      if (el.dataset.section === section) {
+        el.classList.add("active");
+      }
+    });
 
-    mess:"Mess",
-
-    library:"Library",
-
-    cafe:"Cafe",
-
-    bookstore:"Book Store"
-
+  const titles = {
+    overview: "Overview",
+    profile: "My Profile",
+    services: "Find Services",
+    reviews: "My Reviews",
+    activity: "My Activity",
+    owner: "Owner Centre",
+    addListing: "Add Listing",
+    requests: "My Requests",
+    liveProperties: "Live Properties",
+    ownerReviews: "Owner Reviews"
   };
 
-  return map[v] || value || "—";
+  $("pageTitle").textContent =
+    titles[section] || "Dashboard";
+
+  closeMobileSidebar();
+
+  if (section === "reviews") {
+    loadStudentReviews();
+  }
+
+  if (section === "requests") {
+    loadOwnerRequests();
+  }
+
+  if (section === "liveProperties") {
+    loadLiveProperties();
+  }
+
+  if (section === "ownerReviews") {
+    loadOwnerReviews();
+  }
 }
 
 
-function formatDate(value){
+window.showSection = showSection;
 
-  if(!value) return "—";
 
-  const d = new Date(value);
-
-  if(Number.isNaN(d.getTime()))
-    return "—";
-
-  return d.toLocaleString(
-    "en-IN",
-    {
-      dateStyle:"medium",
-      timeStyle:"short"
-    }
-  );
+function goFinder(page) {
+  window.location.href = page;
 }
 
-
-function showMessage(
-  id,
-  text,
-  type="info"
-){
-
-  const el = $(id);
-
-  if(!el) return;
-
-  el.className =
-    "message show " + type;
-
-  el.textContent = text;
-}
-
-
-function hideMessage(id){
-
-  const el = $(id);
-
-  if(el)
-    el.className = "message";
-}
-
-
-function toast(
-  text,
-  type="success"
-){
-
-  const container =
-    $("toastContainer");
-
-  const item =
-    document.createElement("div");
-
-  item.className =
-    "toast " + type;
-
-  item.textContent = text;
-
-  container.appendChild(item);
-
-  setTimeout(() => {
-
-    item.remove();
-
-  }, 3800);
-}
-
-
-function safeUrl(value){
-
-  try{
-
-    const u =
-      new URL(
-        value,
-        window.location.href
-      );
-
-    if(
-      u.protocol === "http:" ||
-      u.protocol === "https:"
-    ){
-      return u.href;
-    }
-
-  }catch(e){}
-
-  return "";
-}
+window.goFinder = goFinder;
 
 
 /* =========================================================
-   BANNER
-   Property tables currently do not expose image column.
-   Use category-specific platform banner.
+   MOBILE SIDEBAR
 ========================================================= */
 
-function propertyBanner(type){
-
-  const t =
-    String(type || "")
-      .toLowerCase();
-
-  if(t === "hostels")
-    return "hostel-banner.png";
-
-  if(t === "tiffins")
-    return "tiffin-banner.png";
-
-  if(t === "libraries")
-    return "library-banner.png";
-
-  if(t === "cafes")
-    return "cafe-banner.png";
-
-  if(t === "bookstores")
-    return "bookstore-banner.png";
-
-  return "hostel-banner.png";
+function openMobileSidebar() {
+  $("sidebar").classList.add("open");
+  $("sidebarOverlay").classList.remove("hidden");
 }
+
+
+function closeMobileSidebar() {
+  $("sidebar").classList.remove("open");
+  $("sidebarOverlay").classList.add("hidden");
+}
+
+
+$("menuBtn").addEventListener(
+  "click",
+  openMobileSidebar
+);
+
+$("sidebarOverlay").addEventListener(
+  "click",
+  closeMobileSidebar
+);
 
 
 /* =========================================================
    NAVIGATION
 ========================================================= */
 
-function showPage(page){
-
-  const target =
-    $("page-" + page);
-
-  if(!target) return;
-
-  document
-    .querySelectorAll(".page")
-    .forEach(el =>
-      el.classList.remove("active")
-    );
-
-  target.classList.add("active");
-
-  document
-    .querySelectorAll(".nav-btn[data-page]")
-    .forEach(btn => {
-
-      btn.classList.toggle(
-        "active",
-        btn.dataset.page === page
-      );
-
-    });
-
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
-
-
-  if(page === "reviews")
-    loadReviews();
-
-  if(page === "requests")
-    loadRequests();
-
-  if(page === "approval")
-    renderApprovalStatus();
-
-  if(page === "live-properties")
-    loadLiveProperties();
-
-  if(page === "owner-reviews")
-    loadOwnerReviews();
-
-  if(page === "owner-centre")
-    loadOwnerCentre();
-
-}
-
-
 document
-  .querySelectorAll(".nav-btn[data-page]")
-  .forEach(btn => {
+  .querySelectorAll(".nav-item")
+  .forEach(button => {
 
-    btn.addEventListener(
+    if (!button.dataset.section) return;
+
+    button.addEventListener(
       "click",
-      () => {
-
-        showPage(
-          btn.dataset.page
-        );
-
-      }
+      () => showSection(button.dataset.section)
     );
 
   });
 
 
-function goFinder(url){
-
-  window.location.href = url;
-
-}
-
-
 /* =========================================================
-   ROLE UI
+   AUTH
 ========================================================= */
 
-function configureRoleUI(){
-
-  const role =
-    String(currentProfile?.role || "")
-      .toLowerCase();
-
-  const isOwner =
-    role === "owner";
-
-  const isStudent =
-    role === "student";
-
-
-  document
-    .querySelectorAll(".owner-only")
-    .forEach(el => {
-
-      el.style.display =
-        isOwner ? "" : "none";
-
-    });
-
-
-  document
-    .querySelectorAll(".student-only")
-    .forEach(el => {
-
-      el.style.display =
-        isStudent ? "" : "none";
-
-    });
-
-
-  document
-    .querySelectorAll(".owner-page")
-    .forEach(el => {
-
-      el.style.display =
-        isOwner ? "" : "none";
-
-    });
-
-
-  document
-    .querySelectorAll(".student-only-page")
-    .forEach(el => {
-
-      el.style.display =
-        isStudent ? "" : "none";
-
-    });
-
-
-  if(isOwner){
-
-    document
-      .querySelector(".student-stats")
-      ?.classList.add("hidden");
-
-    document
-      .querySelector(".owner-stats")
-      ?.classList.remove("hidden");
-
-  }else{
-
-    document
-      .querySelector(".student-stats")
-      ?.classList.remove("hidden");
-
-    document
-      .querySelector(".owner-stats")
-      ?.classList.add("hidden");
-
-  }
-
-
-  if(isOwner){
-
-    $("heroText").textContent =
-      "Manage your owner profile, submit property requests, track approvals and view your live properties.";
-
-    $("heroRole").textContent =
-      "OWNER ACCOUNT";
-
-  }else{
-
-    $("heroText").textContent =
-      "Discover Hostel / PG, Tiffin / Mess, Library, Cafe and Book Store services across India.";
-
-    $("heroRole").textContent =
-      "STUDENT ACCOUNT";
-
-  }
-
-}
-
-
-/* =========================================================
-   BOOT
-========================================================= */
-
-async function boot(){
+async function loadDashboard() {
 
   const {
-    data,
+    data: {
+      session
+    }
+  } = await supabaseClient.auth.getSession();
+
+
+  if (!session || !session.user) {
+
+    window.location.href =
+      "login.html";
+
+    return;
+  }
+
+
+  currentUser = session.user;
+
+
+  /*
+    IMPORTANT:
+    Role comes ONLY from profiles.role.
+    No localStorage role.
+    No hardcoded owner.
+  */
+
+  const {
+    data: profile,
     error
-  } =
-    await sb.auth.getSession();
+  } = await supabaseClient
+    .from("profiles")
+    .select(`
+      id,
+      full_name,
+      phone,
+      email,
+      address,
+      role
+    `)
+    .eq("id", currentUser.id)
+    .maybeSingle();
 
 
-  if(error){
+  if (error) {
 
     console.error(error);
 
-    window.location.href =
-      "auth.html";
+    alert(
+      "Unable to load your profile."
+    );
 
     return;
   }
 
 
-  if(!data?.session){
+  if (!profile || !profile.role) {
 
-    window.location.href =
-      "auth.html";
+    document.body.innerHTML = `
+      <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="max-w-md w-full bg-white border border-gray-200
+                    rounded-2xl p-8 text-center">
+          <div class="text-4xl mb-4">⚠</div>
+          <h2 class="text-xl font-bold">
+            Account Role Not Available
+          </h2>
+          <p class="text-gray-500 mt-3">
+            Your account role could not be verified.
+            Please contact the administrator.
+          </p>
+        </div>
+      </div>
+    `;
 
     return;
   }
 
 
-  currentUser =
-    data.session.user;
-
-
-  await loadProfile();
+  currentProfile = profile;
 
 
   const role =
-    String(currentProfile?.role || "")
+    String(profile.role)
+      .trim()
       .toLowerCase();
 
 
   /*
-    Admin never stays on user dashboard.
+    ADMIN IS NEVER SHOWN IN USER DASHBOARD.
   */
 
-  if(role === "admin"){
+  if (role === "admin" ||
+      role === "director" ||
+      role === "director_admin") {
 
     window.location.href =
       "admin-dashboard.html";
@@ -4251,1982 +1433,286 @@ async function boot(){
   }
 
 
-  /*
-    Missing role fails closed.
-  */
-
-  if(
+  if (
     role !== "student" &&
     role !== "owner"
-  ){
+  ) {
 
-    toast(
-      "Your account role is not configured.",
-      "error"
-    );
+    document.body.innerHTML = `
+      <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="max-w-md w-full bg-white border border-gray-200
+                    rounded-2xl p-8 text-center">
+          <h2 class="text-xl font-bold">
+            Invalid Account Role
+          </h2>
+          <p class="text-gray-500 mt-3">
+            Please contact the administrator.
+          </p>
+        </div>
+      </div>
+    `;
 
+    return;
   }
 
 
-  configureRoleUI();
+  applyProfile(profile, role);
 
-  await loadRequests();
-  await loadReviews();
-  await loadLiveProperties();
-  await loadOwnerReviews();
-  await loadOwnerCentre();
 
-  subscribeRealtime();
+  if (role === "owner") {
 
+    enableOwnerMode();
+
+    await loadOwnerStats();
+
+  } else {
+
+    enableStudentMode();
+
+    await loadStudentStats();
+
+  }
 }
 
 
 /* =========================================================
-   PROFILE
+   PROFILE UI
 ========================================================= */
 
-async function loadProfile(){
-
-  const {
-    data,
-    error
-  } =
-    await sb
-      .from("profiles")
-      .select(
-        "id,full_name,phone,email,address,role"
-      )
-      .eq(
-        "id",
-        currentUser.id
-      )
-      .maybeSingle();
-
-
-  if(error){
-
-    console.error(
-      "Profile load error:",
-      error
-    );
-
-    currentProfile = {
-
-      id:currentUser.id,
-
-      full_name:
-        currentUser
-          .user_metadata
-          ?.full_name ||
-        "User",
-
-      phone:"",
-
-      email:
-        currentUser.email || "",
-
-      address:"",
-
-      role:""
-
-    };
-
-  }else{
-
-    currentProfile =
-      data || {
-
-        id:currentUser.id,
-
-        full_name:
-          currentUser
-            .user_metadata
-            ?.full_name ||
-          "User",
-
-        phone:"",
-
-        email:
-          currentUser.email || "",
-
-        address:"",
-
-        role:""
-
-      };
-
-  }
-
+function applyProfile(profile, role) {
 
   const name =
-    currentProfile.full_name ||
+    profile.full_name ||
+    currentUser.email?.split("@")[0] ||
     "User";
 
-  const role =
-    roleName(
-      currentProfile.role
-    );
 
+  $("welcomeName").textContent =
+    name;
 
   $("topUserName").textContent =
     name;
 
   $("topUserRole").textContent =
-    role;
+    capitalize(role);
 
-  $("topAvatar").textContent =
-    initials(name);
+  $("userInitial").textContent =
+    name
+      .trim()
+      .charAt(0)
+      .toUpperCase();
 
-  $("heroName").textContent =
-    name;
 
+  $("summaryName").textContent =
+    profile.full_name || "—";
 
-  $("studentStatRole").textContent =
-    role;
+  $("summaryEmail").textContent =
+    profile.email ||
+    currentUser.email ||
+    "—";
+
+  $("summaryPhone").textContent =
+    profile.phone || "—";
+
+  $("summaryAddress").textContent =
+    profile.address || "—";
 
 
   $("profileName").value =
-    currentProfile.full_name || "";
+    profile.full_name || "";
 
   $("profilePhone").value =
-    currentProfile.phone || "";
+    profile.phone || "";
 
   $("profileEmail").value =
-    currentProfile.email ||
+    profile.email ||
     currentUser.email ||
     "";
 
   $("profileRole").value =
-    role;
+    capitalize(role);
 
   $("profileAddress").value =
-    currentProfile.address || "";
+    profile.address || "";
 
 
-  $("profileAvatar").textContent =
-    initials(name);
+  $("ownerName").textContent =
+    profile.full_name || "—";
 
-  $("profileSummaryName").textContent =
-    name;
+  $("ownerPhone").textContent =
+    profile.phone || "—";
 
-  $("profileSummaryEmail").textContent =
-    currentProfile.email ||
+  $("ownerEmail").textContent =
+    profile.email ||
     currentUser.email ||
     "—";
 
-  $("profileSummaryRole").textContent =
-    role;
-
-
-  $("ownerCentreAvatar").textContent =
-    initials(name);
-
-  $("ownerCentreName").textContent =
-    name;
-
-  $("ownerCentreName2").textContent =
-    name;
-
-  $("ownerCentreContact").textContent =
-    currentProfile.phone ||
-    "Phone not provided";
-
-  $("ownerCentrePhone").textContent =
-    currentProfile.phone ||
-    "—";
-
-  $("ownerCentreEmail").textContent =
-    currentProfile.email ||
-    currentUser.email ||
-    "—";
-
-  $("ownerCentreAddress").textContent =
-    currentProfile.address ||
-    "Address not provided";
-
+  $("ownerAddress").textContent =
+    profile.address || "";
 }
 
 
 /* =========================================================
-   SAVE PROFILE
+   STUDENT MODE
 ========================================================= */
 
-async function saveProfile(){
+function enableStudentMode() {
 
-  const btn =
-    $("saveProfileBtn");
+  $("ownerNav").classList.add("hidden");
 
-  btn.disabled = true;
-  btn.textContent =
-    "Saving...";
+  $("ownerStats").classList.add("hidden");
+  $("ownerStats").classList.remove("grid");
 
+  $("studentStats").classList.remove("hidden");
+  $("studentStats").classList.add("grid");
 
-  hideMessage(
-    "profileMessage"
-  );
-
-
-  const payload = {
-
-    full_name:
-      $("profileName")
-        .value
-        .trim(),
-
-    phone:
-      $("profilePhone")
-        .value
-        .trim(),
-
-    address:
-      $("profileAddress")
-        .value
-        .trim()
-
-  };
-
-
-  if(!payload.full_name){
-
-    showMessage(
-      "profileMessage",
-      "Full name is required.",
-      "error"
-    );
-
-    btn.disabled = false;
-    btn.textContent =
-      "Save Profile";
-
-    return;
-  }
-
-
-  const {
-    error
-  } =
-    await sb
-      .from("profiles")
-      .update(payload)
-      .eq(
-        "id",
-        currentUser.id
-      );
-
-
-  if(error){
-
-    console.error(error);
-
-    showMessage(
-      "profileMessage",
-      error.message,
-      "error"
-    );
-
-  }else{
-
-    currentProfile = {
-      ...currentProfile,
-      ...payload
-    };
-
-
-    await loadProfile();
-
-
-    showMessage(
-      "profileMessage",
-      "Profile saved successfully.",
-      "success"
-    );
-
-    toast(
-      "Profile updated successfully."
-    );
-
-  }
-
-
-  btn.disabled = false;
-
-  btn.textContent =
-    "Save Profile";
-
+  document
+    .querySelectorAll("#ownerNav button")
+    .forEach(btn => {
+      btn.disabled = true;
+    });
 }
-
-
-$("saveProfileBtn")
-  .addEventListener(
-    "click",
-    saveProfile
-  );
 
 
 /* =========================================================
-   LISTING REQUEST
+   OWNER MODE
 ========================================================= */
 
-async function submitListing(e){
+function enableOwnerMode() {
 
-  e.preventDefault();
+  $("ownerNav").classList.remove("hidden");
 
+  $("studentStats").classList.add("hidden");
+  $("studentStats").classList.remove("grid");
 
-  const btn =
-    $("submitListingBtn");
-
-  btn.disabled = true;
-  btn.textContent =
-    "Submitting...";
-
-
-  hideMessage(
-    "listingMessage"
-  );
-
-
-  if(
-    String(currentProfile?.role || "")
-      .toLowerCase() !== "owner"
-  ){
-
-    showMessage(
-      "listingMessage",
-      "Only owner accounts can submit listings.",
-      "error"
-    );
-
-    btn.disabled = false;
-    btn.textContent =
-      "Submit Listing Request";
-
-    return;
-  }
-
-
-  if(
-    !normalizePhone(
-      currentProfile?.phone
-    )
-  ){
-
-    showMessage(
-      "listingMessage",
-      "Please add your registered owner phone number in My Profile first.",
-      "error"
-    );
-
-    btn.disabled = false;
-    btn.textContent =
-      "Submit Listing Request";
-
-    return;
-  }
-
-
-  const payload = {
-
-    owner_id:
-      currentUser.id,
-
-    owner_name:
-      currentProfile.full_name ||
-      "Owner",
-
-    owner_phone:
-      currentProfile.phone,
-
-    name:
-      $("listingName")
-        .value
-        .trim(),
-
-    category:
-      $("listingCategory")
-        .value,
-
-    area:
-      $("listingArea")
-        .value
-        .trim(),
-
-    address:
-      $("listingAddress")
-        .value
-        .trim(),
-
-    phone:
-      $("listingPhone")
-        .value
-        .trim(),
-
-    timing:
-      $("listingTiming")
-        .value
-        .trim() ||
-      null,
-
-    facilities:
-      $("listingFacilities")
-        .value
-        .trim() ||
-      null,
-
-    image:
-      $("listingImage")
-        .value
-        .trim() ||
-      null,
-
-    rating:null,
-
-    status:"pending"
-
-  };
-
-
-  const {
-    error
-  } =
-    await sb
-      .from("listing_requests")
-      .insert(payload);
-
-
-  if(error){
-
-    console.error(error);
-
-    showMessage(
-      "listingMessage",
-      error.message,
-      "error"
-    );
-
-  }else{
-
-    showMessage(
-      "listingMessage",
-      "Listing request submitted successfully. It is now pending Admin verification.",
-      "success"
-    );
-
-
-    $("listingForm").reset();
-
-
-    $("listingPhone").value =
-      currentProfile.phone || "";
-
-
-    await loadRequests();
-
-    renderApprovalStatus();
-
-
-    toast(
-      "Listing request submitted."
-    );
-
-  }
-
-
-  btn.disabled = false;
-
-  btn.textContent =
-    "Submit Listing Request";
-
+  $("ownerStats").classList.remove("hidden");
+  $("ownerStats").classList.add("grid");
 }
 
 
-$("listingForm")
+/* =========================================================
+   STUDENT STATS
+========================================================= */
+
+async function loadStudentStats() {
+
+  const {
+    count,
+    error
+  } = await supabaseClient
+    .from("reviews")
+    .select("*", {
+      count: "exact",
+      head: true
+    })
+    .eq("student_id", currentUser.id);
+
+
+  if (!error) {
+
+    $("reviewCount").textContent =
+      count || 0;
+  }
+}
+
+
+/* =========================================================
+   PROFILE UPDATE
+========================================================= */
+
+$("profileForm")
   .addEventListener(
     "submit",
-    submitListing
-  );
+    async e => {
+
+      e.preventDefault();
 
 
-/* =========================================================
-   REQUESTS
-========================================================= */
-
-async function loadRequests(){
-
-  if(!currentUser)
-    return;
+      const message =
+        $("profileMessage");
 
 
-  const box =
-    $("requestsContainer");
+      message.className =
+        "text-sm text-gray-500";
 
-  if(!box)
-    return;
+      message.textContent =
+        "Saving...";
 
-
-  box.innerHTML = `
-    <div class="loading">
-      <div class="spinner"></div>
-      Loading requests...
-    </div>
-  `;
-
-
-  const {
-    data,
-    error
-  } =
-    await sb
-      .from("listing_requests")
-      .select(
-        "id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at"
-      )
-      .eq(
-        "owner_id",
-        currentUser.id
-      )
-      .order(
-        "created_at",
-        {
-          ascending:false
-        }
+      message.classList.remove(
+        "hidden"
       );
 
 
-  if(error){
+      const updates = {
 
-    console.error(error);
+        full_name:
+          $("profileName").value.trim(),
 
-    box.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">!</div>
-        <strong>Unable to load requests</strong>
-        <p>${escapeHtml(error.message)}</p>
-      </div>
-    `;
+        phone:
+          $("profilePhone").value.trim(),
 
-    return;
-  }
+        address:
+          $("profileAddress").value.trim()
+
+      };
 
 
-  listingRequests =
-    data || [];
+      const {
+        error
+      } = await supabaseClient
+        .from("profiles")
+        .update(updates)
+        .eq("id", currentUser.id);
 
 
-  updateOwnerStats();
+      if (error) {
 
+        console.error(error);
 
-  if(!listingRequests.length){
+        message.className =
+          "text-sm text-red-600";
 
-    box.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">▤</div>
-        <strong>No listing requests yet</strong>
-        <p>
-          Your submitted listing requests will appear here.
-        </p>
-      </div>
-    `;
+        message.textContent =
+          "Unable to update profile.";
 
-    renderApprovalStatus();
-
-    return;
-  }
-
-
-  box.innerHTML =
-    listingRequests
-      .map(requestCardHtml)
-      .join("");
-
-
-  renderApprovalStatus();
-
-}
-
-
-function requestCardHtml(r){
-
-  const status =
-    String(r.status || "pending")
-      .toLowerCase();
-
-
-  const isEdit =
-    String(r.admin_note || "")
-      .toUpperCase()
-      .includes("EDIT_REQUEST");
-
-
-  return `
-
-    <div class="request-card">
-
-      <div class="request-main">
-
-        <h3 class="request-title">
-          ${escapeHtml(r.name || "Unnamed Property")}
-        </h3>
-
-        <div class="request-meta">
-
-          <span>
-            ${escapeHtml(formatCategory(r.category))}
-          </span>
-
-          <span>
-            ${escapeHtml(r.area || "Area not provided")}
-          </span>
-
-          <span>
-            ${isEdit ? "Edit Request" : "New Listing"}
-          </span>
-
-          <span>
-            ${formatDate(r.created_at)}
-          </span>
-
-        </div>
-
-
-        ${
-          r.admin_note &&
-          !String(r.admin_note)
-            .toUpperCase()
-            .includes("EDIT_REQUEST")
-          ?
-
-          `<div class="request-note">
-             <strong>Admin Note:</strong>
-             ${escapeHtml(r.admin_note)}
-           </div>`
-
-          : ""
-
-        }
-
-      </div>
-
-
-      <div class="request-actions">
-
-        <span class="status ${escapeHtml(status)}">
-          ${escapeHtml(status)}
-        </span>
-
-        <button
-          class="btn btn-light"
-          onclick="viewRequest('${escapeHtml(r.id)}')">
-
-          View
-
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
-}
-
-
-/* =========================================================
-   VIEW REQUEST
-========================================================= */
-
-async function viewRequest(id){
-
-  const row =
-    listingRequests.find(
-      x => String(x.id) === String(id)
-    );
-
-
-  if(!row)
-    return;
-
-
-  openModal(
-    "Listing Request",
-    "Request submitted for Admin review.",
-    `
-      ${
-        row.image
-        ?
-        `
-        <div class="detail-hero">
-          <img
-            src="${safeUrl(row.image) || "hostel-banner.png"}"
-            onerror="this.src='hostel-banner.png'"
-            alt="">
-        </div>
-        `
-        :
-        ""
+        return;
       }
 
 
-      <div class="detail-grid">
-
-        <div class="detail-item">
-          <div class="detail-label">
-            Property Name
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(row.name || "—")}
-          </div>
-        </div>
-
-
-        <div class="detail-item">
-          <div class="detail-label">
-            Category
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(formatCategory(row.category))}
-          </div>
-        </div>
-
-
-        <div class="detail-item">
-          <div class="detail-label">
-            Area
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(row.area || "—")}
-          </div>
-        </div>
-
-
-        <div class="detail-item">
-          <div class="detail-label">
-            Phone
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(row.phone || "—")}
-          </div>
-        </div>
-
-
-        <div class="detail-item full">
-          <div class="detail-label">
-            Address
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(row.address || "—")}
-          </div>
-        </div>
-
-
-        <div class="detail-item">
-          <div class="detail-label">
-            Timing
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(row.timing || "—")}
-          </div>
-        </div>
-
-
-        <div class="detail-item">
-          <div class="detail-label">
-            Status
-          </div>
-
-          <div class="detail-value">
-            <span class="status ${escapeHtml(String(row.status || "pending").toLowerCase())}">
-              ${escapeHtml(row.status || "pending")}
-            </span>
-          </div>
-        </div>
-
-
-        <div class="detail-item full">
-          <div class="detail-label">
-            Facilities
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(row.facilities || "—")}
-          </div>
-        </div>
-
-
-        ${
-          row.admin_note &&
-          !String(row.admin_note)
-            .toUpperCase()
-            .includes("EDIT_REQUEST")
-
-          ?
-
-          `
-          <div class="detail-item full">
-            <div class="detail-label">
-              Admin Note
-            </div>
-
-            <div class="detail-value">
-              ${escapeHtml(row.admin_note)}
-            </div>
-          </div>
-          `
-
-          : ""
-
-        }
-
-      </div>
-    `,
-
-    `
-      <button
-        class="btn btn-light"
-        onclick="closeModal()">
-        Close
-      </button>
-    `
-  );
-
-}
-
-
-/* =========================================================
-   APPROVAL STATUS
-========================================================= */
-
-function renderApprovalStatus(){
-
-  const box =
-    $("approvalContainer");
-
-  if(!box)
-    return;
-
-
-  const latest =
-    listingRequests[0];
-
-
-  if(!latest){
-
-    box.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">✓</div>
-        <strong>No listing request yet</strong>
-        <p>
-          Submit a listing from Add Listing
-          to start the approval process.
-        </p>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  const status =
-    String(
-      latest.status || "pending"
-    ).toLowerCase();
-
-
-  let submittedDone = true;
-  let reviewDone = false;
-  let approvedDone = false;
-
-
-  if(status === "pending"){
-
-    reviewDone = true;
-
-  }
-
-
-  if(status === "approved"){
-
-    reviewDone = true;
-    approvedDone = true;
-
-  }
-
-
-  if(status === "rejected"){
-
-    reviewDone = true;
-
-  }
-
-
-  box.innerHTML = `
-
-    <div>
-
-      <div>
-
-        <strong style="
-          color:var(--navy);
-          font-size:15px;
-          font-weight:950;
-        ">
-          ${escapeHtml(latest.name || "Property")}
-        </strong>
-
-        <div style="
-          margin-top:5px;
-          color:var(--muted);
-          font-size:10px;
-        ">
-          ${escapeHtml(formatCategory(latest.category))}
-          ·
-          ${escapeHtml(latest.area || "—")}
-        </div>
-
-      </div>
-
-
-      <div class="timeline">
-
-        <div class="timeline-step done">
-
-          <div class="timeline-dot">
-            ✓
-          </div>
-
-          <div>
-
-            <div class="timeline-title">
-              Submitted
-            </div>
-
-            <div class="timeline-text">
-              Request received
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="timeline-step ${reviewDone ? "current" : ""}">
-
-          <div class="timeline-dot">
-            ${reviewDone ? "✓" : "2"}
-          </div>
-
-          <div>
-
-            <div class="timeline-title">
-              Under Review
-            </div>
-
-            <div class="timeline-text">
-              Director Admin verification
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="timeline-step ${approvedDone ? "done" : ""}">
-
-          <div class="timeline-dot">
-
-            ${
-              status === "rejected"
-              ? "!"
-              : approvedDone
-                ? "✓"
-                : "3"
-            }
-
-          </div>
-
-          <div>
-
-            <div class="timeline-title">
-
-              ${
-                status === "rejected"
-                ? "Rejected"
-                : "Approved"
-              }
-
-            </div>
-
-            <div class="timeline-text">
-
-              ${
-                status === "rejected"
-                ? "See Admin note in My Requests"
-                : "Property goes live after approval"
-              }
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div style="margin-top:22px">
-
-        <span class="status ${escapeHtml(status)}">
-          ${escapeHtml(status)}
-        </span>
-
-        <button
-          class="btn btn-light"
-          style="margin-left:8px"
-          onclick="viewRequest('${escapeHtml(latest.id)}')">
-
-          View Request
-
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =========================================================
-   LIVE PROPERTIES
-========================================================= */
-
-const propertyTables = [
-
-  {
-    table:"hostels",
-    category:"Hostel",
-    banner:"hostel-banner.png"
-  },
-
-  {
-    table:"tiffins",
-    category:"Tiffin",
-    banner:"tiffin-banner.png"
-  },
-
-  {
-    table:"libraries",
-    category:"Library",
-    banner:"library-banner.png"
-  },
-
-  {
-    table:"cafes",
-    category:"Cafe",
-    banner:"cafe-banner.png"
-  },
-
-  {
-    table:"bookstores",
-    category:"Book Store",
-    banner:"bookstore-banner.png"
-  }
-
-];
-
-
-async function loadLiveProperties(){
-
-  if(!currentUser)
-    return;
-
-
-  if(
-    String(currentProfile?.role || "")
-      .toLowerCase() !== "owner"
-  )
-    return;
-
-
-  const box =
-    $("livePropertiesContainer");
-
-  if(!box)
-    return;
-
-
-  box.innerHTML = `
-    <div class="loading"
-         style="grid-column:1/-1">
-      <div class="spinner"></div>
-      Loading live properties...
-    </div>
-  `;
-
-
-  const ownerPhone =
-    normalizePhone(
-      currentProfile?.phone
-    );
-
-
-  if(!ownerPhone){
-
-    box.innerHTML = `
-      <div class="empty"
-           style="grid-column:1/-1">
-
-        <div class="empty-icon">
-          ☎
-        </div>
-
-        <strong>
-          Owner phone number required
-        </strong>
-
-        <p>
-          Add your registered owner phone number
-          in My Profile to connect live properties.
-        </p>
-
-      </div>
-    `;
-
-    return;
-  }
-
-
-  const results = [];
-
-
-  for(
-    const config of propertyTables
-  ){
-
-    const {
-      data,
-      error
-    } =
-      await sb
-        .from(config.table)
-        .select(
-          "id,name,category,area,address,phone,timing,facilities,rating"
-        );
-
-
-    if(error){
-
-      console.warn(
-        config.table,
-        error.message
+      currentProfile = {
+        ...currentProfile,
+        ...updates
+      };
+
+
+      applyProfile(
+        currentProfile,
+        String(currentProfile.role)
+          .toLowerCase()
       );
 
-      continue;
+
+      message.className =
+        "text-sm text-green-600";
+
+      message.textContent =
+        "Profile updated successfully.";
     }
-
-
-    const matches =
-      (data || [])
-        .filter(row =>
-          normalizePhone(
-            row.phone
-          ) === ownerPhone
-        )
-        .map(row => ({
-
-          ...row,
-
-          table:
-            config.table,
-
-          banner:
-            config.banner,
-
-          displayCategory:
-            row.category ||
-            config.category
-
-        }));
-
-
-    results.push(
-      ...matches
-    );
-
-  }
-
-
-  liveProperties =
-    results;
-
-
-  renderLiveProperties();
-
-  updateOwnerStats();
-
-}
-
-
-/* =========================================================
-   RENDER LIVE PROPERTIES
-========================================================= */
-
-function renderLiveProperties(){
-
-  const box =
-    $("livePropertiesContainer");
-
-
-  if(!box)
-    return;
-
-
-  if(!liveProperties.length){
-
-    box.innerHTML = `
-      <div class="empty"
-           style="grid-column:1/-1">
-
-        <div class="empty-icon">
-          ⌂
-        </div>
-
-        <strong>
-          No live properties found
-        </strong>
-
-        <p>
-          Approved properties connected to your
-          registered owner phone number will appear here.
-        </p>
-
-        <button
-          class="btn btn-gold"
-          style="margin-top:14px"
-          onclick="showPage('listing')">
-
-          Add New Listing
-
-        </button>
-
-      </div>
-    `;
-
-    return;
-  }
-
-
-  box.innerHTML =
-    liveProperties
-      .map((property,index) =>
-        propertyCardHtml(
-          property,
-          index
-        )
-      )
-      .join("");
-
-}
-
-
-function propertyCardHtml(
-  p,
-  index
-){
-
-  const banner =
-    p.banner ||
-    propertyBanner(
-      p.table
-    );
-
-
-  return `
-
-    <article class="property-card">
-
-      <div class="property-banner">
-
-        <img
-          src="${escapeHtml(banner)}"
-          alt="${escapeHtml(p.name || "Property")}"
-          onerror="this.src='hostel-banner.png'">
-
-        <div class="live-label">
-          <span class="live-dot"></span>
-          LIVE PROPERTY
-        </div>
-
-        <div class="property-category">
-          ${escapeHtml(formatCategory(p.displayCategory))}
-        </div>
-
-        <div class="property-banner-title">
-          ${escapeHtml(p.name || "Property")}
-        </div>
-
-      </div>
-
-
-      <div class="property-body">
-
-        <div class="property-info">
-
-          <div class="property-row">
-
-            <span class="property-row-icon">
-              ◉
-            </span>
-
-            <span>
-              ${escapeHtml(p.area || "Area not provided")}
-            </span>
-
-          </div>
-
-
-          <div class="property-row">
-
-            <span class="property-row-icon">
-              ⌂
-            </span>
-
-            <span>
-              ${escapeHtml(p.address || "Address not provided")}
-            </span>
-
-          </div>
-
-
-          <div class="property-row">
-
-            <span class="property-row-icon">
-              ◷
-            </span>
-
-            <span>
-              ${escapeHtml(p.timing || "Timing not provided")}
-            </span>
-
-          </div>
-
-
-          <div class="property-row">
-
-            <span class="property-row-icon">
-              ★
-            </span>
-
-            <span>
-              Rating:
-              ${escapeHtml(
-                p.rating ?? "Not rated"
-              )}
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <div class="property-actions">
-
-          <button
-            class="btn btn-primary"
-            onclick="viewLiveProperty(${index})">
-
-            View Details
-
-          </button>
-
-          <button
-            class="btn btn-light"
-            onclick="openEditRequest(${index})">
-
-            Request Edit
-
-          </button>
-
-        </div>
-
-      </div>
-
-    </article>
-
-  `;
-
-}
-
-
-/* =========================================================
-   VIEW LIVE PROPERTY MODAL
-========================================================= */
-
-function viewLiveProperty(index){
-
-  const property =
-    liveProperties[index];
-
-  if(!property)
-    return;
-
-
-  const banner =
-    property.banner ||
-    propertyBanner(
-      property.table
-    );
-
-
-  openModal(
-
-    property.name ||
-    "Property Details",
-
-    "Live property details",
-
-    `
-
-      <div class="detail-hero">
-
-        <img
-          src="${escapeHtml(banner)}"
-          alt=""
-          onerror="this.src='hostel-banner.png'">
-
-      </div>
-
-
-      <div class="detail-grid">
-
-        <div class="detail-item">
-
-          <div class="detail-label">
-            Property Name
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(property.name || "—")}
-          </div>
-
-        </div>
-
-
-        <div class="detail-item">
-
-          <div class="detail-label">
-            Category
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(
-              formatCategory(
-                property.displayCategory
-              )
-            )}
-          </div>
-
-        </div>
-
-
-        <div class="detail-item">
-
-          <div class="detail-label">
-            Area
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(property.area || "—")}
-          </div>
-
-        </div>
-
-
-        <div class="detail-item">
-
-          <div class="detail-label">
-            Phone
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(property.phone || "—")}
-          </div>
-
-        </div>
-
-
-        <div class="detail-item full">
-
-          <div class="detail-label">
-            Address
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(property.address || "—")}
-          </div>
-
-        </div>
-
-
-        <div class="detail-item">
-
-          <div class="detail-label">
-            Timing
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(property.timing || "—")}
-          </div>
-
-        </div>
-
-
-        <div class="detail-item">
-
-          <div class="detail-label">
-            Rating
-          </div>
-
-          <div class="detail-value">
-            ★ ${escapeHtml(property.rating ?? "Not rated")}
-          </div>
-
-        </div>
-
-
-        <div class="detail-item full">
-
-          <div class="detail-label">
-            Facilities
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(property.facilities || "—")}
-          </div>
-
-        </div>
-
-      </div>
-
-    `,
-
-    `
-
-      <button
-        class="btn btn-light"
-        onclick="closeModal()">
-        Close
-      </button>
-
-      <button
-        class="btn btn-gold"
-        onclick="closeModal();openEditRequest(${index})">
-
-        Request Edit
-
-      </button>
-
-    `
-
   );
-
-}
-
-
-/* =========================================================
-   REQUEST EDIT MODAL
-========================================================= */
-
-function openEditRequest(index){
-
-  const property =
-    liveProperties[index];
-
-  if(!property)
-    return;
-
-
-  const banner =
-    property.banner ||
-    propertyBanner(
-      property.table
-    );
-
-
-  openModal(
-
-    "Request Property Edit",
-
-    "Changes go to Director Admin for review.",
-
-    `
-
-      <div class="info-note">
-
-        <strong>
-          Important:
-        </strong>
-
-        This does not directly modify your live property.
-        Submit the requested changes and Admin will review
-        them before the live listing is updated.
-
-      </div>
-
-
-      <form id="editRequestForm">
-
-        <input
-          type="hidden"
-          id="editPropertyId"
-          value="${escapeHtml(property.id)}">
-
-        <input
-          type="hidden"
-          id="editPropertyTable"
-          value="${escapeHtml(property.table)}">
-
-
-        <div class="form-grid">
-
-          <div class="field">
-
-            <label>
-              Property Name *
-            </label>
-
-            <input
-              id="editName"
-              required
-              value="${escapeHtml(property.name || "")}">
-
-          </div>
-
-
-          <div class="field">
-
-            <label>
-              Property Type
-            </label>
-
-            <select
-              id="editCategory">
-
-              <option value="hostel"
-                ${property.table==="hostels" ? "selected" : ""}>
-                Hostel
-              </option>
-
-              <option value="pg"
-                ${String(property.category).toLowerCase()==="pg" ? "selected" : ""}>
-                PG
-              </option>
-
-              <option value="tiffin"
-                ${property.table==="tiffins" ? "selected" : ""}>
-                Tiffin
-              </option>
-
-              <option value="mess"
-                ${String(property.category).toLowerCase()==="mess" ? "selected" : ""}>
-                Mess
-              </option>
-
-              <option value="library"
-                ${property.table==="libraries" ? "selected" : ""}>
-                Library
-              </option>
-
-              <option value="cafe"
-                ${property.table==="cafes" ? "selected" : ""}>
-                Cafe
-              </option>
-
-              <option value="bookstore"
-                ${property.table==="bookstores" ? "selected" : ""}>
-                Book Store
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <div class="field">
-
-            <label>
-              Area / City / District *
-            </label>
-
-            <input
-              id="editArea"
-              required
-              value="${escapeHtml(property.area || "")}">
-
-          </div>
-
-
-          <div class="field">
-
-            <label>
-              Phone *
-            </label>
-
-            <input
-              id="editPhone"
-              type="tel"
-              required
-              value="${escapeHtml(property.phone || "")}">
-
-          </div>
-
-
-          <div class="field full">
-
-            <label>
-              Full Address *
-            </label>
-
-            <textarea
-              id="editAddress"
-              required>${escapeHtml(property.address || "")}</textarea>
-
-          </div>
-
-
-          <div class="field">
-
-            <label>
-              Timing
-            </label>
-
-            <input
-              id="editTiming"
-              value="${escapeHtml(property.timing || "")}">
-
-          </div>
-
-
-          <div class="field">
-
-            <label>
-              Current Rating
-            </label>
-
-            <input
-              value="${escapeHtml(property.rating ?? "")}"
-              disabled>
-
-          </div>
-
-
-          <div class="field full">
-
-            <label>
-              Facilities
-            </label>
-
-            <textarea
-              id="editFacilities">${escapeHtml(property.facilities || "")}</textarea>
-
-          </div>
-
-        </div>
-
-
-        <div class="form-actions">
-
-          <button
-            type="button"
-            class="btn btn-light"
-            onclick="closeModal()">
-
-            Cancel
-
-          </button>
-
-
-          <button
-            type="submit"
-            class="btn btn-gold"
-            id="submitEditRequestBtn">
-
-            Submit Edit Request
-
-          </button>
-
-        </div>
-
-      </form>
-
-    `,
-
-    ""
-  );
-
-
-  $("editRequestForm")
-    .addEventListener(
-      "submit",
-      () =>
-        submitEditRequest(
-          property
-        )
-    );
-
-}
-
-
-/* =========================================================
-   SUBMIT EDIT REQUEST
-========================================================= */
-
-async function submitEditRequest(
-  property
-){
-
-  const btn =
-    $("submitEditRequestBtn");
-
-  btn.disabled = true;
-  btn.textContent =
-    "Submitting...";
-
-
-  const payload = {
-
-    owner_id:
-      currentUser.id,
-
-    owner_name:
-      currentProfile?.full_name ||
-      "Owner",
-
-    owner_phone:
-      currentProfile?.phone ||
-      "",
-
-    name:
-      $("editName")
-        .value
-        .trim(),
-
-    category:
-      $("editCategory")
-        .value,
-
-    area:
-      $("editArea")
-        .value
-        .trim(),
-
-    address:
-      $("editAddress")
-        .value
-        .trim(),
-
-    phone:
-      $("editPhone")
-        .value
-        .trim(),
-
-    timing:
-      $("editTiming")
-        .value
-        .trim() ||
-      null,
-
-    facilities:
-      $("editFacilities")
-        .value
-        .trim() ||
-      null,
-
-    image:null,
-
-    rating:
-      property.rating ?? null,
-
-    status:"pending",
-
-    /*
-      Current listing_requests schema has
-      admin_note but no request_type column.
-      This marker lets Admin identify an
-      owner edit request without changing DB schema.
-    */
-
-    admin_note:
-      "EDIT_REQUEST | Property ID: " +
-      String(property.id) +
-      " | Source: " +
-      String(property.table)
-
-  };
-
-
-  const {
-    error
-  } =
-    await sb
-      .from("listing_requests")
-      .insert(payload);
-
-
-  if(error){
-
-    console.error(error);
-
-    toast(
-      error.message,
-      "error"
-    );
-
-    btn.disabled = false;
-    btn.textContent =
-      "Submit Edit Request";
-
-    return;
-  }
-
-
-  closeModal();
-
-  toast(
-    "Edit request submitted to Admin."
-  );
-
-
-  await loadRequests();
-
-}
 
 
 /* =========================================================
    STUDENT REVIEWS
 ========================================================= */
 
-async function loadReviews(){
+async function loadStudentReviews() {
 
-  if(!currentUser)
-    return;
-
-
-  const box =
+  const container =
     $("reviewsContainer");
 
-  if(!box)
-    return;
 
-
-  box.innerHTML = `
-    <div class="loading">
-      <div class="spinner"></div>
+  container.innerHTML = `
+    <div class="content-card p-6 text-gray-400">
       Loading reviews...
     </div>
   `;
@@ -6235,64 +1721,46 @@ async function loadReviews(){
   const {
     data,
     error
-  } =
-    await sb
-      .from("reviews")
-      .select(
-        "id,property_id,rating,review_text,status,created_at"
-      )
-      .eq(
-        "student_id",
-        currentUser.id
-      )
-      .order(
-        "created_at",
-        {
-          ascending:false
-        }
-      );
+  } = await supabaseClient
+    .from("reviews")
+    .select(`
+      id,
+      property_id,
+      rating,
+      review_text,
+      status,
+      created_at
+    `)
+    .eq("student_id", currentUser.id)
+    .order("created_at", {
+      ascending: false
+    });
 
 
-  if(error){
+  if (error) {
 
-    console.warn(
-      "Reviews unavailable:",
-      error.message
-    );
+    console.error(error);
 
-    box.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">★</div>
-        <strong>No reviews available</strong>
-        <p>
-          Reviews could not be loaded at the moment.
-        </p>
+    container.innerHTML = `
+      <div class="content-card p-6 text-red-500">
+        Unable to load reviews.
       </div>
     `;
-
-    $("studentStatReviews").textContent =
-      "0";
 
     return;
   }
 
 
-  const rows =
-    data || [];
+  if (!data || !data.length) {
 
-
-  $("studentStatReviews").textContent =
-    rows.length;
-
-
-  if(!rows.length){
-
-    box.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">★</div>
-        <strong>You have not submitted any reviews yet.</strong>
-        <p>
-          Your reviews will appear here after you review a property.
+    container.innerHTML = `
+      <div class="content-card p-10 text-center">
+        <div class="text-4xl mb-3">★</div>
+        <h3 class="font-bold">
+          No Reviews Yet
+        </h3>
+        <p class="text-gray-400 mt-2">
+          Your submitted reviews will appear here.
         </p>
       </div>
     `;
@@ -6301,162 +1769,218 @@ async function loadReviews(){
   }
 
 
-  box.innerHTML =
-    rows
-      .map(review => {
+  container.innerHTML =
+    data.map(review => `
 
-        const rating =
-          Math.max(
-            0,
-            Math.min(
-              5,
-              Number(review.rating) || 0
-            )
-          );
+      <div class="content-card p-5">
 
+        <div class="flex flex-col md:flex-row
+                    md:items-center md:justify-between gap-3">
 
-        return `
+          <div>
 
-          <div class="review-card">
-
-            <div class="review-head">
-
-              <div>
-
-                <div class="review-property">
-                  Property #${escapeHtml(review.property_id || "—")}
-                </div>
-
-                <div class="stars">
-                  ${"★".repeat(rating)}
-                  ${"☆".repeat(5-rating)}
-                </div>
-
-              </div>
-
-              <span class="status ${
-                review.status === "approved"
-                ? "approved"
-                : "pending"
-              }">
-
-                ${escapeHtml(review.status || "pending")}
-
-              </span>
-
+            <div class="text-sm text-gray-400">
+              Property ID
             </div>
 
-
-            <div class="review-text">
-
-              ${escapeHtml(
-                review.review_text ||
-                "No review text"
-              )}
-
-            </div>
-
-
-            <div class="review-date">
-
-              ${formatDate(review.created_at)}
-
+            <div class="font-semibold">
+              ${escapeHTML(review.property_id || "—")}
             </div>
 
           </div>
 
-        `;
 
-      })
-      .join("");
+          <div class="flex items-center gap-4">
 
+            <div class="font-semibold">
+              ${"★".repeat(
+                Math.max(
+                  0,
+                  Math.min(
+                    5,
+                    Number(review.rating) || 0
+                  )
+                )
+              )}
+            </div>
+
+            <span class="text-xs px-3 py-1 rounded-full
+                         bg-gray-100">
+              ${escapeHTML(review.status || "Pending")}
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <p class="text-gray-600 mt-4">
+          ${escapeHTML(
+            review.review_text || ""
+          )}
+        </p>
+
+
+        <div class="text-xs text-gray-400 mt-4">
+          ${review.created_at
+            ? new Date(review.created_at)
+                .toLocaleDateString()
+            : ""}
+        </div>
+
+      </div>
+
+    `).join("");
 }
 
 
 /* =========================================================
-   OWNER REVIEWS
+   OWNER STATS
 ========================================================= */
 
-async function loadOwnerReviews(){
+async function loadOwnerStats() {
 
-  if(
-    String(currentProfile?.role || "")
-      .toLowerCase() !== "owner"
-  )
-    return;
+  /*
+    Requests
+  */
 
-
-  const box =
-    $("ownerReviewsContainer");
-
-  if(!box)
-    return;
+  const {
+    data: requests
+  } = await supabaseClient
+    .from("listing_requests")
+    .select("id,status")
+    .eq("owner_id", currentUser.id);
 
 
-  if(!liveProperties.length){
+  $("ownerListingCount").textContent =
+    requests?.filter(
+      r => String(r.status || "").toLowerCase() === "approved"
+    ).length || 0;
 
-    box.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">★</div>
-        <strong>No owner reviews yet</strong>
-        <p>
-          Reviews on your live properties will appear here.
-        </p>
-      </div>
-    `;
 
-    $("ownerStatReviews").textContent =
+  $("ownerPendingCount").textContent =
+    requests?.filter(
+      r => String(r.status || "").toLowerCase() === "pending"
+    ).length || 0;
+
+
+  /*
+    Live properties are loaded separately
+    because property tables are different.
+  */
+
+  const live =
+    await getOwnerLiveProperties();
+
+
+  $("ownerLiveCount").textContent =
+    live.length;
+
+
+  /*
+    Owner reviews
+  */
+
+  const properties =
+    live.map(p => String(p.id));
+
+
+  if (!properties.length) {
+
+    $("ownerReviewCount").textContent =
       "0";
-
-    return;
-  }
-
-
-  const propertyIds =
-    liveProperties
-      .map(p => String(p.id));
-
-
-  if(!propertyIds.length){
 
     return;
   }
 
 
   const {
-    data,
-    error
-  } =
-    await sb
-      .from("reviews")
-      .select(
-        "id,property_id,rating,review_text,status,created_at"
-      )
-      .in(
-        "property_id",
-        propertyIds
-      )
-      .order(
-        "created_at",
-        {
-          ascending:false
-        }
-      );
-
-
-  if(error){
-
-    console.warn(
-      "Owner reviews:",
-      error.message
+    count
+  } = await supabaseClient
+    .from("reviews")
+    .select("*", {
+      count: "exact",
+      head: true
+    })
+    .in(
+      "property_id",
+      properties
     );
 
-    box.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">★</div>
-        <strong>Reviews unavailable</strong>
-        <p>
-          ${escapeHtml(error.message)}
+
+  $("ownerReviewCount").textContent =
+    count || 0;
+}
+
+
+/* =========================================================
+   OWNER REQUESTS
+========================================================= */
+
+async function loadOwnerRequests() {
+
+  const container =
+    $("requestsContainer");
+
+
+  container.innerHTML = `
+    <div class="content-card p-6 text-gray-400">
+      Loading requests...
+    </div>
+  `;
+
+
+  const {
+    data,
+    error
+  } = await supabaseClient
+    .from("listing_requests")
+    .select(`
+      id,
+      name,
+      category,
+      area,
+      address,
+      phone,
+      timing,
+      facilities,
+      image,
+      rating,
+      status,
+      admin_note,
+      created_at,
+      updated_at
+    `)
+    .eq("owner_id", currentUser.id)
+    .order("created_at", {
+      ascending: false
+    });
+
+
+  if (error) {
+
+    console.error(error);
+
+    container.innerHTML = `
+      <div class="content-card p-6 text-red-500">
+        Unable to load requests.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  if (!data?.length) {
+
+    container.innerHTML = `
+      <div class="content-card p-10 text-center">
+        <div class="text-4xl mb-3">◷</div>
+        <h3 class="font-bold">
+          No Requests Yet
+        </h3>
+        <p class="text-gray-400 mt-2">
+          Your listing requests will appear here.
         </p>
       </div>
     `;
@@ -6465,362 +1989,731 @@ async function loadOwnerReviews(){
   }
 
 
-  ownerReviews =
-    data || [];
+  container.innerHTML =
+    data.map(request => {
+
+      const status =
+        String(request.status || "pending")
+          .toLowerCase();
 
 
-  $("ownerStatReviews").textContent =
-    ownerReviews.length;
+      const statusClass =
+        status === "approved"
+          ? "bg-green-50 text-green-700"
+          : status === "rejected"
+            ? "bg-red-50 text-red-700"
+            : "bg-yellow-50 text-yellow-700";
 
 
-  if(!ownerReviews.length){
+      return `
 
-    box.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">★</div>
-        <strong>No student reviews yet</strong>
-        <p>
-          Student reviews for your properties will appear here.
-        </p>
-      </div>
-    `;
+        <div class="content-card p-6">
 
-    return;
-  }
+          <div class="flex flex-col md:flex-row
+                      md:items-start md:justify-between gap-4">
 
+            <div>
 
-  box.innerHTML =
-    ownerReviews
-      .map(review => {
+              <h3 class="font-bold text-lg">
+                ${escapeHTML(request.name || "Unnamed Property")}
+              </h3>
 
-        const property =
-          liveProperties.find(
-            p =>
-              String(p.id) ===
-              String(review.property_id)
-          );
-
-
-        const rating =
-          Math.max(
-            0,
-            Math.min(
-              5,
-              Number(review.rating) || 0
-            )
-          );
-
-
-        return `
-
-          <div class="review-card">
-
-            <div class="review-head">
-
-              <div>
-
-                <div class="review-property">
-
-                  ${
-                    escapeHtml(
-                      property?.name ||
-                      "Property #" +
-                      review.property_id
-                    )
-                  }
-
-                </div>
-
-                <div class="stars">
-                  ${"★".repeat(rating)}
-                  ${"☆".repeat(5-rating)}
-                </div>
-
+              <div class="text-sm text-gray-400 mt-1">
+                ${escapeHTML(request.category || "—")}
+                ·
+                ${escapeHTML(request.area || "—")}
               </div>
 
+            </div>
 
-              <span class="status ${
-                review.status === "approved"
-                ? "approved"
-                : "pending"
-              }">
 
-                ${escapeHtml(
-                  review.status || "pending"
-                )}
+            <span class="px-3 py-1 rounded-full text-xs
+                         font-semibold ${statusClass}">
+              ${capitalize(status)}
+            </span>
 
+          </div>
+
+
+          <div class="grid grid-cols-1 md:grid-cols-2
+                      gap-4 mt-5 text-sm">
+
+            <div>
+              <span class="text-gray-400">
+                Address
               </span>
-
+              <div class="font-medium mt-1">
+                ${escapeHTML(request.address || "—")}
+              </div>
             </div>
 
-
-            <div class="review-text">
-
-              ${escapeHtml(
-                review.review_text ||
-                "No review text"
-              )}
-
-            </div>
-
-
-            <div class="review-date">
-
-              ${formatDate(
-                review.created_at
-              )}
-
+            <div>
+              <span class="text-gray-400">
+                Phone
+              </span>
+              <div class="font-medium mt-1">
+                ${escapeHTML(request.phone || "—")}
+              </div>
             </div>
 
           </div>
 
-        `;
 
-      })
-      .join("");
+          ${
+            request.admin_note
+              ? `
+                <div class="mt-5 p-4 rounded-xl bg-gray-50">
+                  <div class="text-xs text-gray-400">
+                    Admin Note
+                  </div>
+                  <div class="text-sm mt-1">
+                    ${escapeHTML(request.admin_note)}
+                  </div>
+                </div>
+              `
+              : ""
+          }
 
+
+          <div class="text-xs text-gray-400 mt-5">
+            Submitted:
+            ${
+              request.created_at
+                ? new Date(
+                    request.created_at
+                  ).toLocaleDateString()
+                : "—"
+            }
+          </div>
+
+        </div>
+
+      `;
+    }).join("");
 }
 
 
 /* =========================================================
-   OWNER CENTRE
+   ADD LISTING
 ========================================================= */
 
-function loadOwnerCentre(){
-
-  if(
-    String(currentProfile?.role || "")
-      .toLowerCase() !== "owner"
-  )
-    return;
-
-
-  $("ownerCentreProperties").textContent =
-    liveProperties.length;
-
-  $("ownerCentreLive").textContent =
-    liveProperties.length;
-
-  $("ownerCentrePending").textContent =
-    listingRequests.filter(
-      r =>
-        String(r.status || "")
-          .toLowerCase() === "pending"
-    ).length;
-
-}
-
-
-function updateOwnerStats(){
-
-  if(
-    String(currentProfile?.role || "")
-      .toLowerCase() !== "owner"
-  )
-    return;
-
-
-  const totalRequests =
-    listingRequests.length;
-
-
-  const pending =
-    listingRequests.filter(
-      r =>
-        String(r.status || "")
-          .toLowerCase() === "pending"
-    ).length;
-
-
-  const live =
-    liveProperties.length;
-
-
-  $("ownerStatListings").textContent =
-    live;
-
-  $("ownerStatPending").textContent =
-    pending;
-
-  $("ownerStatLive").textContent =
-    live;
-
-  $("ownerCentreProperties").textContent =
-    live;
-
-  $("ownerCentreLive").textContent =
-    live;
-
-  $("ownerCentrePending").textContent =
-    pending;
-
-}
-
-
-/* =========================================================
-   MODAL
-========================================================= */
-
-function openModal(
-  title,
-  subtitle,
-  body,
-  footer=""
-){
-
-  $("modalTitle").textContent =
-    title;
-
-  $("modalSubtitle").textContent =
-    subtitle;
-
-  $("modalBody").innerHTML =
-    body;
-
-  $("modalFooter").innerHTML =
-    footer;
-
-
-  $("modalBackdrop")
-    .classList.add("show");
-
-  document.body.style.overflow =
-    "hidden";
-
-}
-
-
-function closeModal(){
-
-  $("modalBackdrop")
-    .classList.remove("show");
-
-  document.body.style.overflow =
-    "";
-
-}
-
-
-$("modalBackdrop")
+$("listingForm")
   .addEventListener(
-    "click",
-    e => {
+    "submit",
+    async e => {
 
-      if(
-        e.target.id ===
-        "modalBackdrop"
-      ){
+      e.preventDefault();
 
-        closeModal();
 
+      const message =
+        $("listingMessage");
+
+
+      message.className =
+        "text-sm text-gray-500";
+
+      message.textContent =
+        "Submitting request...";
+
+      message.classList.remove(
+        "hidden"
+      );
+
+
+      const payload = {
+
+        owner_id:
+          currentUser.id,
+
+        owner_name:
+          currentProfile.full_name || "",
+
+        owner_phone:
+          currentProfile.phone || "",
+
+        name:
+          $("listingName").value.trim(),
+
+        category:
+          $("listingCategory").value,
+
+        area:
+          $("listingArea").value.trim(),
+
+        address:
+          $("listingAddress").value.trim(),
+
+        phone:
+          $("listingPhone").value.trim(),
+
+        timing:
+          $("listingTiming").value.trim(),
+
+        facilities:
+          $("listingFacilities").value.trim(),
+
+        status:
+          "pending"
+
+      };
+
+
+      const {
+        error
+      } = await supabaseClient
+        .from("listing_requests")
+        .insert(payload);
+
+
+      if (error) {
+
+        console.error(error);
+
+        message.className =
+          "text-sm text-red-600";
+
+        message.textContent =
+          "Unable to submit listing request.";
+
+        return;
       }
+
+
+      $("listingForm").reset();
+
+
+      message.className =
+        "text-sm text-green-600";
+
+      message.textContent =
+        "Listing request submitted successfully.";
 
     }
   );
 
 
-document.addEventListener(
-  "keydown",
-  e => {
+/* =========================================================
+   LIVE PROPERTY HELPERS
+========================================================= */
 
-    if(e.key === "Escape")
-      closeModal();
+const PROPERTY_TABLES = [
+  "hostels",
+  "tiffins",
+  "libraries",
+  "cafes",
+  "bookstores"
+];
+
+
+const PROPERTY_COLUMNS = `
+  id,
+  name,
+  category,
+  area,
+  address,
+  phone,
+  timing,
+  facilities,
+  rating
+`;
+
+
+async function getOwnerLiveProperties() {
+
+  if (!currentProfile?.phone) {
+    return [];
+  }
+
+
+  const ownerPhone =
+    normalizePhone(
+      currentProfile.phone
+    );
+
+
+  const all = [];
+
+
+  for (
+    const table of PROPERTY_TABLES
+  ) {
+
+    const {
+      data,
+      error
+    } = await supabaseClient
+      .from(table)
+      .select(PROPERTY_COLUMNS);
+
+
+    if (error) {
+
+      console.warn(
+        "Property table:",
+        table,
+        error.message
+      );
+
+      continue;
+    }
+
+
+    (data || []).forEach(property => {
+
+      if (
+        normalizePhone(property.phone) ===
+        ownerPhone
+      ) {
+
+        all.push({
+          ...property,
+          property_table: table
+        });
+
+      }
+
+    });
 
   }
-);
+
+
+  return all;
+}
+
+
+/* =========================================================
+   LIVE PROPERTIES UI
+========================================================= */
+
+async function loadLiveProperties() {
+
+  const container =
+    $("livePropertiesContainer");
+
+
+  container.innerHTML = `
+    <div class="content-card p-6 text-gray-400">
+      Loading live properties...
+    </div>
+  `;
+
+
+  const properties =
+    await getOwnerLiveProperties();
+
+
+  if (!properties.length) {
+
+    container.innerHTML = `
+      <div class="content-card p-10 text-center md:col-span-2 xl:col-span-3">
+
+        <div class="text-4xl mb-4">
+          ●
+        </div>
+
+        <h3 class="font-bold">
+          No Live Properties
+        </h3>
+
+        <p class="text-gray-400 mt-2">
+          Approved properties will appear here.
+        </p>
+
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML =
+    properties.map(property => `
+
+      <div class="content-card overflow-hidden">
+
+        <div class="h-36 bg-[#0b1730]
+                    flex items-center justify-center">
+
+          <div class="text-white/80 text-4xl">
+            ${getPropertyIcon(property.property_table)}
+          </div>
+
+        </div>
+
+
+        <div class="p-5">
+
+          <div class="flex items-start
+                      justify-between gap-3">
+
+            <div>
+
+              <h3 class="font-bold text-lg">
+                ${escapeHTML(property.name || "Property")}
+              </h3>
+
+              <div class="text-sm text-gray-400 mt-1">
+                ${escapeHTML(property.category || "—")}
+              </div>
+
+            </div>
+
+
+            <div class="text-sm font-semibold">
+              ★ ${escapeHTML(
+                property.rating ?? "—"
+              )}
+            </div>
+
+          </div>
+
+
+          <div class="mt-4 space-y-2 text-sm">
+
+            <div>
+              <span class="text-gray-400">
+                Area:
+              </span>
+              ${escapeHTML(property.area || "—")}
+            </div>
+
+            <div>
+              <span class="text-gray-400">
+                Address:
+              </span>
+              ${escapeHTML(property.address || "—")}
+            </div>
+
+          </div>
+
+
+          <div class="flex gap-2 mt-5">
+
+            <button
+              onclick='viewProperty(${JSON.stringify(property)})'
+              class="flex-1 px-4 py-2.5 rounded-xl
+                     bg-[#0b1730] text-white text-sm
+                     font-semibold">
+              View Details
+            </button>
+
+            <button
+              onclick='requestPropertyEdit(${JSON.stringify(property)})'
+              class="px-4 py-2.5 rounded-xl
+                     border border-gray-200 text-sm
+                     font-semibold">
+              Request Edit
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `).join("");
+}
+
+
+function getPropertyIcon(table) {
+
+  const icons = {
+    hostels: "🏠",
+    tiffins: "🍱",
+    libraries: "📚",
+    cafes: "☕",
+    bookstores: "📖"
+  };
+
+  return icons[table] || "●";
+}
+
+
+window.viewProperty = function(property) {
+
+  alert(
+    `${property.name || "Property"}\n\n` +
+    `Category: ${property.category || "—"}\n` +
+    `Area: ${property.area || "—"}\n` +
+    `Address: ${property.address || "—"}\n` +
+    `Phone: ${property.phone || "—"}\n` +
+    `Timing: ${property.timing || "—"}\n` +
+    `Facilities: ${property.facilities || "—"}`
+  );
+
+};
+
+
+window.requestPropertyEdit = function(property) {
+
+  alert(
+    "Edit request workflow will submit the requested changes to admin for approval."
+  );
+
+};
+
+
+/* =========================================================
+   OWNER REVIEWS
+========================================================= */
+
+async function loadOwnerReviews() {
+
+  const container =
+    $("ownerReviewsContainer");
+
+
+  const properties =
+    await getOwnerLiveProperties();
+
+
+  if (!properties.length) {
+
+    container.innerHTML = `
+      <div class="content-card p-10 text-center">
+        <h3 class="font-bold">
+          No Reviews Yet
+        </h3>
+        <p class="text-gray-400 mt-2">
+          Reviews received on your live properties will appear here.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  const ids =
+    properties.map(
+      p => String(p.id)
+    );
+
+
+  const {
+    data,
+    error
+  } = await supabaseClient
+    .from("reviews")
+    .select(`
+      id,
+      property_id,
+      rating,
+      review_text,
+      status,
+      created_at
+    `)
+    .in("property_id", ids)
+    .order("created_at", {
+      ascending: false
+    });
+
+
+  if (error) {
+
+    console.error(error);
+
+    container.innerHTML = `
+      <div class="content-card p-6 text-red-500">
+        Unable to load owner reviews.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  if (!data?.length) {
+
+    container.innerHTML = `
+      <div class="content-card p-10 text-center">
+        <div class="text-4xl mb-3">
+          ★
+        </div>
+        <h3 class="font-bold">
+          No Reviews Yet
+        </h3>
+        <p class="text-gray-400 mt-2">
+          Student reviews will appear here.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML =
+    data.map(review => {
+
+      const property =
+        properties.find(
+          p =>
+            String(p.id) ===
+            String(review.property_id)
+        );
+
+
+      return `
+
+        <div class="content-card p-5">
+
+          <div class="flex flex-col md:flex-row
+                      md:items-center md:justify-between gap-3">
+
+            <div>
+
+              <div class="font-bold">
+                ${escapeHTML(
+                  property?.name ||
+                  "Property"
+                )}
+              </div>
+
+              <div class="text-sm text-gray-400 mt-1">
+                Property ID:
+                ${escapeHTML(
+                  review.property_id
+                )}
+              </div>
+
+            </div>
+
+
+            <div class="font-semibold">
+              ★ ${escapeHTML(
+                review.rating
+              )}
+            </div>
+
+          </div>
+
+
+          <p class="text-gray-600 mt-4">
+            ${escapeHTML(
+              review.review_text || ""
+            )}
+          </p>
+
+
+          <div class="flex justify-between
+                      text-xs text-gray-400 mt-4">
+
+            <span>
+              ${
+                review.created_at
+                  ? new Date(
+                      review.created_at
+                    ).toLocaleDateString()
+                  : ""
+              }
+            </span>
+
+            <span>
+              ${escapeHTML(
+                review.status || "—"
+              )}
+            </span>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
+}
 
 
 /* =========================================================
    REALTIME
 ========================================================= */
 
-function subscribeRealtime(){
+function setupRealtime() {
 
-  realtimeChannels.forEach(
-    channel =>
-      sb.removeChannel(channel)
-  );
-
-  realtimeChannels = [];
+  if (!currentUser) return;
 
 
-  /*
-    Listing requests
-  */
+  supabaseClient
+    .channel(
+      "user-dashboard-" +
+      currentUser.id
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "listing_requests",
+        filter:
+          "owner_id=eq." +
+          currentUser.id
+      },
+      async () => {
 
-  const requestChannel =
-    sb
-      .channel(
-        "user-dashboard-requests-" +
-        currentUser.id
-      )
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"listing_requests",
-          filter:
-            "owner_id=eq." +
-            currentUser.id
-        },
-        async () => {
+        if (
+          currentProfile &&
+          String(currentProfile.role)
+            .toLowerCase() === "owner"
+        ) {
 
-          await loadRequests();
+          await loadOwnerStats();
 
-          await loadOwnerCentre();
+          if (
+            !$("section-requests")
+              .classList.contains("hidden")
+          ) {
+            await loadOwnerRequests();
+          }
 
         }
-      )
-      .subscribe();
 
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "reviews"
+      },
+      async () => {
 
-  realtimeChannels.push(
-    requestChannel
-  );
+        if (
+          String(currentProfile?.role)
+            .toLowerCase() === "student"
+        ) {
 
+          await loadStudentStats();
 
-  /*
-    Live property tables
-  */
+          if (
+            !$("section-reviews")
+              .classList.contains("hidden")
+          ) {
+            await loadStudentReviews();
+          }
 
-  propertyTables.forEach(
-    config => {
+        }
 
-      const channel =
-        sb
-          .channel(
-            "user-dashboard-" +
-            config.table +
-            "-" +
-            currentUser.id
-          )
-          .on(
-            "postgres_changes",
-            {
-              event:"*",
-              schema:"public",
-              table:config.table
-            },
-            async () => {
+        if (
+          String(currentProfile?.role)
+            .toLowerCase() === "owner"
+        ) {
 
-              await loadLiveProperties();
+          await loadOwnerStats();
 
-              await loadOwnerReviews();
+          if (
+            !$("section-ownerReviews")
+              .classList.contains("hidden")
+          ) {
+            await loadOwnerReviews();
+          }
 
-              await loadOwnerCentre();
+        }
 
-            }
-          )
-          .subscribe();
-
-
-      realtimeChannels.push(
-        channel
-      );
-
-    }
-  );
+      }
+    )
+    .subscribe();
 
 }
 
@@ -6829,53 +2722,46 @@ function subscribeRealtime(){
    LOGOUT
 ========================================================= */
 
-async function logout(){
-
-  await sb.auth.signOut();
-
-  window.location.href =
-    "auth.html";
-
-}
-
-
 $("logoutBtn")
   .addEventListener(
     "click",
-    logout
-  );
+    async () => {
 
+      await supabaseClient.auth.signOut();
 
-$("logoutSideBtn")
-  .addEventListener(
-    "click",
-    logout
+      window.location.href =
+        "login.html";
+
+    }
   );
 
 
 /* =========================================================
-   CLEANUP
+   ESCAPE HTML
 ========================================================= */
 
-window.addEventListener(
-  "beforeunload",
-  () => {
+function escapeHTML(value) {
 
-    realtimeChannels.forEach(
-      channel =>
-        sb.removeChannel(channel)
-    );
-
-  }
-);
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
 
 /* =========================================================
    START
 ========================================================= */
 
-boot();
+(async function init() {
 
+  await loadDashboard();
+
+  setupRealtime();
+
+})();
 </script>
 
 </body>
