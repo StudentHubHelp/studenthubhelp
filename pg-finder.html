@@ -6,7 +6,7 @@
 
   <title>Hostel & PG Finder | StudentHubHelp</title>
   <link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
   <meta name="description" content="Find student-friendly hostels and PG accommodations across India with StudentHubHelp.">
   <meta name="theme-color" content="#071a33">
 
@@ -14,6 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <style>
     * {
@@ -556,12 +557,15 @@
 
     .modal-actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
       margin-top: 22px;
     }
 
-    .modal-actions a {
+    .modal-actions a,
+    .modal-actions button {
       flex: 1;
+      min-width: 120px;
     }
 
     .disabled {
@@ -705,12 +709,7 @@
       <a href="tiffin-finder.html">🍱 Tiffin / Mess</a>
       <a href="library-finder.html">📚 Library</a>
       <a href="cafe-finder.html">☕ Cafe</a>
-      <a
-  href="bookstore-finder.html"
-  class="active"
->
-  📖 Book Store
-</a>
+      <a href="bookstore-finder.html">📖 Book Store</a>
     </div>
   </div>
 
@@ -807,6 +806,11 @@
         <div class="detail-grid">
 
           <div class="detail-item">
+            <div class="detail-label">Property ID</div>
+            <div class="detail-value" id="modalId" style="color: #2563eb; font-weight: 800;">—</div>
+          </div>
+
+          <div class="detail-item">
             <div class="detail-label">Category</div>
             <div class="detail-value" id="modalCategory">—</div>
           </div>
@@ -841,33 +845,21 @@
 
         <div class="modal-actions">
 
-          <a
-            id="callBtn"
-            class="btn btn-primary"
-            href="#"
-          >
+          <a id="callBtn" class="btn btn-primary" href="#">
             📞 Call
           </a>
 
-          <a
-            id="whatsappBtn"
-            class="btn btn-light"
-            href="#"
-            target="_blank"
-            rel="noopener"
-          >
+          <a id="whatsappBtn" class="btn btn-light" href="#" target="_blank" rel="noopener">
             💬 WhatsApp
           </a>
 
-          <a
-            id="mapsBtn"
-            class="btn btn-light"
-            href="#"
-            target="_blank"
-            rel="noopener"
-          >
+          <a id="mapsBtn" class="btn btn-light" href="#" target="_blank" rel="noopener">
             📍 Maps
           </a>
+
+          <button class="btn btn-primary" style="background: var(--gold); color: var(--navy);" onclick="bookCurrentProperty()">
+            🔖 Book Now
+          </button>
 
         </div>
 
@@ -893,10 +885,6 @@
 
   <script>
 
-    /* ==========================================
-       SUPABASE CONFIG
-       ========================================== */
-
     const SUPABASE_URL =
       "https://idurlccrarznnnqixxsd.supabase.co";
 
@@ -908,67 +896,25 @@
       SUPABASE_ANON_KEY
     );
 
+    const listingGrid = document.getElementById("listingGrid");
+    const emptyState = document.getElementById("emptyState");
+    const statusBox = document.getElementById("status");
+    const countBadge = document.getElementById("countBadge");
+    const resultText = document.getElementById("resultText");
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const modal = document.getElementById("detailModal");
+    const closeModal = document.getElementById("closeModal");
+    const menuBtn = document.getElementById("menuBtn");
+    const navLinks = document.getElementById("navLinks");
 
-    /* ==========================================
-       ELEMENTS
-       ========================================== */
-
-    const listingGrid =
-      document.getElementById("listingGrid");
-
-    const emptyState =
-      document.getElementById("emptyState");
-
-    const statusBox =
-      document.getElementById("status");
-
-    const countBadge =
-      document.getElementById("countBadge");
-
-    const resultText =
-      document.getElementById("resultText");
-
-    const searchInput =
-      document.getElementById("searchInput");
-
-    const searchBtn =
-      document.getElementById("searchBtn");
-
-    const modal =
-      document.getElementById("detailModal");
-
-    const closeModal =
-      document.getElementById("closeModal");
-
-    const menuBtn =
-      document.getElementById("menuBtn");
-
-    const navLinks =
-      document.getElementById("navLinks");
-
-
-    document.getElementById("year").textContent =
-      new Date().getFullYear();
-
-
-    /* ==========================================
-       STATE
-       ========================================== */
+    document.getElementById("year").textContent = new Date().getFullYear();
 
     let allRecords = [];
     let currentRecord = null;
 
-
-    /* ==========================================
-       HELPERS
-       ========================================== */
-
     function escapeHTML(value) {
-
-      if (value === null || value === undefined) {
-        return "";
-      }
-
+      if (value === null || value === undefined) return "";
       return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -977,748 +923,218 @@
         .replace(/'/g, "&#039;");
     }
 
-
     function clean(value) {
-
-      if (
-        value === null ||
-        value === undefined ||
-        String(value).trim() === ""
-      ) {
-        return "";
-      }
-
+      if (value === null || value === undefined || String(value).trim() === "") return "";
       return String(value).trim();
     }
 
-
-    function displayValue(value, fallback = "Not available") {
-
-      const v = clean(value);
-
-      return v
-        ? escapeHTML(v)
-        : fallback;
-    }
-
-
-    function normalizePhone(phone) {
-
-      let value = clean(phone);
-
-      value = value.replace(/\D/g, "");
-
-      if (value.length === 10) {
-        return "91" + value;
-      }
-
-      if (
-        value.length === 12 &&
-        value.startsWith("91")
-      ) {
-        return value;
-      }
-
-      return value;
-    }
-
-
-    function phoneForCall(phone) {
-
-      const value = clean(phone);
-
-      if (!value) {
-        return null;
-      }
-
-      return value.replace(/[^\d+]/g, "");
-    }
-
-
-    function mapsURL(address) {
-
-      const value = clean(address);
-
-      if (!value) {
-        return null;
-      }
-
-      return (
-        "https://www.google.com/maps/search/?api=1&query=" +
-        encodeURIComponent(value)
-      );
-    }
-
-
     function ratingText(rating) {
-
       const value = Number(rating);
-
-      if (!Number.isFinite(value) || value <= 0) {
-        return "Not rated";
-      }
-
-      const safe =
-        Math.max(0, Math.min(5, value));
-
-      return "⭐ " + safe.toFixed(1) + " / 5";
+      if (!Number.isFinite(value) || value <= 0) return "Not rated";
+      return "⭐ " + Math.max(0, Math.min(5, value)).toFixed(1) + " / 5";
     }
-
 
     function showStatus(message, type = "loading") {
-
       statusBox.textContent = message;
-
-      statusBox.className =
-        "status show " + type;
+      statusBox.className = "status show " + type;
     }
 
-
     function hideStatus() {
-
       statusBox.className = "status";
     }
 
-
-    /* ==========================================
-       LOAD LIVE HOSTELS
-       IMPORTANT:
-       ONLY CURRENT 9 DB COLUMNS USED
-       ========================================== */
-
     async function loadRecords() {
-
-      showStatus(
-        "Loading live hostels...",
-        "loading"
-      );
-
+      showStatus("Loading live hostels...", "loading");
       try {
-
         const { data, error } = await db
           .from("hostels")
-          .select(
-            "id,name,category,area,address,phone,timing,facilities,rating"
-          );
+          .select("id,name,category,area,address,phone,timing,facilities,rating");
 
-        if (error) {
-          throw error;
-        }
-
-        allRecords = Array.isArray(data)
-          ? data
-          : [];
-
+        if (error) throw error;
+        allRecords = Array.isArray(data) ? data : [];
         renderRecords();
-
         hideStatus();
-
       } catch (error) {
-
-        console.error(
-          "Hostel loading error:",
-          error
-        );
-
+        console.error("Hostel loading error:", error);
         allRecords = [];
-
         listingGrid.innerHTML = "";
-
         emptyState.classList.remove("show");
-
         countBadge.textContent = "Error";
-
-        resultText.textContent =
-          "Unable to load live hostels";
-
-        showStatus(
-          "Unable to load live hostels. " +
-          (error.message || ""),
-          "error"
-        );
+        resultText.textContent = "Unable to load live hostels";
+        showStatus("Unable to load live hostels. " + (error.message || ""), "error");
       }
     }
-
-
-    /* ==========================================
-       SEARCH
-       ========================================== */
 
     function getSearchValue() {
-
-      return searchInput.value
-        .trim()
-        .toLowerCase();
-
+      return searchInput.value.trim().toLowerCase();
     }
 
-
     function filterRecords() {
-
-      const query =
-        getSearchValue();
-
-      if (!query) {
-        return [...allRecords];
-      }
-
+      const query = getSearchValue();
+      if (!query) return [...allRecords];
       return allRecords.filter(record => {
-
-        const searchable = [
-
-          record.id,
-
-          record.name,
-
-          record.category,
-
-          record.area,
-
-          record.address,
-
-          record.phone,
-
-          record.timing,
-
-          record.facilities,
-
-          record.rating
-
-        ]
+        const searchable = [record.id, record.name, record.category, record.area, record.address, record.phone, record.timing, record.facilities, record.rating]
           .map(value => clean(value))
           .join(" ")
           .toLowerCase();
-
         return searchable.includes(query);
-
       });
     }
 
-
-    /* ==========================================
-       RENDER
-       ========================================== */
-
     function renderRecords() {
-
-      const records =
-        filterRecords();
-
+      const records = filterRecords();
       listingGrid.innerHTML = "";
-
-      countBadge.textContent =
-        records.length +
-        (records.length === 1
-          ? " Listing"
-          : " Listings");
+      countBadge.textContent = records.length + (records.length === 1 ? " Listing" : " Listings");
 
       if (getSearchValue()) {
-
-        resultText.textContent =
-          `Showing ${records.length} result${
-            records.length === 1 ? "" : "s"
-          } for "${searchInput.value.trim()}"`;
-
+        resultText.textContent = `Showing ${records.length} result${records.length === 1 ? "" : "s"} for "${searchInput.value.trim()}"`;
       } else {
-
-        resultText.textContent =
-          "Live listings from StudentHubHelp";
+        resultText.textContent = "Live listings from StudentHubHelp";
       }
-
 
       if (!records.length) {
-
         emptyState.classList.add("show");
-
         return;
       }
-
       emptyState.classList.remove("show");
 
-
       records.forEach(record => {
-
-        const card =
-          document.createElement("article");
-
+        const card = document.createElement("article");
         card.className = "card";
 
-        const name =
-          clean(record.name) ||
-          "Hostel / PG";
-
-        const category =
-          clean(record.category) ||
-          "Hostel / PG";
-
-        const area =
-          clean(record.area);
-
-        const address =
-          clean(record.address);
-
-        const timing =
-          clean(record.timing);
-
-        const phone =
-          clean(record.phone);
-
-        const rating =
-          ratingText(record.rating);
-
+        const name = clean(record.name) || "Hostel / PG";
+        const category = clean(record.category) || "Hostel / PG";
+        const area = clean(record.area);
+        const address = clean(record.address);
+        const timing = clean(record.timing);
+        const phone = clean(record.phone);
+        const rating = ratingText(record.rating);
 
         card.innerHTML = `
-
           <div class="card-banner">
-
-            <div class="card-category">
-              ${escapeHTML(category)}
-            </div>
-
+            <div class="card-category">${escapeHTML(category)}</div>
           </div>
-
-
           <div class="card-body">
-
-            <h3>
-              ${escapeHTML(name)}
-            </h3>
-
-
-            ${
-              area
-                ? `
-                  <div class="area">
-                    📍 ${escapeHTML(area)}
-                  </div>
-                `
-                : ""
-            }
-
-
-            ${
-              address
-                ? `
-                  <div class="info-row">
-                    <span>🏠</span>
-                    <span>
-                      ${escapeHTML(address)}
-                    </span>
-                  </div>
-                `
-                : ""
-            }
-
-
-            ${
-              timing
-                ? `
-                  <div class="info-row">
-                    <span>🕒</span>
-                    <span>
-                      ${escapeHTML(timing)}
-                    </span>
-                  </div>
-                `
-                : ""
-            }
-
-
-            <div class="rating">
-              ${escapeHTML(rating)}
-            </div>
-
-
+            <h3>${escapeHTML(name)}</h3>
+            <div style="font-size:11px; color:#64748b; font-weight:700; margin-bottom:5px;">ID: #${escapeHTML(record.id)}</div>
+            ${area ? `<div class="area">📍 ${escapeHTML(area)}</div>` : ""}
+            ${address ? `<div class="info-row"><span>🏠</span><span>${escapeHTML(address)}</span></div>` : ""}
+            ${timing ? `<div class="info-row"><span>🕒</span><span>${escapeHTML(timing)}</span></div>` : ""}
+            <div class="rating">${escapeHTML(rating)}</div>
             <div class="card-actions">
-
-              <button
-                class="btn btn-primary details-btn"
-                type="button"
-              >
-                View Details
-              </button>
-
-              ${
-                phone
-                  ? `
-                    <a
-                      class="btn btn-light"
-                      href="tel:${escapeHTML(
-                        phoneForCall(phone) || ""
-                      )}"
-                    >
-                      📞 Call
-                    </a>
-                  `
-                  : `
-                    <button
-                      class="btn btn-light"
-                      type="button"
-                      disabled
-                      style="opacity:.45;cursor:not-allowed"
-                    >
-                      📞 Call
-                    </button>
-                  `
-              }
-
+              <button class="btn btn-primary details-btn" type="button">View Details</button>
+              ${phone ? `<a class="btn btn-light" href="tel:${escapeHTML(phone)}">📞 Call</a>` : `<button class="btn btn-light" disabled style="opacity:.45;cursor:not-allowed">📞 Call</button>`}
             </div>
-
           </div>
         `;
 
-
-        card
-          .querySelector(".details-btn")
-          .addEventListener(
-            "click",
-            () => openModal(record)
-          );
-
-
+        card.querySelector(".details-btn").addEventListener("click", () => openModal(record));
         listingGrid.appendChild(card);
-
       });
-
     }
-
-
-    /* ==========================================
-       MODAL
-       ========================================== */
 
     function openModal(record) {
-
       currentRecord = record;
 
-      document.getElementById("modalTitle")
-        .textContent =
-        clean(record.name) ||
-        "Hostel / PG";
+      document.getElementById("modalTitle").textContent = clean(record.name) || "Hostel / PG";
+      document.getElementById("modalId").textContent = "#" + clean(record.id);
+      document.getElementById("modalCategory").textContent = clean(record.category) || "Hostel / PG";
+      document.getElementById("modalRating").textContent = ratingText(record.rating);
+      document.getElementById("modalArea").textContent = clean(record.area) || "Not available";
+      document.getElementById("modalTiming").textContent = clean(record.timing) || "Not available";
+      document.getElementById("modalAddress").textContent = clean(record.address) || "Not available";
+      document.getElementById("modalFacilities").textContent = clean(record.facilities) || "Not available";
 
-
-      document.getElementById("modalCategory")
-        .textContent =
-        clean(record.category) ||
-        "Hostel / PG";
-
-
-      document.getElementById("modalRating")
-        .textContent =
-        ratingText(record.rating);
-
-
-      document.getElementById("modalArea")
-        .textContent =
-        clean(record.area) ||
-        "Not available";
-
-
-      document.getElementById("modalTiming")
-        .textContent =
-        clean(record.timing) ||
-        "Not available";
-
-
-      document.getElementById("modalAddress")
-        .textContent =
-        clean(record.address) ||
-        "Not available";
-
-
-      document.getElementById("modalFacilities")
-        .textContent =
-        clean(record.facilities) ||
-        "Not available";
-
-
-      /* CALL */
-
-      const callBtn =
-        document.getElementById("callBtn");
-
-      const callPhone =
-        phoneForCall(record.phone);
-
-      if (callPhone) {
-
-        callBtn.href =
-          "tel:" + callPhone;
-
-        callBtn.classList.remove(
-          "disabled"
-        );
-
+      const callBtn = document.getElementById("callBtn");
+      const phone = clean(record.phone);
+      if (phone) {
+        callBtn.href = "tel:" + phone;
+        callBtn.classList.remove("disabled");
       } else {
-
         callBtn.href = "#";
-
-        callBtn.classList.add(
-          "disabled"
-        );
+        callBtn.classList.add("disabled");
       }
 
-
-      /* WHATSAPP */
-
-      const whatsappBtn =
-        document.getElementById(
-          "whatsappBtn"
-        );
-
-      const whatsappPhone =
-        normalizePhone(record.phone);
-
-
-      if (whatsappPhone) {
-
-        const message =
-          "Hello, I found " +
-          (clean(record.name) || "this Hostel / PG") +
-          " on StudentHubHelp.";
-
-        whatsappBtn.href =
-          "https://wa.me/" +
-          whatsappPhone +
-          "?text=" +
-          encodeURIComponent(message);
-
-        whatsappBtn.classList.remove(
-          "disabled"
-        );
-
+      const whatsappBtn = document.getElementById("whatsappBtn");
+      if (phone) {
+        whatsappBtn.href = "https://wa.me/91" + phone.replace(/\D/g, "") + "?text=" + encodeURIComponent("Hello, I found " + (clean(record.name) || "this Hostel") + " on StudentHubHelp.");
+        whatsappBtn.classList.remove("disabled");
       } else {
-
         whatsappBtn.href = "#";
-
-        whatsappBtn.classList.add(
-          "disabled"
-        );
+        whatsappBtn.classList.add("disabled");
       }
 
-
-      /* GOOGLE MAPS */
-
-      const mapsBtn =
-        document.getElementById(
-          "mapsBtn"
-        );
-
-      const map =
-        mapsURL(record.address);
-
-      if (map) {
-
-        mapsBtn.href = map;
-
-        mapsBtn.classList.remove(
-          "disabled"
-        );
-
+      const mapsBtn = document.getElementById("mapsBtn");
+      const address = clean(record.address);
+      if (address) {
+        mapsBtn.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(address);
+        mapsBtn.classList.remove("disabled");
       } else {
-
         mapsBtn.href = "#";
-
-        mapsBtn.classList.add(
-          "disabled"
-        );
+        mapsBtn.classList.add("disabled");
       }
-
 
       modal.classList.add("show");
-
-      document.body.style.overflow =
-        "hidden";
+      document.body.style.overflow = "hidden";
     }
 
-
     function closeDetails() {
-
       modal.classList.remove("show");
-
-      document.body.style.overflow =
-        "";
-
+      document.body.style.overflow = "";
       currentRecord = null;
     }
 
+    async function bookCurrentProperty() {
+      if (!currentRecord) {
+        alert("कोई प्रॉपर्टी चुनी नहीं गई है!");
+        return;
+      }
 
-    closeModal.addEventListener(
-      "click",
-      closeDetails
-    );
+      const { data: { session } } = await db.auth.getSession();
+      
+      if (!session || !session.user) {
+        alert("बुकिंग करने के लिए कृपया पहले लॉग-इन करें!");
+        window.location.href = "auth.html";
+        return;
+      }
 
+      const studentId = session.user.id;
+      const propertyId = String(currentRecord.id);
+      const propertyName = clean(currentRecord.name) || "Hostel / PG";
+      const category = clean(currentRecord.category) || "Hostel / PG";
 
-    modal.addEventListener(
-      "click",
-      event => {
-
-        if (
-          event.target === modal
-        ) {
-          closeDetails();
+      const { error } = await db.from("student_bookings").insert([
+        {
+          student_id: studentId,
+          property_id: propertyId,
+          property_name: propertyName,
+          category: category,
+          joined_date: new Date().toISOString(),
+          status: "confirmed"
         }
+      ]);
 
-      }
-    );
-
-
-    document.addEventListener(
-      "keydown",
-      event => {
-
-        if (
-          event.key === "Escape" &&
-          modal.classList.contains("show")
-        ) {
-          closeDetails();
-        }
-
-      }
-    );
-
-
-    /* ==========================================
-       SEARCH EVENTS
-       ========================================== */
-
-    searchBtn.addEventListener(
-      "click",
-      renderRecords
-    );
-
-
-    searchInput.addEventListener(
-      "input",
-      renderRecords
-    );
-
-
-    searchInput.addEventListener(
-      "keydown",
-      event => {
-
-        if (
-          event.key === "Enter"
-        ) {
-          renderRecords();
-        }
-
-      }
-    );
-
-
-    /* ==========================================
-       MOBILE MENU
-       ========================================== */
-
-    menuBtn.addEventListener(
-      "click",
-      () => {
-
-        navLinks.classList.toggle(
-          "show"
-        );
-
-      }
-    );
-
-
-    document
-      .querySelectorAll(".nav-links a")
-      .forEach(link => {
-
-        link.addEventListener(
-          "click",
-          () => {
-            navLinks.classList.remove(
-              "show"
-            );
-          }
-        );
-
-      });
-
-
-    /* ==========================================
-       URL SEARCH SUPPORT
-
-       Examples:
-       pg-finder.html?q=Hisar
-       pg-finder.html?area=Haryana
-       pg-finder.html?location=Delhi
-       ========================================== */
-
-    function loadURLSearch() {
-
-      const params =
-        new URLSearchParams(
-          window.location.search
-        );
-
-      const value =
-        params.get("q") ||
-        params.get("area") ||
-        params.get("location");
-
-
-      if (value) {
-
-        searchInput.value =
-          value;
-
+      if (error) {
+        console.error("Booking failed:", error);
+        alert("बुकिंग असफल रही: " + (error.message || "डेटाबेस एरर"));
+      } else {
+        alert("बधाई हो! आपकी बुकिंग सफलताપૂર્વक हो गई है।");
+        window.location.href = "student-dashboard.html";
       }
     }
 
+    closeModal.addEventListener("click", closeDetails);
+    modal.addEventListener("click", e => { if (e.target === modal) closeDetails(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && modal.classList.contains("show")) closeDetails(); });
 
-    /* ==========================================
-       SUPABASE REALTIME
-       ========================================== */
+    searchBtn.addEventListener("click", renderRecords);
+    searchInput.addEventListener("input", renderRecords);
+    searchInput.addEventListener("keydown", e => { if (e.key === "Enter") renderRecords(); });
 
-    function setupRealtime() {
-
-      db
-        .channel(
-          "studenthub-hostels-live"
-        )
-
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "hostels"
-          },
-          () => {
-
-            loadRecords();
-
-          }
-        )
-
-        .subscribe(
-          status => {
-
-            console.log(
-              "Hostel realtime:",
-              status
-            );
-
-          }
-        );
-    }
-
-
-    /* ==========================================
-       INITIALIZE
-       ========================================== */
-
-    loadURLSearch();
+    menuBtn.addEventListener("click", () => navLinks.classList.toggle("show"));
+    document.querySelectorAll(".nav-links a").forEach(l => l.addEventListener("click", () => navLinks.classList.remove("show")));
 
     loadRecords();
-
-    setupRealtime();
-
   </script>
 
 </body>
