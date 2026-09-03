@@ -1,8 +1,659 @@
-<!DOCTYPE html><html lang="en" class="scroll-smooth"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Add Property | StudentHubHelp</title><link rel="icon" href="logo.png"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/studenthub-core.js"></script><link rel="stylesheet" href="css/premium.css"><meta name="robots" content="noindex, nofollow, noarchive">
-</head><body class="bg-navy-950 text-slate-100 min-h-screen font-sans"><nav data-sh-nav></nav><main class="max-w-3xl mx-auto px-4 py-10"><div class="glass rounded-3xl p-6 sm:p-8"><div class="premium-kicker">Owner listing</div><h1 class="text-3xl font-display font-bold mt-2">Add your property</h1><p class="text-sm text-slate-400 mt-2">Hostel, Tiffin, Library or Cafe — your listing is stored directly in Supabase.</p><div id="authState" class="mt-5 p-4 rounded-2xl bg-navy-850 border border-navy-700 text-sm">Checking owner account…</div><form id="listingForm" class="grid sm:grid-cols-2 gap-4 mt-6 hidden"><div class="sm:col-span-2"><label class="text-xs font-bold">Property Name *</label><input id="fName" required class="premium-input w-full rounded-xl px-4 py-3 mt-1"></div><div><label class="text-xs font-bold">Property Type *</label><select id="fCategory" required class="premium-input w-full rounded-xl px-4 py-3 mt-1"><option value="hostel">Hostel / PG</option><option value="tiffin">Tiffin / Mess</option><option value="library">Library</option><option value="cafe">Cafe</option></select></div><div><label class="text-xs font-bold">Area / District / State *</label><input id="fArea" required placeholder="e.g. Hisar, Haryana" class="premium-input w-full rounded-xl px-4 py-3 mt-1"></div><div class="sm:col-span-2"><label class="text-xs font-bold">Full Address *</label><textarea id="fAddress" required rows="3" placeholder="Complete address" class="premium-input w-full rounded-xl px-4 py-3 mt-1"></textarea></div><div><label class="text-xs font-bold">Phone *</label><input id="fPhone" required type="tel" class="premium-input w-full rounded-xl px-4 py-3 mt-1"></div><div><label class="text-xs font-bold">Timing</label><input id="fTiming" class="premium-input w-full rounded-xl px-4 py-3 mt-1"></div><div class="sm:col-span-2"><label class="text-xs font-bold">Facilities / Details</label><textarea id="fFacilities" rows="3" class="premium-input w-full rounded-xl px-4 py-3 mt-1"></textarea></div><div><label class="text-xs font-bold">Image URL</label><input id="fImage" type="url" placeholder="https://..." class="premium-input w-full rounded-xl px-4 py-3 mt-1"></div><div><label class="text-xs font-bold">Existing Rating (optional)</label><input id="fRating" type="number" min="0" max="5" step="0.1" class="premium-input w-full rounded-xl px-4 py-3 mt-1"></div><div class="sm:col-span-2 flex gap-3"><a href="user-dashboard.html" class="flex-1 text-center py-3 rounded-xl bg-navy-800 font-bold">Cancel</a><button class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold" id="saveBtn">Publish Live</button></div><p id="msg" class="sm:col-span-2 text-xs"></p></form></div></main><script>
-const SUPABASE_URL='https://idurlccrarznnnqixxsd.supabase.co';const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA';
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const $=id=>document.getElementById(id);const clean=StudentHub.clean;let user=null,profile=null;
-StudentHub.injectNav('');
-(async()=>{const {data}=await db.auth.getSession();user=data?.session?.user;if(!user){$('authState').innerHTML='Please sign in first. <a class="text-gold-300 font-bold" href="auth.html">Open Login</a>';return}const {data:p,error}=await db.from('profiles').select('*').eq('id',user.id).maybeSingle();profile=p;if(error||!p){$('authState').textContent='Owner profile could not be loaded.';return}if((user.email||'').toLowerCase()==='satpalswami22742@gmail.com'||String(p.role).toLowerCase()==='admin'){location.href='admin-dashboard.html';return}if(String(p.role).toLowerCase()!=='owner'){$('authState').textContent='Only owner accounts can add a property.';return}$('authState').innerHTML='<span class="text-emerald-300">Signed in as owner:</span> '+StudentHub.esc(p.full_name||user.email);$('listingForm').classList.remove('hidden');$('fPhone').value=p.phone||'';$('fAddress').value=p.address||'';})();
-$('listingForm').addEventListener('submit',async e=>{e.preventDefault();const categoryMap={hostel:'hostels',tiffin:'tiffins',library:'libraries',cafe:'cafes'};const table=categoryMap[$('fCategory').value];const rating=$('fRating').value===''?null:Number($('fRating').value);const payload={name:clean($('fName').value),category:({hostel:'Hostel / PG',tiffin:'Tiffin / Mess',library:'Library',cafe:'Cafe'})[$('fCategory').value],area:clean($('fArea').value),address:clean($('fAddress').value),phone:clean($('fPhone').value),timing:clean($('fTiming').value)||null,facilities:clean($('fFacilities').value)||null,rating,image:clean($('fImage').value)||null,owner_id:user.id};const {error}=await db.from(table).insert(payload);if(error){$('msg').textContent=error.message;$('msg').className='sm:col-span-2 text-xs text-red-300';return}$('msg').textContent='Listing added live to Supabase.';$('msg').className='sm:col-span-2 text-xs text-emerald-300';$('listingForm').reset();$('fPhone').value=profile.phone||'';$('fAddress').value=profile.address||'';});
-</script></body></html>
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Add Listing | StudentHubHelp</title>
+  <meta name="description" content="Add your student-friendly property or service to StudentHubHelp.">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="icon" href="logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --navy:#071a33;
+      --navy2:#0b2344;
+      --navy3:#102d52;
+      --gold:#f4c44e;
+      --gold2:#ffd970;
+      --text:#eef4fb;
+      --muted:#9fb0c7;
+      --line:rgba(255,255,255,.10);
+      --glass:rgba(10,35,68,.72);
+      --success:#34d399;
+      --danger:#fb7185;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 10% 0%,rgba(244,196,78,.09),transparent 30%),
+        radial-gradient(circle at 90% 10%,rgba(48,112,190,.15),transparent 32%),
+        linear-gradient(180deg,#06162c 0%,#071a33 45%,#06172e 100%);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      min-height:100vh;
+    }
+    a{text-decoration:none}
+    .site-nav{
+      position:sticky;top:0;z-index:50;
+      background:rgba(5,21,42,.94);
+      backdrop-filter:blur(16px);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .nav-inner{
+      max-width:1200px;margin:auto;padding:14px 20px;
+      display:flex;align-items:center;justify-content:space-between;gap:20px;
+    }
+    .brand{display:flex;align-items:center;gap:13px;color:#fff}
+    .brand img{width:58px;height:58px;border-radius:16px;object-fit:cover;border:2px solid rgba(255,255,255,.9);box-shadow:0 8px 28px rgba(0,0,0,.25)}
+    .brand-title{font-size:23px;font-weight:900;letter-spacing:-.5px}
+    .brand-sub{font-size:12px;font-weight:800;color:var(--gold);margin-top:1px}
+    .nav-links{display:flex;align-items:center;gap:7px}
+    .nav-links a{
+      color:#d8e2ef;font-weight:800;padding:11px 15px;border-radius:14px;transition:.2s;
+    }
+    .nav-links a:hover{color:#fff;background:rgba(255,255,255,.06)}
+    .nav-links a.active{color:var(--gold2);border:1px solid rgba(244,196,78,.45);background:rgba(244,196,78,.05)}
+    .nav-toggle{display:none;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff;width:44px;height:44px;border-radius:12px}
+    .mobile-menu{display:none;padding:0 20px 16px}
+    .mobile-menu.open{display:grid;gap:6px}
+    .mobile-menu a{color:#dce7f4;padding:12px;border-radius:12px;font-weight:800}
+    .mobile-menu a.active{color:var(--gold);background:rgba(244,196,78,.07)}
+
+    .page{
+      max-width:1120px;margin:0 auto;padding:42px 20px 70px;
+    }
+    .hero{
+      position:relative;overflow:hidden;border:1px solid var(--line);
+      border-radius:30px;padding:34px;
+      background:
+        linear-gradient(135deg,rgba(7,26,51,.96),rgba(11,35,68,.84)),
+        radial-gradient(circle at 85% 10%,rgba(244,196,78,.15),transparent 28%);
+      box-shadow:0 24px 80px rgba(0,0,0,.22);
+    }
+    .hero:after{
+      content:"";position:absolute;width:220px;height:220px;border-radius:50%;
+      right:-80px;top:-100px;border:1px solid rgba(244,196,78,.16);
+      box-shadow:0 0 0 35px rgba(244,196,78,.025),0 0 0 70px rgba(244,196,78,.015);
+    }
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      color:var(--gold);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;
+    }
+    .hero h1{margin:10px 0 8px;font-size:clamp(30px,5vw,50px);line-height:1.05;letter-spacing:-1.6px;font-weight:950}
+    .hero p{max-width:720px;color:var(--muted);font-size:15px;line-height:1.75;margin:0}
+    .trust-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+    .trust{
+      display:inline-flex;align-items:center;gap:8px;padding:9px 12px;
+      border-radius:999px;background:rgba(255,255,255,.045);border:1px solid var(--line);
+      color:#d8e4f2;font-size:12px;font-weight:800;
+    }
+    .trust i{color:var(--gold)}
+
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:22px;margin-top:22px}
+    .panel{
+      background:var(--glass);border:1px solid var(--line);border-radius:26px;
+      box-shadow:0 18px 55px rgba(0,0,0,.18);
+    }
+    .form-panel{padding:26px}
+    .side-panel{padding:22px;height:max-content;position:sticky;top:105px}
+    .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:20px}
+    .section-head h2{margin:0;font-size:20px;font-weight:950}
+    .section-head p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
+    .step{
+      width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+      background:rgba(244,196,78,.10);color:var(--gold);font-weight:950;border:1px solid rgba(244,196,78,.22)
+    }
+    .field{margin-bottom:17px}
+    .field label{display:flex;align-items:center;gap:7px;color:#dfe8f3;font-size:12px;font-weight:900;margin-bottom:7px}
+    .required{color:var(--gold)}
+    .input,.select,.textarea{
+      width:100%;border:1px solid rgba(255,255,255,.11);outline:none;
+      background:rgba(3,16,33,.56);color:#f4f8fc;border-radius:14px;
+      padding:13px 14px;font-size:14px;transition:.2s;
+    }
+    .textarea{resize:vertical;min-height:112px;line-height:1.55}
+    .input:focus,.select:focus,.textarea:focus{
+      border-color:rgba(244,196,78,.65);
+      box-shadow:0 0 0 4px rgba(244,196,78,.08);
+    }
+    .input::placeholder,.textarea::placeholder{color:#71849d}
+    .select option{background:#0b2344;color:#fff}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .hint{font-size:11px;color:#778ba5;margin-top:6px;line-height:1.5}
+    .locked{
+      background:rgba(255,255,255,.035);color:#a9bad0;
+      cursor:not-allowed;
+    }
+    .category-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:20px}
+    .category-card{
+      cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.025);
+      border-radius:14px;padding:12px 8px;text-align:center;transition:.2s;
+    }
+    .category-card i{display:block;font-size:18px;color:#9fb1c8;margin-bottom:7px}
+    .category-card span{font-size:11px;font-weight:900;color:#b9c8d9}
+    .category-card.selected{border-color:rgba(244,196,78,.65);background:rgba(244,196,78,.08)}
+    .category-card.selected i,.category-card.selected span{color:var(--gold2)}
+    .notice{
+      padding:13px 14px;border-radius:15px;border:1px solid rgba(244,196,78,.16);
+      background:rgba(244,196,78,.055);color:#d8e3ef;font-size:12px;line-height:1.6;
+    }
+    .notice i{color:var(--gold);margin-right:7px}
+    .actions{display:flex;gap:11px;margin-top:24px}
+    .btn{
+      min-height:48px;border:0;border-radius:14px;padding:0 18px;
+      font-weight:950;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:.2s;
+    }
+    .btn-primary{flex:1;background:linear-gradient(135deg,#f4c44e,#ffd970);color:#071a33;box-shadow:0 12px 30px rgba(244,196,78,.14)}
+    .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.04)}
+    .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .btn-secondary{background:rgba(255,255,255,.055);color:#dce6f1;border:1px solid var(--line)}
+    .status{
+      margin-top:16px;padding:13px 14px;border-radius:14px;font-size:12px;line-height:1.55;display:none
+    }
+    .status.show{display:block}
+    .status.success{color:#9ff1ce;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.22)}
+    .status.error{color:#fecdd3;background:rgba(251,113,133,.07);border:1px solid rgba(251,113,133,.22)}
+    .status.info{color:#cbd8e7;background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.16)}
+    .side-title{font-weight:950;font-size:16px;margin-bottom:15px}
+    .side-list{display:grid;gap:11px}
+    .side-item{display:flex;gap:11px;padding:12px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+    .side-item i{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:rgba(244,196,78,.08);color:var(--gold)}
+    .side-item b{display:block;font-size:12px}
+    .side-item span{display:block;color:#8295ad;font-size:11px;margin-top:3px;line-height:1.45}
+    .account-box{margin-top:18px;padding:14px;border-radius:16px;background:rgba(0,0,0,.14);border:1px solid var(--line)}
+    .account-box .label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#7589a2;font-weight:900}
+    .account-box .value{margin-top:5px;font-size:13px;font-weight:850;word-break:break-word}
+    .auth-state{margin-top:18px}
+    .image-preview{
+      display:none;margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+      background:#071a33;height:180px;
+    }
+    .image-preview.show{display:block}
+    .image-preview img{width:100%;height:100%;object-fit:cover;display:block}
+    .footer{max-width:1120px;margin:0 auto;padding:0 20px 34px;color:#647891;text-align:center;font-size:11px}
+
+    @media(max-width:900px){
+      .layout{grid-template-columns:1fr}
+      .side-panel{position:static}
+      .category-grid{grid-template-columns:repeat(3,1fr)}
+      .nav-links{display:none}
+      .nav-toggle{display:block}
+    }
+    @media(max-width:600px){
+      .nav-inner{padding:11px 14px}
+      .brand img{width:49px;height:49px;border-radius:14px}
+      .brand-title{font-size:18px}
+      .brand-sub{font-size:10px}
+      .page{padding:24px 13px 45px}
+      .hero{padding:24px 20px;border-radius:23px}
+      .form-panel,.side-panel{padding:19px;border-radius:21px}
+      .grid2{grid-template-columns:1fr;gap:0}
+      .category-grid{grid-template-columns:repeat(2,1fr)}
+      .actions{flex-direction:column-reverse}
+      .btn{width:100%}
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a class="brand" href="index.html" aria-label="StudentHubHelp Home">
+      <img src="logo.png" alt="StudentHubHelp Logo">
+      <div>
+        <div class="brand-title">StudentHubHelp</div>
+        <div class="brand-sub">Student Discovery Platform</div>
+      </div>
+    </a>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="pg-finder.html">Hostel / PG</a>
+      <a href="tiffin-finder.html">Tiffin / Mess</a>
+      <a href="library-finder.html">Library</a>
+      <a href="cafe-finder.html">Cafe</a>
+      <a href="bookstore-finder.html">Book Store</a>
+      <a href="user-dashboard.html" class="active">Dashboard</a>
+    </div>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">Home</a>
+    <a href="pg-finder.html">Hostel / PG</a>
+    <a href="tiffin-finder.html">Tiffin / Mess</a>
+    <a href="library-finder.html">Library</a>
+    <a href="cafe-finder.html">Cafe</a>
+    <a href="bookstore-finder.html">Book Store</a>
+    <a href="user-dashboard.html" class="active">Dashboard</a>
+  </div>
+</nav>
+
+<main class="page">
+  <section class="hero">
+    <div class="eyebrow"><i class="fa-solid fa-building-circle-plus"></i> Owner Listing Center</div>
+    <h1>Add Your Listing</h1>
+    <p>
+      Add your Hostel / PG, Tiffin / Mess, Library, Cafe or Book Store to StudentHubHelp.
+      Your listing is submitted directly to your Supabase database and becomes available according to your account permissions.
+    </p>
+    <div class="trust-row">
+      <div class="trust"><i class="fa-solid fa-shield-halved"></i> Secure owner access</div>
+      <div class="trust"><i class="fa-solid fa-database"></i> Supabase connected</div>
+      <div class="trust"><i class="fa-solid fa-mobile-screen"></i> Mobile friendly</div>
+      <div class="trust"><i class="fa-solid fa-bolt"></i> Fast submission</div>
+    </div>
+  </section>
+
+  <div id="authState" class="status info auth-state show">
+    <i class="fa-solid fa-spinner fa-spin"></i> Checking your owner account…
+  </div>
+
+  <section class="layout" id="contentLayout" style="display:none">
+    <div class="panel form-panel">
+      <div class="section-head">
+        <div>
+          <h2>Listing Information</h2>
+          <p>Fill in accurate information so students can find your business easily.</p>
+        </div>
+        <div class="step">01</div>
+      </div>
+
+      <div class="category-grid" id="categoryGrid">
+        <button type="button" class="category-card selected" data-value="hostel">
+          <i class="fa-solid fa-house"></i><span>Hostel / PG</span>
+        </button>
+        <button type="button" class="category-card" data-value="tiffin">
+          <i class="fa-solid fa-bowl-food"></i><span>Tiffin / Mess</span>
+        </button>
+        <button type="button" class="category-card" data-value="library">
+          <i class="fa-solid fa-book-open"></i><span>Library</span>
+        </button>
+        <button type="button" class="category-card" data-value="cafe">
+          <i class="fa-solid fa-mug-hot"></i><span>Cafe</span>
+        </button>
+        <button type="button" class="category-card" data-value="bookstore">
+          <i class="fa-solid fa-book"></i><span>Book Store</span>
+        </button>
+      </div>
+
+      <form id="listingForm" novalidate>
+        <input type="hidden" id="fCategory" value="hostel">
+
+        <div class="grid2">
+          <div class="field">
+            <label for="fName">Business / Property Name <span class="required">*</span></label>
+            <input id="fName" class="input" required maxlength="120" placeholder="e.g. Sharma Boys Hostel">
+          </div>
+
+          <div class="field">
+            <label for="fArea">Area / District / State <span class="required">*</span></label>
+            <input id="fArea" class="input" required maxlength="150" placeholder="e.g. Hisar, Haryana">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fAddress">Full Address <span class="required">*</span></label>
+          <textarea id="fAddress" class="textarea" required maxlength="500" placeholder="Enter the complete address, landmark, road, area, city and state."></textarea>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="fPhone">Business Phone <span class="required">*</span></label>
+            <input id="fPhone" class="input" required maxlength="20" inputmode="tel" placeholder="10 digit mobile number">
+            <div class="hint">Use the phone number that students can contact for this listing.</div>
+          </div>
+
+          <div class="field">
+            <label for="fTiming">Opening / Service Timing</label>
+            <input id="fTiming" class="input" maxlength="120" placeholder="e.g. 7:00 AM – 10:00 PM">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fFacilities">Facilities / Details</label>
+          <textarea id="fFacilities" class="textarea" maxlength="1000" placeholder="Examples: Wi-Fi, AC, meals, study room, parking, AC rooms, home delivery, charging points..."></textarea>
+        </div>
+
+        <div class="field" id="imageField" style="display:none">
+          <label for="fImage"><i class="fa-regular fa-image"></i> Cafe Image URL</label>
+          <input id="fImage" class="input" type="url" maxlength="500" placeholder="https://...">
+          <div class="hint">For Cafe listings, you can provide an image URL. If left empty, your Cafe Finder can use its default cafe banner.</div>
+          <div class="image-preview" id="imagePreview">
+            <img id="previewImg" src="cafe-banner.png" alt="Cafe preview">
+          </div>
+        </div>
+
+        <div class="notice">
+          <i class="fa-solid fa-circle-info"></i>
+          Rating is not entered here. Student ratings/reviews should remain student-generated so the public rating stays trustworthy.
+        </div>
+
+        <div class="actions">
+          <a href="user-dashboard.html" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Cancel
+          </a>
+          <button type="submit" class="btn btn-primary" id="saveBtn">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Submit Listing
+          </button>
+        </div>
+
+        <div id="msg" class="status"></div>
+      </form>
+    </div>
+
+    <aside class="panel side-panel">
+      <div class="side-title">How it works</div>
+
+      <div class="side-list">
+        <div class="side-item">
+          <i class="fa-solid fa-1"></i>
+          <div><b>Choose category</b><span>Select the correct listing type for your business.</span></div>
+        </div>
+        <div class="side-item">
+          <i class="fa-solid fa-2"></i>
+          <div><b>Add accurate details</b><span>Name, location, address, phone and useful facilities.</span></div>
+        </div>
+        <div class="side-item">
+          <i class="fa-solid fa-3"></i>
+          <div><b>Submit securely</b><span>Your authenticated owner account is used for the request.</span></div>
+        </div>
+        <div class="side-item">
+          <i class="fa-solid fa-4"></i>
+          <div><b>Manage later</b><span>Use your User Dashboard to manage your listings.</span></div>
+        </div>
+      </div>
+
+      <div class="account-box">
+        <div class="label">Signed in owner</div>
+        <div class="value" id="ownerName">Loading…</div>
+        <div class="hint" id="ownerEmail"></div>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<div class="footer">
+  © 2026 StudentHubHelp · Owner Listing Center
+</div>
+
+<script>
+  const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVxJwjocFUeLB1yMA";
+
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $ = (id) => document.getElementById(id);
+
+  let user = null;
+  let profile = null;
+
+  const categoryMap = {
+    hostel: "hostels",
+    tiffin: "tiffins",
+    library: "libraries",
+    cafe: "cafes",
+    bookstore: "bookstores"
+  };
+
+  const categoryLabels = {
+    hostel: "Hostel / PG",
+    tiffin: "Tiffin / Mess",
+    library: "Library",
+    cafe: "Cafe",
+    bookstore: "Book Store"
+  };
+
+  function clean(value) {
+    return String(value ?? "").trim().replace(/\s+/g, " ");
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function setStatus(type, message) {
+    const el = $("msg");
+    el.className = "status show " + type;
+    el.innerHTML = message;
+  }
+
+  function setAuthState(type, message) {
+    const el = $("authState");
+    el.className = "status show " + type + " auth-state";
+    el.innerHTML = message;
+  }
+
+  function normalizePhone(value) {
+    return clean(value).replace(/[^\d+]/g, "");
+  }
+
+  function validPhone(value) {
+    const digits = clean(value).replace(/\D/g, "");
+    return digits.length >= 10 && digits.length <= 15;
+  }
+
+  function updateCategoryUI(category) {
+    $("fCategory").value = category;
+
+    document.querySelectorAll(".category-card").forEach(card => {
+      card.classList.toggle("selected", card.dataset.value === category);
+    });
+
+    const imageField = $("imageField");
+    if (category === "cafe") {
+      imageField.style.display = "block";
+    } else {
+      imageField.style.display = "none";
+      $("fImage").value = "";
+      $("imagePreview").classList.remove("show");
+    }
+  }
+
+  document.querySelectorAll(".category-card").forEach(card => {
+    card.addEventListener("click", () => {
+      updateCategoryUI(card.dataset.value);
+      setStatus("info", "Category selected: <strong>" + escapeHTML(categoryLabels[card.dataset.value]) + "</strong>.");
+    });
+  });
+
+  $("fImage").addEventListener("input", () => {
+    const url = clean($("fImage").value);
+    if (!url) {
+      $("imagePreview").classList.remove("show");
+      return;
+    }
+
+    $("previewImg").src = url;
+    $("imagePreview").classList.add("show");
+  });
+
+  $("previewImg").addEventListener("error", () => {
+    $("previewImg").src = "cafe-banner.png";
+  });
+
+  $("navToggle").addEventListener("click", () => {
+    $("mobileMenu").classList.toggle("open");
+  });
+
+  async function init() {
+    try {
+      const { data, error } = await db.auth.getSession();
+
+      if (error) {
+        throw error;
+      }
+
+      user = data?.session?.user || null;
+
+      if (!user) {
+        setAuthState("error",
+          '<i class="fa-solid fa-lock"></i> Please sign in first. <a href="auth.html" style="color:#ffd970;font-weight:900">Open Login</a>'
+        );
+        return;
+      }
+
+      const { data: p, error: profileError } = await db
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      profile = p;
+
+      if (!profile) {
+        setAuthState("error", '<i class="fa-solid fa-user-xmark"></i> Your profile could not be loaded.');
+        return;
+      }
+
+      const role = String(profile.role || "").toLowerCase();
+      const email = String(user.email || "").toLowerCase();
+
+      if (email === "satpalswami22742@gmail.com" || role === "admin") {
+        window.location.href = "admin-dashboard.html";
+        return;
+      }
+
+      if (role !== "owner") {
+        setAuthState("error",
+          '<i class="fa-solid fa-user-shield"></i> Only owner accounts can add listings.'
+        );
+        return;
+      }
+
+      $("fPhone").value = profile.phone || "";
+      $("fAddress").value = profile.address || "";
+      $("ownerName").textContent = profile.full_name || "Owner";
+      $("ownerEmail").textContent = user.email || "";
+
+      setAuthState("success",
+        '<i class="fa-solid fa-circle-check"></i> Signed in as owner: <strong>' +
+        escapeHTML(profile.full_name || user.email || "Owner") +
+        "</strong>"
+      );
+
+      $("contentLayout").style.display = "grid";
+    } catch (error) {
+      console.error(error);
+      setAuthState("error",
+        '<i class="fa-solid fa-triangle-exclamation"></i> Unable to verify your account. Please refresh and try again.'
+      );
+    }
+  }
+
+  $("listingForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!user || !profile) {
+      setStatus("error", '<i class="fa-solid fa-lock"></i> Please sign in as an owner first.');
+      return;
+    }
+
+    const name = clean($("fName").value);
+    const category = $("fCategory").value;
+    const area = clean($("fArea").value);
+    const address = clean($("fAddress").value);
+    const phone = normalizePhone($("fPhone").value);
+    const timing = clean($("fTiming").value);
+    const facilities = clean($("fFacilities").value);
+
+    if (!name || !area || !address || !phone) {
+      setStatus("error", '<i class="fa-solid fa-circle-exclamation"></i> Please complete all required fields.');
+      return;
+    }
+
+    if (!validPhone(phone)) {
+      setStatus("error", '<i class="fa-solid fa-phone-slash"></i> Please enter a valid phone number.');
+      return;
+    }
+
+    const table = categoryMap[category];
+
+    if (!table) {
+      setStatus("error", '<i class="fa-solid fa-triangle-exclamation"></i> Invalid listing category.');
+      return;
+    }
+
+    const payload = {
+      name,
+      category: categoryLabels[category],
+      area,
+      address,
+      phone,
+      timing: timing || null,
+      facilities: facilities || null,
+      rating: null
+    };
+
+    // The current Cafe table has an image column. Keep image handling
+    // limited to Cafe so other existing tables are not forced to have it.
+    if (category === "cafe") {
+      payload.image = clean($("fImage").value) || null;
+    }
+
+    const saveBtn = $("saveBtn");
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting…';
+
+    setStatus("info",
+      '<i class="fa-solid fa-cloud-arrow-up"></i> Sending your ' +
+      escapeHTML(categoryLabels[category]) +
+      " listing to Supabase…"
+    );
+
+    try {
+      const { error } = await db
+        .from(table)
+        .insert(payload);
+
+      if (error) {
+        console.error(error);
+        throw error;
+      }
+
+      setStatus("success",
+        '<i class="fa-solid fa-circle-check"></i> <strong>Listing submitted successfully.</strong><br>' +
+        "Your " + escapeHTML(categoryLabels[category]) +
+        " listing has been added to Supabase."
+      );
+
+      const keepPhone = profile.phone || "";
+      const keepAddress = profile.address || "";
+
+      $("listingForm").reset();
+      $("fCategory").value = category;
+      updateCategoryUI(category);
+      $("fPhone").value = keepPhone;
+      $("fAddress").value = keepAddress;
+      $("imagePreview").classList.remove("show");
+
+    } catch (error) {
+      setStatus("error",
+        '<i class="fa-solid fa-triangle-exclamation"></i> <strong>Listing could not be submitted.</strong><br>' +
+        escapeHTML(error.message || "Unknown Supabase error.")
+      );
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Submit Listing';
+    }
+  });
+
+  init();
+</script>
+
+</body>
+</html>
