@@ -192,14 +192,15 @@
     }
 
     .property-banner {
-      height: 150px;
-      background:
-        linear-gradient(
-          135deg,
-          #0b1730,
-          #203a68
-        );
+      width: 100%;
+      height: 160px;
+      background-size: cover !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      position: relative;
+      overflow: hidden;
     }
+    
 
     .empty-state {
       padding: 45px 20px;
@@ -3929,43 +3930,50 @@ async function loadLiveProperties() {
 ========================================================= */
 
 function renderLivePropertyCard(property) {
-  const icon = getPropertyIcon(property.property_table);
+  const table = property.property_table || "hostels";
   
-  // यदि ओनर ने इमेज यूआरएल दिया है तो वो दिखाएं, नहीं तो कैटेगरी का डिफ़ॉल्ट बैनर दिखाएं
-  let bannerBg = `linear-gradient(135deg, #0b1730, #203a68)`;
-  let bannerContent = `<div class="text-5xl">${icon}</div>`;
-  
-  if (property.image && property.image.trim() !== "") {
-    bannerBg = `url('${escapeHTML(property.image)}') center/cover no-repeat`;
-    bannerContent = "";
-  }
+  // हर कैटेगरी के हिसाब से डिफ़ॉल्ट बैनर इमेज या रंग
+  let defaultImages = {
+    hostels: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=600&q=80",
+    tiffins: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80",
+    libraries: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=600&q=80",
+    cafes: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80",
+    bookstores: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=600&q=80"
+  };
+
+  let bgImg = property.image && property.image.trim() !== "" 
+    ? property.image 
+    : (defaultImages[table] || defaultImages.hostels);
+
+  const icon = getPropertyIcon(table);
 
   return `
     <div class="card overflow-hidden">
-      <div class="property-banner flex items-center justify-center relative" style="background: ${bannerBg};">
-        ${bannerContent}
+      <div class="property-banner flex items-center justify-center relative" style="background: url('${escapeHTML(bgImg)}') center/cover no-repeat;">
+        <div style="position: absolute; inset: 0; background: rgba(11,23,48,0.3);"></div>
+        <div class="text-white text-4xl relative z-10 drop-shadow-lg">${icon}</div>
       </div>
 
       <div class="p-5">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h3 class="font-bold text-lg">${escapeHTML(property.name || "Property")}</h3>
+            <h3 class="font-bold text-lg text-gray-800">${escapeHTML(property.name || "Property")}</h3>
             <div class="text-sm text-gray-400 mt-1">${escapeHTML(formatCategory(property.category))}</div>
           </div>
-          <div class="font-semibold text-sm whitespace-nowrap">
-            ★ ${escapeHTML(property.rating ?? "—")}
+          <div class="font-semibold text-sm whitespace-nowrap text-amber-600">
+            ★ ${escapeHTML(property.rating ?? "4.0")}
           </div>
         </div>
 
-        <div class="mt-4 space-y-2 text-sm">
+        <div class="mt-4 space-y-2 text-sm text-gray-600">
           <div>
-            <span class="text-gray-400">Area:</span> ${escapeHTML(property.area || "—")}
+            <span class="text-gray-400 font-medium">Area:</span> ${escapeHTML(property.area || "—")}
           </div>
           <div>
-            <span class="text-gray-400">Address:</span> ${escapeHTML(property.address || "—")}
+            <span class="text-gray-400 font-medium">Address:</span> ${escapeHTML(property.address || "—")}
           </div>
           <div>
-            <span class="text-gray-400">Phone:</span> ${escapeHTML(property.phone || "—")}
+            <span class="text-gray-400 font-medium">Phone:</span> ${escapeHTML(property.phone || "—")}
           </div>
         </div>
 
