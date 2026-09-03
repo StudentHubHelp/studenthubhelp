@@ -4403,223 +4403,95 @@ $("editRequestForm")
 ========================================================= */
 
 async function loadOwnerReviews() {
-
-  const container =
-    $("ownerReviewsContainer");
-
+  const container = $("ownerReviewsContainer");
 
   container.innerHTML = `
-
     <div class="card empty-state">
       Loading reviews...
     </div>
-
   `;
 
+  try {
+    ownerLiveProperties = await getOwnerLiveProperties();
 
-  ownerLiveProperties =
-    await getOwnerLiveProperties();
-
-
-  if (!ownerLiveProperties.length) {
-
-    container.innerHTML = `
-
-      <div class="card empty-state">
-
-        <div class="text-4xl mb-4">
-          ★
+    if (!ownerLiveProperties.length) {
+      container.innerHTML = `
+        <div class="card empty-state">
+          <div class="text-4xl mb-4">★</div>
+          <h3 class="font-bold text-gray-800">No Live Properties</h3>
+          <p class="mt-2">Reviews will appear here after your properties become live.</p>
         </div>
+      `;
+      return;
+    }
 
-        <h3 class="font-bold text-gray-800">
-          No Live Properties
-        </h3>
+    const propertyIds = ownerLiveProperties.map(property => String(property.id));
 
-        <p class="mt-2">
-          Reviews will appear here after your properties
-          become live.
-        </p>
-
-      </div>
-
-    `;
-
-    return;
-
-  }
-
-
-  const propertyIds =
-    ownerLiveProperties.map(
-      property =>
-        String(property.id)
-    );
-
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
+    const { data, error } = await supabaseClient
       .from("reviews")
-      .select(`
-        id,
-        property_id,
-        rating,
-        review_text,
-        status,
-        created_at
-      `)
-      .in(
-        "property_id",
-        propertyIds
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false
-        }
+      .select("id, property_id, rating, review_text, status, created_at")
+      .in("property_id", propertyIds)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn("Reviews table query warning:", error.message);
+      container.innerHTML = `
+        <div class="card empty-state">
+          <div class="text-4xl mb-4">★</div>
+          <h3 class="font-bold text-gray-800">No Reviews Yet</h3>
+          <p class="mt-2">No student reviews have been posted for your properties yet.</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (!data?.length) {
+      container.innerHTML = `
+        <div class="card empty-state">
+          <div class="text-4xl mb-4">★</div>
+          <h3 class="font-bold text-gray-800">No Reviews Yet</h3>
+          <p class="mt-2">Student reviews on your properties will appear here.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = data.map(review => {
+      const property = ownerLiveProperties.find(
+        item => String(item.id) === String(review.property_id)
       );
 
-
-  if (error) {
-
-    console.error(error);
-
-    container.innerHTML = `
-
-      <div class="card p-6 text-red-600">
-        Unable to load owner reviews.
-      </div>
-
-    `;
-
-    return;
-
-  }
-
-
-  if (!data?.length) {
-
-    container.innerHTML = `
-
-      <div class="card empty-state">
-
-        <div class="text-4xl mb-4">
-          ★
-        </div>
-
-        <h3 class="font-bold text-gray-800">
-          No Reviews Yet
-        </h3>
-
-        <p class="mt-2">
-          Student reviews on your properties will appear here.
-        </p>
-
-      </div>
-
-    `;
-
-    return;
-
-  }
-
-
-  container.innerHTML =
-    data.map(
-      review => {
-
-        const property =
-          ownerLiveProperties.find(
-            item =>
-              String(item.id) ===
-              String(review.property_id)
-          );
-
-
-        return `
-
-          <div class="card p-5">
-
-            <div
-              class="flex flex-col
-                     sm:flex-row
-                     sm:items-center
-                     sm:justify-between
-                     gap-3">
-
-              <div>
-
-                <div class="font-bold">
-                  ${escapeHTML(
-                    property?.name ||
-                    "Property"
-                  )}
-                </div>
-
-                <div class="text-xs text-gray-400 mt-1">
-                  Property ID:
-                  ${escapeHTML(
-                    review.property_id
-                  )}
-                </div>
-
-              </div>
-
-
-              <div class="flex items-center gap-3">
-
-                <div class="font-semibold">
-                  ★ ${escapeHTML(
-                    review.rating ?? "—"
-                  )}
-                </div>
-
-                ${statusBadge(
-                  review.status
-                )}
-
-              </div>
-
+      return `
+        <div class="card p-5">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div class="font-bold">${escapeHTML(property?.name || "Property")}</div>
+              <div class="text-xs text-gray-400 mt-1">Property ID: ${escapeHTML(review.property_id)}</div>
             </div>
-
-
-            <div
-              class="mt-4 rounded-xl
-                     bg-gray-50 p-4">
-
-              <p class="text-sm text-gray-700">
-                ${escapeHTML(
-                  review.review_text || ""
-                )}
-              </p>
-
+            <div class="flex items-center gap-3">
+              <div class="font-semibold text-amber-600">★ ${escapeHTML(review.rating ?? "—")}</div>
+              ${statusBadge(review.status)}
             </div>
-
-
-            <div
-              class="text-xs text-gray-400 mt-4">
-
-              ${
-                review.created_at
-                  ? new Date(
-                      review.created_at
-                    ).toLocaleDateString()
-                  : ""
-              }
-
-            </div>
-
           </div>
+          <div class="mt-4 rounded-xl bg-gray-50 p-4">
+            <p class="text-sm text-gray-700">${escapeHTML(review.review_text || "")}</p>
+          </div>
+          <div class="text-xs text-gray-400 mt-4">
+            ${review.created_at ? new Date(review.created_at).toLocaleDateString() : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
 
-        `;
-
-      }
-    ).join("");
-
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `
+      <div class="card p-6 text-gray-500 text-center">
+        No reviews data available at the moment.
+      </div>
+    `;
+  }
 }
-
 
 /* =========================================================
    REALTIME
