@@ -1084,44 +1084,46 @@
       currentRecord = null;
     }
 
-    async function bookCurrentProperty() {
-      if (!currentRecord) {
-        alert("कोई प्रॉपर्टी चुनी नहीं गई है!");
-        return;
-      }
+async function bookCurrentProperty() {
+  if (!currentRecord) {
+    alert("कोई प्रॉपर्टी चुनी नहीं गई है!");
+    return;
+  }
 
-      const { data: { session } } = await db.auth.getSession();
-      
-      if (!session || !session.user) {
-        alert("बुकिंग करने के लिए कृपया पहले लॉग-इन करें!");
-        window.location.href = "auth.html";
-        return;
-      }
+  const { data: { session } } = await db.auth.getSession();
+  
+  if (!session || !session.user) {
+    alert("बुकिंग करने के लिए कृपया पहले लॉग-इन करें!");
+    window.location.href = "auth.html";
+    return;
+  }
 
-      const studentId = session.user.id;
-      const propertyId = String(currentRecord.id);
-      const propertyName = clean(currentRecord.name) || "Hostel / PG";
-      const category = clean(currentRecord.category) || "Hostel / PG";
+  const studentId = session.user.id;
+  const propertyId = String(currentRecord.id);
+  const propertyName = clean(currentRecord.name) || "Hostel / PG";
+  const category = clean(currentRecord.category) || "Hostel / PG";
 
-      const { error } = await db.from("student_bookings").insert([
-        {
-          student_id: studentId,
-          property_id: propertyId,
-          property_name: propertyName,
-          category: category,
-          joined_date: new Date().toISOString(),
-          status: "confirmed"
-        }
-      ]);
-
-      if (error) {
-        console.error("Booking failed:", error);
-        alert("बुकिंग असफल रही: " + (error.message || "डेटाबेस एरर"));
-      } else {
-        alert("बधाई हो! आपकी बुकिंग सफलताપૂર્વक हो गई है।");
-        window.location.href = "student-dashboard.html";
-      }
+  // Supabase में डेटा भेजते समय property_table भी जोड़ दिया गया है
+  const { error } = await db.from("student_bookings").insert([
+    {
+      student_id: studentId,
+      property_id: propertyId,
+      property_name: propertyName,
+      category: category,
+      property_table: "hostels", // यह लाइन एरर को ठीक कर देगी
+      joined_date: new Date().toISOString(),
+      status: "confirmed"
     }
+  ]);
+
+  if (error) {
+    console.error("Booking failed:", error);
+    alert("बुकिंग असफल रही: " + (error.message || "डेटाबेस एरर"));
+  } else {
+    alert("बधाई हो! आपकी बुकिंग सफलतापूर्वक हो गई है।");
+    window.location.href = "student-dashboard.html";
+  }
+}
 
     closeModal.addEventListener("click", closeDetails);
     modal.addEventListener("click", e => { if (e.target === modal) closeDetails(); });
