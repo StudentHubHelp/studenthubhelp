@@ -5,321 +5,996 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>StudentHubHelp — User Dashboard</title>
-  <meta name="description" content="StudentHubHelp student and owner dashboard. Find student services and submit property listing requests.">
+  <meta name="description" content="StudentHubHelp student and owner dashboard. Discover student services, manage your profile and track listing requests.">
+  <meta name="robots" content="noindex, nofollow, noarchive">
 
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- IMPORTANT: lowercase @supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root{
-      --navy:#08172b;
-      --navy2:#0d2340;
+      --navy:#07182d;
+      --navy-2:#0b2545;
+      --navy-3:#12375f;
       --gold:#d6a84f;
-      --gold2:#f1ce78;
-      --bg:#f5f7fb;
+      --gold-2:#f3d27f;
+      --bg:#f4f7fb;
       --card:#ffffff;
-      --text:#152238;
-      --muted:#66758a;
-      --border:#e5eaf1;
+      --text:#142238;
+      --muted:#718096;
+      --line:#e4eaf2;
       --success:#138a58;
-      --danger:#c94141;
-      --shadow:0 18px 45px rgba(8,23,43,.10);
+      --danger:#c83d48;
+      --warning:#a87512;
+      --blue:#2c69a7;
+      --shadow:0 18px 50px rgba(7,24,45,.10);
+      --shadow-soft:0 8px 28px rgba(7,24,45,.06);
       --radius:22px;
+      --sidebar:268px;
+      --topbar:74px;
     }
 
     *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
     body{
       margin:0;
-      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:var(--bg);
+      background:
+        radial-gradient(circle at 75% -10%,rgba(214,168,79,.08),transparent 25%),
+        var(--bg);
       color:var(--text);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     }
     button,input,select,textarea{font:inherit}
     button{cursor:pointer}
     a{text-decoration:none;color:inherit}
+    img{max-width:100%}
 
+    /* TOPBAR */
     .topbar{
-      min-height:72px;
-      background:linear-gradient(135deg,var(--navy),var(--navy2));
-      color:#fff;
+      height:var(--topbar);
+      position:fixed;
+      inset:0 0 auto 0;
+      z-index:100;
       display:flex;
       align-items:center;
       justify-content:space-between;
-      padding:14px 5%;
-      position:sticky;
-      top:0;
-      z-index:50;
-      box-shadow:0 8px 25px rgba(0,0,0,.16);
+      padding:0 28px;
+      color:#fff;
+      background:linear-gradient(135deg,#06162a,#0d2b4d);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      box-shadow:0 8px 30px rgba(0,0,0,.16);
     }
+
     .brand{
       display:flex;
       align-items:center;
       gap:12px;
-      font-weight:800;
-      letter-spacing:.2px;
+      min-width:0;
     }
     .brand img{
-      width:43px;height:43px;object-fit:contain;border-radius:12px;background:#fff;
+      width:45px;height:45px;
+      object-fit:contain;
+      border-radius:13px;
+      background:#fff;
+      box-shadow:0 5px 15px rgba(0,0,0,.18);
     }
-    .brand small{display:block;color:#b9c7d9;font-weight:500;font-size:11px;margin-top:2px}
-    .top-actions{display:flex;align-items:center;gap:10px}
+    .brand-title{
+      font-weight:900;
+      font-size:17px;
+      line-height:1.1;
+      white-space:nowrap;
+    }
+    .brand-sub{
+      display:block;
+      color:#c4d1e0;
+      font-size:10px;
+      font-weight:600;
+      margin-top:3px;
+      white-space:nowrap;
+    }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
     .user-chip{
-      display:flex;align-items:center;gap:9px;
-      padding:8px 12px;border:1px solid rgba(255,255,255,.15);
-      border-radius:999px;background:rgba(255,255,255,.06);
-      font-size:13px;
+      display:flex;
+      align-items:center;
+      gap:9px;
+      padding:7px 11px;
+      border:1px solid rgba(255,255,255,.13);
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      font-size:12px;
+      max-width:240px;
     }
     .avatar{
-      width:30px;height:30px;border-radius:50%;
-      display:grid;place-items:center;background:var(--gold);color:var(--navy);
+      width:32px;height:32px;
+      flex:0 0 32px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      background:linear-gradient(135deg,var(--gold-2),var(--gold));
+      color:var(--navy);
       font-weight:900;
     }
+    .user-chip span{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
     .logout{
-      border:1px solid rgba(255,255,255,.2);
-      background:transparent;color:#fff;border-radius:12px;padding:10px 14px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      border-radius:12px;
+      padding:10px 14px;
+      font-weight:700;
+      transition:.2s;
+    }
+    .logout:hover{background:rgba(255,255,255,.10)}
+    .menu-toggle{
+      display:none;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      width:42px;height:42px;
+      border-radius:12px;
     }
 
-    .layout{max-width:1400px;margin:auto;display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 72px)}
+    /* LEFT SIDEBAR */
     .sidebar{
-      background:#fff;border-right:1px solid var(--border);padding:24px 16px;
+      position:fixed;
+      left:0;
+      top:var(--topbar);
+      bottom:0;
+      width:var(--sidebar);
+      z-index:90;
+      overflow-y:auto;
+      padding:22px 15px;
+      background:rgba(255,255,255,.96);
+      backdrop-filter:blur(16px);
+      border-right:1px solid var(--line);
     }
-    .nav-title{font-size:11px;text-transform:uppercase;color:#8b98a9;font-weight:800;letter-spacing:1px;padding:10px 12px}
+    .nav-title{
+      padding:8px 12px 10px;
+      color:#91a0b2;
+      font-size:10px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:1.2px;
+    }
+    .nav-group{margin-bottom:20px}
     .nav-btn{
-      width:100%;border:0;background:transparent;text-align:left;
-      padding:13px 14px;border-radius:13px;color:#536276;font-weight:700;
-      margin:3px 0;transition:.2s;
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:11px;
+      border:0;
+      background:transparent;
+      color:#59687b;
+      text-align:left;
+      padding:12px 13px;
+      margin:3px 0;
+      border-radius:13px;
+      font-size:13px;
+      font-weight:750;
+      transition:.2s;
     }
-    .nav-btn:hover,.nav-btn.active{background:#eef3f9;color:var(--navy)}
-    .nav-btn.active{box-shadow:inset 3px 0 var(--gold)}
+    .nav-btn i{
+      width:19px;
+      text-align:center;
+      color:#8390a0;
+    }
+    .nav-btn:hover{
+      background:#f0f4f8;
+      color:var(--navy);
+    }
+    .nav-btn.active{
+      color:var(--navy);
+      background:linear-gradient(90deg,#eef3f8,#f7f9fb);
+      box-shadow:inset 3px 0 var(--gold);
+    }
+    .nav-btn.active i{color:var(--gold)}
+    .nav-divider{
+      height:1px;
+      background:var(--line);
+      margin:15px 8px;
+    }
     .sidebar-note{
-      margin:25px 8px 0;padding:16px;border-radius:18px;
-      background:linear-gradient(145deg,#0b1d35,#15355b);color:#fff;
-    }
-    .sidebar-note strong{display:block;margin-bottom:6px}
-    .sidebar-note p{font-size:12px;color:#c4d0df;line-height:1.55;margin:0}
-
-    main{padding:30px;min-width:0}
-    .page{display:none}
-    .page.active{display:block}
-
-    .hero{
+      margin:22px 5px 0;
+      padding:17px;
+      border-radius:18px;
+      color:#fff;
       background:
-        radial-gradient(circle at 90% 20%,rgba(214,168,79,.24),transparent 25%),
-        linear-gradient(135deg,#091a31,#12375f);
-      color:#fff;border-radius:28px;padding:32px;
-      box-shadow:var(--shadow);margin-bottom:24px;
+        radial-gradient(circle at 90% 10%,rgba(214,168,79,.20),transparent 35%),
+        linear-gradient(145deg,#091b33,#12385f);
+      box-shadow:var(--shadow-soft);
     }
-    .hero h1{margin:0 0 8px;font-size:clamp(26px,4vw,40px)}
-    .hero p{margin:0;color:#c9d6e6;max-width:760px;line-height:1.65}
+    .sidebar-note .note-icon{
+      width:35px;height:35px;
+      display:grid;
+      place-items:center;
+      border-radius:11px;
+      background:rgba(214,168,79,.16);
+      color:var(--gold-2);
+      margin-bottom:10px;
+    }
+    .sidebar-note strong{font-size:13px}
+    .sidebar-note p{
+      color:#c7d3e1;
+      font-size:11px;
+      line-height:1.55;
+      margin:6px 0 0;
+    }
+
+    /* MAIN */
+    .main{
+      margin-left:var(--sidebar);
+      padding-top:var(--topbar);
+      min-height:100vh;
+    }
+    .content{
+      width:min(1440px,100%);
+      margin:auto;
+      padding:30px;
+    }
+
+    .page{display:none;animation:pageIn .25s ease}
+    .page.active{display:block}
+    @keyframes pageIn{
+      from{opacity:0;transform:translateY(5px)}
+      to{opacity:1;transform:none}
+    }
+
+    /* HERO */
+    .hero{
+      position:relative;
+      overflow:hidden;
+      padding:34px;
+      border-radius:28px;
+      color:#fff;
+      background:
+        radial-gradient(circle at 92% 18%,rgba(214,168,79,.28),transparent 24%),
+        radial-gradient(circle at 75% 100%,rgba(42,106,166,.25),transparent 28%),
+        linear-gradient(135deg,#07172b,#123a63);
+      box-shadow:var(--shadow);
+      margin-bottom:22px;
+    }
+    .hero:after{
+      content:"";
+      position:absolute;
+      width:190px;height:190px;
+      right:-80px;bottom:-100px;
+      border:1px solid rgba(255,255,255,.09);
+      border-radius:50%;
+    }
     .hero-badge{
-      display:inline-flex;padding:7px 11px;border-radius:999px;
-      background:rgba(214,168,79,.16);border:1px solid rgba(214,168,79,.35);
-      color:var(--gold2);font-size:12px;font-weight:800;margin-bottom:14px;
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      padding:7px 11px;
+      border-radius:999px;
+      color:var(--gold-2);
+      background:rgba(214,168,79,.12);
+      border:1px solid rgba(214,168,79,.28);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.7px;
+      text-transform:uppercase;
+      margin-bottom:13px;
+    }
+    .hero h1{
+      margin:0 0 8px;
+      font-family:"Playfair Display",Georgia,serif;
+      font-size:clamp(28px,4vw,43px);
+      line-height:1.1;
+    }
+    .hero p{
+      margin:0;
+      max-width:760px;
+      color:#cbd8e7;
+      line-height:1.65;
+      font-size:13px;
+    }
+    .hero-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:20px;
     }
 
-    .section-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:0 0 15px}
-    .section-head h2{margin:0;font-size:21px}
-    .section-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    /* COMMON */
+    .section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      margin:0 0 15px;
+    }
+    .section-head h2{
+      margin:0;
+      font-size:21px;
+      font-weight:900;
+      color:var(--navy);
+    }
+    .section-head p{
+      margin:5px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+    .section-title-kicker{
+      color:var(--gold);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:1px;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+
     .btn{
-      border:0;border-radius:13px;padding:11px 16px;font-weight:800;
-      background:var(--navy);color:#fff;
+      border:0;
+      border-radius:12px;
+      padding:11px 15px;
+      font-size:12px;
+      font-weight:850;
+      color:#fff;
+      background:var(--navy);
+      transition:.2s;
     }
-    .btn.gold{background:linear-gradient(135deg,var(--gold),#b98627);color:#fff}
-    .btn.light{background:#edf2f7;color:var(--navy)}
-    .btn.danger{background:#fff0f0;color:var(--danger)}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.gold{
+      color:#1d2630;
+      background:linear-gradient(135deg,var(--gold-2),var(--gold));
+    }
+    .btn.light{
+      color:var(--navy);
+      background:#edf2f7;
+    }
+    .btn.danger{
+      color:var(--danger);
+      background:#fff0f1;
+    }
+    .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
 
-    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:28px}
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:14px;
+      margin-bottom:28px;
+    }
     .stat{
-      background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px;
-      box-shadow:0 7px 24px rgba(8,23,43,.05)
+      position:relative;
+      overflow:hidden;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:19px;
+      padding:18px;
+      box-shadow:var(--shadow-soft);
     }
-    .stat-label{font-size:12px;color:var(--muted);font-weight:700}
-    .stat-value{font-size:29px;font-weight:900;margin-top:7px;color:var(--navy)}
+    .stat:after{
+      content:"";
+      position:absolute;
+      right:-28px;bottom:-28px;
+      width:75px;height:75px;
+      border-radius:50%;
+      background:rgba(214,168,79,.08);
+    }
+    .stat-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .stat-icon{
+      width:33px;height:33px;
+      display:grid;
+      place-items:center;
+      border-radius:10px;
+      background:#f2f5f8;
+      color:var(--navy);
+      font-size:13px;
+    }
+    .stat-label{
+      color:var(--muted);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.5px;
+      margin-top:13px;
+    }
+    .stat-value{
+      color:var(--navy);
+      font-size:27px;
+      font-weight:900;
+      margin-top:4px;
+    }
 
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-    .service{
-      background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px;
-      transition:.2s;box-shadow:0 7px 24px rgba(8,23,43,.04)
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:15px;
     }
-    .service:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
-    .service-icon{font-size:28px}
-    .service h3{margin:12px 0 6px}
-    .service p{color:var(--muted);font-size:13px;line-height:1.5}
-    .service button{margin-top:8px}
+    .service{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:19px;
+      box-shadow:var(--shadow-soft);
+      transition:.22s;
+    }
+    .service:hover{
+      transform:translateY(-3px);
+      box-shadow:var(--shadow);
+    }
+    .service-icon{
+      width:48px;height:48px;
+      display:grid;
+      place-items:center;
+      border-radius:15px;
+      background:linear-gradient(135deg,#f7f2e7,#fff);
+      border:1px solid #efe5cc;
+      font-size:24px;
+    }
+    .service h3{
+      margin:13px 0 6px;
+      font-size:15px;
+      color:var(--navy);
+    }
+    .service p{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55;
+      min-height:38px;
+      margin:0;
+    }
+    .service .btn{margin-top:13px}
 
     .card{
-      background:#fff;border:1px solid var(--border);border-radius:22px;
-      padding:22px;box-shadow:0 7px 24px rgba(8,23,43,.04);margin-bottom:18px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:21px;
+      padding:21px;
+      box-shadow:var(--shadow-soft);
+      margin-bottom:18px;
     }
-    .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
-    .field{margin-bottom:15px}
-    label{display:block;font-size:12px;font-weight:800;color:#516074;margin-bottom:7px}
+
+    /* PROFILE */
+    .profile-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:15px;
+    }
+    .field{margin-bottom:3px}
+    label{
+      display:block;
+      margin-bottom:7px;
+      color:#536276;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.4px;
+    }
     input,select,textarea{
-      width:100%;border:1px solid #dce3ec;background:#fbfcfe;
-      padding:12px 13px;border-radius:12px;outline:none;color:var(--text);
+      width:100%;
+      border:1px solid #dce4ed;
+      background:#fbfcfe;
+      color:var(--text);
+      border-radius:12px;
+      outline:none;
+      padding:12px 13px;
+      font-size:13px;
+      transition:.2s;
     }
-    input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(214,168,79,.12)}
-    textarea{min-height:105px;resize:vertical}
+    input:focus,select:focus,textarea:focus{
+      border-color:var(--gold);
+      box-shadow:0 0 0 3px rgba(214,168,79,.12);
+      background:#fff;
+    }
+    input:disabled{
+      background:#f1f4f7;
+      color:#738196;
+      cursor:not-allowed;
+    }
+    textarea{
+      min-height:110px;
+      resize:vertical;
+    }
     .full{grid-column:1/-1}
 
-    .listing-form{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px}
+    /* OWNER */
+    .owner-panel{
+      display:grid;
+      grid-template-columns:1.3fr .7fr;
+      gap:15px;
+      margin-bottom:18px;
+    }
+    .owner-card{
+      border-radius:21px;
+      padding:21px;
+      color:#fff;
+      background:linear-gradient(135deg,#0a1d35,#12385d);
+      box-shadow:var(--shadow-soft);
+    }
+    .owner-card h3{margin:0 0 7px;font-size:18px}
+    .owner-card p{margin:0;color:#c6d3e2;font-size:12px;line-height:1.6}
+    .owner-mini{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-top:18px;
+    }
+    .owner-mini-avatar{
+      width:45px;height:45px;
+      display:grid;
+      place-items:center;
+      border-radius:14px;
+      background:rgba(214,168,79,.15);
+      color:var(--gold-2);
+      font-weight:900;
+    }
+    .owner-mini strong{display:block;font-size:13px}
+    .owner-mini span{font-size:11px;color:#c6d3e2}
+    .owner-tip{
+      background:#fff9ea;
+      border:1px solid #f0dfb0;
+      color:#73591c;
+      border-radius:21px;
+      padding:21px;
+    }
+    .owner-tip strong{font-size:13px}
+    .owner-tip p{font-size:11px;line-height:1.6;margin:8px 0 0}
+
     .form-note{
-      padding:13px 15px;background:#fff9e9;border:1px solid #f2dfad;
-      border-radius:13px;color:#765b1d;font-size:13px;line-height:1.55;margin-bottom:18px
+      padding:14px 15px;
+      margin-bottom:18px;
+      color:#72591e;
+      background:#fff9e9;
+      border:1px solid #f1dfae;
+      border-radius:14px;
+      font-size:12px;
+      line-height:1.6;
     }
 
-    .request-list{display:grid;gap:13px}
+    .listing-form{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:15px 18px;
+    }
+
+    /* REQUESTS / PROPERTIES */
+    .request-list{display:grid;gap:12px}
     .request{
-      border:1px solid var(--border);border-radius:17px;padding:17px;
-      display:flex;justify-content:space-between;gap:15px;align-items:center;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:17px;
+      background:#fff;
+      transition:.2s;
     }
-    .request h3{margin:0 0 5px;font-size:16px}
-    .request p{margin:3px 0;color:var(--muted);font-size:12px}
-    .status{
-      white-space:nowrap;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:900;
-      text-transform:uppercase;letter-spacing:.5px
+    .request:hover{
+      border-color:#d7dee8;
+      box-shadow:0 7px 22px rgba(7,24,45,.05);
     }
-    .status.pending{background:#fff5d8;color:#8b6612}
-    .status.approved{background:#e6f8ef;color:#087345}
-    .status.rejected{background:#ffeded;color:#ad3030}
+    .request-main{min-width:0}
+    .request-title{
+      display:flex;
+      align-items:center;
+      gap:9px;
+      flex-wrap:wrap;
+    }
+    .request h3{
+      margin:0 0 5px;
+      color:var(--navy);
+      font-size:15px;
+    }
+    .request p{
+      margin:3px 0;
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.45;
+    }
+    .request-actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
 
-    .empty{text-align:center;padding:35px;color:var(--muted)}
-    .message{display:none;padding:12px 14px;border-radius:12px;font-size:13px;margin-bottom:15px}
+    .status{
+      display:inline-flex;
+      align-items:center;
+      white-space:nowrap;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:9px;
+      font-weight:900;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+    }
+    .status.pending{background:#fff5d9;color:#8a6510}
+    .status.approved{background:#e7f8ef;color:#087345}
+    .status.rejected{background:#ffeded;color:#ad3030}
+    .status.default{background:#edf2f7;color:#526176}
+
+    .property-type{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      padding:5px 9px;
+      border-radius:999px;
+      background:#f1f4f7;
+      color:#526176;
+      font-size:9px;
+      font-weight:850;
+    }
+
+    /* REVIEW */
+    .review-box{
+      background:#f8fafc;
+      border:1px solid #edf1f5;
+      border-radius:16px;
+      padding:15px;
+      margin-top:10px;
+    }
+    .stars{
+      color:#d19c31;
+      letter-spacing:2px;
+      font-size:13px;
+    }
+
+    /* MESSAGE */
+    .message{
+      display:none;
+      padding:12px 14px;
+      border-radius:12px;
+      font-size:12px;
+      line-height:1.5;
+      margin-bottom:15px;
+    }
     .message.show{display:block}
     .message.success{background:#e9f8f0;color:#087345}
     .message.error{background:#ffeded;color:#a82d2d}
     .message.info{background:#edf4ff;color:#24588f}
 
-    .loading{padding:30px;text-align:center;color:var(--muted)}
+    .loading{
+      padding:30px;
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+    }
     .spinner{
-      width:25px;height:25px;border:3px solid #e6ebf1;border-top-color:var(--gold);
-      border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px
+      width:25px;height:25px;
+      margin:0 auto 10px;
+      border:3px solid #e6ebf1;
+      border-top-color:var(--gold);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
     }
     @keyframes spin{to{transform:rotate(360deg)}}
+    .empty{
+      text-align:center;
+      padding:38px 20px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .empty i{
+      display:block;
+      font-size:28px;
+      color:#b6c0cc;
+      margin-bottom:10px;
+    }
 
-    .review-box{background:#f8fafc;border-radius:15px;padding:15px;margin-top:12px}
-    .stars{letter-spacing:2px;color:#d19c31}
-
+    /* MODAL */
     .modal-backdrop{
-      display:none;position:fixed;inset:0;background:rgba(2,12,25,.62);
-      z-index:100;padding:20px;align-items:center;justify-content:center
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:300;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(2,12,25,.67);
+      backdrop-filter:blur(5px);
     }
     .modal-backdrop.show{display:flex}
     .modal{
-      width:min(680px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:23px;padding:25px;
-      box-shadow:0 25px 80px rgba(0,0,0,.28)
+      width:min(700px,100%);
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:24px;
+      padding:24px;
+      box-shadow:0 30px 100px rgba(0,0,0,.30);
     }
-    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .close{border:0;background:#edf1f5;width:38px;height:38px;border-radius:50%;font-size:20px}
-    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .modal-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding-bottom:12px;
+      border-bottom:1px solid var(--line);
+    }
+    .modal-head h2{
+      margin:0;
+      color:var(--navy);
+      font-size:20px;
+    }
+    .close{
+      width:38px;height:38px;
+      border:0;
+      border-radius:50%;
+      background:#edf1f5;
+      color:#4e5b6c;
+      font-size:20px;
+    }
+    .modal-body{
+      padding-top:15px;
+      color:#566477;
+      font-size:12px;
+      line-height:1.65;
+    }
+    .detail-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:11px;
+    }
+    .detail{
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:13px;
+      background:#fafbfd;
+    }
+    .detail.full{grid-column:1/-1}
+    .detail span{
+      display:block;
+      color:#8a96a5;
+      font-size:9px;
+      font-weight:900;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    .detail strong{
+      color:var(--navy);
+      font-size:12px;
+      font-weight:750;
+      word-break:break-word;
+    }
 
-    @media(max-width:1050px){
+    /* MOBILE SIDEBAR */
+    .mobile-overlay{
+      display:none;
+      position:fixed;
+      inset:var(--topbar) 0 0 0;
+      z-index:80;
+      background:rgba(2,12,25,.45);
+    }
+
+    @media(max-width:1150px){
+      :root{--sidebar:235px}
       .stats{grid-template-columns:repeat(3,1fr)}
-      .layout{grid-template-columns:210px 1fr}
-      .stats{grid-template-columns:repeat(2,1fr)}
       .grid{grid-template-columns:repeat(2,1fr)}
+      .owner-panel{grid-template-columns:1fr}
     }
-    @media(max-width:760px){
-      .stats{grid-template-columns:1fr 1fr}
-      .topbar{padding:11px 4%}
-      .user-chip span{display:none}
-      .layout{display:block}
+
+    @media(max-width:820px){
+      :root{--sidebar:250px}
+      .topbar{padding:0 16px}
+      .menu-toggle{display:block}
       .sidebar{
-        border-right:0;border-bottom:1px solid var(--border);
-        padding:8px;display:flex;overflow-x:auto;gap:5px;position:sticky;top:72px;z-index:40
+        transform:translateX(-105%);
+        transition:transform .25s ease;
+        box-shadow:15px 0 35px rgba(0,0,0,.12);
       }
-      .nav-title,.sidebar-note{display:none}
-      .nav-btn{width:auto;white-space:nowrap;margin:0}
-      main{padding:18px 14px}
-      .hero{padding:24px;border-radius:22px}
-      .stats,.grid{grid-template-columns:1fr 1fr}
-      .profile-grid,.listing-form{grid-template-columns:1fr}
-      .full{grid-column:auto}
+      .sidebar.open{transform:translateX(0)}
+      .mobile-overlay.show{display:block}
+      .main{margin-left:0}
+      .content{padding:20px 15px}
+      .user-chip{max-width:150px}
     }
-    @media(max-width:480px){
-      .stats,.grid{grid-template-columns:1fr}
-      .request{align-items:flex-start;flex-direction:column}
+
+    @media(max-width:620px){
+      .brand-sub{display:none}
+      .brand-title{font-size:15px}
+      .brand img{width:41px;height:41px}
+      .user-chip span{display:none}
+      .stats{grid-template-columns:1fr 1fr}
+      .grid{grid-template-columns:1fr}
+      .profile-grid,.listing-form,.detail-grid{grid-template-columns:1fr}
+      .full,.detail.full{grid-column:auto}
+      .hero{padding:25px 21px;border-radius:22px}
+      .hero h1{font-size:29px}
       .section-head{align-items:flex-start;flex-direction:column}
+      .request{align-items:flex-start;flex-direction:column}
+      .request-actions{justify-content:flex-start}
+      .modal{padding:19px;border-radius:20px}
+    }
+
+    @media(max-width:420px){
+      .stats{grid-template-columns:1fr}
+      .top-actions{gap:6px}
+      .logout{padding:9px 10px;font-size:11px}
+      .content{padding:17px 12px}
     }
   </style>
 </head>
 
 <body>
+
 <header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Open dashboard menu">
+    <i class="fa-solid fa-bars"></i>
+  </button>
+
   <a class="brand" href="index.html">
     <img src="logo.png" alt="StudentHubHelp">
-    <div>StudentHubHelp<small>India Student Discovery Platform</small></div>
+    <div>
+      <div class="brand-title">StudentHubHelp</div>
+      <small class="brand-sub">India Student Discovery Platform</small>
+    </div>
   </a>
+
   <div class="top-actions">
     <div class="user-chip">
       <div class="avatar" id="topAvatar">U</div>
       <span id="topUserName">Loading...</span>
     </div>
-    <button class="logout" id="logoutBtn">Logout</button>
+    <button class="logout" id="logoutBtn">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      <span>Logout</span>
+    </button>
   </div>
 </header>
 
-<div class="layout">
-  <aside class="sidebar">
-    <div class="nav-title">Dashboard</div>
-    <button class="nav-btn active" data-page="home">🏠 Overview</button>
-    <button class="nav-btn" data-page="profile">👤 My Profile</button>
-    <button class="nav-btn" data-page="find">🔎 Find Services</button>
-    <button class="nav-btn owner-only" data-page="listing">➕ Add Listing</button>
-    <button class="nav-btn owner-only" data-page="requests">📋 My Requests</button>
-    <button class="nav-btn owner-only" data-page="properties">🏢 Live Properties</button>
-    <button class="nav-btn" data-page="reviews">⭐ My Reviews</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
 
-    <div class="sidebar-note">
-      <strong>StudentHubHelp</strong>
-      <p>Your data and listing requests are handled through Supabase.</p>
-    </div>
-  </aside>
+<aside class="sidebar" id="sidebar">
+  <div class="nav-title">Dashboard</div>
 
-  <main>
+  <div class="nav-group">
+    <button class="nav-btn active" data-page="home">
+      <i class="fa-solid fa-house"></i><span>Overview</span>
+    </button>
+    <button class="nav-btn" data-page="profile">
+      <i class="fa-solid fa-user"></i><span>My Profile</span>
+    </button>
+    <button class="nav-btn" data-page="find">
+      <i class="fa-solid fa-magnifying-glass"></i><span>Find Services</span>
+    </button>
+    <button class="nav-btn" data-page="reviews">
+      <i class="fa-solid fa-star"></i><span>My Reviews</span>
+    </button>
+  </div>
+
+  <div class="nav-divider"></div>
+  <div class="nav-title owner-only">Owner Centre</div>
+
+  <div class="nav-group owner-only">
+    <button class="nav-btn" data-page="listing">
+      <i class="fa-solid fa-plus"></i><span>Add Listing</span>
+    </button>
+    <button class="nav-btn" data-page="requests">
+      <i class="fa-solid fa-clipboard-list"></i><span>My Requests</span>
+    </button>
+    <button class="nav-btn" data-page="properties">
+      <i class="fa-solid fa-building"></i><span>Live Properties</span>
+    </button>
+  </div>
+
+  <div class="sidebar-note">
+    <div class="note-icon"><i class="fa-solid fa-shield-halved"></i></div>
+    <strong>Secure Dashboard</strong>
+    <p>Your account, listing requests and live property information are connected with Supabase.</p>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="content">
+
     <!-- OVERVIEW -->
     <section class="page active" id="page-home">
       <div class="hero">
-        <div class="hero-badge">SECURE USER DASHBOARD</div>
+        <div class="hero-badge">
+          <i class="fa-solid fa-circle-check"></i>
+          Secure User Dashboard
+        </div>
         <h1>Welcome, <span id="heroName">User</span> 👋</h1>
-        <p id="heroText">Manage your profile, discover student services across India and keep track of your activity.</p>
+        <p id="heroText">
+          Discover student services across India, manage your profile and keep track of your activity.
+        </p>
+        <div class="hero-actions">
+          <button class="btn gold" onclick="openPage('find')">
+            <i class="fa-solid fa-compass"></i> Explore Services
+          </button>
+          <button class="btn light owner-only" onclick="openPage('listing')">
+            <i class="fa-solid fa-plus"></i> Add Listing
+          </button>
+        </div>
       </div>
 
       <div class="stats">
-        <div class="stat"><div class="stat-label">ACCOUNT ROLE</div><div class="stat-value" id="statRole">—</div></div>
-        <div class="stat"><div class="stat-label">MY REQUESTS</div><div class="stat-value" id="statRequests">0</div></div>
-        <div class="stat"><div class="stat-label">APPROVED</div><div class="stat-value" id="statApproved">0</div></div>
-<div class="stat"><div class="stat-label">LIVE PROPERTIES</div><div class="stat-value" id="statLive">0</div></div>
-        <div class="stat"><div class="stat-label">REVIEWS</div><div class="stat-value" id="statReviews">0</div></div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-icon"><i class="fa-solid fa-user-shield"></i></div></div>
+          <div class="stat-label">ACCOUNT ROLE</div>
+          <div class="stat-value" id="statRole">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></div></div>
+          <div class="stat-label">MY REQUESTS</div>
+          <div class="stat-value" id="statRequests">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div></div>
+          <div class="stat-label">APPROVED</div>
+          <div class="stat-value" id="statApproved">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-icon"><i class="fa-solid fa-building"></i></div></div>
+          <div class="stat-label">LIVE PROPERTIES</div>
+          <div class="stat-value" id="statLive">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-top"><div class="stat-icon"><i class="fa-solid fa-star"></i></div></div>
+          <div class="stat-label">REVIEWS</div>
+          <div class="stat-value" id="statReviews">0</div>
+        </div>
       </div>
 
       <div class="section-head">
-        <div><h2>Quick Access</h2><p>Choose what you want to do today.</p></div>
+        <div>
+          <div class="section-title-kicker">StudentHubHelp</div>
+          <h2>Quick Access</h2>
+          <p>Find the student service you need across India.</p>
+        </div>
       </div>
 
       <div class="grid">
         <div class="service">
-          <div class="service-icon">🏠</div><h3>Hostel / PG</h3>
-          <p>Find student accommodation by city, district or area.</p>
+          <div class="service-icon">🏠</div>
+          <h3>Hostel / PG</h3>
+          <p>Find accommodation by city, district or local area.</p>
           <button class="btn light" onclick="goToFinder('pg-finder.html')">Explore</button>
         </div>
+
         <div class="service">
-          <div class="service-icon">🍱</div><h3>Tiffin / Mess</h3>
-          <p>Discover food services suitable for students.</p>
+          <div class="service-icon">🍱</div>
+          <h3>Tiffin / Mess</h3>
+          <p>Discover food and mess services suitable for students.</p>
           <button class="btn light" onclick="goToFinder('tiffin-finder.html')">Explore</button>
         </div>
+
         <div class="service">
-          <div class="service-icon">📚</div><h3>Library</h3>
+          <div class="service-icon">📚</div>
+          <h3>Library</h3>
           <p>Find libraries and study spaces near your location.</p>
           <button class="btn light" onclick="goToFinder('library-finder.html')">Explore</button>
         </div>
+
         <div class="service">
-          <div class="service-icon">☕</div><h3>Cafe</h3>
+          <div class="service-icon">☕</div>
+          <h3>Cafe</h3>
           <p>Find cafes and student-friendly places to study or relax.</p>
           <button class="btn light" onclick="goToFinder('cafe-finder.html')">Explore</button>
+        </div>
+
+        <div class="service">
+          <div class="service-icon">📖</div>
+          <h3>Book Store</h3>
+          <p>Discover book stores for textbooks, stationery and study needs.</p>
+          <button class="btn light" onclick="goToFinder('bookstore-finder.html')">Explore</button>
         </div>
       </div>
     </section>
@@ -327,45 +1002,135 @@
     <!-- PROFILE -->
     <section class="page" id="page-profile">
       <div class="section-head">
-        <div><h2>My Profile</h2><p>Your profile information from Supabase.</p></div>
+        <div>
+          <div class="section-title-kicker">Account</div>
+          <h2>My Profile</h2>
+          <p>Keep your registered information updated.</p>
+        </div>
       </div>
+
       <div id="profileMessage" class="message"></div>
+
       <div class="card">
         <div class="profile-grid">
-          <div class="field"><label>FULL NAME</label><input id="profileName"></div>
-          <div class="field"><label>PHONE</label><input id="profilePhone" type="tel"></div>
-          <div class="field"><label>EMAIL</label><input id="profileEmail" type="email" disabled></div>
-          <div class="field"><label>ROLE</label><input id="profileRole" disabled></div>
-          <div class="field full"><label>ADDRESS</label><textarea id="profileAddress"></textarea></div>
+          <div class="field">
+            <label>FULL NAME</label>
+            <input id="profileName" autocomplete="name">
+          </div>
+
+          <div class="field">
+            <label>PHONE</label>
+            <input id="profilePhone" type="tel" autocomplete="tel">
+          </div>
+
+          <div class="field">
+            <label>EMAIL</label>
+            <input id="profileEmail" type="email" disabled>
+          </div>
+
+          <div class="field">
+            <label>ROLE</label>
+            <input id="profileRole" disabled>
+          </div>
+
+          <div class="field full">
+            <label>ADDRESS</label>
+            <textarea id="profileAddress" placeholder="Your address"></textarea>
+          </div>
         </div>
-        <button class="btn gold" id="saveProfileBtn">Save Profile</button>
+
+        <button class="btn gold" id="saveProfileBtn">
+          <i class="fa-solid fa-floppy-disk"></i> Save Profile
+        </button>
       </div>
     </section>
 
-    <!-- FIND -->
+    <!-- FIND SERVICES -->
     <section class="page" id="page-find">
       <div class="section-head">
-        <div><h2>Find Student Services</h2><p>Live finder pages connected to the platform.</p></div>
+        <div>
+          <div class="section-title-kicker">Discovery</div>
+          <h2>Find Student Services</h2>
+          <p>Live finder pages connected to StudentHubHelp.</p>
+        </div>
       </div>
+
       <div class="grid">
-        <div class="service"><div class="service-icon">🏠</div><h3>Hostel / PG</h3><p>Accommodation listings.</p><button class="btn" onclick="goToFinder('pg-finder.html')">Open Finder</button></div>
-        <div class="service"><div class="service-icon">🍱</div><h3>Tiffin / Mess</h3><p>Food and mess listings.</p><button class="btn" onclick="goToFinder('tiffin-finder.html')">Open Finder</button></div>
-        <div class="service"><div class="service-icon">📚</div><h3>Library</h3><p>Study and library listings.</p><button class="btn" onclick="goToFinder('library-finder.html')">Open Finder</button></div>
-        <div class="service"><div class="service-icon">☕</div><h3>Cafe</h3><p>Cafe and study-friendly listings.</p><button class="btn" onclick="goToFinder('cafe-finder.html')">Open Finder</button></div>
+        <div class="service">
+          <div class="service-icon">🏠</div>
+          <h3>Hostel / PG</h3>
+          <p>Accommodation listings across India.</p>
+          <button class="btn" onclick="goToFinder('pg-finder.html')">Open Finder</button>
+        </div>
+        <div class="service">
+          <div class="service-icon">🍱</div>
+          <h3>Tiffin / Mess</h3>
+          <p>Food and mess listings for students.</p>
+          <button class="btn" onclick="goToFinder('tiffin-finder.html')">Open Finder</button>
+        </div>
+        <div class="service">
+          <div class="service-icon">📚</div>
+          <h3>Library</h3>
+          <p>Libraries and study spaces.</p>
+          <button class="btn" onclick="goToFinder('library-finder.html')">Open Finder</button>
+        </div>
+        <div class="service">
+          <div class="service-icon">☕</div>
+          <h3>Cafe</h3>
+          <p>Cafes and student-friendly places.</p>
+          <button class="btn" onclick="goToFinder('cafe-finder.html')">Open Finder</button>
+        </div>
+        <div class="service">
+          <div class="service-icon">📖</div>
+          <h3>Book Store</h3>
+          <p>Books, stationery and study supplies.</p>
+          <button class="btn" onclick="goToFinder('bookstore-finder.html')">Open Finder</button>
+        </div>
       </div>
     </section>
 
     <!-- OWNER LISTING -->
     <section class="page" id="page-listing">
       <div class="section-head">
-        <div><h2>Submit a New Listing</h2><p>Owner listing request — final publishing is handled by Director Admin.</p></div>
+        <div>
+          <div class="section-title-kicker">Owner Centre</div>
+          <h2>Submit a New Listing</h2>
+          <p>Your request is reviewed by Director Admin before going live.</p>
+        </div>
       </div>
 
       <div id="listingMessage" class="message"></div>
 
+      <div class="owner-panel">
+        <div class="owner-card">
+          <h3>Grow your presence on StudentHubHelp</h3>
+          <p>
+            Submit accurate property or business details. Your request remains pending
+            until Director Admin verifies and publishes it.
+          </p>
+          <div class="owner-mini">
+            <div class="owner-mini-avatar"><i class="fa-solid fa-store"></i></div>
+            <div>
+              <strong>Owner Listing Centre</strong>
+              <span>Live publishing after verification</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="owner-tip">
+          <strong><i class="fa-solid fa-lightbulb"></i> Listing tip</strong>
+          <p>
+            Use the correct area, complete address and active phone number.
+            This helps students find and contact your property.
+          </p>
+        </div>
+      </div>
+
       <div class="card">
         <div class="form-note">
-          <strong>How it works:</strong> Submit your property details here. Your request will be saved in Supabase as <strong>Pending</strong>. The Admin verifies the information and publishes the property on StudentHubHelp after approval.
+          <strong>How it works:</strong>
+          Submit your details → Admin verifies them → Approved listing is published →
+          the property appears in your <strong>Live Properties</strong> section.
         </div>
 
         <form id="listingForm" class="listing-form">
@@ -382,6 +1147,7 @@
               <option value="tiffin">Tiffin / Mess</option>
               <option value="library">Library</option>
               <option value="cafe">Cafe</option>
+              <option value="bookstore">Book Store</option>
             </select>
           </div>
 
@@ -411,12 +1177,14 @@
           </div>
 
           <div class="field full">
-            <label>FACILITIES</label>
-            <textarea id="listingFacilities" placeholder="Wi-Fi, AC, parking, meals, study table, etc."></textarea>
+            <label>FACILITIES / DETAILS</label>
+            <textarea id="listingFacilities" placeholder="Wi-Fi, AC, parking, meals, study table, stationery, etc."></textarea>
           </div>
 
           <div class="field full">
-            <button class="btn gold" type="submit" id="submitListingBtn">Submit Listing Request</button>
+            <button class="btn gold" type="submit" id="submitListingBtn">
+              <i class="fa-solid fa-paper-plane"></i> Submit Listing Request
+            </button>
           </div>
         </form>
       </div>
@@ -425,9 +1193,16 @@
     <!-- REQUESTS -->
     <section class="page" id="page-requests">
       <div class="section-head">
-        <div><h2>My Listing Requests</h2><p>Track requests submitted from your account.</p></div>
-        <button class="btn light" onclick="loadRequests()">Refresh</button>
+        <div>
+          <div class="section-title-kicker">Owner Centre</div>
+          <h2>My Listing Requests</h2>
+          <p>Track every request submitted from your owner account.</p>
+        </div>
+        <button class="btn light" onclick="loadRequests()">
+          <i class="fa-solid fa-rotate"></i> Refresh
+        </button>
       </div>
+
       <div class="card">
         <div id="requestsContainer" class="request-list">
           <div class="loading"><div class="spinner"></div>Loading requests...</div>
@@ -439,17 +1214,19 @@
     <section class="page" id="page-properties">
       <div class="section-head">
         <div>
+          <div class="section-title-kicker">Owner Centre</div>
           <h2>My Live Properties</h2>
-          <p>Properties published by Director Admin and linked to your registered owner phone.</p>
+          <p>Published properties linked to your registered owner phone.</p>
         </div>
-        <button class="btn light" onclick="loadLiveProperties()">Refresh</button>
+        <button class="btn light" onclick="loadLiveProperties()">
+          <i class="fa-solid fa-rotate"></i> Refresh
+        </button>
       </div>
 
       <div class="form-note">
         <strong>Admin approval connection:</strong>
-        Your submitted request stays pending until Director Admin verifies it.
-        Once approved and published, the property becomes live on StudentHubHelp
-        and appears here automatically.
+        Your request stays pending until Director Admin verifies it.
+        After approval and publication, the property appears here automatically.
       </div>
 
       <div class="card">
@@ -462,531 +1239,795 @@
     <!-- REVIEWS -->
     <section class="page" id="page-reviews">
       <div class="section-head">
-        <div><h2>My Reviews</h2><p>Reviews submitted using your student account.</p></div>
+        <div>
+          <div class="section-title-kicker">Student Activity</div>
+          <h2>My Reviews</h2>
+          <p>Reviews submitted using your student account.</p>
+        </div>
+        <button class="btn light" onclick="loadReviews()">
+          <i class="fa-solid fa-rotate"></i> Refresh
+        </button>
       </div>
+
       <div class="card">
         <div id="reviewsContainer" class="request-list">
-          <div class="empty">Reviews will appear here when available.</div>
+          <div class="empty">
+            <i class="fa-regular fa-star"></i>
+            Reviews will appear here when available.
+          </div>
         </div>
       </div>
     </section>
-  </main>
-</div>
 
+  </div>
+</main>
+
+<!-- MODAL -->
 <div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-head">
       <h2 id="modalTitle">Details</h2>
-      <button class="close" onclick="closeModal()">×</button>
+      <button class="close" id="closeModalBtn" aria-label="Close">×</button>
     </div>
-    <div id="modalBody"></div>
+    <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
 
 <script>
-const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-</script>
+  const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVxJwjocFUeLB1yMA";
 
-<script>
-/*
-  IMPORTANT:
-  The anon key above is replaced below with the exact key configured for
-  this project if the first constant is edited incorrectly.
-*/
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentUser = null;
-let currentProfile = null;
-let requestChannel = null;
+  let currentUser = null;
+  let currentProfile = null;
+  let requestChannel = null;
 
-function $(id){ return document.getElementById(id); }
+  const $ = id => document.getElementById(id);
 
-function showMessage(id, text, type="info"){
-  const el = $(id);
-  if(!el) return;
-  el.className = "message show " + type;
-  el.textContent = text;
-}
-
-function hideMessage(id){
-  const el = $(id);
-  if(el) el.className = "message";
-}
-
-function roleName(role){
-  const r = String(role || "").toLowerCase();
-  if(r === "owner") return "OWNER";
-  if(r === "student") return "STUDENT";
-  if(r === "admin") return "ADMIN";
-  return "USER";
-}
-
-function initials(name){
-  return String(name || "User").trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase() || "U";
-}
-
-function normalizePhone(phone){
-  return String(phone || "").replace(/\D/g,"").slice(-10);
-}
-
-async function boot(){
-  const {data:{session}, error} = await sb.auth.getSession();
-
-  if(error || !session){
-    window.location.href = "auth.html";
-    return;
-  }
-
-  currentUser = session.user;
-
-  await loadProfile();
-  configureRoleUI();
-  await loadRequests();
-  await loadLiveProperties();
-  await loadReviews();
-  subscribeRealtime();
-}
-
-async function loadProfile(){
-  const {data, error} = await sb
-    .from("profiles")
-    .select("id,full_name,phone,email,address,role")
-    .eq("id", currentUser.id)
-    .maybeSingle();
-
-  if(error){
-    console.error(error);
-    currentProfile = {
-      id: currentUser.id,
-      full_name: currentUser.user_metadata?.full_name || "User",
-      phone: "",
-      email: currentUser.email || "",
-      address: "",
-      role: "student"
-    };
-  } else {
-    currentProfile = data || {
-      id: currentUser.id,
-      full_name: currentUser.user_metadata?.full_name || "User",
-      phone: "",
-      email: currentUser.email || "",
-      address: "",
-      role: "student"
-    };
-  }
-
-  const name = currentProfile.full_name || "User";
-
-  $("topUserName").textContent = name;
-  $("topAvatar").textContent = initials(name);
-  $("heroName").textContent = name;
-  $("statRole").textContent = roleName(currentProfile.role);
-
-  $("profileName").value = currentProfile.full_name || "";
-  $("profilePhone").value = currentProfile.phone || "";
-  $("profileEmail").value = currentProfile.email || currentUser.email || "";
-  $("profileRole").value = roleName(currentProfile.role);
-  $("profileAddress").value = currentProfile.address || "";
-
-  $("heroText").textContent =
-    String(currentProfile.role).toLowerCase() === "owner"
-      ? "Manage your owner profile, submit property listing requests and track approval status."
-      : "Find student services across India, manage your profile and keep track of your reviews.";
-}
-
-function configureRoleUI(){
-  const isOwner = String(currentProfile?.role || "").toLowerCase() === "owner";
-  document.querySelectorAll(".owner-only").forEach(el=>{
-    el.style.display = isOwner ? "" : "none";
-  });
-}
-
-async function saveProfile(){
-  const btn = $("saveProfileBtn");
-  btn.disabled = true;
-  btn.textContent = "Saving...";
-
-  const payload = {
-    full_name: $("profileName").value.trim(),
-    phone: $("profilePhone").value.trim(),
-    address: $("profileAddress").value.trim()
+  const categoryLabels = {
+    hostel: "Hostel / PG",
+    pg: "Hostel / PG",
+    tiffin: "Tiffin / Mess",
+    mess: "Tiffin / Mess",
+    library: "Library",
+    cafe: "Cafe",
+    bookstore: "Book Store"
   };
 
-  const {error} = await sb.from("profiles").update(payload).eq("id", currentUser.id);
-
-  if(error){
-    showMessage("profileMessage", error.message, "error");
-  }else{
-    currentProfile = {...currentProfile, ...payload};
-    $("topUserName").textContent = payload.full_name || "User";
-    $("topAvatar").textContent = initials(payload.full_name);
-    $("heroName").textContent = payload.full_name || "User";
-    showMessage("profileMessage", "Profile saved successfully.", "success");
-  }
-
-  btn.disabled = false;
-  btn.textContent = "Save Profile";
-}
-
-async function submitListing(e){
-  e.preventDefault();
-
-  const btn = $("submitListingBtn");
-  btn.disabled = true;
-  btn.textContent = "Submitting...";
-
-  hideMessage("listingMessage");
-
-  const ownerPhone = currentProfile?.phone || "";
-  const listingPhone = $("listingPhone").value.trim();
-
-  if(!normalizePhone(ownerPhone)){
-    showMessage("listingMessage", "Please add your registered owner phone number in My Profile first.", "error");
-    btn.disabled = false;
-    btn.textContent = "Submit Listing Request";
-    return;
-  }
-
-  const payload = {
-    owner_id: currentUser.id,
-    owner_name: currentProfile?.full_name || currentUser.email || "Owner",
-    owner_phone: ownerPhone,
-    name: $("listingName").value.trim(),
-    category: $("listingCategory").value,
-    area: $("listingArea").value.trim(),
-    address: $("listingAddress").value.trim(),
-    phone: listingPhone,
-    timing: $("listingTiming").value.trim() || null,
-    facilities: $("listingFacilities").value.trim() || null,
-    image: $("listingImage").value.trim() || null,
-    rating: null,
-    status: "pending"
+  const categoryIcons = {
+    hostel: "🏠",
+    pg: "🏠",
+    tiffin: "🍱",
+    mess: "🍱",
+    library: "📚",
+    cafe: "☕",
+    bookstore: "📖"
   };
 
-  const {error} = await sb.from("listing_requests").insert(payload);
-
-  if(error){
-    console.error(error);
-    showMessage("listingMessage", error.message, "error");
-  }else{
-    showMessage("listingMessage", "Listing request submitted successfully. It is now pending Admin verification.", "success");
-    $("listingForm").reset();
-    $("listingPhone").value = currentProfile?.phone || "";
-    await loadRequests();
-    updateRequestStats();
+  function showMessage(id, text, type="info"){
+    const el = $(id);
+    if(!el) return;
+    el.className = "message show " + type;
+    el.textContent = text;
   }
 
-  btn.disabled = false;
-  btn.textContent = "Submit Listing Request";
-}
-
-async function loadRequests(){
-  if(!currentUser) return;
-
-  const box = $("requestsContainer");
-  box.innerHTML = '<div class="loading"><div class="spinner"></div>Loading requests...</div>';
-
-  const {data, error} = await sb
-    .from("listing_requests")
-    .select("id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at")
-    .eq("owner_id", currentUser.id)
-    .order("created_at", {ascending:false});
-
-  if(error){
-    box.innerHTML = '<div class="empty">Unable to load requests right now.</div>';
-    console.error(error);
-    $("statRequests").textContent = "—";
-    $("statApproved").textContent = "—";
-    return;
+  function hideMessage(id){
+    const el = $(id);
+    if(el) el.className = "message";
   }
 
-  const rows = data || [];
-  $("statRequests").textContent = rows.length;
-  $("statApproved").textContent = rows.filter(x=>x.status==="approved").length;
-
-  if(!rows.length){
-    box.innerHTML = '<div class="empty">No listing requests yet.</div>';
-    return;
+  function roleName(role){
+    const r = String(role || "").toLowerCase();
+    if(r === "owner") return "OWNER";
+    if(r === "student") return "STUDENT";
+    if(r === "admin") return "ADMIN";
+    return "USER";
   }
 
-  box.innerHTML = rows.map(r=>`
-    <div class="request">
-      <div>
-        <h3>${escapeHtml(r.name || "Unnamed listing")}</h3>
-        <p>${escapeHtml(formatCategory(r.category))} • ${escapeHtml(r.area || "Area not provided")}</p>
-        <p>Submitted: ${formatDate(r.created_at)}</p>
-        ${r.admin_note ? `<p><strong>Admin note:</strong> ${escapeHtml(r.admin_note)}</p>` : ""}
-      </div>
-      <div>
-        <span class="status ${escapeHtml(r.status)}">${escapeHtml(r.status)}</span>
-        <button class="btn light" style="margin-left:7px" onclick="viewRequest('${r.id}')">View</button>
-      </div>
-    </div>
-  `).join("");
-}
-
-async function viewRequest(id){
-  const {data, error} = await sb
-    .from("listing_requests")
-    .select("id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at")
-    .eq("id", id)
-    .eq("owner_id", currentUser.id)
-    .maybeSingle();
-
-  if(error || !data) return;
-
-  $("modalTitle").textContent = data.name || "Listing Details";
-  $("modalBody").innerHTML = `
-    <div class="review-box">
-      <p><strong>Status:</strong> <span class="status ${escapeHtml(data.status)}">${escapeHtml(data.status)}</span></p>
-      <p><strong>Type:</strong> ${escapeHtml(formatCategory(data.category))}</p>
-      <p><strong>Area:</strong> ${escapeHtml(data.area || "—")}</p>
-      <p><strong>Address:</strong> ${escapeHtml(data.address || "—")}</p>
-      <p><strong>Phone:</strong> ${escapeHtml(data.phone || "—")}</p>
-      <p><strong>Timing:</strong> ${escapeHtml(data.timing || "—")}</p>
-      <p><strong>Facilities:</strong><br>${escapeHtml(data.facilities || "—")}</p>
-      ${data.image ? `<p><strong>Image:</strong><br><a href="${safeUrl(data.image)}" target="_blank" rel="noopener">Open image</a></p>` : ""}
-      ${data.admin_note ? `<p><strong>Admin Note:</strong><br>${escapeHtml(data.admin_note)}</p>` : ""}
-    </div>
-  `;
-  $("modalBackdrop").classList.add("show");
-}
-
-function closeModal(){
-  $("modalBackdrop").classList.remove("show");
-}
-
-async function loadReviews(){
-  if(!currentUser) return;
-
-  const box = $("reviewsContainer");
-
-  const {data, error} = await sb
-    .from("reviews")
-    .select("id,property_id,rating,review,status,created_at")
-    .eq("student_id", currentUser.id)
-    .order("created_at", {ascending:false});
-
-  if(error){
-    console.warn("Reviews unavailable:", error.message);
-    box.innerHTML = '<div class="empty">No reviews available yet.</div>';
-    $("statReviews").textContent = "0";
-    return;
+  function initials(name){
+    const value = String(name || "User").trim();
+    return value
+      .split(/\s+/)
+      .slice(0,2)
+      .map(x => x[0] || "")
+      .join("")
+      .toUpperCase() || "U";
   }
 
-  const rows = data || [];
-  $("statReviews").textContent = rows.length;
-
-  if(!rows.length){
-    box.innerHTML = '<div class="empty">You have not submitted any reviews yet.</div>';
-    return;
+  function normalizePhone(phone){
+    return String(phone || "").replace(/\D/g,"").slice(-10);
   }
 
-  box.innerHTML = rows.map(r=>`
-    <div class="request">
-      <div>
-        <h3>Property #${escapeHtml(r.property_id || "—")}</h3>
-        <p class="stars">${"★".repeat(Number(r.rating)||0)}${"☆".repeat(5-(Number(r.rating)||0))}</p>
-        <p>${escapeHtml(r.review || "No review text")}</p>
-        <p>${formatDate(r.created_at)}</p>
-      </div>
-      <span class="status ${r.status === "approved" ? "approved" : "pending"}">${escapeHtml(r.status || "pending")}</span>
-    </div>
-  `).join("");
-}
-
-function updateRequestStats(){
-  loadRequests();
-}
-
-
-async function loadLiveProperties(){
-  if(!currentUser) return;
-
-  const box = $("livePropertiesContainer");
-  if(box) box.innerHTML = '<div class="loading"><div class="spinner"></div>Loading live properties...</div>';
-
-  const phone = normalizePhone(currentProfile?.phone);
-  if(!phone){
-    if(box) box.innerHTML = '<div class="empty">Add your registered phone number in My Profile to see linked live properties.</div>';
-    $("statLive").textContent = "0";
-    return;
+  function escapeHtml(value){
+    return String(value ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
   }
 
-  const tables = [
-    {table:"hostels", label:"Hostel / PG", icon:"🏠"},
-    {table:"tiffins", label:"Tiffin / Mess", icon:"🍱"},
-    {table:"libraries", label:"Library", icon:"📚"},
-    {table:"cafes", label:"Cafe", icon:"☕"}
-  ];
+  function safeUrl(value){
+    try{
+      const u = new URL(value, window.location.href);
+      if(["http:","https:"].includes(u.protocol)) return u.href;
+    }catch(e){}
+    return "#";
+  }
 
-  const results = await Promise.all(tables.map(async item=>{
-    const {data, error} = await sb
-      .from(item.table)
-      .select("id,name,category,area,address,phone,timing,facilities,rating")
-      .eq("phone", currentProfile.phone);
+  function formatCategory(value){
+    const key = String(value || "").toLowerCase();
+    return categoryLabels[key] || value || "—";
+  }
 
-    return {
-      ...item,
-      data: error ? [] : (data || []),
-      error
-    };
-  }));
-
-  const live = results.flatMap(r => r.data.map(x => ({...x, _table:r.table, _label:r.label, _icon:r.icon})));
-
-  // Some existing records may have formatting differences in phone numbers.
-  // Fetch a small fallback set and normalize client-side without exposing
-  // unrelated data in the UI.
-  if(live.length === 0){
-    const fallbackResults = await Promise.all(tables.map(async item=>{
-      const {data, error} = await sb
-        .from(item.table)
-        .select("id,name,category,area,address,phone,timing,facilities,rating");
-      return {...item, data: error ? [] : (data || [])};
-    }));
-
-    fallbackResults.forEach(r=>{
-      r.data.forEach(x=>{
-        if(normalizePhone(x.phone) === phone){
-          live.push({...x, _table:r.table, _label:r.label, _icon:r.icon});
-        }
-      });
+  function formatDate(value){
+    if(!value) return "—";
+    const d = new Date(value);
+    if(Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString("en-IN", {
+      dateStyle:"medium",
+      timeStyle:"short"
     });
   }
 
-  $("statLive").textContent = live.length;
-
-  if(!box) return;
-
-  if(!live.length){
-    box.innerHTML = '<div class="empty">No approved live property is linked to your registered phone yet.</div>';
-    return;
+  function statusClass(status){
+    const s = String(status || "").toLowerCase();
+    return ["pending","approved","rejected"].includes(s) ? s : "default";
   }
 
-  box.innerHTML = live.map(p=>`
-    <div class="request">
-      <div>
-        <h3>${escapeHtml(p._icon + " " + (p.name || "Unnamed property"))}</h3>
-        <p>${escapeHtml(p._label)} • ${escapeHtml(p.area || "Area not provided")}</p>
-        <p>${escapeHtml(p.address || "Address not provided")}</p>
-        <p>📞 ${escapeHtml(p.phone || "—")} ${p.rating != null ? ` • ⭐ ${escapeHtml(p.rating)}` : ""}</p>
-      </div>
-      <button class="btn light" onclick='viewLiveProperty(${JSON.stringify(p).replace(/'/g,"&#39;")})'>View</button>
-    </div>
-  `).join("");
-}
+  function goToFinder(url){
+    window.location.href = url;
+  }
 
-function viewLiveProperty(p){
-  $("modalTitle").textContent = p.name || "Live Property";
-  $("modalBody").innerHTML = `
-    <div class="review-box">
-      <p><strong>Type:</strong> ${escapeHtml(p._label || formatCategory(p.category))}</p>
-      <p><strong>Area:</strong> ${escapeHtml(p.area || "—")}</p>
-      <p><strong>Address:</strong> ${escapeHtml(p.address || "—")}</p>
-      <p><strong>Phone:</strong> ${escapeHtml(p.phone || "—")}</p>
-      <p><strong>Timing:</strong> ${escapeHtml(p.timing || "—")}</p>
-      <p><strong>Facilities:</strong><br>${escapeHtml(p.facilities || "—")}</p>
-      ${p.rating != null ? `<p><strong>Rating:</strong> ⭐ ${escapeHtml(p.rating)}</p>` : ""}
-    </div>
-  `;
-  $("modalBackdrop").classList.add("show");
-}
+  function closeSidebarMobile(){
+    $("sidebar").classList.remove("open");
+    $("mobileOverlay").classList.remove("show");
+  }
 
-function subscribeRealtime(){
-  if(requestChannel) sb.removeChannel(requestChannel);
+  function openPage(page){
+    const target = document.querySelector('.nav-btn[data-page="' + page + '"]');
+    if(target) target.click();
+  }
 
-  requestChannel = sb
-    .channel("user-dashboard-listing-requests-" + currentUser.id)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "listing_requests",
-        filter: "owner_id=eq." + currentUser.id
-      },
-      () => {
-        loadRequests();
-        loadLiveProperties();
+  async function boot(){
+    if(!window.supabase){
+      alert("Supabase library failed to load. Please refresh the page.");
+      return;
+    }
+
+    const { data, error } = await sb.auth.getSession();
+
+    if(error || !data?.session){
+      window.location.href = "auth.html";
+      return;
+    }
+
+    currentUser = data.session.user;
+
+    await loadProfile();
+    configureRoleUI();
+    await loadRequests();
+    await loadLiveProperties();
+    await loadReviews();
+    subscribeRealtime();
+  }
+
+  async function loadProfile(){
+    const { data, error } = await sb
+      .from("profiles")
+      .select("id,full_name,phone,email,address,role")
+      .eq("id", currentUser.id)
+      .maybeSingle();
+
+    if(error){
+      console.error("Profile error:", error);
+      currentProfile = {
+        id: currentUser.id,
+        full_name: currentUser.user_metadata?.full_name || "User",
+        phone: "",
+        email: currentUser.email || "",
+        address: "",
+        role: "student"
+      };
+    }else{
+      currentProfile = data || {
+        id: currentUser.id,
+        full_name: currentUser.user_metadata?.full_name || "User",
+        phone: "",
+        email: currentUser.email || "",
+        address: "",
+        role: "student"
+      };
+    }
+
+    const name = currentProfile.full_name || "User";
+    const role = String(currentProfile.role || "student").toLowerCase();
+
+    $("topUserName").textContent = name;
+    $("topAvatar").textContent = initials(name);
+    $("heroName").textContent = name;
+    $("statRole").textContent = roleName(role);
+
+    $("profileName").value = currentProfile.full_name || "";
+    $("profilePhone").value = currentProfile.phone || "";
+    $("profileEmail").value = currentProfile.email || currentUser.email || "";
+    $("profileRole").value = roleName(role);
+    $("profileAddress").value = currentProfile.address || "";
+
+    $("heroText").textContent =
+      role === "owner"
+        ? "Manage your owner profile, submit property listing requests and track approval status."
+        : "Find student services across India, manage your profile and keep track of your reviews.";
+  }
+
+  function configureRoleUI(){
+    const isOwner = String(currentProfile?.role || "").toLowerCase() === "owner";
+    document.querySelectorAll(".owner-only").forEach(el => {
+      el.style.display = isOwner ? "" : "none";
+    });
+  }
+
+  async function saveProfile(){
+    const btn = $("saveProfileBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    hideMessage("profileMessage");
+
+    const name = $("profileName").value.trim();
+    const phone = $("profilePhone").value.trim();
+    const address = $("profileAddress").value.trim();
+
+    if(!name){
+      showMessage("profileMessage","Full name is required.","error");
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Profile';
+      return;
+    }
+
+    const payload = {
+      full_name: name,
+      phone,
+      address
+    };
+
+    const { error } = await sb
+      .from("profiles")
+      .update(payload)
+      .eq("id", currentUser.id);
+
+    if(error){
+      console.error(error);
+      showMessage("profileMessage", error.message, "error");
+    }else{
+      currentProfile = {...currentProfile, ...payload};
+      $("topUserName").textContent = name;
+      $("topAvatar").textContent = initials(name);
+      $("heroName").textContent = name;
+
+      showMessage(
+        "profileMessage",
+        "Profile saved successfully.",
+        "success"
+      );
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Profile';
+  }
+
+  async function submitListing(e){
+    e.preventDefault();
+
+    const btn = $("submitListingBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+    hideMessage("listingMessage");
+
+    const ownerPhone = currentProfile?.phone || "";
+    const listingPhone = $("listingPhone").value.trim();
+    const category = $("listingCategory").value;
+
+    if(!normalizePhone(ownerPhone)){
+      showMessage(
+        "listingMessage",
+        "Please add your registered owner phone number in My Profile first.",
+        "error"
+      );
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Listing Request';
+      return;
+    }
+
+    if(!category){
+      showMessage("listingMessage","Please select a property type.","error");
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Listing Request';
+      return;
+    }
+
+    const payload = {
+      owner_id: currentUser.id,
+      owner_name: currentProfile?.full_name || currentUser.email || "Owner",
+      owner_phone: ownerPhone,
+      name: $("listingName").value.trim(),
+      category,
+      area: $("listingArea").value.trim(),
+      address: $("listingAddress").value.trim(),
+      phone: listingPhone,
+      timing: $("listingTiming").value.trim() || null,
+      facilities: $("listingFacilities").value.trim() || null,
+      image: $("listingImage").value.trim() || null,
+      rating: null,
+      status: "pending"
+    };
+
+    const { error } = await sb
+      .from("listing_requests")
+      .insert(payload);
+
+    if(error){
+      console.error(error);
+      showMessage("listingMessage", error.message, "error");
+    }else{
+      showMessage(
+        "listingMessage",
+        "Listing request submitted successfully. It is now pending Admin verification.",
+        "success"
+      );
+
+      $("listingForm").reset();
+      $("listingPhone").value = currentProfile?.phone || "";
+
+      await loadRequests();
+      await loadLiveProperties();
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Listing Request';
+  }
+
+  async function loadRequests(){
+    if(!currentUser) return;
+
+    const box = $("requestsContainer");
+    if(!box) return;
+
+    box.innerHTML = '<div class="loading"><div class="spinner"></div>Loading requests...</div>';
+
+    const { data, error } = await sb
+      .from("listing_requests")
+      .select("id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at")
+      .eq("owner_id", currentUser.id)
+      .order("created_at",{ascending:false});
+
+    if(error){
+      console.error("Requests error:",error);
+      box.innerHTML = `
+        <div class="empty">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          Unable to load requests right now.
+        </div>`;
+      $("statRequests").textContent = "—";
+      $("statApproved").textContent = "—";
+      return;
+    }
+
+    const rows = data || [];
+
+    $("statRequests").textContent = rows.length;
+    $("statApproved").textContent =
+      rows.filter(x => String(x.status).toLowerCase() === "approved").length;
+
+    if(!rows.length){
+      box.innerHTML = `
+        <div class="empty">
+          <i class="fa-regular fa-clipboard"></i>
+          No listing requests yet.
+        </div>`;
+      return;
+    }
+
+    box.innerHTML = rows.map(r => {
+      const status = String(r.status || "pending").toLowerCase();
+      const icon = categoryIcons[String(r.category || "").toLowerCase()] || "🏢";
+
+      return `
+        <div class="request">
+          <div class="request-main">
+            <div class="request-title">
+              <h3>${escapeHtml(r.name || "Unnamed listing")}</h3>
+              <span class="status ${statusClass(status)}">${escapeHtml(status)}</span>
+            </div>
+            <p>${escapeHtml(icon)} ${escapeHtml(formatCategory(r.category))} • ${escapeHtml(r.area || "Area not provided")}</p>
+            <p>Submitted: ${escapeHtml(formatDate(r.created_at))}</p>
+            ${r.admin_note ? `<p><strong>Admin note:</strong> ${escapeHtml(r.admin_note)}</p>` : ""}
+          </div>
+
+          <div class="request-actions">
+            <button class="btn light" onclick="viewRequest('${escapeHtml(r.id)}')">
+              <i class="fa-regular fa-eye"></i> View
+            </button>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  async function viewRequest(id){
+    const { data, error } = await sb
+      .from("listing_requests")
+      .select("id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at")
+      .eq("id", id)
+      .eq("owner_id", currentUser.id)
+      .maybeSingle();
+
+    if(error || !data){
+      console.error("Request detail error:",error);
+      return;
+    }
+
+    const imageUrl = data.image ? safeUrl(data.image) : "";
+
+    $("modalTitle").textContent = data.name || "Listing Details";
+
+    $("modalBody").innerHTML = `
+      <div class="detail-grid">
+        <div class="detail">
+          <span>Status</span>
+          <strong><span class="status ${statusClass(data.status)}">${escapeHtml(data.status || "pending")}</span></strong>
+        </div>
+        <div class="detail">
+          <span>Property Type</span>
+          <strong>${escapeHtml(formatCategory(data.category))}</strong>
+        </div>
+        <div class="detail">
+          <span>Area</span>
+          <strong>${escapeHtml(data.area || "—")}</strong>
+        </div>
+        <div class="detail">
+          <span>Phone</span>
+          <strong>${escapeHtml(data.phone || "—")}</strong>
+        </div>
+        <div class="detail full">
+          <span>Full Address</span>
+          <strong>${escapeHtml(data.address || "—")}</strong>
+        </div>
+        <div class="detail">
+          <span>Timing</span>
+          <strong>${escapeHtml(data.timing || "—")}</strong>
+        </div>
+        <div class="detail">
+          <span>Submitted</span>
+          <strong>${escapeHtml(formatDate(data.created_at))}</strong>
+        </div>
+        <div class="detail full">
+          <span>Facilities / Details</span>
+          <strong>${escapeHtml(data.facilities || "—")}</strong>
+        </div>
+        ${imageUrl !== "#" && imageUrl ? `
+          <div class="detail full">
+            <span>Image</span>
+            <strong><a href="${imageUrl}" target="_blank" rel="noopener" style="color:#245f98">Open image</a></strong>
+          </div>` : ""}
+        ${data.admin_note ? `
+          <div class="detail full">
+            <span>Admin Note</span>
+            <strong>${escapeHtml(data.admin_note)}</strong>
+          </div>` : ""}
+      </div>`;
+
+    $("modalBackdrop").classList.add("show");
+  }
+
+  async function loadLiveProperties(){
+    if(!currentUser) return;
+
+    const box = $("livePropertiesContainer");
+    if(box){
+      box.innerHTML = '<div class="loading"><div class="spinner"></div>Loading live properties...</div>';
+    }
+
+    const phone = normalizePhone(currentProfile?.phone);
+
+    if(!phone){
+      if(box){
+        box.innerHTML = `
+          <div class="empty">
+            <i class="fa-solid fa-phone"></i>
+            Add your registered phone number in My Profile to see linked live properties.
+          </div>`;
       }
-    )
-    .subscribe();
-}
+      $("statLive").textContent = "0";
+      return;
+    }
 
-function goToFinder(url){
-  window.location.href = url;
-}
+    const tables = [
+      {table:"hostels", label:"Hostel / PG", icon:"🏠"},
+      {table:"tiffins", label:"Tiffin / Mess", icon:"🍱"},
+      {table:"libraries", label:"Library", icon:"📚"},
+      {table:"cafes", label:"Cafe", icon:"☕"},
+      {table:"bookstores", label:"Book Store", icon:"📖"}
+    ];
 
-function formatCategory(v){
-  const s = String(v || "").toLowerCase();
-  const map = {
-    hostel:"Hostel",
-    pg:"PG",
-    tiffin:"Tiffin",
-    mess:"Mess",
-    library:"Library",
-    cafe:"Cafe"
-  };
-  return map[s] || v || "—";
-}
+    const selectColumns = "id,name,category,area,address,phone,timing,facilities,rating";
 
-function formatDate(v){
-  if(!v) return "—";
-  const d = new Date(v);
-  if(Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
-}
+    const results = await Promise.all(
+      tables.map(async item => {
+        const {data,error} = await sb
+          .from(item.table)
+          .select(selectColumns)
+          .eq("phone",currentProfile.phone);
 
-function escapeHtml(value){
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
+        return {
+          ...item,
+          data: error ? [] : (data || []),
+          error
+        };
+      })
+    );
 
-function safeUrl(value){
-  try{
-    const u = new URL(value, window.location.href);
-    if(["http:","https:"].includes(u.protocol)) return u.href;
-  }catch(e){}
-  return "#";
-}
+    const live = [];
 
-document.querySelectorAll(".nav-btn").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    const page = btn.dataset.page;
-    document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
-    $("page-" + page).classList.add("active");
+    results.forEach(r => {
+      r.data.forEach(x => {
+        if(normalizePhone(x.phone) === phone){
+          live.push({
+            ...x,
+            _table:r.table,
+            _label:r.label,
+            _icon:r.icon
+          });
+        }
+      });
+    });
 
-    if(page === "requests") loadRequests();
-    if(page === "properties") loadLiveProperties();
-    if(page === "reviews") loadReviews();
+    // If phone formatting differs, fetch fallback rows and compare normalized phone.
+    if(live.length === 0){
+      const fallbackResults = await Promise.all(
+        tables.map(async item => {
+          const {data,error} = await sb
+            .from(item.table)
+            .select(selectColumns);
+
+          return {
+            ...item,
+            data:error ? [] : (data || [])
+          };
+        })
+      );
+
+      fallbackResults.forEach(r => {
+        r.data.forEach(x => {
+          if(normalizePhone(x.phone) === phone){
+            live.push({
+              ...x,
+              _table:r.table,
+              _label:r.label,
+              _icon:r.icon
+            });
+          }
+        });
+      });
+    }
+
+    $("statLive").textContent = live.length;
+
+    if(!box) return;
+
+    if(!live.length){
+      box.innerHTML = `
+        <div class="empty">
+          <i class="fa-regular fa-building"></i>
+          No approved live property is linked to your registered phone yet.
+        </div>`;
+      return;
+    }
+
+    box.innerHTML = live.map(p => `
+      <div class="request">
+        <div class="request-main">
+          <div class="request-title">
+            <h3>${escapeHtml(p._icon + " " + (p.name || "Unnamed property"))}</h3>
+            <span class="property-type">${escapeHtml(p._label)}</span>
+          </div>
+          <p>${escapeHtml(p.area || "Area not provided")}</p>
+          <p>${escapeHtml(p.address || "Address not provided")}</p>
+          <p>
+            <i class="fa-solid fa-phone"></i> ${escapeHtml(p.phone || "—")}
+            ${p.rating != null ? ` • ⭐ ${escapeHtml(p.rating)}` : ""}
+          </p>
+        </div>
+
+        <div class="request-actions">
+          <button class="btn light" onclick='viewLiveProperty(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+            <i class="fa-regular fa-eye"></i> View
+          </button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function viewLiveProperty(p){
+    $("modalTitle").textContent = p.name || "Live Property";
+
+    $("modalBody").innerHTML = `
+      <div class="detail-grid">
+        <div class="detail">
+          <span>Property Type</span>
+          <strong>${escapeHtml(p._label || formatCategory(p.category))}</strong>
+        </div>
+        <div class="detail">
+          <span>Rating</span>
+          <strong>${p.rating != null ? "⭐ " + escapeHtml(p.rating) : "Not rated yet"}</strong>
+        </div>
+        <div class="detail">
+          <span>Area</span>
+          <strong>${escapeHtml(p.area || "—")}</strong>
+        </div>
+        <div class="detail">
+          <span>Phone</span>
+          <strong>${escapeHtml(p.phone || "—")}</strong>
+        </div>
+        <div class="detail full">
+          <span>Full Address</span>
+          <strong>${escapeHtml(p.address || "—")}</strong>
+        </div>
+        <div class="detail">
+          <span>Timing</span>
+          <strong>${escapeHtml(p.timing || "—")}</strong>
+        </div>
+        <div class="detail">
+          <span>Database Table</span>
+          <strong>${escapeHtml(p._table || "—")}</strong>
+        </div>
+        <div class="detail full">
+          <span>Facilities / Details</span>
+          <strong>${escapeHtml(p.facilities || "—")}</strong>
+        </div>
+      </div>`;
+    $("modalBackdrop").classList.add("show");
+  }
+
+  async function loadReviews(){
+    if(!currentUser) return;
+
+    const box = $("reviewsContainer");
+    if(!box) return;
+
+    const {data,error} = await sb
+      .from("reviews")
+      .select("id,property_id,rating,review,status,created_at")
+      .eq("student_id",currentUser.id)
+      .order("created_at",{ascending:false});
+
+    if(error){
+      console.warn("Reviews unavailable:",error.message);
+      box.innerHTML = `
+        <div class="empty">
+          <i class="fa-regular fa-star"></i>
+          No reviews available yet.
+        </div>`;
+      $("statReviews").textContent = "0";
+      return;
+    }
+
+    const rows = data || [];
+    $("statReviews").textContent = rows.length;
+
+    if(!rows.length){
+      box.innerHTML = `
+        <div class="empty">
+          <i class="fa-regular fa-star"></i>
+          You have not submitted any reviews yet.
+        </div>`;
+      return;
+    }
+
+    box.innerHTML = rows.map(r => {
+      const rating = Math.max(0,Math.min(5,Number(r.rating)||0));
+      const stars = "★".repeat(rating) + "☆".repeat(5-rating);
+      const reviewStatus = String(r.status || "pending").toLowerCase();
+
+      return `
+        <div class="request">
+          <div class="request-main">
+            <div class="request-title">
+              <h3>Property #${escapeHtml(r.property_id || "—")}</h3>
+              <span class="status ${statusClass(reviewStatus)}">${escapeHtml(reviewStatus)}</span>
+            </div>
+            <p class="stars">${stars}</p>
+            <div class="review-box">${escapeHtml(r.review || "No review text")}</div>
+            <p>${escapeHtml(formatDate(r.created_at))}</p>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function subscribeRealtime(){
+    if(requestChannel){
+      sb.removeChannel(requestChannel);
+    }
+
+    requestChannel = sb
+      .channel("user-dashboard-listing-requests-" + currentUser.id)
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"listing_requests",
+          filter:"owner_id=eq." + currentUser.id
+        },
+        () => {
+          loadRequests();
+          loadLiveProperties();
+        }
+      )
+      .subscribe();
+  }
+
+  /* NAVIGATION */
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.addEventListener("click",() => {
+      const page = btn.dataset.page;
+
+      document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
+      btn.classList.add("active");
+
+      document.querySelectorAll(".page").forEach(x => x.classList.remove("active"));
+      const target = $("page-" + page);
+      if(target) target.classList.add("active");
+
+      if(page === "requests") loadRequests();
+      if(page === "properties") loadLiveProperties();
+      if(page === "reviews") loadReviews();
+
+      closeSidebarMobile();
+    });
   });
-});
 
-$("saveProfileBtn").addEventListener("click", saveProfile);
-$("listingForm").addEventListener("submit", submitListing);
+  $("menuToggle").addEventListener("click",() => {
+    $("sidebar").classList.toggle("open");
+    $("mobileOverlay").classList.toggle("show");
+  });
 
-$("logoutBtn").addEventListener("click", async ()=>{
-  await sb.auth.signOut();
-  window.location.href = "auth.html";
-});
+  $("mobileOverlay").addEventListener("click",closeSidebarMobile);
 
-$("modalBackdrop").addEventListener("click", e=>{
-  if(e.target.id === "modalBackdrop") closeModal();
-});
+  $("saveProfileBtn").addEventListener("click",saveProfile);
+  $("listingForm").addEventListener("submit",submitListing);
 
-window.addEventListener("beforeunload", ()=>{
-  if(requestChannel) sb.removeChannel(requestChannel);
-});
+  $("logoutBtn").addEventListener("click",async() => {
+    const btn = $("logoutBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-boot();
+    await sb.auth.signOut();
+    window.location.href = "auth.html";
+  });
+
+  $("closeModalBtn").addEventListener("click",() => {
+    $("modalBackdrop").classList.remove("show");
+  });
+
+  $("modalBackdrop").addEventListener("click",e => {
+    if(e.target.id === "modalBackdrop"){
+      $("modalBackdrop").classList.remove("show");
+    }
+  });
+
+  document.addEventListener("keydown",e => {
+    if(e.key === "Escape"){
+      $("modalBackdrop").classList.remove("show");
+      closeSidebarMobile();
+    }
+  });
+
+  window.addEventListener("beforeunload",() => {
+    if(requestChannel) sb.removeChannel(requestChannel);
+  });
+
+  boot();
 </script>
+
 </body>
 </html>
