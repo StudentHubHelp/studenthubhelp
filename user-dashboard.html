@@ -4,3093 +4,1668 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>StudentHubHelp — User Dashboard</title>
-
-  <meta
-    name="description"
-    content="StudentHubHelp India Student Discovery Platform user and owner dashboard."
-  >
-
-  <meta name="robots" content="noindex,nofollow">
-
-  <link rel="icon" type="image/png" href="logo.png">
-  <link rel="apple-touch-icon" href="logo.png">
+  <title>My Dashboard | StudentHubHelp</title>
+  <meta name="description" content="StudentHubHelp student and owner dashboard. Discover services, manage listings, requests and reviews.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700&display=swap"
-    rel="stylesheet"
-  >
-
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-  >
-
-  <!-- CORRECT LOWERCASE SUPABASE CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    :root{
-      --navy:#07182d;
-      --navy2:#0c2748;
-      --navy3:#123b63;
-
-      --gold:#d5a64b;
-      --gold2:#f2d17c;
-
+    :root {
+      --navy:#071d35;
+      --navy-2:#0b2948;
+      --gold:#e9b949;
+      --gold-2:#f5cc67;
       --bg:#f4f7fb;
       --white:#ffffff;
-
-      --text:#17253a;
-      --muted:#718096;
-
-      --line:#e2e8f0;
-
-      --green:#118653;
-      --greenBg:#e8f8f0;
-
-      --red:#c63d48;
-      --redBg:#ffeded;
-
-      --yellow:#9a7216;
-      --yellowBg:#fff5d9;
-
-      --blue:#2c68a2;
-      --blueBg:#edf5ff;
-
-      --sidebar:270px;
-      --topbar:76px;
-
-      --shadow:0 20px 55px rgba(7,24,45,.10);
-      --shadow2:0 8px 28px rgba(7,24,45,.065);
-
-      --radius:22px;
+      --text:#10233d;
+      --muted:#6b7c93;
+      --border:#e2e9f2;
+      --success:#16966a;
+      --danger:#d9534f;
+      --warning:#c98a00;
+      --shadow:0 12px 35px rgba(17,42,72,.08);
+      --sidebar:280px;
+      --radius:20px;
     }
 
-    *{
+    * {
       box-sizing:border-box;
+      margin:0;
+      padding:0;
     }
 
-    html{
+    html {
       scroll-behavior:smooth;
     }
 
-    body{
-      margin:0;
-      background:
-        radial-gradient(
-          circle at 85% -10%,
-          rgba(213,166,75,.09),
-          transparent 25%
-        ),
-        var(--bg);
+    body {
+      font-family:Inter,Arial,sans-serif;
+      background:var(--bg);
       color:var(--text);
-      font-family:
-        Inter,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-    }
-
-    body.no-scroll{
-      overflow:hidden;
+      min-height:100vh;
     }
 
     button,
     input,
     textarea,
-    select{
+    select {
       font:inherit;
     }
 
-    button{
+    button {
       cursor:pointer;
     }
 
-    a{
+    a {
       color:inherit;
       text-decoration:none;
     }
 
-    img{
-      max-width:100%;
+    .app {
+      min-height:100vh;
     }
 
-    /* =========================================================
-       TOP BAR
-    ========================================================= */
+    /* =========================
+       TOPBAR
+    ========================= */
 
-    .topbar{
+    .topbar {
+      height:96px;
       position:fixed;
       top:0;
       left:0;
       right:0;
-
-      height:var(--topbar);
-
       z-index:1000;
-
+      background:linear-gradient(135deg,#061a31,#0b2948);
+      color:#fff;
       display:flex;
       align-items:center;
       justify-content:space-between;
-
-      padding:0 28px;
-
-      color:#fff;
-
-      background:
-        linear-gradient(
-          135deg,
-          #06162a,
-          #0c2b4c
-        );
-
-      border-bottom:1px solid rgba(255,255,255,.09);
-
-      box-shadow:
-        0 8px 30px rgba(0,0,0,.17);
+      padding:0 34px;
+      box-shadow:0 8px 25px rgba(4,20,38,.16);
     }
 
-    .top-left{
+    .brand {
       display:flex;
       align-items:center;
-      gap:14px;
-      min-width:0;
+      gap:15px;
     }
 
-    .brand{
+    .brand img {
+      width:62px;
+      height:62px;
+      border-radius:17px;
+      object-fit:cover;
+      border:2px solid rgba(255,255,255,.8);
+      background:#fff;
+    }
+
+    .brand-title {
+      font-family:"Plus Jakarta Sans",sans-serif;
+      font-size:23px;
+      font-weight:800;
+      line-height:1.1;
+    }
+
+    .brand-subtitle {
+      margin-top:5px;
+      color:#c6d3e2;
+      font-size:12px;
+      font-weight:600;
+    }
+
+    .top-actions {
       display:flex;
       align-items:center;
       gap:12px;
-      min-width:0;
     }
 
-    .brand img{
+    .user-chip {
+      min-height:54px;
+      padding:7px 17px 7px 8px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:30px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:rgba(255,255,255,.06);
+    }
+
+    .avatar {
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg,var(--gold),#f6d57c);
+      color:#10233d;
+      font-weight:800;
+      font-size:13px;
+    }
+
+    .user-name {
+      font-size:13px;
+      font-weight:800;
+    }
+
+    .user-role {
+      display:block;
+      color:#b9c9db;
+      font-size:10px;
+      margin-top:2px;
+      text-transform:uppercase;
+      letter-spacing:.8px;
+    }
+
+    .logout-btn {
+      height:48px;
+      padding:0 17px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      border-radius:14px;
+      font-weight:700;
+      transition:.2s;
+    }
+
+    .logout-btn:hover {
+      background:#fff;
+      color:var(--navy);
+    }
+
+    .menu-btn {
+      display:none;
       width:46px;
       height:46px;
-
-      object-fit:contain;
-
-      background:#fff;
-
-      border-radius:13px;
-
-      box-shadow:
-        0 5px 16px rgba(0,0,0,.18);
-    }
-
-    .brand-title{
-      font-size:18px;
-      font-weight:900;
-      line-height:1.1;
-      white-space:nowrap;
-    }
-
-    .brand-sub{
-      display:block;
-
-      margin-top:4px;
-
-      color:#c5d2e1;
-
-      font-size:10px;
-      font-weight:600;
-
-      white-space:nowrap;
-    }
-
-    .menu-toggle{
-      display:none;
-
-      width:42px;
-      height:42px;
-
-      border:1px solid rgba(255,255,255,.15);
-
+      border:1px solid rgba(255,255,255,.2);
       border-radius:12px;
-
-      color:#fff;
       background:rgba(255,255,255,.06);
-    }
-
-    .top-actions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    .user-chip{
-      display:flex;
-      align-items:center;
-      gap:9px;
-
-      max-width:250px;
-
-      padding:7px 12px;
-
-      border:1px solid rgba(255,255,255,.13);
-      border-radius:999px;
-
-      background:rgba(255,255,255,.06);
-
-      font-size:12px;
-      font-weight:700;
-    }
-
-    .avatar{
-      width:34px;
-      height:34px;
-
-      flex:0 0 34px;
-
-      display:grid;
-      place-items:center;
-
-      border-radius:50%;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--gold2),
-          var(--gold)
-        );
-
-      color:var(--navy);
-
-      font-size:12px;
-      font-weight:900;
-    }
-
-    .user-chip span{
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-
-    .logout{
-      border:1px solid rgba(255,255,255,.17);
-
-      border-radius:12px;
-
-      padding:10px 14px;
-
       color:#fff;
-      background:rgba(255,255,255,.05);
-
-      font-size:12px;
-      font-weight:800;
-
-      transition:.2s;
+      font-size:22px;
     }
 
-    .logout:hover{
-      background:rgba(255,255,255,.12);
-    }
-
-    /* =========================================================
+    /* =========================
        SIDEBAR
-    ========================================================= */
+    ========================= */
 
-    .sidebar{
+    .sidebar {
       position:fixed;
-
-      top:var(--topbar);
       left:0;
+      top:96px;
       bottom:0;
-
       width:var(--sidebar);
-
-      z-index:900;
-
+      background:#fff;
+      border-right:1px solid var(--border);
+      padding:28px 18px 25px;
       overflow-y:auto;
-
-      padding:20px 15px 25px;
-
-      background:
-        rgba(255,255,255,.97);
-
-      backdrop-filter:blur(16px);
-
-      border-right:1px solid var(--line);
+      z-index:900;
     }
 
-    .sidebar::-webkit-scrollbar{
-      width:5px;
-    }
-
-    .sidebar::-webkit-scrollbar-thumb{
-      background:#d8e0e9;
-      border-radius:99px;
-    }
-
-    .nav-title{
-      padding:8px 12px 9px;
-
-      color:#8a97a8;
-
-      font-size:10px;
-      font-weight:900;
-
-      text-transform:uppercase;
-      letter-spacing:1.1px;
-    }
-
-    .nav-group{
-      margin-bottom:17px;
-    }
-
-    .nav-btn{
-      position:relative;
-
-      width:100%;
-
-      display:flex;
-      align-items:center;
-
-      gap:11px;
-
-      padding:12px 13px;
-      margin:3px 0;
-
-      border:0;
-      border-radius:13px;
-
-      color:#58677a;
-      background:transparent;
-
-      text-align:left;
-
-      font-size:13px;
-      font-weight:750;
-
-      transition:.2s;
-    }
-
-    .nav-btn i{
-      width:20px;
-
-      color:#8b98a8;
-
-      text-align:center;
-
-      transition:.2s;
-    }
-
-    .nav-btn:hover{
-      color:var(--navy);
-
-      background:#f1f5f9;
-    }
-
-    .nav-btn:hover i{
-      color:var(--gold);
-    }
-
-    .nav-btn.active{
-      color:var(--navy);
-
-      background:
-        linear-gradient(
-          90deg,
-          #edf3f8,
-          #f8fafc
-        );
-
-      box-shadow:
-        inset 3px 0 var(--gold);
-    }
-
-    .nav-btn.active i{
-      color:var(--gold);
-    }
-
-    .nav-divider{
-      height:1px;
-
-      margin:15px 8px;
-
-      background:var(--line);
-    }
-
-    .category-label{
-      display:flex;
-      align-items:center;
-      gap:9px;
-
-      padding:9px 12px;
-
-      color:#9aa5b3;
-
-      font-size:10px;
-      font-weight:900;
-
-      text-transform:uppercase;
-      letter-spacing:1px;
-    }
-
-    .category-link{
-      display:flex;
-      align-items:center;
-      gap:10px;
-
-      width:100%;
-
-      padding:10px 13px;
-
-      margin:2px 0;
-
-      border-radius:11px;
-
-      color:#68778a;
-
-      font-size:12px;
-      font-weight:700;
-
-      transition:.2s;
-    }
-
-    .category-link:hover{
-      color:var(--navy);
-      background:#f4f7fa;
-      transform:translateX(2px);
-    }
-
-    .category-icon{
-      width:24px;
-
-      text-align:center;
-
-      font-size:16px;
-    }
-
-    .sidebar-note{
-      margin:20px 5px 0;
-
-      padding:17px;
-
-      border-radius:18px;
-
-      color:#fff;
-
-      background:
-        radial-gradient(
-          circle at 90% 10%,
-          rgba(213,166,75,.22),
-          transparent 35%
-        ),
-        linear-gradient(
-          145deg,
-          #091b33,
-          #123a60
-        );
-
-      box-shadow:var(--shadow2);
-    }
-
-    .sidebar-note-icon{
-      width:35px;
-      height:35px;
-
-      display:grid;
-      place-items:center;
-
-      margin-bottom:10px;
-
-      border-radius:11px;
-
-      color:var(--gold2);
-      background:rgba(213,166,75,.15);
-    }
-
-    .sidebar-note strong{
-      font-size:13px;
-    }
-
-    .sidebar-note p{
-      margin:6px 0 0;
-
-      color:#c6d3e1;
-
+    .side-label {
+      padding:0 14px;
+      margin:5px 0 12px;
+      color:#96a3b5;
       font-size:11px;
-      line-height:1.55;
+      font-weight:800;
+      letter-spacing:1.2px;
+      text-transform:uppercase;
     }
 
-    /* =========================================================
-       MAIN
-    ========================================================= */
-
-    .main{
-      min-height:100vh;
-
-      margin-left:var(--sidebar);
-
-      padding-top:var(--topbar);
+    .nav-list {
+      list-style:none;
+      display:grid;
+      gap:5px;
+      margin-bottom:25px;
     }
 
-    .content{
-      width:min(1500px,100%);
-
-      margin:auto;
-
-      padding:30px;
+    .nav-item {
+      width:100%;
+      border:0;
+      background:transparent;
+      color:#63748b;
+      min-height:48px;
+      padding:0 14px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      text-align:left;
+      font-weight:700;
+      transition:.2s;
     }
 
-    .page{
+    .nav-item:hover {
+      background:#f4f7fb;
+      color:var(--navy);
+    }
+
+    .nav-item.active {
+      background:linear-gradient(90deg,#f5f8fc,#edf3fa);
+      color:var(--navy);
+      box-shadow:inset 3px 0 0 var(--gold);
+    }
+
+    .nav-icon {
+      width:25px;
+      text-align:center;
+      font-size:18px;
+    }
+
+    .side-divider {
+      height:1px;
+      background:var(--border);
+      margin:18px 10px;
+    }
+
+    .owner-menu {
       display:none;
-
-      animation:pageIn .24s ease;
     }
 
-    .page.active{
+    body.owner .owner-menu {
       display:block;
     }
 
-    @keyframes pageIn{
-      from{
-        opacity:0;
-        transform:translateY(6px);
-      }
+    .owner-badge {
+      margin:15px 8px;
+      padding:16px;
+      border-radius:17px;
+      background:linear-gradient(135deg,#08203a,#123b62);
+      color:#fff;
+    }
 
-      to{
+    .owner-badge strong {
+      display:block;
+      font-size:12px;
+      margin-bottom:5px;
+    }
+
+    .owner-badge span {
+      color:#c7d6e6;
+      font-size:10px;
+      line-height:1.5;
+    }
+
+    /* =========================
+       MOBILE OVERLAY
+    ========================= */
+
+    .sidebar-overlay {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(2,17,32,.45);
+      z-index:850;
+    }
+
+    /* =========================
+       MAIN
+    ========================= */
+
+    .main {
+      margin-left:var(--sidebar);
+      padding-top:96px;
+      min-height:100vh;
+    }
+
+    .content {
+      max-width:1500px;
+      margin:auto;
+      padding:38px 38px 60px;
+    }
+
+    .section {
+      display:none;
+      animation:fadeUp .25s ease;
+    }
+
+    .section.active {
+      display:block;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity:0;
+        transform:translateY(7px);
+      }
+      to {
         opacity:1;
         transform:none;
       }
     }
 
-    /* =========================================================
-       HERO
-    ========================================================= */
-
-    .hero{
-      position:relative;
-
-      overflow:hidden;
-
-      margin-bottom:22px;
-
-      padding:35px;
-
-      border-radius:28px;
-
-      color:#fff;
-
-      background:
-        radial-gradient(
-          circle at 92% 15%,
-          rgba(213,166,75,.28),
-          transparent 25%
-        ),
-        radial-gradient(
-          circle at 75% 110%,
-          rgba(43,104,162,.25),
-          transparent 30%
-        ),
-        linear-gradient(
-          135deg,
-          #07172b,
-          #123b63
-        );
-
-      box-shadow:var(--shadow);
-    }
-
-    .hero:after{
-      content:"";
-
-      position:absolute;
-
-      width:220px;
-      height:220px;
-
-      right:-105px;
-      bottom:-120px;
-
-      border:1px solid rgba(255,255,255,.08);
-
-      border-radius:50%;
-    }
-
-    .hero-badge{
-      display:inline-flex;
-      align-items:center;
-      gap:7px;
-
-      margin-bottom:14px;
-
-      padding:7px 11px;
-
-      border:1px solid rgba(213,166,75,.3);
-      border-radius:999px;
-
-      color:var(--gold2);
-      background:rgba(213,166,75,.12);
-
-      font-size:10px;
-      font-weight:900;
-
+    .eyebrow {
+      color:#c68b13;
       text-transform:uppercase;
-      letter-spacing:.7px;
+      font-weight:800;
+      letter-spacing:1.5px;
+      font-size:11px;
+      margin-bottom:7px;
     }
 
-    .hero h1{
-      margin:0 0 8px;
-
-      font-family:
-        "Playfair Display",
-        Georgia,
-        serif;
-
-      font-size:clamp(29px,4vw,44px);
-
-      line-height:1.1;
+    .page-title {
+      font-family:"Plus Jakarta Sans",sans-serif;
+      font-size:32px;
+      line-height:1.15;
+      color:#071a31;
+      margin-bottom:8px;
     }
 
-    .hero p{
-      max-width:780px;
-
-      margin:0;
-
-      color:#cad8e7;
-
-      font-size:13px;
-      line-height:1.65;
+    .page-subtitle {
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.7;
+      margin-bottom:25px;
     }
 
-    .hero-actions{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
+    /* =========================
+       OVERVIEW HERO
+    ========================= */
 
-      margin-top:20px;
-    }
-
-    /* =========================================================
-       BUTTONS
-    ========================================================= */
-
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:7px;
-
-      min-height:42px;
-
-      padding:10px 15px;
-
-      border:0;
-      border-radius:12px;
-
-      color:#fff;
-      background:var(--navy);
-
-      font-size:12px;
-      font-weight:850;
-
-      transition:.2s;
-    }
-
-    .btn:hover{
-      transform:translateY(-1px);
-    }
-
-    .btn.gold{
-      color:#1d2732;
-
+    .dashboard-hero {
       background:
-        linear-gradient(
-          135deg,
-          var(--gold2),
-          var(--gold)
-        );
-    }
-
-    .btn.light{
-      color:var(--navy);
-      background:#edf2f7;
-    }
-
-    .btn.danger{
-      color:var(--red);
-      background:var(--redBg);
-    }
-
-    .btn:disabled{
-      opacity:.55;
-      cursor:not-allowed;
-      transform:none;
-    }
-
-    /* =========================================================
-       STATS
-    ========================================================= */
-
-    .stats{
-      display:grid;
-
-      grid-template-columns:
-        repeat(5,minmax(0,1fr));
-
-      gap:14px;
-
-      margin-bottom:30px;
-    }
-
-    .stat{
+        radial-gradient(circle at 85% 15%,rgba(233,185,73,.22),transparent 26%),
+        linear-gradient(135deg,#071d35,#0c3156);
+      color:#fff;
+      border-radius:26px;
+      padding:31px;
+      box-shadow:var(--shadow);
+      margin-bottom:25px;
       position:relative;
-
       overflow:hidden;
-
-      min-height:135px;
-
-      padding:18px;
-
-      border:1px solid var(--line);
-      border-radius:19px;
-
-      background:#fff;
-
-      box-shadow:var(--shadow2);
     }
 
-    .stat:after{
+    .dashboard-hero:after {
       content:"";
-
       position:absolute;
-
-      right:-25px;
-      bottom:-28px;
-
-      width:78px;
-      height:78px;
-
+      width:240px;
+      height:240px;
+      right:-90px;
+      bottom:-110px;
       border-radius:50%;
-
-      background:rgba(213,166,75,.08);
+      border:1px solid rgba(255,255,255,.1);
     }
 
-    .stat-icon{
-      width:36px;
-      height:36px;
+    .hero-kicker {
+      color:#f4ca68;
+      text-transform:uppercase;
+      font-size:11px;
+      letter-spacing:1.4px;
+      font-weight:800;
+      margin-bottom:9px;
+    }
 
+    .hero-title {
+      font-family:"Plus Jakarta Sans",sans-serif;
+      font-size:29px;
+      margin-bottom:9px;
+    }
+
+    .hero-text {
+      color:#c7d6e5;
+      max-width:730px;
+      font-size:13px;
+      line-height:1.7;
+    }
+
+    .hero-role {
+      display:inline-flex;
+      margin-top:17px;
+      padding:8px 13px;
+      border-radius:30px;
+      background:rgba(255,255,255,.1);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:.7px;
+      text-transform:uppercase;
+    }
+
+    /* =========================
+       STAT CARDS
+    ========================= */
+
+    .stats-grid {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+      margin-bottom:28px;
+    }
+
+    .stat-card {
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:20px;
+      box-shadow:0 8px 25px rgba(20,47,79,.05);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .stat-card:before {
+      content:"";
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:3px;
+      background:var(--gold);
+    }
+
+    .stat-icon {
+      width:42px;
+      height:42px;
       display:grid;
       place-items:center;
-
-      border-radius:11px;
-
-      color:var(--navy);
-      background:#f1f5f8;
-
-      font-size:14px;
+      background:#f6f8fb;
+      border-radius:13px;
+      font-size:19px;
+      margin-bottom:14px;
     }
 
-    .stat-label{
-      margin-top:13px;
-
-      color:#7c8999;
-
-      font-size:9px;
-      font-weight:900;
-
-      text-transform:uppercase;
-      letter-spacing:.7px;
-    }
-
-    .stat-value{
-      margin-top:4px;
-
-      color:var(--navy);
-
+    .stat-number {
+      font-family:"Plus Jakarta Sans",sans-serif;
       font-size:27px;
-      font-weight:900;
-
-      line-height:1.15;
+      font-weight:800;
+      color:#071d35;
     }
 
-    .stat-sub{
+    .stat-label {
+      color:#7a899d;
+      font-size:12px;
       margin-top:4px;
-
-      color:#9aa5b3;
-
-      font-size:10px;
     }
 
-    /* =========================================================
-       SECTION HEAD
-    ========================================================= */
+    /* =========================
+       CARDS / GRIDS
+    ========================= */
 
-    .section-head{
+    .block-title {
       display:flex;
-      align-items:center;
       justify-content:space-between;
-
-      gap:16px;
-
+      align-items:center;
+      gap:15px;
       margin-bottom:15px;
     }
 
-    .section-kicker{
-      margin-bottom:4px;
-
-      color:var(--gold);
-
-      font-size:10px;
-      font-weight:900;
-
-      text-transform:uppercase;
-      letter-spacing:1px;
+    .block-title h2 {
+      font-family:"Plus Jakarta Sans",sans-serif;
+      font-size:18px;
     }
 
-    .section-head h2{
-      margin:0;
-
-      color:var(--navy);
-
-      font-size:22px;
-      font-weight:900;
-    }
-
-    .section-head p{
-      margin:5px 0 0;
-
-      color:var(--muted);
-
+    .block-title span {
+      color:#8a98aa;
       font-size:12px;
-      line-height:1.5;
     }
 
-    /* =========================================================
-       SERVICE CARDS
-    ========================================================= */
-
-    .service-grid{
+    .service-grid {
       display:grid;
-
-      grid-template-columns:
-        repeat(5,minmax(0,1fr));
-
+      grid-template-columns:repeat(5,1fr);
       gap:15px;
     }
 
-    .service{
-      overflow:hidden;
-
-      border:1px solid var(--line);
-      border-radius:20px;
-
+    .service-card {
       background:#fff;
-
-      box-shadow:var(--shadow2);
-
-      transition:.22s;
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:20px;
+      transition:.2s;
+      box-shadow:0 8px 25px rgba(20,47,79,.04);
     }
 
-    .service:hover{
+    .service-card:hover {
       transform:translateY(-3px);
+      border-color:#d5dee9;
       box-shadow:var(--shadow);
     }
 
-    .service-top{
-      height:105px;
-
-      display:grid;
-      place-items:center;
-
-      background:
-        linear-gradient(
-          135deg,
-          #f7f3e8,
-          #fff
-        );
+    .service-icon {
+      font-size:27px;
+      margin-bottom:15px;
     }
 
-    .service-icon{
-      width:56px;
-      height:56px;
-
-      display:grid;
-      place-items:center;
-
-      border:1px solid #eee4cb;
-      border-radius:17px;
-
-      background:#fff;
-
-      font-size:28px;
-
-      box-shadow:0 8px 20px rgba(7,24,45,.07);
+    .service-card h3 {
+      font-size:14px;
+      margin-bottom:6px;
     }
 
-    .service-body{
-      padding:17px;
-    }
-
-    .service h3{
-      margin:0 0 6px;
-
-      color:var(--navy);
-
-      font-size:15px;
-      font-weight:900;
-    }
-
-    .service p{
-      min-height:42px;
-
-      margin:0;
-
-      color:var(--muted);
-
-      font-size:11px;
-      line-height:1.55;
-    }
-
-    .service .btn{
-      width:100%;
-
-      margin-top:13px;
-    }
-
-    /* =========================================================
-       CARDS
-    ========================================================= */
-
-    .card{
-      margin-bottom:18px;
-
-      padding:22px;
-
-      border:1px solid var(--line);
-      border-radius:21px;
-
-      background:#fff;
-
-      box-shadow:var(--shadow2);
-    }
-
-    /* =========================================================
-       PROFILE
-    ========================================================= */
-
-    .profile-grid{
-      display:grid;
-
-      grid-template-columns:
-        repeat(2,minmax(0,1fr));
-
-      gap:16px;
-    }
-
-    .field label{
-      display:block;
-
-      margin-bottom:7px;
-
-      color:#59677a;
-
-      font-size:10px;
-      font-weight:900;
-
-      text-transform:uppercase;
-      letter-spacing:.45px;
-    }
-
-    input,
-    select,
-    textarea{
-      width:100%;
-
-      border:1px solid #dce4ed;
-      border-radius:12px;
-
-      padding:12px 13px;
-
-      outline:none;
-
-      color:var(--text);
-      background:#fbfcfe;
-
-      font-size:13px;
-
-      transition:.2s;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus{
-      border-color:var(--gold);
-
-      background:#fff;
-
-      box-shadow:
-        0 0 0 3px rgba(213,166,75,.12);
-    }
-
-    input:disabled{
-      color:#7d8a9a;
-      background:#f0f3f6;
-      cursor:not-allowed;
-    }
-
-    textarea{
-      min-height:110px;
-      resize:vertical;
-    }
-
-    .full{
-      grid-column:1/-1;
-    }
-
-    /* =========================================================
-       OWNER
-    ========================================================= */
-
-    .owner-panel{
-      display:grid;
-
-      grid-template-columns:
-        1.35fr .65fr;
-
-      gap:15px;
-
-      margin-bottom:18px;
-    }
-
-    .owner-card{
-      padding:24px;
-
-      border-radius:22px;
-
-      color:#fff;
-
-      background:
-        radial-gradient(
-          circle at 90% 10%,
-          rgba(213,166,75,.2),
-          transparent 30%
-        ),
-        linear-gradient(
-          135deg,
-          #091c34,
-          #123b61
-        );
-
-      box-shadow:var(--shadow2);
-    }
-
-    .owner-card h3{
-      margin:0 0 8px;
-
-      font-size:19px;
-      font-weight:900;
-    }
-
-    .owner-card p{
-      max-width:700px;
-
-      margin:0;
-
-      color:#c6d4e3;
-
-      font-size:12px;
-      line-height:1.65;
-    }
-
-    .owner-meta{
-      display:flex;
-      align-items:center;
-      gap:12px;
-
-      margin-top:19px;
-    }
-
-    .owner-avatar{
-      width:46px;
-      height:46px;
-
-      display:grid;
-      place-items:center;
-
-      border-radius:14px;
-
-      color:var(--gold2);
-      background:rgba(213,166,75,.15);
-    }
-
-    .owner-meta strong{
-      display:block;
-
-      font-size:13px;
-    }
-
-    .owner-meta span{
-      color:#c4d1df;
-
-      font-size:10px;
-    }
-
-    .owner-tip{
-      padding:22px;
-
-      border:1px solid #f0dfb0;
-      border-radius:22px;
-
-      color:#735a20;
-      background:#fff9e9;
-    }
-
-    .owner-tip strong{
-      font-size:13px;
-    }
-
-    .owner-tip p{
-      margin:8px 0 0;
-
-      font-size:11px;
-      line-height:1.6;
-    }
-
-    .flow{
-      display:flex;
-      align-items:center;
-      flex-wrap:wrap;
-
-      gap:8px;
-
-      margin-top:14px;
-    }
-
-    .flow-step{
-      display:flex;
-      align-items:center;
-      gap:6px;
-
-      padding:7px 9px;
-
-      border-radius:999px;
-
-      color:#657286;
-      background:#f0f3f7;
-
-      font-size:9px;
-      font-weight:900;
-    }
-
-    .flow-arrow{
-      color:#b0bac6;
-      font-size:10px;
-    }
-
-    /* =========================================================
-       REQUESTS / PROPERTIES
-    ========================================================= */
-
-    .request-list{
-      display:grid;
-      gap:12px;
-    }
-
-    .request{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-
-      gap:18px;
-
-      padding:17px;
-
-      border:1px solid var(--line);
-      border-radius:17px;
-
-      background:#fff;
-
-      transition:.2s;
-    }
-
-    .request:hover{
-      border-color:#d6dee8;
-
-      box-shadow:
-        0 7px 22px rgba(7,24,45,.05);
-    }
-
-    .request-main{
-      min-width:0;
-    }
-
-    .request-title{
-      display:flex;
-      align-items:center;
-      flex-wrap:wrap;
-
-      gap:8px;
-    }
-
-    .request-title h3{
-      margin:0;
-
-      color:var(--navy);
-
-      font-size:15px;
-      font-weight:900;
-    }
-
-    .request p{
-      margin:5px 0 0;
-
-      color:var(--muted);
-
+    .service-card p {
+      color:#8290a2;
       font-size:11px;
       line-height:1.5;
+      margin-bottom:14px;
     }
 
-    .request-actions{
-      display:flex;
-      align-items:center;
-
-      gap:8px;
-
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-
-    .status{
-      display:inline-flex;
-      align-items:center;
-
-      padding:6px 10px;
-
-      border-radius:999px;
-
-      font-size:9px;
-      font-weight:900;
-
-      text-transform:uppercase;
-      letter-spacing:.5px;
-    }
-
-    .status.pending{
-      color:#8a6510;
-      background:var(--yellowBg);
-    }
-
-    .status.approved{
-      color:#087345;
-      background:var(--greenBg);
-    }
-
-    .status.rejected{
-      color:#ad3030;
-      background:var(--redBg);
-    }
-
-    .status.default{
-      color:#536175;
-      background:#edf2f7;
-    }
-
-    .property-type{
-      display:inline-flex;
-      align-items:center;
-      gap:5px;
-
-      padding:5px 9px;
-
-      border-radius:999px;
-
-      color:#536174;
-      background:#f0f3f6;
-
-      font-size:9px;
-      font-weight:850;
-    }
-
-    .admin-note{
-      margin-top:9px;
-
-      padding:10px 12px;
-
-      border:1px solid #f0dfb0;
-      border-radius:11px;
-
-      color:#72591c;
-      background:#fff9e9;
-
+    .service-link {
+      color:#b27a08;
       font-size:11px;
-      line-height:1.5;
-    }
-
-    .approval-track{
-      display:flex;
-      align-items:center;
-
-      margin-top:11px;
-
-      max-width:500px;
-    }
-
-    .track-dot{
-      width:9px;
-      height:9px;
-
-      flex:0 0 9px;
-
-      border-radius:50%;
-
-      background:#d6dde6;
-    }
-
-    .track-dot.active{
-      background:var(--gold);
-      box-shadow:0 0 0 4px rgba(213,166,75,.12);
-    }
-
-    .track-dot.done{
-      background:var(--green);
-    }
-
-    .track-line{
-      height:2px;
-
-      flex:1;
-
-      background:#dce3eb;
-    }
-
-    .track-line.done{
-      background:var(--green);
-    }
-
-    .track-label{
-      display:flex;
-      justify-content:space-between;
-
-      max-width:500px;
-
-      margin-top:5px;
-
-      color:#9aa5b2;
-
-      font-size:8px;
       font-weight:800;
     }
 
-    /* =========================================================
-       REVIEW
-    ========================================================= */
-
-    .stars{
-      margin-top:8px;
-
-      color:#d09c31;
-
-      letter-spacing:2px;
-
-      font-size:14px;
-    }
-
-    .review-box{
-      margin-top:10px;
-
-      padding:14px;
-
-      border:1px solid #edf1f5;
-      border-radius:15px;
-
-      color:#536174;
-      background:#f8fafc;
-
-      font-size:12px;
-      line-height:1.6;
-    }
-
-    /* =========================================================
-       MESSAGE
-    ========================================================= */
-
-    .message{
-      display:none;
-
-      margin-bottom:15px;
-
-      padding:12px 14px;
-
-      border-radius:12px;
-
-      font-size:12px;
-      line-height:1.5;
-    }
-
-    .message.show{
-      display:block;
-    }
-
-    .message.success{
-      color:#087345;
-      background:#e8f8f0;
-    }
-
-    .message.error{
-      color:#a82d2d;
-      background:#ffeded;
-    }
-
-    .message.info{
-      color:#24588f;
-      background:#edf4ff;
-    }
-
-    /* =========================================================
-       LOADING / EMPTY
-    ========================================================= */
-
-    .loading{
-      padding:35px 20px;
-
-      color:var(--muted);
-
-      text-align:center;
-
-      font-size:12px;
-    }
-
-    .spinner{
-      width:27px;
-      height:27px;
-
-      margin:0 auto 10px;
-
-      border:3px solid #e6ebf1;
-
-      border-top-color:var(--gold);
-
-      border-radius:50%;
-
-      animation:spin .8s linear infinite;
-    }
-
-    @keyframes spin{
-      to{
-        transform:rotate(360deg);
-      }
-    }
-
-    .empty{
-      padding:40px 20px;
-
-      color:var(--muted);
-
-      text-align:center;
-
-      font-size:12px;
-    }
-
-    .empty i{
-      display:block;
-
-      margin-bottom:10px;
-
-      color:#b5c0cc;
-
-      font-size:30px;
-    }
-
-    /* =========================================================
-       MODAL
-    ========================================================= */
-
-    .modal-backdrop{
-      display:none;
-
-      position:fixed;
-
-      inset:0;
-
-      z-index:2000;
-
-      align-items:center;
-      justify-content:center;
-
-      padding:20px;
-
-      background:rgba(2,12,25,.68);
-
-      backdrop-filter:blur(5px);
-    }
-
-    .modal-backdrop.show{
-      display:flex;
-    }
-
-    .modal{
-      width:min(720px,100%);
-
-      max-height:90vh;
-
-      overflow:auto;
-
-      padding:24px;
-
-      border-radius:24px;
-
-      background:#fff;
-
-      box-shadow:
-        0 30px 100px rgba(0,0,0,.30);
-    }
-
-    .modal-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-
-      gap:12px;
-
-      padding-bottom:13px;
-
-      border-bottom:1px solid var(--line);
-    }
-
-    .modal-head h2{
-      margin:0;
-
-      color:var(--navy);
-
-      font-size:20px;
-      font-weight:900;
-    }
-
-    .close{
-      width:38px;
-      height:38px;
-
-      border:0;
-      border-radius:50%;
-
-      color:#4e5b6c;
-      background:#edf1f5;
-
-      font-size:20px;
-    }
-
-    .modal-body{
-      padding-top:16px;
-
-      color:#566477;
-
-      font-size:12px;
-      line-height:1.6;
-    }
-
-    .detail-grid{
+    .quick-grid {
       display:grid;
-
-      grid-template-columns:
-        repeat(2,minmax(0,1fr));
-
-      gap:11px;
+      grid-template-columns:repeat(3,1fr);
+      gap:16px;
+      margin-top:28px;
     }
 
-    .detail{
-      padding:13px;
-
-      border:1px solid var(--line);
-      border-radius:13px;
-
-      background:#fafbfd;
+    .quick-card {
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:20px;
     }
 
-    .detail.full{
+    .quick-card h3 {
+      font-size:14px;
+      margin-bottom:7px;
+    }
+
+    .quick-card p {
+      color:#7b899c;
+      font-size:12px;
+      line-height:1.6;
+      margin-bottom:15px;
+    }
+
+    /* =========================
+       BUTTONS
+    ========================= */
+
+    .btn {
+      min-height:43px;
+      padding:0 16px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--navy);
+      font-weight:800;
+      font-size:12px;
+      transition:.2s;
+    }
+
+    .btn:hover {
+      transform:translateY(-1px);
+    }
+
+    .btn-primary {
+      background:linear-gradient(135deg,#e5ae3d,#f3cb69);
+      border-color:#e5ae3d;
+      color:#071d35;
+    }
+
+    .btn-dark {
+      background:var(--navy);
+      border-color:var(--navy);
+      color:#fff;
+    }
+
+    .btn-danger {
+      color:#fff;
+      background:var(--danger);
+      border-color:var(--danger);
+    }
+
+    .btn-row {
+      display:flex;
+      gap:9px;
+      flex-wrap:wrap;
+    }
+
+    /* =========================
+       PROFILE
+    ========================= */
+
+    .form-card {
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:22px;
+      padding:27px;
+      box-shadow:var(--shadow);
+    }
+
+    .form-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+    }
+
+    .field {
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .field.full {
       grid-column:1/-1;
     }
 
-    .detail span{
-      display:block;
-
-      margin-bottom:4px;
-
-      color:#8995a4;
-
-      font-size:9px;
-      font-weight:900;
-
+    .field label {
+      color:#4d5e73;
+      font-size:11px;
+      font-weight:800;
       text-transform:uppercase;
-      letter-spacing:.5px;
+      letter-spacing:.4px;
     }
 
-    .detail strong{
-      color:var(--navy);
+    .field input,
+    .field textarea,
+    .field select {
+      width:100%;
+      border:1px solid #dbe4ee;
+      background:#fbfcfe;
+      border-radius:13px;
+      min-height:48px;
+      padding:12px 14px;
+      color:#162942;
+      outline:none;
+      transition:.2s;
+    }
 
+    .field textarea {
+      min-height:120px;
+      resize:vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      border-color:#d9aa42;
+      background:#fff;
+      box-shadow:0 0 0 3px rgba(233,185,73,.12);
+    }
+
+    .field input:disabled {
+      background:#f0f3f7;
+      color:#718096;
+    }
+
+    /* =========================
+       FIND SERVICES
+    ========================= */
+
+    .finder-grid {
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:17px;
+    }
+
+    .finder-card {
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:22px;
+      box-shadow:0 8px 25px rgba(20,47,79,.04);
+    }
+
+    .finder-card .finder-icon {
+      font-size:31px;
+      margin-bottom:15px;
+    }
+
+    .finder-card h3 {
+      font-size:15px;
+      margin-bottom:7px;
+    }
+
+    .finder-card p {
+      color:#7b899c;
+      font-size:11px;
+      line-height:1.6;
+      min-height:53px;
+      margin-bottom:16px;
+    }
+
+    /* =========================
+       OWNER CENTRE
+    ========================= */
+
+    .owner-banner {
+      background:linear-gradient(135deg,#0b2948,#123c61);
+      color:#fff;
+      border-radius:23px;
+      padding:27px;
+      margin-bottom:20px;
+      box-shadow:var(--shadow);
+    }
+
+    .owner-banner h2 {
+      font-family:"Plus Jakarta Sans",sans-serif;
+      font-size:23px;
+      margin-bottom:7px;
+    }
+
+    .owner-banner p {
+      color:#c7d6e5;
+      font-size:13px;
+      line-height:1.6;
+      max-width:760px;
+    }
+
+    .owner-tools {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:16px;
+    }
+
+    .owner-tool {
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:22px;
+    }
+
+    .owner-tool .icon {
+      font-size:26px;
+      margin-bottom:13px;
+    }
+
+    .owner-tool h3 {
+      font-size:14px;
+      margin-bottom:7px;
+    }
+
+    .owner-tool p {
+      color:#7c8a9c;
+      font-size:11px;
+      line-height:1.6;
+      margin-bottom:15px;
+    }
+
+    /* =========================
+       REQUESTS
+    ========================= */
+
+    .list {
+      display:grid;
+      gap:15px;
+    }
+
+    .request-card,
+    .property-card,
+    .review-card {
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:19px;
+      padding:20px;
+      box-shadow:0 8px 25px rgba(20,47,79,.04);
+    }
+
+    .item-head {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:15px;
+      margin-bottom:14px;
+    }
+
+    .item-title {
+      font-size:15px;
+      font-weight:800;
+      margin-bottom:5px;
+    }
+
+    .item-meta {
+      color:#8492a4;
+      font-size:11px;
+      line-height:1.6;
+    }
+
+    .status {
+      padding:7px 11px;
+      border-radius:30px;
+      font-size:10px;
+      font-weight:800;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+
+    .status.pending {
+      color:#9a6a00;
+      background:#fff5d9;
+    }
+
+    .status.approved {
+      color:#117b58;
+      background:#e7f8f1;
+    }
+
+    .status.rejected {
+      color:#b63b38;
+      background:#fdeceb;
+    }
+
+    .status.other {
+      color:#526176;
+      background:#eef2f6;
+    }
+
+    .request-progress {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:6px;
+      margin:18px 0;
+    }
+
+    .progress-step {
+      height:6px;
+      border-radius:20px;
+      background:#e8edf3;
+    }
+
+    .progress-step.done {
+      background:#e1b34e;
+    }
+
+    .admin-note {
+      border-left:3px solid var(--gold);
+      background:#fffaf0;
+      padding:11px 13px;
+      border-radius:0 11px 11px 0;
+      color:#6e5a2d;
+      font-size:11px;
+      line-height:1.6;
+      margin-top:14px;
+    }
+
+    /* =========================
+       PROPERTY GRID
+    ========================= */
+
+    .property-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:16px;
+    }
+
+    .property-card h3 {
+      font-size:15px;
+      margin-bottom:5px;
+    }
+
+    .property-category {
+      display:inline-block;
+      color:#a16d00;
+      background:#fff5d9;
+      border-radius:30px;
+      padding:5px 9px;
+      font-size:9px;
+      font-weight:800;
+      text-transform:uppercase;
+      margin-bottom:13px;
+    }
+
+    .property-info {
+      display:grid;
+      gap:8px;
+      color:#6f7f92;
+      font-size:11px;
+      line-height:1.5;
+      margin-bottom:16px;
+    }
+
+    .property-info strong {
+      color:#31435a;
+    }
+
+    .facility {
+      display:inline-block;
+      padding:5px 8px;
+      background:#f4f7fa;
+      border-radius:7px;
+      color:#64758a;
+      font-size:9px;
+      margin:2px;
+    }
+
+    /* =========================
+       EMPTY / LOADING
+    ========================= */
+
+    .empty {
+      background:#fff;
+      border:1px dashed #ccd6e3;
+      border-radius:19px;
+      padding:40px 20px;
+      text-align:center;
+      color:#7e8da0;
+    }
+
+    .empty-icon {
+      font-size:30px;
+      margin-bottom:10px;
+    }
+
+    .empty h3 {
+      color:#344860;
+      font-size:15px;
+      margin-bottom:5px;
+    }
+
+    .empty p {
+      font-size:11px;
+      line-height:1.6;
+    }
+
+    .loading {
+      padding:35px;
+      text-align:center;
+      color:#8190a3;
       font-size:12px;
-      font-weight:750;
+    }
 
+    .spinner {
+      width:30px;
+      height:30px;
+      margin:0 auto 12px;
+      border:3px solid #e5ebf2;
+      border-top-color:#d5a73f;
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform:rotate(360deg); }
+    }
+
+    /* =========================
+       MODAL
+    ========================= */
+
+    .modal {
+      position:fixed;
+      inset:0;
+      background:rgba(3,17,31,.62);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:2000;
+      padding:20px;
+    }
+
+    .modal.show {
+      display:flex;
+    }
+
+    .modal-box {
+      width:min(680px,100%);
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:23px;
+      box-shadow:0 30px 80px rgba(0,0,0,.2);
+    }
+
+    .modal-head {
+      padding:21px 23px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:15px;
+    }
+
+    .modal-head h3 {
+      font-family:"Plus Jakarta Sans",sans-serif;
+      font-size:18px;
+    }
+
+    .close-modal {
+      width:36px;
+      height:36px;
+      border:1px solid var(--border);
+      background:#f7f9fb;
+      border-radius:10px;
+      font-size:20px;
+      color:#607086;
+    }
+
+    .modal-body {
+      padding:23px;
+    }
+
+    .detail-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .detail-box {
+      background:#f7f9fb;
+      border-radius:13px;
+      padding:13px;
+    }
+
+    .detail-box.full {
+      grid-column:1/-1;
+    }
+
+    .detail-label {
+      color:#8b99a9;
+      font-size:9px;
+      text-transform:uppercase;
+      font-weight:800;
+      margin-bottom:5px;
+    }
+
+    .detail-value {
+      color:#243952;
+      font-size:12px;
+      line-height:1.5;
       word-break:break-word;
     }
 
-    /* =========================================================
-       MOBILE OVERLAY
-    ========================================================= */
+    /* =========================
+       TOAST
+    ========================= */
 
-    .mobile-overlay{
-      display:none;
-
+    .toast {
       position:fixed;
-
-      inset:var(--topbar) 0 0 0;
-
-      z-index:850;
-
-      background:rgba(2,12,25,.48);
+      right:24px;
+      bottom:24px;
+      z-index:3000;
+      max-width:370px;
+      background:#071d35;
+      color:#fff;
+      padding:14px 17px;
+      border-radius:13px;
+      box-shadow:0 15px 40px rgba(0,0,0,.2);
+      font-size:12px;
+      font-weight:600;
+      display:none;
     }
 
-    /* =========================================================
-       RESPONSIVE
-    ========================================================= */
-
-    @media(max-width:1250px){
-
-      .service-grid{
-        grid-template-columns:
-          repeat(3,minmax(0,1fr));
-      }
-
-      .stats{
-        grid-template-columns:
-          repeat(3,minmax(0,1fr));
-      }
-
+    .toast.show {
+      display:block;
+      animation:toastIn .25s ease;
     }
 
-    @media(max-width:900px){
+    .toast.success {
+      border-left:4px solid #29b982;
+    }
 
-      :root{
-        --sidebar:260px;
+    .toast.error {
+      border-left:4px solid #ef716c;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity:0;
+        transform:translateY(10px);
+      }
+      to {
+        opacity:1;
+        transform:none;
+      }
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media(max-width:1200px) {
+      .service-grid,
+      .finder-grid {
+        grid-template-columns:repeat(3,1fr);
       }
 
-      .topbar{
-        padding:0 16px;
+      .property-grid {
+        grid-template-columns:repeat(2,1fr);
+      }
+    }
+
+    @media(max-width:900px) {
+      :root {
+        --sidebar:280px;
       }
 
-      .menu-toggle{
-        display:grid;
-        place-items:center;
+      .topbar {
+        height:82px;
+        padding:0 17px;
       }
 
-      .sidebar{
-        transform:translateX(-105%);
-
-        transition:
-          transform .25s ease;
-
-        box-shadow:
-          15px 0 35px rgba(0,0,0,.13);
+      .brand img {
+        width:48px;
+        height:48px;
+        border-radius:13px;
       }
 
-      .sidebar.open{
-        transform:translateX(0);
+      .brand-title {
+        font-size:18px;
       }
 
-      .mobile-overlay.show{
+      .brand-subtitle {
+        font-size:10px;
+      }
+
+      .menu-btn {
         display:block;
       }
 
-      .main{
-        margin-left:0;
+      .top-actions {
+        gap:7px;
       }
 
-      .content{
-        padding:22px 16px;
-      }
-
-      .owner-panel{
-        grid-template-columns:1fr;
-      }
-
-    }
-
-    @media(max-width:680px){
-
-      .brand-title{
-        font-size:15px;
-      }
-
-      .brand-sub{
+      .user-chip {
         display:none;
       }
 
-      .brand img{
-        width:41px;
-        height:41px;
-      }
-
-      .user-chip{
-        max-width:145px;
-      }
-
-      .user-chip span{
-        display:none;
-      }
-
-      .stats{
-        grid-template-columns:
-          repeat(2,minmax(0,1fr));
-      }
-
-      .service-grid{
-        grid-template-columns:1fr;
-      }
-
-      .profile-grid{
-        grid-template-columns:1fr;
-      }
-
-      .listing-form{
-        grid-template-columns:1fr !important;
-      }
-
-      .full{
-        grid-column:auto;
-      }
-
-      .request{
-        align-items:flex-start;
-        flex-direction:column;
-      }
-
-      .request-actions{
-        width:100%;
-        justify-content:flex-start;
-      }
-
-      .section-head{
-        align-items:flex-start;
-        flex-direction:column;
-      }
-
-      .hero{
-        padding:26px 21px;
-        border-radius:22px;
-      }
-
-      .hero h1{
-        font-size:29px;
-      }
-
-      .detail-grid{
-        grid-template-columns:1fr;
-      }
-
-      .detail.full{
-        grid-column:auto;
-      }
-
-      .modal{
-        padding:19px;
-        border-radius:20px;
-      }
-
-    }
-
-    @media(max-width:430px){
-
-      .stats{
-        grid-template-columns:1fr;
-      }
-
-      .top-actions{
-        gap:6px;
-      }
-
-      .logout{
-        padding:9px 10px;
+      .logout-btn {
+        height:43px;
+        padding:0 12px;
         font-size:11px;
       }
 
-      .logout span{
+      .sidebar {
+        top:82px;
+        transform:translateX(-100%);
+        transition:.25s;
+        box-shadow:10px 0 35px rgba(0,0,0,.12);
+      }
+
+      body.menu-open .sidebar {
+        transform:translateX(0);
+      }
+
+      body.menu-open .sidebar-overlay {
+        display:block;
+      }
+
+      .main {
+        margin-left:0;
+        padding-top:82px;
+      }
+
+      .content {
+        padding:25px 17px 45px;
+      }
+
+      .stats-grid {
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .service-grid,
+      .finder-grid {
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .owner-tools,
+      .quick-grid {
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:600px) {
+      .page-title {
+        font-size:26px;
+      }
+
+      .dashboard-hero {
+        padding:22px;
+        border-radius:20px;
+      }
+
+      .hero-title {
+        font-size:23px;
+      }
+
+      .stats-grid {
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+      }
+
+      .stat-card {
+        padding:15px;
+      }
+
+      .stat-number {
+        font-size:22px;
+      }
+
+      .service-grid,
+      .finder-grid,
+      .property-grid {
+        grid-template-columns:1fr;
+      }
+
+      .form-grid,
+      .detail-grid {
+        grid-template-columns:1fr;
+      }
+
+      .field.full,
+      .detail-box.full {
+        grid-column:auto;
+      }
+
+      .form-card {
+        padding:18px;
+      }
+
+      .request-card,
+      .property-card,
+      .review-card {
+        padding:17px;
+      }
+
+      .item-head {
+        flex-direction:column;
+      }
+
+      .status {
+        align-self:flex-start;
+      }
+
+      .topbar {
+        padding:0 12px;
+      }
+
+      .brand {
+        gap:9px;
+      }
+
+      .brand-title {
+        font-size:16px;
+      }
+
+      .brand-subtitle {
         display:none;
       }
-
-      .content{
-        padding:17px 12px;
-      }
-
     }
   </style>
 </head>
 
 <body>
 
-  <!-- =========================================================
-       TOP BAR
-  ========================================================= -->
+  <!-- =========================
+       TOPBAR
+  ========================== -->
 
   <header class="topbar">
 
-    <div class="top-left">
+    <div class="brand">
+      <img src="logo.png" alt="StudentHubHelp Logo">
 
-      <button
-        class="menu-toggle"
-        id="menuToggle"
-        aria-label="Open dashboard menu"
-      >
-        <i class="fa-solid fa-bars"></i>
-      </button>
-
-      <a href="index.html" class="brand">
-
-        <img
-          src="logo.png"
-          alt="StudentHubHelp"
-        >
-
-        <div>
-
-          <div class="brand-title">
-            StudentHubHelp
-          </div>
-
-          <small class="brand-sub">
-            India Student Discovery Platform
-          </small>
-
-        </div>
-
-      </a>
-
+      <div>
+        <div class="brand-title">StudentHubHelp</div>
+        <div class="brand-subtitle">India Student Discovery Platform</div>
+      </div>
     </div>
-
 
     <div class="top-actions">
 
       <div class="user-chip">
+        <div class="avatar" id="topAvatar">--</div>
 
-        <div
-          class="avatar"
-          id="topAvatar"
-        >
-          U
+        <div>
+          <div class="user-name" id="topUserName">Loading...</div>
+          <span class="user-role" id="topUserRole">Loading...</span>
         </div>
-
-        <span id="topUserName">
-          Loading...
-        </span>
-
       </div>
 
+      <button class="logout-btn" id="logoutBtn">
+        ↪ Logout
+      </button>
 
-      <button
-        class="logout"
-        id="logoutBtn"
-      >
-
-        <i class="fa-solid fa-right-from-bracket"></i>
-
-        <span>
-          Logout
-        </span>
-
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+        ☰
       </button>
 
     </div>
-
   </header>
 
 
-  <!-- MOBILE OVERLAY -->
+  <!-- =========================
+       SIDEBAR OVERLAY
+  ========================== -->
 
-  <div
-    class="mobile-overlay"
-    id="mobileOverlay"
-  ></div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 
-  <!-- =========================================================
+  <!-- =========================
        SIDEBAR
-  ========================================================= -->
+  ========================== -->
 
-  <aside
-    class="sidebar"
-    id="sidebar"
-  >
+  <aside class="sidebar">
 
-    <div class="nav-title">
-      Dashboard
-    </div>
+    <div class="side-label">Dashboard</div>
 
+    <ul class="nav-list">
 
-    <div class="nav-group">
+      <li>
+        <button class="nav-item active" data-section="overview">
+          <span class="nav-icon">⌂</span>
+          <span>Overview</span>
+        </button>
+      </li>
 
-      <button
-        class="nav-btn active"
-        data-page="home"
-      >
-        <i class="fa-solid fa-house"></i>
-        <span>Overview</span>
-      </button>
+      <li>
+        <button class="nav-item" data-section="profile">
+          <span class="nav-icon">👤</span>
+          <span>My Profile</span>
+        </button>
+      </li>
 
+      <li>
+        <button class="nav-item" data-section="find">
+          <span class="nav-icon">◉</span>
+          <span>Find Services</span>
+        </button>
+      </li>
 
-      <button
-        class="nav-btn"
-        data-page="profile"
-      >
-        <i class="fa-solid fa-user"></i>
-        <span>My Profile</span>
-      </button>
+      <li>
+        <button class="nav-item" data-section="reviews">
+          <span class="nav-icon">★</span>
+          <span>My Reviews</span>
+        </button>
+      </li>
 
-
-      <button
-        class="nav-btn"
-        data-page="find"
-      >
-        <i class="fa-solid fa-compass"></i>
-        <span>Find Services</span>
-      </button>
+    </ul>
 
 
-      <button
-        class="nav-btn"
-        data-page="reviews"
-      >
-        <i class="fa-solid fa-star"></i>
-        <span>My Reviews</span>
-      </button>
+    <div class="side-divider"></div>
 
-    </div>
+    <div class="side-label">Student Services</div>
 
+    <ul class="nav-list">
 
-    <div class="nav-divider"></div>
+      <li>
+        <button class="nav-item" data-link="pg-finder.html">
+          <span class="nav-icon">🏠</span>
+          <span>Hostel / PG</span>
+        </button>
+      </li>
 
+      <li>
+        <button class="nav-item" data-link="tiffin-finder.html">
+          <span class="nav-icon">🍱</span>
+          <span>Tiffin / Mess</span>
+        </button>
+      </li>
 
-    <!-- FIVE CATEGORIES -->
+      <li>
+        <button class="nav-item" data-link="library-finder.html">
+          <span class="nav-icon">📚</span>
+          <span>Library</span>
+        </button>
+      </li>
 
-    <div class="category-label">
-      <i class="fa-solid fa-layer-group"></i>
-      Student Services
-    </div>
+      <li>
+        <button class="nav-item" data-link="cafe-finder.html">
+          <span class="nav-icon">☕</span>
+          <span>Cafe</span>
+        </button>
+      </li>
 
+      <li>
+        <button class="nav-item" data-link="bookstore-finder.html">
+          <span class="nav-icon">📖</span>
+          <span>Book Store</span>
+        </button>
+      </li>
 
-    <div class="nav-group">
-
-      <a
-        class="category-link"
-        href="pg-finder.html"
-      >
-        <span class="category-icon">🏠</span>
-        <span>Hostel / PG</span>
-      </a>
-
-
-      <a
-        class="category-link"
-        href="tiffin-finder.html"
-      >
-        <span class="category-icon">🍱</span>
-        <span>Tiffin / Mess</span>
-      </a>
-
-
-      <a
-        class="category-link"
-        href="library-finder.html"
-      >
-        <span class="category-icon">📚</span>
-        <span>Library</span>
-      </a>
+    </ul>
 
 
-      <a
-        class="category-link"
-        href="cafe-finder.html"
-      >
-        <span class="category-icon">☕</span>
-        <span>Cafe</span>
-      </a>
+    <!-- OWNER ONLY -->
 
+    <div class="owner-menu">
 
-      <a
-        class="category-link"
-        href="bookstore-finder.html"
-      >
-        <span class="category-icon">📖</span>
-        <span>Book Store</span>
-      </a>
+      <div class="side-divider"></div>
 
-    </div>
+      <div class="side-label">Owner Centre</div>
 
+      <ul class="nav-list">
 
-    <div class="nav-divider"></div>
+        <li>
+          <button class="nav-item" data-section="owner">
+            <span class="nav-icon">▣</span>
+            <span>Owner Centre</span>
+          </button>
+        </li>
 
+        <li>
+          <button class="nav-item" data-section="add-listing">
+            <span class="nav-icon">＋</span>
+            <span>Add Listing</span>
+          </button>
+        </li>
 
-    <!-- OWNER CENTRE -->
+        <li>
+          <button class="nav-item" data-section="requests">
+            <span class="nav-icon">◷</span>
+            <span>My Requests</span>
+          </button>
+        </li>
 
-    <div
-      class="nav-title owner-only"
-    >
-      Owner Centre
-    </div>
+        <li>
+          <button class="nav-item" data-section="properties">
+            <span class="nav-icon">▦</span>
+            <span>Live Properties</span>
+          </button>
+        </li>
 
+      </ul>
 
-    <div
-      class="nav-group owner-only"
-    >
-
-      <button
-        class="nav-btn"
-        data-page="listing"
-      >
-        <i class="fa-solid fa-plus"></i>
-        <span>Add Listing</span>
-      </button>
-
-
-      <button
-        class="nav-btn"
-        data-page="requests"
-      >
-        <i class="fa-solid fa-clipboard-list"></i>
-        <span>My Requests</span>
-      </button>
-
-
-      <button
-        class="nav-btn"
-        data-page="properties"
-      >
-        <i class="fa-solid fa-building"></i>
-        <span>Live Properties</span>
-      </button>
-
-    </div>
-
-
-    <div class="sidebar-note">
-
-      <div class="sidebar-note-icon">
-        <i class="fa-solid fa-shield-halved"></i>
+      <div class="owner-badge">
+        <strong>OWNER ACCOUNT</strong>
+        <span>
+          Your owner tools and listing workflow are controlled directly by your Supabase profile role.
+        </span>
       </div>
-
-      <strong>
-        Secure Dashboard
-      </strong>
-
-      <p>
-        Account information, listing requests,
-        approvals and live property data are
-        connected directly with Supabase.
-      </p>
 
     </div>
 
   </aside>
 
 
-  <!-- =========================================================
+  <!-- =========================
        MAIN
-  ========================================================= -->
+  ========================== -->
 
   <main class="main">
 
     <div class="content">
 
 
-      <!-- =====================================================
+      <!-- =========================
            OVERVIEW
-      ===================================================== -->
+      ========================== -->
 
-      <section
-        class="page active"
-        id="page-home"
-      >
+      <section class="section active" id="section-overview">
 
-        <div class="hero">
+        <div class="dashboard-hero">
 
-          <div class="hero-badge">
-            <i class="fa-solid fa-circle-check"></i>
-            Secure User Dashboard
-          </div>
+          <div class="hero-kicker">StudentHubHelp Dashboard</div>
 
-
-          <h1>
-            Welcome,
-            <span id="heroName">
-              User
-            </span>
-            👋
+          <h1 class="hero-title">
+            Welcome, <span id="welcomeName">...</span>
           </h1>
 
-
-          <p id="heroText">
-            Discover student services across India,
-            manage your profile and keep track of
-            your activity.
+          <p class="hero-text">
+            Manage your StudentHubHelp account, discover student services across India,
+            track listing requests and keep your profile connected with Supabase.
           </p>
 
+          <span class="hero-role" id="heroRole">
+            Loading role...
+          </span>
 
-          <div class="hero-actions">
-
-            <button
-              class="btn gold"
-              onclick="openPage('find')"
-            >
-              <i class="fa-solid fa-compass"></i>
-              Explore Services
-            </button>
+        </div>
 
 
-            <button
-              class="btn light owner-only"
-              onclick="openPage('listing')"
-            >
-              <i class="fa-solid fa-plus"></i>
-              Add Listing
-            </button>
+        <div class="stats-grid">
 
+          <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-number" id="statRequests">0</div>
+            <div class="stat-label">My Requests</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">✓</div>
+            <div class="stat-number" id="statApproved">0</div>
+            <div class="stat-label">Approved Listings</div>
+          </div>
+
+          <div class="stat-card owner-stat">
+            <div class="stat-icon">🏢</div>
+            <div class="stat-number" id="statProperties">0</div>
+            <div class="stat-label">Live Properties</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">★</div>
+            <div class="stat-number" id="statReviews">0</div>
+            <div class="stat-label">My Reviews</div>
           </div>
 
         </div>
 
 
-        <!-- STATISTICS -->
-
-        <div class="stats">
-
-          <div class="stat">
-
-            <div class="stat-icon">
-              <i class="fa-solid fa-user-shield"></i>
-            </div>
-
-            <div class="stat-label">
-              Account Role
-            </div>
-
-            <div
-              class="stat-value"
-              id="statRole"
-            >
-              —
-            </div>
-
-            <div class="stat-sub">
-              Supabase profile
-            </div>
-
-          </div>
-
-
-          <div class="stat">
-
-            <div class="stat-icon">
-              <i class="fa-solid fa-clipboard-list"></i>
-            </div>
-
-            <div class="stat-label">
-              My Requests
-            </div>
-
-            <div
-              class="stat-value"
-              id="statRequests"
-            >
-              0
-            </div>
-
-            <div class="stat-sub">
-              Listing requests
-            </div>
-
-          </div>
-
-
-          <div class="stat">
-
-            <div class="stat-icon">
-              <i class="fa-solid fa-circle-check"></i>
-            </div>
-
-            <div class="stat-label">
-              Approved
-            </div>
-
-            <div
-              class="stat-value"
-              id="statApproved"
-            >
-              0
-            </div>
-
-            <div class="stat-sub">
-              Admin approved
-            </div>
-
-          </div>
-
-
-          <div class="stat">
-
-            <div class="stat-icon">
-              <i class="fa-solid fa-building"></i>
-            </div>
-
-            <div class="stat-label">
-              Live Properties
-            </div>
-
-            <div
-              class="stat-value"
-              id="statLive"
-            >
-              0
-            </div>
-
-            <div class="stat-sub">
-              Published listings
-            </div>
-
-          </div>
-
-
-          <div class="stat">
-
-            <div class="stat-icon">
-              <i class="fa-solid fa-star"></i>
-            </div>
-
-            <div class="stat-label">
-              My Reviews
-            </div>
-
-            <div
-              class="stat-value"
-              id="statReviews"
-            >
-              0
-            </div>
-
-            <div class="stat-sub">
-              Your submitted reviews
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- QUICK ACCESS -->
-
-        <div class="section-head">
-
-          <div>
-
-            <div class="section-kicker">
-              StudentHubHelp
-            </div>
-
-            <h2>
-              Quick Access
-            </h2>
-
-            <p>
-              Find the student service you need
-              across India.
-            </p>
-
-          </div>
-
+        <div class="block-title">
+          <h2>Explore Student Services</h2>
+          <span>5 categories available</span>
         </div>
 
 
         <div class="service-grid">
 
+          <a class="service-card" href="pg-finder.html">
+            <div class="service-icon">🏠</div>
+            <h3>Hostel / PG</h3>
+            <p>Find accommodation and student living options.</p>
+            <span class="service-link">Explore →</span>
+          </a>
 
-          <div class="service">
+          <a class="service-card" href="tiffin-finder.html">
+            <div class="service-icon">🍱</div>
+            <h3>Tiffin / Mess</h3>
+            <p>Discover food, tiffin and mess services.</p>
+            <span class="service-link">Explore →</span>
+          </a>
 
-            <div class="service-top">
-              <div class="service-icon">
-                🏠
-              </div>
-            </div>
+          <a class="service-card" href="library-finder.html">
+            <div class="service-icon">📚</div>
+            <h3>Library</h3>
+            <p>Search libraries and study spaces.</p>
+            <span class="service-link">Explore →</span>
+          </a>
 
-            <div class="service-body">
+          <a class="service-card" href="cafe-finder.html">
+            <div class="service-icon">☕</div>
+            <h3>Cafe</h3>
+            <p>Find cafes and student-friendly places.</p>
+            <span class="service-link">Explore →</span>
+          </a>
 
-              <h3>
-                Hostel / PG
-              </h3>
+          <a class="service-card" href="bookstore-finder.html">
+            <div class="service-icon">📖</div>
+            <h3>Book Store</h3>
+            <p>Find books, stationery and study material.</p>
+            <span class="service-link">Explore →</span>
+          </a>
 
-              <p>
-                Find accommodation by city,
-                district or local area.
-              </p>
+        </div>
 
-              <button
-                class="btn light"
-                onclick="goToFinder('pg-finder.html')"
-              >
-                Explore
-              </button>
 
-            </div>
+        <div class="quick-grid">
 
+          <div class="quick-card">
+            <h3>🔎 Find Services</h3>
+            <p>
+              Search student-focused services by city, district and area.
+            </p>
+
+            <button class="btn btn-dark" data-section="find">
+              Open Find Services
+            </button>
           </div>
 
+          <div class="quick-card">
+            <h3>👤 Complete Your Profile</h3>
+            <p>
+              Keep your name, phone and address updated in Supabase.
+            </p>
 
-          <div class="service">
-
-            <div class="service-top">
-              <div class="service-icon">
-                🍱
-              </div>
-            </div>
-
-            <div class="service-body">
-
-              <h3>
-                Tiffin / Mess
-              </h3>
-
-              <p>
-                Discover food and mess services
-                suitable for students.
-              </p>
-
-              <button
-                class="btn light"
-                onclick="goToFinder('tiffin-finder.html')"
-              >
-                Explore
-              </button>
-
-            </div>
-
+            <button class="btn btn-primary" data-section="profile">
+              Open Profile
+            </button>
           </div>
 
+          <div class="quick-card owner-quick">
+            <h3>🏢 Owner Centre</h3>
+            <p>
+              Submit listings and track approval status from one place.
+            </p>
 
-          <div class="service">
-
-            <div class="service-top">
-              <div class="service-icon">
-                📚
-              </div>
-            </div>
-
-            <div class="service-body">
-
-              <h3>
-                Library
-              </h3>
-
-              <p>
-                Find libraries and study spaces
-                near your location.
-              </p>
-
-              <button
-                class="btn light"
-                onclick="goToFinder('library-finder.html')"
-              >
-                Explore
-              </button>
-
-            </div>
-
+            <button class="btn btn-dark" data-section="owner">
+              Open Owner Centre
+            </button>
           </div>
-
-
-          <div class="service">
-
-            <div class="service-top">
-              <div class="service-icon">
-                ☕
-              </div>
-            </div>
-
-            <div class="service-body">
-
-              <h3>
-                Cafe
-              </h3>
-
-              <p>
-                Find cafes and student-friendly
-                places to study or relax.
-              </p>
-
-              <button
-                class="btn light"
-                onclick="goToFinder('cafe-finder.html')"
-              >
-                Explore
-              </button>
-
-            </div>
-
-          </div>
-
-
-          <div class="service">
-
-            <div class="service-top">
-              <div class="service-icon">
-                📖
-              </div>
-            </div>
-
-            <div class="service-body">
-
-              <h3>
-                Book Store
-              </h3>
-
-              <p>
-                Find books, stationery and study
-                supplies near you.
-              </p>
-
-              <button
-                class="btn light"
-                onclick="goToFinder('bookstore-finder.html')"
-              >
-                Explore
-              </button>
-
-            </div>
-
-          </div>
-
 
         </div>
 
       </section>
 
 
-      <!-- =====================================================
+      <!-- =========================
            PROFILE
-      ===================================================== -->
+      ========================== -->
 
-      <section
-        class="page"
-        id="page-profile"
-      >
+      <section class="section" id="section-profile">
 
-        <div class="section-head">
+        <div class="eyebrow">Account</div>
 
-          <div>
+        <h1 class="page-title">My Profile</h1>
 
-            <div class="section-kicker">
-              Account
-            </div>
-
-            <h2>
-              My Profile
-            </h2>
-
-            <p>
-              Your profile information is stored
-              directly in Supabase.
-            </p>
-
-          </div>
-
-        </div>
+        <p class="page-subtitle">
+          Your profile information is stored directly in Supabase.
+          Role and account identity are controlled by your Supabase profile.
+        </p>
 
 
-        <div
-          class="message"
-          id="profileMessage"
-        ></div>
+        <div class="form-card">
 
+          <form id="profileForm">
 
-        <div class="card">
+            <div class="form-grid">
 
-          <div class="profile-grid">
+              <div class="field">
+                <label>Full Name</label>
+                <input id="profileName" type="text" required>
+              </div>
 
+              <div class="field">
+                <label>Phone</label>
+                <input id="profilePhone" type="tel" placeholder="Your phone number">
+              </div>
 
-            <div class="field">
+              <div class="field">
+                <label>Email</label>
+                <input id="profileEmail" type="email" disabled>
+              </div>
 
-              <label>
-                Full Name
-              </label>
+              <div class="field">
+                <label>Role</label>
+                <input id="profileRole" type="text" disabled>
+              </div>
 
-              <input
-                id="profileName"
-                autocomplete="name"
-              >
+              <div class="field full">
+                <label>Address</label>
+                <textarea id="profileAddress" placeholder="Your address"></textarea>
+              </div>
 
             </div>
 
-
-            <div class="field">
-
-              <label>
-                Phone
-              </label>
-
-              <input
-                id="profilePhone"
-                type="tel"
-                autocomplete="tel"
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Email
-              </label>
-
-              <input
-                id="profileEmail"
-                type="email"
-                disabled
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Role
-              </label>
-
-              <input
-                id="profileRole"
-                disabled
-              >
-
-            </div>
-
-
-            <div class="field full">
-
-              <label>
-                Address
-              </label>
-
-              <textarea
-                id="profileAddress"
-                placeholder="Your address"
-              ></textarea>
-
-            </div>
-
-
-          </div>
-
-
-          <button
-            class="btn gold"
-            id="saveProfileBtn"
-          >
-            <i class="fa-solid fa-floppy-disk"></i>
-            Save Profile
-          </button>
-
-        </div>
-
-      </section>
-
-
-      <!-- =====================================================
-           FIND SERVICES
-      ===================================================== -->
-
-      <section
-        class="page"
-        id="page-find"
-      >
-
-        <div class="section-head">
-
-          <div>
-
-            <div class="section-kicker">
-              Discovery
-            </div>
-
-            <h2>
-              Find Student Services
-            </h2>
-
-            <p>
-              Live finder pages connected to
-              StudentHubHelp.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="service-grid">
-
-
-          <div class="service">
-
-            <div class="service-top">
-              <div class="service-icon">🏠</div>
-            </div>
-
-            <div class="service-body">
-
-              <h3>
-                Hostel / PG
-              </h3>
-
-              <p>
-                Accommodation listings across India.
-              </p>
-
-              <button
-                class="btn"
-                onclick="goToFinder('pg-finder.html')"
-              >
-                Open Finder
+            <div class="btn-row" style="margin-top:20px;">
+              <button class="btn btn-primary" type="submit">
+                💾 Save Profile
               </button>
-
             </div>
-
-          </div>
-
-
-          <div class="service">
-
-            <div class="service-top">
-              <div class="service-icon">🍱</div>
-            </div>
-
-            <div class="service-body">
-
-              <h3>
-                Tiffin / Mess
-              </h3>
-
-              <p>
-                Food and mess listings for students.
-              </p>
-
-              <button
-                class="btn"
-                onclick="goToFinder('tiffin-finder.html')"
-              >
-                Open Finder
-              </button>
-
-            </div>
-
-          </div>
-
-
-          <div class="service">
-
-            <div class="service-top">
-              <div class="service-icon">📚</div>
-            </div>
-
-            <div class="service-body">
-
-              <h3>
-                Library
-              </h3>
-
-              <p>
-                Libraries and study spaces.
-              </p>
-
-              <button
-                class="btn"
-                onclick="goToFinder('library-finder.html')"
-              >
-                Open Finder
-              </button>
-
-            </div>
-
-          </div>
-
-
-          <div class="service">
-
-            <div class="service-top">
-              <div class="service-icon">☕</div>
-            </div>
-
-            <div class="service-body">
-
-              <h3>
-                Cafe
-              </h3>
-
-              <p>
-                Cafes and student-friendly places.
-              </p>
-
-              <button
-                class="btn"
-                onclick="goToFinder('cafe-finder.html')"
-              >
-                Open Finder
-              </button>
-
-            </div>
-
-          </div>
-
-
-          <div class="service">
-
-            <div class="service-top">
-              <div class="service-icon">📖</div>
-            </div>
-
-            <div class="service-body">
-
-              <h3>
-                Book Store
-              </h3>
-
-              <p>
-                Books, stationery and study supplies.
-              </p>
-
-              <button
-                class="btn"
-                onclick="goToFinder('bookstore-finder.html')"
-              >
-                Open Finder
-              </button>
-
-            </div>
-
-          </div>
-
-
-        </div>
-
-      </section>
-
-
-      <!-- =====================================================
-           OWNER LISTING
-      ===================================================== -->
-
-      <section
-        class="page"
-        id="page-listing"
-      >
-
-        <div class="section-head">
-
-          <div>
-
-            <div class="section-kicker">
-              Owner Centre
-            </div>
-
-            <h2>
-              Add Listing
-            </h2>
-
-            <p>
-              Submit a property or business for
-              Director Admin verification.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div
-          class="message"
-          id="listingMessage"
-        ></div>
-
-
-        <div class="owner-panel">
-
-          <div class="owner-card">
-
-            <h3>
-              Grow your presence on StudentHubHelp
-            </h3>
-
-            <p>
-              Submit accurate details for your
-              property or business. Your listing
-              remains pending until Admin verifies
-              and approves it.
-            </p>
-
-
-            <div class="owner-meta">
-
-              <div class="owner-avatar">
-                <i class="fa-solid fa-store"></i>
-              </div>
-
-              <div>
-
-                <strong>
-                  Owner Listing Centre
-                </strong>
-
-                <span>
-                  Live publishing after verification
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <div class="flow">
-
-              <div class="flow-step">
-                <i class="fa-solid fa-paper-plane"></i>
-                Submit
-              </div>
-
-              <div class="flow-arrow">
-                <i class="fa-solid fa-chevron-right"></i>
-              </div>
-
-              <div class="flow-step">
-                <i class="fa-solid fa-shield-halved"></i>
-                Admin Review
-              </div>
-
-              <div class="flow-arrow">
-                <i class="fa-solid fa-chevron-right"></i>
-              </div>
-
-              <div class="flow-step">
-                <i class="fa-solid fa-circle-check"></i>
-                Approved
-              </div>
-
-              <div class="flow-arrow">
-                <i class="fa-solid fa-chevron-right"></i>
-              </div>
-
-              <div class="flow-step">
-                <i class="fa-solid fa-globe"></i>
-                Live
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div class="owner-tip">
-
-            <strong>
-              <i class="fa-solid fa-lightbulb"></i>
-              Listing tip
-            </strong>
-
-            <p>
-              Use the correct city, district,
-              complete address and active contact
-              number. This helps students find
-              your listing.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="card">
-
-          <div class="message info show">
-
-            <strong>
-              Approval flow:
-            </strong>
-
-            Submit your details →
-            Admin verifies →
-            Approved listing is published →
-            listing appears in Live Properties.
-
-          </div>
-
-
-          <form
-            id="listingForm"
-            class="profile-grid"
-          >
-
-
-            <div class="field">
-
-              <label>
-                Property / Business Name *
-              </label>
-
-              <input
-                id="listingName"
-                required
-                placeholder="Example: Sunrise Boys PG"
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Property Type *
-              </label>
-
-              <select
-                id="listingCategory"
-                required
-              >
-
-                <option value="">
-                  Select type
-                </option>
-
-                <option value="hostel">
-                  Hostel / PG
-                </option>
-
-                <option value="tiffin">
-                  Tiffin / Mess
-                </option>
-
-                <option value="library">
-                  Library
-                </option>
-
-                <option value="cafe">
-                  Cafe
-                </option>
-
-                <option value="bookstore">
-                  Book Store
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Area / City / District / State *
-              </label>
-
-              <input
-                id="listingArea"
-                required
-                placeholder="Example: Hisar, Haryana"
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Phone *
-              </label>
-
-              <input
-                id="listingPhone"
-                type="tel"
-                required
-                placeholder="Property contact number"
-              >
-
-            </div>
-
-
-            <div class="field full">
-
-              <label>
-                Full Address *
-              </label>
-
-              <textarea
-                id="listingAddress"
-                required
-                placeholder="Complete property address"
-              ></textarea>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Timing
-              </label>
-
-              <input
-                id="listingTiming"
-                placeholder="Example: 7 AM - 10 PM"
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Image URL
-              </label>
-
-              <input
-                id="listingImage"
-                type="url"
-                placeholder="https://..."
-              >
-
-            </div>
-
-
-            <div class="field full">
-
-              <label>
-                Facilities / Details
-              </label>
-
-              <textarea
-                id="listingFacilities"
-                placeholder="Wi-Fi, AC, parking, meals, study table, stationery, etc."
-              ></textarea>
-
-            </div>
-
-
-            <div class="field full">
-
-              <button
-                class="btn gold"
-                type="submit"
-                id="submitListingBtn"
-              >
-
-                <i class="fa-solid fa-paper-plane"></i>
-
-                Submit Listing Request
-
-              </button>
-
-            </div>
-
 
           </form>
 
@@ -3099,61 +1674,56 @@
       </section>
 
 
-      <!-- =====================================================
-           MY REQUESTS
-      ===================================================== -->
+      <!-- =========================
+           FIND SERVICES
+      ========================== -->
 
-      <section
-        class="page"
-        id="page-requests"
-      >
+      <section class="section" id="section-find">
 
-        <div class="section-head">
+        <div class="eyebrow">Discover</div>
 
-          <div>
+        <h1 class="page-title">Find Services</h1>
 
-            <div class="section-kicker">
-              Owner Centre
-            </div>
+        <p class="page-subtitle">
+          Search student services across India using the live StudentHubHelp listings.
+        </p>
 
-            <h2>
-              My Requests
-            </h2>
 
-            <p>
-              Track listing approval status and
-              Admin notes.
-            </p>
+        <div class="finder-grid">
 
+          <div class="finder-card">
+            <div class="finder-icon">🏠</div>
+            <h3>Hostel / PG</h3>
+            <p>Search accommodation and PG options.</p>
+            <a class="btn btn-dark" href="pg-finder.html">Find Hostel / PG</a>
           </div>
 
+          <div class="finder-card">
+            <div class="finder-icon">🍱</div>
+            <h3>Tiffin / Mess</h3>
+            <p>Find mess and tiffin services around your study location.</p>
+            <a class="btn btn-dark" href="tiffin-finder.html">Find Tiffin</a>
+          </div>
 
-          <button
-            class="btn light"
-            onclick="loadRequests()"
-          >
-            <i class="fa-solid fa-rotate"></i>
-            Refresh
-          </button>
+          <div class="finder-card">
+            <div class="finder-icon">📚</div>
+            <h3>Library</h3>
+            <p>Discover libraries and study spaces.</p>
+            <a class="btn btn-dark" href="library-finder.html">Find Library</a>
+          </div>
 
-        </div>
+          <div class="finder-card">
+            <div class="finder-icon">☕</div>
+            <h3>Cafe</h3>
+            <p>Find cafes suitable for students.</p>
+            <a class="btn btn-dark" href="cafe-finder.html">Find Cafe</a>
+          </div>
 
-
-        <div class="card">
-
-          <div
-            id="requestsContainer"
-            class="request-list"
-          >
-
-            <div class="loading">
-
-              <div class="spinner"></div>
-
-              Loading requests...
-
-            </div>
-
+          <div class="finder-card">
+            <div class="finder-icon">📖</div>
+            <h3>Book Store</h3>
+            <p>Find books, stationery and academic material.</p>
+            <a class="btn btn-primary" href="bookstore-finder.html">Find Book Store</a>
           </div>
 
         </div>
@@ -3161,2915 +1731,2500 @@
       </section>
 
 
-      <!-- =====================================================
+      <!-- =========================
+           OWNER CENTRE
+      ========================== -->
+
+      <section class="section owner-section" id="section-owner">
+
+        <div class="eyebrow">Business</div>
+
+        <h1 class="page-title">Owner Centre</h1>
+
+        <p class="page-subtitle">
+          Manage your business listings and monitor their approval workflow.
+        </p>
+
+
+        <div class="owner-banner">
+
+          <h2>Professional Listing Management</h2>
+
+          <p>
+            Submit your Hostel / PG, Tiffin / Mess, Library, Cafe or Book Store
+            listing. Every request is stored in Supabase and can be tracked here.
+          </p>
+
+        </div>
+
+
+        <div class="owner-tools">
+
+          <div class="owner-tool">
+            <div class="icon">＋</div>
+            <h3>Add Listing</h3>
+            <p>
+              Submit a new property or business listing for admin approval.
+            </p>
+
+            <button class="btn btn-primary" data-section="add-listing">
+              Add New Listing
+            </button>
+          </div>
+
+          <div class="owner-tool">
+            <div class="icon">◷</div>
+            <h3>My Requests</h3>
+            <p>
+              Check pending, approved and rejected listing requests.
+            </p>
+
+            <button class="btn btn-dark" data-section="requests">
+              View Requests
+            </button>
+          </div>
+
+          <div class="owner-tool">
+            <div class="icon">▦</div>
+            <h3>Live Properties</h3>
+            <p>
+              View your currently live properties across all five categories.
+            </p>
+
+            <button class="btn btn-dark" data-section="properties">
+              View Properties
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================
+           ADD LISTING
+      ========================== -->
+
+      <section class="section owner-section" id="section-add-listing">
+
+        <div class="eyebrow">Owner Centre</div>
+
+        <h1 class="page-title">Add Listing</h1>
+
+        <p class="page-subtitle">
+          Submit your listing. It will remain pending until reviewed by the admin.
+        </p>
+
+
+        <div class="form-card">
+
+          <form id="listingForm">
+
+            <div class="form-grid">
+
+              <div class="field">
+                <label>Property / Business Name</label>
+                <input id="listingName" type="text" required>
+              </div>
+
+              <div class="field">
+                <label>Category</label>
+
+                <select id="listingCategory" required>
+                  <option value="">Select category</option>
+                  <option value="hostel">Hostel / PG</option>
+                  <option value="tiffin">Tiffin / Mess</option>
+                  <option value="library">Library</option>
+                  <option value="cafe">Cafe</option>
+                  <option value="bookstore">Book Store</option>
+                </select>
+
+              </div>
+
+
+              <div class="field">
+                <label>Area / City / District</label>
+                <input
+                  id="listingArea"
+                  type="text"
+                  placeholder="Example: Hisar, Haryana"
+                  required
+                >
+              </div>
+
+
+              <div class="field">
+                <label>Phone</label>
+                <input
+                  id="listingPhone"
+                  type="tel"
+                  required
+                >
+              </div>
+
+
+              <div class="field full">
+                <label>Full Address</label>
+                <textarea
+                  id="listingAddress"
+                  required
+                  placeholder="Complete property address"
+                ></textarea>
+              </div>
+
+
+              <div class="field">
+                <label>Timing</label>
+                <input
+                  id="listingTiming"
+                  type="text"
+                  placeholder="Example: 7 AM - 10 PM"
+                >
+              </div>
+
+
+              <div class="field">
+                <label>Facilities</label>
+                <input
+                  id="listingFacilities"
+                  type="text"
+                  placeholder="WiFi, Parking, AC..."
+                >
+              </div>
+
+
+              <div class="field">
+                <label>Image URL</label>
+                <input
+                  id="listingImage"
+                  type="url"
+                  placeholder="Optional image URL"
+                >
+              </div>
+
+
+              <div class="field">
+                <label>Rating</label>
+                <input
+                  id="listingRating"
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  placeholder="Optional"
+                >
+              </div>
+
+            </div>
+
+
+            <div class="btn-row" style="margin-top:22px;">
+
+              <button class="btn btn-primary" type="submit">
+                📤 Submit Listing
+              </button>
+
+              <button class="btn" type="reset">
+                Reset
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================
+           REQUESTS
+      ========================== -->
+
+      <section class="section owner-section" id="section-requests">
+
+        <div class="eyebrow">Owner Centre</div>
+
+        <h1 class="page-title">My Requests</h1>
+
+        <p class="page-subtitle">
+          Track every listing request submitted from your owner account.
+        </p>
+
+
+        <div id="requestsContainer" class="list">
+          <div class="loading">
+            <div class="spinner"></div>
+            Loading requests...
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- =========================
            LIVE PROPERTIES
-      ===================================================== -->
+      ========================== -->
 
-      <section
-        class="page"
-        id="page-properties"
-      >
+      <section class="section owner-section" id="section-properties">
 
-        <div class="section-head">
+        <div class="eyebrow">Owner Centre</div>
 
-          <div>
+        <h1 class="page-title">Live Properties</h1>
 
-            <div class="section-kicker">
-              Owner Centre
-            </div>
+        <p class="page-subtitle">
+          Your live properties loaded directly from the five Supabase property tables.
+        </p>
 
-            <h2>
-              Live Properties
-            </h2>
 
-            <p>
-              Approved properties linked to your
-              registered owner phone.
-            </p>
-
+        <div id="propertiesContainer" class="property-grid">
+          <div class="loading">
+            <div class="spinner"></div>
+            Loading live properties...
           </div>
-
-
-          <button
-            class="btn light"
-            onclick="loadLiveProperties()"
-          >
-            <i class="fa-solid fa-rotate"></i>
-            Refresh
-          </button>
-
-        </div>
-
-
-        <div class="card">
-
-          <div
-            id="livePropertiesContainer"
-            class="request-list"
-          >
-
-            <div class="loading">
-
-              <div class="spinner"></div>
-
-              Loading live properties...
-
-            </div>
-
-          </div>
-
         </div>
 
       </section>
 
 
-      <!-- =====================================================
-           MY REVIEWS
-      ===================================================== -->
+      <!-- =========================
+           REVIEWS
+      ========================== -->
 
-      <section
-        class="page"
-        id="page-reviews"
-      >
+      <section class="section" id="section-reviews">
 
-        <div class="section-head">
+        <div class="eyebrow">Student Activity</div>
 
-          <div>
+        <h1 class="page-title">My Reviews</h1>
 
-            <div class="section-kicker">
-              Student Activity
-            </div>
+        <p class="page-subtitle">
+          Reviews submitted by your account are loaded directly from Supabase.
+        </p>
 
-            <h2>
-              My Reviews
-            </h2>
 
-            <p>
-              Reviews submitted using your
-              account.
-            </p>
-
+        <div id="reviewsContainer" class="list">
+          <div class="loading">
+            <div class="spinner"></div>
+            Loading reviews...
           </div>
-
-
-          <button
-            class="btn light"
-            onclick="loadReviews()"
-          >
-            <i class="fa-solid fa-rotate"></i>
-            Refresh
-          </button>
-
-        </div>
-
-
-        <div class="card">
-
-          <div
-            id="reviewsContainer"
-            class="request-list"
-          >
-
-            <div class="empty">
-
-              <i class="fa-regular fa-star"></i>
-
-              Reviews will appear here when
-              available.
-
-            </div>
-
-          </div>
-
         </div>
 
       </section>
-
 
     </div>
 
   </main>
 
 
-  <!-- =========================================================
-       DETAIL MODAL
-  ========================================================= -->
+  <!-- =========================
+       PROPERTY MODAL
+  ========================== -->
 
-  <div
-    class="modal-backdrop"
-    id="modalBackdrop"
-  >
+  <div class="modal" id="propertyModal">
 
-    <div
-      class="modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modalTitle"
-    >
+    <div class="modal-box">
 
       <div class="modal-head">
 
-        <h2 id="modalTitle">
-          Details
-        </h2>
+        <h3 id="modalTitle">Property Details</h3>
 
-        <button
-          class="close"
-          id="closeModalBtn"
-          aria-label="Close"
-        >
+        <button class="close-modal" id="closeModal">
           ×
         </button>
 
       </div>
 
-      <div
-        class="modal-body"
-        id="modalBody"
-      ></div>
+      <div class="modal-body" id="modalBody"></div>
 
     </div>
 
   </div>
 
 
-  <!-- =========================================================
-       JAVASCRIPT
-  ========================================================= -->
+  <!-- =========================
+       TOAST
+  ========================== -->
 
-  <script>
+  <div class="toast" id="toast"></div>
 
-    /* =========================================================
-       SUPABASE
-    ========================================================= */
 
-    const SUPABASE_URL =
-      "https://idurlccrarznnnqixxsd.supabase.co";
+<script>
+/* ============================================================
+   STUDENTHUBHELP USER DASHBOARD
+   Roles:
+     - student
+     - owner
+     - admin (redirected to admin-dashboard.html)
 
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVxJwjocFUeLB1yMA";
+   IMPORTANT:
+   Supabase is the source of truth.
+   ============================================================ */
 
 
-    if(!window.supabase){
+/* =========================
+   SUPABASE CONFIG
+========================= */
 
-      document.body.innerHTML = `
-        <div style="
-          min-height:100vh;
-          display:grid;
-          place-items:center;
-          padding:25px;
-          font-family:Arial,sans-serif;
-          background:#f4f7fb;
-        ">
-          <div style="
-            max-width:500px;
-            padding:30px;
-            border-radius:20px;
-            background:#fff;
-            box-shadow:0 20px 50px rgba(0,0,0,.1);
-            text-align:center;
-          ">
-            <h2 style="color:#07182d;">
-              Supabase Library Error
-            </h2>
+const SUPABASE_URL =
+  "https://idurlccrarznnnqixxsd.supabase.co";
 
-            <p style="color:#718096;">
-              Supabase JavaScript library failed to load.
-              Please refresh the page.
-            </p>
-          </div>
-        </div>
-      `;
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
-      throw new Error(
-        "Supabase library not loaded."
-      );
-    }
 
+const { createClient } =
+  supabase;
 
-    const sb =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-      );
+const db =
+  createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 
 
-    /* =========================================================
-       STATE
-    ========================================================= */
+/* =========================
+   GLOBAL STATE
+========================= */
 
-    let currentUser = null;
-    let currentProfile = null;
+let currentUser = null;
+let currentProfile = null;
 
-    let realtimeChannel = null;
+let realtimeChannel = null;
 
+let propertyCache = [];
 
-    /* =========================================================
-       HELPERS
-    ========================================================= */
 
-    const $ = id =>
-      document.getElementById(id);
+/* =========================
+   DOM HELPERS
+========================= */
 
+const $ = id =>
+  document.getElementById(id);
 
-    const categoryLabels = {
 
-      hostel:
-        "Hostel / PG",
+/* =========================
+   TOAST
+========================= */
 
-      pg:
-        "Hostel / PG",
+function showToast(message, type = "success") {
 
-      tiffin:
-        "Tiffin / Mess",
+  const toast = $("toast");
 
-      mess:
-        "Tiffin / Mess",
+  toast.textContent = message;
 
-      library:
-        "Library",
+  toast.className =
+    "toast show " + type;
 
-      cafe:
-        "Cafe",
+  clearTimeout(window.toastTimer);
 
-      bookstore:
-        "Book Store"
+  window.toastTimer =
+    setTimeout(() => {
 
-    };
+      toast.className =
+        "toast";
 
+    }, 3500);
+}
 
-    const categoryIcons = {
 
-      hostel:"🏠",
-      pg:"🏠",
+/* =========================
+   PHONE NORMALIZATION
+========================= */
 
-      tiffin:"🍱",
-      mess:"🍱",
+function normalizePhone(value) {
 
-      library:"📚",
+  return String(value || "")
+    .replace(/\D/g, "")
+    .slice(-10);
 
-      cafe:"☕",
+}
 
-      bookstore:"📖"
 
-    };
+/* =========================
+   CATEGORY FORMATTER
+========================= */
 
+function formatCategory(category) {
 
-    function escapeHtml(value){
+  const value =
+    String(category || "").toLowerCase();
 
-      return String(
-        value ?? ""
-      )
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
+  const map = {
 
-    }
+    hostel: "Hostel / PG",
+    pg: "Hostel / PG",
 
+    tiffin: "Tiffin / Mess",
+    mess: "Tiffin / Mess",
 
-    function normalizePhone(phone){
+    library: "Library",
 
-      return String(phone || "")
-        .replace(/\D/g,"")
-        .slice(-10);
+    cafe: "Cafe",
 
-    }
+    bookstore: "Book Store"
 
+  };
 
-    function initials(name){
+  return map[value] || category || "Service";
+}
 
-      const value =
-        String(name || "User")
-          .trim();
 
-      return value
-        .split(/\s+/)
-        .slice(0,2)
-        .map(x => x[0] || "")
-        .join("")
-        .toUpperCase() || "U";
+/* =========================
+   INITIALS
+========================= */
 
-    }
+function getInitials(name) {
 
+  const parts =
+    String(name || "User")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
 
-    function roleName(role){
+  if (!parts.length) return "U";
 
-      const r =
-        String(role || "")
-          .toLowerCase();
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
 
-      if(r === "owner")
-        return "OWNER";
+  return (
+    parts[0][0] +
+    parts[parts.length - 1][0]
+  ).toUpperCase();
+}
 
-      if(r === "student")
-        return "STUDENT";
 
-      if(r === "admin")
-        return "ADMIN";
+/* =========================
+   ESCAPE HTML
+========================= */
 
-      return "USER";
+function escapeHtml(value) {
 
-    }
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 
-    function formatCategory(value){
+/* =========================
+   SECTION NAVIGATION
+========================= */
 
-      const key =
-        String(value || "")
-          .toLowerCase();
+function openSection(sectionName) {
 
-      return (
-        categoryLabels[key] ||
-        value ||
-        "—"
-      );
+  if (
+    !currentProfile
+  ) return;
 
-    }
 
+  /* Owner-only protection */
 
-    function formatDate(value){
+  const ownerSections = [
+    "owner",
+    "add-listing",
+    "requests",
+    "properties"
+  ];
 
-      if(!value)
-        return "—";
+  if (
+    ownerSections.includes(sectionName) &&
+    String(currentProfile.role || "").toLowerCase() !== "owner"
+  ) {
 
-      const d =
-        new Date(value);
+    showToast(
+      "This section is available only for owner accounts.",
+      "error"
+    );
 
-      if(
-        Number.isNaN(
-          d.getTime()
-        )
-      ){
-        return "—";
+    return;
+  }
+
+
+  document
+    .querySelectorAll(".section")
+    .forEach(section => {
+
+      section.classList.remove("active");
+
+    });
+
+
+  const target =
+    $("section-" + sectionName);
+
+  if (target) {
+    target.classList.add("active");
+  }
+
+
+  document
+    .querySelectorAll(".nav-item")
+    .forEach(item => {
+
+      item.classList.remove("active");
+
+      if (
+        item.dataset.section === sectionName
+      ) {
+        item.classList.add("active");
       }
 
-      return d.toLocaleString(
-        "en-IN",
-        {
-          dateStyle:"medium",
-          timeStyle:"short"
+    });
+
+
+  document.body.classList.remove("menu-open");
+
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+
+  if (sectionName === "requests") {
+    loadRequests();
+  }
+
+  if (sectionName === "properties") {
+    loadLiveProperties();
+  }
+
+  if (sectionName === "reviews") {
+    loadReviews();
+  }
+
+}
+
+
+/* =========================
+   NAV EVENTS
+========================= */
+
+document
+  .querySelectorAll("[data-section]")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => openSection(button.dataset.section)
+    );
+
+  });
+
+
+document
+  .querySelectorAll("[data-link]")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        window.location.href =
+          button.dataset.link;
+
+      }
+    );
+
+  });
+
+
+/* =========================
+   MOBILE MENU
+========================= */
+
+$("menuBtn").addEventListener(
+  "click",
+  () => {
+
+    document.body.classList.toggle(
+      "menu-open"
+    );
+
+  }
+);
+
+
+$("sidebarOverlay").addEventListener(
+  "click",
+  () => {
+
+    document.body.classList.remove(
+      "menu-open"
+    );
+
+  }
+);
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+$("logoutBtn").addEventListener(
+  "click",
+  async () => {
+
+    const {
+      error
+    } = await db.auth.signOut();
+
+    if (error) {
+
+      showToast(
+        error.message,
+        "error"
+      );
+
+      return;
+    }
+
+    window.location.href =
+      "auth.html";
+
+  }
+);
+
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+
+async function loadProfile() {
+
+  if (!currentUser) return;
+
+
+  const {
+    data,
+    error
+  } = await db
+    .from("profiles")
+    .select(
+      "id,full_name,phone,email,address,role"
+    )
+    .eq(
+      "id",
+      currentUser.id
+    )
+    .maybeSingle();
+
+
+  if (error) {
+
+    console.error(error);
+
+    showToast(
+      "Unable to load your profile.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (!data) {
+
+    showToast(
+      "Your Supabase profile was not found.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  currentProfile = data;
+
+
+  /*
+    EXACT ROLE LOGIC
+
+    Only:
+      student
+      owner
+      admin
+
+    No USER fallback.
+  */
+
+  const role =
+    String(data.role || "")
+      .trim()
+      .toLowerCase();
+
+
+  if (role === "admin") {
+
+    window.location.href =
+      "admin-dashboard.html";
+
+    return;
+  }
+
+
+  if (
+    role !== "student" &&
+    role !== "owner"
+  ) {
+
+    /*
+      Unknown role is not silently converted
+      into student or USER.
+    */
+
+    showToast(
+      "Your account role is not configured as student or owner in Supabase.",
+      "error"
+    );
+
+  }
+
+
+  document.body.classList.toggle(
+    "owner",
+    role === "owner"
+  );
+
+
+  /* Header */
+
+  $("topUserName").textContent =
+    data.full_name ||
+    "Student";
+
+
+  $("topUserRole").textContent =
+    role.toUpperCase();
+
+
+  $("topAvatar").textContent =
+    getInitials(
+      data.full_name
+    );
+
+
+  /* Overview */
+
+  $("welcomeName").textContent =
+    data.full_name ||
+    "Student";
+
+
+  $("heroRole").textContent =
+    role.toUpperCase();
+
+
+  /* Profile */
+
+  $("profileName").value =
+    data.full_name || "";
+
+  $("profilePhone").value =
+    data.phone || "";
+
+  $("profileEmail").value =
+    data.email ||
+    currentUser.email ||
+    "";
+
+  $("profileRole").value =
+    role.toUpperCase();
+
+  $("profileAddress").value =
+    data.address || "";
+
+
+  /* Hide owner quick card for students */
+
+  document
+    .querySelectorAll(".owner-quick")
+    .forEach(element => {
+
+      element.style.display =
+        role === "owner"
+          ? ""
+          : "none";
+
+    });
+
+
+  await loadDashboardStats();
+
+
+  if (role === "owner") {
+
+    await Promise.all([
+      loadRequests(true),
+      loadLiveProperties(true)
+    ]);
+
+  }
+
+  await loadReviews(true);
+
+
+  setupRealtime();
+
+}
+
+
+/* =========================
+   SAVE PROFILE
+========================= */
+
+$("profileForm").addEventListener(
+  "submit",
+  async event => {
+
+    event.preventDefault();
+
+
+    if (!currentUser) return;
+
+
+    const payload = {
+
+      full_name:
+        $("profileName").value.trim(),
+
+      phone:
+        $("profilePhone").value.trim(),
+
+      address:
+        $("profileAddress").value.trim()
+
+    };
+
+
+    const {
+      error
+    } = await db
+      .from("profiles")
+      .update(payload)
+      .eq(
+        "id",
+        currentUser.id
+      );
+
+
+    if (error) {
+
+      console.error(error);
+
+      showToast(
+        "Unable to save profile: " +
+        error.message,
+        "error"
+      );
+
+      return;
+    }
+
+
+    currentProfile = {
+      ...currentProfile,
+      ...payload
+    };
+
+
+    $("topUserName").textContent =
+      currentProfile.full_name ||
+      "Student";
+
+    $("welcomeName").textContent =
+      currentProfile.full_name ||
+      "Student";
+
+    $("topAvatar").textContent =
+      getInitials(
+        currentProfile.full_name
+      );
+
+
+    showToast(
+      "Profile saved successfully."
+    );
+
+  }
+);
+
+
+/* ============================================================
+   DASHBOARD STATS
+   ============================================================ */
+
+async function loadDashboardStats() {
+
+  if (!currentUser) return;
+
+
+  /* Requests */
+
+  const {
+    count: requestCount
+  } = await db
+    .from("listing_requests")
+    .select(
+      "id",
+      {
+        count:"exact",
+        head:true
+      }
+    )
+    .eq(
+      "owner_id",
+      currentUser.id
+    );
+
+
+  $("statRequests").textContent =
+    requestCount || 0;
+
+
+  /* Approved */
+
+  const {
+    count: approvedCount
+  } = await db
+    .from("listing_requests")
+    .select(
+      "id",
+      {
+        count:"exact",
+        head:true
+      }
+    )
+    .eq(
+      "owner_id",
+      currentUser.id
+    )
+    .eq(
+      "status",
+      "approved"
+    );
+
+
+  $("statApproved").textContent =
+    approvedCount || 0;
+
+
+  /* Reviews */
+
+  const {
+    count: reviewCount
+  } = await db
+    .from("reviews")
+    .select(
+      "id",
+      {
+        count:"exact",
+        head:true
+      }
+    )
+    .or(
+      `student_id.eq.${currentUser.id},user_id.eq.${currentUser.id}`
+    );
+
+
+  $("statReviews").textContent =
+    reviewCount || 0;
+
+
+  if (
+    String(currentProfile?.role || "")
+      .toLowerCase() !== "owner"
+  ) {
+
+    $("statProperties").textContent =
+      "—";
+
+    return;
+  }
+
+
+  const properties =
+    await getOwnerProperties();
+
+
+  $("statProperties").textContent =
+    properties.length;
+
+}
+
+
+/* ============================================================
+   OWNER REQUESTS
+   ============================================================ */
+
+async function loadRequests(silent = false) {
+
+  if (
+    !currentUser ||
+    String(currentProfile?.role || "").toLowerCase() !== "owner"
+  ) return;
+
+
+  const container =
+    $("requestsContainer");
+
+
+  if (!silent) {
+
+    container.innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        Loading requests...
+      </div>
+    `;
+
+  }
+
+
+  const {
+    data,
+    error
+  } = await db
+    .from("listing_requests")
+    .select(
+      "id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at"
+    )
+    .eq(
+      "owner_id",
+      currentUser.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
+
+
+  if (error) {
+
+    console.error(error);
+
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">⚠️</div>
+        <h3>Unable to load requests</h3>
+        <p>${escapeHtml(error.message)}</p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  if (!data || !data.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📋</div>
+        <h3>No listing requests yet</h3>
+        <p>
+          Submit your first listing from Add Listing.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML =
+    data
+      .map(renderRequest)
+      .join("");
+
+}
+
+
+/* =========================
+   REQUEST RENDER
+========================= */
+
+function renderRequest(request) {
+
+  const status =
+    String(request.status || "pending")
+      .toLowerCase();
+
+
+  let statusClass =
+    "other";
+
+  if (
+    ["pending","approved","rejected"]
+      .includes(status)
+  ) {
+    statusClass = status;
+  }
+
+
+  let progress = 0;
+
+  if (status === "pending") {
+    progress = 1;
+  }
+
+  if (status === "approved") {
+    progress = 3;
+  }
+
+  if (status === "rejected") {
+    progress = 2;
+  }
+
+
+  const created =
+    request.created_at
+      ? new Date(
+          request.created_at
+        ).toLocaleDateString()
+      : "";
+
+
+  return `
+    <article class="request-card">
+
+      <div class="item-head">
+
+        <div>
+          <div class="item-title">
+            ${escapeHtml(request.name)}
+          </div>
+
+          <div class="item-meta">
+            ${escapeHtml(formatCategory(request.category))}
+            •
+            ${escapeHtml(request.area || "")}
+            ${created ? " • " + created : ""}
+          </div>
+        </div>
+
+        <span class="status ${statusClass}">
+          ${escapeHtml(status)}
+        </span>
+
+      </div>
+
+
+      <div class="request-progress">
+
+        <div class="progress-step ${progress >= 1 ? "done" : ""}"></div>
+
+        <div class="progress-step ${progress >= 2 ? "done" : ""}"></div>
+
+        <div class="progress-step ${progress >= 3 ? "done" : ""}"></div>
+
+      </div>
+
+
+      <div class="item-meta">
+
+        <strong>Address:</strong>
+        ${escapeHtml(request.address || "—")}
+
+        <br>
+
+        <strong>Phone:</strong>
+        ${escapeHtml(request.phone || "—")}
+
+      </div>
+
+
+      ${
+        request.admin_note
+        ?
+        `
+          <div class="admin-note">
+            <strong>Admin Note:</strong><br>
+            ${escapeHtml(request.admin_note)}
+          </div>
+        `
+        :
+        ""
+      }
+
+
+      <div class="btn-row" style="margin-top:15px;">
+
+        <button
+          class="btn btn-dark"
+          onclick="openRequestModal(${JSON.stringify(request).replace(/"/g,'&quot;')})"
+        >
+          View Details
+        </button>
+
+      </div>
+
+    </article>
+  `;
+
+}
+
+
+/* ============================================================
+   LIVE PROPERTIES
+   ============================================================ */
+
+async function getOwnerProperties() {
+
+  if (!currentProfile) {
+    return [];
+  }
+
+
+  const ownerPhone =
+    normalizePhone(
+      currentProfile.phone
+    );
+
+
+  if (!ownerPhone) {
+    return [];
+  }
+
+
+  const tables = [
+    "hostels",
+    "tiffins",
+    "libraries",
+    "cafes",
+    "bookstores"
+  ];
+
+
+  const columns =
+    "id,name,category,area,address,phone,timing,facilities,rating";
+
+
+  const results = [];
+
+
+  for (
+    const table of tables
+  ) {
+
+    try {
+
+      const {
+        data,
+        error
+      } = await db
+        .from(table)
+        .select(columns);
+
+
+      if (error) {
+
+        console.warn(
+          table,
+          error.message
+        );
+
+        continue;
+      }
+
+
+      for (
+        const row of data || []
+      ) {
+
+        if (
+          normalizePhone(row.phone) ===
+          ownerPhone
+        ) {
+
+          results.push({
+            ...row,
+            sourceTable:table
+          });
+
         }
+
+      }
+
+    } catch(error) {
+
+      console.warn(
+        table,
+        error
       );
 
     }
 
-
-    function statusClass(status){
-
-      const s =
-        String(status || "")
-          .toLowerCase();
-
-      return [
-        "pending",
-        "approved",
-        "rejected"
-      ].includes(s)
-        ? s
-        : "default";
-
-    }
+  }
 
 
-    function safeUrl(value){
+  return results;
 
-      try{
+}
 
-        const url =
-          new URL(
-            value,
-            window.location.href
-          );
 
-        if(
-          ["http:","https:"]
-            .includes(url.protocol)
-        ){
-          return url.href;
+/* =========================
+   LOAD LIVE PROPERTIES
+========================= */
+
+async function loadLiveProperties(silent = false) {
+
+  if (
+    !currentUser ||
+    String(currentProfile?.role || "").toLowerCase() !== "owner"
+  ) return;
+
+
+  const container =
+    $("propertiesContainer");
+
+
+  if (!silent) {
+
+    container.innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        Loading live properties...
+      </div>
+    `;
+
+  }
+
+
+  const properties =
+    await getOwnerProperties();
+
+
+  propertyCache =
+    properties;
+
+
+  $("statProperties").textContent =
+    properties.length;
+
+
+  if (!properties.length) {
+
+    container.innerHTML = `
+      <div class="empty" style="grid-column:1/-1;">
+        <div class="empty-icon">🏢</div>
+        <h3>No live properties found</h3>
+        <p>
+          Approved properties connected to your owner phone number
+          will appear here.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML =
+    properties
+      .map(renderProperty)
+      .join("");
+
+}
+
+
+/* =========================
+   PROPERTY RENDER
+========================= */
+
+function renderProperty(property) {
+
+  const facilities =
+    String(property.facilities || "")
+      .split(",")
+      .map(item => item.trim())
+      .filter(Boolean)
+      .slice(0,8);
+
+
+  return `
+    <article class="property-card">
+
+      <span class="property-category">
+        ${escapeHtml(formatCategory(property.category))}
+      </span>
+
+      <h3>
+        ${escapeHtml(property.name)}
+      </h3>
+
+
+      <div class="property-info">
+
+        <div>
+          <strong>Area:</strong>
+          ${escapeHtml(property.area || "—")}
+        </div>
+
+        <div>
+          <strong>Address:</strong>
+          ${escapeHtml(property.address || "—")}
+        </div>
+
+        <div>
+          <strong>Phone:</strong>
+          ${escapeHtml(property.phone || "—")}
+        </div>
+
+        <div>
+          <strong>Timing:</strong>
+          ${escapeHtml(property.timing || "—")}
+        </div>
+
+        <div>
+          <strong>Rating:</strong>
+          ${
+            property.rating !== null &&
+            property.rating !== undefined &&
+            property.rating !== ""
+            ? "★ " + escapeHtml(property.rating)
+            : "Not rated"
+          }
+        </div>
+
+      </div>
+
+
+      ${
+        facilities.length
+        ?
+        `
+          <div style="margin-bottom:13px;">
+            ${facilities
+              .map(
+                item =>
+                  `<span class="facility">${escapeHtml(item)}</span>`
+              )
+              .join("")
+            }
+          </div>
+        `
+        :
+        ""
+      }
+
+
+      <div class="btn-row">
+
+        <button
+          class="btn btn-dark"
+          onclick="openPropertyModal(${propertyCache.indexOf(property)})"
+        >
+          View Details
+        </button>
+
+        ${
+          property.phone
+          ?
+          `
+            <a
+              class="btn"
+              href="tel:${escapeHtml(property.phone)}"
+            >
+              Call
+            </a>
+          `
+          :
+          ""
         }
 
-      }catch(e){}
+      </div>
 
-      return "#";
+    </article>
+  `;
 
-    }
-
-
-    function showMessage(
-      id,
-      text,
-      type="info"
-    ){
-
-      const el = $(id);
-
-      if(!el)
-        return;
-
-      el.className =
-        "message show " + type;
-
-      el.textContent =
-        text;
-
-    }
+}
 
 
-    function hideMessage(id){
+/* ============================================================
+   REVIEWS
+   ============================================================ */
 
-      const el = $(id);
+async function loadReviews(silent = false) {
 
-      if(el)
-        el.className = "message";
-
-    }
-
-
-    function goToFinder(url){
-
-      window.location.href =
-        url;
-
-    }
+  if (!currentUser) return;
 
 
-    function closeSidebarMobile(){
+  const container =
+    $("reviewsContainer");
 
-      $("sidebar")
-        .classList
-        .remove("open");
 
-      $("mobileOverlay")
+  if (!silent) {
+
+    container.innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        Loading reviews...
+      </div>
+    `;
+
+  }
+
+
+  /*
+    Current reviews schema:
+      id
+      property_id
+      student_id
+      user_id
+      rating
+      review_text
+      status
+      created_at
+      updated_at
+  */
+
+  const {
+    data,
+    error
+  } = await db
+    .from("reviews")
+    .select(
+      "id,property_id,student_id,user_id,rating,review_text,status,created_at,updated_at"
+    )
+    .or(
+      `student_id.eq.${currentUser.id},user_id.eq.${currentUser.id}`
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
+
+
+  if (error) {
+
+    console.error(error);
+
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">⚠️</div>
+        <h3>Unable to load reviews</h3>
+        <p>${escapeHtml(error.message)}</p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  $("statReviews").textContent =
+    data?.length || 0;
+
+
+  if (!data || !data.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">★</div>
+        <h3>No reviews yet</h3>
+        <p>
+          Reviews submitted by your account will appear here.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML =
+    data
+      .map(renderReview)
+      .join("");
+
+}
+
+
+/* =========================
+   REVIEW RENDER
+========================= */
+
+function renderReview(review) {
+
+  const stars =
+    "★".repeat(
+      Math.max(
+        0,
+        Math.min(
+          5,
+          Number(review.rating || 0)
+        )
+      )
+    );
+
+
+  const created =
+    review.created_at
+      ? new Date(
+          review.created_at
+        ).toLocaleDateString()
+      : "";
+
+
+  return `
+    <article class="review-card">
+
+      <div class="item-head">
+
+        <div>
+
+          <div class="item-title">
+            Property #${escapeHtml(review.property_id || "—")}
+          </div>
+
+          <div class="item-meta">
+            ${created}
+          </div>
+
+        </div>
+
+        <span style="color:#d39b20;font-size:15px;">
+          ${stars || "—"}
+        </span>
+
+      </div>
+
+
+      <div style="
+        color:#53657a;
+        font-size:12px;
+        line-height:1.7;
+      ">
+        ${escapeHtml(review.review_text || "No review text")}
+      </div>
+
+
+      <div style="margin-top:13px;">
+
+        <span class="status ${
+          review.status === "approved"
+            ? "approved"
+            : review.status === "rejected"
+            ? "rejected"
+            : "pending"
+        }">
+          ${escapeHtml(review.status || "pending")}
+        </span>
+
+      </div>
+
+    </article>
+  `;
+
+}
+
+
+/* ============================================================
+   PROPERTY MODAL
+   ============================================================ */
+
+function openPropertyModal(index) {
+
+  const property =
+    propertyCache[index];
+
+
+  if (!property) return;
+
+
+  $("modalTitle").textContent =
+    property.name ||
+    "Property Details";
+
+
+  $("modalBody").innerHTML = `
+
+    <div class="detail-grid">
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Category
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(formatCategory(property.category))}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Rating
+        </div>
+
+        <div class="detail-value">
+          ${
+            property.rating !== null &&
+            property.rating !== undefined &&
+            property.rating !== ""
+            ? "★ " + escapeHtml(property.rating)
+            : "Not rated"
+          }
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Area
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(property.area || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Phone
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(property.phone || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box full">
+
+        <div class="detail-label">
+          Address
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(property.address || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Timing
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(property.timing || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Facilities
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(property.facilities || "—")}
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="btn-row" style="margin-top:20px;">
+
+      ${
+        property.phone
+        ?
+        `
+          <a
+            class="btn btn-dark"
+            href="tel:${escapeHtml(property.phone)}"
+          >
+            📞 Call
+          </a>
+        `
+        :
+        ""
+      }
+
+      ${
+        property.phone
+        ?
+        `
+          <a
+            class="btn"
+            target="_blank"
+            href="https://wa.me/91${normalizePhone(property.phone)}"
+          >
+            WhatsApp
+          </a>
+        `
+        :
+        ""
+      }
+
+      ${
+        property.address
+        ?
+        `
+          <a
+            class="btn"
+            target="_blank"
+            href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address)}"
+          >
+            📍 Maps
+          </a>
+        `
+        :
+        ""
+      }
+
+    </div>
+
+  `;
+
+
+  $("propertyModal")
+    .classList
+    .add("show");
+
+}
+
+
+/* =========================
+   REQUEST MODAL
+========================= */
+
+function openRequestModal(request) {
+
+  if (!request) return;
+
+
+  $("modalTitle").textContent =
+    request.name ||
+    "Listing Request";
+
+
+  $("modalBody").innerHTML = `
+
+    <div class="detail-grid">
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Category
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(formatCategory(request.category))}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Status
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(request.status || "pending")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Area
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(request.area || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Phone
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(request.phone || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box full">
+
+        <div class="detail-label">
+          Address
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(request.address || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Timing
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(request.timing || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box">
+
+        <div class="detail-label">
+          Rating
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(request.rating || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="detail-box full">
+
+        <div class="detail-label">
+          Facilities
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(request.facilities || "—")}
+        </div>
+
+      </div>
+
+
+      ${
+        request.admin_note
+        ?
+        `
+          <div class="detail-box full">
+
+            <div class="detail-label">
+              Admin Note
+            </div>
+
+            <div class="detail-value">
+              ${escapeHtml(request.admin_note)}
+            </div>
+
+          </div>
+        `
+        :
+        ""
+      }
+
+    </div>
+
+  `;
+
+
+  $("propertyModal")
+    .classList
+    .add("show");
+
+}
+
+
+/* =========================
+   MODAL CLOSE
+========================= */
+
+$("closeModal").addEventListener(
+  "click",
+  () => {
+
+    $("propertyModal")
+      .classList
+      .remove("show");
+
+  }
+);
+
+
+$("propertyModal").addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target ===
+      $("propertyModal")
+    ) {
+
+      $("propertyModal")
         .classList
         .remove("show");
 
-      document.body
-        .classList
-        .remove("no-scroll");
+    }
 
+  }
+);
+
+
+/* ============================================================
+   ADD LISTING
+   ============================================================ */
+
+$("listingForm").addEventListener(
+  "submit",
+  async event => {
+
+    event.preventDefault();
+
+
+    if (
+      !currentUser ||
+      !currentProfile
+    ) return;
+
+
+    const role =
+      String(currentProfile.role || "")
+        .toLowerCase();
+
+
+    if (role !== "owner") {
+
+      showToast(
+        "Only owner accounts can submit listings.",
+        "error"
+      );
+
+      return;
     }
 
 
-    function openPage(page){
-
-      const target =
-        document.querySelector(
-          '.nav-btn[data-page="' +
-          page +
-          '"]'
-        );
-
-      if(target)
-        target.click();
-
-    }
-
-
-    /* =========================================================
-       AUTH + BOOT
-    ========================================================= */
-
-    async function boot(){
-
-      try{
-
-        const {
-          data,
-          error
-        } =
-          await sb.auth.getSession();
-
-
-        if(
-          error ||
-          !data ||
-          !data.session
-        ){
-
-          window.location.href =
-            "auth.html";
-
-          return;
-
-        }
-
-
-        currentUser =
-          data.session.user;
-
-
-        /*
-          IMPORTANT:
-          Role is ALWAYS loaded from
-          public.profiles.
-          No localStorage/sessionStorage.
-        */
-
-        await loadProfile();
-
-
-        configureRoleUI();
-
-
-        await Promise.all([
-          loadRequests(),
-          loadLiveProperties(),
-          loadReviews()
-        ]);
-
-
-        subscribeRealtime();
-
-
-      }catch(error){
-
-        console.error(
-          "Dashboard boot error:",
-          error
-        );
-
-      }
-
-    }
-
-
-    /* =========================================================
-       PROFILE
-    ========================================================= */
-
-    async function loadProfile(){
-
-      const {
-        data,
-        error
-      } =
-        await sb
-          .from("profiles")
-          .select(
-            "id,full_name,phone,email,address,role"
-          )
-          .eq(
-            "id",
-            currentUser.id
-          )
-          .maybeSingle();
-
-
-      if(error){
-
-        console.error(
-          "Profile load error:",
-          error
-        );
-
-
-        /*
-          Do NOT promote user to owner
-          if profile cannot be verified.
-        */
-
-        currentProfile = {
-          id:currentUser.id,
-          full_name:
-            currentUser
-              .user_metadata
-              ?.full_name ||
-            "User",
-          phone:"",
-          email:
-            currentUser.email || "",
-          address:"",
-          role:null
-        };
-
-      }else{
-
-        currentProfile =
-          data || {
-            id:currentUser.id,
-            full_name:
-              currentUser
-                .user_metadata
-                ?.full_name ||
-              "User",
-            phone:"",
-            email:
-              currentUser.email || "",
-            address:"",
-            role:null
-          };
-
-      }
-
-
-      const name =
-        currentProfile.full_name ||
-        "User";
-
-
-      const role =
-        String(
-          currentProfile.role || ""
-        ).toLowerCase();
-
-
-      $("topUserName")
-        .textContent = name;
-
-
-      $("topAvatar")
-        .textContent =
-          initials(name);
-
-
-      $("heroName")
-        .textContent = name;
-
-
-      $("statRole")
-        .textContent =
-          roleName(role);
-
-
-      $("profileName")
-        .value =
-          currentProfile.full_name ||
-          "";
-
-
-      $("profilePhone")
-        .value =
-          currentProfile.phone ||
-          "";
-
-
-      $("profileEmail")
-        .value =
-          currentProfile.email ||
-          currentUser.email ||
-          "";
-
-
-      $("profileRole")
-        .value =
-          roleName(role);
-
-
-      $("profileAddress")
-        .value =
-          currentProfile.address ||
-          "";
-
-
+    const name =
+      $("listingName")
+        .value
+        .trim();
+
+    const category =
+      $("listingCategory")
+        .value;
+
+    const area =
+      $("listingArea")
+        .value
+        .trim();
+
+    const address =
+      $("listingAddress")
+        .value
+        .trim();
+
+    const phone =
       $("listingPhone")
-        .value =
-          currentProfile.phone ||
-          "";
+        .value
+        .trim();
+
+    const timing =
+      $("listingTiming")
+        .value
+        .trim();
+
+    const facilities =
+      $("listingFacilities")
+        .value
+        .trim();
+
+    const image =
+      $("listingImage")
+        .value
+        .trim();
+
+    const ratingRaw =
+      $("listingRating")
+        .value
+        .trim();
 
 
-      $("heroText")
-        .textContent =
-          role === "owner"
-            ? "Manage your owner profile, submit property listing requests and track approval status."
-            : "Find student services across India, manage your profile and keep track of your reviews.";
+    if (
+      !name ||
+      !category ||
+      !area ||
+      !address ||
+      !phone
+    ) {
 
-    }
-
-
-    function configureRoleUI(){
-
-      const role =
-        String(
-          currentProfile?.role || ""
-        ).toLowerCase();
-
-
-      const isOwner =
-        role === "owner";
-
-
-      document
-        .querySelectorAll(
-          ".owner-only"
-        )
-        .forEach(el => {
-
-          el.style.display =
-            isOwner
-              ? ""
-              : "none";
-
-        });
-
-
-      /*
-        Admin account should not use this
-        normal user dashboard.
-      */
-
-      if(role === "admin"){
-
-        /*
-          Keep the dashboard accessible,
-          but add an Admin shortcut.
-        */
-
-        const heroActions =
-          document.querySelector(
-            ".hero-actions"
-          );
-
-        if(heroActions){
-
-          const adminButton =
-            document.createElement(
-              "button"
-            );
-
-          adminButton.className =
-            "btn light";
-
-          adminButton.innerHTML =
-            '<i class="fa-solid fa-shield-halved"></i> Admin Dashboard';
-
-          adminButton.onclick = () => {
-
-            window.location.href =
-              "admin-dashboard.html";
-
-          };
-
-          heroActions.appendChild(
-            adminButton
-          );
-
-        }
-
-      }
-
-    }
-
-
-    /* =========================================================
-       SAVE PROFILE
-    ========================================================= */
-
-    async function saveProfile(){
-
-      const btn =
-        $("saveProfileBtn");
-
-
-      btn.disabled = true;
-
-
-      btn.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
-
-      hideMessage(
-        "profileMessage"
+      showToast(
+        "Please fill all required fields.",
+        "error"
       );
 
-
-      const name =
-        $("profileName")
-          .value
-          .trim();
-
-
-      const phone =
-        $("profilePhone")
-          .value
-          .trim();
-
-
-      const address =
-        $("profileAddress")
-          .value
-          .trim();
-
-
-      if(!name){
-
-        showMessage(
-          "profileMessage",
-          "Full name is required.",
-          "error"
-        );
-
-
-        btn.disabled = false;
-
-
-        btn.innerHTML =
-          '<i class="fa-solid fa-floppy-disk"></i> Save Profile';
-
-        return;
-
-      }
-
-
-      const payload = {
-
-        full_name:name,
-
-        phone:phone,
-
-        address:address
-
-      };
-
-
-      const {
-        error
-      } =
-        await sb
-          .from("profiles")
-          .update(payload)
-          .eq(
-            "id",
-            currentUser.id
-          );
-
-
-      if(error){
-
-        console.error(
-          "Profile update error:",
-          error
-        );
-
-
-        showMessage(
-          "profileMessage",
-          error.message,
-          "error"
-        );
-
-      }else{
-
-        currentProfile = {
-          ...currentProfile,
-          ...payload
-        };
-
-
-        $("topUserName")
-          .textContent = name;
-
-
-        $("topAvatar")
-          .textContent =
-            initials(name);
-
-
-        $("heroName")
-          .textContent = name;
-
-
-        $("listingPhone")
-          .value = phone;
-
-
-        showMessage(
-          "profileMessage",
-          "Profile saved successfully.",
-          "success"
-        );
-
-
-        /*
-          Reload live properties because
-          owner matching uses registered phone.
-        */
-
-        await loadLiveProperties();
-
-      }
-
-
-      btn.disabled = false;
-
-
-      btn.innerHTML =
-        '<i class="fa-solid fa-floppy-disk"></i> Save Profile';
-
+      return;
     }
 
 
-    /* =========================================================
-       ADD LISTING
-    ========================================================= */
-
-    async function submitListing(e){
-
-      e.preventDefault();
+    const rating =
+      ratingRaw === ""
+        ? null
+        : Number(ratingRaw);
 
 
-      const role =
-        String(
-          currentProfile?.role || ""
-        ).toLowerCase();
+    const payload = {
+
+      owner_id:
+        currentUser.id,
+
+      owner_name:
+        currentProfile.full_name || "",
+
+      owner_phone:
+        currentProfile.phone || phone,
+
+      name,
+
+      category,
+
+      area,
+
+      address,
+
+      phone,
+
+      timing:
+        timing || null,
+
+      facilities:
+        facilities || null,
+
+      image:
+        image || null,
+
+      rating:
+        Number.isFinite(rating)
+          ? rating
+          : null,
+
+      status:
+        "pending"
+
+    };
 
 
-      if(role !== "owner"){
-
-        showMessage(
-          "listingMessage",
-          "Only an approved owner account can submit a listing.",
-          "error"
-        );
-
-        return;
-
-      }
+    const {
+      error
+    } = await db
+      .from("listing_requests")
+      .insert(payload);
 
 
-      const btn =
-        $("submitListingBtn");
+    if (error) {
 
+      console.error(error);
 
-      btn.disabled = true;
-
-
-      btn.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
-
-
-      hideMessage(
-        "listingMessage"
+      showToast(
+        "Unable to submit listing: " +
+        error.message,
+        "error"
       );
 
-
-      const ownerPhone =
-        currentProfile?.phone || "";
-
-
-      const listingPhone =
-        $("listingPhone")
-          .value
-          .trim();
-
-
-      const category =
-        $("listingCategory")
-          .value;
-
-
-      if(
-        !normalizePhone(ownerPhone)
-      ){
-
-        showMessage(
-          "listingMessage",
-          "Please add your registered owner phone number in My Profile first.",
-          "error"
-        );
-
-
-        btn.disabled = false;
-
-
-        btn.innerHTML =
-          '<i class="fa-solid fa-paper-plane"></i> Submit Listing Request';
-
-        return;
-
-      }
-
-
-      if(!category){
-
-        showMessage(
-          "listingMessage",
-          "Please select a property type.",
-          "error"
-        );
-
-
-        btn.disabled = false;
-
-
-        btn.innerHTML =
-          '<i class="fa-solid fa-paper-plane"></i> Submit Listing Request';
-
-        return;
-
-      }
-
-
-      const name =
-        $("listingName")
-          .value
-          .trim();
-
-
-      const area =
-        $("listingArea")
-          .value
-          .trim();
-
-
-      const address =
-        $("listingAddress")
-          .value
-          .trim();
-
-
-      if(
-        !name ||
-        !area ||
-        !address ||
-        !listingPhone
-      ){
-
-        showMessage(
-          "listingMessage",
-          "Please complete all required fields.",
-          "error"
-        );
-
-
-        btn.disabled = false;
-
-
-        btn.innerHTML =
-          '<i class="fa-solid fa-paper-plane"></i> Submit Listing Request';
-
-        return;
-
-      }
-
-
-      /*
-        listing_requests schema is used here.
-        No direct insert into property tables.
-      */
-
-      const payload = {
-
-        owner_id:
-          currentUser.id,
-
-        owner_name:
-          currentProfile.full_name ||
-          currentUser.email ||
-          "Owner",
-
-        owner_phone:
-          ownerPhone,
-
-        name:name,
-
-        category:category,
-
-        area:area,
-
-        address:address,
-
-        phone:listingPhone,
-
-        timing:
-          $("listingTiming")
-            .value
-            .trim() || null,
-
-        facilities:
-          $("listingFacilities")
-            .value
-            .trim() || null,
-
-        image:
-          $("listingImage")
-            .value
-            .trim() || null,
-
-        rating:null,
-
-        status:"pending"
-
-      };
-
-
-      const {
-        error
-      } =
-        await sb
-          .from("listing_requests")
-          .insert(payload);
-
-
-      if(error){
-
-        console.error(
-          "Listing request error:",
-          error
-        );
-
-
-        showMessage(
-          "listingMessage",
-          error.message,
-          "error"
-        );
-
-      }else{
-
-        showMessage(
-          "listingMessage",
-          "Listing request submitted successfully. It is now pending Admin verification.",
-          "success"
-        );
-
-
-        $("listingForm")
-          .reset();
-
-
-        $("listingPhone")
-          .value =
-            currentProfile?.phone ||
-            "";
-
-
-        await loadRequests();
-
-      }
-
-
-      btn.disabled = false;
-
-
-      btn.innerHTML =
-        '<i class="fa-solid fa-paper-plane"></i> Submit Listing Request';
-
+      return;
     }
 
 
-    /* =========================================================
-       REQUESTS
-    ========================================================= */
+    $("listingForm").reset();
 
-    async function loadRequests(){
 
-      if(!currentUser)
-        return;
+    showToast(
+      "Listing submitted successfully. It is now pending admin approval."
+    );
 
 
-      const box =
-        $("requestsContainer");
+    await loadDashboardStats();
 
+    await loadRequests(true);
 
-      if(!box)
-        return;
 
+    openSection("requests");
 
-      const role =
-        String(
-          currentProfile?.role || ""
-        ).toLowerCase();
+  }
+);
 
 
-      if(role !== "owner"){
+/* ============================================================
+   REALTIME
+   ============================================================ */
 
-        box.innerHTML = `
-          <div class="empty">
-            <i class="fa-solid fa-lock"></i>
-            Listing requests are available only
-            for owner accounts.
-          </div>
-        `;
+function setupRealtime() {
 
-        $("statRequests")
-          .textContent = "0";
+  if (!currentUser) return;
 
-        $("statApproved")
-          .textContent = "0";
 
-        return;
+  if (realtimeChannel) {
 
-      }
-
-
-      box.innerHTML =
-        `
-          <div class="loading">
-            <div class="spinner"></div>
-            Loading requests...
-          </div>
-        `;
-
-
-      const {
-        data,
-        error
-      } =
-        await sb
-          .from("listing_requests")
-          .select(
-            "id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at"
-          )
-          .eq(
-            "owner_id",
-            currentUser.id
-          )
-          .order(
-            "created_at",
-            {
-              ascending:false
-            }
-          );
-
-
-      if(error){
-
-        console.error(
-          "Requests error:",
-          error
-        );
-
-
-        box.innerHTML = `
-          <div class="empty">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            Unable to load listing requests.
-          </div>
-        `;
-
-
-        $("statRequests")
-          .textContent = "—";
-
-
-        $("statApproved")
-          .textContent = "—";
-
-
-        return;
-
-      }
-
-
-      const rows =
-        data || [];
-
-
-      $("statRequests")
-        .textContent =
-          rows.length;
-
-
-      $("statApproved")
-        .textContent =
-          rows.filter(
-            x =>
-              String(
-                x.status || ""
-              ).toLowerCase()
-              === "approved"
-          ).length;
-
-
-      if(!rows.length){
-
-        box.innerHTML = `
-          <div class="empty">
-            <i class="fa-regular fa-clipboard"></i>
-            No listing requests yet.
-          </div>
-        `;
-
-        return;
-
-      }
-
-
-      box.innerHTML =
-        rows
-          .map(
-            r =>
-              renderRequest(
-                r
-              )
-          )
-          .join("");
-
-    }
-
-
-    function renderRequest(r){
-
-      const status =
-        String(
-          r.status || "pending"
-        ).toLowerCase();
-
-
-      const icon =
-        categoryIcons[
-          String(
-            r.category || ""
-          ).toLowerCase()
-        ] || "🏢";
-
-
-      return `
-
-        <div class="request">
-
-          <div class="request-main">
-
-            <div class="request-title">
-
-              <h3>
-                ${escapeHtml(
-                  r.name ||
-                  "Unnamed listing"
-                )}
-              </h3>
-
-              <span
-                class="status ${statusClass(status)}"
-              >
-                ${escapeHtml(status)}
-              </span>
-
-              <span class="property-type">
-                ${escapeHtml(
-                  formatCategory(
-                    r.category
-                  )
-                )}
-              </span>
-
-            </div>
-
-
-            <p>
-              ${escapeHtml(icon)}
-              ${escapeHtml(
-                r.area ||
-                "Area not provided"
-              )}
-            </p>
-
-
-            <p>
-              Submitted:
-              ${escapeHtml(
-                formatDate(
-                  r.created_at
-                )
-              )}
-            </p>
-
-
-            ${renderApprovalTrack(status)}
-
-
-            ${
-              r.admin_note
-                ? `
-                  <div class="admin-note">
-                    <strong>
-                      <i class="fa-solid fa-note-sticky"></i>
-                      Admin Note:
-                    </strong>
-                    ${escapeHtml(
-                      r.admin_note
-                    )}
-                  </div>
-                `
-                : ""
-            }
-
-          </div>
-
-
-          <div class="request-actions">
-
-            <button
-              class="btn light"
-              onclick="viewRequest('${escapeHtml(r.id)}')"
-            >
-              <i class="fa-regular fa-eye"></i>
-              View Details
-            </button>
-
-          </div>
-
-        </div>
-
-      `;
-
-    }
-
-
-    function renderApprovalTrack(status){
-
-      let submitDone = true;
-      let reviewDone =
-        status === "approved";
-
-      let approvedDone =
-        status === "approved";
-
-
-      if(status === "rejected"){
-
-        reviewDone = false;
-        approvedDone = false;
-
-      }
-
-
-      return `
-
-        <div class="approval-track">
-
-          <div class="track-dot done"></div>
-
-          <div class="track-line ${
-            reviewDone
-              ? "done"
-              : ""
-          }"></div>
-
-          <div class="track-dot ${
-            reviewDone
-              ? "done"
-              : "active"
-          }"></div>
-
-          <div class="track-line ${
-            approvedDone
-              ? "done"
-              : ""
-          }"></div>
-
-          <div class="track-dot ${
-            approvedDone
-              ? "done"
-              : ""
-          }"></div>
-
-        </div>
-
-
-        <div class="track-label">
-
-          <span>
-            Submitted
-          </span>
-
-          <span>
-            Admin Review
-          </span>
-
-          <span>
-            Published
-          </span>
-
-        </div>
-
-      `;
-
-    }
-
-
-    /* =========================================================
-       REQUEST DETAIL MODAL
-    ========================================================= */
-
-    async function viewRequest(id){
-
-      const {
-        data,
-        error
-      } =
-        await sb
-          .from("listing_requests")
-          .select(
-            "id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at"
-          )
-          .eq(
-            "id",
-            id
-          )
-          .eq(
-            "owner_id",
-            currentUser.id
-          )
-          .maybeSingle();
-
-
-      if(error || !data){
-
-        console.error(
-          "Request detail error:",
-          error
-        );
-
-        return;
-
-      }
-
-
-      $("modalTitle")
-        .textContent =
-          data.name ||
-          "Listing Details";
-
-
-      const imageUrl =
-        data.image
-          ? safeUrl(data.image)
-          : "#";
-
-
-      $("modalBody")
-        .innerHTML = `
-
-          <div class="detail-grid">
-
-            <div class="detail">
-
-              <span>
-                Status
-              </span>
-
-              <strong>
-
-                <span
-                  class="status ${statusClass(data.status)}"
-                >
-                  ${escapeHtml(
-                    data.status ||
-                    "pending"
-                  )}
-                </span>
-
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Property Type
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  formatCategory(
-                    data.category
-                  )
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Area
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  data.area ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Phone
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  data.phone ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail full">
-
-              <span>
-                Full Address
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  data.address ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Timing
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  data.timing ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Submitted
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  formatDate(
-                    data.created_at
-                  )
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail full">
-
-              <span>
-                Facilities / Details
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  data.facilities ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            ${
-              imageUrl !== "#"
-                ? `
-                  <div class="detail full">
-
-                    <span>
-                      Image
-                    </span>
-
-                    <strong>
-
-                      <a
-                        href="${imageUrl}"
-                        target="_blank"
-                        rel="noopener"
-                        style="color:#245f98"
-                      >
-                        Open image
-                      </a>
-
-                    </strong>
-
-                  </div>
-                `
-                : ""
-            }
-
-
-            ${
-              data.admin_note
-                ? `
-                  <div class="detail full">
-
-                    <span>
-                      Admin Note
-                    </span>
-
-                    <strong>
-                      ${escapeHtml(
-                        data.admin_note
-                      )}
-                    </strong>
-
-                  </div>
-                `
-                : ""
-            }
-
-
-          </div>
-
-        `;
-
-
-      $("modalBackdrop")
-        .classList
-        .add("show");
-
-    }
-
-
-    /* =========================================================
-       LIVE PROPERTIES
-    ========================================================= */
-
-    async function loadLiveProperties(){
-
-      if(!currentUser)
-        return;
-
-
-      const box =
-        $("livePropertiesContainer");
-
-
-      if(!box)
-        return;
-
-
-      const role =
-        String(
-          currentProfile?.role || ""
-        ).toLowerCase();
-
-
-      if(role !== "owner"){
-
-        box.innerHTML = `
-          <div class="empty">
-            <i class="fa-solid fa-lock"></i>
-            Live Properties are available only
-            for owner accounts.
-          </div>
-        `;
-
-
-        $("statLive")
-          .textContent = "0";
-
-
-        return;
-
-      }
-
-
-      box.innerHTML =
-        `
-          <div class="loading">
-            <div class="spinner"></div>
-            Loading live properties...
-          </div>
-        `;
-
-
-      const ownerPhone =
-        normalizePhone(
-          currentProfile?.phone
-        );
-
-
-      if(!ownerPhone){
-
-        box.innerHTML = `
-          <div class="empty">
-            <i class="fa-solid fa-phone"></i>
-            Add your registered owner phone
-            number in My Profile to see
-            linked live properties.
-          </div>
-        `;
-
-
-        $("statLive")
-          .textContent = "0";
-
-
-        return;
-
-      }
-
-
-      /*
-        All five live property tables share
-        these nine fields.
-
-        IMPORTANT:
-        No created_at.
-        No review.
-        No image.
-        No owner_id.
-
-        Bookstores also use the same nine
-        common fields.
-      */
-
-      const tables = [
-
-        {
-          table:"hostels",
-          label:"Hostel / PG",
-          icon:"🏠"
-        },
-
-        {
-          table:"tiffins",
-          label:"Tiffin / Mess",
-          icon:"🍱"
-        },
-
-        {
-          table:"libraries",
-          label:"Library",
-          icon:"📚"
-        },
-
-        {
-          table:"cafes",
-          label:"Cafe",
-          icon:"☕"
-        },
-
-        {
-          table:"bookstores",
-          label:"Book Store",
-          icon:"📖"
-        }
-
-      ];
-
-
-      const columns =
-        "id,name,category,area,address,phone,timing,facilities,rating";
-
-
-      const results =
-        await Promise.all(
-          tables.map(
-            async item => {
-
-              /*
-                First attempt:
-                exact phone match.
-              */
-
-              const {
-                data,
-                error
-              } =
-                await sb
-                  .from(item.table)
-                  .select(columns)
-                  .eq(
-                    "phone",
-                    currentProfile.phone
-                  );
-
-
-              return {
-                ...item,
-                data:
-                  error
-                    ? []
-                    : (
-                        data ||
-                        []
-                      ),
-                error
-              };
-
-            }
-          )
-        );
-
-
-      const live = [];
-
-
-      results.forEach(
-        result => {
-
-          result.data.forEach(
-            row => {
-
-              if(
-                normalizePhone(
-                  row.phone
-                ) === ownerPhone
-              ){
-
-                live.push({
-
-                  ...row,
-
-                  _table:
-                    result.table,
-
-                  _label:
-                    result.label,
-
-                  _icon:
-                    result.icon
-
-                });
-
-              }
-
-            }
-          );
-
-        }
-      );
-
-
-      /*
-        Phone formatting fallback.
-
-        Example:
-        +91 9929718264
-        9929718264
-        0919929718264
-
-        All normalize to last 10 digits.
-      */
-
-      if(live.length === 0){
-
-        const fallback =
-          await Promise.all(
-            tables.map(
-              async item => {
-
-                const {
-                  data,
-                  error
-                } =
-                  await sb
-                    .from(item.table)
-                    .select(columns);
-
-
-                return {
-
-                  ...item,
-
-                  data:
-                    error
-                      ? []
-                      : (
-                          data ||
-                          []
-                        )
-
-                };
-
-              }
-            )
-          );
-
-
-        fallback.forEach(
-          result => {
-
-            result.data.forEach(
-              row => {
-
-                if(
-                  normalizePhone(
-                    row.phone
-                  ) === ownerPhone
-                ){
-
-                  live.push({
-
-                    ...row,
-
-                    _table:
-                      result.table,
-
-                    _label:
-                      result.label,
-
-                    _icon:
-                      result.icon
-
-                  });
-
-                }
-
-              }
-            );
-
-          }
-        );
-
-      }
-
-
-      $("statLive")
-        .textContent =
-          live.length;
-
-
-      if(!live.length){
-
-        box.innerHTML = `
-          <div class="empty">
-            <i class="fa-regular fa-building"></i>
-            No approved live property is linked
-            to your registered phone yet.
-          </div>
-        `;
-
-        return;
-
-      }
-
-
-      box.innerHTML =
-        live
-          .map(
-            p =>
-              renderLiveProperty(
-                p
-              )
-          )
-          .join("");
-
-    }
-
-
-    function renderLiveProperty(p){
-
-      return `
-
-        <div class="request">
-
-          <div class="request-main">
-
-            <div class="request-title">
-
-              <h3>
-                ${escapeHtml(
-                  p._icon +
-                  " " +
-                  (
-                    p.name ||
-                    "Unnamed property"
-                  )
-                )}
-              </h3>
-
-
-              <span class="property-type">
-                ${escapeHtml(
-                  p._label
-                )}
-              </span>
-
-            </div>
-
-
-            <p>
-              <i class="fa-solid fa-location-dot"></i>
-              ${escapeHtml(
-                p.area ||
-                "Area not provided"
-              )}
-            </p>
-
-
-            <p>
-              ${escapeHtml(
-                p.address ||
-                "Address not provided"
-              )}
-            </p>
-
-
-            <p>
-
-              <i class="fa-solid fa-phone"></i>
-
-              ${escapeHtml(
-                p.phone ||
-                "—"
-              )}
-
-              ${
-                p.rating != null &&
-                String(p.rating).trim() !== ""
-                  ? `
-                    • ⭐
-                    ${escapeHtml(
-                      p.rating
-                    )}
-                  `
-                  : ""
-              }
-
-            </p>
-
-          </div>
-
-
-          <div class="request-actions">
-
-            <button
-              class="btn light"
-              onclick='viewLiveProperty(${JSON.stringify(p)})'
-            >
-              <i class="fa-regular fa-eye"></i>
-              View Details
-            </button>
-
-          </div>
-
-        </div>
-
-      `;
-
-    }
-
-
-    /* =========================================================
-       LIVE PROPERTY MODAL
-    ========================================================= */
-
-    function viewLiveProperty(p){
-
-      $("modalTitle")
-        .textContent =
-          p.name ||
-          "Live Property";
-
-
-      $("modalBody")
-        .innerHTML = `
-
-          <div class="detail-grid">
-
-
-            <div class="detail">
-
-              <span>
-                Property Type
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  p._label ||
-                  formatCategory(
-                    p.category
-                  )
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Rating
-              </span>
-
-              <strong>
-
-                ${
-                  p.rating != null &&
-                  String(p.rating).trim() !== ""
-                    ? "⭐ " +
-                      escapeHtml(
-                        p.rating
-                      )
-                    : "Not rated yet"
-                }
-
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Area
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  p.area ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Phone
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  p.phone ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail full">
-
-              <span>
-                Full Address
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  p.address ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Timing
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  p.timing ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail">
-
-              <span>
-                Live Category
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  p._table ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-            <div class="detail full">
-
-              <span>
-                Facilities / Details
-              </span>
-
-              <strong>
-                ${escapeHtml(
-                  p.facilities ||
-                  "—"
-                )}
-              </strong>
-
-            </div>
-
-
-          </div>
-
-        `;
-
-
-      $("modalBackdrop")
-        .classList
-        .add("show");
-
-    }
-
-
-    /* =========================================================
-       REVIEWS
-    ========================================================= */
-
-    async function loadReviews(){
-
-      if(!currentUser)
-        return;
-
-
-      const box =
-        $("reviewsContainer");
-
-
-      if(!box)
-        return;
-
-
-      box.innerHTML =
-        `
-          <div class="loading">
-            <div class="spinner"></div>
-            Loading reviews...
-          </div>
-        `;
-
-
-      /*
-        Actual live reviews schema:
-        id
-        property_id
-        user_id
-        user_name
-        rating
-        review_text
-        status
-        created_at
-        student_id
-      */
-
-      let rows = [];
-
-
-      const first =
-        await sb
-          .from("reviews")
-          .select(
-            "id,property_id,user_id,user_name,rating,review_text,status,created_at,student_id"
-          )
-          .eq(
-            "student_id",
-            currentUser.id
-          )
-          .order(
-            "created_at",
-            {
-              ascending:false
-            }
-          );
-
-
-      if(
-        !first.error &&
-        first.data
-      ){
-
-        rows =
-          first.data;
-
-      }
-
-
-      /*
-        Compatibility fallback:
-        Some existing records may have
-        user_id filled instead of student_id.
-      */
-
-      if(rows.length === 0){
-
-        const second =
-          await sb
-            .from("reviews")
-            .select(
-              "id,property_id,user_id,user_name,rating,review_text,status,created_at,student_id"
-            )
-            .eq(
-              "user_id",
-              currentUser.id
-            )
-            .order(
-              "created_at",
-              {
-                ascending:false
-              }
-            );
-
-
-        if(
-          !second.error &&
-          second.data
-        ){
-
-          rows =
-            second.data;
-
-        }
-
-      }
-
-
-      $("statReviews")
-        .textContent =
-          rows.length;
-
-
-      if(!rows.length){
-
-        box.innerHTML = `
-          <div class="empty">
-            <i class="fa-regular fa-star"></i>
-            You have not submitted any reviews yet.
-          </div>
-        `;
-
-        return;
-
-      }
-
-
-      box.innerHTML =
-        rows
-          .map(
-            r =>
-              renderReview(
-                r
-              )
-          )
-          .join("");
-
-    }
-
-
-    function renderReview(r){
-
-      const numericRating =
-        Math.max(
-          0,
-          Math.min(
-            5,
-            Number(
-              r.rating
-            ) || 0
-          )
-        );
-
-
-      const stars =
-        "★".repeat(
-          numericRating
-        ) +
-        "☆".repeat(
-          5 -
-          numericRating
-        );
-
-
-      const status =
-        String(
-          r.status ||
-          "approved"
-        ).toLowerCase();
-
-
-      return `
-
-        <div class="request">
-
-          <div class="request-main">
-
-            <div class="request-title">
-
-              <h3>
-                Property #
-                ${escapeHtml(
-                  r.property_id ||
-                  "—"
-                )}
-              </h3>
-
-
-              <span
-                class="status ${statusClass(status)}"
-              >
-                ${escapeHtml(
-                  status
-                )}
-              </span>
-
-            </div>
-
-
-            <div class="stars">
-              ${stars}
-            </div>
-
-
-            <div class="review-box">
-
-              ${escapeHtml(
-                r.review_text ||
-                "No review text"
-              )}
-
-            </div>
-
-
-            <p>
-
-              ${
-                r.user_name
-                  ? escapeHtml(
-                      r.user_name
-                    ) + " • "
-                  : ""
-              }
-
-              ${escapeHtml(
-                formatDate(
-                  r.created_at
-                )
-              )}
-
-            </p>
-
-          </div>
-
-        </div>
-
-      `;
-
-    }
-
-
-    /* =========================================================
-       REALTIME
-    ========================================================= */
-
-    function subscribeRealtime(){
-
-      if(
+    try {
+      db.removeChannel(
         realtimeChannel
-      ){
+      );
+    } catch(e) {}
 
-        sb.removeChannel(
-          realtimeChannel
-        );
-
-      }
+  }
 
 
-      realtimeChannel =
-        sb
-          .channel(
-            "studenthub-user-dashboard-" +
-            currentUser.id
-          )
-          .on(
-            "postgres_changes",
-            {
-              event:"*",
-              schema:"public",
-              table:"listing_requests",
-              filter:
-                "owner_id=eq." +
-                currentUser.id
-            },
-            async () => {
+  /*
+    Listing request realtime
+  */
 
-              await loadRequests();
-
-              await loadLiveProperties();
-
-            }
-          )
-          .subscribe(
-            status => {
-
-              console.log(
-                "Dashboard realtime:",
-                status
-              );
-
-            }
-          );
-
-    }
-
-
-    /* =========================================================
-       NAVIGATION
-    ========================================================= */
-
-    document
-      .querySelectorAll(
-        ".nav-btn"
+  realtimeChannel =
+    db
+      .channel(
+        "user-dashboard-live-" +
+        currentUser.id
       )
-      .forEach(
-        btn => {
-
-          btn.addEventListener(
-            "click",
-            async () => {
-
-              const page =
-                btn.dataset.page;
-
-
-              document
-                .querySelectorAll(
-                  ".nav-btn"
-                )
-                .forEach(
-                  item =>
-                    item.classList
-                      .remove(
-                        "active"
-                      )
-                );
-
-
-              btn.classList
-                .add("active");
-
-
-              document
-                .querySelectorAll(
-                  ".page"
-                )
-                .forEach(
-                  item =>
-                    item.classList
-                      .remove(
-                        "active"
-                      )
-                );
-
-
-              const target =
-                $("page-" + page);
-
-
-              if(target){
-
-                target.classList
-                  .add("active");
-
-              }
-
-
-              if(page === "requests"){
-
-                await loadRequests();
-
-              }
-
-
-              if(page === "properties"){
-
-                await loadLiveProperties();
-
-              }
-
-
-              if(page === "reviews"){
-
-                await loadReviews();
-
-              }
-
-
-              closeSidebarMobile();
-
-              window.scrollTo({
-                top:0,
-                behavior:"smooth"
-              });
-
-            }
-          );
-
-        }
-      );
-
-
-    /* =========================================================
-       MOBILE MENU
-    ========================================================= */
-
-    $("menuToggle")
-      .addEventListener(
-        "click",
-        () => {
-
-          $("sidebar")
-            .classList
-            .toggle("open");
-
-
-          $("mobileOverlay")
-            .classList
-            .toggle("show");
-
-
-          document.body
-            .classList
-            .toggle("no-scroll");
-
-        }
-      );
-
-
-    $("mobileOverlay")
-      .addEventListener(
-        "click",
-        closeSidebarMobile
-      );
-
-
-    /* =========================================================
-       EVENTS
-    ========================================================= */
-
-    $("saveProfileBtn")
-      .addEventListener(
-        "click",
-        saveProfile
-      );
-
-
-    $("listingForm")
-      .addEventListener(
-        "submit",
-        submitListing
-      );
-
-
-    $("logoutBtn")
-      .addEventListener(
-        "click",
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"listing_requests",
+          filter:
+            "owner_id=eq." +
+            currentUser.id
+        },
         async () => {
 
-          const btn =
-            $("logoutBtn");
+          await loadDashboardStats();
 
+          if (
+            String(currentProfile?.role || "")
+              .toLowerCase() === "owner"
+          ) {
 
-          btn.disabled = true;
+            await loadRequests(true);
 
-
-          btn.innerHTML =
-            '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-
-          await sb.auth.signOut();
-
-
-          window.location.href =
-            "auth.html";
-
-        }
-      );
-
-
-    $("closeModalBtn")
-      .addEventListener(
-        "click",
-        () => {
-
-          $("modalBackdrop")
-            .classList
-            .remove("show");
-
-        }
-      );
-
-
-    $("modalBackdrop")
-      .addEventListener(
-        "click",
-        e => {
-
-          if(
-            e.target.id ===
-            "modalBackdrop"
-          ){
-
-            $("modalBackdrop")
-              .classList
-              .remove("show");
+            await loadLiveProperties(true);
 
           }
 
         }
-      );
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"reviews"
+        },
+        async () => {
 
+          await loadReviews(true);
 
-    document.addEventListener(
-      "keydown",
-      e => {
-
-        if(e.key === "Escape"){
-
-          $("modalBackdrop")
-            .classList
-            .remove("show");
-
-          closeSidebarMobile();
+          await loadDashboardStats();
 
         }
+      )
+      .subscribe(
+        status => {
 
-      }
-    );
-
-
-    window.addEventListener(
-      "beforeunload",
-      () => {
-
-        if(
-          realtimeChannel
-        ){
-
-          sb.removeChannel(
-            realtimeChannel
+          console.log(
+            "StudentHubHelp realtime:",
+            status
           );
 
         }
+      );
 
-      }
+
+  /*
+    Live property updates.
+
+    We listen to all five property tables because
+    property tables do not use a common owner_id field.
+  */
+
+  const propertyTables = [
+    "hostels",
+    "tiffins",
+    "libraries",
+    "cafes",
+    "bookstores"
+  ];
+
+
+  propertyTables.forEach(
+    table => {
+
+      db
+        .channel(
+          "property-live-" + table
+        )
+        .on(
+          "postgres_changes",
+          {
+            event:"*",
+            schema:"public",
+            table
+          },
+          async () => {
+
+            if (
+              String(currentProfile?.role || "")
+                .toLowerCase() === "owner"
+            ) {
+
+              await loadLiveProperties(true);
+
+              await loadDashboardStats();
+
+            }
+
+          }
+        )
+        .subscribe();
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   AUTH INIT
+   ============================================================ */
+
+async function init() {
+
+  try {
+
+    /*
+      Auth session is the first source.
+    */
+
+    const {
+      data: sessionData,
+      error: sessionError
+    } = await db.auth.getSession();
+
+
+    if (sessionError) {
+
+      console.error(
+        sessionError
+      );
+
+      window.location.href =
+        "auth.html";
+
+      return;
+    }
+
+
+    const session =
+      sessionData?.session;
+
+
+    if (!session?.user) {
+
+      window.location.href =
+        "auth.html";
+
+      return;
+    }
+
+
+    currentUser =
+      session.user;
+
+
+    /*
+      Profile + role from Supabase.
+    */
+
+    await loadProfile();
+
+
+  } catch(error) {
+
+    console.error(error);
+
+    showToast(
+      "Unable to initialize dashboard.",
+      "error"
     );
 
+  }
 
-    /* =========================================================
-       START
-    ========================================================= */
+}
 
-    boot();
 
-  </script>
+/* =========================
+   AUTH STATE LISTENER
+========================= */
+
+db.auth.onAuthStateChange(
+  async (event, session) => {
+
+    if (
+      event === "SIGNED_OUT"
+    ) {
+
+      window.location.href =
+        "auth.html";
+
+      return;
+    }
+
+
+    if (
+      session?.user &&
+      !currentUser
+    ) {
+
+      currentUser =
+        session.user;
+
+      await loadProfile();
+
+    }
+
+  }
+);
+
+
+/* =========================
+   START
+========================= */
+
+init();
+
+</script>
 
 </body>
 </html>
