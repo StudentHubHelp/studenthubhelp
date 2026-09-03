@@ -57,6 +57,7 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- IMPORTANT: lowercase supabase-js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script type="application/ld+json">
@@ -94,17 +95,28 @@
     :root {
       --navy: #071a33;
       --navy-2: #0b2547;
+      --navy-3: #102f55;
+      --navy-card: #0b2342;
+      --navy-card-2: #0e2a4d;
+
       --gold: #d6a84f;
       --gold-light: #f0d48a;
-      --cream: #f8f5ee;
+
       --white: #ffffff;
-      --text: #172033;
-      --muted: #64748b;
-      --border: #e7e3da;
-      --soft: #f5f7fa;
-      --success: #16805c;
-      --shadow: 0 18px 55px rgba(7, 26, 51, .10);
-      --shadow-lg: 0 25px 80px rgba(7, 26, 51, .16);
+      --text: #ffffff;
+      --muted: #aebed2;
+      --muted-2: #8498b2;
+
+      --border: rgba(214,168,79,.20);
+      --border-light: rgba(255,255,255,.10);
+
+      --cream: #091d37;
+      --soft: #06162b;
+
+      --success: #42c996;
+
+      --shadow: 0 18px 55px rgba(0,0,0,.20);
+      --shadow-lg: 0 25px 80px rgba(0,0,0,.35);
     }
 
     * {
@@ -117,7 +129,7 @@
 
     body {
       margin: 0;
-      background: #fff;
+      background: var(--soft);
       color: var(--text);
       font-family: "Inter", sans-serif;
       line-height: 1.6;
@@ -146,7 +158,10 @@
       font-family: "Playfair Display", serif;
     }
 
-    /* NAVBAR */
+
+    /* =========================================
+       NAVBAR
+    ========================================= */
 
     .navbar {
       position: sticky;
@@ -233,7 +248,10 @@
       cursor: pointer;
     }
 
-    /* HERO */
+
+    /* =========================================
+       HERO
+    ========================================= */
 
     .hero {
       position: relative;
@@ -313,7 +331,7 @@
       border: 0;
       outline: 0;
       padding: 14px 15px;
-      color: var(--text);
+      color: #172033;
       background: transparent;
       font-size: 15px;
     }
@@ -356,7 +374,10 @@
       color: var(--gold-light);
     }
 
-    /* HERO CAROUSEL */
+
+    /* =========================================
+       HERO CAROUSEL
+    ========================================= */
 
     .hero-visual {
       position: relative;
@@ -429,7 +450,11 @@
       background: var(--gold);
     }
 
-    /* STATS */
+
+    /* =========================================
+       LIVE STATS
+       DARK + SUPABASE LIVE
+    ========================================= */
 
     .stats-wrap {
       margin-top: -38px;
@@ -444,38 +469,88 @@
     }
 
     .stat-card {
-      background: #fff;
-      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(
+          145deg,
+          #0c2749,
+          #081b34
+        );
+      border: 1px solid rgba(214,168,79,.24);
       border-radius: 17px;
-      padding: 18px;
-      box-shadow: var(--shadow);
+      padding: 20px 18px;
+      box-shadow:
+        0 18px 45px rgba(0,0,0,.24),
+        inset 0 1px 0 rgba(255,255,255,.04);
       text-align: center;
+      transition: .25s ease;
+    }
+
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 18%;
+      right: 18%;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(214,168,79,.7),
+        transparent
+      );
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(214,168,79,.48);
+      box-shadow:
+        0 25px 55px rgba(0,0,0,.32),
+        inset 0 1px 0 rgba(255,255,255,.05);
     }
 
     .stat-number {
-      font-size: 25px;
+      font-size: 27px;
+      line-height: 1.1;
       font-weight: 800;
-      color: var(--navy);
+      color: #fff;
+      min-height: 30px;
     }
 
     .stat-label {
-      color: var(--muted);
+      color: var(--gold-light);
       font-size: 11px;
-      margin-top: 2px;
+      margin-top: 6px;
+      font-weight: 600;
     }
 
-    /* SECTION */
+
+    /* =========================================
+       SECTIONS
+    ========================================= */
 
     .section {
       padding: 88px 0;
-    }
-
-    .section.soft {
       background: var(--soft);
     }
 
+    .section.soft {
+      background:
+        linear-gradient(
+          180deg,
+          #06162b,
+          #081c35
+        );
+    }
+
     .section.cream {
-      background: var(--cream);
+      background:
+        linear-gradient(
+          180deg,
+          #091d37,
+          #07182f
+        );
     }
 
     .section-head {
@@ -486,7 +561,7 @@
 
     .eyebrow {
       display: inline-block;
-      color: #a87822;
+      color: var(--gold-light);
       font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
@@ -496,7 +571,7 @@
 
     .section-title {
       margin: 0;
-      color: var(--navy);
+      color: #fff;
       font-family: "Playfair Display", serif;
       font-size: clamp(30px, 4vw, 45px);
       line-height: 1.1;
@@ -509,7 +584,10 @@
       font-size: 14px;
     }
 
-    /* SERVICES */
+
+    /* =========================================
+       SERVICES
+    ========================================= */
 
     .services-grid {
       display: grid;
@@ -522,7 +600,12 @@
       overflow: hidden;
       min-height: 275px;
       border-radius: 22px;
-      background: #fff;
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081c35
+        );
       border: 1px solid var(--border);
       box-shadow: var(--shadow);
       transition: .3s ease;
@@ -530,6 +613,7 @@
 
     .service-card:hover {
       transform: translateY(-7px);
+      border-color: rgba(214,168,79,.45);
       box-shadow: var(--shadow-lg);
     }
 
@@ -553,12 +637,12 @@
       border-radius: 10px;
       margin-top: -35px;
       position: relative;
-      border: 3px solid #fff;
+      border: 3px solid #0d2a4d;
     }
 
     .service-card h3 {
       margin: 11px 0 4px;
-      color: var(--navy);
+      color: #fff;
       font-size: 17px;
     }
 
@@ -571,12 +655,15 @@
     .service-link {
       display: inline-block;
       margin-top: 10px;
-      color: #a87822;
+      color: var(--gold-light);
       font-size: 11px;
       font-weight: 800;
     }
 
-    /* WHY CHOOSE */
+
+    /* =========================================
+       WHY CHOOSE US
+    ========================================= */
 
     .why-grid {
       display: grid;
@@ -586,10 +673,21 @@
 
     .why-card {
       padding: 28px;
-      background: #fff;
-      border: 1px solid var(--border);
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081b34
+        );
+      border: 1px solid var(--border-light);
       border-radius: 20px;
       box-shadow: var(--shadow);
+      transition: .25s ease;
+    }
+
+    .why-card:hover {
+      border-color: rgba(214,168,79,.35);
+      transform: translateY(-3px);
     }
 
     .why-number {
@@ -599,7 +697,7 @@
     }
 
     .why-card h3 {
-      color: var(--navy);
+      color: #fff;
       margin: 7px 0;
       font-size: 19px;
     }
@@ -610,7 +708,10 @@
       font-size: 13px;
     }
 
-    /* CITY GRID */
+
+    /* =========================================
+       CITY GRID
+    ========================================= */
 
     .city-grid {
       display: grid;
@@ -624,13 +725,21 @@
       padding: 22px;
       border-radius: 19px;
       overflow: hidden;
-      background: linear-gradient(135deg, var(--navy), var(--navy-2));
+      background:
+        linear-gradient(
+          135deg,
+          #0d2a4d,
+          #071a33
+        );
+      border: 1px solid rgba(214,168,79,.18);
       color: #fff;
       transition: .25s ease;
+      box-shadow: var(--shadow);
     }
 
     .city-card:hover {
       transform: translateY(-4px);
+      border-color: rgba(214,168,79,.42);
     }
 
     .city-card::after {
@@ -648,10 +757,11 @@
       margin: 0;
       font-family: "Playfair Display", serif;
       font-size: 22px;
+      color: #fff;
     }
 
     .city-card p {
-      color: rgba(255,255,255,.66);
+      color: var(--muted);
       font-size: 11px;
       margin: 5px 0 14px;
     }
@@ -662,7 +772,10 @@
       font-weight: 800;
     }
 
-    /* COACHING HUB */
+
+    /* =========================================
+       COACHING HUB
+    ========================================= */
 
     .hub-grid {
       display: grid;
@@ -672,21 +785,28 @@
 
     .hub-card {
       padding: 24px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-light);
       border-radius: 20px;
-      background: #fff;
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081b34
+        );
       box-shadow: var(--shadow);
       transition: .25s ease;
     }
 
     .hub-card:hover {
       transform: translateY(-5px);
+      border-color: rgba(214,168,79,.35);
     }
 
     .hub-tag {
       display: inline-block;
-      color: #a87822;
-      background: #fbf3df;
+      color: var(--gold-light);
+      background: rgba(214,168,79,.10);
+      border: 1px solid rgba(214,168,79,.16);
       padding: 5px 8px;
       border-radius: 999px;
       font-size: 10px;
@@ -694,7 +814,7 @@
     }
 
     .hub-card h3 {
-      color: var(--navy);
+      color: #fff;
       font-family: "Playfair Display", serif;
       font-size: 22px;
       margin: 12px 0 7px;
@@ -716,33 +836,47 @@
     .hub-links a {
       padding: 6px 9px;
       border-radius: 999px;
-      background: var(--soft);
-      color: var(--navy);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.07);
+      color: #fff;
       font-size: 10px;
       font-weight: 700;
     }
 
-    /* SEO ARTICLE */
+    .hub-links a:hover {
+      border-color: rgba(214,168,79,.4);
+      color: var(--gold-light);
+    }
+
+
+    /* =========================================
+       SEO ARTICLE
+    ========================================= */
 
     .article-box {
       max-width: 950px;
       margin: auto;
       padding: 34px;
-      background: #fff;
-      border: 1px solid var(--border);
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081b34
+        );
+      border: 1px solid var(--border-light);
       border-radius: 24px;
       box-shadow: var(--shadow);
     }
 
     .article-box h3 {
-      color: var(--navy);
+      color: #fff;
       font-family: "Playfair Display", serif;
       font-size: 25px;
       margin: 0 0 12px;
     }
 
     .article-box h4 {
-      color: var(--navy);
+      color: var(--gold-light);
       margin: 25px 0 7px;
       font-size: 16px;
     }
@@ -757,7 +891,10 @@
       padding-left: 20px;
     }
 
-    /* LIVE LISTINGS */
+
+    /* =========================================
+       LIVE LISTINGS
+    ========================================= */
 
     .listing-tabs {
       display: flex;
@@ -768,8 +905,8 @@
     }
 
     .listing-tab {
-      border: 1px solid var(--border);
-      background: #fff;
+      border: 1px solid var(--border-light);
+      background: #0b2342;
       color: var(--muted);
       padding: 8px 13px;
       border-radius: 999px;
@@ -778,10 +915,15 @@
       font-weight: 700;
     }
 
+    .listing-tab:hover {
+      border-color: rgba(214,168,79,.4);
+      color: var(--gold-light);
+    }
+
     .listing-tab.active {
-      background: var(--navy);
-      color: #fff;
-      border-color: var(--navy);
+      background: var(--gold);
+      color: #172238;
+      border-color: var(--gold);
     }
 
     .listing-grid {
@@ -791,23 +933,30 @@
     }
 
     .listing-card {
-      background: #fff;
-      border: 1px solid var(--border);
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081b34
+        );
+      border: 1px solid var(--border-light);
       border-radius: 17px;
       padding: 17px;
-      box-shadow: 0 8px 30px rgba(7,26,51,.06);
+      box-shadow: 0 8px 30px rgba(0,0,0,.18);
       transition: .2s ease;
     }
 
     .listing-card:hover {
       transform: translateY(-4px);
+      border-color: rgba(214,168,79,.35);
       box-shadow: var(--shadow);
     }
 
     .listing-category {
       display: inline-block;
-      color: #a87822;
-      background: #fbf3df;
+      color: var(--gold-light);
+      background: rgba(214,168,79,.10);
+      border: 1px solid rgba(214,168,79,.15);
       padding: 5px 8px;
       border-radius: 999px;
       font-size: 9px;
@@ -816,13 +965,13 @@
     }
 
     .listing-card h3 {
-      color: var(--navy);
+      color: #fff;
       font-size: 15px;
       margin: 11px 0 5px;
     }
 
     .listing-area {
-      color: #a87822;
+      color: var(--gold-light);
       font-size: 11px;
       font-weight: 700;
     }
@@ -837,7 +986,7 @@
     .listing-meta {
       margin-top: 13px;
       padding-top: 11px;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid rgba(255,255,255,.08);
       display: flex;
       justify-content: space-between;
       gap: 8px;
@@ -849,20 +998,27 @@
       grid-column: 1/-1;
       text-align: center;
       padding: 55px 20px;
-      border: 1px dashed var(--border);
+      border: 1px dashed rgba(255,255,255,.15);
       border-radius: 20px;
       color: var(--muted);
+      background: rgba(255,255,255,.025);
     }
+
+
+    /* =========================================
+       SKELETON
+    ========================================= */
 
     .skeleton {
       height: 190px;
       border-radius: 17px;
-      background: linear-gradient(
-        90deg,
-        #f0f2f5 25%,
-        #e6e9ed 50%,
-        #f0f2f5 75%
-      );
+      background:
+        linear-gradient(
+          90deg,
+          #0a203c 25%,
+          #102c4e 50%,
+          #0a203c 75%
+        );
       background-size: 200% 100%;
       animation: skeleton 1.4s infinite;
     }
@@ -873,7 +1029,10 @@
       }
     }
 
-    /* TESTIMONIALS */
+
+    /* =========================================
+       TESTIMONIALS
+    ========================================= */
 
     .testimonial-wrap {
       position: relative;
@@ -889,8 +1048,13 @@
       transform: translateY(15px);
       transition: .5s ease;
       pointer-events: none;
-      background: #fff;
-      border: 1px solid var(--border);
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081b34
+        );
+      border: 1px solid var(--border-light);
       border-radius: 23px;
       padding: 30px;
       box-shadow: var(--shadow);
@@ -903,29 +1067,32 @@
     }
 
     .stars {
-      color: #d19b2d;
+      color: var(--gold);
       letter-spacing: 2px;
       font-size: 14px;
     }
 
     .testimonial-text {
-      color: var(--text);
+      color: #fff;
       font-size: 17px;
       margin: 13px 0 20px;
     }
 
     .testimonial-user {
-      color: var(--navy);
+      color: var(--gold-light);
       font-weight: 800;
       font-size: 12px;
     }
 
     .testimonial-note {
-      color: var(--muted);
+      color: var(--muted-2);
       font-size: 10px;
     }
 
-    /* HOW IT WORKS */
+
+    /* =========================================
+       HOW IT WORKS
+    ========================================= */
 
     .steps {
       display: grid;
@@ -936,8 +1103,13 @@
     .step {
       position: relative;
       padding: 25px;
-      background: #fff;
-      border: 1px solid var(--border);
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081b34
+        );
+      border: 1px solid var(--border-light);
       border-radius: 20px;
       box-shadow: var(--shadow);
     }
@@ -950,12 +1122,13 @@
       border-radius: 50%;
       background: var(--navy);
       color: var(--gold-light);
+      border: 1px solid rgba(214,168,79,.25);
       font-weight: 900;
       font-size: 12px;
     }
 
     .step h3 {
-      color: var(--navy);
+      color: #fff;
       margin: 14px 0 6px;
       font-size: 16px;
     }
@@ -966,7 +1139,10 @@
       margin: 0;
     }
 
-    /* AUDIENCE CARDS */
+
+    /* =========================================
+       AUDIENCE CARDS
+    ========================================= */
 
     .audience-grid {
       display: grid;
@@ -978,15 +1154,31 @@
       padding: 30px;
       border-radius: 23px;
       color: #fff;
-      background: linear-gradient(135deg, var(--navy), var(--navy-2));
+      background:
+        linear-gradient(
+          135deg,
+          #0d2a4d,
+          #071a33
+        );
+      border: 1px solid rgba(214,168,79,.18);
     }
 
     .audience-card:nth-child(2) {
-      background: linear-gradient(135deg, #152f50, #274b70);
+      background:
+        linear-gradient(
+          135deg,
+          #122f50,
+          #0a203b
+        );
     }
 
     .audience-card:nth-child(3) {
-      background: linear-gradient(135deg, #3b2c15, #74582a);
+      background:
+        linear-gradient(
+          135deg,
+          #49381b,
+          #241b0c
+        );
     }
 
     .audience-card .icon {
@@ -1000,12 +1192,15 @@
     }
 
     .audience-card p {
-      color: rgba(255,255,255,.7);
+      color: rgba(255,255,255,.68);
       font-size: 12px;
       margin: 0;
     }
 
-    /* BLOGS */
+
+    /* =========================================
+       BLOGS
+    ========================================= */
 
     .blog-grid {
       display: grid;
@@ -1016,19 +1211,30 @@
     .blog-card {
       padding: 23px;
       border-radius: 20px;
-      background: #fff;
-      border: 1px solid var(--border);
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081b34
+        );
+      border: 1px solid var(--border-light);
       box-shadow: var(--shadow);
+      transition: .25s ease;
+    }
+
+    .blog-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(214,168,79,.35);
     }
 
     .blog-label {
-      color: #a87822;
+      color: var(--gold-light);
       font-size: 10px;
       font-weight: 800;
     }
 
     .blog-card h3 {
-      color: var(--navy);
+      color: #fff;
       font-family: "Playfair Display", serif;
       font-size: 20px;
       line-height: 1.25;
@@ -1043,21 +1249,38 @@
 
     .blog-link {
       display: inline-block;
-      color: #a87822;
+      color: var(--gold-light);
       margin-top: 14px;
       font-size: 10px;
       font-weight: 800;
     }
 
-    /* FAQ */
+
+    /* =========================================
+       FAQ
+    ========================================= */
 
     .faq {
       max-width: 850px;
       margin: auto;
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081b34
+        );
+      border: 1px solid var(--border-light);
+      border-radius: 22px;
+      padding: 0 24px;
+      box-shadow: var(--shadow);
     }
 
     .faq-item {
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .faq-item:last-child {
+      border-bottom: 0;
     }
 
     .faq-question {
@@ -1070,7 +1293,7 @@
       justify-content: space-between;
       gap: 15px;
       cursor: pointer;
-      color: var(--navy);
+      color: #fff;
       font-weight: 800;
       font-size: 13px;
     }
@@ -1097,7 +1320,10 @@
       line-height: 1;
     }
 
-    /* TRUST */
+
+    /* =========================================
+       TRUST
+    ========================================= */
 
     .trust-grid {
       display: grid;
@@ -1107,13 +1333,23 @@
 
     .trust-card {
       padding: 25px;
-      background: #fff;
-      border: 1px solid var(--border);
+      background:
+        linear-gradient(
+          145deg,
+          #0d2a4d,
+          #081b34
+        );
+      border: 1px solid var(--border-light);
       border-radius: 20px;
+      transition: .25s ease;
+    }
+
+    .trust-card:hover {
+      border-color: rgba(214,168,79,.35);
     }
 
     .trust-card h3 {
-      color: var(--navy);
+      color: #fff;
       font-size: 16px;
       margin: 0 0 8px;
     }
@@ -1124,12 +1360,23 @@
       margin: 0;
     }
 
-    /* CTA */
+
+    /* =========================================
+       CTA
+    ========================================= */
 
     .final-cta {
       background:
-        radial-gradient(circle at 10% 50%, rgba(214,168,79,.14), transparent 25%),
-        linear-gradient(135deg, var(--navy), #0d2b4e);
+        radial-gradient(
+          circle at 10% 50%,
+          rgba(214,168,79,.14),
+          transparent 25%
+        ),
+        linear-gradient(
+          135deg,
+          var(--navy),
+          #0d2b4e
+        );
       color: #fff;
       padding: 72px 0;
     }
@@ -1164,12 +1411,16 @@
       font-weight: 900;
     }
 
-    /* FOOTER */
+
+    /* =========================================
+       FOOTER
+    ========================================= */
 
     footer {
       background: #041225;
       color: #fff;
       padding: 55px 0 25px;
+      border-top: 1px solid rgba(214,168,79,.10);
     }
 
     .footer-grid {
@@ -1251,7 +1502,10 @@
       font-size: 10px;
     }
 
-    /* TOAST */
+
+    /* =========================================
+       TOAST
+    ========================================= */
 
     .toast {
       position: fixed;
@@ -1261,7 +1515,8 @@
       max-width: 340px;
       padding: 13px 16px;
       border-radius: 13px;
-      background: var(--navy);
+      background: #0d2a4d;
+      border: 1px solid rgba(214,168,79,.3);
       color: #fff;
       box-shadow: var(--shadow-lg);
       transform: translateY(30px);
@@ -1276,9 +1531,13 @@
       opacity: 1;
     }
 
-    /* RESPONSIVE */
+
+    /* =========================================
+       RESPONSIVE
+    ========================================= */
 
     @media (max-width: 1050px) {
+
       .nav-links a {
         padding-inline: 8px;
         font-size: 11px;
@@ -1295,9 +1554,12 @@
       .listing-grid {
         grid-template-columns: repeat(3, 1fr);
       }
+
     }
 
+
     @media (max-width: 850px) {
+
       .nav-inner {
         min-height: 68px;
       }
@@ -1371,9 +1633,12 @@
       .footer-grid {
         grid-template-columns: 1fr 1fr;
       }
+
     }
 
+
     @media (max-width: 600px) {
+
       .container {
         width: min(100% - 22px, 1180px);
       }
@@ -1437,12 +1702,19 @@
         padding: 22px;
       }
 
+      .faq {
+        padding-inline: 18px;
+      }
+
       .footer-bottom {
         flex-direction: column;
       }
+
     }
 
+
     @media (prefers-reduced-motion: reduce) {
+
       html {
         scroll-behavior: auto;
       }
@@ -1454,34 +1726,78 @@
         animation-iteration-count: 1 !important;
         transition-duration: .01ms !important;
       }
+
     }
+
   </style>
 </head>
 
+
 <body>
 
-  <!-- NAVBAR -->
+
+  <!-- =========================================
+       NAVBAR
+  ========================================= -->
 
   <header class="navbar">
+
     <div class="container nav-inner">
 
       <a href="index.html" class="brand">
-        <img src="logo.png" alt="StudentHubHelp logo" />
+
+        <img
+          src="logo.png"
+          alt="StudentHubHelp logo"
+        />
+
         <div>
-          <div class="brand-title">StudentHubHelp</div>
-          <div class="brand-sub">Student Discovery Platform</div>
+
+          <div class="brand-title">
+            StudentHubHelp
+          </div>
+
+          <div class="brand-sub">
+            Student Discovery Platform
+          </div>
+
         </div>
+
       </a>
 
+
       <nav class="nav-links" id="navLinks">
-        <a href="index.html" class="active">Home</a>
-        <a href="pg-finder.html">Hostel / PG</a>
-        <a href="tiffin-finder.html">Tiffin / Mess</a>
-        <a href="library-finder.html">Library</a>
-        <a href="cafe-finder.html">Cafe</a>
-        <a href="bookstore-finder.html">Book Store</a>
-        <a href="auth.html" class="login-btn">Login</a>
+
+        <a href="index.html" class="active">
+          Home
+        </a>
+
+        <a href="pg-finder.html">
+          Hostel / PG
+        </a>
+
+        <a href="tiffin-finder.html">
+          Tiffin / Mess
+        </a>
+
+        <a href="library-finder.html">
+          Library
+        </a>
+
+        <a href="cafe-finder.html">
+          Cafe
+        </a>
+
+        <a href="bookstore-finder.html">
+          Book Store
+        </a>
+
+        <a href="auth.html" class="login-btn">
+          Login
+        </a>
+
       </nav>
+
 
       <button
         class="mobile-menu"
@@ -1492,14 +1808,18 @@
       </button>
 
     </div>
+
   </header>
 
 
-  <!-- HERO -->
+  <!-- =========================================
+       HERO
+  ========================================= -->
 
   <section class="hero">
 
     <div class="container hero-grid">
+
 
       <div>
 
@@ -1507,18 +1827,28 @@
           ✦ INDIA-WIDE STUDENT DISCOVERY
         </div>
 
+
         <h1>
+
           Students के लिए
           <span>सब कुछ एक जगह.</span>
+
         </h1>
 
+
         <p class="hero-text">
-          Find hostels, PGs, tiffin & mess services, libraries, cafes
-          and book stores near your study destination — from Sikar and
-          Kota to major student cities across India.
+
+          Find hostels, PGs, tiffin & mess services, libraries,
+          cafes and book stores near your study destination —
+          from Sikar and Kota to major student cities across India.
+
         </p>
 
-        <form class="hero-search" id="mainSearchForm">
+
+        <form
+          class="hero-search"
+          id="mainSearchForm"
+        >
 
           <input
             id="mainSearch"
@@ -1528,82 +1858,188 @@
             aria-label="Search student services"
           />
 
-          <button class="search-btn" type="submit">
+          <button
+            class="search-btn"
+            type="submit"
+          >
             Search
           </button>
 
         </form>
 
+
         <div class="quick-searches">
-          <button type="button" data-search="Sikar">Sikar</button>
-          <button type="button" data-search="Kota">Kota</button>
-          <button type="button" data-search="Jaipur">Jaipur</button>
-          <button type="button" data-search="Delhi">Delhi</button>
-          <button type="button" data-search="Ahmedabad">Ahmedabad</button>
-          <button type="button" data-search="Pune">Pune</button>
+
+          <button
+            type="button"
+            data-search="Sikar"
+          >
+            Sikar
+          </button>
+
+          <button
+            type="button"
+            data-search="Kota"
+          >
+            Kota
+          </button>
+
+          <button
+            type="button"
+            data-search="Jaipur"
+          >
+            Jaipur
+          </button>
+
+          <button
+            type="button"
+            data-search="Delhi"
+          >
+            Delhi
+          </button>
+
+          <button
+            type="button"
+            data-search="Ahmedabad"
+          >
+            Ahmedabad
+          </button>
+
+          <button
+            type="button"
+            data-search="Pune"
+          >
+            Pune
+          </button>
+
         </div>
 
       </div>
 
 
-      <div class="hero-visual" id="heroCarousel">
+      <!-- HERO IMAGE CAROUSEL -->
+
+      <div
+        class="hero-visual"
+        id="heroCarousel"
+      >
+
 
         <div class="carousel-card active">
+
           <img
             src="hostel-banner.png"
             alt="Student hostel and PG discovery"
           />
+
           <div class="carousel-overlay">
-            <small>HOSTEL / PG</small>
-            <h3>Find a place to stay near your study hub.</h3>
+
+            <small>
+              HOSTEL / PG
+            </small>
+
+            <h3>
+              Find a place to stay near your study hub.
+            </h3>
+
           </div>
+
         </div>
 
+
         <div class="carousel-card">
+
           <img
             src="tiffin-banner.png"
             alt="Student tiffin and mess services"
           />
+
           <div class="carousel-overlay">
-            <small>TIFFIN / MESS</small>
-            <h3>Discover everyday food options for students.</h3>
+
+            <small>
+              TIFFIN / MESS
+            </small>
+
+            <h3>
+              Discover everyday food options for students.
+            </h3>
+
           </div>
+
         </div>
 
+
         <div class="carousel-card">
+
           <img
             src="library-banner.png"
             alt="Student library and study spaces"
           />
+
           <div class="carousel-overlay">
-            <small>LIBRARY</small>
-            <h3>Explore study spaces built around your routine.</h3>
+
+            <small>
+              LIBRARY
+            </small>
+
+            <h3>
+              Explore study spaces built around your routine.
+            </h3>
+
           </div>
+
         </div>
 
+
         <div class="carousel-card">
+
           <img
             src="cafe-banner.png"
             alt="Student friendly cafes"
           />
+
           <div class="carousel-overlay">
-            <small>CAFE</small>
-            <h3>Find student-friendly cafes around you.</h3>
+
+            <small>
+              CAFE
+            </small>
+
+            <h3>
+              Find student-friendly cafes around you.
+            </h3>
+
           </div>
+
         </div>
 
+
         <div class="carousel-card">
+
           <img
             src="bookstore-banner.png"
             alt="Student book store"
           />
+
           <div class="carousel-overlay">
-            <small>BOOK STORE</small>
-            <h3>Find books and study essentials nearby.</h3>
+
+            <small>
+              BOOK STORE
+            </small>
+
+            <h3>
+              Find books and study essentials nearby.
+            </h3>
+
           </div>
+
         </div>
 
-        <div class="carousel-dots" id="carouselDots"></div>
+
+        <div
+          class="carousel-dots"
+          id="carouselDots"
+        ></div>
+
 
       </div>
 
@@ -1612,63 +2048,133 @@
   </section>
 
 
-  <!-- LIVE STATS -->
+  <!-- =========================================
+       LIVE SUPABASE STATS
+  ========================================= -->
 
   <div class="stats-wrap">
 
     <div class="container stats-grid">
 
-      <div class="stat-card">
-        <div class="stat-number" id="hostelCount">—</div>
-        <div class="stat-label">Hostels / PGs</div>
-      </div>
 
       <div class="stat-card">
-        <div class="stat-number" id="tiffinCount">—</div>
-        <div class="stat-label">Tiffin / Mess</div>
+
+        <div
+          class="stat-number"
+          id="hostelCount"
+        >
+          <span aria-hidden="true">...</span>
+        </div>
+
+        <div class="stat-label">
+          Hostels / PGs
+        </div>
+
       </div>
 
-      <div class="stat-card">
-        <div class="stat-number" id="libraryCount">—</div>
-        <div class="stat-label">Libraries</div>
-      </div>
 
       <div class="stat-card">
-        <div class="stat-number" id="cafeCount">—</div>
-        <div class="stat-label">Cafes</div>
+
+        <div
+          class="stat-number"
+          id="tiffinCount"
+        >
+          <span aria-hidden="true">...</span>
+        </div>
+
+        <div class="stat-label">
+          Tiffin / Mess
+        </div>
+
       </div>
 
+
       <div class="stat-card">
-        <div class="stat-number" id="bookstoreCount">—</div>
-        <div class="stat-label">Book Stores</div>
+
+        <div
+          class="stat-number"
+          id="libraryCount"
+        >
+          <span aria-hidden="true">...</span>
+        </div>
+
+        <div class="stat-label">
+          Libraries
+        </div>
+
       </div>
+
+
+      <div class="stat-card">
+
+        <div
+          class="stat-number"
+          id="cafeCount"
+        >
+          <span aria-hidden="true">...</span>
+        </div>
+
+        <div class="stat-label">
+          Cafes
+        </div>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <div
+          class="stat-number"
+          id="bookstoreCount"
+        >
+          <span aria-hidden="true">...</span>
+        </div>
+
+        <div class="stat-label">
+          Book Stores
+        </div>
+
+      </div>
+
 
     </div>
 
   </div>
 
 
-  <!-- 5 SERVICES -->
+  <!-- =========================================
+       5 SERVICES
+  ========================================= -->
 
   <section class="section">
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Explore Student Services</span>
+
+        <span class="eyebrow">
+          Explore Student Services
+        </span>
+
         <h2 class="section-title">
           Your student life, simplified.
         </h2>
+
         <p class="section-description">
           Discover the everyday places students need while preparing,
           studying and living away from home.
         </p>
+
       </div>
 
 
       <div class="services-grid">
 
-        <a href="pg-finder.html" class="service-card">
+
+        <a
+          href="pg-finder.html"
+          class="service-card"
+        >
 
           <img
             class="service-image"
@@ -1678,18 +2184,32 @@
           />
 
           <div class="service-content">
-            <div class="service-icon">🏠</div>
-            <h3>Hostel / PG</h3>
+
+            <div class="service-icon">
+              🏠
+            </div>
+
+            <h3>
+              Hostel / PG
+            </h3>
+
             <p>
               Explore student accommodation and PG options.
             </p>
-            <span class="service-link">Explore →</span>
+
+            <span class="service-link">
+              Explore →
+            </span>
+
           </div>
 
         </a>
 
 
-        <a href="tiffin-finder.html" class="service-card">
+        <a
+          href="tiffin-finder.html"
+          class="service-card"
+        >
 
           <img
             class="service-image"
@@ -1699,18 +2219,32 @@
           />
 
           <div class="service-content">
-            <div class="service-icon">🍱</div>
-            <h3>Tiffin / Mess</h3>
+
+            <div class="service-icon">
+              🍱
+            </div>
+
+            <h3>
+              Tiffin / Mess
+            </h3>
+
             <p>
               Find everyday food and mess services.
             </p>
-            <span class="service-link">Explore →</span>
+
+            <span class="service-link">
+              Explore →
+            </span>
+
           </div>
 
         </a>
 
 
-        <a href="library-finder.html" class="service-card">
+        <a
+          href="library-finder.html"
+          class="service-card"
+        >
 
           <img
             class="service-image"
@@ -1720,18 +2254,32 @@
           />
 
           <div class="service-content">
-            <div class="service-icon">📚</div>
-            <h3>Library</h3>
+
+            <div class="service-icon">
+              📚
+            </div>
+
+            <h3>
+              Library
+            </h3>
+
             <p>
               Find libraries and focused study spaces.
             </p>
-            <span class="service-link">Explore →</span>
+
+            <span class="service-link">
+              Explore →
+            </span>
+
           </div>
 
         </a>
 
 
-        <a href="cafe-finder.html" class="service-card">
+        <a
+          href="cafe-finder.html"
+          class="service-card"
+        >
 
           <img
             class="service-image"
@@ -1741,18 +2289,32 @@
           />
 
           <div class="service-content">
-            <div class="service-icon">☕</div>
-            <h3>Cafe</h3>
+
+            <div class="service-icon">
+              ☕
+            </div>
+
+            <h3>
+              Cafe
+            </h3>
+
             <p>
               Discover cafes suitable for students.
             </p>
-            <span class="service-link">Explore →</span>
+
+            <span class="service-link">
+              Explore →
+            </span>
+
           </div>
 
         </a>
 
 
-        <a href="bookstore-finder.html" class="service-card">
+        <a
+          href="bookstore-finder.html"
+          class="service-card"
+        >
 
           <img
             class="service-image"
@@ -1762,15 +2324,27 @@
           />
 
           <div class="service-content">
-            <div class="service-icon">📖</div>
-            <h3>Book Store</h3>
+
+            <div class="service-icon">
+              📖
+            </div>
+
+            <h3>
+              Book Store
+            </h3>
+
             <p>
               Find books, notes and study essentials.
             </p>
-            <span class="service-link">Explore →</span>
+
+            <span class="service-link">
+              Explore →
+            </span>
+
           </div>
 
         </a>
+
 
       </div>
 
@@ -1779,84 +2353,150 @@
   </section>
 
 
-  <!-- WHY CHOOSE US -->
+  <!-- =========================================
+       WHY CHOOSE US
+  ========================================= -->
 
-  <section class="section soft" id="why-us">
+  <section
+    class="section soft"
+    id="why-us"
+  >
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Why Choose Us</span>
+
+        <span class="eyebrow">
+          Why Choose Us
+        </span>
+
         <h2 class="section-title">
           Built around what students actually need.
         </h2>
+
         <p class="section-description">
-          StudentHubHelp focuses on discovery, useful information and
-          direct connections — without making students search through
-          scattered sources.
+          StudentHubHelp focuses on discovery, useful information
+          and direct connections — without making students search
+          through scattered sources.
         </p>
+
       </div>
 
 
       <div class="why-grid">
 
-        <div class="why-card">
-          <div class="why-number">01 — DISCOVER</div>
-          <h3>Multiple student services in one platform</h3>
-          <p>
-            Instead of searching separately for accommodation, food,
-            study spaces, cafes and books, students can explore all
-            five categories from one place.
-          </p>
-        </div>
 
         <div class="why-card">
-          <div class="why-number">02 — LOCAL CONTEXT</div>
-          <h3>Area and student-hub focused discovery</h3>
+
+          <div class="why-number">
+            01 — DISCOVER
+          </div>
+
+          <h3>
+            Multiple student services in one platform
+          </h3>
+
+          <p>
+            Instead of searching separately for accommodation,
+            food, study spaces, cafes and books, students can
+            explore all five categories from one place.
+          </p>
+
+        </div>
+
+
+        <div class="why-card">
+
+          <div class="why-number">
+            02 — LOCAL CONTEXT
+          </div>
+
+          <h3>
+            Area and student-hub focused discovery
+          </h3>
+
           <p>
             Search by city, area or coaching hub to make it easier
             to understand where student facilities are located.
           </p>
+
         </div>
 
+
         <div class="why-card">
-          <div class="why-number">03 — DIRECT CONTACT</div>
-          <h3>Connect directly with listed businesses</h3>
+
+          <div class="why-number">
+            03 — DIRECT CONTACT
+          </div>
+
+          <h3>
+            Connect directly with listed businesses
+          </h3>
+
           <p>
             Where contact information is available, students can
-            connect directly with the relevant hostel, service or
-            business.
+            connect directly with the relevant hostel, service
+            or business.
           </p>
+
         </div>
 
+
         <div class="why-card">
-          <div class="why-number">04 — LIVE DIRECTORY</div>
-          <h3>Listings connected to live platform data</h3>
+
+          <div class="why-number">
+            04 — LIVE DIRECTORY
+          </div>
+
+          <h3>
+            Listings connected to live platform data
+          </h3>
+
           <p>
             Public listings are loaded from the platform database,
             helping the directory evolve as information is added
             or updated.
           </p>
+
         </div>
 
-        <div class="why-card">
-          <div class="why-number">05 — STUDENT REVIEWS</div>
-          <h3>Real student feedback when available</h3>
-          <p>
-            Reviews submitted through the platform can help students
-            understand other users' experiences.
-          </p>
-        </div>
 
         <div class="why-card">
-          <div class="why-number">06 — SAFETY FIRST</div>
-          <h3>Discovery is not a replacement for verification</h3>
+
+          <div class="why-number">
+            05 — STUDENT REVIEWS
+          </div>
+
+          <h3>
+            Real student feedback when available
+          </h3>
+
           <p>
-            Students and parents are encouraged to independently verify
-            pricing, facilities, availability, safety and other important
-            details before making decisions.
+            Reviews submitted through the platform can help
+            students understand other users' experiences.
           </p>
+
         </div>
+
+
+        <div class="why-card">
+
+          <div class="why-number">
+            06 — SAFETY FIRST
+          </div>
+
+          <h3>
+            Discovery is not a replacement for verification
+          </h3>
+
+          <p>
+            Students and parents are encouraged to independently
+            verify pricing, facilities, availability, safety
+            and other important details.
+          </p>
+
+        </div>
+
 
       </div>
 
@@ -1865,73 +2505,170 @@
   </section>
 
 
-  <!-- POPULAR STUDENT CITIES -->
+  <!-- =========================================
+       POPULAR STUDENT CITIES
+  ========================================= -->
 
   <section class="section">
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Student Cities</span>
+
+        <span class="eyebrow">
+          Student Cities
+        </span>
+
         <h2 class="section-title">
           Explore popular student destinations.
         </h2>
+
         <p class="section-description">
           Start your search by city and explore student facilities
           around your study destination.
         </p>
+
       </div>
 
 
       <div class="city-grid">
 
-        <div class="city-card">
-          <h3>Sikar</h3>
-          <p>Coaching, study and student accommodation hub.</p>
-          <a href="pg-finder.html?q=Sikar">Explore Sikar →</a>
-        </div>
 
         <div class="city-card">
-          <h3>Kota</h3>
-          <p>A major competitive-exam preparation destination.</p>
-          <a href="pg-finder.html?q=Kota">Explore Kota →</a>
+
+          <h3>
+            Sikar
+          </h3>
+
+          <p>
+            Coaching, study and student accommodation hub.
+          </p>
+
+          <a href="pg-finder.html?q=Sikar">
+            Explore Sikar →
+          </a>
+
         </div>
 
-        <div class="city-card">
-          <h3>Jaipur</h3>
-          <p>Large education and student-services ecosystem.</p>
-          <a href="pg-finder.html?q=Jaipur">Explore Jaipur →</a>
-        </div>
 
         <div class="city-card">
-          <h3>Delhi</h3>
-          <p>Student areas and coaching destinations across the city.</p>
-          <a href="pg-finder.html?q=Delhi">Explore Delhi →</a>
+
+          <h3>
+            Kota
+          </h3>
+
+          <p>
+            A major competitive-exam preparation destination.
+          </p>
+
+          <a href="pg-finder.html?q=Kota">
+            Explore Kota →
+          </a>
+
         </div>
 
-        <div class="city-card">
-          <h3>Ahmedabad</h3>
-          <p>Education, coaching and student accommodation options.</p>
-          <a href="pg-finder.html?q=Ahmedabad">Explore Ahmedabad →</a>
-        </div>
 
         <div class="city-card">
-          <h3>Lucknow</h3>
-          <p>Growing education and competitive-exam ecosystem.</p>
-          <a href="pg-finder.html?q=Lucknow">Explore Lucknow →</a>
+
+          <h3>
+            Jaipur
+          </h3>
+
+          <p>
+            Large education and student-services ecosystem.
+          </p>
+
+          <a href="pg-finder.html?q=Jaipur">
+            Explore Jaipur →
+          </a>
+
         </div>
 
-        <div class="city-card">
-          <h3>Hyderabad</h3>
-          <p>Large student population and education ecosystem.</p>
-          <a href="pg-finder.html?q=Hyderabad">Explore Hyderabad →</a>
-        </div>
 
         <div class="city-card">
-          <h3>Pune</h3>
-          <p>Major education destination with diverse student needs.</p>
-          <a href="pg-finder.html?q=Pune">Explore Pune →</a>
+
+          <h3>
+            Delhi
+          </h3>
+
+          <p>
+            Student areas and coaching destinations across the city.
+          </p>
+
+          <a href="pg-finder.html?q=Delhi">
+            Explore Delhi →
+          </a>
+
         </div>
+
+
+        <div class="city-card">
+
+          <h3>
+            Ahmedabad
+          </h3>
+
+          <p>
+            Education, coaching and student accommodation options.
+          </p>
+
+          <a href="pg-finder.html?q=Ahmedabad">
+            Explore Ahmedabad →
+          </a>
+
+        </div>
+
+
+        <div class="city-card">
+
+          <h3>
+            Lucknow
+          </h3>
+
+          <p>
+            Growing education and competitive-exam ecosystem.
+          </p>
+
+          <a href="pg-finder.html?q=Lucknow">
+            Explore Lucknow →
+          </a>
+
+        </div>
+
+
+        <div class="city-card">
+
+          <h3>
+            Hyderabad
+          </h3>
+
+          <p>
+            Large student population and education ecosystem.
+          </p>
+
+          <a href="pg-finder.html?q=Hyderabad">
+            Explore Hyderabad →
+          </a>
+
+        </div>
+
+
+        <div class="city-card">
+
+          <h3>
+            Pune
+          </h3>
+
+          <p>
+            Major education destination with diverse student needs.
+          </p>
+
+          <a href="pg-finder.html?q=Pune">
+            Explore Pune →
+          </a>
+
+        </div>
+
 
       </div>
 
@@ -1940,121 +2677,239 @@
   </section>
 
 
-  <!-- COACHING HUB / LANDMARK SEO -->
+  <!-- =========================================
+       COACHING HUBS
+  ========================================= -->
 
   <section class="section cream">
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Coaching Hub Discovery</span>
+
+        <span class="eyebrow">
+          Coaching Hub Discovery
+        </span>
+
         <h2 class="section-title">
           Find student services around coaching hubs.
         </h2>
+
         <p class="section-description">
           Location matters. Students often prefer accommodation,
           food and study facilities close to their coaching or
           educational destination.
         </p>
+
       </div>
 
 
       <div class="hub-grid">
 
+
         <div class="hub-card">
-          <span class="hub-tag">SIKAR · RAJASTHAN</span>
-          <h3>Piprali Road</h3>
+
+          <span class="hub-tag">
+            SIKAR · RAJASTHAN
+          </span>
+
+          <h3>
+            Piprali Road
+          </h3>
+
           <p>
             A well-known student-oriented area where students may
             look for accommodation, food and study facilities.
           </p>
 
           <div class="hub-links">
-            <a href="pg-finder.html?q=Piprali%20Road">Hostels</a>
-            <a href="tiffin-finder.html?q=Piprali%20Road">Tiffin</a>
-            <a href="library-finder.html?q=Piprali%20Road">Libraries</a>
+
+            <a href="pg-finder.html?q=Piprali%20Road">
+              Hostels
+            </a>
+
+            <a href="tiffin-finder.html?q=Piprali%20Road">
+              Tiffin
+            </a>
+
+            <a href="library-finder.html?q=Piprali%20Road">
+              Libraries
+            </a>
+
           </div>
+
         </div>
 
 
         <div class="hub-card">
-          <span class="hub-tag">KOTA · RAJASTHAN</span>
-          <h3>Talwandi</h3>
+
+          <span class="hub-tag">
+            KOTA · RAJASTHAN
+          </span>
+
+          <h3>
+            Talwandi
+          </h3>
+
           <p>
-            Students searching around Kota's coaching ecosystem can
-            explore nearby services by location.
+            Students searching around Kota's coaching ecosystem
+            can explore nearby services by location.
           </p>
 
           <div class="hub-links">
-            <a href="pg-finder.html?q=Talwandi">Hostels</a>
-            <a href="tiffin-finder.html?q=Talwandi">Tiffin</a>
-            <a href="library-finder.html?q=Talwandi">Libraries</a>
+
+            <a href="pg-finder.html?q=Talwandi">
+              Hostels
+            </a>
+
+            <a href="tiffin-finder.html?q=Talwandi">
+              Tiffin
+            </a>
+
+            <a href="library-finder.html?q=Talwandi">
+              Libraries
+            </a>
+
           </div>
+
         </div>
 
 
         <div class="hub-card">
-          <span class="hub-tag">DELHI · NCR</span>
-          <h3>Mukherjee Nagar</h3>
+
+          <span class="hub-tag">
+            DELHI · NCR
+          </span>
+
+          <h3>
+            Mukherjee Nagar
+          </h3>
+
           <p>
-            A major student and competitive-exam area where location
-            based discovery can be useful.
+            A major student and competitive-exam area where
+            location based discovery can be useful.
           </p>
 
           <div class="hub-links">
-            <a href="pg-finder.html?q=Mukherjee%20Nagar">Hostels</a>
-            <a href="tiffin-finder.html?q=Mukherjee%20Nagar">Tiffin</a>
-            <a href="library-finder.html?q=Mukherjee%20Nagar">Libraries</a>
+
+            <a href="pg-finder.html?q=Mukherjee%20Nagar">
+              Hostels
+            </a>
+
+            <a href="tiffin-finder.html?q=Mukherjee%20Nagar">
+              Tiffin
+            </a>
+
+            <a href="library-finder.html?q=Mukherjee%20Nagar">
+              Libraries
+            </a>
+
           </div>
+
         </div>
 
 
         <div class="hub-card">
-          <span class="hub-tag">DELHI · NCR</span>
-          <h3>Kalu Sarai</h3>
+
+          <span class="hub-tag">
+            DELHI · NCR
+          </span>
+
+          <h3>
+            Kalu Sarai
+          </h3>
+
           <p>
-            Search for student accommodation and supporting services
-            around this education-focused locality.
+            Search for student accommodation and supporting
+            services around this education-focused locality.
           </p>
 
           <div class="hub-links">
-            <a href="pg-finder.html?q=Kalu%20Sarai">Hostels</a>
-            <a href="tiffin-finder.html?q=Kalu%20Sarai">Tiffin</a>
-            <a href="library-finder.html?q=Kalu%20Sarai">Libraries</a>
+
+            <a href="pg-finder.html?q=Kalu%20Sarai">
+              Hostels
+            </a>
+
+            <a href="tiffin-finder.html?q=Kalu%20Sarai">
+              Tiffin
+            </a>
+
+            <a href="library-finder.html?q=Kalu%20Sarai">
+              Libraries
+            </a>
+
           </div>
+
         </div>
 
 
         <div class="hub-card">
-          <span class="hub-tag">JAIPUR · RAJASTHAN</span>
-          <h3>Jaipur Student Hubs</h3>
+
+          <span class="hub-tag">
+            JAIPUR · RAJASTHAN
+          </span>
+
+          <h3>
+            Jaipur Student Hubs
+          </h3>
+
           <p>
-            Explore student services by locality instead of searching
-            for the entire city at once.
+            Explore student services by locality instead of
+            searching for the entire city at once.
           </p>
 
           <div class="hub-links">
-            <a href="pg-finder.html?q=Jaipur">Hostels</a>
-            <a href="tiffin-finder.html?q=Jaipur">Tiffin</a>
-            <a href="library-finder.html?q=Jaipur">Libraries</a>
+
+            <a href="pg-finder.html?q=Jaipur">
+              Hostels
+            </a>
+
+            <a href="tiffin-finder.html?q=Jaipur">
+              Tiffin
+            </a>
+
+            <a href="library-finder.html?q=Jaipur">
+              Libraries
+            </a>
+
           </div>
+
         </div>
 
 
         <div class="hub-card">
-          <span class="hub-tag">SIKAR · RAJASTHAN</span>
-          <h3>Student Areas Around Sikar</h3>
+
+          <span class="hub-tag">
+            SIKAR · RAJASTHAN
+          </span>
+
+          <h3>
+            Student Areas Around Sikar
+          </h3>
+
           <p>
-            Search areas such as DC Road, Jaipur Bypass and other
-            student-focused localities.
+            Search areas such as DC Road, Jaipur Bypass and
+            other student-focused localities.
           </p>
 
           <div class="hub-links">
-            <a href="pg-finder.html?q=DC%20Road">DC Road</a>
-            <a href="pg-finder.html?q=Jaipur%20Bypass">Jaipur Bypass</a>
-            <a href="pg-finder.html?q=Nawalgarh%20Road">Nawalgarh Road</a>
+
+            <a href="pg-finder.html?q=DC%20Road">
+              DC Road
+            </a>
+
+            <a href="pg-finder.html?q=Jaipur%20Bypass">
+              Jaipur Bypass
+            </a>
+
+            <a href="pg-finder.html?q=Nawalgarh%20Road">
+              Nawalgarh Road
+            </a>
+
           </div>
+
         </div>
+
 
       </div>
 
@@ -2063,7 +2918,9 @@
   </section>
 
 
-  <!-- HOSTEL NEAR COACHING SEO -->
+  <!-- =========================================
+       HOSTEL + COACHING SEO
+  ========================================= -->
 
   <section class="section">
 
@@ -2087,7 +2944,10 @@
           for classes, revision and rest.
         </p>
 
-        <h4>1. Less daily travel</h4>
+
+        <h4>
+          1. Less daily travel
+        </h4>
 
         <p>
           A hostel or PG close to the study area can reduce commuting
@@ -2095,33 +2955,68 @@
           particularly for students attending multiple classes.
         </p>
 
-        <h4>2. Easier access to student facilities</h4>
+
+        <h4>
+          2. Easier access to student facilities
+        </h4>
 
         <p>
           Student areas often have supporting facilities such as
-          tiffin services, libraries, cafes, stationery and book stores.
-          Living nearby can make these services easier to access.
+          tiffin services, libraries, cafes, stationery and book
+          stores. Living nearby can make these services easier to access.
         </p>
 
-        <h4>3. Better study routine</h4>
+
+        <h4>
+          3. Better study routine
+        </h4>
 
         <p>
           A convenient location can help students create a consistent
           routine between classes, self-study, meals and rest.
         </p>
 
-        <h4>4. What students should check before choosing</h4>
+
+        <h4>
+          4. What students should check before choosing
+        </h4>
 
         <ul>
-          <li>Actual distance from the coaching institute</li>
-          <li>Monthly rent and additional charges</li>
-          <li>Room sharing arrangement</li>
-          <li>Food availability and quality</li>
-          <li>Water, electricity and internet arrangements</li>
-          <li>Safety and surrounding locality</li>
-          <li>Rules, deposit and refund conditions</li>
-          <li>Current availability of the room</li>
+
+          <li>
+            Actual distance from the coaching institute
+          </li>
+
+          <li>
+            Monthly rent and additional charges
+          </li>
+
+          <li>
+            Room sharing arrangement
+          </li>
+
+          <li>
+            Food availability and quality
+          </li>
+
+          <li>
+            Water, electricity and internet arrangements
+          </li>
+
+          <li>
+            Safety and surrounding locality
+          </li>
+
+          <li>
+            Rules, deposit and refund conditions
+          </li>
+
+          <li>
+            Current availability of the room
+          </li>
+
         </ul>
+
 
         <p>
           StudentHubHelp helps with discovery. Students and parents
@@ -2136,54 +3031,86 @@
   </section>
 
 
-  <!-- LIVE LISTINGS -->
+  <!-- =========================================
+       LIVE LISTINGS
+  ========================================= -->
 
-  <section class="section soft" id="live-listings">
+  <section
+    class="section soft"
+    id="live-listings"
+  >
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Live Directory</span>
+
+        <span class="eyebrow">
+          Live Directory
+        </span>
+
         <h2 class="section-title">
           Popular & Live Student Listings
         </h2>
+
         <p class="section-description">
           Explore currently available directory information loaded
           from the StudentHubHelp platform.
         </p>
+
       </div>
 
 
       <div class="listing-tabs">
 
-        <button class="listing-tab active" data-category="all">
+        <button
+          class="listing-tab active"
+          data-category="all"
+        >
           All
         </button>
 
-        <button class="listing-tab" data-category="hostel">
+        <button
+          class="listing-tab"
+          data-category="hostel"
+        >
           Hostel / PG
         </button>
 
-        <button class="listing-tab" data-category="tiffin">
+        <button
+          class="listing-tab"
+          data-category="tiffin"
+        >
           Tiffin
         </button>
 
-        <button class="listing-tab" data-category="library">
+        <button
+          class="listing-tab"
+          data-category="library"
+        >
           Library
         </button>
 
-        <button class="listing-tab" data-category="cafe">
+        <button
+          class="listing-tab"
+          data-category="cafe"
+        >
           Cafe
         </button>
 
-        <button class="listing-tab" data-category="bookstore">
+        <button
+          class="listing-tab"
+          data-category="bookstore"
+        >
           Book Store
         </button>
 
       </div>
 
 
-      <div class="listing-grid" id="listingGrid">
+      <div
+        class="listing-grid"
+        id="listingGrid"
+      >
 
         <div class="skeleton"></div>
         <div class="skeleton"></div>
@@ -2197,33 +3124,46 @@
   </section>
 
 
-  <!-- TESTIMONIALS -->
+  <!-- =========================================
+       STUDENT REVIEWS
+  ========================================= -->
 
   <section class="section">
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Student Feedback</span>
+
+        <span class="eyebrow">
+          Student Feedback
+        </span>
+
         <h2 class="section-title">
           What students are saying.
         </h2>
+
         <p class="section-description">
           Feedback shown here comes from reviews submitted through
           the platform. We do not create artificial testimonials.
         </p>
+
       </div>
 
 
-      <div class="testimonial-wrap" id="testimonialWrap">
+      <div
+        class="testimonial-wrap"
+        id="testimonialWrap"
+      >
 
         <div class="testimonial active">
 
-          <div class="stars">★★★★★</div>
+          <div class="stars">
+            ☆☆☆☆☆
+          </div>
 
           <div class="testimonial-text">
-            Student feedback will appear here as reviews are submitted
-            through StudentHubHelp.
+            Student feedback will appear here as reviews are
+            submitted through StudentHubHelp.
           </div>
 
           <div class="testimonial-user">
@@ -2243,54 +3183,98 @@
   </section>
 
 
-  <!-- HOW IT WORKS -->
+  <!-- =========================================
+       HOW IT WORKS
+  ========================================= -->
 
   <section class="section soft">
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">How StudentHubHelp Works</span>
+
+        <span class="eyebrow">
+          How StudentHubHelp Works
+        </span>
+
         <h2 class="section-title">
           Search. Compare. Connect.
         </h2>
+
       </div>
 
 
       <div class="steps">
 
+
         <div class="step">
-          <div class="step-num">01</div>
-          <h3>Choose a service</h3>
+
+          <div class="step-num">
+            01
+          </div>
+
+          <h3>
+            Choose a service
+          </h3>
+
           <p>
             Select Hostel / PG, Tiffin, Library, Cafe or Book Store.
           </p>
+
         </div>
 
+
         <div class="step">
-          <div class="step-num">02</div>
-          <h3>Search your area</h3>
+
+          <div class="step-num">
+            02
+          </div>
+
+          <h3>
+            Search your area
+          </h3>
+
           <p>
             Search by city, locality or student hub.
           </p>
+
         </div>
 
+
         <div class="step">
-          <div class="step-num">03</div>
-          <h3>Explore details</h3>
+
+          <div class="step-num">
+            03
+          </div>
+
+          <h3>
+            Explore details
+          </h3>
+
           <p>
             Check available information, location and contact details.
           </p>
+
         </div>
 
+
         <div class="step">
-          <div class="step-num">04</div>
-          <h3>Verify & connect</h3>
+
+          <div class="step-num">
+            04
+          </div>
+
+          <h3>
+            Verify & connect
+          </h3>
+
           <p>
-            Confirm important details independently and contact the
-            relevant business directly.
+            Confirm important details independently and contact
+            the relevant business directly.
           </p>
+
         </div>
+
 
       </div>
 
@@ -2299,27 +3283,39 @@
   </section>
 
 
-  <!-- FOR STUDENTS / PARENTS / OWNERS -->
+  <!-- =========================================
+       STUDENTS / PARENTS / OWNERS
+  ========================================= -->
 
   <section class="section">
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Built For Everyone</span>
+
+        <span class="eyebrow">
+          Built For Everyone
+        </span>
+
         <h2 class="section-title">
           One platform, different needs.
         </h2>
+
       </div>
 
 
       <div class="audience-grid">
 
+
         <div class="audience-card">
 
-          <div class="icon">🎓</div>
+          <div class="icon">
+            🎓
+          </div>
 
-          <h3>For Students</h3>
+          <h3>
+            For Students
+          </h3>
 
           <p>
             Find accommodation, food, libraries, cafes and books
@@ -2331,9 +3327,13 @@
 
         <div class="audience-card">
 
-          <div class="icon">👨‍👩‍👦</div>
+          <div class="icon">
+            👨‍👩‍👦
+          </div>
 
-          <h3>For Parents</h3>
+          <h3>
+            For Parents
+          </h3>
 
           <p>
             Explore student areas and compare available information
@@ -2345,9 +3345,13 @@
 
         <div class="audience-card">
 
-          <div class="icon">🏢</div>
+          <div class="icon">
+            🏢
+          </div>
 
-          <h3>For Property Owners</h3>
+          <h3>
+            For Property Owners
+          </h3>
 
           <p>
             Connect your business with students searching for
@@ -2356,6 +3360,7 @@
 
         </div>
 
+
       </div>
 
     </div>
@@ -2363,25 +3368,34 @@
   </section>
 
 
-  <!-- BLOGS & GUIDES -->
+  <!-- =========================================
+       BLOGS & GUIDES
+  ========================================= -->
 
   <section class="section cream">
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Blogs & Guides</span>
+
+        <span class="eyebrow">
+          Blogs & Guides
+        </span>
+
         <h2 class="section-title">
           Useful information before you choose.
         </h2>
+
         <p class="section-description">
           Practical student-focused guides can help you make better
           decisions beyond simply finding a listing.
         </p>
+
       </div>
 
 
       <div class="blog-grid">
+
 
         <article class="blog-card">
 
@@ -2398,7 +3412,10 @@
             safety and other factors before selecting accommodation.
           </p>
 
-          <a class="blog-link" href="pg-finder.html">
+          <a
+            class="blog-link"
+            href="pg-finder.html"
+          >
             Explore Hostel / PG →
           </a>
 
@@ -2420,7 +3437,10 @@
             arrangements and cancellation policies.
           </p>
 
-          <a class="blog-link" href="tiffin-finder.html">
+          <a
+            class="blog-link"
+            href="tiffin-finder.html"
+          >
             Explore Tiffin / Mess →
           </a>
 
@@ -2442,7 +3462,10 @@
             and other useful study-space information.
           </p>
 
-          <a class="blog-link" href="library-finder.html">
+          <a
+            class="blog-link"
+            href="library-finder.html"
+          >
             Explore Libraries →
           </a>
 
@@ -2464,7 +3487,10 @@
             food, study spaces and essential services easier.
           </p>
 
-          <a class="blog-link" href="#coaching-hubs">
+          <a
+            class="blog-link"
+            href="#live-listings"
+          >
             Explore Student Hubs →
           </a>
 
@@ -2486,7 +3512,10 @@
             and other study essentials.
           </p>
 
-          <a class="blog-link" href="bookstore-finder.html">
+          <a
+            class="blog-link"
+            href="bookstore-finder.html"
+          >
             Explore Book Stores →
           </a>
 
@@ -2508,11 +3537,15 @@
             pricing before choosing a cafe.
           </p>
 
-          <a class="blog-link" href="cafe-finder.html">
+          <a
+            class="blog-link"
+            href="cafe-finder.html"
+          >
             Explore Cafes →
           </a>
 
         </article>
+
 
       </div>
 
@@ -2521,35 +3554,53 @@
   </section>
 
 
-  <!-- FAQ -->
+  <!-- =========================================
+       FAQ
+  ========================================= -->
 
-  <section class="section" id="faq">
+  <section
+    class="section"
+    id="faq"
+  >
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Frequently Asked Questions</span>
+
+        <span class="eyebrow">
+          Frequently Asked Questions
+        </span>
+
         <h2 class="section-title">
           Common questions from students and parents.
         </h2>
+
       </div>
 
 
       <div class="faq">
 
+
         <div class="faq-item">
 
           <button class="faq-question">
+
             Is StudentHubHelp available only in Sikar?
-            <span class="faq-plus">+</span>
+
+            <span class="faq-plus">
+              +
+            </span>
+
           </button>
 
           <div class="faq-answer">
+
             <p>
               No. StudentHubHelp is designed as an India-wide student
               discovery platform. Sikar is one important student hub,
               but the platform is intended for students across India.
             </p>
+
           </div>
 
         </div>
@@ -2558,15 +3609,22 @@
         <div class="faq-item">
 
           <button class="faq-question">
+
             What can I find on StudentHubHelp?
-            <span class="faq-plus">+</span>
+
+            <span class="faq-plus">
+              +
+            </span>
+
           </button>
 
           <div class="faq-answer">
+
             <p>
               Students can explore five main categories:
               Hostel / PG, Tiffin / Mess, Library, Cafe and Book Store.
             </p>
+
           </div>
 
         </div>
@@ -2575,11 +3633,17 @@
         <div class="faq-item">
 
           <button class="faq-question">
+
             Are all listings verified?
-            <span class="faq-plus">+</span>
+
+            <span class="faq-plus">
+              +
+            </span>
+
           </button>
 
           <div class="faq-answer">
+
             <p>
               Listing information can have different levels of
               verification or may require confirmation. Students
@@ -2587,6 +3651,7 @@
               pricing, facilities and other important details before
               making a decision.
             </p>
+
           </div>
 
         </div>
@@ -2595,17 +3660,22 @@
         <div class="faq-item">
 
           <button class="faq-question">
+
             Can students review a property or service?
-            <span class="faq-plus">+</span>
+
+            <span class="faq-plus">
+              +
+            </span>
+
           </button>
 
           <div class="faq-answer">
+
             <p>
               Yes. Logged-in students can submit reviews where the
               relevant property review functionality is available.
-              Submitted reviews may appear on the platform according
-              to the site's review rules.
             </p>
+
           </div>
 
         </div>
@@ -2614,17 +3684,24 @@
         <div class="faq-item">
 
           <button class="faq-question">
+
             Does StudentHubHelp charge brokerage?
-            <span class="faq-plus">+</span>
+
+            <span class="faq-plus">
+              +
+            </span>
+
           </button>
 
           <div class="faq-answer">
+
             <p>
               StudentHubHelp is designed as a discovery and directory
               platform. Students should always confirm any payment,
               deposit, rent or other transaction directly with the
               relevant business or property owner.
             </p>
+
           </div>
 
         </div>
@@ -2633,19 +3710,27 @@
         <div class="faq-item">
 
           <button class="faq-question">
+
             Can property owners request corrections?
-            <span class="faq-plus">+</span>
+
+            <span class="faq-plus">
+              +
+            </span>
+
           </button>
 
           <div class="faq-answer">
+
             <p>
               Yes. Owners or representatives can use the platform's
               available claim, update or correction process for
               relevant listings.
             </p>
+
           </div>
 
         </div>
+
 
       </div>
 
@@ -2654,29 +3739,40 @@
   </section>
 
 
-  <!-- TRUST & SAFETY -->
+  <!-- =========================================
+       TRUST & SAFETY
+  ========================================= -->
 
   <section class="section soft">
 
     <div class="container">
 
       <div class="section-head">
-        <span class="eyebrow">Trust & Safety</span>
+
+        <span class="eyebrow">
+          Trust & Safety
+        </span>
+
         <h2 class="section-title">
           Search smarter. Verify before you commit.
         </h2>
+
         <p class="section-description">
-          StudentHubHelp helps with discovery, but important real-world
-          decisions should always include independent verification.
+          StudentHubHelp helps with discovery, but important
+          real-world decisions should always include independent verification.
         </p>
+
       </div>
 
 
       <div class="trust-grid">
 
+
         <div class="trust-card">
 
-          <h3>🔎 Check current information</h3>
+          <h3>
+            🔎 Check current information
+          </h3>
 
           <p>
             Confirm rent, fees, room availability, meal pricing,
@@ -2688,7 +3784,9 @@
 
         <div class="trust-card">
 
-          <h3>🏠 Inspect accommodation</h3>
+          <h3>
+            🏠 Inspect accommodation
+          </h3>
 
           <p>
             Students and parents should physically inspect a hostel
@@ -2700,7 +3798,9 @@
 
         <div class="trust-card">
 
-          <h3>💳 Be careful with payments</h3>
+          <h3>
+            💳 Be careful with payments
+          </h3>
 
           <p>
             Do not transfer money solely because a listing appears
@@ -2713,7 +3813,9 @@
 
         <div class="trust-card">
 
-          <h3>📞 Use direct contact</h3>
+          <h3>
+            📞 Use direct contact
+          </h3>
 
           <p>
             Where phone or other contact information is available,
@@ -2725,7 +3827,9 @@
 
         <div class="trust-card">
 
-          <h3>⭐ Read student reviews</h3>
+          <h3>
+            ⭐ Read student reviews
+          </h3>
 
           <p>
             Reviews can provide useful context, but they should be
@@ -2737,15 +3841,17 @@
 
         <div class="trust-card">
 
-          <h3>🚩 Report inaccurate information</h3>
+          <h3>
+            🚩 Report inaccurate information
+          </h3>
 
           <p>
             If you find inaccurate, outdated or suspicious directory
-            information, use the available reporting or correction
-            channels.
+            information, use the available reporting or correction channels.
           </p>
 
         </div>
+
 
       </div>
 
@@ -2754,7 +3860,9 @@
   </section>
 
 
-  <!-- FINAL CTA -->
+  <!-- =========================================
+       FINAL CTA
+  ========================================= -->
 
   <section class="final-cta">
 
@@ -2772,7 +3880,10 @@
 
       </div>
 
-      <a class="cta-btn" href="#live-listings">
+      <a
+        class="cta-btn"
+        href="#live-listings"
+      >
         Explore Live Listings →
       </a>
 
@@ -2781,19 +3892,27 @@
   </section>
 
 
-  <!-- FOOTER -->
+  <!-- =========================================
+       FOOTER
+  ========================================= -->
 
   <footer>
 
     <div class="container footer-grid">
 
+
       <div>
 
         <div class="footer-brand">
 
-          <img src="logo.png" alt="StudentHubHelp logo" />
+          <img
+            src="logo.png"
+            alt="StudentHubHelp logo"
+          />
 
-          <strong>StudentHubHelp</strong>
+          <strong>
+            StudentHubHelp
+          </strong>
 
         </div>
 
@@ -2807,7 +3926,9 @@
 
       <div>
 
-        <h4>Student Services</h4>
+        <h4>
+          Student Services
+        </h4>
 
         <div class="footer-links">
 
@@ -2838,7 +3959,9 @@
 
       <div>
 
-        <h4>Director & Support</h4>
+        <h4>
+          Director & Support
+        </h4>
 
         <div class="director-name">
           SATPAL SWAMI
@@ -2847,18 +3970,26 @@
         <div class="director-info">
 
           <div>
+
             📞
+
             <a href="tel:+919929718264">
               +91 9929718264
             </a>
+
           </div>
 
+
           <div>
+
             ✉️
+
             <a href="mailto:satpalswami22742@gmail.com">
               satpalswami22742@gmail.com
             </a>
+
           </div>
+
 
           <div>
             StudentHubHelp Platform
@@ -2867,6 +3998,7 @@
         </div>
 
       </div>
+
 
     </div>
 
@@ -2888,20 +4020,31 @@
 
   <!-- TOAST -->
 
-  <div class="toast" id="toast"></div>
+  <div
+    class="toast"
+    id="toast"
+  ></div>
 
 
   <script>
 
     /* =========================================
-       SUPABASE
+       SUPABASE CONNECTION
     ========================================= */
 
     const SUPABASE_URL =
       "https://idurlccrarznnnqixxsd.supabase.co";
 
+
+    /*
+      IMPORTANT:
+      This is the same current anon key.
+      Do NOT use service_role key here.
+    */
+
     const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OX0.pq_rza98twL-SETQM_6TGNzsPCkVJxwjocFUeLB1yMA";
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OX0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+
 
     const supabaseClient =
       window.supabase.createClient(
@@ -2957,22 +4100,29 @@
     const navLinks =
       document.getElementById("navLinks");
 
-    mobileMenu.addEventListener("click", () => {
 
-      navLinks.classList.toggle("open");
+    mobileMenu.addEventListener(
+      "click",
+      () => {
 
-    });
+        navLinks.classList.toggle("open");
+
+      }
+    );
 
 
     document
       .querySelectorAll("#navLinks a")
       .forEach(link => {
 
-        link.addEventListener("click", () => {
+        link.addEventListener(
+          "click",
+          () => {
 
-          navLinks.classList.remove("open");
+            navLinks.classList.remove("open");
 
-        });
+          }
+        );
 
       });
 
@@ -2990,18 +4140,24 @@
     let carouselIndex = 0;
 
 
-    carouselCards.forEach((_, index) => {
+    carouselCards.forEach(
+      (_, index) => {
 
-      const dot =
-        document.createElement("span");
+        const dot =
+          document.createElement("span");
 
-      dot.className =
-        "carousel-dot" +
-        (index === 0 ? " active" : "");
+        dot.className =
+          "carousel-dot" +
+          (
+            index === 0
+              ? " active"
+              : ""
+          );
 
-      carouselDots.appendChild(dot);
+        carouselDots.appendChild(dot);
 
-    });
+      }
+    );
 
 
     const dots =
@@ -3010,36 +4166,46 @@
 
     function showCarousel(index) {
 
-      carouselCards.forEach((card, i) => {
+      carouselCards.forEach(
+        (card, i) => {
 
-        card.classList.toggle(
-          "active",
-          i === index
-        );
+          card.classList.toggle(
+            "active",
+            i === index
+          );
 
-      });
+        }
+      );
 
-      dots.forEach((dot, i) => {
 
-        dot.classList.toggle(
-          "active",
-          i === index
-        );
+      dots.forEach(
+        (dot, i) => {
 
-      });
+          dot.classList.toggle(
+            "active",
+            i === index
+          );
+
+        }
+      );
 
     }
 
 
-    setInterval(() => {
+    setInterval(
+      () => {
 
-      carouselIndex =
-        (carouselIndex + 1) %
-        carouselCards.length;
+        carouselIndex =
+          (
+            carouselIndex + 1
+          ) %
+          carouselCards.length;
 
-      showCarousel(carouselIndex);
+        showCarousel(carouselIndex);
 
-    }, 4300);
+      },
+      4300
+    );
 
 
     /* =========================================
@@ -3047,10 +4213,14 @@
     ========================================= */
 
     const searchForm =
-      document.getElementById("mainSearchForm");
+      document.getElementById(
+        "mainSearchForm"
+      );
 
     const searchInput =
-      document.getElementById("mainSearch");
+      document.getElementById(
+        "mainSearch"
+      );
 
 
     function getSearchTarget(value) {
@@ -3058,55 +4228,87 @@
       const q =
         value.trim().toLowerCase();
 
+
       if (!q) {
         return "pg-finder.html";
       }
 
-      const tiffinWords =
-        ["tiffin", "mess", "food", "meal"];
 
-      const libraryWords =
-        ["library", "study", "reading"];
+      const tiffinWords = [
+        "tiffin",
+        "mess",
+        "food",
+        "meal"
+      ];
 
-      const cafeWords =
-        ["cafe", "coffee"];
 
-      const bookWords =
-        ["book", "books", "bookstore", "book store"];
+      const libraryWords = [
+        "library",
+        "study",
+        "reading"
+      ];
+
+
+      const cafeWords = [
+        "cafe",
+        "coffee"
+      ];
+
+
+      const bookWords = [
+        "book",
+        "books",
+        "bookstore",
+        "book store"
+      ];
+
 
       if (
-        tiffinWords.some(word =>
-          q.includes(word)
+        tiffinWords.some(
+          word => q.includes(word)
         )
       ) {
+
         return "tiffin-finder.html";
+
       }
 
+
       if (
-        libraryWords.some(word =>
-          q.includes(word)
+        libraryWords.some(
+          word => q.includes(word)
         )
       ) {
+
         return "library-finder.html";
+
       }
 
+
       if (
-        cafeWords.some(word =>
-          q.includes(word)
+        cafeWords.some(
+          word => q.includes(word)
         )
       ) {
+
         return "cafe-finder.html";
+
       }
 
+
       if (
-        bookWords.some(word =>
-          q.includes(word)
+        bookWords.some(
+          word => q.includes(word)
         )
       ) {
+
         return "bookstore-finder.html";
+
       }
+
 
       return "pg-finder.html";
+
     }
 
 
@@ -3115,114 +4317,180 @@
       const target =
         getSearchTarget(value);
 
+
+      const cleanValue =
+        value.trim();
+
+
       const url =
-        `${target}?q=${encodeURIComponent(value.trim())}`;
+        cleanValue
+          ? `${target}?q=${encodeURIComponent(cleanValue)}`
+          : target;
+
 
       window.location.href = url;
 
     }
 
 
-    searchForm.addEventListener("submit", event => {
+    searchForm.addEventListener(
+      "submit",
+      event => {
 
-      event.preventDefault();
+        event.preventDefault();
 
-      performSearch(searchInput.value);
+        performSearch(
+          searchInput.value
+        );
 
-    });
+      }
+    );
 
 
     document
       .querySelectorAll("[data-search]")
       .forEach(button => {
 
-        button.addEventListener("click", () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          const value =
-            button.dataset.search;
+            const value =
+              button.dataset.search;
 
-          searchInput.value = value;
+            searchInput.value =
+              value;
 
-          performSearch(value);
+            performSearch(value);
 
-        });
+          }
+        );
 
       });
 
 
     /* =========================================
-       LIVE STATS
+       LIVE SUPABASE STATS
     ========================================= */
 
-    const tables = {
+    const statsConfig = [
 
-      hostel: "hostels",
-      tiffin: "tiffins",
-      library: "libraries",
-      cafe: "cafes",
-      bookstore: "bookstores"
+      {
+        table: "hostels",
+        element: "hostelCount"
+      },
 
-    };
+      {
+        table: "tiffins",
+        element: "tiffinCount"
+      },
+
+      {
+        table: "libraries",
+        element: "libraryCount"
+      },
+
+      {
+        table: "cafes",
+        element: "cafeCount"
+      },
+
+      {
+        table: "bookstores",
+        element: "bookstoreCount"
+      }
+
+    ];
 
 
-    async function getTableCount(table) {
+    async function loadSingleCount(
+      table,
+      elementId
+    ) {
 
-      const {
-        count,
-        error
-      } =
-        await supabaseClient
-          .from(table)
-          .select("*", {
-            count: "exact",
-            head: true
-          });
-
-      if (error) {
-
-        console.error(
-          `Count error: ${table}`,
-          error
+      const element =
+        document.getElementById(
+          elementId
         );
 
-        return 0;
+
+      try {
+
+        /*
+          head:true means we only ask Supabase
+          for the count, not all rows.
+        */
+
+        const {
+          count,
+          error
+        } =
+          await supabaseClient
+            .from(table)
+            .select(
+              "*",
+              {
+                count: "exact",
+                head: true
+              }
+            );
+
+
+        if (error) {
+
+          console.error(
+            `Supabase count error for ${table}:`,
+            error
+          );
+
+          element.textContent = "0";
+
+          return;
+
+        }
+
+
+        element.textContent =
+          Number.isFinite(count)
+            ? count
+            : 0;
 
       }
 
-      return count || 0;
+      catch (error) {
+
+        console.error(
+          `Unexpected count error for ${table}:`,
+          error
+        );
+
+        element.textContent = "0";
+
+      }
 
     }
 
 
     async function loadStats() {
 
-      const results =
-        await Promise.all([
-          getTableCount(tables.hostel),
-          getTableCount(tables.tiffin),
-          getTableCount(tables.library),
-          getTableCount(tables.cafe),
-          getTableCount(tables.bookstore)
-        ]);
+      await Promise.all(
 
+        statsConfig.map(
+          item =>
+            loadSingleCount(
+              item.table,
+              item.element
+            )
+        )
 
-      document.getElementById("hostelCount")
-        .textContent = results[0];
-
-      document.getElementById("tiffinCount")
-        .textContent = results[1];
-
-      document.getElementById("libraryCount")
-        .textContent = results[2];
-
-      document.getElementById("cafeCount")
-        .textContent = results[3];
-
-      document.getElementById("bookstoreCount")
-        .textContent = results[4];
+      );
 
     }
 
+
+    /*
+      Load counts immediately.
+    */
 
     loadStats();
 
@@ -3230,10 +4498,6 @@
     /* =========================================
        LIVE LISTINGS
     ========================================= */
-
-    const listingGrid =
-      document.getElementById("listingGrid");
-
 
     const listingSources = [
 
@@ -3299,11 +4563,14 @@
       }
 
 
-      return (data || []).map(item => ({
+      return (
+        data || []
+      ).map(item => ({
 
         ...item,
 
-        sourceTable: source.table,
+        sourceTable:
+          source.table,
 
         listingCategory:
           source.category,
@@ -3330,7 +4597,9 @@
 
       const results =
         await Promise.all(
-          listingSources.map(fetchListings)
+          listingSources.map(
+            fetchListings
+          )
         );
 
 
@@ -3343,18 +4612,23 @@
     }
 
 
-    function renderListings(category) {
+    function renderListings(
+      category
+    ) {
 
       let listings =
         allListings;
 
 
-      if (category !== "all") {
+      if (
+        category !== "all"
+      ) {
 
         listings =
           listings.filter(
             item =>
-              item.listingCategory === category
+              item.listingCategory ===
+              category
           );
 
       }
@@ -3370,7 +4644,9 @@
 
           <div class="listing-empty">
 
-            <div style="font-size:30px;margin-bottom:8px;">
+            <div
+              style="font-size:30px;margin-bottom:8px;"
+            >
               🔎
             </div>
 
@@ -3378,7 +4654,9 @@
               No listings found for this category yet.
             </strong>
 
-            <div style="margin-top:5px;font-size:11px;">
+            <div
+              style="margin-top:5px;font-size:11px;"
+            >
               More student places can appear as the directory grows.
             </div>
 
@@ -3392,95 +4670,115 @@
 
 
       listingGrid.innerHTML =
-        listings.map(item => {
+        listings
+          .map(item => {
 
-          const name =
-            escapeHTML(item.name);
+            const name =
+              escapeHTML(item.name);
 
-          const area =
-            escapeHTML(item.area);
+            const area =
+              escapeHTML(item.area);
 
-          const address =
-            escapeHTML(item.address);
+            const address =
+              escapeHTML(item.address);
 
-          const timing =
-            escapeHTML(item.timing);
+            const timing =
+              escapeHTML(item.timing);
 
-          const rating =
-            escapeHTML(item.rating);
+            const rating =
+              escapeHTML(item.rating);
 
-          const categoryLabel =
-            escapeHTML(item.listingLabel);
+            const categoryLabel =
+              escapeHTML(
+                item.listingLabel
+              );
 
 
-          return `
+            return `
 
-            <article class="listing-card">
+              <article class="listing-card">
 
-              <span class="listing-category">
-                ${categoryLabel}
-              </span>
-
-              <h3>
-                ${name || "Student Listing"}
-              </h3>
-
-              <div class="listing-area">
-                📍 ${area || "Location available"}
-              </div>
-
-              <div class="listing-address">
-                ${address || "Address information available on details page."}
-              </div>
-
-              <div class="listing-meta">
-
-                <span>
-                  ${
-                    rating
-                      ? `⭐ ${rating}`
-                      : "Student place"
-                  }
+                <span class="listing-category">
+                  ${categoryLabel}
                 </span>
 
-                <span>
+                <h3>
+                  ${name || "Student Listing"}
+                </h3>
+
+                <div class="listing-area">
+                  📍 ${area || "Location available"}
+                </div>
+
+                <div class="listing-address">
                   ${
-                    timing
-                      ? `🕐 ${timing}`
-                      : "View details"
+                    address ||
+                    "Address information available on details page."
                   }
-                </span>
+                </div>
 
-              </div>
+                <div class="listing-meta">
 
-            </article>
+                  <span>
+                    ${
+                      rating
+                        ? `⭐ ${rating}`
+                        : "Student place"
+                    }
+                  </span>
 
-          `;
+                  <span>
+                    ${
+                      timing
+                        ? `🕐 ${timing}`
+                        : "View details"
+                    }
+                  </span>
 
-        }).join("");
+                </div>
+
+              </article>
+
+            `;
+
+          })
+          .join("");
 
     }
 
 
     document
-      .querySelectorAll(".listing-tab")
+      .querySelectorAll(
+        ".listing-tab"
+      )
       .forEach(button => {
 
-        button.addEventListener("click", () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          document
-            .querySelectorAll(".listing-tab")
-            .forEach(btn =>
-              btn.classList.remove("active")
+            document
+              .querySelectorAll(
+                ".listing-tab"
+              )
+              .forEach(btn =>
+                btn.classList.remove(
+                  "active"
+                )
+              );
+
+
+            button.classList.add(
+              "active"
             );
 
-          button.classList.add("active");
 
-          renderListings(
-            button.dataset.category
-          );
+            renderListings(
+              button.dataset.category
+            );
 
-        });
+          }
+        );
 
       });
 
@@ -3489,11 +4787,10 @@
 
 
     /* =========================================
-       REVIEWS / TESTIMONIALS
+       REAL STUDENT REVIEWS
     ========================================= */
 
     let reviews = [];
-
     let reviewIndex = 0;
 
 
@@ -3508,8 +4805,11 @@
           )
         );
 
-      return "★".repeat(value) +
-        "☆".repeat(5 - value);
+
+      return (
+        "★".repeat(value) +
+        "☆".repeat(5 - value)
+      );
 
     }
 
@@ -3547,21 +4847,23 @@
 
 
       reviews =
-        (data || []).filter(review => {
+        (data || [])
+          .filter(review => {
 
-          const status =
-            String(
-              review.status || ""
-            ).toLowerCase();
+            const status =
+              String(
+                review.status || ""
+              ).toLowerCase();
 
-          return (
-            !status ||
-            status === "approved" ||
-            status === "active" ||
-            status === "published"
-          );
 
-        });
+            return (
+              !status ||
+              status === "approved" ||
+              status === "active" ||
+              status === "published"
+            );
+
+          });
 
 
       renderReviews();
@@ -3610,37 +4912,47 @@
 
 
       wrap.innerHTML =
-        reviews.map((review, index) => {
+        reviews
+          .map(
+            (review, index) => {
 
-          return `
+              return `
 
-            <div class="testimonial ${
-              index === 0
-                ? "active"
-                : ""
-            }">
+                <div class="testimonial ${
+                  index === 0
+                    ? "active"
+                    : ""
+                }">
 
-              <div class="stars">
-                ${starsHTML(review.rating)}
-              </div>
+                  <div class="stars">
+                    ${starsHTML(
+                      review.rating
+                    )}
+                  </div>
 
-              <div class="testimonial-text">
-                “${escapeHTML(review.review_text)}”
-              </div>
+                  <div class="testimonial-text">
+                    “${escapeHTML(
+                      review.review_text
+                    )}”
+                  </div>
 
-              <div class="testimonial-user">
-                ${escapeHTML(review.user_name)}
-              </div>
+                  <div class="testimonial-user">
+                    ${escapeHTML(
+                      review.user_name
+                    )}
+                  </div>
 
-              <div class="testimonial-note">
-                Student Review
-              </div>
+                  <div class="testimonial-note">
+                    Student Review
+                  </div>
 
-            </div>
+                </div>
 
-          `;
+              `;
 
-        }).join("");
+            }
+          )
+          .join("");
 
 
       reviewIndex = 0;
@@ -3654,32 +4966,39 @@
 
 
         window.__reviewTimer =
-          setInterval(() => {
+          setInterval(
+            () => {
 
-            const items =
-              wrap.querySelectorAll(
-                ".testimonial"
+              const items =
+                wrap.querySelectorAll(
+                  ".testimonial"
+                );
+
+
+              items.forEach(
+                item =>
+                  item.classList.remove(
+                    "active"
+                  )
               );
 
-            items.forEach(item =>
-              item.classList.remove(
+
+              reviewIndex =
+                (
+                  reviewIndex + 1
+                ) %
+                items.length;
+
+
+              items[
+                reviewIndex
+              ].classList.add(
                 "active"
-              )
-            );
+              );
 
-
-            reviewIndex =
-              (reviewIndex + 1) %
-              items.length;
-
-
-            items[
-              reviewIndex
-            ].classList.add(
-              "active"
-            );
-
-          }, 5000);
+            },
+            5000
+          );
 
       }
 
@@ -3694,52 +5013,72 @@
     ========================================= */
 
     document
-      .querySelectorAll(".faq-question")
+      .querySelectorAll(
+        ".faq-question"
+      )
       .forEach(button => {
 
-        button.addEventListener("click", () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          const item =
-            button.closest(".faq-item");
+            const item =
+              button.closest(
+                ".faq-item"
+              );
 
-          const wasOpen =
-            item.classList.contains("open");
+
+            const wasOpen =
+              item.classList.contains(
+                "open"
+              );
 
 
-          document
-            .querySelectorAll(".faq-item")
-            .forEach(other => {
+            document
+              .querySelectorAll(
+                ".faq-item"
+              )
+              .forEach(other => {
 
-              other.classList.remove("open");
+                other.classList.remove(
+                  "open"
+                );
+
+
+                const plus =
+                  other.querySelector(
+                    ".faq-plus"
+                  );
+
+
+                if (plus) {
+                  plus.textContent = "+";
+                }
+
+              });
+
+
+            if (!wasOpen) {
+
+              item.classList.add(
+                "open"
+              );
+
 
               const plus =
-                other.querySelector(
+                item.querySelector(
                   ".faq-plus"
                 );
 
+
               if (plus) {
-                plus.textContent = "+";
+                plus.textContent = "−";
               }
 
-            });
-
-
-          if (!wasOpen) {
-
-            item.classList.add("open");
-
-            const plus =
-              item.querySelector(
-                ".faq-plus"
-              );
-
-            if (plus) {
-              plus.textContent = "−";
             }
 
           }
-
-        });
+        );
 
       });
 
@@ -3749,37 +5088,48 @@
     ========================================= */
 
     const realtimeTables = [
+
       "hostels",
       "tiffins",
       "libraries",
       "cafes",
       "bookstores"
+
     ];
 
 
-    realtimeTables.forEach(table => {
+    realtimeTables.forEach(
+      table => {
 
-      supabaseClient
-        .channel(
-          `homepage-${table}`
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table
-          },
-          async () => {
+        supabaseClient
+          .channel(
+            `homepage-${table}`
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table
+            },
+            async () => {
 
-            await loadStats();
-            await loadListings();
+              /*
+                Whenever admin/owner changes a
+                listing, refresh live counts
+                and listings automatically.
+              */
 
-          }
-        )
-        .subscribe();
+              await loadStats();
 
-    });
+              await loadListings();
+
+            }
+          )
+          .subscribe();
+
+      }
+    );
 
 
     /* =========================================
@@ -3787,7 +5137,9 @@
     ========================================= */
 
     supabaseClient
-      .channel("homepage-reviews")
+      .channel(
+        "homepage-reviews"
+      )
       .on(
         "postgres_changes",
         {
@@ -3813,19 +5165,31 @@
       "#live-listings"
     ) {
 
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        document
-          .getElementById(
-            "live-listings"
-          )
-          ?.scrollIntoView({
-            behavior: "smooth"
-          });
+          document
+            .getElementById(
+              "live-listings"
+            )
+            ?.scrollIntoView({
+              behavior: "smooth"
+            });
 
-      }, 300);
+        },
+        300
+      );
 
     }
+
+
+    /* =========================================
+       SUPABASE CONNECTION CHECK
+    ========================================= */
+
+    console.log(
+      "StudentHubHelp Supabase connection initialized."
+    );
 
   </script>
 
