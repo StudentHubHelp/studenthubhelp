@@ -1,1019 +1,4776 @@
 <!DOCTYPE html>
-<html lang="hi" class="scroll-smooth">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#081026">
-<title>Director Admin Dashboard | StudentHubHelp</title>
-<link rel="icon" type="image/png" href="logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-tailwind.config={theme:{extend:{colors:{
-navy:{950:"#040814",900:"#081026",850:"#0D1838",800:"#14224D",700:"#1F316B"},
-gold:{100:"#FFF7D6",200:"#FDECB2",300:"#F5DE88",400:"#E6C65E",500:"#D4AF37",600:"#B89020",700:"#8C6B10"}
-},fontFamily:{sans:["Inter","Noto Sans Devanagari","sans-serif"],display:["Cinzel","serif"]}}}};
-</script>
-<style>
-body{background:linear-gradient(rgba(4,8,20,.80),rgba(4,8,20,.88)),url("ChatGPT Image Sep 1, 2026, 03_17_37 PM.png") center/cover fixed}
-.gold-gradient-text{background:linear-gradient(135deg,#FFF7D6,#D4AF37,#B89020);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.gold-gradient-bg{background:linear-gradient(135deg,#D4AF37,#F5DE88,#B89020)}
-.card{background:rgba(8,16,38,.94);border:1px solid rgba(212,175,55,.20);box-shadow:0 10px 35px rgba(0,0,0,.20)}
-.input{width:100%;background:#0D1838;border:1px solid #1F316B;border-radius:.75rem;padding:.7rem .85rem;color:#fff;outline:none}
-.input:focus{border-color:#D4AF37;box-shadow:0 0 0 2px rgba(212,175,55,.08)}
-.modal{background:rgba(4,8,20,.88);backdrop-filter:blur(10px)}
-button:disabled{opacity:.55;cursor:not-allowed}
-.table-wrap{overflow-x:auto}
-.toast{animation:toast .2s ease-out}@keyframes toast{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
-</style>
-<link rel="stylesheet" href="css/premium.css">
-<meta name="robots" content="noindex, nofollow, noarchive">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>StudentHubHelp — Director Admin</title>
+
+  <link rel="icon" href="logo.png">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Inter, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+
+    .sidebar {
+      width: 270px;
+      transition: .25s ease;
+    }
+
+    .main {
+      margin-left: 270px;
+    }
+
+    .nav-item {
+      transition: .2s ease;
+    }
+
+    .nav-item.active {
+      background: #1e293b;
+      color: white;
+      box-shadow: 0 5px 18px rgba(15, 23, 42, .15);
+    }
+
+    .glass {
+      background: rgba(255,255,255,.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(226,232,240,.9);
+    }
+
+    .stat-card {
+      transition: .2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(15,23,42,.08);
+    }
+
+    .modal-backdrop {
+      background: rgba(15,23,42,.55);
+      backdrop-filter: blur(5px);
+    }
+
+    .hidden-section {
+      display: none !important;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    .toast {
+      animation: toastIn .25s ease;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media(max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+        z-index: 50;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main {
+        margin-left: 0;
+      }
+    }
+  </style>
 </head>
 
-<body class="premium-grid bg-navy-950 text-slate-100 font-sans min-h-screen">
+<body>
 
-<!-- ================= AUTH ================= -->
-<div id="authScreen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy-950/95 backdrop-blur-xl">
-  <div class="card rounded-3xl w-full max-w-md p-7">
-    <div class="flex justify-center mb-5">
-      <div class="w-16 h-16 rounded-2xl gold-gradient-bg text-navy-950 flex items-center justify-center text-2xl font-extrabold shadow-xl">SH</div>
+<!-- =========================
+     MOBILE OVERLAY
+========================= -->
+<div id="sidebarOverlay"
+     class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden"
+     onclick="toggleSidebar()"></div>
+
+
+<!-- =========================
+     SIDEBAR
+========================= -->
+<aside id="sidebar"
+       class="sidebar fixed left-0 top-0 bottom-0 bg-[#07111f] text-slate-300 z-50 overflow-y-auto">
+
+  <div class="p-5 border-b border-white/10">
+
+    <div class="flex items-center gap-3">
+
+      <img src="logo.png"
+           class="w-11 h-11 rounded-xl object-cover bg-white"
+           onerror="this.style.display='none'">
+
+      <div>
+        <h1 class="text-white font-extrabold text-lg">
+          StudentHubHelp
+        </h1>
+
+        <p class="text-xs text-slate-400">
+          Director Control Center
+        </p>
+      </div>
+
     </div>
-    <h1 class="text-2xl text-center font-display font-bold">Director Admin Login</h1>
-    <p class="text-center text-xs text-slate-400 mt-1">StudentHubHelp • Master Control Center</p>
 
-    <form id="loginForm" class="space-y-4 mt-7">
-      <div>
-        <label class="text-xs font-bold text-slate-300">Director Email</label>
-        <input id="loginEmail" class="input mt-1" type="email" autocomplete="username" value="satpalswami22742@gmail.com" required>
-      </div>
-      <div>
-        <label class="text-xs font-bold text-slate-300">Password</label>
-        <input id="loginPassword" class="input mt-1" type="password" autocomplete="current-password" required>
-      </div>
-      <button id="loginBtn" type="submit" class="w-full py-3 rounded-xl gold-gradient-bg text-navy-950 font-extrabold">
-        <i class="fa-solid fa-shield-halved mr-1"></i> Sign In Securely
-      </button>
-      <p id="authMessage" class="text-xs text-center min-h-4 text-red-300"></p>
-    </form>
-
-    <p class="text-[10px] text-slate-500 text-center mt-5">
-      Authentication is handled by Supabase Auth. No master password is stored in this HTML.
-    </p>
   </div>
-</div>
 
-<!-- ================= APP ================= -->
-<div id="app" class="hidden min-h-screen md:flex">
 
-  <aside class="w-full md:w-64 bg-navy-900/95 border-r border-gold-500/20 flex-shrink-0 md:sticky md:top-0 md:h-screen">
-    <div class="p-5 border-b border-navy-800 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl gold-gradient-bg text-navy-950 flex items-center justify-center font-display font-bold">SH</div>
-      <div>
-        <div class="font-display font-bold gold-gradient-text">StudentHubHelp</div>
-        <div class="text-[10px] text-emerald-400">● ADMIN ONLINE</div>
-      </div>
-    </div>
+  <div class="px-3 py-5">
 
-    <nav class="p-3 space-y-1 text-xs font-bold">
-      <button data-section="overview" class="nav w-full p-3 rounded-xl text-left text-gold-300 bg-gold-500/10 border border-gold-500/30"><i class="fa-solid fa-chart-pie w-5 text-gold-400"></i> Overview</button>
-      <button data-section="students" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-user-graduate w-5 text-gold-400"></i> Students</button>
-      <button data-section="owners" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-user-tie w-5 text-gold-400"></i> Owners</button>
-      <button data-section="hostels" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-hotel w-5 text-gold-400"></i> Hostels / PG</button>
-      <button data-section="tiffins" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-bowl-food w-5 text-gold-400"></i> Tiffin / Mess</button>
-      <button data-section="libraries" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-book-open w-5 text-gold-400"></i> Libraries</button>
-      <button data-section="cafes" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-mug-hot w-5 text-gold-400"></i> Cafes</button>
-      <button data-section="admin" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-user-gear w-5 text-gold-400"></i> Admin Profile</button>
+    <p class="px-3 mb-2 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+      Main
+    </p>
+
+    <nav id="mainNav" class="space-y-1">
+
+      <button data-view="overview"
+              class="nav-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('overview')">
+        <i class="fa-solid fa-chart-pie w-5"></i>
+        Overview
+      </button>
+
+      <button data-view="students"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('students')">
+        <i class="fa-solid fa-user-graduate w-5"></i>
+        Students
+      </button>
+
+      <button data-view="owners"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('owners')">
+        <i class="fa-solid fa-user-tie w-5"></i>
+        Owners
+      </button>
+
     </nav>
 
-    <div class="p-3 border-t border-navy-800">
-      <button id="logoutBtn" class="w-full py-2.5 rounded-xl bg-red-500/10 text-red-300 font-bold text-xs">
-        <i class="fa-solid fa-power-off mr-1"></i> Logout
+
+    <p class="px-3 mt-7 mb-2 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+      Property Management
+    </p>
+
+    <nav class="space-y-1">
+
+      <button data-view="listing_requests"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('listing_requests')">
+        <i class="fa-solid fa-file-circle-plus w-5"></i>
+        Listing Requests
+        <span id="pendingListingBadge"
+              class="ml-auto hidden bg-amber-400 text-slate-950 text-[10px] px-2 py-0.5 rounded-full font-bold">
+          0
+        </span>
       </button>
-    </div>
-  </aside>
 
-  <div class="flex-1 min-w-0">
-    <header class="sticky top-0 z-40 bg-navy-900/95 backdrop-blur border-b border-gold-500/20 p-3 sm:p-4">
-      <div class="flex gap-2 items-center">
-        <div class="relative flex-1">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gold-500"></i>
-          <input id="globalSearch" class="input pl-9" placeholder="Search students, owners, properties, phone, area...">
-          <div id="searchResults" class="absolute left-0 right-0 top-12 hidden card rounded-2xl p-2 max-h-96 overflow-auto z-50"></div>
-        </div>
-        <button id="refreshBtn" class="w-11 h-11 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300"><i class="fa-solid fa-rotate"></i></button>
-        <a href="./" target="_blank" class="hidden sm:flex px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold"><i class="fa-solid fa-globe mr-1"></i> Live Site</a>
+      <button data-view="claim_requests"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('claim_requests')">
+        <i class="fa-solid fa-link w-5"></i>
+        Claim Requests
+        <span id="pendingClaimBadge"
+              class="ml-auto hidden bg-blue-400 text-slate-950 text-[10px] px-2 py-0.5 rounded-full font-bold">
+          0
+        </span>
+      </button>
+
+      <button data-view="hostels"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('hostels')">
+        <i class="fa-solid fa-hotel w-5"></i>
+        Hostel / PG
+      </button>
+
+      <button data-view="tiffins"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('tiffins')">
+        <i class="fa-solid fa-bowl-food w-5"></i>
+        Tiffin / Mess
+      </button>
+
+      <button data-view="libraries"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('libraries')">
+        <i class="fa-solid fa-book-open w-5"></i>
+        Libraries
+      </button>
+
+      <button data-view="cafes"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('cafes')">
+        <i class="fa-solid fa-mug-hot w-5"></i>
+        Cafes
+      </button>
+
+      <button data-view="bookstores"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('bookstores')">
+        <i class="fa-solid fa-store w-5"></i>
+        Book Stores
+      </button>
+
+    </nav>
+
+
+    <p class="px-3 mt-7 mb-2 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+      Monitoring
+    </p>
+
+    <nav class="space-y-1">
+
+      <button data-view="bookings"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('bookings')">
+        <i class="fa-solid fa-calendar-check w-5"></i>
+        Student Bookings
+      </button>
+
+      <button data-view="reviews"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('reviews')">
+        <i class="fa-solid fa-star w-5"></i>
+        Reviews
+      </button>
+
+    </nav>
+
+
+    <p class="px-3 mt-7 mb-2 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+      Account
+    </p>
+
+    <nav class="space-y-1">
+
+      <button data-view="admin_profile"
+              class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"
+              onclick="showView('admin_profile')">
+        <i class="fa-solid fa-shield-halved w-5"></i>
+        Admin & Security
+      </button>
+
+    </nav>
+
+  </div>
+
+
+  <div class="absolute bottom-0 left-0 right-0 p-4 bg-[#07111f] border-t border-white/10">
+
+    <button onclick="logout()"
+            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 text-red-300 hover:bg-red-500/20 text-sm">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      Sign Out
+    </button>
+
+  </div>
+
+</aside>
+
+
+<!-- =========================
+     MAIN
+========================= -->
+<main class="main min-h-screen">
+
+  <!-- TOPBAR -->
+  <header class="sticky top-0 z-30 glass h-16 flex items-center justify-between px-4 md:px-6">
+
+    <div class="flex items-center gap-3">
+
+      <button onclick="toggleSidebar()"
+              class="lg:hidden w-10 h-10 rounded-xl hover:bg-slate-100">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <div>
+        <p id="pageTitle" class="font-bold text-slate-900">
+          Dashboard Overview
+        </p>
+
+        <p id="pageSubtitle" class="text-xs text-slate-500">
+          Live StudentHubHelp control center
+        </p>
       </div>
-    </header>
 
-    <main class="p-4 sm:p-7 space-y-6">
+    </div>
 
-      <!-- OVERVIEW -->
-      <section id="section-overview" class="section space-y-6">
-        <div>
-          <h2 class="text-2xl font-display font-bold">Dashboard Overview</h2>
-          <p class="text-xs text-slate-400">Live records from Supabase.</p>
-        </div>
 
-        <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
-          <div class="card rounded-2xl p-4 cursor-pointer" data-go="students"><div class="text-xs text-slate-400">Students</div><div id="statStudents" class="text-2xl font-bold mt-1">0</div></div>
-          <div class="card rounded-2xl p-4 cursor-pointer" data-go="owners"><div class="text-xs text-slate-400">Owners</div><div id="statOwners" class="text-2xl font-bold mt-1">0</div></div>
-          <div class="card rounded-2xl p-4 cursor-pointer" data-go="hostels"><div class="text-xs text-slate-400">Hostels</div><div id="statHostels" class="text-2xl font-bold mt-1">0</div></div>
-          <div class="card rounded-2xl p-4 cursor-pointer" data-go="tiffins"><div class="text-xs text-slate-400">Tiffins</div><div id="statTiffins" class="text-2xl font-bold mt-1">0</div></div>
-          <div class="card rounded-2xl p-4 cursor-pointer" data-go="libraries"><div class="text-xs text-slate-400">Libraries</div><div id="statLibraries" class="text-2xl font-bold mt-1">0</div></div>
-          <div class="card rounded-2xl p-4 cursor-pointer" data-go="cafes"><div class="text-xs text-slate-400">Cafes</div><div id="statCafes" class="text-2xl font-bold mt-1">0</div></div>
-        </div>
+    <div class="flex items-center gap-3">
 
-        <div class="card rounded-2xl p-5">
-          <h3 class="font-bold">System status</h3>
-          <div class="grid sm:grid-cols-3 gap-3 mt-4 text-xs">
-            <div class="bg-navy-850 rounded-xl p-3"><span class="text-slate-400">Database</span><div id="dbStatus" class="text-amber-300 mt-1">Checking...</div></div>
-            <div class="bg-navy-850 rounded-xl p-3"><span class="text-slate-400">Authenticated as</span><div id="authUser" class="text-white mt-1 truncate">—</div></div>
-            <div class="bg-navy-850 rounded-xl p-3"><span class="text-slate-400">Last sync</span><div id="lastSync" class="text-white mt-1">—</div></div>
+      <div class="hidden sm:flex items-center gap-2 text-xs text-slate-500">
+
+        <span id="connectionDot"
+              class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+
+        <span id="connectionText">
+          Connecting...
+        </span>
+
+      </div>
+
+
+      <button onclick="refreshAll()"
+              class="w-10 h-10 rounded-xl hover:bg-slate-100 text-slate-600"
+              title="Refresh">
+        <i class="fa-solid fa-rotate"></i>
+      </button>
+
+
+      <div class="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center">
+        <i class="fa-solid fa-user-shield text-sm"></i>
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <div class="p-4 md:p-6 lg:p-8">
+
+    <!-- =========================
+         OVERVIEW
+    ========================= -->
+    <section id="view-overview">
+
+      <div class="mb-7">
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+          <div>
+            <h2 class="text-2xl md:text-3xl font-extrabold">
+              Director Dashboard
+            </h2>
+
+            <p class="text-slate-500 mt-1">
+              Complete live control of StudentHubHelp.
+            </p>
           </div>
+
+          <div class="flex gap-2">
+
+            <button onclick="showView('listing_requests')"
+                    class="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold">
+              <i class="fa-solid fa-inbox mr-2"></i>
+              Requests
+            </button>
+
+            <button onclick="openPropertyModal()"
+                    class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold">
+              <i class="fa-solid fa-plus mr-2"></i>
+              Add Property
+            </button>
+
+          </div>
+
         </div>
-      </section>
 
-      <!-- STUDENTS -->
-      <section id="section-students" class="section hidden space-y-5">
-        <div class="flex flex-wrap gap-3 justify-between items-center">
-          <div><h2 class="text-xl font-bold">Students</h2><p class="text-xs text-slate-400">Registered student profiles.</p></div>
-          <input id="studentFilter" class="input max-w-xs" placeholder="Filter students...">
-        </div>
-        <div class="card rounded-2xl table-wrap">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-navy-950 text-gold-300">
-              <tr><th class="p-4">Name</th><th class="p-4">Phone</th><th class="p-4">Email</th><th class="p-4">Status</th><th class="p-4 text-right">Action</th></tr>
-            </thead>
-            <tbody id="studentBody"></tbody>
-          </table>
-        </div>
-      </section>
+      </div>
 
-      <!-- OWNERS -->
-      <section id="section-owners" class="section hidden space-y-5">
-        <div><h2 class="text-xl font-bold">Verified Owners</h2><p class="text-xs text-slate-400">Only profiles with role = owner are shown. Admin is excluded.</p></div>
-        <div class="card rounded-2xl table-wrap">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-navy-950 text-gold-300">
-              <tr><th class="p-4">Owner</th><th class="p-4">Phone</th><th class="p-4">Email</th><th class="p-4">Status</th><th class="p-4 text-right">Actions</th></tr>
-            </thead>
-            <tbody id="ownerBody"></tbody>
-          </table>
-        </div>
-      </section>
 
-      <section id="section-hostels" class="section hidden space-y-5"></section>
-      <section id="section-tiffins" class="section hidden space-y-5"></section>
-      <section id="section-libraries" class="section hidden space-y-5"></section>
-      <section id="section-cafes" class="section hidden space-y-5"></section>
+      <div id="statsGrid"
+           class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 
-      <!-- ADMIN -->
-      <section id="section-admin" class="section hidden space-y-5 max-w-2xl">
-        <div><h2 class="text-xl font-bold">Admin Profile & Security</h2><p class="text-xs text-slate-400">Supabase Auth controls the account password.</p></div>
+      </div>
 
-        <div class="card rounded-3xl p-6">
-          <div class="flex justify-between gap-4">
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 mt-6">
+
+        <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5">
+
+          <div class="flex items-center justify-between mb-5">
+
             <div>
-              <h3 class="text-2xl font-display font-extrabold gold-gradient-text">SATPAL SWAMI</h3>
-              <p class="text-[10px] uppercase tracking-widest text-slate-400">Managing Director — StudentHubHelp</p>
+              <h3 class="font-bold">
+                Recent Activity
+              </h3>
+
+              <p class="text-xs text-slate-500">
+                Latest database activity
+              </p>
             </div>
-            <img src="logo.png" class="w-14 h-14 rounded-xl object-cover border border-gold-500/50" onerror="this.style.display='none'">
+
+            <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+              Live
+            </span>
+
           </div>
-          <div class="border-t border-navy-800 mt-4 pt-4 text-xs space-y-2">
-            <div><i class="fa-solid fa-phone text-gold-400 w-5"></i> +91 99297 18264</div>
-            <div><i class="fa-solid fa-envelope text-gold-400 w-5"></i> satpalswami22742@gmail.com</div>
-            <div><i class="fa-solid fa-location-dot text-gold-400 w-5"></i> Live Supabase Directory</div>
+
+          <div id="activityList"
+               class="space-y-3">
           </div>
+
         </div>
 
-        <div class="card rounded-3xl p-6">
-          <h3 class="font-bold"><i class="fa-solid fa-key text-gold-400 mr-2"></i>Change Password</h3>
-          <form id="passwordForm" class="space-y-3 mt-4">
-            <input id="newPassword" class="input" type="password" minlength="8" placeholder="New password (minimum 8 characters)" required>
-            <input id="confirmPassword" class="input" type="password" minlength="8" placeholder="Confirm new password" required>
-            <button class="w-full py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Update Supabase Password</button>
-          </form>
+
+        <div class="bg-slate-900 text-white rounded-2xl p-5">
+
+          <p class="text-sm text-slate-400">
+            Director
+          </p>
+
+          <h3 class="text-xl font-extrabold mt-1">
+            SATPAL SWAMI
+          </h3>
+
+          <div class="mt-5 space-y-3 text-sm">
+
+            <div class="flex gap-3">
+              <i class="fa-solid fa-phone text-slate-400 mt-1"></i>
+              <span>+91 9929718264</span>
+            </div>
+
+            <div class="flex gap-3 break-all">
+              <i class="fa-solid fa-envelope text-slate-400 mt-1"></i>
+              <span>satpalswami22742@gmail.com</span>
+            </div>
+
+          </div>
+
+          <div class="mt-7 pt-5 border-t border-white/10">
+
+            <p class="text-xs text-slate-400">
+              Authentication
+            </p>
+
+            <p id="adminEmailBox"
+               class="text-sm font-semibold mt-1 break-all">
+              Loading...
+            </p>
+
+          </div>
+
         </div>
-      </section>
 
-    </main>
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         STUDENTS
+    ========================= -->
+    <section id="view-students" class="hidden-section">
+
+      <div class="section-header"
+           data-title="Students"
+           data-subtitle="Manage registered student accounts">
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+
+        <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-3">
+
+          <div class="relative flex-1">
+
+            <i class="fa-solid fa-search absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+
+            <input id="studentSearch"
+                   oninput="renderStudents()"
+                   placeholder="Search student by name, email or phone..."
+                   class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-200">
+
+          </div>
+
+        </div>
+
+        <div id="studentsTable"
+             class="table-wrap">
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         OWNERS
+    ========================= -->
+    <section id="view-owners" class="hidden-section">
+
+      <div class="section-header"
+           data-title="Owners"
+           data-subtitle="Manage owners and linked properties">
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+
+        <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-3">
+
+          <div class="relative flex-1">
+
+            <i class="fa-solid fa-search absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+
+            <input id="ownerSearch"
+                   oninput="renderOwners()"
+                   placeholder="Search owner..."
+                   class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-200">
+
+          </div>
+
+        </div>
+
+        <div id="ownersTable"
+             class="table-wrap">
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         REQUESTS
+    ========================= -->
+    <section id="view-listing_requests" class="hidden-section">
+
+      <div class="section-header"
+           data-title="Listing Requests"
+           data-subtitle="Approve or reject new owner property submissions">
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+
+        <div class="p-4 border-b border-slate-200 flex flex-wrap gap-2">
+
+          <button onclick="setRequestFilter('all')"
+                  class="request-filter px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold">
+            All
+          </button>
+
+          <button onclick="setRequestFilter('pending')"
+                  class="request-filter px-3 py-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold">
+            Pending
+          </button>
+
+          <button onclick="setRequestFilter('approved')"
+                  class="request-filter px-3 py-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold">
+            Approved
+          </button>
+
+          <button onclick="setRequestFilter('rejected')"
+                  class="request-filter px-3 py-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold">
+            Rejected
+          </button>
+
+        </div>
+
+        <div id="listingRequestsTable"
+             class="table-wrap">
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         CLAIM REQUESTS
+    ========================= -->
+    <section id="view-claim_requests" class="hidden-section">
+
+      <div class="section-header"
+           data-title="Claim Requests"
+           data-subtitle="Review ownership claims for existing properties">
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+
+        <div id="claimRequestsTable"
+             class="table-wrap">
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         PROPERTIES
+    ========================= -->
+
+    <section id="view-hostels" class="hidden-section">
+      <div id="hostelsContent"></div>
+    </section>
+
+    <section id="view-tiffins" class="hidden-section">
+      <div id="tiffinsContent"></div>
+    </section>
+
+    <section id="view-libraries" class="hidden-section">
+      <div id="librariesContent"></div>
+    </section>
+
+    <section id="view-cafes" class="hidden-section">
+      <div id="cafesContent"></div>
+    </section>
+
+    <section id="view-bookstores" class="hidden-section">
+      <div id="bookstoresContent"></div>
+    </section>
+
+
+    <!-- =========================
+         BOOKINGS
+    ========================= -->
+    <section id="view-bookings" class="hidden-section">
+
+      <div class="section-header"
+           data-title="Student Bookings"
+           data-subtitle="Monitor student property bookings">
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+
+        <div class="p-4 border-b border-slate-200">
+
+          <div class="relative">
+
+            <i class="fa-solid fa-search absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+
+            <input id="bookingSearch"
+                   oninput="renderBookings()"
+                   placeholder="Search student, property or category..."
+                   class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200">
+
+          </div>
+
+        </div>
+
+        <div id="bookingsTable"
+             class="table-wrap">
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         REVIEWS
+    ========================= -->
+    <section id="view-reviews" class="hidden-section">
+
+      <div class="section-header"
+           data-title="Reviews"
+           data-subtitle="Monitor student reviews and ratings">
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+
+        <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-3">
+
+          <input id="reviewSearch"
+                 oninput="renderReviews()"
+                 placeholder="Search student, review or property ID..."
+                 class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200">
+
+          <select id="reviewStatusFilter"
+                  onchange="renderReviews()"
+                  class="px-4 py-2.5 rounded-xl border border-slate-200">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+
+        </div>
+
+        <div id="reviewsTable"
+             class="table-wrap">
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         ADMIN PROFILE
+    ========================= -->
+    <section id="view-admin_profile" class="hidden-section">
+
+      <div class="section-header"
+           data-title="Admin & Security"
+           data-subtitle="Director account and security information">
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-6">
+
+          <div class="flex items-center gap-4">
+
+            <div class="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center">
+              <i class="fa-solid fa-user-shield text-2xl"></i>
+            </div>
+
+            <div>
+
+              <h3 class="text-xl font-extrabold">
+                SATPAL SWAMI
+              </h3>
+
+              <p class="text-sm text-emerald-600 font-semibold">
+                Director Administrator
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="mt-7 space-y-4">
+
+            <div>
+              <p class="text-xs text-slate-400 uppercase">
+                Email
+              </p>
+
+              <p id="profileEmail"
+                 class="font-semibold mt-1 break-all">
+                —
+              </p>
+            </div>
+
+            <div>
+              <p class="text-xs text-slate-400 uppercase">
+                Phone
+              </p>
+
+              <p class="font-semibold mt-1">
+                +91 9929718264
+              </p>
+            </div>
+
+            <div>
+              <p class="text-xs text-slate-400 uppercase">
+                Role
+              </p>
+
+              <p id="profileRole"
+                 class="font-semibold mt-1">
+                —
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-6">
+
+          <h3 class="font-bold">
+            Security Model
+          </h3>
+
+          <div class="mt-5 space-y-3 text-sm">
+
+            <div class="flex gap-3">
+              <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+              <span>Supabase Auth protected login</span>
+            </div>
+
+            <div class="flex gap-3">
+              <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+              <span>Admin role verified from profiles</span>
+            </div>
+
+            <div class="flex gap-3">
+              <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+              <span>Browser never uses service-role key</span>
+            </div>
+
+            <div class="flex gap-3">
+              <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+              <span>Database permissions controlled by RLS</span>
+            </div>
+
+            <div class="flex gap-3">
+              <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+              <span>Realtime Supabase synchronization enabled</span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
   </div>
-</div>
 
-<!-- ================= VIEW MODAL ================= -->
-<div id="propertyModal" class="modal fixed inset-0 z-[80] hidden items-center justify-center p-3">
-  <div class="card rounded-3xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
-    <div class="relative h-48 bg-navy-950">
-      <img id="viewImage" class="w-full h-full object-cover" src="hostel-banner.png">
-      <div class="absolute inset-0 bg-gradient-to-t from-navy-900 to-transparent"></div>
-      <button class="absolute top-3 right-3 w-10 h-10 rounded-full bg-navy-950/80" data-close="propertyModal"><i class="fa-solid fa-xmark"></i></button>
-      <div class="absolute bottom-4 left-5">
-        <span id="viewCategory" class="text-[10px] bg-gold-500/20 text-gold-300 px-2 py-1 rounded"></span>
-        <h2 id="viewName" class="text-2xl font-bold"></h2>
-        <p id="viewAddress" class="text-xs text-slate-300"></p>
-      </div>
-    </div>
-    <div class="p-5 overflow-auto space-y-3 text-sm">
-      <div class="grid sm:grid-cols-2 gap-3">
-        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Phone</b><div id="viewPhone"></div></div>
-        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Area</b><div id="viewArea"></div></div>
-        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Timing</b><div id="viewTiming"></div></div>
-        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Rating</b><div id="viewRating"></div></div>
-      </div>
-      <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Facilities / Menu / Description</b><div id="viewFacilities" class="mt-1 whitespace-pre-wrap"></div></div>
-    </div>
-    <div class="p-4 border-t border-navy-800 flex gap-2">
-      <a id="viewCall" class="flex-1 text-center py-3 rounded-xl border border-gold-500/40 text-gold-300">Call</a>
-      <a id="viewWhatsapp" target="_blank" rel="noopener" class="flex-1 text-center py-3 rounded-xl bg-emerald-600 text-white">WhatsApp</a>
-      <button id="viewEdit" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Edit</button>
-    </div>
-  </div>
-</div>
+</main>
 
-<!-- ================= FORM MODAL ================= -->
-<div id="formModal" class="modal fixed inset-0 z-[90] hidden items-center justify-center p-3">
-  <div class="card rounded-3xl w-full max-w-2xl max-h-[94vh] overflow-auto p-6 relative">
-    <button class="absolute top-4 right-4 w-9 h-9 rounded-full bg-navy-850" data-close="formModal"><i class="fa-solid fa-xmark"></i></button>
-    <h2 id="formTitle" class="text-xl font-bold pr-10">Property</h2>
-    <form id="propertyForm" class="grid sm:grid-cols-2 gap-3 mt-5">
-      <input id="formId" type="hidden"><input id="formType" type="hidden">
-      <div class="sm:col-span-2"><label class="text-xs font-bold">Name *</label><input id="fName" class="input mt-1" required></div>
-      <div><label class="text-xs font-bold">Category *</label><input id="fCategory" class="input mt-1" required></div>
-      <div><label class="text-xs font-bold">Phone *</label><input id="fPhone" class="input mt-1" type="tel" required></div>
-      <div><label class="text-xs font-bold">Area / Locality *</label><input id="fArea" class="input mt-1" required></div>
-      <div><label class="text-xs font-bold">Rating</label><input id="fRating" class="input mt-1" type="number" min="0" max="5" step="0.1" placeholder="Leave blank if rating is unavailable"></div>
-      <div class="sm:col-span-2"><label class="text-xs font-bold">Full Address *</label><input id="fAddress" class="input mt-1" required></div>
-      <div><label class="text-xs font-bold">Timing / Hours</label><input id="fTiming" class="input mt-1"></div>
-      <div><label class="text-xs font-bold">Image URL</label><input id="fImage" class="input mt-1" type="url"></div>
-      <div class="sm:col-span-2"><label class="text-xs font-bold">Facilities / Menu / Description</label><textarea id="fFacilities" class="input mt-1" rows="4"></textarea></div>
-      <div class="sm:col-span-2 flex gap-2">
-        <button type="button" class="flex-1 py-3 rounded-xl bg-navy-800" data-close="formModal">Cancel</button>
-        <button id="savePropertyBtn" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Save Live</button>
+
+<!-- =========================
+     PROPERTY MODAL
+========================= -->
+<div id="propertyModal"
+     class="fixed inset-0 z-[100] modal-backdrop hidden items-center justify-center p-4">
+
+  <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
+
+    <div class="sticky top-0 bg-white border-b border-slate-200 p-5 flex items-center justify-between">
+
+      <div>
+
+        <h3 id="propertyModalTitle"
+            class="text-xl font-extrabold">
+          Add Property
+        </h3>
+
+        <p class="text-xs text-slate-500">
+          Create or update a live property
+        </p>
+
       </div>
+
+      <button onclick="closePropertyModal()"
+              class="w-10 h-10 rounded-xl hover:bg-slate-100">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+
+
+    <form id="propertyForm"
+          onsubmit="saveProperty(event)"
+          class="p-5 space-y-4">
+
+      <input type="hidden" id="propertyEditId">
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Property Category
+        </label>
+
+        <select id="propertyTable"
+                required
+                class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200">
+          <option value="hostels">Hostel / PG</option>
+          <option value="tiffins">Tiffin / Mess</option>
+          <option value="libraries">Library</option>
+          <option value="cafes">Cafe</option>
+          <option value="bookstores">Book Store</option>
+        </select>
+
+      </div>
+
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div>
+
+          <label class="text-sm font-semibold">
+            Name *
+          </label>
+
+          <input id="propertyName"
+                 required
+                 class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200">
+
+        </div>
+
+
+        <div>
+
+          <label class="text-sm font-semibold">
+            Area / City *
+          </label>
+
+          <input id="propertyArea"
+                 required
+                 class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200">
+
+        </div>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Address *
+        </label>
+
+        <textarea id="propertyAddress"
+                  required
+                  rows="2"
+                  class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200"></textarea>
+
+      </div>
+
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div>
+
+          <label class="text-sm font-semibold">
+            Phone *
+          </label>
+
+          <input id="propertyPhone"
+                 required
+                 class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200">
+
+        </div>
+
+
+        <div>
+
+          <label class="text-sm font-semibold">
+            Timing
+          </label>
+
+          <input id="propertyTiming"
+                 class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200">
+
+        </div>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Facilities
+        </label>
+
+        <textarea id="propertyFacilities"
+                  rows="2"
+                  placeholder="WiFi, AC, Parking, CCTV..."
+                  class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200"></textarea>
+
+      </div>
+
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div>
+
+          <label class="text-sm font-semibold">
+            Rating
+          </label>
+
+          <input id="propertyRating"
+                 type="number"
+                 step="0.1"
+                 min="0"
+                 max="5"
+                 class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200">
+
+        </div>
+
+
+        <div>
+
+          <label class="text-sm font-semibold">
+            Image URL / Path
+          </label>
+
+          <input id="propertyImage"
+                 placeholder="images/property.jpg"
+                 class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200">
+
+        </div>
+
+      </div>
+
+
+      <div>
+
+        <label class="text-sm font-semibold">
+          Link Owner
+        </label>
+
+        <select id="propertyOwner"
+                class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200">
+          <option value="">No Owner / Public Listing</option>
+        </select>
+
+        <p class="text-xs text-slate-500 mt-1">
+          Owner ID is taken from the authenticated profile, not phone matching.
+        </p>
+
+      </div>
+
+
+      <div class="pt-3 flex gap-3">
+
+        <button type="button"
+                onclick="closePropertyModal()"
+                class="flex-1 px-4 py-3 rounded-xl border border-slate-200 font-semibold">
+          Cancel
+        </button>
+
+        <button id="propertySaveBtn"
+                type="submit"
+                class="flex-1 px-4 py-3 rounded-xl bg-slate-900 text-white font-semibold">
+          Save Property
+        </button>
+
+      </div>
+
     </form>
+
   </div>
+
 </div>
 
-<div id="ownerEditModal" class="fixed inset-0 z-[195] hidden items-center justify-center bg-navy-950/90 backdrop-blur-md p-4">
-  <div class="bg-navy-900 border border-gold-500/35 rounded-3xl max-w-4xl w-full max-h-[94vh] overflow-auto shadow-2xl">
-    <div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4">
-      <div><p class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">Owner Management</p>
-      <h3 class="text-xl font-bold text-white mt-1">Edit Owner</h3>
-      <p class="text-xs text-slate-400 mt-1">Name, phone, email, address and property details</p></div>
-      <button type="button" onclick="closeOwnerEdit()" class="w-9 h-9 rounded-full bg-navy-850 border border-navy-700"><i class="fa-solid fa-xmark"></i></button>
+
+<!-- =========================
+     DETAILS MODAL
+========================= -->
+<div id="detailsModal"
+     class="fixed inset-0 z-[110] modal-backdrop hidden items-center justify-center p-4">
+
+  <div class="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl">
+
+    <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+
+      <h3 id="detailsTitle"
+          class="text-xl font-extrabold">
+        Details
+      </h3>
+
+      <button onclick="closeDetailsModal()"
+              class="w-10 h-10 rounded-xl hover:bg-slate-100">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
     </div>
-    <div class="p-5 space-y-5">
-      <form id="ownerEditForm" class="grid sm:grid-cols-2 gap-3">
-        <input id="ownerEditId" type="hidden">
-        <div><label class="text-xs font-bold">Owner Name *</label><input id="ownerName" class="input mt-1" required></div>
-        <div><label class="text-xs font-bold">Phone Number *</label><input id="ownerPhone" class="input mt-1" type="tel" required></div>
-        <div><label class="text-xs font-bold">Email</label><input id="ownerEmail" class="input mt-1" type="email" placeholder="Owner email"></div>
-        <div><label class="text-xs font-bold">Owner Address</label><input id="ownerAddress" class="input mt-1" placeholder="Owner's address"></div>
-        <div><label class="text-xs font-bold">Property Type</label><select id="ownerPropertyType" class="input mt-1"><option value="hostels">Hostel / PG</option><option value="tiffins">Tiffin / Mess</option><option value="libraries">Library</option><option value="cafes">Cafe</option></select></div>
-        <div><label class="text-xs font-bold">Property / Business Name</label><input id="ownerProperty" class="input mt-1" placeholder="e.g. Shree Ram Hostel / Maa Tiffin"></div>
-        <div class="sm:col-span-2 flex gap-2 pt-2">
-          <button type="button" class="flex-1 py-3 rounded-xl bg-navy-800" onclick="closeOwnerEdit()">Cancel</button>
-          <button id="saveOwnerBtn" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Save Owner Live</button>
-        </div>
-      </form>
-      <div class="border-t border-navy-800 pt-5">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div><h4 class="font-bold">Add Live Property</h4><p class="text-xs text-slate-400">The owner's phone will be prefilled so the listing links to this owner.</p></div>
-          <button id="ownerAddPropertyBtn" type="button" class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i>Add Property</button>
-        </div>
-      </div>
+
+    <div id="detailsBody"
+         class="p-5">
     </div>
+
   </div>
+
 </div>
 
-<div id="ownerDetailsModal" class="fixed inset-0 z-[190] hidden items-center justify-center bg-navy-950/90 backdrop-blur-md p-4"><div class="bg-navy-900 border border-gold-500/35 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"><div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4"><div><p class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">Owner Profile</p><h3 id="ownerDetailsName" class="text-xl font-bold text-white mt-1">Owner</h3><p id="ownerDetailsContact" class="text-xs text-slate-400 mt-1">—</p></div><button type="button" onclick="closeOwnerDetails()" class="w-9 h-9 rounded-full bg-navy-850 border border-navy-700 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 overflow-y-auto max-h-[calc(90vh-100px)] space-y-5"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Email</div><div id="ownerDetailsEmail" class="text-sm text-white mt-1 break-all">—</div></div><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Phone</div><div id="ownerDetailsPhone" class="text-sm text-white mt-1">—</div></div><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Address</div><div id="ownerDetailsAddress" class="text-sm text-white mt-1">—</div></div><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Matched Listings</div><div id="ownerDetailsCount" class="text-sm text-gold-300 font-bold mt-1">0</div></div></div><div><div class="flex items-center justify-between gap-3 mb-3"><h4 class="font-bold text-white">Owner Properties</h4><span class="text-[10px] text-slate-500">Phone match • last 10 digits</span></div><div id="ownerDetailsProperties" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div></div></div></div>
 
-<div id="toast" class="fixed bottom-5 right-5 z-[200] hidden max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl"></div>
+<!-- =========================
+     TOAST
+========================= -->
+<div id="toastContainer"
+     class="fixed right-4 bottom-4 z-[200] space-y-2">
+</div>
+
 
 <script>
-"use strict";
-
-/* =========================================================
+/* ============================================================
    SUPABASE CONFIG
-   This is the public ANON key. Never put service_role here.
-   ========================================================= */
-const SUPABASE_URL="https://idurlccrarznnnqixxsd.supabase.co";
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-const ADMIN_EMAIL="satpalswami22742@gmail.com";
+============================================================ */
 
-const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const SUPABASE_URL =
+  "https://idurlccrarznnnqixxsd.supabase.co";
 
-const state={
-  user:null,profile:null,
-  students:[],owners:[],
-  hostels:[],tiffins:[],libraries:[],cafes:[],
-  currentView:null
-};
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
-const propertyConfig={
-  hostels:{title:"Hostels & PGs",singular:"Hostel / PG",category:"Hostel",icon:"fa-hotel"},
-  tiffins:{title:"Tiffin & Mess Services",singular:"Tiffin / Mess",category:"Tiffin",icon:"fa-bowl-food"},
-  libraries:{title:"24/7 Study Libraries",singular:"Library",category:"Library",icon:"fa-book-open"},
-  cafes:{title:"Student Cafes",singular:"Cafe",category:"Cafe",icon:"fa-mug-hot"}
-};
+const { createClient } =
+  supabase;
 
-const $=id=>document.getElementById(id);
-const text=v=>String(v??"").trim();
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-
-function toast(msg,error=false){
-  const el=$("toast");
-  el.textContent=msg;
-  el.className=`fixed bottom-5 right-5 z-[200] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl ${error?"bg-red-600 text-white":"bg-emerald-600 text-white"}`;
-  setTimeout(()=>el.classList.add("hidden"),3500);
-}
-
-function setBusy(btn,busy,label){
-  if(!btn)return;
-  btn.disabled=busy;
-  if(busy){
-    btn.dataset.old=btn.innerHTML;
-    btn.innerHTML='<i class="fa-solid fa-spinner fa-spin mr-1"></i> Please wait...';
-  }else{
-    btn.innerHTML=label||btn.dataset.old||"Save";
-  }
-}
-
-/* ================= AUTH ================= */
-
-async function signIn(){
-  const email=text($("loginEmail").value).toLowerCase();
-  const password=$("loginPassword").value;
-  $("authMessage").textContent="";
-  setBusy($("loginBtn"),true);
-
-  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
-
-  setBusy($("loginBtn"),false,'<i class="fa-solid fa-shield-halved mr-1"></i> Sign In Securely');
-
-  if(error){
-    $("authMessage").textContent=error.message;
-    return;
-  }
-
-  await handleSession(data.session);
-}
-
-$("loginForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  signIn();
-});
-
-async function handleSession(session){
-  if(!session){
-    state.user=null;
-    state.profile=null;
-    $("app").classList.add("hidden");
-    $("authScreen").classList.remove("hidden");
-    return;
-  }
-
-  state.user=session.user;
-
-  /* Exact Director email check */
-  if((state.user.email||"").toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
-    await supabaseClient.auth.signOut();
-    $("authMessage").textContent="This account is not authorized as Director Admin.";
-    return;
-  }
-
-  /*
-    Your real profiles table is:
-    id, full_name, phone, role, created_at
-    and allowed roles are:
-    student, owner, admin
-  */
-  const {data:profile,error}=await supabaseClient
-    .from("profiles")
-    .select("id,full_name,phone,email,role,created_at")
-    .eq("id",state.user.id)
-    .maybeSingle();
-
-  if(error){
-    toast("Could not verify admin profile: "+error.message,true);
-    await supabaseClient.auth.signOut();
-    return;
-  }
-
-  if(!profile){
-    toast("Admin profile not found. Run the Admin profile SQL setup first.",true);
-    await supabaseClient.auth.signOut();
-    return;
-  }
-
-  if(String(profile.role||"").toLowerCase()!=="admin"){
-    await supabaseClient.auth.signOut();
-    $("authMessage").textContent="This account exists, but its profiles.role is not 'admin'.";
-    return;
-  }
-
-  state.profile=profile;
-  $("authScreen").classList.add("hidden");
-  $("app").classList.remove("hidden");
-  $("authUser").textContent=state.user.email||"—";
-
-  showSection("overview");
-  await loadAll();
-}
-
-supabaseClient.auth.onAuthStateChange((event,session)=>{
-  if(event==="SIGNED_OUT")handleSession(null);
-});
-
-$("logoutBtn").addEventListener("click",async()=>{
-  await supabaseClient.auth.signOut();
-});
-
-/* ================= NAVIGATION ================= */
-
-function showSection(name){
-  document.querySelectorAll(".section").forEach(s=>s.classList.add("hidden"));
-  const target=$("section-"+name);
-  if(target)target.classList.remove("hidden");
-
-  document.querySelectorAll(".nav").forEach(b=>{
-    const active=b.dataset.section===name;
-    b.className=active
-      ?"nav w-full p-3 rounded-xl text-left text-gold-300 bg-gold-500/10 border border-gold-500/30"
-      :"nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850";
-  });
-
-  $("searchResults").classList.add("hidden");
-}
-
-document.querySelectorAll(".nav").forEach(b=>{
-  b.addEventListener("click",()=>showSection(b.dataset.section));
-});
-
-document.querySelectorAll("[data-go]").forEach(x=>{
-  x.addEventListener("click",()=>showSection(x.dataset.go));
-});
-
-/* ================= DATA LOADING ================= */
-
-async function loadAll(){
-  $("dbStatus").textContent="Syncing...";
-  $("dbStatus").className="text-amber-300 mt-1";
-
-  try{
-    const results=await Promise.all([
-      supabaseClient.from("hostels").select("*").order("id",{ascending:true}),
-      supabaseClient.from("tiffins").select("*").order("id",{ascending:true}),
-      supabaseClient.from("libraries").select("*").order("id",{ascending:true}),
-      supabaseClient.from("cafes").select("*").order("id",{ascending:true}),
-      supabaseClient.from("profiles").select("id,full_name,phone,email,role,created_at")
-    ]);
-
-    const [h,t,l,c,p]=results;
-    const firstError=[h,t,l,c,p].find(x=>x.error);
-    if(firstError)throw firstError.error;
-
-    state.hostels=h.data||[];
-    state.tiffins=t.data||[];
-    state.libraries=l.data||[];
-    state.cafes=c.data||[];
-
-    const profiles=p.data||[];
-
-    state.students=profiles.filter(x=>String(x.role||"").toLowerCase()==="student");
-
-    /* Important: only owner role. Admin can never appear here. */
-    state.owners=profiles.filter(x=>String(x.role||"").toLowerCase()==="owner");
-
-    renderAll();
-
-    $("dbStatus").textContent="Connected";
-    $("dbStatus").className="text-emerald-400 mt-1";
-    $("lastSync").textContent=new Date().toLocaleString();
-
-  }catch(e){
-    console.error(e);
-    $("dbStatus").textContent="Error";
-    $("dbStatus").className="text-red-400 mt-1";
-    toast("Database sync failed: "+e.message,true);
-  }
-}
-
-$("refreshBtn").addEventListener("click",loadAll);
-
-function updateStats(){
-  $("statStudents").textContent=state.students.length;
-  $("statOwners").textContent=state.owners.length;
-  $("statHostels").textContent=state.hostels.length;
-  $("statTiffins").textContent=state.tiffins.length;
-  $("statLibraries").textContent=state.libraries.length;
-  $("statCafes").textContent=state.cafes.length;
-}
-
-function emptyRow(cols,msg="No records found."){
-  return `<tr><td colspan="${cols}" class="p-6 text-center text-slate-400">${esc(msg)}</td></tr>`;
-}
-
-/* ================= STUDENTS ================= */
-
-function renderStudents(filter=""){
-  const q=filter.toLowerCase();
-
-  const arr=state.students.filter(s=>
-    `${s.full_name||""} ${s.phone||""} ${s.id||""}`.toLowerCase().includes(q)
+const db =
+  createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
   );
 
-  $("studentBody").innerHTML=arr.length?arr.map(s=>{
-    const active=true;
-    return `<tr class="border-t border-navy-800">
-      <td class="p-4 font-bold">${esc(s.full_name||"Student")}</td>
-      <td class="p-4 font-mono">${esc(s.phone||"—")}</td>
-      <td class="p-4 text-slate-300 break-all">${esc(s.email||"—")}</td>
-      <td class="p-4"><span class="text-emerald-400">${active?"Active":"Inactive"}</span></td>
-      <td class="p-4 text-right">
-        <button class="p-2 rounded bg-red-500/10 text-red-300" data-delete-profile="${esc(s.id)}" title="Delete profile">
-          <i class="fa-solid fa-trash"></i>
-        </button>
-      </td>
-    </tr>`;
-  }).join(""):emptyRow(5);
 
-  $("studentFilter").dataset.count=arr.length;
-}
+/* ============================================================
+   STATE
+============================================================ */
 
-$("studentFilter").addEventListener("input",e=>renderStudents(e.target.value));
+const state = {
 
-/* ================= OWNERS ================= */
+  user: null,
+  profile: null,
 
-function renderOwners(){
-  $("ownerBody").innerHTML=state.owners.length?state.owners.map(o=>`<tr class="border-t border-navy-800 hover:bg-navy-850 transition cursor-pointer" data-owner-details="${esc(o.id)}"><td class="p-4 font-bold">${esc(o.full_name||"Owner")}</td><td class="p-4 font-mono">${esc(o.phone||"—")}</td><td class="p-4 text-slate-300 break-all">${esc(o.email||"—")}</td><td class="p-4 text-emerald-400">Registered</td><td class="p-4 text-right whitespace-nowrap"><button class="px-3 py-2 rounded bg-gold-500/10 text-gold-300 font-bold text-[11px]" data-owner-details="${esc(o.id)}"><i class="fa-solid fa-eye mr-1"></i>Details</button><button class="p-2 rounded bg-navy-800 text-gold-300 ml-1" data-edit-owner="${esc(o.id)}" title="Edit owner"><i class="fa-solid fa-pen"></i></button><button class="p-2 rounded bg-red-500/10 text-red-300 ml-1" data-delete-profile="${esc(o.id)}" title="Delete owner"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(""):emptyRow(5,"No registered owners found.");
-}
+  students: [],
+  owners: [],
 
-/* ================= PROPERTIES ================= */
+  hostels: [],
+  tiffins: [],
+  libraries: [],
+  cafes: [],
+  bookstores: [],
 
-function renderProperty(type){
-  const cfg=propertyConfig[type];
-  const arr=state[type]||[];
+  listingRequests: [],
+  claimRequests: [],
+  bookings: [],
+  reviews: [],
 
-  $("section-"+type).innerHTML=`
-    <div class="flex flex-wrap justify-between gap-3 items-center">
-      <div>
-        <h2 class="text-xl font-bold">${cfg.title}</h2>
-        <p class="text-xs text-slate-400">Standardized live Supabase records.</p>
-      </div>
-      <button class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold" data-add="${type}">
-        <i class="fa-solid fa-plus mr-1"></i>Add ${cfg.singular}
-      </button>
-    </div>
+  currentView: "overview",
+  requestFilter: "all",
 
-    <div class="card rounded-2xl table-wrap">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-navy-950 text-gold-300">
-          <tr>
-            <th class="p-4">SN</th>
-            <th class="p-4">Name</th>
-            <th class="p-4">Category</th>
-            <th class="p-4">Area</th>
-            <th class="p-4">Phone</th>
-            <th class="p-4">Address</th>
-            <th class="p-4">Timing</th>
-            <th class="p-4">Rating</th>
-            <th class="p-4 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${arr.length?arr.map((x,i)=>`
-            <tr class="border-t border-navy-800 hover:bg-navy-850 cursor-pointer" data-view="${type}" data-index="${i}">
-              <td class="p-4 font-mono">#${i+1}</td>
-              <td class="p-4 font-bold">${esc(x.name||cfg.singular)}</td>
-              <td class="p-4">${esc(x.category||cfg.category)}</td>
-              <td class="p-4">${esc(x.area||"—")}</td>
-              <td class="p-4 font-mono">${esc(x.phone||"—")}</td>
-              <td class="p-4 max-w-xs">${esc(x.address||"—")}</td>
-              <td class="p-4">${esc(x.timing||"—")}</td>
-              <td class="p-4 text-gold-300">${esc(x.rating??"—")}</td>
-              <td class="p-4 text-right whitespace-nowrap">
-                <button class="p-2 bg-navy-800 rounded text-gold-300" data-edit="${type}" data-index="${i}" title="Edit">
-                  <i class="fa-solid fa-pen"></i>
-                </button>
-                <button class="p-2 bg-red-500/10 rounded text-red-300 ml-1" data-delete="${type}" data-id="${esc(x.id)}" title="Delete">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </td>
-            </tr>
-          `).join(""):emptyRow(9)}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
+  realtimeChannels: []
 
-function renderAll(){
-  updateStats();
-  renderStudents($("studentFilter").value);
-  renderOwners();
-  Object.keys(propertyConfig).forEach(renderProperty);
-}
+};
 
-/* ================= CLICK HANDLERS ================= */
 
-document.addEventListener("click",async e=>{
-  const close=e.target.closest("[data-close]");
-  if(close){closeModal(close.dataset.close);return}
+/* ============================================================
+   PROPERTY CONFIG
+============================================================ */
 
-  const add=e.target.closest("[data-add]");
-  if(add){openCreate(add.dataset.add);return}
+const propertyConfig = {
 
-  const edit=e.target.closest("[data-edit]");
-  if(edit){openEdit(edit.dataset.edit,Number(edit.dataset.index));return}
+  hostels: {
+    table: "hostels",
+    title: "Hostels & PGs",
+    singular: "Hostel / PG",
+    icon: "fa-hotel"
+  },
 
-  const del=e.target.closest("[data-delete]");
-  if(del){deleteProperty(del.dataset.delete,del.dataset.id);return}
+  tiffins: {
+    table: "tiffins",
+    title: "Tiffin & Mess Services",
+    singular: "Tiffin / Mess",
+    icon: "fa-bowl-food"
+  },
 
-  const dp=e.target.closest("[data-delete-profile]");
-  if(dp){deleteProfile(dp.dataset.deleteProfile);return}
+  libraries: {
+    table: "libraries",
+    title: "Study Libraries",
+    singular: "Library",
+    icon: "fa-book-open"
+  },
 
-  const eo=e.target.closest("[data-edit-owner]");
-  if(eo){editOwner(eo.dataset.editOwner);return}
+  cafes: {
+    table: "cafes",
+    title: "Student Cafes",
+    singular: "Cafe",
+    icon: "fa-mug-hot"
+  },
 
-  const ownerProp=e.target.closest("[data-owner-property]");
-  if(ownerProp){const type=ownerProp.dataset.ownerProperty;const idx=(state[type]||[]).findIndex(x=>String(x.id)===String(ownerProp.dataset.ownerPropertyId));if(idx>=0){closeOwnerDetails();openView(type,idx);}return;}
-
-  const row=e.target.closest("[data-view]");
-  if(row&&!e.target.closest("button")){
-    openView(row.dataset.view,Number(row.dataset.index));
-  }
-});
-
-/* ================= PROPERTY CREATE/EDIT ================= */
-
-function openCreate(type){
-  $("formTitle").textContent="Add "+propertyConfig[type].singular;
-  $("formId").value="";
-  $("formType").value=type;
-  $("fName").value="";
-  $("fCategory").value=propertyConfig[type].category;
-  $("fPhone").value="";
-  $("fArea").value="";
-  $("fAddress").value="";
-  $("fTiming").value=type==="libraries"?"24/7 Open":"";
-  $("fFacilities").value="";
-  $("fRating").value="";
-  $("fImage").value="";
-  openModal("formModal");
-}
-
-function openEdit(type,index){
-  const x=state[type][index];
-  if(!x)return;
-
-  $("formTitle").textContent="Edit "+propertyConfig[type].singular;
-  $("formId").value=x.id;
-  $("formType").value=type;
-  $("fName").value=x.name||"";
-  $("fCategory").value=x.category||propertyConfig[type].category;
-  $("fPhone").value=x.phone||"";
-  $("fArea").value=x.area||"";
-  $("fAddress").value=x.address||"";
-  $("fTiming").value=x.timing||"";
-  $("fFacilities").value=x.facilities||"";
-  $("fRating").value=x.rating??"";
-  $("fImage").value=x.image||"";
-
-  openModal("formModal");
-}
-
-$("propertyForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-
-  const type=$("formType").value;
-  const id=text($("formId").value);
-  const ratingRaw=text($("fRating").value);
-  const rating=ratingRaw===""?null:Number(ratingRaw);
-
-  if(!propertyConfig[type]){
-    toast("Invalid property type.",true);
-    return;
+  bookstores: {
+    table: "bookstores",
+    title: "Book Stores",
+    singular: "Book Store",
+    icon: "fa-store"
   }
 
-  if(!text($("fName").value)||!text($("fCategory").value)||!text($("fPhone").value)||!text($("fArea").value)||!text($("fAddress").value)){
-    toast("Please fill all required fields.",true);
-    return;
+};
+
+
+/* ============================================================
+   UTILITY
+============================================================ */
+
+function escapeHtml(value) {
+
+  if (value === null || value === undefined) {
+    return "";
   }
 
-  if(rating!==null&&(Number.isNaN(rating)||rating<0||rating>5)){
-    toast("Rating must be between 0 and 5.",true);
-    return;
-  }
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
-  const payload={
-    name:text($("fName").value),
-    category:text($("fCategory").value),
-    area:text($("fArea").value),
-    address:text($("fAddress").value),
-    phone:text($("fPhone").value),
-    timing:text($("fTiming").value),
-    facilities:text($("fFacilities").value),
-    rating,
-    image:text($("fImage").value)
-  };
-
-  const btn=$("savePropertyBtn");
-  setBusy(btn,true);
-
-  const result=id
-    ?await supabaseClient.from(type).update(payload).eq("id",id)
-    :await supabaseClient.from(type).insert({...payload,id:(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID():("00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0").slice(0,12))});
-
-  setBusy(btn,false,"Save Live");
-
-  if(result.error){
-    toast(result.error.message,true);
-    return;
-  }
-
-  closeModal("formModal");
-  toast(id?"Property updated successfully.":"Property added successfully.");
-  await loadAll();
-});
-
-async function deleteProperty(type,id){
-  if(!confirm("Delete this property permanently from Supabase?"))return;
-
-  const {error}=await supabaseClient.from(type).delete().eq("id",id);
-
-  if(error)toast(error.message,true);
-  else{
-    toast("Property deleted.");
-    await loadAll();
-  }
 }
 
-function normalizePhone(v){const d=String(v??"").replace(/\D/g,"");return d.length>=10?d.slice(-10):d;}
-function openOwnerDetails(id){const owner=state.owners.find(x=>String(x.id)===String(id));if(!owner)return;const key=normalizePhone(owner.phone),matches=[];[["hostels","Hostel / PG","fa-hotel"],["tiffins","Tiffin / Mess","fa-bowl-food"],["libraries","Library","fa-book-open"],["cafes","Cafe","fa-mug-hot"]].forEach(([type,label,icon])=>(state[type]||[]).forEach(item=>{if(key&&key===normalizePhone(item.phone))matches.push({type,label,icon,item});}));$("ownerDetailsName").textContent=owner.full_name||"Owner";$("ownerDetailsEmail").textContent=owner.email||"—";$("ownerDetailsPhone").textContent=owner.phone||"—";$("ownerDetailsAddress").textContent=owner.address||"—";$("ownerDetailsContact").textContent=`${owner.email||"No email"} • ${owner.phone||"No phone"}`;$("ownerDetailsCount").textContent=String(matches.length);$("ownerDetailsProperties").innerHTML=matches.length?matches.map(m=>{const x=m.item;return `<button type="button" class="text-left bg-navy-850 border border-navy-700 hover:border-gold-500/50 rounded-2xl p-4 transition" data-owner-property="${esc(m.type)}" data-owner-property-id="${esc(x.id)}"><div class="text-[10px] uppercase text-gold-400 font-bold"><i class="fa-solid ${m.icon} mr-1"></i>${esc(m.label)}</div><div class="font-bold text-white mt-1">${esc(x.name||m.label)}</div><div class="text-[11px] text-slate-400 mt-2">${esc(x.area||"India")} • ${esc(x.phone||"—")}</div><div class="text-xs text-slate-300 mt-2">${esc(x.address||"—")}</div></button>`}).join(""):"<div class='md:col-span-2 p-6 rounded-2xl bg-navy-850 border border-navy-700 text-center text-sm text-slate-400'>No property matched this owner phone number. Matching uses the last 10 digits.</div>";$("ownerDetailsModal").classList.remove("hidden");$("ownerDetailsModal").classList.add("flex");}
-function closeOwnerDetails(){$("ownerDetailsModal").classList.add("hidden");$("ownerDetailsModal").classList.remove("flex");}
 
-/* ================= PROFILE / OWNER ================= */
+function normalizeRole(role) {
 
-async function deleteProfile(id){
-  if(String(id)===String(state.user?.id)){
-    toast("You cannot delete the currently logged-in Admin profile.",true);
-    return;
-  }
+  return String(role || "")
+    .trim()
+    .toLowerCase();
 
-  if(!confirm("Delete this profile record? This does not delete the Supabase Auth account."))return;
-
-  const {error}=await supabaseClient.from("profiles").delete().eq("id",id);
-
-  if(error)toast(error.message,true);
-  else{
-    toast("Profile deleted.");
-    await loadAll();
-  }
 }
 
-async function editOwner(id){
-  const o=state.owners.find(x=>String(x.id)===String(id));
-  if(!o)return;
-  $("ownerEditId").value=o.id||"";
-  $("ownerName").value=o.full_name||"";
-  $("ownerPhone").value=o.phone||"";
-  $("ownerEmail").value=o.email||"";
-  $("ownerAddress").value=o.address||"";
-  $("ownerProperty").value=o.property||"";
-  $("ownerPropertyType").value="hostels";
-  openModal("ownerEditModal");
-}
 
-function closeOwnerEdit(){closeModal("ownerEditModal");}
+function formatDate(date) {
 
-$("ownerEditForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const id=text($("ownerEditId").value);
-  const name=text($("ownerName").value), phone=text($("ownerPhone").value);
-  if(!id||!name||!phone){toast("Owner name and phone are required.",true);return;}
-  const payload={
-    full_name:name, phone:phone, email:text($("ownerEmail").value)||null,
-    address:text($("ownerAddress").value)||null,
-    property:text($("ownerProperty").value)||null,
-    role:"owner"
-  };
-  const btn=$("saveOwnerBtn"); setBusy(btn,true);
-  const {error}=await supabaseClient.from("profiles").update(payload).eq("id",id);
-  setBusy(btn,false,"Save Owner Live");
-  if(error){toast(error.message,true);return;}
-  toast("Owner details saved live.");
-  await loadAll();
-});
+  if (!date) return "—";
 
-$("ownerAddPropertyBtn").addEventListener("click",()=>{
-  const phone=text($("ownerPhone").value);
-  if(!phone){toast("Owner phone is required before adding a property.",true);return;}
-  closeOwnerEdit();
-  openCreate($("ownerPropertyType").value||"hostels");
-  $("fPhone").value=phone;
-  $("fAddress").value=text($("ownerAddress").value);
-  $("fName").value=text($("ownerProperty").value);
-});
+  try {
 
-/* ================= VIEW ================= */
-
-function openView(type,index){
-  const x=state[type][index];
-  if(!x)return;
-
-  state.currentView={type,index};
-
-  $("viewImage").src=x.image||"hostel-banner.png";
-  $("viewImage").onerror=()=>{$("viewImage").src="hostel-banner.png"};
-
-  $("viewCategory").textContent=(x.category||propertyConfig[type].category).toUpperCase();
-  $("viewName").textContent=x.name||propertyConfig[type].singular;
-  $("viewAddress").textContent=x.address||x.area||"India";
-  $("viewPhone").textContent=x.phone||"—";
-  $("viewArea").textContent=x.area||"—";
-  $("viewTiming").textContent=x.timing||"—";
-  $("viewRating").textContent=x.rating??"—";
-  $("viewFacilities").textContent=x.facilities||"—";
-
-  $("viewCall").href=x.phone?"tel:"+x.phone:"#";
-
-  const digits=(x.phone||"").replace(/\D/g,"");
-  $("viewWhatsapp").href=digits
-    ?`https://wa.me/${digits}?text=${encodeURIComponent("Hello "+(x.name||""))}`
-    :"#";
-
-  openModal("propertyModal");
-}
-
-$("viewEdit").addEventListener("click",()=>{
-  if(state.currentView){
-    const {type,index}=state.currentView;
-    closeModal("propertyModal");
-    openEdit(type,index);
-  }
-});
-
-/* ================= MODALS ================= */
-
-function openModal(id){
-  $(id).classList.remove("hidden");
-  $(id).classList.add("flex");
-}
-
-function closeModal(id){
-  $(id).classList.add("hidden");
-  $(id).classList.remove("flex");
-}
-
-document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){
-    closeModal("propertyModal");
-    closeModal("formModal");
-    closeOwnerDetails();
-    closeOwnerEdit();
-    $("searchResults").classList.add("hidden");
-  }
-});
-
-/* ================= GLOBAL SEARCH ================= */
-
-function buildSearch(){
-  const q=text($("globalSearch").value).toLowerCase();
-  const box=$("searchResults");
-
-  if(!q){
-    box.classList.add("hidden");
-    box.innerHTML="";
-    return;
-  }
-
-  const out=[];
-
-  state.students.forEach(s=>{
-    if(`${s.full_name||""} ${s.phone||""} ${s.id||""}`.toLowerCase().includes(q)){
-      out.push({
-        title:s.full_name||"Student",
-        sub:`Student • ${s.phone||"No phone"}`,
-        section:"students"
-      });
-    }
-  });
-
-  state.owners.forEach(o=>{
-    if(`${o.full_name||""} ${o.phone||""} ${o.id||""}`.toLowerCase().includes(q)){
-      out.push({
-        title:o.full_name||"Owner",
-        sub:`Owner • ${o.phone||"No phone"}`,
-        section:"owners"
-      });
-    }
-  });
-
-  Object.keys(propertyConfig).forEach(type=>{
-    state[type].forEach((x,i)=>{
-      if(`${x.name||""} ${x.category||""} ${x.area||""} ${x.address||""} ${x.phone||""} ${x.facilities||""}`.toLowerCase().includes(q)){
-        out.push({
-          title:x.name||propertyConfig[type].singular,
-          sub:`${propertyConfig[type].singular} • ${x.area||""} • ${x.phone||""}`,
-          section:type,
-          index:i
-        });
-      }
+    return new Date(date).toLocaleString("en-IN", {
+      dateStyle: "medium",
+      timeStyle: "short"
     });
-  });
 
-  box.innerHTML=out.length
-    ?out.slice(0,30).map(r=>`
-      <button class="w-full text-left p-3 rounded-xl hover:bg-navy-850"
-        data-search-section="${esc(r.section)}"
-        data-search-index="${r.index??""}">
-        <div class="font-bold">${esc(r.title)}</div>
-        <div class="text-[10px] text-slate-400">${esc(r.sub)}</div>
-      </button>
-    `).join("")
-    :`<div class="p-3 text-slate-400">No results found.</div>`;
+  } catch {
 
-  box.classList.remove("hidden");
+    return date;
+
+  }
+
 }
 
-$("globalSearch").addEventListener("input",buildSearch);
 
-document.addEventListener("click",e=>{
-  const r=e.target.closest("[data-search-section]");
-  if(!r)return;
+function statusBadge(status) {
 
-  const section=r.dataset.searchSection;
-  const index=r.dataset.searchIndex;
+  const value =
+    String(status || "unknown").toLowerCase();
 
-  $("searchResults").classList.add("hidden");
-  $("globalSearch").value="";
-  showSection(section);
+  let cls =
+    "bg-slate-100 text-slate-600";
 
-  if(index!=="")openView(section,Number(index));
-});
-
-/* ================= PASSWORD ================= */
-
-$("passwordForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-
-  const p1=$("newPassword").value;
-  const p2=$("confirmPassword").value;
-
-  if(p1!==p2){
-    toast("Passwords do not match.",true);
-    return;
+  if (value === "pending") {
+    cls = "bg-amber-50 text-amber-700";
   }
 
-  if(p1.length<8){
-    toast("Password must be at least 8 characters.",true);
-    return;
+  if (value === "approved" || value === "active") {
+    cls = "bg-emerald-50 text-emerald-700";
   }
 
-  const {error}=await supabaseClient.auth.updateUser({password:p1});
-
-  if(error){
-    toast(error.message,true);
-  }else{
-    $("passwordForm").reset();
-    toast("Supabase password updated successfully.");
+  if (value === "rejected") {
+    cls = "bg-red-50 text-red-700";
   }
-});
 
-/* ================= REALTIME ================= */
-const adminRealtimeChannels=[];
-['hostels','tiffins','libraries','cafes','profiles'].forEach(table=>{
-  const channel=supabaseClient.channel('admin-live-'+table)
-    .on('postgres_changes',{event:'*',schema:'public',table},async()=>{
-      if(state.user) await loadAll();
-    })
-    .subscribe();
-  adminRealtimeChannels.push(channel);
-});
+  if (value === "cancelled") {
+    cls = "bg-slate-100 text-slate-600";
+  }
 
-/* ================= BOOT ================= */
+  return `
+    <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${cls}">
+      ${escapeHtml(status || "Unknown")}
+    </span>
+  `;
 
-(async function boot(){
-  const {data,error}=await supabaseClient.auth.getSession();
+}
 
-  if(error){
+
+function showToast(message, type = "success") {
+
+  const container =
+    document.getElementById("toastContainer");
+
+  const color =
+    type === "error"
+      ? "bg-red-600"
+      : type === "warning"
+        ? "bg-amber-500"
+        : "bg-emerald-600";
+
+  const icon =
+    type === "error"
+      ? "fa-circle-exclamation"
+      : type === "warning"
+        ? "fa-triangle-exclamation"
+        : "fa-circle-check";
+
+  const item =
+    document.createElement("div");
+
+  item.className =
+    `toast ${color} text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm max-w-sm`;
+
+  item.innerHTML = `
+    <i class="fa-solid ${icon}"></i>
+    <span>${escapeHtml(message)}</span>
+  `;
+
+  container.appendChild(item);
+
+  setTimeout(() => {
+    item.remove();
+  }, 3500);
+
+}
+
+
+function setConnection(online, text) {
+
+  const dot =
+    document.getElementById("connectionDot");
+
+  const label =
+    document.getElementById("connectionText");
+
+  dot.className =
+    "w-2.5 h-2.5 rounded-full " +
+    (online ? "bg-emerald-500" : "bg-red-500");
+
+  label.textContent =
+    text;
+
+}
+
+
+/* ============================================================
+   SIDEBAR
+============================================================ */
+
+function toggleSidebar() {
+
+  const sidebar =
+    document.getElementById("sidebar");
+
+  const overlay =
+    document.getElementById("sidebarOverlay");
+
+  sidebar.classList.toggle("open");
+
+  overlay.classList.toggle("hidden");
+
+}
+
+
+/* ============================================================
+   VIEW SYSTEM
+============================================================ */
+
+const viewTitles = {
+
+  overview: [
+    "Dashboard Overview",
+    "Live StudentHubHelp control center"
+  ],
+
+  students: [
+    "Students",
+    "Manage registered student accounts"
+  ],
+
+  owners: [
+    "Owners",
+    "Manage owners and linked properties"
+  ],
+
+  listing_requests: [
+    "Listing Requests",
+    "Approve or reject owner property submissions"
+  ],
+
+  claim_requests: [
+    "Claim Requests",
+    "Review property ownership claims"
+  ],
+
+  hostels: [
+    "Hostels & PGs",
+    "Live property management"
+  ],
+
+  tiffins: [
+    "Tiffin & Mess",
+    "Live property management"
+  ],
+
+  libraries: [
+    "Libraries",
+    "Live property management"
+  ],
+
+  cafes: [
+    "Cafes",
+    "Live property management"
+  ],
+
+  bookstores: [
+    "Book Stores",
+    "Live property management"
+  ],
+
+  bookings: [
+    "Student Bookings",
+    "Monitor student bookings"
+  ],
+
+  reviews: [
+    "Reviews",
+    "Monitor student reviews"
+  ],
+
+  admin_profile: [
+    "Admin & Security",
+    "Director account and security"
+  ]
+
+};
+
+
+function showView(view) {
+
+  state.currentView =
+    view;
+
+  document
+    .querySelectorAll("main section")
+    .forEach(section => {
+      section.classList.add("hidden-section");
+    });
+
+  const target =
+    document.getElementById("view-" + view);
+
+  if (target) {
+    target.classList.remove("hidden-section");
+  }
+
+  document
+    .querySelectorAll(".nav-item")
+    .forEach(item => {
+      item.classList.toggle(
+        "active",
+        item.dataset.view === view
+      );
+    });
+
+  const info =
+    viewTitles[view] || [
+      "Dashboard",
+      ""
+    ];
+
+  document.getElementById("pageTitle").textContent =
+    info[0];
+
+  document.getElementById("pageSubtitle").textContent =
+    info[1];
+
+  if (window.innerWidth < 1024) {
+    document
+      .getElementById("sidebar")
+      .classList.remove("open");
+
+    document
+      .getElementById("sidebarOverlay")
+      .classList.add("hidden");
+  }
+
+  if (view === "overview") {
+    renderOverview();
+  }
+
+  if (view === "students") {
+    renderStudents();
+  }
+
+  if (view === "owners") {
+    renderOwners();
+  }
+
+  if (view === "listing_requests") {
+    renderListingRequests();
+  }
+
+  if (view === "claim_requests") {
+    renderClaimRequests();
+  }
+
+  if (view === "hostels") {
+    renderPropertySection("hostels");
+  }
+
+  if (view === "tiffins") {
+    renderPropertySection("tiffins");
+  }
+
+  if (view === "libraries") {
+    renderPropertySection("libraries");
+  }
+
+  if (view === "cafes") {
+    renderPropertySection("cafes");
+  }
+
+  if (view === "bookstores") {
+    renderPropertySection("bookstores");
+  }
+
+  if (view === "bookings") {
+    renderBookings();
+  }
+
+  if (view === "reviews") {
+    renderReviews();
+  }
+
+  if (view === "admin_profile") {
+    renderAdminProfile();
+  }
+
+}
+
+
+/* ============================================================
+   SECTION HEADER
+============================================================ */
+
+function sectionHeader(title, subtitle) {
+
+  return `
+
+    <div class="mb-6">
+
+      <h2 class="text-2xl md:text-3xl font-extrabold">
+        ${escapeHtml(title)}
+      </h2>
+
+      <p class="text-slate-500 mt-1">
+        ${escapeHtml(subtitle)}
+      </p>
+
+    </div>
+
+  `;
+
+}
+
+
+document
+  .querySelectorAll(".section-header")
+  .forEach(el => {
+
+    el.innerHTML =
+      sectionHeader(
+        el.dataset.title,
+        el.dataset.subtitle
+      );
+
+  });
+
+
+/* ============================================================
+   AUTH
+============================================================ */
+
+async function initAuth() {
+
+  try {
+
+    const {
+      data: {
+        session
+      }
+    } =
+      await db.auth.getSession();
+
+    if (!session || !session.user) {
+
+      window.location.href =
+        "auth.html";
+
+      return;
+
+    }
+
+    state.user =
+      session.user;
+
+    document.getElementById("adminEmailBox").textContent =
+      state.user.email || "—";
+
+    document.getElementById("profileEmail").textContent =
+      state.user.email || "—";
+
+    await loadProfile();
+
+    const role =
+      normalizeRole(
+        state.profile?.role
+      );
+
+    if (role !== "admin") {
+
+      showToast(
+        "Admin access denied.",
+        "error"
+      );
+
+      await db.auth.signOut();
+
+      setTimeout(() => {
+        window.location.href = "auth.html";
+      }, 900);
+
+      return;
+
+    }
+
+    setConnection(
+      true,
+      "Connected"
+    );
+
+    await loadAll();
+
+    subscribeRealtime();
+
+    showView("overview");
+
+  } catch (error) {
+
     console.error(error);
-    $("authMessage").textContent=error.message;
+
+    setConnection(
+      false,
+      "Connection error"
+    );
+
+    showToast(
+      error.message || "Authentication failed",
+      "error"
+    );
+
+  }
+
+}
+
+
+async function loadProfile() {
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("profiles")
+      .select("*")
+      .eq("id", state.user.id)
+      .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+
+    throw new Error(
+      "Admin profile not found."
+    );
+
+  }
+
+  state.profile =
+    data;
+
+}
+
+
+/* ============================================================
+   LOAD ALL DATA
+============================================================ */
+
+async function safeSelect(table) {
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from(table)
+      .select("*");
+
+  if (error) {
+
+    console.error(
+      `Failed loading ${table}:`,
+      error
+    );
+
+    return [];
+
+  }
+
+  return data || [];
+
+}
+
+
+async function loadAll() {
+
+  setConnection(
+    true,
+    "Syncing..."
+  );
+
+  const results =
+    await Promise.all([
+
+      safeSelect("profiles"),
+
+      safeSelect("hostels"),
+      safeSelect("tiffins"),
+      safeSelect("libraries"),
+      safeSelect("cafes"),
+      safeSelect("bookstores"),
+
+      safeSelect("listing_requests"),
+      safeSelect("claim_requests"),
+
+      safeSelect("student_bookings"),
+      safeSelect("reviews")
+
+    ]);
+
+  const [
+
+    profiles,
+
+    hostels,
+    tiffins,
+    libraries,
+    cafes,
+    bookstores,
+
+    listingRequests,
+    claimRequests,
+
+    bookings,
+    reviews
+
+  ] = results;
+
+
+  state.students =
+    profiles.filter(
+      p =>
+        normalizeRole(p.role) === "student"
+    );
+
+
+  state.owners =
+    profiles.filter(
+      p =>
+        normalizeRole(p.role) === "owner"
+    );
+
+
+  state.hostels =
+    hostels;
+
+  state.tiffins =
+    tiffins;
+
+  state.libraries =
+    libraries;
+
+  state.cafes =
+    cafes;
+
+  state.bookstores =
+    bookstores;
+
+
+  state.listingRequests =
+    listingRequests;
+
+  state.claimRequests =
+    claimRequests;
+
+  state.bookings =
+    bookings;
+
+  state.reviews =
+    reviews;
+
+
+  setConnection(
+    true,
+    "Live"
+  );
+
+  updateBadges();
+
+  renderOverview();
+
+}
+
+
+/* ============================================================
+   REALTIME
+============================================================ */
+
+function subscribeRealtime() {
+
+  state.realtimeChannels
+    .forEach(channel => {
+      try {
+        db.removeChannel(channel);
+      } catch {}
+    });
+
+  state.realtimeChannels = [];
+
+
+  const tables = [
+
+    "profiles",
+    "hostels",
+    "tiffins",
+    "libraries",
+    "cafes",
+    "bookstores",
+
+    "listing_requests",
+    "claim_requests",
+
+    "student_bookings",
+    "reviews"
+
+  ];
+
+
+  tables.forEach(table => {
+
+    const channel =
+      db
+        .channel(
+          "admin-live-" + table
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table
+          },
+          async payload => {
+
+            console.log(
+              "Realtime:",
+              table,
+              payload.eventType
+            );
+
+            setConnection(
+              true,
+              "Live update"
+            );
+
+            await loadAll();
+
+            if (state.currentView !== "overview") {
+              showView(state.currentView);
+            }
+
+          }
+        )
+        .subscribe(
+          status => {
+
+            if (
+              status === "SUBSCRIBED"
+            ) {
+
+              setConnection(
+                true,
+                "Live"
+              );
+
+            }
+
+          }
+        );
+
+
+    state.realtimeChannels
+      .push(channel);
+
+  });
+
+}
+
+
+/* ============================================================
+   OVERVIEW
+============================================================ */
+
+function renderOverview() {
+
+  const pendingListings =
+    state.listingRequests.filter(
+      r =>
+        String(r.status || "").toLowerCase() === "pending"
+    ).length;
+
+
+  const pendingClaims =
+    state.claimRequests.filter(
+      r =>
+        String(r.status || "").toLowerCase() === "pending"
+    ).length;
+
+
+  const stats = [
+
+    {
+      label: "Students",
+      value: state.students.length,
+      icon: "fa-user-graduate",
+      action: "students"
+    },
+
+    {
+      label: "Owners",
+      value: state.owners.length,
+      icon: "fa-user-tie",
+      action: "owners"
+    },
+
+    {
+      label: "Hostel / PG",
+      value: state.hostels.length,
+      icon: "fa-hotel",
+      action: "hostels"
+    },
+
+    {
+      label: "Tiffin / Mess",
+      value: state.tiffins.length,
+      icon: "fa-bowl-food",
+      action: "tiffins"
+    },
+
+    {
+      label: "Libraries",
+      value: state.libraries.length,
+      icon: "fa-book-open",
+      action: "libraries"
+    },
+
+    {
+      label: "Cafes",
+      value: state.cafes.length,
+      icon: "fa-mug-hot",
+      action: "cafes"
+    },
+
+    {
+      label: "Book Stores",
+      value: state.bookstores.length,
+      icon: "fa-store",
+      action: "bookstores"
+    },
+
+    {
+      label: "Bookings",
+      value: state.bookings.length,
+      icon: "fa-calendar-check",
+      action: "bookings"
+    },
+
+    {
+      label: "Reviews",
+      value: state.reviews.length,
+      icon: "fa-star",
+      action: "reviews"
+    },
+
+    {
+      label: "Pending Listings",
+      value: pendingListings,
+      icon: "fa-file-circle-plus",
+      action: "listing_requests"
+    },
+
+    {
+      label: "Pending Claims",
+      value: pendingClaims,
+      icon: "fa-link",
+      action: "claim_requests"
+    }
+
+  ];
+
+
+  document.getElementById("statsGrid").innerHTML =
+    stats.map(stat => `
+
+      <button onclick="showView('${stat.action}')"
+              class="stat-card text-left bg-white border border-slate-200 rounded-2xl p-5">
+
+        <div class="flex items-center justify-between">
+
+          <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center">
+            <i class="fa-solid ${stat.icon} text-slate-700"></i>
+          </div>
+
+          <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-300"></i>
+
+        </div>
+
+        <p class="text-sm text-slate-500 mt-5">
+          ${escapeHtml(stat.label)}
+        </p>
+
+        <p class="text-3xl font-extrabold mt-1">
+          ${stat.value}
+        </p>
+
+      </button>
+
+    `).join("");
+
+
+  renderActivity();
+
+}
+
+
+function renderActivity() {
+
+  const activity = [];
+
+
+  state.listingRequests
+    .slice()
+    .sort(
+      (a,b) =>
+        new Date(b.created_at || 0) -
+        new Date(a.created_at || 0)
+    )
+    .slice(0,4)
+    .forEach(item => {
+
+      activity.push({
+
+        icon: "fa-file-circle-plus",
+
+        title:
+          `Listing request: ${item.name || "Property"}`,
+
+        time:
+          item.created_at,
+
+        status:
+          item.status
+
+      });
+
+    });
+
+
+  state.claimRequests
+    .slice()
+    .sort(
+      (a,b) =>
+        new Date(b.created_at || 0) -
+        new Date(a.created_at || 0)
+    )
+    .slice(0,4)
+    .forEach(item => {
+
+      activity.push({
+
+        icon: "fa-link",
+
+        title:
+          `Claim request: ${item.property_id || "Property"}`,
+
+        time:
+          item.created_at,
+
+        status:
+          item.status
+
+      });
+
+    });
+
+
+  state.reviews
+    .slice()
+    .sort(
+      (a,b) =>
+        new Date(b.created_at || 0) -
+        new Date(a.created_at || 0)
+    )
+    .slice(0,4)
+    .forEach(item => {
+
+      activity.push({
+
+        icon: "fa-star",
+
+        title:
+          `Review by ${item.user_name || "Student"}`,
+
+        time:
+          item.created_at,
+
+        status:
+          item.status
+
+      });
+
+    });
+
+
+  activity.sort(
+    (a,b) =>
+      new Date(b.time || 0) -
+      new Date(a.time || 0)
+  );
+
+
+  const container =
+    document.getElementById("activityList");
+
+
+  if (!activity.length) {
+
+    container.innerHTML = `
+      <div class="py-10 text-center text-slate-400 text-sm">
+        No recent activity found.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  container.innerHTML =
+    activity
+      .slice(0,8)
+      .map(item => `
+
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+
+          <div class="w-9 h-9 rounded-lg bg-white flex items-center justify-center border border-slate-200">
+            <i class="fa-solid ${item.icon} text-slate-600 text-sm"></i>
+          </div>
+
+          <div class="min-w-0 flex-1">
+
+            <p class="text-sm font-semibold truncate">
+              ${escapeHtml(item.title)}
+            </p>
+
+            <p class="text-xs text-slate-400">
+              ${formatDate(item.time)}
+            </p>
+
+          </div>
+
+          ${statusBadge(item.status)}
+
+        </div>
+
+      `)
+      .join("");
+
+}
+
+
+/* ============================================================
+   BADGES
+============================================================ */
+
+function updateBadges() {
+
+  const pendingListings =
+    state.listingRequests.filter(
+      r =>
+        String(r.status || "").toLowerCase() === "pending"
+    ).length;
+
+
+  const pendingClaims =
+    state.claimRequests.filter(
+      r =>
+        String(r.status || "").toLowerCase() === "pending"
+    ).length;
+
+
+  const listingBadge =
+    document.getElementById("pendingListingBadge");
+
+  const claimBadge =
+    document.getElementById("pendingClaimBadge");
+
+
+  listingBadge.textContent =
+    pendingListings;
+
+  claimBadge.textContent =
+    pendingClaims;
+
+
+  listingBadge.classList.toggle(
+    "hidden",
+    pendingListings === 0
+  );
+
+  claimBadge.classList.toggle(
+    "hidden",
+    pendingClaims === 0
+  );
+
+}
+
+
+/* ============================================================
+   STUDENTS
+============================================================ */
+
+function renderStudents() {
+
+  const search =
+    String(
+      document.getElementById("studentSearch")?.value || ""
+    )
+    .toLowerCase()
+    .trim();
+
+
+  const rows =
+    state.students.filter(student => {
+
+      if (!search) return true;
+
+      return [
+
+        student.full_name,
+        student.email,
+        student.phone
+
+      ]
+      .some(
+        value =>
+          String(value || "")
+            .toLowerCase()
+            .includes(search)
+      );
+
+    });
+
+
+  const container =
+    document.getElementById("studentsTable");
+
+
+  if (!rows.length) {
+
+    container.innerHTML =
+      emptyState(
+        "fa-user-graduate",
+        "No students found"
+      );
+
+    return;
+
+  }
+
+
+  container.innerHTML = `
+
+    <table class="w-full text-sm">
+
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+
+        <tr>
+
+          <th class="text-left px-5 py-4">
+            Student
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Phone
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Email
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Role
+          </th>
+
+          <th class="text-right px-5 py-4">
+            Action
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody class="divide-y divide-slate-100">
+
+        ${rows.map(student => `
+
+          <tr class="hover:bg-slate-50">
+
+            <td class="px-5 py-4">
+
+              <div class="font-semibold">
+                ${escapeHtml(student.full_name || "Unnamed")}
+              </div>
+
+              <div class="text-xs text-slate-400">
+                ${escapeHtml(student.id)}
+              </div>
+
+            </td>
+
+            <td class="px-5 py-4">
+              ${escapeHtml(student.phone || "—")}
+            </td>
+
+            <td class="px-5 py-4">
+              ${escapeHtml(student.email || "—")}
+            </td>
+
+            <td class="px-5 py-4">
+              ${statusBadge("student")}
+            </td>
+
+            <td class="px-5 py-4 text-right">
+
+              <button onclick='viewProfile(${JSON.stringify(student)})'
+                      class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold">
+                View
+              </button>
+
+            </td>
+
+          </tr>
+
+        `).join("")}
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
+
+
+/* ============================================================
+   OWNERS
+============================================================ */
+
+function renderOwners() {
+
+  const search =
+    String(
+      document.getElementById("ownerSearch")?.value || ""
+    )
+    .toLowerCase()
+    .trim();
+
+
+  const rows =
+    state.owners.filter(owner => {
+
+      if (!search) return true;
+
+      return [
+
+        owner.full_name,
+        owner.email,
+        owner.phone
+
+      ]
+      .some(
+        value =>
+          String(value || "")
+            .toLowerCase()
+            .includes(search)
+      );
+
+    });
+
+
+  const container =
+    document.getElementById("ownersTable");
+
+
+  if (!rows.length) {
+
+    container.innerHTML =
+      emptyState(
+        "fa-user-tie",
+        "No owners found"
+      );
+
+    return;
+
+  }
+
+
+  container.innerHTML = `
+
+    <table class="w-full text-sm">
+
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+
+        <tr>
+
+          <th class="text-left px-5 py-4">
+            Owner
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Contact
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Properties
+          </th>
+
+          <th class="text-right px-5 py-4">
+            Action
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody class="divide-y divide-slate-100">
+
+        ${rows.map(owner => {
+
+          const propertyCount =
+            getOwnerPropertyCount(owner.id);
+
+          return `
+
+            <tr class="hover:bg-slate-50">
+
+              <td class="px-5 py-4">
+
+                <div class="font-semibold">
+                  ${escapeHtml(owner.full_name || "Unnamed")}
+                </div>
+
+                <div class="text-xs text-slate-400">
+                  ${escapeHtml(owner.email || "")}
+                </div>
+
+              </td>
+
+              <td class="px-5 py-4">
+                ${escapeHtml(owner.phone || "—")}
+              </td>
+
+              <td class="px-5 py-4">
+
+                <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
+                  ${propertyCount} linked
+                </span>
+
+              </td>
+
+              <td class="px-5 py-4 text-right">
+
+                <button onclick='viewOwner(${JSON.stringify(owner)})'
+                        class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold">
+                  Details
+                </button>
+
+              </td>
+
+            </tr>
+
+          `;
+
+        }).join("")}
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
+
+
+function getOwnerPropertyCount(ownerId) {
+
+  let count = 0;
+
+  Object.keys(propertyConfig)
+    .forEach(key => {
+
+      count +=
+        state[key].filter(
+          property =>
+            String(property.owner_id || "") ===
+            String(ownerId)
+        ).length;
+
+    });
+
+  return count;
+
+}
+
+
+/* ============================================================
+   PROPERTY SECTIONS
+============================================================ */
+
+function renderPropertySection(key) {
+
+  const config =
+    propertyConfig[key];
+
+  const data =
+    state[key] || [];
+
+  const container =
+    document.getElementById(
+      key + "Content"
+    );
+
+
+  if (!container) return;
+
+
+  container.innerHTML = `
+
+    <div class="mb-6">
+
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+        <div>
+
+          <h2 class="text-2xl md:text-3xl font-extrabold">
+            ${escapeHtml(config.title)}
+          </h2>
+
+          <p class="text-slate-500 mt-1">
+            ${data.length} live listings
+          </p>
+
+        </div>
+
+        <button onclick="openPropertyModal('${key}')"
+                class="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold">
+          <i class="fa-solid fa-plus mr-2"></i>
+          Add ${escapeHtml(config.singular)}
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+
+      <div class="p-4 border-b border-slate-200 flex flex-col lg:flex-row gap-3">
+
+        <input id="${key}Search"
+               oninput="renderPropertyRows('${key}')"
+               placeholder="Search ${escapeHtml(config.singular)}..."
+               class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200">
+
+        <select id="${key}OwnerFilter"
+                onchange="renderPropertyRows('${key}')"
+                class="px-4 py-2.5 rounded-xl border border-slate-200">
+
+          <option value="all">
+            All Owners
+          </option>
+
+          <option value="unlinked">
+            Unlinked
+          </option>
+
+          ${state.owners.map(owner => `
+
+            <option value="${escapeHtml(owner.id)}">
+              ${escapeHtml(owner.full_name || owner.email || owner.id)}
+            </option>
+
+          `).join("")}
+
+        </select>
+
+      </div>
+
+      <div id="${key}Rows"
+           class="table-wrap">
+      </div>
+
+    </div>
+
+  `;
+
+
+  renderPropertyRows(key);
+
+}
+
+
+function renderPropertyRows(key) {
+
+  const data =
+    state[key] || [];
+
+  const search =
+    String(
+      document.getElementById(key + "Search")?.value || ""
+    )
+    .toLowerCase()
+    .trim();
+
+
+  const ownerFilter =
+    document.getElementById(
+      key + "OwnerFilter"
+    )?.value || "all";
+
+
+  const rows =
+    data.filter(item => {
+
+      const matchesSearch =
+        !search ||
+        [
+          item.name,
+          item.area,
+          item.address,
+          item.phone
+        ]
+        .some(
+          value =>
+            String(value || "")
+              .toLowerCase()
+              .includes(search)
+        );
+
+
+      const matchesOwner =
+        ownerFilter === "all"
+          ? true
+          : ownerFilter === "unlinked"
+            ? !item.owner_id
+            : String(item.owner_id || "") ===
+              String(ownerFilter);
+
+
+      return matchesSearch &&
+             matchesOwner;
+
+    });
+
+
+  const container =
+    document.getElementById(
+      key + "Rows"
+    );
+
+
+  if (!rows.length) {
+
+    container.innerHTML =
+      emptyState(
+        propertyConfig[key].icon,
+        "No properties found"
+      );
+
+    return;
+
+  }
+
+
+  container.innerHTML = `
+
+    <table class="w-full text-sm">
+
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+
+        <tr>
+
+          <th class="text-left px-5 py-4">
+            Property
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Area
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Contact
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Owner
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Rating
+          </th>
+
+          <th class="text-right px-5 py-4">
+            Actions
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody class="divide-y divide-slate-100">
+
+        ${rows.map(item => {
+
+          const owner =
+            state.owners.find(
+              o =>
+                String(o.id) ===
+                String(item.owner_id)
+            );
+
+
+          return `
+
+            <tr class="hover:bg-slate-50">
+
+              <td class="px-5 py-4">
+
+                <div class="font-semibold">
+                  ${escapeHtml(item.name || "Unnamed")}
+                </div>
+
+                <div class="text-xs text-slate-400">
+                  ID: ${escapeHtml(item.id)}
+                </div>
+
+              </td>
+
+              <td class="px-5 py-4">
+                ${escapeHtml(item.area || "—")}
+              </td>
+
+              <td class="px-5 py-4">
+
+                <div>
+                  ${escapeHtml(item.phone || "—")}
+                </div>
+
+                <div class="text-xs text-slate-400">
+                  ${escapeHtml(item.timing || "")}
+                </div>
+
+              </td>
+
+              <td class="px-5 py-4">
+
+                ${
+                  owner
+                    ? `
+                      <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                        ${escapeHtml(owner.full_name || owner.email)}
+                      </span>
+                    `
+                    : `
+                      <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-semibold">
+                        Unlinked
+                      </span>
+                    `
+                }
+
+              </td>
+
+              <td class="px-5 py-4">
+
+                <span class="font-semibold">
+                  ${escapeHtml(item.rating ?? "—")}
+                </span>
+
+                ${
+                  item.rating
+                    ? `<i class="fa-solid fa-star text-amber-400 text-xs ml-1"></i>`
+                    : ""
+                }
+
+              </td>
+
+              <td class="px-5 py-4 text-right whitespace-nowrap">
+
+                <button onclick='viewProperty("${key}", ${JSON.stringify(item)})'
+                        class="px-2.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold">
+                  View
+                </button>
+
+                <button onclick='editProperty("${key}", ${JSON.stringify(item)})'
+                        class="px-2.5 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold ml-1">
+                  Edit
+                </button>
+
+                <button onclick='deleteProperty("${key}", ${JSON.stringify(item.id)})'
+                        class="px-2.5 py-2 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold ml-1">
+                  Delete
+                </button>
+
+              </td>
+
+            </tr>
+
+          `;
+
+        }).join("")}
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
+
+
+/* ============================================================
+   PROPERTY MODAL
+============================================================ */
+
+function openPropertyModal(defaultTable = "hostels") {
+
+  document.getElementById("propertyModal").classList.remove("hidden");
+  document.getElementById("propertyModal").classList.add("flex");
+
+  document.getElementById("propertyForm").reset();
+
+  document.getElementById("propertyEditId").value =
+    "";
+
+  document.getElementById("propertyModalTitle").textContent =
+    "Add Property";
+
+  document.getElementById("propertySaveBtn").textContent =
+    "Save Property";
+
+  document.getElementById("propertyTable").value =
+    defaultTable || "hostels";
+
+  populateOwnerSelect();
+
+}
+
+
+function closePropertyModal() {
+
+  document.getElementById("propertyModal").classList.add("hidden");
+  document.getElementById("propertyModal").classList.remove("flex");
+
+}
+
+
+function populateOwnerSelect(selected = "") {
+
+  const select =
+    document.getElementById("propertyOwner");
+
+
+  select.innerHTML = `
+
+    <option value="">
+      No Owner / Public Listing
+    </option>
+
+    ${state.owners.map(owner => `
+
+      <option value="${escapeHtml(owner.id)}"
+              ${String(selected) === String(owner.id) ? "selected" : ""}>
+        ${escapeHtml(owner.full_name || owner.email || owner.id)}
+      </option>
+
+    `).join("")}
+
+  `;
+
+}
+
+
+function editProperty(key, item) {
+
+  openPropertyModal(key);
+
+  document.getElementById("propertyModalTitle").textContent =
+    "Edit Property";
+
+  document.getElementById("propertySaveBtn").textContent =
+    "Update Property";
+
+  document.getElementById("propertyEditId").value =
+    item.id;
+
+  document.getElementById("propertyTable").value =
+    key;
+
+  document.getElementById("propertyName").value =
+    item.name || "";
+
+  document.getElementById("propertyArea").value =
+    item.area || "";
+
+  document.getElementById("propertyAddress").value =
+    item.address || "";
+
+  document.getElementById("propertyPhone").value =
+    item.phone || "";
+
+  document.getElementById("propertyTiming").value =
+    item.timing || "";
+
+  document.getElementById("propertyFacilities").value =
+    item.facilities || "";
+
+  document.getElementById("propertyRating").value =
+    item.rating ?? "";
+
+  document.getElementById("propertyImage").value =
+    item.image || "";
+
+  populateOwnerSelect(
+    item.owner_id || ""
+  );
+
+}
+
+
+async function saveProperty(event) {
+
+  event.preventDefault();
+
+
+  const key =
+    document.getElementById("propertyTable").value;
+
+  const id =
+    document.getElementById("propertyEditId").value;
+
+
+  const payload = {
+
+    name:
+      document.getElementById("propertyName").value.trim(),
+
+    area:
+      document.getElementById("propertyArea").value.trim(),
+
+    address:
+      document.getElementById("propertyAddress").value.trim(),
+
+    phone:
+      document.getElementById("propertyPhone").value.trim(),
+
+    timing:
+      document.getElementById("propertyTiming").value.trim() || null,
+
+    facilities:
+      document.getElementById("propertyFacilities").value.trim() || null,
+
+    rating:
+      document.getElementById("propertyRating").value === ""
+        ? null
+        : document.getElementById("propertyRating").value,
+
+    image:
+      document.getElementById("propertyImage").value.trim() || null,
+
+    owner_id:
+      document.getElementById("propertyOwner").value || null
+
+  };
+
+
+  const button =
+    document.getElementById("propertySaveBtn");
+
+  button.disabled = true;
+
+  button.textContent =
+    "Saving...";
+
+
+  try {
+
+    let error = null;
+
+
+    if (id) {
+
+      const result =
+        await db
+          .from(propertyConfig[key].table)
+          .update(payload)
+          .eq("id", id);
+
+      error =
+        result.error;
+
+    } else {
+
+      /*
+        IMPORTANT:
+        bookstore.id is an identity bigint.
+        Therefore we NEVER send id for a new bookstore.
+      */
+
+      const insertPayload =
+        { ...payload };
+
+
+      if (key !== "bookstores") {
+
+        insertPayload.id =
+          crypto.randomUUID();
+
+      }
+
+
+      const result =
+        await db
+          .from(propertyConfig[key].table)
+          .insert(insertPayload);
+
+      error =
+        result.error;
+
+    }
+
+
+    if (error) {
+      throw error;
+    }
+
+
+    showToast(
+      id
+        ? "Property updated successfully."
+        : "Property created successfully."
+    );
+
+
+    closePropertyModal();
+
+    await loadAll();
+
+    showView(key);
+
+  } catch (error) {
+
+    console.error(error);
+
+    showToast(
+      error.message ||
+      "Property save failed.",
+      "error"
+    );
+
+  } finally {
+
+    button.disabled = false;
+
+    button.textContent =
+      id
+        ? "Update Property"
+        : "Save Property";
+
+  }
+
+}
+
+
+async function deleteProperty(key, id) {
+
+  if (
+    !confirm(
+      "Delete this property permanently?"
+    )
+  ) {
     return;
   }
 
-  if(data.session){
-    await handleSession(data.session);
-  }else{
-    $("authScreen").classList.remove("hidden");
-    $("app").classList.add("hidden");
+
+  try {
+
+    const {
+      error
+    } =
+      await db
+        .from(propertyConfig[key].table)
+        .delete()
+        .eq("id", id);
+
+
+    if (error) {
+      throw error;
+    }
+
+
+    showToast(
+      "Property deleted."
+    );
+
+    await loadAll();
+
+    showView(key);
+
+  } catch (error) {
+
+    console.error(error);
+
+    showToast(
+      error.message ||
+      "Delete failed.",
+      "error"
+    );
+
   }
-})();
+
+}
+
+
+/* ============================================================
+   LISTING REQUESTS
+============================================================ */
+
+function setRequestFilter(filter) {
+
+  state.requestFilter =
+    filter;
+
+
+  document
+    .querySelectorAll(".request-filter")
+    .forEach(button => {
+
+      button.classList.remove(
+        "bg-slate-900",
+        "text-white"
+      );
+
+      button.classList.add(
+        "bg-slate-100",
+        "text-slate-600"
+      );
+
+    });
+
+
+  const buttons =
+    document.querySelectorAll(
+      ".request-filter"
+    );
+
+
+  buttons.forEach(button => {
+
+    if (
+      button.textContent
+        .trim()
+        .toLowerCase() === filter
+    ) {
+
+      button.classList.remove(
+        "bg-slate-100",
+        "text-slate-600"
+      );
+
+      button.classList.add(
+        "bg-slate-900",
+        "text-white"
+      );
+
+    }
+
+  });
+
+
+  renderListingRequests();
+
+}
+
+
+function renderListingRequests() {
+
+  let rows =
+    state.listingRequests;
+
+
+  if (state.requestFilter !== "all") {
+
+    rows =
+      rows.filter(
+        item =>
+          String(item.status || "")
+            .toLowerCase() ===
+          state.requestFilter
+      );
+
+  }
+
+
+  rows =
+    rows
+      .slice()
+      .sort(
+        (a,b) =>
+          new Date(b.created_at || 0) -
+          new Date(a.created_at || 0)
+      );
+
+
+  const container =
+    document.getElementById(
+      "listingRequestsTable"
+    );
+
+
+  if (!rows.length) {
+
+    container.innerHTML =
+      emptyState(
+        "fa-file-circle-plus",
+        "No listing requests"
+      );
+
+    return;
+
+  }
+
+
+  container.innerHTML = `
+
+    <table class="w-full text-sm">
+
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+
+        <tr>
+
+          <th class="text-left px-5 py-4">
+            Property
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Owner
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Location
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Status
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Date
+          </th>
+
+          <th class="text-right px-5 py-4">
+            Action
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody class="divide-y divide-slate-100">
+
+        ${rows.map(item => `
+
+          <tr class="hover:bg-slate-50">
+
+            <td class="px-5 py-4">
+
+              <div class="font-semibold">
+                ${escapeHtml(item.name || "Unnamed")}
+              </div>
+
+              <div class="text-xs text-slate-400">
+                ${escapeHtml(item.category || "—")}
+              </div>
+
+            </td>
+
+            <td class="px-5 py-4">
+
+              <div>
+                ${escapeHtml(item.owner_name || "—")}
+              </div>
+
+              <div class="text-xs text-slate-400">
+                ${escapeHtml(item.owner_phone || "—")}
+              </div>
+
+            </td>
+
+            <td class="px-5 py-4">
+
+              <div>
+                ${escapeHtml(item.area || "—")}
+              </div>
+
+              <div class="text-xs text-slate-400">
+                ${escapeHtml(item.address || "—")}
+              </div>
+
+            </td>
+
+            <td class="px-5 py-4">
+              ${statusBadge(item.status)}
+            </td>
+
+            <td class="px-5 py-4 text-xs text-slate-500">
+              ${formatDate(item.created_at)}
+            </td>
+
+            <td class="px-5 py-4 text-right">
+
+              <button onclick='viewListingRequest(${JSON.stringify(item)})'
+                      class="px-3 py-2 rounded-lg bg-slate-100 text-xs font-semibold">
+                View
+              </button>
+
+              ${
+                String(item.status || "").toLowerCase() === "pending"
+                  ? `
+                    <button onclick='approveListing(${JSON.stringify(item)})'
+                            class="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold ml-1">
+                      Approve
+                    </button>
+
+                    <button onclick='rejectListing(${JSON.stringify(item)})'
+                            class="px-3 py-2 rounded-lg bg-red-50 text-red-700 text-xs font-semibold ml-1">
+                      Reject
+                    </button>
+                  `
+                  : ""
+              }
+
+            </td>
+
+          </tr>
+
+        `).join("")}
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
+
+
+/* ============================================================
+   APPROVE LISTING
+============================================================ */
+
+async function approveListing(item) {
+
+  if (
+    !confirm(
+      `Approve "${item.name}"?`
+    )
+  ) {
+    return;
+  }
+
+
+  try {
+
+    const category =
+      normalizePropertyCategory(
+        item.category
+      );
+
+
+    if (!category) {
+
+      throw new Error(
+        "Unknown property category: " +
+        item.category
+      );
+
+    }
+
+
+    /*
+      First create the live property.
+    */
+
+    const payload = {
+
+      name:
+        item.name,
+
+      area:
+        item.area,
+
+      address:
+        item.address,
+
+      phone:
+        item.phone || "",
+
+      timing:
+        item.timing || null,
+
+      facilities:
+        item.facilities || null,
+
+      rating:
+        item.rating ?? null,
+
+      image:
+        item.image || null,
+
+      owner_id:
+        item.owner_id || null
+
+    };
+
+
+    /*
+      Bookstore uses identity bigint.
+      Do not generate UUID for bookstore.
+    */
+
+    if (category !== "bookstores") {
+
+      payload.id =
+        crypto.randomUUID();
+
+    }
+
+
+    const {
+      error: propertyError
+    } =
+      await db
+        .from(
+          propertyConfig[category].table
+        )
+        .insert(payload);
+
+
+    if (propertyError) {
+      throw propertyError;
+    }
+
+
+    /*
+      Then update request status.
+    */
+
+    const {
+      error: requestError
+    } =
+      await db
+        .from("listing_requests")
+        .update({
+          status: "approved",
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", item.id);
+
+
+    if (requestError) {
+      throw requestError;
+    }
+
+
+    showToast(
+      "Listing approved and published."
+    );
+
+
+    await loadAll();
+
+    showView("listing_requests");
+
+  } catch (error) {
+
+    console.error(error);
+
+    showToast(
+      error.message ||
+      "Approval failed.",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* ============================================================
+   REJECT LISTING
+============================================================ */
+
+async function rejectListing(item) {
+
+  const note =
+    prompt(
+      "Optional admin note for rejection:"
+    );
+
+
+  try {
+
+    const {
+      error
+    } =
+      await db
+        .from("listing_requests")
+        .update({
+
+          status: "rejected",
+
+          admin_note:
+            note || null,
+
+          updated_at:
+            new Date().toISOString()
+
+        })
+        .eq("id", item.id);
+
+
+    if (error) {
+      throw error;
+    }
+
+
+    showToast(
+      "Listing request rejected."
+    );
+
+
+    await loadAll();
+
+    showView("listing_requests");
+
+  } catch (error) {
+
+    console.error(error);
+
+    showToast(
+      error.message ||
+      "Rejection failed.",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* ============================================================
+   CLAIM REQUESTS
+============================================================ */
+
+function renderClaimRequests() {
+
+  const rows =
+    state.claimRequests
+      .slice()
+      .sort(
+        (a,b) =>
+          new Date(b.created_at || 0) -
+          new Date(a.created_at || 0)
+      );
+
+
+  const container =
+    document.getElementById(
+      "claimRequestsTable"
+    );
+
+
+  if (!rows.length) {
+
+    container.innerHTML =
+      emptyState(
+        "fa-link",
+        "No claim requests"
+      );
+
+    return;
+
+  }
+
+
+  container.innerHTML = `
+
+    <table class="w-full text-sm">
+
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+
+        <tr>
+
+          <th class="text-left px-5 py-4">
+            Claimant
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Property
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Type
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Status
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Date
+          </th>
+
+          <th class="text-right px-5 py-4">
+            Action
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody class="divide-y divide-slate-100">
+
+        ${rows.map(item => `
+
+          <tr class="hover:bg-slate-50">
+
+            <td class="px-5 py-4">
+
+              <div class="font-semibold">
+                ${escapeHtml(item.owner_name || "—")}
+              </div>
+
+              <div class="text-xs text-slate-400">
+                ${escapeHtml(item.owner_phone || "—")}
+              </div>
+
+            </td>
+
+            <td class="px-5 py-4">
+              ${escapeHtml(item.property_id || "—")}
+            </td>
+
+            <td class="px-5 py-4">
+              ${escapeHtml(item.property_type || "—")}
+            </td>
+
+            <td class="px-5 py-4">
+              ${statusBadge(item.status)}
+            </td>
+
+            <td class="px-5 py-4 text-xs text-slate-500">
+              ${formatDate(item.created_at)}
+            </td>
+
+            <td class="px-5 py-4 text-right">
+
+              <button onclick='viewClaimRequest(${JSON.stringify(item)})'
+                      class="px-3 py-2 rounded-lg bg-slate-100 text-xs font-semibold">
+                View
+              </button>
+
+              ${
+                String(item.status || "").toLowerCase() === "pending"
+                  ? `
+                    <button onclick='approveClaim(${JSON.stringify(item)})'
+                            class="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold ml-1">
+                      Approve
+                    </button>
+
+                    <button onclick='rejectClaim(${JSON.stringify(item)})'
+                            class="px-3 py-2 rounded-lg bg-red-50 text-red-700 text-xs font-semibold ml-1">
+                      Reject
+                    </button>
+                  `
+                  : ""
+              }
+
+            </td>
+
+          </tr>
+
+        `).join("")}
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
+
+
+/* ============================================================
+   CLAIM APPROVAL
+============================================================ */
+
+async function approveClaim(item) {
+
+  if (
+    !confirm(
+      "Approve this ownership claim?"
+    )
+  ) {
+    return;
+  }
+
+
+  try {
+
+    const key =
+      normalizePropertyCategory(
+        item.property_type
+      );
+
+
+    if (!key) {
+
+      throw new Error(
+        "Unknown property type."
+      );
+
+    }
+
+
+    const {
+      error: propertyError
+    } =
+      await db
+        .from(
+          propertyConfig[key].table
+        )
+        .update({
+          owner_id: item.owner_id
+        })
+        .eq(
+          "id",
+          item.property_id
+        );
+
+
+    if (propertyError) {
+      throw propertyError;
+    }
+
+
+    const {
+      error: claimError
+    } =
+      await db
+        .from("claim_requests")
+        .update({
+          status: "approved",
+          updated_at: new Date().toISOString()
+        })
+        .eq(
+          "id",
+          item.id
+        );
+
+
+    if (claimError) {
+      throw claimError;
+    }
+
+
+    showToast(
+      "Claim approved and property linked."
+    );
+
+
+    await loadAll();
+
+    showView("claim_requests");
+
+  } catch (error) {
+
+    console.error(error);
+
+    showToast(
+      error.message ||
+      "Claim approval failed.",
+      "error"
+    );
+
+  }
+
+}
+
+
+async function rejectClaim(item) {
+
+  const note =
+    prompt(
+      "Optional rejection note:"
+    );
+
+
+  try {
+
+    const {
+      error
+    } =
+      await db
+        .from("claim_requests")
+        .update({
+
+          status: "rejected",
+
+          admin_note:
+            note || null,
+
+          updated_at:
+            new Date().toISOString()
+
+        })
+        .eq(
+          "id",
+          item.id
+        );
+
+
+    if (error) {
+      throw error;
+    }
+
+
+    showToast(
+      "Claim rejected."
+    );
+
+
+    await loadAll();
+
+    showView("claim_requests");
+
+  } catch (error) {
+
+    console.error(error);
+
+    showToast(
+      error.message ||
+      "Claim rejection failed.",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* ============================================================
+   BOOKINGS
+============================================================ */
+
+function renderBookings() {
+
+  const search =
+    String(
+      document.getElementById("bookingSearch")?.value || ""
+    )
+    .toLowerCase()
+    .trim();
+
+
+  const rows =
+    state.bookings.filter(item => {
+
+      if (!search) return true;
+
+      return [
+
+        item.property_name,
+        item.category,
+        item.status,
+        item.property_id,
+        item.student_id
+
+      ]
+      .some(
+        value =>
+          String(value || "")
+            .toLowerCase()
+            .includes(search)
+      );
+
+    });
+
+
+  const container =
+    document.getElementById(
+      "bookingsTable"
+    );
+
+
+  if (!rows.length) {
+
+    container.innerHTML =
+      emptyState(
+        "fa-calendar-check",
+        "No bookings found"
+      );
+
+    return;
+
+  }
+
+
+  container.innerHTML = `
+
+    <table class="w-full text-sm">
+
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+
+        <tr>
+
+          <th class="text-left px-5 py-4">
+            Student
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Property
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Category
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Status
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Joined
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Created
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody class="divide-y divide-slate-100">
+
+        ${rows.map(item => `
+
+          <tr class="hover:bg-slate-50">
+
+            <td class="px-5 py-4">
+
+              <div class="font-semibold">
+                ${escapeHtml(
+                  findStudentName(item.student_id)
+                )}
+              </div>
+
+              <div class="text-xs text-slate-400">
+                ${escapeHtml(item.student_id || "—")}
+              </div>
+
+            </td>
+
+            <td class="px-5 py-4">
+
+              <div class="font-semibold">
+                ${escapeHtml(item.property_name || "—")}
+              </div>
+
+              <div class="text-xs text-slate-400">
+                ${escapeHtml(item.property_id || "—")}
+              </div>
+
+            </td>
+
+            <td class="px-5 py-4">
+              ${escapeHtml(item.category || "—")}
+            </td>
+
+            <td class="px-5 py-4">
+              ${statusBadge(item.status)}
+            </td>
+
+            <td class="px-5 py-4 text-xs">
+              ${formatDate(item.joined_date)}
+            </td>
+
+            <td class="px-5 py-4 text-xs text-slate-500">
+              ${formatDate(item.created_at)}
+            </td>
+
+          </tr>
+
+        `).join("")}
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
+
+
+function findStudentName(studentId) {
+
+  const student =
+    state.students.find(
+      item =>
+        String(item.id) ===
+        String(studentId)
+    );
+
+  return student?.full_name ||
+         student?.email ||
+         "Student";
+
+}
+
+
+/* ============================================================
+   REVIEWS
+============================================================ */
+
+function renderReviews() {
+
+  const search =
+    String(
+      document.getElementById("reviewSearch")?.value || ""
+    )
+    .toLowerCase()
+    .trim();
+
+
+  const status =
+    document.getElementById(
+      "reviewStatusFilter"
+    )?.value || "all";
+
+
+  const rows =
+    state.reviews.filter(item => {
+
+      const matchesStatus =
+        status === "all" ||
+        String(item.status || "")
+          .toLowerCase() === status;
+
+
+      const matchesSearch =
+        !search ||
+        [
+
+          item.user_name,
+          item.review_text,
+          item.property_id
+
+        ]
+        .some(
+          value =>
+            String(value || "")
+              .toLowerCase()
+              .includes(search)
+        );
+
+
+      return matchesStatus &&
+             matchesSearch;
+
+    });
+
+
+  const container =
+    document.getElementById(
+      "reviewsTable"
+    );
+
+
+  if (!rows.length) {
+
+    container.innerHTML =
+      emptyState(
+        "fa-star",
+        "No reviews found"
+      );
+
+    return;
+
+  }
+
+
+  container.innerHTML = `
+
+    <table class="w-full text-sm">
+
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+
+        <tr>
+
+          <th class="text-left px-5 py-4">
+            Student
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Property ID
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Rating
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Review
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Status
+          </th>
+
+          <th class="text-left px-5 py-4">
+            Date
+          </th>
+
+          <th class="text-right px-5 py-4">
+            Action
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody class="divide-y divide-slate-100">
+
+        ${rows.map(item => `
+
+          <tr class="hover:bg-slate-50">
+
+            <td class="px-5 py-4 font-semibold">
+              ${escapeHtml(item.user_name || "Student")}
+            </td>
+
+            <td class="px-5 py-4">
+              ${escapeHtml(item.property_id)}
+            </td>
+
+            <td class="px-5 py-4">
+
+              <span class="font-bold">
+                ${escapeHtml(item.rating ?? "—")}
+              </span>
+
+              ${
+                item.rating
+                  ? `<i class="fa-solid fa-star text-amber-400 ml-1"></i>`
+                  : ""
+              }
+
+            </td>
+
+            <td class="px-5 py-4 max-w-md">
+
+              <p class="line-clamp-2 text-slate-600">
+                ${escapeHtml(item.review_text || "")}
+              </p>
+
+            </td>
+
+            <td class="px-5 py-4">
+              ${statusBadge(item.status)}
+            </td>
+
+            <td class="px-5 py-4 text-xs text-slate-500">
+              ${formatDate(item.created_at)}
+            </td>
+
+            <td class="px-5 py-4 text-right">
+
+              <button onclick='viewReview(${JSON.stringify(item)})'
+                      class="px-3 py-2 rounded-lg bg-slate-100 text-xs font-semibold">
+                View
+              </button>
+
+              ${
+                String(item.status || "").toLowerCase() === "pending"
+                  ? `
+                    <button onclick='moderateReview(${JSON.stringify(item)}, "approved")'
+                            class="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold ml-1">
+                      Approve
+                    </button>
+
+                    <button onclick='moderateReview(${JSON.stringify(item)}, "rejected")'
+                            class="px-3 py-2 rounded-lg bg-red-50 text-red-700 text-xs font-semibold ml-1">
+                      Reject
+                    </button>
+                  `
+                  : ""
+              }
+
+            </td>
+
+          </tr>
+
+        `).join("")}
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
+
+
+async function moderateReview(item, status) {
+
+  try {
+
+    const {
+      error
+    } =
+      await db
+        .from("reviews")
+        .update({
+          status
+        })
+        .eq(
+          "id",
+          item.id
+        );
+
+
+    if (error) {
+      throw error;
+    }
+
+
+    showToast(
+      `Review ${status}.`
+    );
+
+
+    await loadAll();
+
+    showView("reviews");
+
+  } catch (error) {
+
+    console.error(error);
+
+    showToast(
+      error.message ||
+      "Review moderation failed.",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* ============================================================
+   ADMIN PROFILE
+============================================================ */
+
+function renderAdminProfile() {
+
+  document.getElementById("profileEmail").textContent =
+    state.profile?.email ||
+    state.user?.email ||
+    "—";
+
+  document.getElementById("profileRole").textContent =
+    state.profile?.role ||
+    "—";
+
+}
+
+
+/* ============================================================
+   NORMALIZE CATEGORY
+============================================================ */
+
+function normalizePropertyCategory(category) {
+
+  const value =
+    String(category || "")
+      .toLowerCase()
+      .trim();
+
+
+  if (
+    value.includes("hostel") ||
+    value.includes("pg")
+  ) {
+    return "hostels";
+  }
+
+
+  if (
+    value.includes("tiffin") ||
+    value.includes("mess")
+  ) {
+    return "tiffins";
+  }
+
+
+  if (
+    value.includes("library") ||
+    value.includes("libraries")
+  ) {
+    return "libraries";
+  }
+
+
+  if (
+    value.includes("cafe") ||
+    value.includes("cafes")
+  ) {
+    return "cafes";
+  }
+
+
+  if (
+    value.includes("bookstore") ||
+    value.includes("book store") ||
+    value.includes("book-store")
+  ) {
+    return "bookstores";
+  }
+
+
+  return null;
+
+}
+
+
+/* ============================================================
+   DETAILS
+============================================================ */
+
+function openDetails(title, html) {
+
+  document.getElementById("detailsTitle").textContent =
+    title;
+
+  document.getElementById("detailsBody").innerHTML =
+    html;
+
+  document.getElementById("detailsModal").classList.remove("hidden");
+  document.getElementById("detailsModal").classList.add("flex");
+
+}
+
+
+function closeDetailsModal() {
+
+  document.getElementById("detailsModal").classList.add("hidden");
+  document.getElementById("detailsModal").classList.remove("flex");
+
+}
+
+
+function detailRow(label, value) {
+
+  return `
+
+    <div class="py-3 border-b border-slate-100">
+
+      <p class="text-xs uppercase text-slate-400">
+        ${escapeHtml(label)}
+      </p>
+
+      <p class="font-semibold mt-1 break-words">
+        ${escapeHtml(value ?? "—")}
+      </p>
+
+    </div>
+
+  `;
+
+}
+
+
+function viewProfile(profile) {
+
+  openDetails(
+    "Student Profile",
+    [
+
+      detailRow("Name", profile.full_name),
+
+      detailRow("Email", profile.email),
+
+      detailRow("Phone", profile.phone),
+
+      detailRow("Role", profile.role),
+
+      detailRow("Address", profile.address),
+
+      detailRow("Profile ID", profile.id),
+
+      detailRow("Created", formatDate(profile.created_at))
+
+    ].join("")
+  );
+
+}
+
+
+function viewOwner(owner) {
+
+  const count =
+    getOwnerPropertyCount(owner.id);
+
+
+  openDetails(
+    "Owner Details",
+    [
+
+      detailRow("Name", owner.full_name),
+
+      detailRow("Email", owner.email),
+
+      detailRow("Phone", owner.phone),
+
+      detailRow("Role", owner.role),
+
+      detailRow("Address", owner.address),
+
+      detailRow("Linked Properties", count),
+
+      detailRow("Profile ID", owner.id),
+
+      detailRow("Created", formatDate(owner.created_at))
+
+    ].join("")
+  );
+
+}
+
+
+function viewProperty(key, item) {
+
+  const config =
+    propertyConfig[key];
+
+
+  const owner =
+    state.owners.find(
+      o =>
+        String(o.id) ===
+        String(item.owner_id)
+    );
+
+
+  openDetails(
+    config.singular,
+    [
+
+      detailRow("Name", item.name),
+
+      detailRow("Area", item.area),
+
+      detailRow("Address", item.address),
+
+      detailRow("Phone", item.phone),
+
+      detailRow("Timing", item.timing),
+
+      detailRow("Facilities", item.facilities),
+
+      detailRow("Rating", item.rating),
+
+      detailRow(
+        "Owner",
+        owner
+          ? owner.full_name || owner.email
+          : "Unlinked"
+      ),
+
+      detailRow("Owner ID", item.owner_id),
+
+      detailRow("Property ID", item.id),
+
+      detailRow("Image", item.image)
+
+    ].join("")
+  );
+
+}
+
+
+function viewListingRequest(item) {
+
+  openDetails(
+    "Listing Request",
+    [
+
+      detailRow("Property", item.name),
+
+      detailRow("Category", item.category),
+
+      detailRow("Area", item.area),
+
+      detailRow("Address", item.address),
+
+      detailRow("Phone", item.phone),
+
+      detailRow("Timing", item.timing),
+
+      detailRow("Facilities", item.facilities),
+
+      detailRow("Owner", item.owner_name),
+
+      detailRow("Owner Phone", item.owner_phone),
+
+      detailRow("Owner ID", item.owner_id),
+
+      detailRow("Status", item.status),
+
+      detailRow("Admin Note", item.admin_note),
+
+      detailRow("Created", formatDate(item.created_at))
+
+    ].join("")
+  );
+
+}
+
+
+function viewClaimRequest(item) {
+
+  openDetails(
+    "Claim Request",
+    [
+
+      detailRow("Property ID", item.property_id),
+
+      detailRow("Property Type", item.property_type),
+
+      detailRow("Owner", item.owner_name),
+
+      detailRow("Owner Phone", item.owner_phone),
+
+      detailRow("Owner ID", item.owner_id),
+
+      detailRow("Message", item.message),
+
+      detailRow("Status", item.status),
+
+      detailRow("Admin Note", item.admin_note),
+
+      detailRow("Created", formatDate(item.created_at))
+
+    ].join("")
+  );
+
+}
+
+
+function viewReview(item) {
+
+  openDetails(
+    "Student Review",
+    [
+
+      detailRow("Student", item.user_name),
+
+      detailRow("Student ID", item.student_id),
+
+      detailRow("Property ID", item.property_id),
+
+      detailRow("Rating", item.rating),
+
+      detailRow("Review", item.review_text),
+
+      detailRow("Status", item.status),
+
+      detailRow("Created", formatDate(item.created_at))
+
+    ].join("")
+  );
+
+}
+
+
+/* ============================================================
+   EMPTY STATE
+============================================================ */
+
+function emptyState(icon, message) {
+
+  return `
+
+    <div class="py-16 text-center">
+
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center">
+        <i class="fa-solid ${icon} text-slate-400 text-xl"></i>
+      </div>
+
+      <p class="font-semibold text-slate-600 mt-4">
+        ${escapeHtml(message)}
+      </p>
+
+      <p class="text-xs text-slate-400 mt-1">
+        Nothing to display right now.
+      </p>
+
+    </div>
+
+  `;
+
+}
+
+
+/* ============================================================
+   REFRESH
+============================================================ */
+
+async function refreshAll() {
+
+  try {
+
+    await loadAll();
+
+    showView(
+      state.currentView
+    );
+
+    showToast(
+      "Dashboard refreshed."
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    showToast(
+      "Refresh failed.",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* ============================================================
+   LOGOUT
+============================================================ */
+
+async function logout() {
+
+  if (
+    !confirm(
+      "Sign out from Director Admin?"
+    )
+  ) {
+    return;
+  }
+
+
+  try {
+
+    await db.auth.signOut();
+
+  } finally {
+
+    window.location.href =
+      "auth.html";
+
+  }
+
+}
+
+
+/* ============================================================
+   CLOSE MODALS ON BACKDROP
+============================================================ */
+
+document
+  .getElementById("propertyModal")
+  .addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target.id ===
+        "propertyModal"
+      ) {
+
+        closePropertyModal();
+
+      }
+
+    }
+  );
+
+
+document
+  .getElementById("detailsModal")
+  .addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target.id ===
+        "detailsModal"
+      ) {
+
+        closeDetailsModal();
+
+      }
+
+    }
+  );
+
+
+/* ============================================================
+   START
+============================================================ */
+
+initAuth();
+
 </script>
+
 </body>
 </html>
