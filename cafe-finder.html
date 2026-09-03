@@ -9,12 +9,12 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Cafe Finder | StudentHubHelp</title>
+  <title>Book Store Finder | StudentHubHelp</title>
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
   <meta
     name="description"
-    content="Find student-friendly cafes across India with StudentHubHelp."
+    content="Find student-friendly book stores across India with StudentHubHelp."
   >
 
   <meta
@@ -333,7 +333,7 @@
           rgba(7,26,51,.68)
         ),
 
-        url("cafe-banner.png")
+        url("bookstore-banner.png")
         center/cover no-repeat;
     }
 
@@ -663,7 +663,7 @@
           rgba(7,26,51,.25)
         ),
 
-        url("cafe-banner.png")
+        url("bookstore-banner.png")
         center/cover no-repeat;
     }
 
@@ -946,7 +946,7 @@
           rgba(7,26,51,.72)
         ),
 
-        url("cafe-banner.png")
+        url("bookstore-banner.png")
         center/cover;
 
       display: flex;
@@ -1316,13 +1316,12 @@
 
 
         <a
-          href="cafe-finder.html"
-          class="active"
+          href="bookstore-finder.html"
         >
-          Cafe
+          Book Store
         </a>
 
-        <a href="bookstore-finder.html">
+        <a href="bookstore-finder.html" class="active">
   📖 Book Store
 </a>
 
@@ -1364,14 +1363,12 @@
 
       <a
         href="cafe-finder.html"
-        class="active"
       >
         ☕ Cafe
       </a>
 
 <a
   href="bookstore-finder.html"
-  class="active"
 >
   📖 Book Store
 </a>
@@ -1392,7 +1389,7 @@
 
 
       <div class="eyebrow">
-        ☕ Student Cafe Finder
+        📖 Student Book Store Finder
       </div>
 
 
@@ -1401,7 +1398,7 @@
         Find the Right
 
         <span>
-          Cafe
+          Book Store
         </span>
 
         Near You
@@ -1411,9 +1408,9 @@
 
       <p>
 
-        Discover student-friendly cafes
-        for studying, food, meetings and
-        relaxation by city, district,
+        Discover student-friendly book stores for textbooks,
+        college books, competitive exam books, study material,
+        reference books and stationery by city, district,
         area or locality across India.
 
       </p>
@@ -1425,7 +1422,7 @@
         <input
           type="search"
           id="searchInput"
-          placeholder="Search city, district, area, cafe name..."
+          placeholder="Search city, district, area, book store name..."
           autocomplete="off"
         >
 
@@ -1461,7 +1458,7 @@
 
 
         <h2>
-          Available Cafes
+          Available Book Stores
         </h2>
 
 
@@ -1489,7 +1486,7 @@
       class="status show"
       id="status"
     >
-      Loading live cafe listings...
+      Loading live book store listings...
     </div>
 
 
@@ -1507,18 +1504,18 @@
     >
 
       <div class="empty-icon">
-        ☕
+        📖
       </div>
 
 
       <h3>
-        No Cafes Found
+        No Book Stores Found
       </h3>
 
 
       <p>
         Try another city, district,
-        locality or cafe name.
+        locality or book store name.
       </p>
 
 
@@ -1554,7 +1551,7 @@
 
 
         <h2 id="modalTitle">
-          Cafe
+          Book Store
         </h2>
 
 
@@ -2115,7 +2112,7 @@
     async function loadRecords() {
 
       showStatus(
-        "Loading live cafe listings..."
+        "Loading live book store listings..."
       );
 
 
@@ -2127,7 +2124,7 @@
           error
         } = await db
 
-          .from("cafes")
+          .from("bookstores")
 
           .select(
             "id,name,category,area,address,phone,timing,facilities,rating"
@@ -2157,7 +2154,7 @@
 
 
         console.error(
-          "Cafe loading error:",
+          "Book Store loading error:",
           error
         );
 
@@ -2179,12 +2176,12 @@
 
 
         resultText.textContent =
-          "Unable to load live cafe listings";
+          "Unable to load live book store listings";
 
 
         showStatus(
 
-          "Unable to load live cafes. " +
+          "Unable to load live book stores. " +
           (
             error.message ||
             "Unknown Supabase error."
@@ -2363,12 +2360,12 @@
 
           const name =
             clean(record.name) ||
-            "Cafe";
+            "Book Store";
 
 
           const category =
             clean(record.category) ||
-            "Cafe";
+            "Book Store";
 
 
           const area =
@@ -2582,7 +2579,7 @@
       ).textContent =
 
         clean(record.name) ||
-        "Cafe";
+        "Book Store";
 
 
       document.getElementById(
@@ -2590,7 +2587,7 @@
       ).textContent =
 
         clean(record.category) ||
-        "Cafe";
+        "Book Store";
 
 
       document.getElementById(
@@ -2699,7 +2696,7 @@
 
           (
             clean(record.name) ||
-            "this Cafe"
+            "this Book Store"
           ) +
 
           " on StudentHubHelp.";
@@ -2924,9 +2921,9 @@
     /* =====================================================
        URL SEARCH SUPPORT
 
-       cafe-finder.html?q=Hisar
-       cafe-finder.html?area=Haryana
-       cafe-finder.html?location=Delhi
+       bookstore-finder.html?q=Hisar
+       bookstore-finder.html?area=Haryana
+       bookstore-finder.html?location=Delhi
     ===================================================== */
 
     function loadURLSearch() {
@@ -2968,7 +2965,7 @@
       db
 
         .channel(
-          "studenthub-cafes-live"
+          "studenthub-bookstores-live"
         )
 
         .on(
@@ -2981,7 +2978,7 @@
 
             schema: "public",
 
-            table: "cafes"
+            table: "bookstores"
 
           },
 
@@ -2997,7 +2994,7 @@
           status => {
 
             console.log(
-              "Cafe realtime:",
+              "Book Store realtime:",
               status
             );
 
