@@ -4,26 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Library Finder | StudentHubHelp</title>
-<link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
+  <title>Study Library Finder | StudentHubHelp</title>
+
   <meta
     name="description"
-    content="Find student-friendly libraries and study spaces across India with StudentHubHelp."
+    content="Find student-friendly study libraries and reading rooms across India with StudentHubHelp."
   >
 
   <meta name="theme-color" content="#071a33">
+
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap"
     rel="stylesheet"
   >
 
-  <style>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  >
 
+  <style>
     * {
       box-sizing: border-box;
       margin: 0;
@@ -32,17 +38,41 @@
 
     :root {
       --navy: #071a33;
-      --navy2: #0d2749;
+      --navy-2: #0b2343;
+      --navy-3: #12365c;
+
       --gold: #d7a63d;
-      --gold2: #f2c866;
+      --gold-2: #f2c866;
+      --gold-soft: #fff7df;
+
       --white: #ffffff;
       --bg: #f5f7fb;
-      --text: #182335;
+      --surface: #ffffff;
+
+      --text: #162033;
       --muted: #667085;
-      --border: #e5e7eb;
-      --danger: #c62828;
-      --shadow: 0 15px 40px rgba(7, 26, 51, .10);
-      --radius: 18px;
+      --muted-2: #98a2b3;
+
+      --border: #e6eaf0;
+
+      --green: #16834b;
+      --green-soft: #eaf8f0;
+
+      --red: #c62828;
+      --red-soft: #fff3f3;
+
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+
+      --shadow-sm: 0 8px 25px rgba(7,26,51,.06);
+      --shadow: 0 18px 50px rgba(7,26,51,.10);
+      --shadow-lg: 0 30px 90px rgba(0,0,0,.28);
+
+      --radius: 20px;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
@@ -52,16 +82,24 @@
       line-height: 1.6;
     }
 
+    body.modal-open {
+      overflow: hidden;
+    }
+
     a {
       text-decoration: none;
       color: inherit;
     }
 
     button,
-    input {
+    input,
+    select {
       font: inherit;
     }
 
+    button {
+      cursor: pointer;
+    }
 
     /* =========================
        NAVBAR
@@ -70,29 +108,25 @@
     .navbar {
       position: sticky;
       top: 0;
-      z-index: 1000;
+      z-index: 1500;
 
-      background: rgba(7, 26, 51, .97);
+      background: rgba(7,26,51,.97);
+      backdrop-filter: blur(18px);
 
-      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
 
-      box-shadow:
-        0 5px 25px rgba(0, 0, 0, .12);
+      box-shadow: 0 6px 28px rgba(0,0,0,.15);
     }
 
     .nav-container {
-      max-width: 1250px;
+      width: min(1320px, 100%);
+      min-height: 76px;
 
       margin: auto;
-
-      min-height: 72px;
-
-      padding: 0 20px;
+      padding: 0 22px;
 
       display: flex;
-
       align-items: center;
-
       justify-content: space-between;
 
       gap: 20px;
@@ -100,159 +134,182 @@
 
     .brand {
       display: flex;
-
       align-items: center;
-
-      gap: 11px;
+      gap: 12px;
 
       color: white;
 
-      font-weight: 800;
-
       font-size: 20px;
+      font-weight: 800;
 
       white-space: nowrap;
     }
 
     .brand-icon {
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
 
-      border-radius: 12px;
+      display: grid;
+      place-items: center;
 
-      background:
-        linear-gradient(
-          135deg,
-          var(--gold),
-          var(--gold2)
-        );
+      border-radius: 14px;
+
+      background: linear-gradient(
+        135deg,
+        var(--gold),
+        var(--gold-2)
+      );
 
       color: var(--navy);
 
-      display: grid;
-
-      place-items: center;
-
-      font-size: 20px;
-
+      font-size: 15px;
       font-weight: 900;
+
+      box-shadow: 0 9px 24px rgba(215,166,61,.20);
+    }
+
+    .brand-text {
+      line-height: 1.15;
+    }
+
+    .brand-sub {
+      display: block;
+
+      margin-top: 4px;
+
+      color: rgba(255,255,255,.50);
+
+      font-size: 9px;
+      font-weight: 600;
+
+      letter-spacing: .35px;
     }
 
     .nav-links {
       display: flex;
-
       align-items: center;
-
-      gap: 6px;
+      gap: 4px;
     }
 
     .nav-links a {
-      color: rgba(255,255,255,.86);
+      color: rgba(255,255,255,.82);
 
       padding: 10px 13px;
 
       border-radius: 10px;
 
-      font-size: 14px;
-
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 700;
 
       transition: .2s ease;
     }
 
-    .nav-links a:hover,
-    .nav-links a.active {
-      background: rgba(215,166,61,.16);
+    .nav-links a:hover {
+      color: var(--gold-2);
+      background: rgba(215,166,61,.10);
+    }
 
-      color: var(--gold2);
+    .nav-links a.active {
+      color: white;
+
+      border: 1px solid rgba(242,200,102,.35);
+
+      background: rgba(215,166,61,.13);
     }
 
     .menu-btn {
       display: none;
 
-      border: 0;
+      width: 44px;
+      height: 44px;
 
-      background: transparent;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+
+      background: rgba(255,255,255,.07);
 
       color: white;
 
-      font-size: 28px;
-
-      cursor: pointer;
+      font-size: 18px;
     }
-
 
     /* =========================
        CATEGORY BAR
     ========================= */
 
     .category-bar {
-      background: white;
+      position: sticky;
+      top: 76px;
+      z-index: 1200;
+
+      background: rgba(255,255,255,.96);
+      backdrop-filter: blur(15px);
 
       border-bottom: 1px solid var(--border);
-
-      position: sticky;
-
-      top: 72px;
-
-      z-index: 900;
     }
 
     .category-inner {
-      max-width: 1250px;
+      width: min(1320px, 100%);
 
       margin: auto;
-
-      padding: 12px 20px;
+      padding: 12px 22px;
 
       display: flex;
-
-      gap: 10px;
+      gap: 9px;
 
       overflow-x: auto;
+
+      scrollbar-width: none;
+    }
+
+    .category-inner::-webkit-scrollbar {
+      display: none;
     }
 
     .category-inner a {
       flex: 0 0 auto;
 
-      padding: 10px 17px;
-
-      border-radius: 999px;
+      padding: 9px 15px;
 
       border: 1px solid var(--border);
+      border-radius: 999px;
 
       background: white;
 
       color: var(--text);
 
-      font-size: 13px;
+      font-size: 11px;
+      font-weight: 800;
 
-      font-weight: 700;
-
-      transition: .2s;
+      transition: .2s ease;
     }
 
-    .category-inner a:hover,
-    .category-inner a.active {
-      background: var(--navy);
+    .category-inner a:hover {
+      border-color: var(--navy);
+      color: var(--navy);
+      transform: translateY(-1px);
+    }
 
+    .category-inner a.active {
       border-color: var(--navy);
 
-      color: white;
-    }
+      background: var(--navy);
 
+      color: white;
+
+      box-shadow: 0 7px 18px rgba(7,26,51,.12);
+    }
 
     /* =========================
        HERO
     ========================= */
 
     .hero {
+      min-height: 465px;
+
       position: relative;
 
-      min-height: 390px;
-
       display: flex;
-
       align-items: center;
 
       overflow: hidden;
@@ -260,196 +317,234 @@
       background:
         linear-gradient(
           90deg,
-          rgba(4,17,34,.94),
-          rgba(7,26,51,.68)
+          rgba(3,13,27,.97) 0%,
+          rgba(7,26,51,.88) 43%,
+          rgba(7,26,51,.48) 100%
         ),
         url("library-banner.png")
-        center/cover no-repeat;
+        center / cover no-repeat;
+    }
+
+    .hero::before {
+      content: "";
+
+      position: absolute;
+      inset: 0;
+
+      background:
+        radial-gradient(
+          circle at 80% 20%,
+          rgba(242,200,102,.13),
+          transparent 30%
+        );
     }
 
     .hero-content {
-      width: min(1250px, 100%);
+      width: min(1320px, 100%);
 
       margin: auto;
 
-      padding: 70px 20px;
+      padding: 82px 22px;
 
-      color: white;
+      position: relative;
+      z-index: 2;
     }
 
     .eyebrow {
+      width: fit-content;
+
       display: inline-flex;
-
       align-items: center;
-
       gap: 8px;
 
-      padding: 8px 14px;
+      padding: 8px 13px;
 
-      border:
-        1px solid
-        rgba(242,200,102,.35);
-
-      background:
-        rgba(215,166,61,.12);
-
-      color: var(--gold2);
+      border: 1px solid rgba(242,200,102,.32);
 
       border-radius: 999px;
 
-      font-size: 13px;
+      background: rgba(215,166,61,.11);
 
-      font-weight: 700;
+      color: var(--gold-2);
 
-      margin-bottom: 18px;
+      font-size: 11px;
+      font-weight: 800;
+
+      margin-bottom: 19px;
     }
 
     .hero h1 {
+      max-width: 850px;
+
+      color: white;
+
       font-family: "Playfair Display", serif;
 
-      font-size:
-        clamp(38px, 6vw, 64px);
+      font-size: clamp(42px, 6vw, 70px);
 
-      line-height: 1.05;
+      line-height: 1.03;
 
-      max-width: 760px;
+      letter-spacing: -.8px;
 
-      margin-bottom: 18px;
+      margin-bottom: 19px;
     }
 
     .hero h1 span {
-      color: var(--gold2);
+      color: var(--gold-2);
     }
 
     .hero p {
-      max-width: 690px;
+      max-width: 720px;
 
-      color:
-        rgba(255,255,255,.82);
+      color: rgba(255,255,255,.76);
 
-      font-size: 17px;
+      font-size: 15px;
 
-      margin-bottom: 28px;
+      line-height: 1.8;
+
+      margin-bottom: 29px;
     }
-
 
     /* =========================
        SEARCH
     ========================= */
 
     .search-box {
-      width: min(850px, 100%);
+      width: min(940px, 100%);
 
       display: flex;
-
-      background: white;
-
-      border-radius: 16px;
+      align-items: center;
 
       padding: 7px;
 
-      box-shadow:
-        0 20px 50px rgba(0,0,0,.24);
+      border: 1px solid rgba(255,255,255,.12);
+
+      border-radius: 17px;
+
+      background: white;
+
+      box-shadow: 0 22px 60px rgba(0,0,0,.27);
+    }
+
+    .search-icon {
+      width: 50px;
+
+      display: grid;
+      place-items: center;
+
+      color: var(--muted);
+
+      font-size: 15px;
     }
 
     .search-box input {
       flex: 1;
-
       min-width: 0;
 
       border: 0;
+      outline: 0;
 
-      outline: none;
+      padding: 15px 8px;
 
-      padding: 15px 17px;
-
-      font-size: 15px;
+      background: transparent;
 
       color: var(--text);
+
+      font-size: 13px;
+    }
+
+    .search-box input::placeholder {
+      color: var(--muted-2);
     }
 
     .search-btn {
-      border: 0;
-
-      border-radius: 12px;
+      min-height: 49px;
 
       padding: 0 25px;
 
-      background:
-        linear-gradient(
-          135deg,
-          var(--gold),
-          var(--gold2)
-        );
+      border: 0;
+      border-radius: 12px;
+
+      background: linear-gradient(
+        135deg,
+        var(--gold),
+        var(--gold-2)
+      );
 
       color: var(--navy);
 
-      font-weight: 800;
-
-      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
 
       transition: .2s ease;
     }
 
     .search-btn:hover {
       transform: translateY(-1px);
+      box-shadow: 0 12px 25px rgba(215,166,61,.24);
     }
-
 
     /* =========================
        MAIN
     ========================= */
 
     .main {
-      max-width: 1250px;
+      width: min(1320px, 100%);
 
       margin: auto;
 
-      padding: 38px 20px 70px;
+      padding: 48px 22px 80px;
     }
 
     .results-head {
       display: flex;
-
-      align-items: center;
-
+      align-items: flex-end;
       justify-content: space-between;
 
       gap: 20px;
 
-      margin-bottom: 25px;
+      margin-bottom: 24px;
     }
 
     .results-title h2 {
-      font-size: 26px;
+      font-size: 28px;
 
-      margin-bottom: 3px;
+      line-height: 1.2;
+
+      letter-spacing: -.4px;
+
+      margin-bottom: 5px;
     }
 
     .results-title p {
       color: var(--muted);
 
-      font-size: 14px;
+      font-size: 12px;
     }
 
     .count-badge {
-      padding: 10px 15px;
+      min-height: 42px;
+
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+      padding: 10px 14px;
+
+      border: 1px solid var(--border);
+      border-radius: 12px;
 
       background: white;
 
-      border: 1px solid var(--border);
-
-      border-radius: 12px;
-
       color: var(--navy);
 
-      font-size: 13px;
-
-      font-weight: 800;
+      font-size: 11px;
+      font-weight: 900;
 
       white-space: nowrap;
-    }
 
+      box-shadow: var(--shadow-sm);
+    }
 
     /* =========================
        STATUS
@@ -458,35 +553,39 @@
     .status {
       display: none;
 
-      margin-bottom: 25px;
+      margin-bottom: 22px;
 
-      padding: 15px 17px;
+      padding: 14px 17px;
 
+      border: 1px solid var(--border);
       border-radius: 13px;
 
       background: white;
 
-      border: 1px solid var(--border);
-
-      font-size: 14px;
+      font-size: 12px;
+      font-weight: 600;
     }
 
     .status.show {
-      display: block;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .status.loading {
+      color: var(--navy);
     }
 
     .status.error {
-      color: var(--danger);
+      color: var(--red);
 
-      border-color:
-        rgba(198,40,40,.25);
+      border-color: rgba(198,40,40,.16);
 
-      background: #fff8f8;
+      background: var(--red-soft);
     }
 
-
     /* =========================
-       LISTING GRID
+       GRID
     ========================= */
 
     .listing-grid {
@@ -495,65 +594,113 @@
       grid-template-columns:
         repeat(3, minmax(0, 1fr));
 
-      gap: 22px;
+      gap: 23px;
     }
 
+    /* =========================
+       CARD
+    ========================= */
+
     .card {
-      background: white;
-
-      border: 1px solid var(--border);
-
-      border-radius: var(--radius);
-
       overflow: hidden;
 
-      box-shadow:
-        0 7px 25px
-        rgba(7,26,51,.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
 
-      transition: .25s ease;
+      background: var(--surface);
+
+      box-shadow: 0 7px 25px rgba(7,26,51,.045);
+
+      transition:
+        transform .25s ease,
+        box-shadow .25s ease,
+        border-color .25s ease;
     }
 
     .card:hover {
-      transform: translateY(-5px);
+      transform: translateY(-6px);
+
+      border-color: #dce2ea;
 
       box-shadow: var(--shadow);
     }
 
     .card-banner {
-      height: 150px;
+      height: 182px;
 
       position: relative;
+
+      display: flex;
+      align-items: flex-end;
+
+      padding: 15px;
 
       background:
         linear-gradient(
           90deg,
-          rgba(7,26,51,.72),
-          rgba(7,26,51,.25)
+          rgba(7,26,51,.87),
+          rgba(7,26,51,.24)
         ),
         url("library-banner.png")
-        center/cover no-repeat;
+        center / cover no-repeat;
+    }
+
+    .card-banner.has-image {
+      background-position: center;
     }
 
     .card-category {
       position: absolute;
 
       top: 13px;
-
       left: 13px;
 
       padding: 7px 10px;
 
       border-radius: 999px;
 
-      background:
-        rgba(255,255,255,.94);
+      background: rgba(255,255,255,.95);
 
       color: var(--navy);
 
-      font-size: 11px;
+      font-size: 9px;
+      font-weight: 900;
+    }
 
-      font-weight: 800;
+    .property-id-badge {
+      position: absolute;
+
+      top: 13px;
+      right: 13px;
+
+      padding: 7px 9px;
+
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 8px;
+
+      background: rgba(7,26,51,.78);
+
+      color: white;
+
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+
+      padding: 6px 9px;
+
+      border-radius: 8px;
+
+      background: rgba(22,131,75,.93);
+
+      color: white;
+
+      font-size: 9px;
+      font-weight: 900;
     }
 
     .card-body {
@@ -565,107 +712,145 @@
 
       line-height: 1.3;
 
-      margin-bottom: 8px;
+      margin-bottom: 5px;
+    }
+
+    .property-id {
+      color: var(--blue);
+
+      font-size: 9px;
+      font-weight: 900;
+
+      margin-bottom: 10px;
     }
 
     .area {
-      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 6px;
 
-      font-size: 13px;
+      color: #a27409;
 
-      font-weight: 700;
+      font-size: 11px;
+      font-weight: 800;
 
       margin-bottom: 13px;
     }
 
     .info-row {
       display: flex;
+      align-items: flex-start;
 
       gap: 9px;
 
       color: var(--muted);
 
-      font-size: 13px;
+      font-size: 11px;
 
       margin: 8px 0;
     }
 
+    .info-row i {
+      width: 15px;
+
+      margin-top: 3px;
+
+      color: #8a96a8;
+    }
+
     .rating {
+      width: fit-content;
+
       display: inline-flex;
-
       align-items: center;
-
       gap: 5px;
+
+      margin-top: 8px;
 
       padding: 6px 9px;
 
       border-radius: 8px;
 
-      background: #fff8e7;
+      background: var(--gold-soft);
 
       color: #9a6a00;
 
-      font-size: 12px;
+      font-size: 10px;
+      font-weight: 900;
+    }
 
-      font-weight: 800;
-
-      margin-top: 5px;
+    .rating.no-rating {
+      background: #f2f4f7;
+      color: #667085;
     }
 
     .card-actions {
-      display: flex;
+      display: grid;
+
+      grid-template-columns: 1.3fr 1fr;
 
       gap: 9px;
 
-      margin-top: 17px;
+      margin-top: 18px;
     }
 
     .btn {
-      flex: 1;
-
       min-height: 42px;
 
       border: 0;
-
       border-radius: 10px;
 
-      cursor: pointer;
-
       display: inline-flex;
-
       align-items: center;
-
       justify-content: center;
 
       gap: 7px;
 
-      font-size: 12px;
+      font-size: 10px;
+      font-weight: 900;
 
-      font-weight: 800;
-
-      transition: .2s;
+      transition: .2s ease;
     }
 
     .btn-primary {
       background: var(--navy);
-
       color: white;
     }
 
     .btn-primary:hover {
-      background: var(--navy2);
+      background: var(--navy-2);
+      transform: translateY(-1px);
     }
 
     .btn-light {
       background: #f1f4f8;
-
       color: var(--navy);
     }
 
     .btn-light:hover {
-      background: #e6ebf2;
+      background: #e8edf3;
+      transform: translateY(-1px);
     }
 
+    .btn-gold {
+      background: linear-gradient(
+        135deg,
+        var(--gold),
+        var(--gold-2)
+      );
+
+      color: var(--navy);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(215,166,61,.18);
+    }
+
+    .disabled {
+      pointer-events: none;
+      opacity: .40;
+    }
 
     /* =========================
        EMPTY
@@ -674,15 +859,14 @@
     .empty {
       display: none;
 
+      padding: 80px 25px;
+
       text-align: center;
 
-      background: white;
-
       border: 1px solid var(--border);
-
       border-radius: var(--radius);
 
-      padding: 65px 20px;
+      background: white;
     }
 
     .empty.show {
@@ -690,23 +874,32 @@
     }
 
     .empty-icon {
-      font-size: 48px;
+      width: 76px;
+      height: 76px;
 
-      margin-bottom: 12px;
+      margin: 0 auto 17px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 22px;
+
+      background: #eef3f8;
+
+      color: var(--navy);
+
+      font-size: 30px;
     }
 
     .empty h3 {
       font-size: 21px;
-
-      margin-bottom: 7px;
+      margin-bottom: 5px;
     }
 
     .empty p {
       color: var(--muted);
-
-      font-size: 14px;
+      font-size: 12px;
     }
-
 
     /* =========================
        MODAL
@@ -714,7 +907,6 @@
 
     .modal {
       position: fixed;
-
       inset: 0;
 
       z-index: 3000;
@@ -722,13 +914,13 @@
       display: none;
 
       align-items: center;
-
       justify-content: center;
 
-      padding: 20px;
+      padding: 18px;
 
-      background:
-        rgba(0,0,0,.65);
+      background: rgba(0,0,0,.68);
+
+      backdrop-filter: blur(5px);
     }
 
     .modal.show {
@@ -736,101 +928,139 @@
     }
 
     .modal-box {
-      width: min(650px, 100%);
+      width: min(760px, 100%);
 
-      max-height: 90vh;
+      max-height: 92vh;
 
       overflow-y: auto;
 
+      position: relative;
+
+      border-radius: 25px;
+
       background: white;
 
-      border-radius: 22px;
+      box-shadow: var(--shadow-lg);
 
-      box-shadow:
-        0 30px 80px
-        rgba(0,0,0,.3);
-
-      position: relative;
+      animation: modalIn .22s ease;
     }
 
-    .modal-head {
-      min-height: 145px;
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(.98);
+      }
 
-      padding: 27px;
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* =========================
+       DETAILS MODAL
+    ========================= */
+
+    .modal-head {
+      min-height: 205px;
+
+      padding: 29px;
+
+      position: relative;
+
+      display: flex;
+      align-items: flex-end;
 
       color: white;
 
       background:
         linear-gradient(
           90deg,
-          rgba(7,26,51,.95),
-          rgba(7,26,51,.72)
+          rgba(7,26,51,.96),
+          rgba(7,26,51,.62)
         ),
         url("library-banner.png")
-        center/cover;
+        center / cover no-repeat;
+    }
 
-      display: flex;
+    .modal-head.has-image {
+      background-position: center;
+    }
 
-      align-items: flex-end;
-
-      position: relative;
+    .modal-title-wrap {
+      padding-right: 48px;
     }
 
     .modal-head h2 {
-      font-family:
-        "Playfair Display", serif;
+      font-family: "Playfair Display", serif;
 
-      font-size: 30px;
+      font-size: 32px;
 
       line-height: 1.15;
 
-      padding-right: 40px;
+      margin-bottom: 8px;
+    }
+
+    .modal-property-id {
+      display: inline-flex;
+
+      padding: 6px 9px;
+
+      border-radius: 7px;
+
+      background: rgba(255,255,255,.12);
+
+      color: var(--gold-2);
+
+      font-size: 10px;
+      font-weight: 900;
     }
 
     .close {
       position: absolute;
 
+      top: 17px;
       right: 17px;
 
-      top: 17px;
+      width: 40px;
+      height: 40px;
 
-      width: 38px;
-
-      height: 38px;
-
-      border: 0;
-
+      border: 1px solid rgba(255,255,255,.15);
       border-radius: 50%;
 
-      background:
-        rgba(255,255,255,.15);
+      background: rgba(255,255,255,.10);
 
       color: white;
 
       font-size: 22px;
 
-      cursor: pointer;
+      transition: .2s;
+    }
+
+    .close:hover {
+      background: rgba(255,255,255,.20);
     }
 
     .modal-content {
-      padding: 24px;
+      padding: 25px;
     }
 
     .detail-grid {
       display: grid;
 
       grid-template-columns:
-        repeat(2, 1fr);
+        repeat(2, minmax(0,1fr));
 
-      gap: 15px;
+      gap: 13px;
     }
 
     .detail-item {
-      background: #f7f9fc;
-
-      border-radius: 12px;
-
       padding: 14px;
+
+      border: 1px solid #edf0f4;
+      border-radius: 13px;
+
+      background: #f7f9fc;
     }
 
     .detail-item.full {
@@ -840,75 +1070,367 @@
     .detail-label {
       color: var(--muted);
 
-      font-size: 11px;
+      font-size: 8px;
+      font-weight: 900;
 
       text-transform: uppercase;
 
-      letter-spacing: .5px;
+      letter-spacing: .8px;
 
-      font-weight: 800;
-
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
     .detail-value {
-      font-size: 14px;
+      color: var(--text);
 
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 700;
 
       word-break: break-word;
     }
 
+    .detail-value.id-value {
+      color: var(--blue);
+
+      font-size: 14px;
+      font-weight: 900;
+    }
+
     .modal-actions {
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, minmax(0,1fr));
+
+      gap: 9px;
+
+      margin-top: 21px;
+    }
+
+    .modal-actions .btn {
+      min-height: 46px;
+    }
+
+    .booking-note {
       display: flex;
+      align-items: flex-start;
+      gap: 9px;
 
-      gap: 10px;
+      margin-top: 17px;
 
-      margin-top: 22px;
+      padding: 13px;
+
+      border: 1px solid #e7ebf0;
+      border-radius: 12px;
+
+      background: #f8fafc;
+
+      color: var(--muted);
+
+      font-size: 10px;
+      line-height: 1.55;
     }
 
-    .modal-actions a {
-      flex: 1;
+    .booking-note i {
+      margin-top: 2px;
+      color: var(--gold);
     }
 
-    .disabled {
-      pointer-events: none;
+    /* =========================
+       BOOKING MODAL
+    ========================= */
 
-      opacity: .45;
+    #bookingModal {
+      z-index: 3500;
     }
 
+    .booking-box {
+      width: min(510px, 100%);
+    }
+
+    .booking-header {
+      padding: 25px 25px 21px;
+
+      border-bottom: 1px solid var(--border);
+    }
+
+    .booking-icon {
+      width: 47px;
+      height: 47px;
+
+      display: grid;
+      place-items: center;
+
+      margin-bottom: 13px;
+
+      border-radius: 14px;
+
+      background: var(--gold-soft);
+
+      color: #9a6a00;
+
+      font-size: 19px;
+    }
+
+    .booking-header h2 {
+      font-size: 22px;
+      line-height: 1.25;
+      margin-bottom: 4px;
+    }
+
+    .booking-header p {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .booking-property {
+      margin-top: 14px;
+
+      padding: 12px 13px;
+
+      border: 1px solid #e7ebf0;
+      border-radius: 11px;
+
+      background: #f7f9fc;
+    }
+
+    .booking-property-label {
+      color: var(--muted);
+
+      font-size: 8px;
+      font-weight: 900;
+
+      text-transform: uppercase;
+
+      letter-spacing: .7px;
+    }
+
+    .booking-property-name {
+      margin-top: 3px;
+
+      color: var(--navy);
+
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .booking-property-id {
+      margin-top: 2px;
+
+      color: var(--blue);
+
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .booking-content {
+      padding: 23px 25px 25px;
+    }
+
+    .form-group {
+      margin-bottom: 17px;
+    }
+
+    .form-label {
+      display: block;
+
+      margin-bottom: 7px;
+
+      color: var(--text);
+
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .form-label span {
+      color: var(--red);
+    }
+
+    .form-control {
+      width: 100%;
+
+      min-height: 47px;
+
+      padding: 0 13px;
+
+      border: 1px solid #dfe4eb;
+      border-radius: 11px;
+
+      outline: none;
+
+      background: white;
+
+      color: var(--text);
+
+      font-size: 12px;
+
+      transition: .2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--navy);
+
+      box-shadow:
+        0 0 0 3px rgba(7,26,51,.07);
+    }
+
+    .booking-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+
+      margin: 6px 0 19px;
+
+      padding: 12px 13px;
+
+      border: 1px solid #e7ebf0;
+      border-radius: 11px;
+
+      background: #f8fafc;
+
+      color: var(--muted);
+
+      font-size: 10px;
+      line-height: 1.55;
+    }
+
+    .booking-info i {
+      margin-top: 2px;
+      color: var(--gold);
+    }
+
+    .booking-submit {
+      width: 100%;
+
+      min-height: 50px;
+
+      border: 0;
+      border-radius: 12px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--navy),
+          var(--navy-3)
+        );
+
+      color: white;
+
+      font-size: 11px;
+      font-weight: 900;
+
+      transition: .2s;
+    }
+
+    .booking-submit:hover {
+      transform: translateY(-1px);
+
+      box-shadow:
+        0 10px 25px rgba(7,26,51,.18);
+    }
+
+    .booking-submit:disabled {
+      cursor: not-allowed;
+      opacity: .60;
+      transform: none;
+    }
+
+    /* =========================
+       TOAST
+    ========================= */
+
+    .toast {
+      position: fixed;
+
+      right: 22px;
+      bottom: 22px;
+
+      z-index: 6000;
+
+      width: min(420px, calc(100vw - 30px));
+
+      display: none;
+      align-items: flex-start;
+
+      gap: 11px;
+
+      padding: 15px 16px;
+
+      border-radius: 14px;
+
+      background: var(--navy);
+
+      color: white;
+
+      box-shadow:
+        0 18px 45px rgba(0,0,0,.25);
+
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .toast.show {
+      display: flex;
+      animation: toastIn .22s ease;
+    }
+
+    .toast.success {
+      border-left: 4px solid #39a96b;
+    }
+
+    .toast.error {
+      border-left: 4px solid #ef5350;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
     /* =========================
        FOOTER
     ========================= */
 
     footer {
-      background: var(--navy);
-
-      color:
-        rgba(255,255,255,.75);
-
-      padding: 30px 20px;
+      padding: 34px 20px;
 
       text-align: center;
 
-      font-size: 13px;
+      background: var(--navy);
+
+      color: rgba(255,255,255,.58);
+
+      font-size: 11px;
     }
 
     footer strong {
-      color: var(--gold2);
+      color: var(--gold-2);
     }
 
+    .director {
+      margin-top: 8px;
+
+      color: rgba(255,255,255,.72);
+
+      line-height: 1.7;
+    }
 
     /* =========================
        RESPONSIVE
     ========================= */
 
-    @media (max-width: 950px) {
+    @media (max-width: 1100px) {
 
       .listing-grid {
         grid-template-columns:
-          repeat(2, minmax(0, 1fr));
+          repeat(2, minmax(0,1fr));
       }
 
       .nav-links {
@@ -917,18 +1439,18 @@
         position: absolute;
 
         left: 0;
-
         right: 0;
-
-        top: 72px;
-
-        background: var(--navy);
+        top: 76px;
 
         padding: 12px 20px 20px;
 
         flex-direction: column;
-
         align-items: stretch;
+
+        background: var(--navy);
+
+        box-shadow:
+          0 18px 30px rgba(0,0,0,.18);
       }
 
       .nav-links.show {
@@ -940,48 +1462,53 @@
       }
 
       .menu-btn {
-        display: block;
+        display: grid;
+        place-items: center;
       }
     }
 
-
-    @media (max-width: 650px) {
+    @media (max-width: 720px) {
 
       .hero {
-        min-height: 430px;
+        min-height: 490px;
       }
 
       .hero-content {
-        padding: 55px 18px;
+        padding: 65px 18px;
       }
 
       .hero h1 {
-        font-size: 40px;
+        font-size: 42px;
       }
 
       .hero p {
-        font-size: 15px;
+        font-size: 13px;
       }
 
       .search-box {
         flex-direction: column;
+        align-items: stretch;
+      }
 
-        padding: 7px;
+      .search-icon {
+        display: none;
+      }
+
+      .search-box input {
+        padding: 14px 13px;
       }
 
       .search-btn {
-        min-height: 48px;
+        width: 100%;
       }
 
       .main {
-        padding:
-          28px 15px 55px;
+        padding: 32px 15px 60px;
       }
 
       .results-head {
-        align-items: flex-start;
-
         flex-direction: column;
+        align-items: flex-start;
       }
 
       .listing-grid {
@@ -996,17 +1523,57 @@
         grid-column: auto;
       }
 
+      .modal-head {
+        min-height: 175px;
+        padding: 23px;
+      }
+
+      .modal-head h2 {
+        font-size: 27px;
+      }
+
+      .modal-content {
+        padding: 19px;
+      }
+
       .modal-actions {
-        flex-direction: column;
+        grid-template-columns:
+          repeat(2, minmax(0,1fr));
       }
     }
 
+    @media (max-width: 450px) {
+
+      .brand {
+        font-size: 17px;
+      }
+
+      .brand-sub {
+        display: none;
+      }
+
+      .brand-icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      .hero h1 {
+        font-size: 37px;
+      }
+
+      .modal-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .toast {
+        right: 15px;
+        bottom: 15px;
+      }
+    }
   </style>
 </head>
 
-
 <body>
-
 
   <!-- =========================
        NAVBAR
@@ -1016,35 +1583,30 @@
 
     <div class="nav-container">
 
-      <a
-        href="index.html"
-        class="brand"
-      >
+      <a href="index.html" class="brand">
 
-        <span class="brand-icon">
-          SH
-        </span>
+        <span class="brand-icon">SH</span>
 
-        <span>
+        <span class="brand-text">
           StudentHubHelp
+
+          <small class="brand-sub">
+            Student Discovery Platform
+          </small>
         </span>
 
       </a>
 
-
       <button
         class="menu-btn"
         id="menuBtn"
-        aria-label="Open menu"
+        type="button"
+        aria-label="Open navigation"
       >
-        ☰
+        <i class="fa-solid fa-bars"></i>
       </button>
 
-
-      <nav
-        class="nav-links"
-        id="navLinks"
-      >
+      <nav class="nav-links" id="navLinks">
 
         <a href="index.html">
           Home
@@ -1068,11 +1630,11 @@
         <a href="cafe-finder.html">
           Cafe
         </a>
-<a
-  href="bookstore-finder.html"
->
-  📖 Book Store
-</a>
+
+        <a href="bookstore-finder.html">
+          Book Store
+        </a>
+
         <a href="auth.html">
           Login
         </a>
@@ -1082,7 +1644,6 @@
     </div>
 
   </header>
-
 
 
   <!-- =========================
@@ -1111,16 +1672,14 @@
       <a href="cafe-finder.html">
         ☕ Cafe
       </a>
-<a
-  href="bookstore-finder.html"
-  class="active"
->
-  📖 Book Store
-</a>
+
+      <a href="bookstore-finder.html">
+        📖 Book Store
+      </a>
+
     </div>
 
   </div>
-
 
 
   <!-- =========================
@@ -1131,48 +1690,43 @@
 
     <div class="hero-content">
 
-
       <div class="eyebrow">
-        📚 Student Study Finder
+        <i class="fa-solid fa-book-open"></i>
+        Student Study Finder
       </div>
 
-
       <h1>
-
         Find Your
-        <span>
-          Perfect Library
-        </span>
-
-        Near You
-
+        <span>Study Library</span>
+        & Reading Room
       </h1>
 
-
       <p>
-
-        Discover libraries and study spaces
-        by city, district, area or locality
-        across India.
-
+        Discover student-friendly study libraries and reading rooms
+        across India. Search by city, district, locality,
+        library name or Property ID.
       </p>
 
-
       <div class="search-box">
+
+        <div class="search-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
 
         <input
           type="search"
           id="searchInput"
-          placeholder="Search city, district, area, library name..."
+          placeholder="Search city, area, library name or Property ID..."
           autocomplete="off"
         >
-
 
         <button
           class="search-btn"
           id="searchBtn"
+          type="button"
         >
-          🔍 Search
+          <i class="fa-solid fa-search"></i>
+          Search
         </button>
 
       </div>
@@ -1182,21 +1736,18 @@
   </section>
 
 
-
   <!-- =========================
        MAIN
   ========================= -->
 
   <main class="main">
 
-
     <div class="results-head">
-
 
       <div class="results-title">
 
         <h2>
-          Available Libraries
+          Available Study Libraries
         </h2>
 
         <p id="resultText">
@@ -1205,26 +1756,24 @@
 
       </div>
 
-
       <div
         class="count-badge"
         id="countBadge"
       >
+        <i class="fa-solid fa-spinner fa-spin"></i>
         Loading...
       </div>
 
-
     </div>
-
 
 
     <div
-      class="status show"
+      class="status loading show"
       id="status"
     >
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
       Loading live libraries...
     </div>
-
 
 
     <section
@@ -1233,69 +1782,90 @@
     ></section>
 
 
-
     <section
       class="empty"
       id="emptyState"
     >
 
       <div class="empty-icon">
-        📚
+        <i class="fa-solid fa-book-bookmark"></i>
       </div>
 
       <h3>
-        No Library Found
+        No Study Library Found
       </h3>
 
       <p>
-        Try another city, district,
-        locality or library name.
+        Try another city, locality, library name or Property ID.
       </p>
 
     </section>
 
-
   </main>
 
 
-
   <!-- =========================
-       DETAIL MODAL
+       DETAILS MODAL
   ========================= -->
 
   <div
     class="modal"
     id="detailModal"
+    aria-hidden="true"
   >
-
 
     <div class="modal-box">
 
-
-      <div class="modal-head">
-
+      <div
+        class="modal-head"
+        id="detailModalHead"
+      >
 
         <button
           class="close"
           id="closeModal"
+          type="button"
+          aria-label="Close details"
         >
           ×
         </button>
 
+        <div class="modal-title-wrap">
 
-        <h2 id="modalTitle">
-          Library
-        </h2>
+          <h2 id="modalTitle">
+            Library
+          </h2>
 
+          <span
+            class="modal-property-id"
+            id="modalPropertyId"
+          >
+            Property ID: —
+          </span>
+
+        </div>
 
       </div>
 
 
-
       <div class="modal-content">
 
-
         <div class="detail-grid">
+
+          <div class="detail-item">
+
+            <div class="detail-label">
+              Property ID
+            </div>
+
+            <div
+              class="detail-value id-value"
+              id="modalId"
+            >
+              —
+            </div>
+
+          </div>
 
 
           <div class="detail-item">
@@ -1314,7 +1884,6 @@
           </div>
 
 
-
           <div class="detail-item">
 
             <div class="detail-label">
@@ -1329,7 +1898,6 @@
             </div>
 
           </div>
-
 
 
           <div class="detail-item">
@@ -1348,6 +1916,21 @@
           </div>
 
 
+          <div class="detail-item">
+
+            <div class="detail-label">
+              Phone
+            </div>
+
+            <div
+              class="detail-value"
+              id="modalPhone"
+            >
+              Not available
+            </div>
+
+          </div>
+
 
           <div class="detail-item">
 
@@ -1359,11 +1942,10 @@
               class="detail-value"
               id="modalTiming"
             >
-              —
+              Not available
             </div>
 
           </div>
-
 
 
           <div class="detail-item full">
@@ -1376,11 +1958,10 @@
               class="detail-value"
               id="modalAddress"
             >
-              —
+              Not available
             </div>
 
           </div>
-
 
 
           <div class="detail-item full">
@@ -1393,25 +1974,25 @@
               class="detail-value"
               id="modalFacilities"
             >
-              —
+              Not available
             </div>
 
           </div>
 
-
         </div>
 
 
+        <!-- MAIN ACTIONS -->
 
         <div class="modal-actions">
-
 
           <a
             id="callBtn"
             class="btn btn-primary"
             href="#"
           >
-            📞 Call
+            <i class="fa-solid fa-phone"></i>
+            Call
           </a>
 
 
@@ -1422,7 +2003,8 @@
             target="_blank"
             rel="noopener"
           >
-            💬 WhatsApp
+            <i class="fa-brands fa-whatsapp"></i>
+            WhatsApp
           </a>
 
 
@@ -1433,20 +2015,225 @@
             target="_blank"
             rel="noopener"
           >
-            📍 Maps
+            <i class="fa-solid fa-location-dot"></i>
+            Maps
           </a>
 
+
+          <!-- REQUIRED BOOK NOW BUTTON -->
+
+          <button
+            class="btn btn-gold"
+            id="bookBtn"
+            type="button"
+          >
+            <i class="fa-solid fa-bookmark"></i>
+            Book Now
+          </button>
 
         </div>
 
 
-      </div>
+        <div class="booking-note">
 
+          <i class="fa-solid fa-circle-info"></i>
+
+          <span>
+            Viewing this library does not create any booking.
+            A booking is created only after you click
+            <strong>Book Now</strong>, select your joining date
+            and duration, and press
+            <strong>Confirm Booking Request</strong>.
+          </span>
+
+        </div>
+
+      </div>
 
     </div>
 
   </div>
 
+
+  <!-- =========================
+       BOOKING MODAL
+  ========================= -->
+
+  <div
+    class="modal"
+    id="bookingModal"
+    aria-hidden="true"
+  >
+
+    <div class="modal-box booking-box">
+
+      <div class="booking-header">
+
+        <div class="booking-icon">
+          <i class="fa-solid fa-bookmark"></i>
+        </div>
+
+        <h2>
+          Reserve Library Seat
+        </h2>
+
+        <p>
+          Submit your study library booking request.
+        </p>
+
+
+        <div class="booking-property">
+
+          <div class="booking-property-label">
+            Selected Property
+          </div>
+
+          <div
+            class="booking-property-name"
+            id="bookingPropertyName"
+          >
+            Library
+          </div>
+
+          <div
+            class="booking-property-id"
+            id="bookingPropertyId"
+          >
+            Property ID: —
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="booking-content">
+
+        <form id="bookingForm">
+
+          <!-- JOINING DATE -->
+
+          <div class="form-group">
+
+            <label
+              class="form-label"
+              for="bookingStartDate"
+            >
+              Joining Date
+              <span>*</span>
+            </label>
+
+            <input
+              class="form-control"
+              type="date"
+              id="bookingStartDate"
+              required
+            >
+
+          </div>
+
+
+          <!-- DURATION -->
+
+          <div class="form-group">
+
+            <label
+              class="form-label"
+              for="bookingDuration"
+            >
+              Duration
+              <span>*</span>
+            </label>
+
+            <select
+              class="form-control"
+              id="bookingDuration"
+              required
+            >
+
+              <option value="">
+                Select duration
+              </option>
+
+              <option value="1">
+                1 Month
+              </option>
+
+              <option value="2">
+                2 Months
+              </option>
+
+              <option value="3">
+                3 Months
+              </option>
+
+              <option value="6">
+                6 Months
+              </option>
+
+              <option value="9">
+                9 Months
+              </option>
+
+              <option value="12">
+                12 Months
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <!-- STATUS INFORMATION -->
+
+          <div class="booking-info">
+
+            <i class="fa-solid fa-shield-halved"></i>
+
+            <span>
+              After confirmation, your request will be saved
+              in <strong>student_bookings</strong> with status
+              <strong>pending</strong>. It will then appear in
+              your Student Dashboard and Admin Dashboard.
+            </span>
+
+          </div>
+
+
+          <!-- FINAL SUBMIT -->
+
+          <button
+            class="booking-submit"
+            id="confirmBookingBtn"
+            type="submit"
+          >
+            <i class="fa-solid fa-paper-plane"></i>
+            Confirm Booking Request
+          </button>
+
+        </form>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       TOAST
+  ========================= -->
+
+  <div
+    class="toast"
+    id="toast"
+  >
+
+    <i id="toastIcon"></i>
+
+    <span id="toastMessage"></span>
+
+  </div>
 
 
   <!-- =========================
@@ -1456,24 +2243,22 @@
   <footer>
 
     <p>
-
-      ©
-      <span id="year"></span>
-
-      <strong>
-        StudentHubHelp
-      </strong>.
-
+      © <span id="year"></span>
+      <strong>StudentHubHelp</strong>.
       Student services made simple.
-
     </p>
+
+    <div class="director">
+      Director: <strong>SATPAL SWAMI</strong><br>
+      +91 9929718264<br>
+      satpalswami22742@gmail.com
+    </div>
 
   </footer>
 
 
-
   <!-- =========================
-       SUPABASE
+       SUPABASE CDN
   ========================= -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1481,17 +2266,15 @@
 
   <script>
 
-    /* ==========================================
+    /* =====================================================
        SUPABASE CONFIG
-    ========================================== */
+    ===================================================== */
 
     const SUPABASE_URL =
       "https://idurlccrarznnnqixxsd.supabase.co";
 
-
     const SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-
 
     const db =
       supabase.createClient(
@@ -1500,97 +2283,112 @@
       );
 
 
-
-    /* ==========================================
-       ELEMENTS
-    ========================================== */
+    /* =====================================================
+       DOM
+    ===================================================== */
 
     const listingGrid =
-      document.getElementById(
-        "listingGrid"
-      );
-
+      document.getElementById("listingGrid");
 
     const emptyState =
-      document.getElementById(
-        "emptyState"
-      );
-
+      document.getElementById("emptyState");
 
     const statusBox =
-      document.getElementById(
-        "status"
-      );
-
+      document.getElementById("status");
 
     const countBadge =
-      document.getElementById(
-        "countBadge"
-      );
-
+      document.getElementById("countBadge");
 
     const resultText =
-      document.getElementById(
-        "resultText"
-      );
-
+      document.getElementById("resultText");
 
     const searchInput =
-      document.getElementById(
-        "searchInput"
-      );
-
+      document.getElementById("searchInput");
 
     const searchBtn =
-      document.getElementById(
-        "searchBtn"
-      );
+      document.getElementById("searchBtn");
 
 
-    const modal =
-      document.getElementById(
-        "detailModal"
-      );
+    /* DETAILS */
 
+    const detailModal =
+      document.getElementById("detailModal");
+
+    const detailModalHead =
+      document.getElementById("detailModalHead");
 
     const closeModal =
-      document.getElementById(
-        "closeModal"
-      );
+      document.getElementById("closeModal");
 
+    const bookBtn =
+      document.getElementById("bookBtn");
+
+
+    /* BOOKING */
+
+    const bookingModal =
+      document.getElementById("bookingModal");
+
+    const bookingForm =
+      document.getElementById("bookingForm");
+
+    const bookingStartDate =
+      document.getElementById("bookingStartDate");
+
+    const bookingDuration =
+      document.getElementById("bookingDuration");
+
+    const bookingPropertyId =
+      document.getElementById("bookingPropertyId");
+
+    const bookingPropertyName =
+      document.getElementById("bookingPropertyName");
+
+    const confirmBookingBtn =
+      document.getElementById("confirmBookingBtn");
+
+
+    /* NAV */
 
     const menuBtn =
-      document.getElementById(
-        "menuBtn"
-      );
-
+      document.getElementById("menuBtn");
 
     const navLinks =
-      document.getElementById(
-        "navLinks"
-      );
+      document.getElementById("navLinks");
 
 
-    document.getElementById(
-      "year"
-    ).textContent =
+    /* TOAST */
+
+    const toast =
+      document.getElementById("toast");
+
+    const toastMessage =
+      document.getElementById("toastMessage");
+
+    const toastIcon =
+      document.getElementById("toastIcon");
+
+
+    document.getElementById("year").textContent =
       new Date().getFullYear();
 
 
-
-    /* ==========================================
+    /* =====================================================
        STATE
-    ========================================== */
+    ===================================================== */
 
     let allRecords = [];
 
     let currentRecord = null;
 
+    let realtimeChannel = null;
+
+    let toastTimer = null;
 
 
-    /* ==========================================
+    /* =====================================================
        HELPERS
-    ========================================== */
+    ===================================================== */
 
     function clean(value) {
 
@@ -1599,165 +2397,86 @@
         value === undefined ||
         String(value).trim() === ""
       ) {
-
         return "";
-
       }
 
       return String(value).trim();
-
     }
 
 
     function escapeHTML(value) {
 
-      if (
-        value === null ||
-        value === undefined
-      ) {
-
-        return "";
-
-      }
-
-      return String(value)
-
-        .replace(
-          /&/g,
-          "&amp;"
-        )
-
-        .replace(
-          /</g,
-          "&lt;"
-        )
-
-        .replace(
-          />/g,
-          "&gt;"
-        )
-
-        .replace(
-          /"/g,
-          "&quot;"
-        )
-
-        .replace(
-          /'/g,
-          "&#039;"
-        );
-
+      return clean(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
 
     function normalizePhone(phone) {
 
-      let value =
-        clean(phone);
-
-
-      value =
-        value.replace(
-          /\D/g,
-          ""
-        );
-
-
-      if (
-        value.length === 10
-      ) {
-
-        return "91" + value;
-
-      }
-
-
-      if (
-        value.length === 12 &&
-        value.startsWith("91")
-      ) {
-
-        return value;
-
-      }
-
-
-      return value;
-
+      return clean(phone)
+        .replace(/\D/g, "");
     }
 
 
-    function phoneForCall(phone) {
+    function ratingValue(rating) {
 
       const value =
-        clean(phone);
+        Number(rating);
 
-
-      if (!value) {
-
+      if (
+        !Number.isFinite(value) ||
+        value <= 0
+      ) {
         return null;
-
       }
 
-
-      return value.replace(
-        /[^\d+]/g,
-        ""
+      return Math.max(
+        0,
+        Math.min(5, value)
       );
-
-    }
-
-
-    function mapsURL(address) {
-
-      const value =
-        clean(address);
-
-
-      if (!value) {
-
-        return null;
-
-      }
-
-
-      return (
-        "https://www.google.com/maps/search/?api=1&query=" +
-        encodeURIComponent(value)
-      );
-
     }
 
 
     function ratingText(rating) {
 
       const value =
-        Number(rating);
+        ratingValue(rating);
 
-
-      if (
-        !Number.isFinite(value) ||
-        value <= 0
-      ) {
-
+      if (value === null) {
         return "Not rated";
-
       }
-
-
-      const safe =
-        Math.max(
-          0,
-          Math.min(5, value)
-        );
-
 
       return (
         "⭐ " +
-        safe.toFixed(1) +
+        value.toFixed(1) +
         " / 5"
       );
+    }
 
+
+    function todayString() {
+
+      const today =
+        new Date();
+
+      const year =
+        today.getFullYear();
+
+      const month =
+        String(
+          today.getMonth() + 1
+        ).padStart(2, "0");
+
+      const day =
+        String(
+          today.getDate()
+        ).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
     }
 
 
@@ -1766,13 +2485,11 @@
       type = "loading"
     ) {
 
-      statusBox.textContent =
+      statusBox.innerHTML =
         message;
-
 
       statusBox.className =
         "status show " + type;
-
     }
 
 
@@ -1780,24 +2497,47 @@
 
       statusBox.className =
         "status";
-
     }
 
 
+    function showToast(
+      message,
+      type = "success"
+    ) {
 
-    /* ==========================================
+      clearTimeout(toastTimer);
+
+      toastMessage.textContent =
+        message;
+
+      toastIcon.className =
+        type === "success"
+          ? "fa-solid fa-circle-check"
+          : "fa-solid fa-circle-exclamation";
+
+      toast.className =
+        "toast show " + type;
+
+      toastTimer =
+        setTimeout(
+          () => {
+            toast.className = "toast";
+          },
+          4500
+        );
+    }
+
+
+    /* =====================================================
        LOAD LIVE LIBRARIES
-
-       ONLY CURRENT 9 DB COLUMNS
-    ========================================== */
+    ===================================================== */
 
     async function loadRecords() {
 
       showStatus(
-        "Loading live libraries...",
+        '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading live libraries...',
         "loading"
       );
-
 
       try {
 
@@ -1805,32 +2545,29 @@
           data,
           error
         } = await db
-
           .from("libraries")
-
           .select(
-            "id,name,category,area,address,phone,timing,facilities,rating"
+            "id,name,category,area,address,phone,timing,facilities,rating,image,owner_id"
+          )
+          .order(
+            "name",
+            {
+              ascending: true
+            }
           );
 
-
         if (error) {
-
           throw error;
-
         }
-
 
         allRecords =
           Array.isArray(data)
             ? data
             : [];
 
-
         renderRecords();
 
-
         hideStatus();
-
 
       } catch (error) {
 
@@ -1839,66 +2576,41 @@
           error
         );
 
-
         allRecords = [];
 
+        listingGrid.innerHTML = "";
 
-        listingGrid.innerHTML =
-          "";
+        emptyState.classList.remove("show");
 
-
-        emptyState.classList.remove(
-          "show"
-        );
-
-
-        countBadge.textContent =
-          "Error";
-
+        countBadge.innerHTML =
+          '<i class="fa-solid fa-triangle-exclamation"></i> Error';
 
         resultText.textContent =
           "Unable to load live libraries";
 
-
         showStatus(
           "Unable to load live libraries. " +
-          (error.message || ""),
+          clean(error.message),
           "error"
         );
-
       }
-
     }
 
 
-
-    /* ==========================================
+    /* =====================================================
        SEARCH
-    ========================================== */
-
-    function getSearchValue() {
-
-      return searchInput.value
-        .trim()
-        .toLowerCase();
-
-    }
-
+    ===================================================== */
 
     function filterRecords() {
 
       const query =
-        getSearchValue();
-
+        searchInput.value
+          .trim()
+          .toLowerCase();
 
       if (!query) {
-
-        return [
-          ...allRecords
-        ];
-
+        return [...allRecords];
       }
-
 
       return allRecords.filter(
         record => {
@@ -1906,60 +2618,40 @@
           const searchable = [
 
             record.id,
-
             record.name,
-
             record.category,
-
             record.area,
-
             record.address,
-
             record.phone,
-
             record.timing,
-
             record.facilities,
-
             record.rating
 
           ]
-
-            .map(
-              value => clean(value)
-            )
-
+            .map(clean)
             .join(" ")
-
             .toLowerCase();
 
-
-          return searchable.includes(
-            query
-          );
-
+          return searchable.includes(query);
         }
       );
-
     }
 
 
-
-    /* ==========================================
-       RENDER
-    ========================================== */
+    /* =====================================================
+       RENDER CARDS
+    ===================================================== */
 
     function renderRecords() {
 
       const records =
         filterRecords();
 
-
-      listingGrid.innerHTML =
-        "";
+      listingGrid.innerHTML = "";
 
 
-      countBadge.textContent =
+      countBadge.innerHTML =
+        '<i class="fa-solid fa-book-open"></i> ' +
         records.length +
         (
           records.length === 1
@@ -1968,16 +2660,18 @@
         );
 
 
-      if (
-        getSearchValue()
-      ) {
+      const query =
+        searchInput.value.trim();
+
+
+      if (query) {
 
         resultText.textContent =
           `Showing ${records.length} result${
             records.length === 1
               ? ""
               : "s"
-          } for "${searchInput.value.trim()}"`;
+          } for "${query}"`;
 
       } else {
 
@@ -1989,29 +2683,20 @@
 
       if (!records.length) {
 
-        emptyState.classList.add(
-          "show"
-        );
+        emptyState.classList.add("show");
 
         return;
-
       }
 
 
-      emptyState.classList.remove(
-        "show"
-      );
+      emptyState.classList.remove("show");
 
 
       records.forEach(
         record => {
 
-
           const card =
-            document.createElement(
-              "article"
-            );
-
+            document.createElement("article");
 
           card.className =
             "card";
@@ -2021,58 +2706,99 @@
             clean(record.name) ||
             "Library";
 
-
           const category =
             clean(record.category) ||
             "Library";
 
-
           const area =
             clean(record.area);
-
 
           const address =
             clean(record.address);
 
-
           const timing =
             clean(record.timing);
-
 
           const phone =
             clean(record.phone);
 
+          const id =
+            clean(record.id);
 
           const rating =
-            ratingText(
-              record.rating
-            );
+            ratingText(record.rating);
+
+          const hasRating =
+            ratingValue(record.rating) !== null;
+
+          const image =
+            clean(record.image);
+
+
+          /* =========================
+             CARD IMAGE
+          ========================= */
+
+          const bannerStyle =
+            image
+              ? `style="background-image:
+                  linear-gradient(
+                    90deg,
+                    rgba(7,26,51,.87),
+                    rgba(7,26,51,.24)
+                  ),
+                  url('${escapeHTML(image)}')"`
+              : "";
 
 
           card.innerHTML = `
 
-            <div class="card-banner">
+            <div
+              class="card-banner"
+              ${bannerStyle}
+            >
 
               <div class="card-category">
                 ${escapeHTML(category)}
               </div>
+
+              <div class="property-id-badge">
+                ID #${escapeHTML(id)}
+              </div>
+
+              ${
+                record.owner_id
+                  ? `
+                    <div class="verified-badge">
+                      <i class="fa-solid fa-circle-check"></i>
+                      Verified Listing
+                    </div>
+                  `
+                  : ""
+              }
 
             </div>
 
 
             <div class="card-body">
 
-
               <h3>
                 ${escapeHTML(name)}
               </h3>
+
+
+              <div class="property-id">
+                <i class="fa-solid fa-fingerprint"></i>
+                Property ID: #${escapeHTML(id)}
+              </div>
 
 
               ${
                 area
                   ? `
                     <div class="area">
-                      📍 ${escapeHTML(area)}
+                      <i class="fa-solid fa-location-dot"></i>
+                      ${escapeHTML(area)}
                     </div>
                   `
                   : ""
@@ -2083,7 +2809,7 @@
                 address
                   ? `
                     <div class="info-row">
-                      <span>🏠</span>
+                      <i class="fa-solid fa-house"></i>
                       <span>
                         ${escapeHTML(address)}
                       </span>
@@ -2097,7 +2823,7 @@
                 timing
                   ? `
                     <div class="info-row">
-                      <span>🕒</span>
+                      <i class="fa-regular fa-clock"></i>
                       <span>
                         ${escapeHTML(timing)}
                       </span>
@@ -2107,18 +2833,24 @@
               }
 
 
-              <div class="rating">
+              <div
+                class="rating ${
+                  hasRating
+                    ? ""
+                    : "no-rating"
+                }"
+              >
                 ${escapeHTML(rating)}
               </div>
 
 
               <div class="card-actions">
 
-
                 <button
                   class="btn btn-primary details-btn"
                   type="button"
                 >
+                  <i class="fa-solid fa-eye"></i>
                   View Details
                 </button>
 
@@ -2128,11 +2860,10 @@
                     ? `
                       <a
                         class="btn btn-light"
-                        href="tel:${escapeHTML(
-                          phoneForCall(phone) || ""
-                        )}"
+                        href="tel:${escapeHTML(phone)}"
                       >
-                        📞 Call
+                        <i class="fa-solid fa-phone"></i>
+                        Call
                       </a>
                     `
                     : `
@@ -2141,60 +2872,80 @@
                         type="button"
                         disabled
                         style="
-                          opacity:.45;
-                          cursor:not-allowed;
+                          opacity:.42;
+                          cursor:not-allowed
                         "
                       >
-                        📞 Call
+                        <i class="fa-solid fa-phone"></i>
+                        Call
                       </button>
                     `
                 }
 
-
               </div>
 
-
             </div>
-
           `;
 
 
           card
-            .querySelector(
-              ".details-btn"
-            )
+            .querySelector(".details-btn")
             .addEventListener(
               "click",
-              () => openModal(record)
+              () => openDetails(record)
             );
 
 
-          listingGrid.appendChild(
-            card
-          );
+          listingGrid.appendChild(card);
 
         }
       );
-
     }
 
 
+    /* =====================================================
+       OPEN DETAILS
+    ===================================================== */
 
-    /* ==========================================
-       MODAL
-    ========================================== */
-
-    function openModal(record) {
+    function openDetails(record) {
 
       currentRecord =
         record;
 
 
+      const id =
+        clean(record.id);
+
+      const name =
+        clean(record.name) ||
+        "Library";
+
+      const phone =
+        clean(record.phone);
+
+      const address =
+        clean(record.address);
+
+      const image =
+        clean(record.image);
+
+
       document.getElementById(
         "modalTitle"
       ).textContent =
-        clean(record.name) ||
-        "Library";
+        name;
+
+
+      document.getElementById(
+        "modalPropertyId"
+      ).textContent =
+        "Property ID: #" + id;
+
+
+      document.getElementById(
+        "modalId"
+      ).textContent =
+        "#" + id;
 
 
       document.getElementById(
@@ -2207,15 +2958,20 @@
       document.getElementById(
         "modalRating"
       ).textContent =
-        ratingText(
-          record.rating
-        );
+        ratingText(record.rating);
 
 
       document.getElementById(
         "modalArea"
       ).textContent =
         clean(record.area) ||
+        "Not available";
+
+
+      document.getElementById(
+        "modalPhone"
+      ).textContent =
+        phone ||
         "Not available";
 
 
@@ -2229,7 +2985,7 @@
       document.getElementById(
         "modalAddress"
       ).textContent =
-        clean(record.address) ||
+        address ||
         "Not available";
 
 
@@ -2240,46 +2996,62 @@
         "Not available";
 
 
+      /* =========================
+         MODAL IMAGE
+      ========================= */
 
-      /* CALL */
+      if (image) {
 
-      const callBtn =
-        document.getElementById(
-          "callBtn"
-        );
-
-
-      const callPhone =
-        phoneForCall(
-          record.phone
-        );
-
-
-      if (callPhone) {
-
-        callBtn.href =
-          "tel:" + callPhone;
-
-
-        callBtn.classList.remove(
-          "disabled"
-        );
+        detailModalHead.style.backgroundImage =
+          `
+          linear-gradient(
+            90deg,
+            rgba(7,26,51,.96),
+            rgba(7,26,51,.62)
+          ),
+          url("${image}")
+          `;
 
       } else {
 
-        callBtn.href =
-          "#";
-
-
-        callBtn.classList.add(
-          "disabled"
-        );
-
+        detailModalHead.style.backgroundImage =
+          `
+          linear-gradient(
+            90deg,
+            rgba(7,26,51,.96),
+            rgba(7,26,51,.62)
+          ),
+          url("library-banner.png")
+          `;
       }
 
 
+      /* =========================
+         CALL
+      ========================= */
 
-      /* WHATSAPP */
+      const callBtn =
+        document.getElementById("callBtn");
+
+
+      if (phone) {
+
+        callBtn.href =
+          "tel:" + phone;
+
+        callBtn.classList.remove("disabled");
+
+      } else {
+
+        callBtn.href = "#";
+
+        callBtn.classList.add("disabled");
+      }
+
+
+      /* =========================
+         WHATSAPP
+      ========================= */
 
       const whatsappBtn =
         document.getElementById(
@@ -2287,31 +3059,29 @@
         );
 
 
-      const whatsappPhone =
-        normalizePhone(
-          record.phone
-        );
+      const cleanPhone =
+        normalizePhone(phone);
 
 
-      if (whatsappPhone) {
+      if (cleanPhone) {
 
-        const message =
-          "Hello, I found " +
-          (
-            clean(record.name) ||
-            "this Library"
-          ) +
-          " on StudentHubHelp.";
+        const whatsappNumber =
+          cleanPhone.length === 10
+            ? "91" + cleanPhone
+            : cleanPhone;
 
 
         whatsappBtn.href =
           "https://wa.me/" +
-          whatsappPhone +
+          whatsappNumber +
           "?text=" +
           encodeURIComponent(
-            message
+            "Hello, I found " +
+            name +
+            " (Property ID #" +
+            id +
+            ") on StudentHubHelp."
           );
-
 
         whatsappBtn.classList.remove(
           "disabled"
@@ -2319,37 +3089,27 @@
 
       } else {
 
-        whatsappBtn.href =
-          "#";
-
+        whatsappBtn.href = "#";
 
         whatsappBtn.classList.add(
           "disabled"
         );
-
       }
 
 
-
-      /* GOOGLE MAPS */
+      /* =========================
+         MAPS
+      ========================= */
 
       const mapsBtn =
-        document.getElementById(
-          "mapsBtn"
-        );
+        document.getElementById("mapsBtn");
 
 
-      const map =
-        mapsURL(
-          record.address
-        );
-
-
-      if (map) {
+      if (address) {
 
         mapsBtn.href =
-          map;
-
+          "https://www.google.com/maps/search/?api=1&query=" +
+          encodeURIComponent(address);
 
         mapsBtn.classList.remove(
           "disabled"
@@ -2357,47 +3117,730 @@
 
       } else {
 
-        mapsBtn.href =
-          "#";
-
+        mapsBtn.href = "#";
 
         mapsBtn.classList.add(
           "disabled"
         );
-
       }
 
 
+      detailModal.classList.add("show");
 
-      modal.classList.add(
-        "show"
+      detailModal.setAttribute(
+        "aria-hidden",
+        "false"
       );
 
-
-      document.body.style.overflow =
-        "hidden";
-
+      document.body.classList.add(
+        "modal-open"
+      );
     }
 
 
+    /* =====================================================
+       CLOSE DETAILS
+    ===================================================== */
 
     function closeDetails() {
 
-      modal.classList.remove(
+      detailModal.classList.remove(
         "show"
       );
 
+      detailModal.setAttribute(
+        "aria-hidden",
+        "true"
+      );
 
-      document.body.style.overflow =
-        "";
+      if (
+        !bookingModal.classList.contains("show")
+      ) {
 
+        currentRecord = null;
 
-      currentRecord =
-        null;
-
+        document.body.classList.remove(
+          "modal-open"
+        );
+      }
     }
 
 
+    /* =====================================================
+       OPEN BOOKING FORM
+    ===================================================== */
+
+    async function openBookingForm() {
+
+      if (!currentRecord) {
+
+        showToast(
+          "Please select a library first.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      /* =========================
+         AUTH CHECK
+      ========================= */
+
+      const {
+        data: {
+          session
+        }
+      } =
+        await db.auth.getSession();
+
+
+      if (
+        !session ||
+        !session.user
+      ) {
+
+        showToast(
+          "Please login as a student before booking.",
+          "error"
+        );
+
+        setTimeout(
+          () => {
+            window.location.href =
+              "auth.html";
+          },
+          900
+        );
+
+        return;
+      }
+
+
+      /* =========================
+         ROLE CHECK
+      ========================= */
+
+      const {
+        data: profile,
+        error: profileError
+      } =
+        await db
+          .from("profiles")
+          .select("id,full_name,role")
+          .eq(
+            "id",
+            session.user.id
+          )
+          .maybeSingle();
+
+
+      if (profileError) {
+
+        console.error(
+          "Profile error:",
+          profileError
+        );
+
+        showToast(
+          "Unable to verify your account role.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      const role =
+        clean(profile?.role)
+          .toLowerCase();
+
+
+      if (role !== "student") {
+
+        if (role === "owner") {
+
+          showToast(
+            "Owner accounts cannot create student bookings.",
+            "error"
+          );
+
+          setTimeout(
+            () => {
+              window.location.href =
+                "owner-dashboard.html";
+            },
+            900
+          );
+
+          return;
+        }
+
+
+        if (role === "admin") {
+
+          showToast(
+            "Admin account does not need to create a student booking.",
+            "error"
+          );
+
+          return;
+        }
+
+
+        showToast(
+          "Your account role could not be verified.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      /* =========================
+         SET PROPERTY
+      ========================= */
+
+      const id =
+        clean(currentRecord.id);
+
+      const name =
+        clean(currentRecord.name) ||
+        "Library";
+
+
+      bookingPropertyId.textContent =
+        "Property ID: #" + id;
+
+
+      bookingPropertyName.textContent =
+        name;
+
+
+      /* =========================
+         DATE
+      ========================= */
+
+      bookingStartDate.min =
+        todayString();
+
+      bookingStartDate.value =
+        "";
+
+      bookingDuration.value =
+        "";
+
+
+      /* =========================
+         OPEN FORM
+      ========================= */
+
+      bookingModal.classList.add(
+        "show"
+      );
+
+      bookingModal.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+
+      document.body.classList.add(
+        "modal-open"
+      );
+    }
+
+
+    /* =====================================================
+       CLOSE BOOKING
+    ===================================================== */
+
+    function closeBookingForm() {
+
+      bookingModal.classList.remove(
+        "show"
+      );
+
+      bookingModal.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+      bookingForm.reset();
+
+
+      if (
+        detailModal.classList.contains("show")
+      ) {
+
+        document.body.classList.add(
+          "modal-open"
+        );
+
+      } else {
+
+        currentRecord = null;
+
+        document.body.classList.remove(
+          "modal-open"
+        );
+      }
+    }
+
+
+    /* =====================================================
+       SUBMIT BOOKING
+    ===================================================== */
+
+    async function submitBooking(event) {
+
+      event.preventDefault();
+
+
+      if (!currentRecord) {
+
+        showToast(
+          "Property information is missing.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      /* =========================
+         SESSION
+      ========================= */
+
+      const {
+        data: {
+          session
+        }
+      } =
+        await db.auth.getSession();
+
+
+      if (
+        !session ||
+        !session.user
+      ) {
+
+        showToast(
+          "Please login first.",
+          "error"
+        );
+
+        setTimeout(
+          () => {
+            window.location.href =
+              "auth.html";
+          },
+          900
+        );
+
+        return;
+      }
+
+
+      const studentId =
+        session.user.id;
+
+
+      /* =========================
+         ROLE VERIFICATION
+      ========================= */
+
+      const {
+        data: profile,
+        error: profileError
+      } =
+        await db
+          .from("profiles")
+          .select("id,full_name,role")
+          .eq(
+            "id",
+            studentId
+          )
+          .maybeSingle();
+
+
+      if (profileError) {
+
+        console.error(
+          "Profile verification error:",
+          profileError
+        );
+
+        showToast(
+          "Unable to verify student account.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      const role =
+        clean(profile?.role)
+          .toLowerCase();
+
+
+      if (role !== "student") {
+
+        showToast(
+          "Only student accounts can create library bookings.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      /* =========================
+         FORM VALUES
+      ========================= */
+
+      const propertyId =
+        String(
+          currentRecord.id
+        );
+
+
+      const propertyName =
+        clean(
+          currentRecord.name
+        ) ||
+        "Library";
+
+
+      const category =
+        clean(
+          currentRecord.category
+        ) ||
+        "Library";
+
+
+      const joiningDate =
+        bookingStartDate.value;
+
+
+      const durationMonths =
+        Number(
+          bookingDuration.value
+        );
+
+
+      /* =========================
+         VALIDATION
+      ========================= */
+
+      if (!joiningDate) {
+
+        showToast(
+          "Please select your joining date.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      if (
+        joiningDate < todayString()
+      ) {
+
+        showToast(
+          "Joining date cannot be in the past.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      if (
+        !Number.isInteger(durationMonths) ||
+        durationMonths <= 0
+      ) {
+
+        showToast(
+          "Please select your duration.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      /* =========================
+         DISABLE BUTTON
+      ========================= */
+
+      confirmBookingBtn.disabled =
+        true;
+
+      confirmBookingBtn.innerHTML =
+        '<i class="fa-solid fa-circle-notch fa-spin"></i> Submitting...';
+
+
+      try {
+
+        /* =========================
+           DUPLICATE CHECK
+        ========================= */
+
+        const {
+          data: existingBookings,
+          error: existingError
+        } =
+          await db
+            .from("student_bookings")
+            .select("id,status")
+            .eq(
+              "student_id",
+              studentId
+            )
+            .eq(
+              "property_id",
+              propertyId
+            )
+            .eq(
+              "property_table",
+              "libraries"
+            )
+            .in(
+              "status",
+              [
+                "pending",
+                "active"
+              ]
+            )
+            .limit(1);
+
+
+        if (existingError) {
+          throw existingError;
+        }
+
+
+        if (
+          Array.isArray(existingBookings) &&
+          existingBookings.length > 0
+        ) {
+
+          showToast(
+            "You already have a pending or active booking for this library.",
+            "error"
+          );
+
+          return;
+        }
+
+
+        /* =========================
+           FINAL INSERT
+           property_table: "libraries"
+        ========================= */
+
+        const {
+          data: booking,
+          error: bookingError
+        } =
+          await db
+            .from("student_bookings")
+            .insert([
+              {
+                student_id:
+                  studentId,
+
+                property_id:
+                  propertyId,
+
+                property_table:
+                  "libraries",
+
+                property_name:
+                  propertyName,
+
+                category:
+                  category,
+
+                joined_date:
+                  joiningDate,
+
+                duration_months:
+                  durationMonths,
+
+                status:
+                  "pending"
+              }
+            ])
+            .select()
+            .single();
+
+
+        if (bookingError) {
+          throw bookingError;
+        }
+
+
+        /* =========================
+           CLOSE MODALS
+        ========================= */
+
+        bookingModal.classList.remove(
+          "show"
+        );
+
+        bookingModal.setAttribute(
+          "aria-hidden",
+          "true"
+        );
+
+        detailModal.classList.remove(
+          "show"
+        );
+
+        detailModal.setAttribute(
+          "aria-hidden",
+          "true"
+        );
+
+        bookingForm.reset();
+
+        currentRecord = null;
+
+        document.body.classList.remove(
+          "modal-open"
+        );
+
+
+        /* =========================
+           SUCCESS
+        ========================= */
+
+        showToast(
+          "Booking request submitted successfully. Status: Pending.",
+          "success"
+        );
+
+
+        /* =========================
+           STUDENT DASHBOARD
+        ========================= */
+
+        setTimeout(
+          () => {
+
+            window.location.href =
+              "student-dashboard.html";
+
+          },
+          1200
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Booking failed:",
+          error
+        );
+
+
+        let message =
+          clean(error.message) ||
+          "Database error";
+
+
+        if (
+          message.includes(
+            "student_bookings_status_check"
+          )
+        ) {
+
+          message =
+            'Booking status must be "pending".';
+        }
+
+
+        if (
+          message.includes(
+            "duration_months"
+          )
+        ) {
+
+          message =
+            "duration_months column is missing in student_bookings.";
+        }
+
+
+        showToast(
+          "Booking failed: " + message,
+          "error"
+        );
+
+
+      } finally {
+
+        confirmBookingBtn.disabled =
+          false;
+
+        confirmBookingBtn.innerHTML =
+          '<i class="fa-solid fa-paper-plane"></i> Confirm Booking Request';
+      }
+    }
+
+
+    /* =====================================================
+       REALTIME LIBRARY LISTINGS
+    ===================================================== */
+
+    function setupRealtime() {
+
+      if (realtimeChannel) {
+
+        db.removeChannel(
+          realtimeChannel
+        );
+      }
+
+
+      realtimeChannel =
+        db
+          .channel(
+            "library-finder-live-libraries"
+          )
+
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "libraries"
+            },
+            () => {
+
+              loadRecords();
+
+            }
+          )
+
+          .subscribe(
+            status => {
+
+              console.log(
+                "Library realtime:",
+                status
+              );
+
+            }
+          );
+    }
+
+
+    /* =====================================================
+       EVENTS
+    ===================================================== */
 
     closeModal.addEventListener(
       "click",
@@ -2405,12 +3848,12 @@
     );
 
 
-    modal.addEventListener(
+    detailModal.addEventListener(
       "click",
       event => {
 
         if (
-          event.target === modal
+          event.target === detailModal
         ) {
 
           closeDetails();
@@ -2421,18 +3864,15 @@
     );
 
 
-    document.addEventListener(
-      "keydown",
+    bookingModal.addEventListener(
+      "click",
       event => {
 
         if (
-          event.key === "Escape" &&
-          modal.classList.contains(
-            "show"
-          )
+          event.target === bookingModal
         ) {
 
-          closeDetails();
+          closeBookingForm();
 
         }
 
@@ -2440,10 +3880,29 @@
     );
 
 
+    /* =========================
+       BOOK NOW
+    ========================= */
 
-    /* ==========================================
-       SEARCH EVENTS
-    ========================================== */
+    bookBtn.addEventListener(
+      "click",
+      openBookingForm
+    );
+
+
+    /* =========================
+       FINAL BOOKING SUBMIT
+    ========================= */
+
+    bookingForm.addEventListener(
+      "submit",
+      submitBooking
+    );
+
+
+    /* =========================
+       SEARCH
+    ========================= */
 
     searchBtn.addEventListener(
       "click",
@@ -2465,6 +3924,8 @@
           event.key === "Enter"
         ) {
 
+          event.preventDefault();
+
           renderRecords();
 
         }
@@ -2473,10 +3934,9 @@
     );
 
 
-
-    /* ==========================================
-       MOBILE MENU
-    ========================================== */
+    /* =========================
+       MOBILE NAV
+    ========================= */
 
     menuBtn.addEventListener(
       "click",
@@ -2512,86 +3972,50 @@
       );
 
 
+    /* =========================
+       ESCAPE KEY
+    ========================= */
 
-    /* ==========================================
-       URL SEARCH SUPPORT
+    document.addEventListener(
+      "keydown",
+      event => {
 
-       ?q=Hisar
-       ?area=Haryana
-       ?location=Delhi
-    ========================================== */
-
-    function loadURLSearch() {
-
-      const params =
-        new URLSearchParams(
-          window.location.search
-        );
+        if (
+          event.key !== "Escape"
+        ) {
+          return;
+        }
 
 
-      const value =
-        params.get("q") ||
-        params.get("area") ||
-        params.get("location");
+        if (
+          bookingModal.classList.contains(
+            "show"
+          )
+        ) {
+
+          closeBookingForm();
+
+          return;
+        }
 
 
-      if (value) {
+        if (
+          detailModal.classList.contains(
+            "show"
+          )
+        ) {
 
-        searchInput.value =
-          value;
+          closeDetails();
+
+        }
 
       }
-
-    }
-
+    );
 
 
-    /* ==========================================
-       SUPABASE REALTIME
-    ========================================== */
-
-    function setupRealtime() {
-
-      db
-
-        .channel(
-          "studenthub-libraries-live"
-        )
-
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "libraries"
-          },
-          () => {
-
-            loadRecords();
-
-          }
-        )
-
-        .subscribe(
-          status => {
-
-            console.log(
-              "Library realtime:",
-              status
-            );
-
-          }
-        );
-
-    }
-
-
-
-    /* ==========================================
-       INITIALIZE
-    ========================================== */
-
-    loadURLSearch();
+    /* =====================================================
+       START
+    ===================================================== */
 
     loadRecords();
 
