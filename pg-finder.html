@@ -5,16 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Hostel & PG Finder | StudentHubHelp</title>
+
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
-  <meta name="description" content="Find student-friendly hostels and PG accommodations across India with StudentHubHelp.">
+
+  <meta
+    name="description"
+    content="Find student-friendly hostels and PG accommodations across India with StudentHubHelp."
+  >
+
   <meta name="theme-color" content="#071a33">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  >
 
   <style>
     * {
@@ -26,17 +39,30 @@
     :root {
       --navy: #071a33;
       --navy2: #0d2749;
+      --navy3: #12385f;
+
       --gold: #d7a63d;
       --gold2: #f2c866;
+
       --white: #ffffff;
       --bg: #f5f7fb;
-      --text: #182335;
+
+      --text: #172033;
       --muted: #667085;
+
       --border: #e5e7eb;
+
       --success: #16834b;
       --danger: #c62828;
-      --shadow: 0 15px 40px rgba(7, 26, 51, .10);
-      --radius: 18px;
+
+      --shadow: 0 18px 50px rgba(7, 26, 51, .10);
+      --shadow2: 0 10px 30px rgba(7, 26, 51, .07);
+
+      --radius: 20px;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
@@ -46,9 +72,13 @@
       line-height: 1.6;
     }
 
+    body.modal-open {
+      overflow: hidden;
+    }
+
     a {
-      text-decoration: none;
       color: inherit;
+      text-decoration: none;
     }
 
     button,
@@ -56,24 +86,37 @@
       font: inherit;
     }
 
-    /* NAVBAR */
+    button {
+      cursor: pointer;
+    }
+
+    /* =========================
+       NAVBAR
+    ========================= */
+
     .navbar {
       position: sticky;
       top: 0;
-      z-index: 1000;
+      z-index: 1500;
+
       background: rgba(7, 26, 51, .97);
-      backdrop-filter: blur(14px);
-      box-shadow: 0 5px 25px rgba(0,0,0,.12);
+      backdrop-filter: blur(15px);
+
+      box-shadow:
+        0 5px 25px rgba(0, 0, 0, .14);
     }
 
     .nav-container {
-      max-width: 1250px;
+      width: min(1280px, 100%);
+      min-height: 74px;
+
       margin: auto;
-      min-height: 72px;
       padding: 0 20px;
+
       display: flex;
       align-items: center;
       justify-content: space-between;
+
       gap: 20px;
     }
 
@@ -81,93 +124,240 @@
       display: flex;
       align-items: center;
       gap: 11px;
+
       color: white;
-      font-weight: 800;
+
       font-size: 20px;
+      font-weight: 800;
+
       white-space: nowrap;
     }
 
     .brand-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--gold), var(--gold2));
-      color: var(--navy);
+      width: 43px;
+      height: 43px;
+
       display: grid;
       place-items: center;
-      font-size: 22px;
+
+      border-radius: 13px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--gold),
+          var(--gold2)
+        );
+
+      color: var(--navy);
+
+      font-size: 19px;
       font-weight: 900;
+
+      box-shadow:
+        0 8px 20px rgba(215, 166, 61, .18);
+    }
+
+    .brand-sub {
+      display: block;
+
+      color: rgba(255,255,255,.55);
+
+      font-size: 9px;
+      font-weight: 600;
+
+      margin-top: -2px;
+      letter-spacing: .3px;
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .nav-links a {
-      color: rgba(255,255,255,.86);
+      color: rgba(255,255,255,.85);
+
       padding: 10px 13px;
+
       border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
+
+      font-size: 13px;
+      font-weight: 700;
+
       transition: .2s ease;
     }
 
     .nav-links a:hover,
     .nav-links a.active {
-      background: rgba(215,166,61,.16);
       color: var(--gold2);
+
+      background:
+        rgba(215,166,61,.14);
     }
 
     .menu-btn {
       display: none;
+
+      width: 44px;
+      height: 44px;
+
       border: 0;
-      background: transparent;
+      border-radius: 12px;
+
+      background: rgba(255,255,255,.08);
+
       color: white;
-      font-size: 28px;
-      cursor: pointer;
+
+      font-size: 20px;
     }
 
-    /* HERO */
+    /* =========================
+       CATEGORY BAR
+    ========================= */
+
+    .category-bar {
+      position: sticky;
+      top: 74px;
+      z-index: 1200;
+
+      background: rgba(255,255,255,.97);
+      backdrop-filter: blur(12px);
+
+      border-bottom: 1px solid var(--border);
+    }
+
+    .category-inner {
+      width: min(1280px, 100%);
+
+      margin: auto;
+      padding: 12px 20px;
+
+      display: flex;
+      gap: 9px;
+
+      overflow-x: auto;
+
+      scrollbar-width: none;
+    }
+
+    .category-inner::-webkit-scrollbar {
+      display: none;
+    }
+
+    .category-inner a {
+      flex: 0 0 auto;
+
+      padding: 9px 15px;
+
+      border-radius: 999px;
+
+      border: 1px solid var(--border);
+
+      background: white;
+
+      color: var(--text);
+
+      font-size: 12px;
+      font-weight: 800;
+
+      transition: .2s;
+    }
+
+    .category-inner a:hover,
+    .category-inner a.active {
+      border-color: var(--navy);
+      background: var(--navy);
+      color: white;
+
+      box-shadow:
+        0 5px 15px rgba(7,26,51,.12);
+    }
+
+    /* =========================
+       HERO
+    ========================= */
+
     .hero {
-      position: relative;
-      min-height: 390px;
+      min-height: 425px;
+
       display: flex;
       align-items: center;
+
+      position: relative;
       overflow: hidden;
+
       background:
-        linear-gradient(90deg, rgba(4,17,34,.94), rgba(7,26,51,.68)),
-        url("hostel-banner.png") center/cover no-repeat;
+        linear-gradient(
+          90deg,
+          rgba(3,15,30,.95),
+          rgba(7,26,51,.70)
+        ),
+        url("hostel-banner.png")
+        center / cover no-repeat;
+    }
+
+    .hero::after {
+      content: "";
+
+      position: absolute;
+      inset: auto 0 0 0;
+
+      height: 90px;
+
+      background:
+        linear-gradient(
+          transparent,
+          rgba(7,26,51,.18)
+        );
     }
 
     .hero-content {
-      width: min(1250px, 100%);
+      position: relative;
+      z-index: 2;
+
+      width: min(1280px, 100%);
+
       margin: auto;
-      padding: 70px 20px;
-      color: white;
+
+      padding: 75px 20px;
     }
 
     .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 8px;
+
       padding: 8px 14px;
+
       border: 1px solid rgba(242,200,102,.35);
-      background: rgba(215,166,61,.12);
+
+      background:
+        rgba(215,166,61,.12);
+
       color: var(--gold2);
+
       border-radius: 999px;
-      font-size: 13px;
-      font-weight: 700;
+
+      font-size: 12px;
+      font-weight: 800;
+
       margin-bottom: 18px;
     }
 
     .hero h1 {
+      max-width: 800px;
+
       font-family: "Playfair Display", serif;
-      font-size: clamp(38px, 6vw, 64px);
-      line-height: 1.05;
-      max-width: 750px;
-      margin-bottom: 18px;
+
+      color: white;
+
+      font-size: clamp(40px, 6vw, 68px);
+
+      line-height: 1.04;
+
+      margin-bottom: 19px;
     }
 
     .hero h1 span {
@@ -175,184 +365,310 @@
     }
 
     .hero p {
-      max-width: 680px;
-      color: rgba(255,255,255,.82);
-      font-size: 17px;
+      max-width: 700px;
+
+      color: rgba(255,255,255,.80);
+
+      font-size: 16px;
+
       margin-bottom: 28px;
     }
 
-    /* SEARCH */
+    /* =========================
+       SEARCH
+    ========================= */
+
     .search-box {
-      width: min(850px, 100%);
+      width: min(900px, 100%);
+
       display: flex;
+
       background: white;
-      border-radius: 16px;
+
       padding: 7px;
-      box-shadow: 0 20px 50px rgba(0,0,0,.24);
+
+      border-radius: 16px;
+
+      box-shadow:
+        0 20px 55px rgba(0,0,0,.25);
+    }
+
+    .search-icon {
+      width: 50px;
+
+      display: grid;
+      place-items: center;
+
+      color: var(--muted);
+
+      font-size: 16px;
     }
 
     .search-box input {
       flex: 1;
       min-width: 0;
+
       border: 0;
-      outline: none;
-      padding: 15px 17px;
-      font-size: 15px;
+      outline: 0;
+
+      padding: 14px 8px;
+
       color: var(--text);
+
+      font-size: 14px;
+    }
+
+    .search-box input::placeholder {
+      color: #98a2b3;
     }
 
     .search-btn {
+      min-height: 48px;
+
+      padding: 0 24px;
+
       border: 0;
       border-radius: 12px;
-      padding: 0 25px;
-      background: linear-gradient(135deg, var(--gold), var(--gold2));
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--gold),
+          var(--gold2)
+        );
+
       color: var(--navy);
-      font-weight: 800;
-      cursor: pointer;
-      transition: .2s ease;
+
+      font-size: 13px;
+      font-weight: 900;
+
+      transition: .2s;
     }
 
     .search-btn:hover {
       transform: translateY(-1px);
+      box-shadow:
+        0 8px 20px rgba(215,166,61,.20);
     }
 
-    /* CATEGORY NAV */
-    .category-bar {
-      background: white;
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 72px;
-      z-index: 900;
-    }
+    /* =========================
+       MAIN
+    ========================= */
 
-    .category-inner {
-      max-width: 1250px;
-      margin: auto;
-      padding: 12px 20px;
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-    }
-
-    .category-inner a {
-      flex: 0 0 auto;
-      padding: 10px 17px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: white;
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 700;
-      transition: .2s;
-    }
-
-    .category-inner a:hover,
-    .category-inner a.active {
-      background: var(--navy);
-      border-color: var(--navy);
-      color: white;
-    }
-
-    /* MAIN */
     .main {
-      max-width: 1250px;
+      width: min(1280px, 100%);
+
       margin: auto;
-      padding: 38px 20px 70px;
+
+      padding: 42px 20px 75px;
     }
 
     .results-head {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
+
       gap: 20px;
-      margin-bottom: 25px;
+
+      margin-bottom: 24px;
     }
 
     .results-title h2 {
-      font-size: 26px;
-      margin-bottom: 3px;
+      font-size: 27px;
+
+      line-height: 1.2;
+
+      margin-bottom: 5px;
     }
 
     .results-title p {
       color: var(--muted);
-      font-size: 14px;
+
+      font-size: 13px;
     }
 
     .count-badge {
-      padding: 10px 15px;
-      background: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+      padding: 10px 14px;
+
       border: 1px solid var(--border);
+
       border-radius: 12px;
+
+      background: white;
+
       color: var(--navy);
-      font-size: 13px;
-      font-weight: 800;
+
+      font-size: 12px;
+      font-weight: 900;
+
       white-space: nowrap;
+
+      box-shadow: var(--shadow2);
     }
 
-    /* STATUS */
+    /* =========================
+       STATUS
+    ========================= */
+
     .status {
       display: none;
-      margin-bottom: 25px;
-      padding: 15px 17px;
+
+      margin-bottom: 24px;
+
+      padding: 14px 17px;
+
       border-radius: 13px;
+
       background: white;
+
       border: 1px solid var(--border);
-      font-size: 14px;
+
+      font-size: 13px;
+      font-weight: 600;
     }
 
     .status.show {
       display: block;
     }
 
-    .status.error {
-      color: var(--danger);
-      border-color: rgba(198,40,40,.25);
-      background: #fff8f8;
-    }
-
     .status.loading {
       color: var(--navy);
     }
 
-    /* GRID */
+    .status.error {
+      color: var(--danger);
+
+      background: #fff8f8;
+
+      border-color: rgba(198,40,40,.20);
+    }
+
+    /* =========================
+       GRID
+    ========================= */
+
     .listing-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+
+      grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
       gap: 22px;
     }
 
+    /* =========================
+       PROPERTY CARD
+    ========================= */
+
     .card {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      position: relative;
+
       overflow: hidden;
-      box-shadow: 0 7px 25px rgba(7,26,51,.05);
-      transition: .25s ease;
+
+      background: white;
+
+      border: 1px solid var(--border);
+
+      border-radius: var(--radius);
+
+      box-shadow:
+        0 7px 25px rgba(7,26,51,.045);
+
+      transition:
+        transform .25s ease,
+        box-shadow .25s ease;
     }
 
     .card:hover {
       transform: translateY(-5px);
-      box-shadow: var(--shadow);
+
+      box-shadow:
+        var(--shadow);
     }
 
     .card-banner {
-      height: 150px;
+      height: 165px;
+
       position: relative;
+
+      display: flex;
+      align-items: flex-end;
+
+      padding: 15px;
+
       background:
-        linear-gradient(90deg, rgba(7,26,51,.72), rgba(7,26,51,.25)),
-        url("hostel-banner.png") center/cover no-repeat;
+        linear-gradient(
+          90deg,
+          rgba(7,26,51,.82),
+          rgba(7,26,51,.25)
+        ),
+        url("hostel-banner.png")
+        center / cover no-repeat;
     }
 
     .card-category {
       position: absolute;
+
       top: 13px;
       left: 13px;
+
       padding: 7px 10px;
+
       border-radius: 999px;
-      background: rgba(255,255,255,.94);
+
+      background:
+        rgba(255,255,255,.95);
+
       color: var(--navy);
-      font-size: 11px;
-      font-weight: 800;
+
+      font-size: 10px;
+      font-weight: 900;
+
+      box-shadow:
+        0 5px 15px rgba(0,0,0,.10);
+    }
+
+    .property-id-badge {
+      position: absolute;
+
+      right: 13px;
+      top: 13px;
+
+      padding: 7px 10px;
+
+      border-radius: 9px;
+
+      background:
+        rgba(7,26,51,.82);
+
+      color: white;
+
+      font-size: 10px;
+      font-weight: 900;
+
+      border: 1px solid rgba(255,255,255,.15);
+    }
+
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+
+      padding: 6px 9px;
+
+      border-radius: 8px;
+
+      background:
+        rgba(22,131,75,.92);
+
+      color: white;
+
+      font-size: 9px;
+      font-weight: 900;
     }
 
     .card-body {
@@ -362,55 +678,103 @@
     .card h3 {
       font-size: 18px;
       line-height: 1.3;
-      margin-bottom: 8px;
+
+      margin-bottom: 5px;
+    }
+
+    .property-id {
+      color: #2563eb;
+
+      font-size: 10px;
+      font-weight: 900;
+
+      margin-bottom: 9px;
     }
 
     .area {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
       color: var(--gold);
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 13px;
+
+      font-size: 12px;
+      font-weight: 800;
+
+      margin-bottom: 12px;
     }
 
     .info-row {
       display: flex;
+      align-items: flex-start;
+
       gap: 9px;
+
       color: var(--muted);
-      font-size: 13px;
+
+      font-size: 12px;
+
       margin: 8px 0;
+    }
+
+    .info-row i {
+      width: 16px;
+
+      margin-top: 3px;
+
+      color: #8492a6;
     }
 
     .rating {
       display: inline-flex;
       align-items: center;
       gap: 5px;
+
+      margin-top: 7px;
+
       padding: 6px 9px;
+
       border-radius: 8px;
+
       background: #fff8e7;
+
       color: #9a6a00;
-      font-size: 12px;
-      font-weight: 800;
-      margin-top: 5px;
+
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .no-rating {
+      background: #f2f4f7;
+      color: #667085;
     }
 
     .card-actions {
-      display: flex;
+      display: grid;
+
+      grid-template-columns:
+        1.3fr 1fr;
+
       gap: 9px;
+
       margin-top: 17px;
     }
 
     .btn {
-      flex: 1;
       min-height: 42px;
+
       border: 0;
       border-radius: 10px;
-      cursor: pointer;
+
       display: inline-flex;
       align-items: center;
       justify-content: center;
+
       gap: 7px;
-      font-size: 12px;
-      font-weight: 800;
+
+      font-size: 11px;
+      font-weight: 900;
+
       transition: .2s;
     }
 
@@ -429,17 +793,25 @@
     }
 
     .btn-light:hover {
-      background: #e6ebf2;
+      background: #e7ebf0;
     }
 
-    /* EMPTY */
+    /* =========================
+       EMPTY
+    ========================= */
+
     .empty {
       display: none;
+
+      padding: 75px 20px;
+
       text-align: center;
+
       background: white;
+
       border: 1px solid var(--border);
+
       border-radius: var(--radius);
-      padding: 65px 20px;
     }
 
     .empty.show {
@@ -447,30 +819,57 @@
     }
 
     .empty-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
+      width: 72px;
+      height: 72px;
+
+      margin: 0 auto 16px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 20px;
+
+      background: #eef3f8;
+
+      color: var(--navy);
+
+      font-size: 31px;
     }
 
     .empty h3 {
       font-size: 21px;
-      margin-bottom: 7px;
+
+      margin-bottom: 6px;
     }
 
     .empty p {
       color: var(--muted);
-      font-size: 14px;
+
+      font-size: 13px;
     }
 
-    /* MODAL */
+    /* =========================
+       MODAL
+    ========================= */
+
     .modal {
       position: fixed;
+
       inset: 0;
+
       z-index: 3000;
+
       display: none;
+
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      background: rgba(0,0,0,.65);
+
+      padding: 18px;
+
+      background:
+        rgba(0,0,0,.67);
+
+      backdrop-filter: blur(4px);
     }
 
     .modal.show {
@@ -478,62 +877,137 @@
     }
 
     .modal-box {
-      width: min(650px, 100%);
-      max-height: 90vh;
+      width: min(700px, 100%);
+
+      max-height: 92vh;
+
       overflow-y: auto;
+
       background: white;
-      border-radius: 22px;
-      box-shadow: 0 30px 80px rgba(0,0,0,.3);
+
+      border-radius: 24px;
+
+      box-shadow:
+        0 30px 90px rgba(0,0,0,.35);
+
       position: relative;
+
+      animation:
+        modalIn .2s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .modal-head {
-      min-height: 145px;
-      padding: 27px;
+      min-height: 175px;
+
+      padding: 28px;
+
       color: white;
-      background:
-        linear-gradient(90deg, rgba(7,26,51,.95), rgba(7,26,51,.72)),
-        url("hostel-banner.png") center/cover;
+
       display: flex;
       align-items: flex-end;
+
       position: relative;
+
+      background:
+        linear-gradient(
+          90deg,
+          rgba(7,26,51,.96),
+          rgba(7,26,51,.68)
+        ),
+        url("hostel-banner.png")
+        center / cover;
+    }
+
+    .modal-title-wrap {
+      padding-right: 50px;
     }
 
     .modal-head h2 {
       font-family: "Playfair Display", serif;
-      font-size: 30px;
+
+      font-size: 31px;
+
       line-height: 1.15;
-      padding-right: 40px;
+
+      margin-bottom: 7px;
+    }
+
+    .modal-property-id {
+      display: inline-flex;
+
+      padding: 6px 9px;
+
+      border-radius: 7px;
+
+      background:
+        rgba(255,255,255,.13);
+
+      color: var(--gold2);
+
+      font-size: 11px;
+      font-weight: 900;
     }
 
     .close {
       position: absolute;
-      right: 17px;
+
       top: 17px;
-      width: 38px;
-      height: 38px;
-      border: 0;
+      right: 17px;
+
+      width: 39px;
+      height: 39px;
+
+      border: 1px solid rgba(255,255,255,.15);
+
       border-radius: 50%;
-      background: rgba(255,255,255,.15);
+
+      background:
+        rgba(255,255,255,.12);
+
       color: white;
+
       font-size: 22px;
-      cursor: pointer;
+
+      transition: .2s;
+    }
+
+    .close:hover {
+      background: rgba(255,255,255,.20);
     }
 
     .modal-content {
-      padding: 24px;
+      padding: 25px;
     }
 
     .detail-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
+
+      grid-template-columns:
+        repeat(2, minmax(0,1fr));
+
+      gap: 13px;
     }
 
     .detail-item {
-      background: #f7f9fc;
-      border-radius: 12px;
       padding: 14px;
+
+      border-radius: 13px;
+
+      background: #f7f9fc;
+
+      border: 1px solid #edf0f4;
     }
 
     .detail-item.full {
@@ -542,66 +1016,199 @@
 
     .detail-label {
       color: var(--muted);
-      font-size: 11px;
+
+      font-size: 9px;
+      font-weight: 900;
+
       text-transform: uppercase;
-      letter-spacing: .5px;
-      font-weight: 800;
-      margin-bottom: 5px;
+
+      letter-spacing: .7px;
+
+      margin-bottom: 4px;
     }
 
     .detail-value {
-      font-size: 14px;
-      font-weight: 600;
+      color: var(--text);
+
+      font-size: 13px;
+      font-weight: 700;
+
       word-break: break-word;
     }
 
-    .modal-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 22px;
+    .detail-value.id-value {
+      color: #2563eb;
+
+      font-size: 15px;
+      font-weight: 900;
     }
 
-    .modal-actions a,
-    .modal-actions button {
-      flex: 1;
-      min-width: 120px;
+    .modal-actions {
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, minmax(0,1fr));
+
+      gap: 9px;
+
+      margin-top: 21px;
+    }
+
+    .modal-actions .btn {
+      min-height: 45px;
     }
 
     .disabled {
       pointer-events: none;
-      opacity: .45;
+      opacity: .42;
     }
 
-    /* FOOTER */
-    footer {
+    /* =========================
+       BOOKING BOX
+    ========================= */
+
+    .booking-note {
+      margin-top: 17px;
+
+      padding: 13px 15px;
+
+      border-radius: 12px;
+
+      background: #f8fafc;
+
+      border: 1px solid #e7ebf0;
+
+      color: var(--muted);
+
+      font-size: 11px;
+
+      display: flex;
+      align-items: flex-start;
+
+      gap: 9px;
+    }
+
+    .booking-note i {
+      color: var(--gold);
+
+      margin-top: 3px;
+    }
+
+    /* =========================
+       TOAST
+    ========================= */
+
+    .toast {
+      position: fixed;
+
+      right: 22px;
+      bottom: 22px;
+
+      z-index: 5000;
+
+      min-width: 290px;
+      max-width: 420px;
+
+      display: none;
+      align-items: flex-start;
+
+      gap: 11px;
+
+      padding: 14px 16px;
+
+      border-radius: 14px;
+
       background: var(--navy);
-      color: rgba(255,255,255,.75);
+
+      color: white;
+
+      box-shadow:
+        0 18px 45px rgba(0,0,0,.22);
+
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .toast.show {
+      display: flex;
+
+      animation:
+        toastIn .22s ease;
+    }
+
+    .toast.success {
+      border-left: 4px solid #39a96b;
+    }
+
+    .toast.error {
+      border-left: 4px solid #ef5350;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .toast i {
+      margin-top: 2px;
+    }
+
+    /* =========================
+       FOOTER
+    ========================= */
+
+    footer {
       padding: 30px 20px;
+
       text-align: center;
-      font-size: 13px;
+
+      background: var(--navy);
+
+      color: rgba(255,255,255,.65);
+
+      font-size: 12px;
     }
 
     footer strong {
       color: var(--gold2);
     }
 
-    /* RESPONSIVE */
-    @media (max-width: 950px) {
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media (max-width: 1050px) {
       .listing-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+          repeat(2, minmax(0,1fr));
       }
 
       .nav-links {
         display: none;
+
         position: absolute;
+
         left: 0;
         right: 0;
-        top: 72px;
-        background: var(--navy);
+        top: 74px;
+
         padding: 12px 20px 20px;
+
+        background: var(--navy);
+
         flex-direction: column;
+
         align-items: stretch;
+
+        box-shadow:
+          0 15px 25px rgba(0,0,0,.18);
       }
 
       .nav-links.show {
@@ -613,30 +1220,38 @@
       }
 
       .menu-btn {
-        display: block;
+        display: grid;
+        place-items: center;
       }
     }
 
-    @media (max-width: 650px) {
+    @media (max-width: 700px) {
       .hero {
-        min-height: 430px;
+        min-height: 455px;
       }
 
       .hero-content {
-        padding: 55px 18px;
+        padding: 58px 18px;
       }
 
       .hero h1 {
-        font-size: 40px;
+        font-size: 41px;
       }
 
       .hero p {
-        font-size: 15px;
+        font-size: 14px;
       }
 
       .search-box {
         flex-direction: column;
-        padding: 7px;
+      }
+
+      .search-icon {
+        display: none;
+      }
+
+      .search-box input {
+        padding: 14px 13px;
       }
 
       .search-btn {
@@ -644,16 +1259,16 @@
       }
 
       .category-bar {
-        top: 72px;
+        top: 74px;
       }
 
       .main {
-        padding: 28px 15px 55px;
+        padding: 30px 15px 55px;
       }
 
       .results-head {
-        align-items: flex-start;
         flex-direction: column;
+        align-items: flex-start;
       }
 
       .listing-grid {
@@ -669,7 +1284,46 @@
       }
 
       .modal-actions {
-        flex-direction: column;
+        grid-template-columns:
+          repeat(2, minmax(0,1fr));
+      }
+
+      .modal-head {
+        min-height: 155px;
+      }
+
+      .modal-head h2 {
+        font-size: 26px;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .brand-sub {
+        display: none;
+      }
+
+      .brand {
+        font-size: 17px;
+      }
+
+      .brand-icon {
+        width: 39px;
+        height: 39px;
+      }
+
+      .hero h1 {
+        font-size: 37px;
+      }
+
+      .modal-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .toast {
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        min-width: 0;
       }
     }
   </style>
@@ -677,49 +1331,122 @@
 
 <body>
 
-  <!-- NAVBAR -->
+  <!-- =========================
+       NAVBAR
+  ========================= -->
+
   <header class="navbar">
+
     <div class="nav-container">
 
       <a href="index.html" class="brand">
+
         <span class="brand-icon">SH</span>
-        <span>StudentHubHelp</span>
+
+        <span>
+          StudentHubHelp
+          <small class="brand-sub">
+            Student Discovery Platform
+          </small>
+        </span>
+
       </a>
 
-      <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      <button
+        class="menu-btn"
+        id="menuBtn"
+        aria-label="Open menu"
+      >
+        <i class="fa-solid fa-bars"></i>
+      </button>
 
       <nav class="nav-links" id="navLinks">
-        <a href="index.html">Home</a>
-        <a href="pg-finder.html" class="active">Hostel / PG</a>
-        <a href="tiffin-finder.html">Tiffin / Mess</a>
-        <a href="library-finder.html">Library</a>
-        <a href="cafe-finder.html">Cafe</a>
-        <a href="bookstore-finder.html">Book Store</a>
-        <a href="auth.html">Login</a>
+
+        <a href="index.html">
+          Home
+        </a>
+
+        <a
+          href="pg-finder.html"
+          class="active"
+        >
+          Hostel / PG
+        </a>
+
+        <a href="tiffin-finder.html">
+          Tiffin / Mess
+        </a>
+
+        <a href="library-finder.html">
+          Library
+        </a>
+
+        <a href="cafe-finder.html">
+          Cafe
+        </a>
+
+        <a href="bookstore-finder.html">
+          Book Store
+        </a>
+
+        <a href="auth.html">
+          Login
+        </a>
+
       </nav>
 
     </div>
+
   </header>
 
 
-  <!-- CATEGORY BAR -->
+  <!-- =========================
+       CATEGORY BAR
+  ========================= -->
+
   <div class="category-bar">
+
     <div class="category-inner">
-      <a href="pg-finder.html" class="active">🏠 Hostel / PG</a>
-      <a href="tiffin-finder.html">🍱 Tiffin / Mess</a>
-      <a href="library-finder.html">📚 Library</a>
-      <a href="cafe-finder.html">☕ Cafe</a>
-      <a href="bookstore-finder.html">📖 Book Store</a>
+
+      <a
+        href="pg-finder.html"
+        class="active"
+      >
+        🏠 Hostel / PG
+      </a>
+
+      <a href="tiffin-finder.html">
+        🍱 Tiffin / Mess
+      </a>
+
+      <a href="library-finder.html">
+        📚 Library
+      </a>
+
+      <a href="cafe-finder.html">
+        ☕ Cafe
+      </a>
+
+      <a href="bookstore-finder.html">
+        📖 Book Store
+      </a>
+
     </div>
+
   </div>
 
 
-  <!-- HERO -->
+  <!-- =========================
+       HERO
+  ========================= -->
+
   <section class="hero">
+
     <div class="hero-content">
 
       <div class="eyebrow">
-        🏠 Student Accommodation Finder
+        <i class="fa-solid fa-house"></i>
+        Student Accommodation Finder
       </div>
 
       <h1>
@@ -729,115 +1456,274 @@
       </h1>
 
       <p>
-        Search student-friendly hostels and PG accommodations
-        by city, district, area or locality across India.
+        Discover student-friendly hostels and PG accommodations
+        by city, district, area, locality or property ID across India.
       </p>
 
       <div class="search-box">
+
+        <div class="search-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+
         <input
           type="search"
           id="searchInput"
-          placeholder="Search city, district, area, hostel name..."
+          placeholder="Search city, area, hostel name or Property ID..."
           autocomplete="off"
         >
 
-        <button class="search-btn" id="searchBtn">
-          🔍 Search
+        <button
+          class="search-btn"
+          id="searchBtn"
+        >
+          <i class="fa-solid fa-search"></i>
+          Search
         </button>
+
       </div>
 
     </div>
+
   </section>
 
 
-  <!-- MAIN -->
+  <!-- =========================
+       MAIN
+  ========================= -->
+
   <main class="main">
 
     <div class="results-head">
+
       <div class="results-title">
-        <h2>Available Hostels & PGs</h2>
-        <p id="resultText">Live listings from StudentHubHelp</p>
+
+        <h2>
+          Available Hostels & PGs
+        </h2>
+
+        <p id="resultText">
+          Live listings from StudentHubHelp
+        </p>
+
       </div>
 
-      <div class="count-badge" id="countBadge">
+      <div
+        class="count-badge"
+        id="countBadge"
+      >
+        <i class="fa-solid fa-spinner fa-spin"></i>
         Loading...
       </div>
+
     </div>
 
 
-    <div class="status loading show" id="status">
+    <div
+      class="status loading show"
+      id="status"
+    >
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
       Loading live hostels...
     </div>
 
 
-    <section class="listing-grid" id="listingGrid"></section>
+    <section
+      class="listing-grid"
+      id="listingGrid"
+    ></section>
 
 
-    <section class="empty" id="emptyState">
-      <div class="empty-icon">🏠</div>
-      <h3>No Hostel / PG Found</h3>
+    <section
+      class="empty"
+      id="emptyState"
+    >
+
+      <div class="empty-icon">
+        <i class="fa-solid fa-house-circle-xmark"></i>
+      </div>
+
+      <h3>
+        No Hostel / PG Found
+      </h3>
+
       <p>
-        Try another city, district, locality or hostel name.
+        Try another city, district, locality, hostel name or Property ID.
       </p>
+
     </section>
 
   </main>
 
 
-  <!-- MODAL -->
-  <div class="modal" id="detailModal">
+  <!-- =========================
+       PROPERTY DETAILS MODAL
+  ========================= -->
+
+  <div
+    class="modal"
+    id="detailModal"
+  >
 
     <div class="modal-box">
 
       <div class="modal-head">
 
-        <button class="close" id="closeModal">
+        <button
+          class="close"
+          id="closeModal"
+          aria-label="Close"
+        >
           ×
         </button>
 
-        <h2 id="modalTitle">
-          Hostel / PG
-        </h2>
+        <div class="modal-title-wrap">
+
+          <h2 id="modalTitle">
+            Hostel / PG
+          </h2>
+
+          <span
+            class="modal-property-id"
+            id="modalPropertyId"
+          >
+            Property ID: —
+          </span>
+
+        </div>
 
       </div>
+
 
       <div class="modal-content">
 
         <div class="detail-grid">
 
           <div class="detail-item">
-            <div class="detail-label">Property ID</div>
-            <div class="detail-value" id="modalId" style="color: #2563eb; font-weight: 800;">—</div>
+
+            <div class="detail-label">
+              Property ID
+            </div>
+
+            <div
+              class="detail-value id-value"
+              id="modalId"
+            >
+              —
+            </div>
+
           </div>
 
-          <div class="detail-item">
-            <div class="detail-label">Category</div>
-            <div class="detail-value" id="modalCategory">—</div>
-          </div>
 
           <div class="detail-item">
-            <div class="detail-label">Rating</div>
-            <div class="detail-value" id="modalRating">Not rated</div>
+
+            <div class="detail-label">
+              Category
+            </div>
+
+            <div
+              class="detail-value"
+              id="modalCategory"
+            >
+              —
+            </div>
+
           </div>
 
-          <div class="detail-item">
-            <div class="detail-label">Area</div>
-            <div class="detail-value" id="modalArea">—</div>
-          </div>
 
           <div class="detail-item">
-            <div class="detail-label">Timing</div>
-            <div class="detail-value" id="modalTiming">—</div>
+
+            <div class="detail-label">
+              Rating
+            </div>
+
+            <div
+              class="detail-value"
+              id="modalRating"
+            >
+              Not rated
+            </div>
+
           </div>
+
+
+          <div class="detail-item">
+
+            <div class="detail-label">
+              Area
+            </div>
+
+            <div
+              class="detail-value"
+              id="modalArea"
+            >
+              —
+            </div>
+
+          </div>
+
+
+          <div class="detail-item">
+
+            <div class="detail-label">
+              Phone
+            </div>
+
+            <div
+              class="detail-value"
+              id="modalPhone"
+            >
+              Not available
+            </div>
+
+          </div>
+
+
+          <div class="detail-item">
+
+            <div class="detail-label">
+              Timing
+            </div>
+
+            <div
+              class="detail-value"
+              id="modalTiming"
+            >
+              Not available
+            </div>
+
+          </div>
+
 
           <div class="detail-item full">
-            <div class="detail-label">Full Address</div>
-            <div class="detail-value" id="modalAddress">—</div>
+
+            <div class="detail-label">
+              Full Address
+            </div>
+
+            <div
+              class="detail-value"
+              id="modalAddress"
+            >
+              Not available
+            </div>
+
           </div>
 
+
           <div class="detail-item full">
-            <div class="detail-label">Facilities</div>
-            <div class="detail-value" id="modalFacilities">—</div>
+
+            <div class="detail-label">
+              Facilities
+            </div>
+
+            <div
+              class="detail-value"
+              id="modalFacilities"
+            >
+              Not available
+            </div>
+
           </div>
 
         </div>
@@ -845,21 +1731,63 @@
 
         <div class="modal-actions">
 
-          <a id="callBtn" class="btn btn-primary" href="#">
-            📞 Call
+          <a
+            id="callBtn"
+            class="btn btn-primary"
+            href="#"
+          >
+            <i class="fa-solid fa-phone"></i>
+            Call
           </a>
 
-          <a id="whatsappBtn" class="btn btn-light" href="#" target="_blank" rel="noopener">
-            💬 WhatsApp
+
+          <a
+            id="whatsappBtn"
+            class="btn btn-light"
+            href="#"
+            target="_blank"
+            rel="noopener"
+          >
+            <i class="fa-brands fa-whatsapp"></i>
+            WhatsApp
           </a>
 
-          <a id="mapsBtn" class="btn btn-light" href="#" target="_blank" rel="noopener">
-            📍 Maps
+
+          <a
+            id="mapsBtn"
+            class="btn btn-light"
+            href="#"
+            target="_blank"
+            rel="noopener"
+          >
+            <i class="fa-solid fa-location-dot"></i>
+            Maps
           </a>
 
-          <button class="btn btn-primary" style="background: var(--gold); color: var(--navy);" onclick="bookCurrentProperty()">
-            🔖 Book Now
+
+          <button
+            class="btn btn-primary"
+            id="bookBtn"
+            style="background:var(--gold);color:var(--navy);"
+            type="button"
+          >
+            <i class="fa-solid fa-bookmark"></i>
+            Book Now
           </button>
+
+        </div>
+
+
+        <div class="booking-note">
+
+          <i class="fa-solid fa-circle-info"></i>
+
+          <span>
+            Booking request will be submitted with this property's
+            <strong>Property ID</strong>.
+            After submission, you can track the booking from your
+            Student Dashboard.
+          </span>
 
         </div>
 
@@ -870,52 +1798,151 @@
   </div>
 
 
-  <!-- FOOTER -->
+  <!-- =========================
+       TOAST
+  ========================= -->
+
+  <div
+    class="toast"
+    id="toast"
+  >
+
+    <i id="toastIcon"></i>
+
+    <span id="toastMessage"></span>
+
+  </div>
+
+
+  <!-- =========================
+       FOOTER
+  ========================= -->
+
   <footer>
+
     <p>
       © <span id="year"></span>
       <strong>StudentHubHelp</strong>.
       Student services made simple.
     </p>
+
   </footer>
 
 
-  <!-- SUPABASE -->
+  <!-- =========================
+       SUPABASE
+  ========================= -->
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+
   <script>
+
+    /* ==========================================
+       SUPABASE CONFIG
+    ========================================== */
 
     const SUPABASE_URL =
       "https://idurlccrarznnnqixxsd.supabase.co";
 
     const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4HhNCIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
-    const db = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
+    const db =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
 
-    const listingGrid = document.getElementById("listingGrid");
-    const emptyState = document.getElementById("emptyState");
-    const statusBox = document.getElementById("status");
-    const countBadge = document.getElementById("countBadge");
-    const resultText = document.getElementById("resultText");
-    const searchInput = document.getElementById("searchInput");
-    const searchBtn = document.getElementById("searchBtn");
-    const modal = document.getElementById("detailModal");
-    const closeModal = document.getElementById("closeModal");
-    const menuBtn = document.getElementById("menuBtn");
-    const navLinks = document.getElementById("navLinks");
 
-    document.getElementById("year").textContent = new Date().getFullYear();
+    /* ==========================================
+       DOM
+    ========================================== */
+
+    const listingGrid =
+      document.getElementById("listingGrid");
+
+    const emptyState =
+      document.getElementById("emptyState");
+
+    const statusBox =
+      document.getElementById("status");
+
+    const countBadge =
+      document.getElementById("countBadge");
+
+    const resultText =
+      document.getElementById("resultText");
+
+    const searchInput =
+      document.getElementById("searchInput");
+
+    const searchBtn =
+      document.getElementById("searchBtn");
+
+    const modal =
+      document.getElementById("detailModal");
+
+    const closeModal =
+      document.getElementById("closeModal");
+
+    const bookBtn =
+      document.getElementById("bookBtn");
+
+    const menuBtn =
+      document.getElementById("menuBtn");
+
+    const navLinks =
+      document.getElementById("navLinks");
+
+    const toast =
+      document.getElementById("toast");
+
+    const toastMessage =
+      document.getElementById("toastMessage");
+
+    const toastIcon =
+      document.getElementById("toastIcon");
+
+
+    document.getElementById("year").textContent =
+      new Date().getFullYear();
+
+
+    /* ==========================================
+       STATE
+    ========================================== */
 
     let allRecords = [];
+
     let currentRecord = null;
 
+    let realtimeChannel = null;
+
+    let toastTimer = null;
+
+
+    /* ==========================================
+       HELPERS
+    ========================================== */
+
+    function clean(value) {
+
+      if (
+        value === null ||
+        value === undefined ||
+        String(value).trim() === ""
+      ) {
+        return "";
+      }
+
+      return String(value).trim();
+    }
+
+
     function escapeHTML(value) {
-      if (value === null || value === undefined) return "";
-      return String(value)
+
+      return clean(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -923,220 +1950,1134 @@
         .replace(/'/g, "&#039;");
     }
 
-    function clean(value) {
-      if (value === null || value === undefined || String(value).trim() === "") return "";
-      return String(value).trim();
+
+    function normalizePhone(phone) {
+
+      return clean(phone)
+        .replace(/\D/g, "");
     }
+
 
     function ratingText(rating) {
-      const value = Number(rating);
-      if (!Number.isFinite(value) || value <= 0) return "Not rated";
-      return "⭐ " + Math.max(0, Math.min(5, value)).toFixed(1) + " / 5";
+
+      const value =
+        Number(rating);
+
+      if (
+        !Number.isFinite(value) ||
+        value <= 0
+      ) {
+        return "Not rated";
+      }
+
+      return (
+        "⭐ " +
+        Math.max(
+          0,
+          Math.min(5, value)
+        ).toFixed(1) +
+        " / 5"
+      );
     }
 
-    function showStatus(message, type = "loading") {
-      statusBox.textContent = message;
-      statusBox.className = "status show " + type;
+
+    function showStatus(
+      message,
+      type = "loading"
+    ) {
+
+      statusBox.innerHTML =
+        message;
+
+      statusBox.className =
+        "status show " + type;
     }
+
 
     function hideStatus() {
-      statusBox.className = "status";
+
+      statusBox.className =
+        "status";
     }
+
+
+    function showToast(
+      message,
+      type = "success"
+    ) {
+
+      clearTimeout(toastTimer);
+
+      toastMessage.textContent =
+        message;
+
+      toast.className =
+        "toast show " + type;
+
+      toastIcon.className =
+        type === "success"
+          ? "fa-solid fa-circle-check"
+          : "fa-solid fa-circle-exclamation";
+
+      toastTimer =
+        setTimeout(() => {
+
+          toast.className =
+            "toast";
+
+        }, 4500);
+    }
+
+
+    /* ==========================================
+       LOAD HOSTELS
+    ========================================== */
 
     async function loadRecords() {
-      showStatus("Loading live hostels...", "loading");
-      try {
-        const { data, error } = await db
-          .from("hostels")
-          .select("id,name,category,area,address,phone,timing,facilities,rating");
 
-        if (error) throw error;
-        allRecords = Array.isArray(data) ? data : [];
+      showStatus(
+        '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading live hostels...',
+        "loading"
+      );
+
+      try {
+
+        const {
+          data,
+          error
+        } = await db
+          .from("hostels")
+          .select(
+            "id,name,category,area,address,phone,timing,facilities,rating,owner_id"
+          )
+          .order(
+            "name",
+            { ascending: true }
+          );
+
+        if (error) {
+          throw error;
+        }
+
+        allRecords =
+          Array.isArray(data)
+            ? data
+            : [];
+
         renderRecords();
+
         hideStatus();
+
       } catch (error) {
-        console.error("Hostel loading error:", error);
+
+        console.error(
+          "Hostel loading error:",
+          error
+        );
+
         allRecords = [];
+
         listingGrid.innerHTML = "";
-        emptyState.classList.remove("show");
-        countBadge.textContent = "Error";
-        resultText.textContent = "Unable to load live hostels";
-        showStatus("Unable to load live hostels. " + (error.message || ""), "error");
+
+        emptyState.classList.remove(
+          "show"
+        );
+
+        countBadge.innerHTML =
+          '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+
+        resultText.textContent =
+          "Unable to load live hostels";
+
+        showStatus(
+          "Unable to load live hostels. " +
+          (error.message || ""),
+          "error"
+        );
       }
     }
+
+
+    /* ==========================================
+       SEARCH
+    ========================================== */
 
     function getSearchValue() {
-      return searchInput.value.trim().toLowerCase();
+
+      return searchInput.value
+        .trim()
+        .toLowerCase();
     }
+
 
     function filterRecords() {
-      const query = getSearchValue();
-      if (!query) return [...allRecords];
-      return allRecords.filter(record => {
-        const searchable = [record.id, record.name, record.category, record.area, record.address, record.phone, record.timing, record.facilities, record.rating]
-          .map(value => clean(value))
-          .join(" ")
-          .toLowerCase();
-        return searchable.includes(query);
-      });
+
+      const query =
+        getSearchValue();
+
+      if (!query) {
+        return [...allRecords];
+      }
+
+      return allRecords.filter(
+        record => {
+
+          const searchable = [
+
+            record.id,
+            record.name,
+            record.category,
+            record.area,
+            record.address,
+            record.phone,
+            record.timing,
+            record.facilities,
+            record.rating
+
+          ]
+            .map(clean)
+            .join(" ")
+            .toLowerCase();
+
+          return searchable.includes(
+            query
+          );
+        }
+      );
     }
+
+
+    /* ==========================================
+       RENDER
+    ========================================== */
 
     function renderRecords() {
-      const records = filterRecords();
+
+      const records =
+        filterRecords();
+
       listingGrid.innerHTML = "";
-      countBadge.textContent = records.length + (records.length === 1 ? " Listing" : " Listings");
+
+      countBadge.innerHTML =
+        '<i class="fa-solid fa-house"></i> ' +
+        records.length +
+        (
+          records.length === 1
+            ? " Listing"
+            : " Listings"
+        );
+
 
       if (getSearchValue()) {
-        resultText.textContent = `Showing ${records.length} result${records.length === 1 ? "" : "s"} for "${searchInput.value.trim()}"`;
+
+        resultText.textContent =
+          `Showing ${
+            records.length
+          } result${
+            records.length === 1
+              ? ""
+              : "s"
+          } for "${
+            searchInput.value.trim()
+          }"`;
+
       } else {
-        resultText.textContent = "Live listings from StudentHubHelp";
+
+        resultText.textContent =
+          "Live listings from StudentHubHelp";
+
       }
+
 
       if (!records.length) {
-        emptyState.classList.add("show");
+
+        emptyState.classList.add(
+          "show"
+        );
+
         return;
       }
-      emptyState.classList.remove("show");
 
-      records.forEach(record => {
-        const card = document.createElement("article");
-        card.className = "card";
 
-        const name = clean(record.name) || "Hostel / PG";
-        const category = clean(record.category) || "Hostel / PG";
-        const area = clean(record.area);
-        const address = clean(record.address);
-        const timing = clean(record.timing);
-        const phone = clean(record.phone);
-        const rating = ratingText(record.rating);
+      emptyState.classList.remove(
+        "show"
+      );
 
-        card.innerHTML = `
-          <div class="card-banner">
-            <div class="card-category">${escapeHTML(category)}</div>
-          </div>
-          <div class="card-body">
-            <h3>${escapeHTML(name)}</h3>
-            <div style="font-size:11px; color:#64748b; font-weight:700; margin-bottom:5px;">ID: #${escapeHTML(record.id)}</div>
-            ${area ? `<div class="area">📍 ${escapeHTML(area)}</div>` : ""}
-            ${address ? `<div class="info-row"><span>🏠</span><span>${escapeHTML(address)}</span></div>` : ""}
-            ${timing ? `<div class="info-row"><span>🕒</span><span>${escapeHTML(timing)}</span></div>` : ""}
-            <div class="rating">${escapeHTML(rating)}</div>
-            <div class="card-actions">
-              <button class="btn btn-primary details-btn" type="button">View Details</button>
-              ${phone ? `<a class="btn btn-light" href="tel:${escapeHTML(phone)}">📞 Call</a>` : `<button class="btn btn-light" disabled style="opacity:.45;cursor:not-allowed">📞 Call</button>`}
+
+      records.forEach(
+        record => {
+
+          const card =
+            document.createElement(
+              "article"
+            );
+
+          card.className =
+            "card";
+
+
+          const name =
+            clean(record.name) ||
+            "Hostel / PG";
+
+          const category =
+            clean(record.category) ||
+            "Hostel / PG";
+
+          const area =
+            clean(record.area);
+
+          const address =
+            clean(record.address);
+
+          const timing =
+            clean(record.timing);
+
+          const phone =
+            clean(record.phone);
+
+          const id =
+            clean(record.id);
+
+          const rating =
+            ratingText(
+              record.rating
+            );
+
+
+          const hasRating =
+            rating !== "Not rated";
+
+
+          card.innerHTML = `
+
+            <div class="card-banner">
+
+              <div class="card-category">
+                ${escapeHTML(category)}
+              </div>
+
+              <div class="property-id-badge">
+                ID #${escapeHTML(id)}
+              </div>
+
+              ${
+                record.owner_id
+                  ? `
+                    <div class="verified-badge">
+                      <i class="fa-solid fa-circle-check"></i>
+                      Listed
+                    </div>
+                  `
+                  : ""
+              }
+
             </div>
-          </div>
-        `;
 
-        card.querySelector(".details-btn").addEventListener("click", () => openModal(record));
-        listingGrid.appendChild(card);
-      });
+
+            <div class="card-body">
+
+              <h3>
+                ${escapeHTML(name)}
+              </h3>
+
+
+              <div class="property-id">
+                <i class="fa-solid fa-fingerprint"></i>
+                Property ID: #${escapeHTML(id)}
+              </div>
+
+
+              ${
+                area
+                  ? `
+                    <div class="area">
+                      <i class="fa-solid fa-location-dot"></i>
+                      ${escapeHTML(area)}
+                    </div>
+                  `
+                  : ""
+              }
+
+
+              ${
+                address
+                  ? `
+                    <div class="info-row">
+                      <i class="fa-solid fa-house"></i>
+                      <span>
+                        ${escapeHTML(address)}
+                      </span>
+                    </div>
+                  `
+                  : ""
+              }
+
+
+              ${
+                timing
+                  ? `
+                    <div class="info-row">
+                      <i class="fa-regular fa-clock"></i>
+                      <span>
+                        ${escapeHTML(timing)}
+                      </span>
+                    </div>
+                  `
+                  : ""
+              }
+
+
+              <div
+                class="rating ${
+                  hasRating
+                    ? ""
+                    : "no-rating"
+                }"
+              >
+                ${escapeHTML(rating)}
+              </div>
+
+
+              <div class="card-actions">
+
+                <button
+                  class="btn btn-primary details-btn"
+                  type="button"
+                >
+                  <i class="fa-solid fa-eye"></i>
+                  View Details
+                </button>
+
+
+                ${
+                  phone
+                    ? `
+                      <a
+                        class="btn btn-light"
+                        href="tel:${escapeHTML(phone)}"
+                      >
+                        <i class="fa-solid fa-phone"></i>
+                        Call
+                      </a>
+                    `
+                    : `
+                      <button
+                        class="btn btn-light"
+                        disabled
+                        style="opacity:.42;cursor:not-allowed"
+                      >
+                        <i class="fa-solid fa-phone"></i>
+                        Call
+                      </button>
+                    `
+                }
+
+              </div>
+
+            </div>
+          `;
+
+
+          card
+            .querySelector(
+              ".details-btn"
+            )
+            .addEventListener(
+              "click",
+              () => openModal(record)
+            );
+
+
+          listingGrid.appendChild(
+            card
+          );
+
+        }
+      );
     }
+
+
+    /* ==========================================
+       OPEN MODAL
+    ========================================== */
 
     function openModal(record) {
-      currentRecord = record;
 
-      document.getElementById("modalTitle").textContent = clean(record.name) || "Hostel / PG";
-      document.getElementById("modalId").textContent = "#" + clean(record.id);
-      document.getElementById("modalCategory").textContent = clean(record.category) || "Hostel / PG";
-      document.getElementById("modalRating").textContent = ratingText(record.rating);
-      document.getElementById("modalArea").textContent = clean(record.area) || "Not available";
-      document.getElementById("modalTiming").textContent = clean(record.timing) || "Not available";
-      document.getElementById("modalAddress").textContent = clean(record.address) || "Not available";
-      document.getElementById("modalFacilities").textContent = clean(record.facilities) || "Not available";
+      currentRecord =
+        record;
 
-      const callBtn = document.getElementById("callBtn");
-      const phone = clean(record.phone);
+
+      const id =
+        clean(record.id);
+
+      const name =
+        clean(record.name) ||
+        "Hostel / PG";
+
+      const phone =
+        clean(record.phone);
+
+      const address =
+        clean(record.address);
+
+
+      document.getElementById(
+        "modalTitle"
+      ).textContent =
+        name;
+
+
+      document.getElementById(
+        "modalPropertyId"
+      ).textContent =
+        "Property ID: #" + id;
+
+
+      document.getElementById(
+        "modalId"
+      ).textContent =
+        "#" + id;
+
+
+      document.getElementById(
+        "modalCategory"
+      ).textContent =
+        clean(record.category) ||
+        "Hostel / PG";
+
+
+      document.getElementById(
+        "modalRating"
+      ).textContent =
+        ratingText(
+          record.rating
+        );
+
+
+      document.getElementById(
+        "modalArea"
+      ).textContent =
+        clean(record.area) ||
+        "Not available";
+
+
+      document.getElementById(
+        "modalPhone"
+      ).textContent =
+        phone ||
+        "Not available";
+
+
+      document.getElementById(
+        "modalTiming"
+      ).textContent =
+        clean(record.timing) ||
+        "Not available";
+
+
+      document.getElementById(
+        "modalAddress"
+      ).textContent =
+        address ||
+        "Not available";
+
+
+      document.getElementById(
+        "modalFacilities"
+      ).textContent =
+        clean(record.facilities) ||
+        "Not available";
+
+
+      /* CALL */
+
+      const callBtn =
+        document.getElementById(
+          "callBtn"
+        );
+
+
       if (phone) {
-        callBtn.href = "tel:" + phone;
-        callBtn.classList.remove("disabled");
+
+        callBtn.href =
+          "tel:" + phone;
+
+        callBtn.classList.remove(
+          "disabled"
+        );
+
       } else {
-        callBtn.href = "#";
-        callBtn.classList.add("disabled");
+
+        callBtn.href =
+          "#";
+
+        callBtn.classList.add(
+          "disabled"
+        );
       }
 
-      const whatsappBtn = document.getElementById("whatsappBtn");
-      if (phone) {
-        whatsappBtn.href = "https://wa.me/91" + phone.replace(/\D/g, "") + "?text=" + encodeURIComponent("Hello, I found " + (clean(record.name) || "this Hostel") + " on StudentHubHelp.");
-        whatsappBtn.classList.remove("disabled");
+
+      /* WHATSAPP */
+
+      const whatsappBtn =
+        document.getElementById(
+          "whatsappBtn"
+        );
+
+
+      const cleanPhone =
+        normalizePhone(phone);
+
+
+      if (cleanPhone) {
+
+        const whatsappNumber =
+          cleanPhone.length === 10
+            ? "91" + cleanPhone
+            : cleanPhone;
+
+
+        whatsappBtn.href =
+          "https://wa.me/" +
+          whatsappNumber +
+          "?text=" +
+          encodeURIComponent(
+            "Hello, I found " +
+            name +
+            " (Property ID #" +
+            id +
+            ") on StudentHubHelp."
+          );
+
+
+        whatsappBtn.classList.remove(
+          "disabled"
+        );
+
       } else {
-        whatsappBtn.href = "#";
-        whatsappBtn.classList.add("disabled");
+
+        whatsappBtn.href =
+          "#";
+
+        whatsappBtn.classList.add(
+          "disabled"
+        );
       }
 
-      const mapsBtn = document.getElementById("mapsBtn");
-      const address = clean(record.address);
+
+      /* MAPS */
+
+      const mapsBtn =
+        document.getElementById(
+          "mapsBtn"
+        );
+
+
       if (address) {
-        mapsBtn.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(address);
-        mapsBtn.classList.remove("disabled");
+
+        mapsBtn.href =
+          "https://www.google.com/maps/search/?api=1&query=" +
+          encodeURIComponent(
+            address
+          );
+
+        mapsBtn.classList.remove(
+          "disabled"
+        );
+
       } else {
-        mapsBtn.href = "#";
-        mapsBtn.classList.add("disabled");
+
+        mapsBtn.href =
+          "#";
+
+        mapsBtn.classList.add(
+          "disabled"
+        );
       }
 
-      modal.classList.add("show");
-      document.body.style.overflow = "hidden";
+
+      /* BOOK */
+
+      bookBtn.disabled =
+        false;
+
+      bookBtn.innerHTML =
+        '<i class="fa-solid fa-bookmark"></i> Book Now';
+
+
+      modal.classList.add(
+        "show"
+      );
+
+      document.body.classList.add(
+        "modal-open"
+      );
     }
+
+
+    /* ==========================================
+       CLOSE MODAL
+    ========================================== */
 
     function closeDetails() {
-      modal.classList.remove("show");
-      document.body.style.overflow = "";
-      currentRecord = null;
+
+      modal.classList.remove(
+        "show"
+      );
+
+      document.body.classList.remove(
+        "modal-open"
+      );
+
+      currentRecord =
+        null;
     }
 
-async function bookCurrentProperty() {
-  if (!currentRecord) {
-    alert("कोई प्रॉपर्टी चुनी नहीं गई है!");
-    return;
-  }
 
-  const { data: { session } } = await db.auth.getSession();
-  
-  if (!session || !session.user) {
-    alert("बुकिंग करने के लिए कृपया पहले लॉग-इन करें!");
-    window.location.href = "auth.html";
-    return;
-  }
+    /* ==========================================
+       BOOK PROPERTY
+    ========================================== */
 
-  const studentId = session.user.id;
-  const propertyId = String(currentRecord.id);
-  const propertyName = clean(currentRecord.name) || "Hostel / PG";
-  const category = clean(currentRecord.category) || "Hostel / PG";
+    async function bookCurrentProperty() {
 
-  // Supabase में डेटा भेजते समय property_table भी जोड़ दिया गया है
-  const { error } = await db.from("student_bookings").insert([
-    {
-      student_id: studentId,
-      property_id: propertyId,
-      property_name: propertyName,
-      category: category,
-      property_table: "hostels", // यह लाइन एरर को ठीक कर देगी
-      joined_date: new Date().toISOString(),
-      status: "pending"
+      if (!currentRecord) {
+
+        showToast(
+          "Please select a property first.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      const {
+        data: {
+          session
+        }
+      } =
+        await db.auth.getSession();
+
+
+      if (
+        !session ||
+        !session.user
+      ) {
+
+        showToast(
+          "Please login first to book this property.",
+          "error"
+        );
+
+        setTimeout(
+          () => {
+
+            window.location.href =
+              "auth.html";
+
+          },
+          900
+        );
+
+        return;
+      }
+
+
+      const studentId =
+        session.user.id;
+
+
+      const propertyId =
+        String(
+          currentRecord.id
+        );
+
+
+      const propertyName =
+        clean(
+          currentRecord.name
+        ) ||
+        "Hostel / PG";
+
+
+      const category =
+        clean(
+          currentRecord.category
+        ) ||
+        "Hostel / PG";
+
+
+      /*
+        IMPORTANT:
+
+        status = pending
+
+        This matches the current
+        student_bookings CHECK constraint.
+      */
+
+      bookBtn.disabled =
+        true;
+
+      bookBtn.innerHTML =
+        '<i class="fa-solid fa-circle-notch fa-spin"></i> Booking...';
+
+
+      try {
+
+        /*
+          First check whether
+          this student already has
+          a pending/active booking
+          for the same property.
+        */
+
+        const {
+          data: existingBookings,
+          error: existingError
+        } =
+          await db
+            .from("student_bookings")
+            .select(
+              "id,status"
+            )
+            .eq(
+              "student_id",
+              studentId
+            )
+            .eq(
+              "property_id",
+              propertyId
+            )
+            .eq(
+              "property_table",
+              "hostels"
+            )
+            .in(
+              "status",
+              [
+                "pending",
+                "active"
+              ]
+            )
+            .limit(1);
+
+
+        if (existingError) {
+          throw existingError;
+        }
+
+
+        if (
+          Array.isArray(
+            existingBookings
+          ) &&
+          existingBookings.length
+        ) {
+
+          showToast(
+            "You already have a pending or active booking for this property.",
+            "error"
+          );
+
+          return;
+        }
+
+
+        /*
+          INSERT BOOKING
+
+          property_id = current hostel ID
+          property_table = hostels
+          status = pending
+        */
+
+        const {
+          data,
+          error
+        } =
+          await db
+            .from(
+              "student_bookings"
+            )
+            .insert([
+              {
+                student_id:
+                  studentId,
+
+                property_id:
+                  propertyId,
+
+                property_table:
+                  "hostels",
+
+                property_name:
+                  propertyName,
+
+                category:
+                  category,
+
+                joined_date:
+                  new Date().toISOString(),
+
+                status:
+                  "pending"
+              }
+            ])
+            .select()
+            .single();
+
+
+        if (error) {
+          throw error;
+        }
+
+
+        console.log(
+          "Booking created:",
+          data
+        );
+
+
+        showToast(
+          "Booking request submitted successfully.",
+          "success"
+        );
+
+
+        /*
+          Give Supabase a moment,
+          then open Student Dashboard.
+        */
+
+        setTimeout(
+          () => {
+
+            window.location.href =
+              "student-dashboard.html";
+
+          },
+          1100
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Booking failed:",
+          error
+        );
+
+
+        let message =
+          error.message ||
+          "Database error";
+
+
+        /*
+          Friendly message for
+          CHECK constraint errors.
+        */
+
+        if (
+          message.includes(
+            "student_bookings_status_check"
+          )
+        ) {
+
+          message =
+            'Booking status error. The booking must use status "pending".';
+
+        }
+
+
+        showToast(
+          "Booking failed: " +
+          message,
+          "error"
+        );
+
+      } finally {
+
+        bookBtn.disabled =
+          false;
+
+        bookBtn.innerHTML =
+          '<i class="fa-solid fa-bookmark"></i> Book Now';
+      }
     }
-  ]);
 
-  if (error) {
-    console.error("Booking failed:", error);
-    alert("बुकिंग असफल रही: " + (error.message || "डेटाबेस एरर"));
-  } else {
-    alert("बधाई हो! आपकी बुकिंग सफलतापूर्वक हो गई है।");
-    window.location.href = "student-dashboard.html";
-  }
-}
 
-    closeModal.addEventListener("click", closeDetails);
-    modal.addEventListener("click", e => { if (e.target === modal) closeDetails(); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape" && modal.classList.contains("show")) closeDetails(); });
+    /* ==========================================
+       REALTIME
+    ========================================== */
 
-    searchBtn.addEventListener("click", renderRecords);
-    searchInput.addEventListener("input", renderRecords);
-    searchInput.addEventListener("keydown", e => { if (e.key === "Enter") renderRecords(); });
+    function setupRealtime() {
 
-    menuBtn.addEventListener("click", () => navLinks.classList.toggle("show"));
-    document.querySelectorAll(".nav-links a").forEach(l => l.addEventListener("click", () => navLinks.classList.remove("show")));
+      if (realtimeChannel) {
+
+        db.removeChannel(
+          realtimeChannel
+        );
+
+      }
+
+
+      realtimeChannel =
+        db
+          .channel(
+            "pg-finder-live"
+          )
+
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "hostels"
+            },
+            () => {
+
+              loadRecords();
+
+            }
+          )
+
+          .subscribe(
+            status => {
+
+              console.log(
+                "Hostel realtime:",
+                status
+              );
+
+            }
+          );
+    }
+
+
+    /* ==========================================
+       EVENTS
+    ========================================== */
+
+    closeModal.addEventListener(
+      "click",
+      closeDetails
+    );
+
+
+    modal.addEventListener(
+      "click",
+      event => {
+
+        if (
+          event.target === modal
+        ) {
+
+          closeDetails();
+
+        }
+
+      }
+    );
+
+
+    document.addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key === "Escape" &&
+          modal.classList.contains(
+            "show"
+          )
+        ) {
+
+          closeDetails();
+
+        }
+
+      }
+    );
+
+
+    bookBtn.addEventListener(
+      "click",
+      bookCurrentProperty
+    );
+
+
+    searchBtn.addEventListener(
+      "click",
+      renderRecords
+    );
+
+
+    searchInput.addEventListener(
+      "input",
+      renderRecords
+    );
+
+
+    searchInput.addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key === "Enter"
+        ) {
+
+          renderRecords();
+
+        }
+
+      }
+    );
+
+
+    menuBtn.addEventListener(
+      "click",
+      () => {
+
+        navLinks.classList.toggle(
+          "show"
+        );
+
+      }
+    );
+
+
+    document
+      .querySelectorAll(
+        ".nav-links a"
+      )
+      .forEach(
+        link => {
+
+          link.addEventListener(
+            "click",
+            () => {
+
+              navLinks.classList.remove(
+                "show"
+              );
+
+            }
+          );
+
+        }
+      );
+
+
+    /* ==========================================
+       START
+    ========================================== */
 
     loadRecords();
+
+    setupRealtime();
+
   </script>
 
 </body>
