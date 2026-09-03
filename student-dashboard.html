@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Browser URL / Tab Logo -->
+  <link rel="icon" type="image/png" href="logo.png">
+
+  <title>Student Dashboard | StudentHubHelp</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      background: #f5f7fb;
+      color: #172033;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .sidebar {
+      width: 270px;
+      background: linear-gradient(180deg, #08142d 0%, #0b1730 100%);
+    }
+
+    .nav-item {
+      transition: all .2s ease;
+      color: rgba(255,255,255,.66);
+    }
+
+    .nav-item:hover {
+      color: #fff;
+      background: rgba(255,255,255,.07);
+      transform: translateX(2px);
+    }
+
+    .nav-item.active {
+      color: #fff;
+      background: rgba(255,255,255,.12);
+      box-shadow: inset 3px 0 0 #fff;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e8ebf1;
+      border-radius: 20px;
+      box-shadow: 0 5px 20px rgba(15,23,42,.025);
+    }
+
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e8ebf1;
+      border-radius: 20px;
+      transition: .2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 35px rgba(15,23,42,.07);
+    }
+
+    .service-card {
+      background: #fff;
+      border: 1px solid #e8ebf1;
+      border-radius: 20px;
+      transition: .22s ease;
+    }
+
+    .service-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 40px rgba(15,23,42,.08);
+    }
+
+    .input {
+      width: 100%;
+      padding: 13px 15px;
+      border: 1px solid #dfe3ea;
+      border-radius: 13px;
+      outline: none;
+      background: #fff;
+      transition: .2s;
+    }
+
+    .input:focus {
+      border-color: #0b1730;
+      box-shadow: 0 0 0 4px rgba(11,23,48,.06);
+    }
+
+    .btn-primary {
+      background: #0b1730;
+      color: #fff;
+      border-radius: 13px;
+      padding: 12px 18px;
+      font-weight: 700;
+      transition: .2s;
+    }
+
+    .btn-primary:hover {
+      background: #14264a;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #172033;
+      border: 1px solid #dfe3ea;
+      border-radius: 13px;
+      padding: 11px 17px;
+      font-weight: 700;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .badge-pending {
+      background: #fff7db;
+      color: #9a6a00;
+    }
+
+    .badge-active {
+      background: #e8f8ef;
+      color: #187345;
+    }
+
+    .badge-rejected,
+    .badge-cancelled {
+      background: #fdecec;
+      color: #b42323;
+    }
+
+    .badge-approved {
+      background: #e8f8ef;
+      color: #187345;
+    }
+
+    .hero-student {
+      background:
+        radial-gradient(
+          circle at 82% 18%,
+          rgba(255,255,255,.13),
+          transparent 34%
+        ),
+        linear-gradient(135deg, #0b1730, #172d55);
+      color: #fff;
+      border-radius: 24px;
+    }
+
+    .mobile-sidebar {
+      transform: translateX(-100%);
+      transition: .25s ease;
+    }
+
+    .mobile-sidebar.open {
+      transform: translateX(0);
+    }
+
+    .modal-backdrop {
+      background: rgba(5,12,28,.62);
+      backdrop-filter: blur(7px);
+    }
+
+    .empty-state {
+      padding: 55px 20px;
+      text-align: center;
+      color: #8a92a2;
+    }
+
+    .service-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f4f9;
+      font-size: 25px;
+    }
+
+    .rating-stars {
+      letter-spacing: 2px;
+    }
+
+    @media (max-width: 1023px) {
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 100;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- Mobile overlay -->
+<div
+  id="sidebarOverlay"
+  class="fixed inset-0 z-[90] hidden modal-backdrop lg:hidden">
+</div>
+
+<div class="min-h-screen flex">
+
+  <!-- =====================================================
+       STUDENT SIDEBAR
+  ====================================================== -->
+
+  <aside
+    id="sidebar"
+    class="sidebar fixed lg:static inset-y-0 left-0 z-[100]
+           flex flex-col mobile-sidebar lg:translate-x-0">
+
+    <!-- Logo -->
+    <div class="px-5 py-6 border-b border-white/10">
+
+      <div class="flex items-center gap-3">
+
+        <div
+          class="w-11 h-11 rounded-xl overflow-hidden
+                 bg-white flex items-center justify-center">
+
+          <img
+            src="logo.png"
+            alt="StudentHubHelp"
+            class="w-full h-full object-cover"
+            onerror="this.style.display='none';this.parentElement.innerHTML='SH';">
+        </div>
+
+        <div>
+          <div class="text-white font-bold text-lg">
+            StudentHubHelp
+          </div>
+
+          <div class="text-xs text-white/40">
+            Student Dashboard
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-3 py-5 overflow-y-auto">
+
+      <div
+        class="px-4 mb-2 text-[10px] uppercase
+               tracking-[.18em] text-white/35">
+        Dashboard
+      </div>
+
+      <div class="space-y-1">
+
+        <button
+          data-section="overview"
+          class="nav-item active w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">⌂</span>
+          <span>Overview</span>
+
+        </button>
+
+
+        <button
+          data-section="profile"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">◉</span>
+          <span>My Profile</span>
+
+        </button>
+
+
+        <button
+          data-section="services"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">⌕</span>
+          <span>Explore Services</span>
+
+        </button>
+
+
+        <button
+          data-section="bookings"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">▣</span>
+          <span>My Bookings</span>
+
+        </button>
+
+
+        <button
+          data-section="reviews"
+          class="nav-item w-full flex items-center
+                 gap-3 px-4 py-3 rounded-xl text-left">
+
+          <span class="w-5 text-center">★</span>
+          <span>My Reviews</span>
+
+        </button>
+
+      </div>
+
+    </nav>
+
+
+    <!-- Logout -->
+    <div class="border-t border-white/10 p-3">
+
+      <button
+        id="logoutBtn"
+        class="nav-item w-full flex items-center
+               gap-3 px-4 py-3 rounded-xl text-left">
+
+        <span class="w-5 text-center">↪</span>
+        <span>Logout</span>
+
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- =====================================================
+       MAIN
+  ====================================================== -->
+
+  <main class="flex-1 min-w-0">
+
+    <!-- TOPBAR -->
+    <header
+      class="h-[76px] bg-white border-b border-gray-200
+             sticky top-0 z-50 flex items-center
+             justify-between px-5 md:px-8">
+
+      <div class="flex items-center gap-4">
+
+        <button
+          id="mobileMenuBtn"
+          class="lg:hidden w-10 h-10 rounded-xl
+                 border border-gray-200 bg-white">
+
+          ☰
+
+        </button>
+
+        <div>
+
+          <div class="text-xs text-gray-400">
+            Student Account
+          </div>
+
+          <h1
+            id="pageTitle"
+            class="text-lg md:text-xl font-bold">
+            Overview
+          </h1>
+
+        </div>
+
+      </div>
+
+
+      <div class="flex items-center gap-3">
+
+        <div class="hidden sm:block text-right">
+
+          <div
+            id="topUserName"
+            class="font-semibold text-sm">
+            Loading...
+          </div>
+
+          <div
+            id="topUserRole"
+            class="text-xs text-gray-400">
+            Student
+          </div>
+
+        </div>
+
+
+        <div
+          id="userAvatar"
+          class="w-10 h-10 rounded-full
+                 bg-[#0b1730] text-white
+                 flex items-center justify-center
+                 font-bold">
+
+          U
+
+        </div>
+
+      </div>
+
+    </header>
+
+
+    <!-- CONTENT -->
+    <div class="max-w-[1500px] mx-auto p-5 md:p-8">
+
+      <!-- =================================================
+           OVERVIEW
+      ================================================== -->
+
+      <section id="section-overview">
+
+        <div class="hero-student p-6 md:p-8 mb-7">
+
+          <div class="max-w-3xl">
+
+            <div
+              class="text-xs uppercase tracking-[.18em]
+                     text-white/45 mb-3">
+
+              StudentHubHelp
+
+            </div>
+
+            <h2
+              id="welcomeTitle"
+              class="text-2xl md:text-4xl
+                     font-extrabold tracking-tight">
+
+              Welcome back!
+
+            </h2>
+
+            <p
+              class="mt-3 text-white/65
+                     text-sm md:text-base">
+
+              Explore hostels, PGs, tiffin services,
+              libraries, cafes and bookstores around you.
+
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- Stats -->
+
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2
+                 xl:grid-cols-4 gap-4 mb-7">
+
+          <div class="stat-card p-5">
+
+            <div
+              class="text-xs uppercase tracking-wider
+                     text-gray-400">
+
+              My Bookings
+
+            </div>
+
+            <div
+              id="bookingCount"
+              class="text-3xl font-extrabold mt-2">
+
+              0
+
+            </div>
+
+            <div class="text-xs text-gray-400 mt-1">
+              Joined services
+            </div>
+
+          </div>
+
+
+          <div class="stat-card p-5">
+
+            <div
+              class="text-xs uppercase tracking-wider
+                     text-gray-400">
+
+              Active
+
+            </div>
+
+            <div
+              id="activeBookingCount"
+              class="text-3xl font-extrabold mt-2">
+
+              0
+
+            </div>
+
+            <div class="text-xs text-gray-400 mt-1">
+              Active services
+            </div>
+
+          </div>
+
+
+          <div class="stat-card p-5">
+
+            <div
+              class="text-xs uppercase tracking-wider
+                     text-gray-400">
+
+              My Reviews
+
+            </div>
+
+            <div
+              id="reviewCount"
+              class="text-3xl font-extrabold mt-2">
+
+              0
+
+            </div>
+
+            <div class="text-xs text-gray-400 mt-1">
+              Reviews submitted
+            </div>
+
+          </div>
+
+
+          <div class="stat-card p-5">
+
+            <div
+              class="text-xs uppercase tracking-wider
+                     text-gray-400">
+
+              Account
+
+            </div>
+
+            <div
+              class="text-3xl font-extrabold mt-2">
+
+              ✓
+
+            </div>
+
+            <div
+              id="accountRoleText"
+              class="text-xs text-gray-400 mt-1">
+
+              Student
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Quick Access -->
+
+        <div class="card p-5 md:p-6">
+
+          <div class="flex items-center justify-between mb-5">
+
+            <div>
+
+              <h3 class="font-bold text-lg">
+                Quick Access
+              </h3>
+
+              <p class="text-sm text-gray-400 mt-1">
+                Find what you need
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="grid grid-cols-2 md:grid-cols-3
+                   lg:grid-cols-5 gap-4">
+
+            <a
+              href="pg-finder.html"
+              class="service-card p-5">
+
+              <div class="service-icon mb-4">
+                🏠
+              </div>
+
+              <div class="font-bold">
+                Hostel / PG
+              </div>
+
+              <div class="text-xs text-gray-400 mt-1">
+                Find accommodation
+              </div>
+
+            </a>
+
+
+            <a
+              href="tiffin-finder.html"
+              class="service-card p-5">
+
+              <div class="service-icon mb-4">
+                🍱
+              </div>
+
+              <div class="font-bold">
+                Tiffin / Mess
+              </div>
+
+              <div class="text-xs text-gray-400 mt-1">
+                Find food services
+              </div>
+
+            </a>
+
+
+            <a
+              href="library-finder.html"
+              class="service-card p-5">
+
+              <div class="service-icon mb-4">
+                📚
+              </div>
+
+              <div class="font-bold">
+                Library
+              </div>
+
+              <div class="text-xs text-gray-400 mt-1">
+                Find study spaces
+              </div>
+
+            </a>
+
+
+            <a
+              href="cafe-finder.html"
+              class="service-card p-5">
+
+              <div class="service-icon mb-4">
+                ☕
+              </div>
+
+              <div class="font-bold">
+                Cafe
+              </div>
+
+              <div class="text-xs text-gray-400 mt-1">
+                Find cafes
+              </div>
+
+            </a>
+
+
+            <a
+              href="bookstore-finder.html"
+              class="service-card p-5">
+
+              <div class="service-icon mb-4">
+                📖
+              </div>
+
+              <div class="font-bold">
+                Book Store
+              </div>
+
+              <div class="text-xs text-gray-400 mt-1">
+                Find books
+              </div>
+
+            </a>
+
+          </div>
+
+        </div>
+
+
+        <!-- Recent bookings -->
+
+        <div class="card p-5 md:p-6 mt-6">
+
+          <div
+            class="flex items-center
+                   justify-between mb-5">
+
+            <div>
+
+              <h3 class="font-bold text-lg">
+                Recent Bookings
+              </h3>
+
+              <p class="text-sm text-gray-400 mt-1">
+                Your latest joined services
+              </p>
+
+            </div>
+
+            <button
+              data-section="bookings"
+              class="btn-secondary text-sm">
+
+              View All
+
+            </button>
+
+          </div>
+
+          <div id="overviewBookings">
+            <div class="empty-state">
+              Loading bookings...
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           PROFILE
+      ================================================== -->
+
+      <section
+        id="section-profile"
+        class="hidden">
+
+        <div class="mb-6">
+
+          <h2 class="text-2xl font-extrabold">
+            My Profile
+          </h2>
+
+          <p class="text-gray-400 mt-1">
+            Manage your student account information.
+          </p>
+
+        </div>
+
+
+        <div
+          class="grid grid-cols-1
+                 xl:grid-cols-3 gap-6">
+
+          <div class="card p-6">
+
+            <div class="flex items-center gap-4">
+
+              <div
+                id="profileAvatar"
+                class="w-16 h-16 rounded-2xl
+                       bg-[#0b1730] text-white
+                       flex items-center justify-center
+                       text-xl font-bold">
+
+                U
+
+              </div>
+
+              <div>
+
+                <h3
+                  id="profileName"
+                  class="text-xl font-bold">
+
+                  Loading...
+
+                </h3>
+
+                <p
+                  id="profileRole"
+                  class="text-sm text-gray-400">
+
+                  Student
+
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="card p-6 xl:col-span-2">
+
+            <div
+              class="grid grid-cols-1 md:grid-cols-2
+                     gap-5">
+
+              <div>
+
+                <label
+                  class="block text-sm font-semibold mb-2">
+
+                  Full Name
+
+                </label>
+
+                <input
+                  id="profileFullName"
+                  class="input"
+                  type="text">
+
+              </div>
+
+
+              <div>
+
+                <label
+                  class="block text-sm font-semibold mb-2">
+
+                  Phone
+
+                </label>
+
+                <input
+                  id="profilePhone"
+                  class="input"
+                  type="text">
+
+              </div>
+
+
+              <div>
+
+                <label
+                  class="block text-sm font-semibold mb-2">
+
+                  Email
+
+                </label>
+
+                <input
+                  id="profileEmail"
+                  class="input"
+                  type="email">
+
+              </div>
+
+
+              <div>
+
+                <label
+                  class="block text-sm font-semibold mb-2">
+
+                  Role
+
+                </label>
+
+                <input
+                  class="input"
+                  type="text"
+                  value="Student"
+                  disabled>
+
+              </div>
+
+
+              <div class="md:col-span-2">
+
+                <label
+                  class="block text-sm font-semibold mb-2">
+
+                  Address
+
+                </label>
+
+                <textarea
+                  id="profileAddress"
+                  class="input"
+                  rows="3"></textarea>
+
+              </div>
+
+            </div>
+
+
+            <div
+              class="flex justify-end mt-6">
+
+              <button
+                id="saveProfileBtn"
+                class="btn-primary">
+
+                Save Profile
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           SERVICES
+      ================================================== -->
+
+      <section
+        id="section-services"
+        class="hidden">
+
+        <div class="mb-6">
+
+          <h2 class="text-2xl font-extrabold">
+            Explore Services
+          </h2>
+
+          <p class="text-gray-400 mt-1">
+            Discover student services across India.
+          </p>
+
+        </div>
+
+
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2
+                 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+
+          <a
+            href="pg-finder.html"
+            class="service-card p-6">
+
+            <div class="service-icon mb-5">
+              🏠
+            </div>
+
+            <h3 class="font-bold text-lg">
+              Hostel / PG
+            </h3>
+
+            <p class="text-sm text-gray-400 mt-2">
+              Find verified accommodation options.
+            </p>
+
+            <div
+              class="mt-5 text-sm font-bold
+                     text-[#0b1730]">
+
+              Explore →
+
+            </div>
+
+          </a>
+
+
+          <a
+            href="tiffin-finder.html"
+            class="service-card p-6">
+
+            <div class="service-icon mb-5">
+              🍱
+            </div>
+
+            <h3 class="font-bold text-lg">
+              Tiffin / Mess
+            </h3>
+
+            <p class="text-sm text-gray-400 mt-2">
+              Discover food and mess services.
+            </p>
+
+            <div
+              class="mt-5 text-sm font-bold
+                     text-[#0b1730]">
+
+              Explore →
+
+            </div>
+
+          </a>
+
+
+          <a
+            href="library-finder.html"
+            class="service-card p-6">
+
+            <div class="service-icon mb-5">
+              📚
+            </div>
+
+            <h3 class="font-bold text-lg">
+              Library
+            </h3>
+
+            <p class="text-sm text-gray-400 mt-2">
+              Find peaceful study spaces.
+            </p>
+
+            <div
+              class="mt-5 text-sm font-bold
+                     text-[#0b1730]">
+
+              Explore →
+
+            </div>
+
+          </a>
+
+
+          <a
+            href="cafe-finder.html"
+            class="service-card p-6">
+
+            <div class="service-icon mb-5">
+              ☕
+            </div>
+
+            <h3 class="font-bold text-lg">
+              Cafe
+            </h3>
+
+            <p class="text-sm text-gray-400 mt-2">
+              Find cafes suitable for students.
+            </p>
+
+            <div
+              class="mt-5 text-sm font-bold
+                     text-[#0b1730]">
+
+              Explore →
+
+            </div>
+
+          </a>
+
+
+          <a
+            href="bookstore-finder.html"
+            class="service-card p-6">
+
+            <div class="service-icon mb-5">
+              📖
+            </div>
+
+            <h3 class="font-bold text-lg">
+              Book Store
+            </h3>
+
+            <p class="text-sm text-gray-400 mt-2">
+              Find books and study resources.
+            </p>
+
+            <div
+              class="mt-5 text-sm font-bold
+                     text-[#0b1730]">
+
+              Explore →
+
+            </div>
+
+          </a>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           BOOKINGS
+      ================================================== -->
+
+      <section
+        id="section-bookings"
+        class="hidden">
+
+        <div
+          class="flex flex-col md:flex-row
+                 md:items-end md:justify-between
+                 gap-4 mb-6">
+
+          <div>
+
+            <h2 class="text-2xl font-extrabold">
+              My Bookings
+            </h2>
+
+            <p class="text-gray-400 mt-1">
+              Your joined services and booking status.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="bookingsList"
+          class="space-y-4">
+
+          <div class="empty-state">
+            Loading bookings...
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           REVIEWS
+      ================================================== -->
+
+      <section
+        id="section-reviews"
+        class="hidden">
+
+        <div class="mb-6">
+
+          <h2 class="text-2xl font-extrabold">
+            My Reviews
+          </h2>
+
+          <p class="text-gray-400 mt-1">
+            Reviews you have submitted.
+          </p>
+
+        </div>
+
+
+        <div
+          id="reviewsList"
+          class="space-y-4">
+
+          <div class="empty-state">
+            Loading reviews...
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<!-- =====================================================
+     TOAST
+====================================================== -->
+
+<div
+  id="toast"
+  class="fixed bottom-5 right-5 z-[200]
+         hidden max-w-sm">
+
+  <div
+    id="toastBox"
+    class="bg-[#0b1730] text-white
+           px-5 py-4 rounded-2xl shadow-2xl">
+
+    <div
+      id="toastMessage"
+      class="text-sm font-semibold">
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+/* ========================================================
+   SUPABASE CONFIG
+======================================================== */
+
+const SUPABASE_URL =
+  "https://idurlccrarznnnqixxsd.supabase.co";
+
+/*
+  IMPORTANT:
+  Paste your existing SUPABASE ANON KEY here.
+  Do NOT use service_role key.
+*/
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+
+/* ========================================================
+   GLOBAL STATE
+======================================================== */
+
+let currentUser = null;
+let currentProfile = null;
+
+const sectionTitles = {
+  overview: "Overview",
+  profile: "My Profile",
+  services: "Explore Services",
+  bookings: "My Bookings",
+  reviews: "My Reviews"
+};
+
+
+/* ========================================================
+   HELPERS
+======================================================== */
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+
+function escapeHtml(value) {
+  if (value === null || value === undefined) return "";
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+function initials(name) {
+  const text = String(name || "Student").trim();
+
+  if (!text) return "S";
+
+  const parts = text.split(/\s+/);
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+
+  return (
+    parts[0][0] +
+    parts[parts.length - 1][0]
+  ).toUpperCase();
+}
+
+
+function formatDate(dateValue) {
+  if (!dateValue) return "—";
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }
+  );
+}
+
+
+function formatStatus(status) {
+  const value =
+    String(status || "pending")
+      .toLowerCase()
+      .trim();
+
+  const labels = {
+    pending: "Pending",
+    active: "Active",
+    rejected: "Rejected",
+    cancelled: "Cancelled"
+  };
+
+  return labels[value] || value;
+}
+
+
+function statusBadge(status) {
+  const value =
+    String(status || "pending")
+      .toLowerCase()
+      .trim();
+
+  const allowed = [
+    "pending",
+    "active",
+    "rejected",
+    "cancelled"
+  ];
+
+  const safeStatus =
+    allowed.includes(value)
+      ? value
+      : "pending";
+
+  return `
+    <span class="badge badge-${safeStatus}">
+      ${escapeHtml(formatStatus(value))}
+    </span>
+  `;
+}
+
+
+function showToast(message) {
+  $("toastMessage").textContent = message;
+
+  $("toast").classList.remove("hidden");
+
+  clearTimeout(window.toastTimer);
+
+  window.toastTimer = setTimeout(() => {
+    $("toast").classList.add("hidden");
+  }, 3000);
+}
+
+
+/* ========================================================
+   NAVIGATION
+======================================================== */
+
+function showSection(section) {
+
+  Object.keys(sectionTitles).forEach(key => {
+
+    const element =
+      $("section-" + key);
+
+    if (element) {
+      element.classList.toggle(
+        "hidden",
+        key !== section
+      );
+    }
+
+  });
+
+
+  document
+    .querySelectorAll("[data-section]")
+    .forEach(button => {
+
+      button.classList.toggle(
+        "active",
+        button.dataset.section === section
+      );
+
+    });
+
+
+  $("pageTitle").textContent =
+    sectionTitles[section] || "Dashboard";
+
+
+  closeMobileSidebar();
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+
+document
+  .querySelectorAll("[data-section]")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const section =
+          button.dataset.section;
+
+        if (
+          section &&
+          sectionTitles[section]
+        ) {
+          showSection(section);
+        }
+
+      }
+    );
+
+  });
+
+
+/* ========================================================
+   MOBILE SIDEBAR
+======================================================== */
+
+function openMobileSidebar() {
+  $("sidebar").classList.add("open");
+  $("sidebarOverlay").classList.remove("hidden");
+}
+
+
+function closeMobileSidebar() {
+  $("sidebar").classList.remove("open");
+  $("sidebarOverlay").classList.add("hidden");
+}
+
+
+$("mobileMenuBtn")
+  .addEventListener(
+    "click",
+    openMobileSidebar
+  );
+
+
+$("sidebarOverlay")
+  .addEventListener(
+    "click",
+    closeMobileSidebar
+  );
+
+
+/* ========================================================
+   LOAD AUTH + PROFILE
+======================================================== */
+
+async function loadAccount() {
+
+  const {
+    data: {
+      session
+    },
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  if (sessionError) {
+    console.error(sessionError);
+  }
+
+
+  if (!session || !session.user) {
+
+    window.location.href =
+      "login.html";
+
+    return false;
+  }
+
+
+  currentUser =
+    session.user;
+
+
+  const {
+    data: profile,
+    error
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "id, full_name, phone, email, address, role"
+      )
+      .eq(
+        "id",
+        currentUser.id
+      )
+      .maybeSingle();
+
+
+  if (error) {
+
+    console.error(
+      "Profile error:",
+      error
+    );
+
+    showToast(
+      "Unable to load your profile."
+    );
+
+    return false;
+  }
+
+
+  /*
+    SECURITY:
+    Never assume a missing role.
+  */
+
+  if (!profile || !profile.role) {
+
+    document.body.innerHTML = `
+      <div class="min-h-screen flex items-center
+                  justify-center bg-[#f5f7fb] p-6">
+
+        <div class="card max-w-lg w-full p-8 text-center">
+
+          <div class="text-4xl mb-4">
+            ⚠️
+          </div>
+
+          <h1 class="text-xl font-extrabold">
+            Profile Role Not Found
+          </h1>
+
+          <p class="text-gray-500 mt-3">
+            Your account role could not be verified.
+            Please contact the administrator.
+          </p>
+
+          <button
+            onclick="logout()"
+            class="btn-primary mt-6">
+
+            Logout
+
+          </button>
+
+        </div>
+
+      </div>
+    `;
+
+    return false;
+  }
+
+
+  const role =
+    String(profile.role)
+      .toLowerCase()
+      .trim();
+
+
+  /*
+    This file is STUDENT dashboard only.
+    Redirect other roles.
+  */
+
+  if (role === "admin") {
+
+    window.location.href =
+      "admin-dashboard.html";
+
+    return false;
+  }
+
+
+  if (role === "owner") {
+
+    window.location.href =
+      "owner-dashboard.html";
+
+    return false;
+  }
+
+
+  if (role !== "student") {
+
+    document.body.innerHTML = `
+      <div class="min-h-screen flex items-center
+                  justify-center bg-[#f5f7fb] p-6">
+
+        <div class="card max-w-lg w-full p-8 text-center">
+
+          <div class="text-4xl mb-4">
+            🔐
+          </div>
+
+          <h1 class="text-xl font-extrabold">
+            Access Restricted
+          </h1>
+
+          <p class="text-gray-500 mt-3">
+            Your account does not have student access.
+          </p>
+
+        </div>
+
+      </div>
+    `;
+
+    return false;
+  }
+
+
+  currentProfile =
+    profile;
+
+
+  renderProfile();
+
+
+  return true;
+}
+
+
+/* ========================================================
+   RENDER PROFILE
+======================================================== */
+
+function renderProfile() {
+
+  const name =
+    currentProfile.full_name ||
+    currentUser.email ||
+    "Student";
+
+
+  $("topUserName").textContent =
+    name;
+
+
+  $("topUserRole").textContent =
+    "Student";
+
+
+  $("accountRoleText").textContent =
+    "Student account";
+
+
+  $("welcomeTitle").textContent =
+    "Welcome back, " + name + "!";
+
+
+  const avatar =
+    initials(name);
+
+
+  $("userAvatar").textContent =
+    avatar;
+
+
+  $("profileAvatar").textContent =
+    avatar;
+
+
+  $("profileName").textContent =
+    name;
+
+
+  $("profileRole").textContent =
+    "Student";
+
+
+  $("profileFullName").value =
+    currentProfile.full_name || "";
+
+
+  $("profilePhone").value =
+    currentProfile.phone || "";
+
+
+  $("profileEmail").value =
+    currentProfile.email ||
+    currentUser.email ||
+    "";
+
+
+  $("profileAddress").value =
+    currentProfile.address || "";
+}
+
+
+/* ========================================================
+   BOOKINGS
+======================================================== */
+
+async function loadBookings() {
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("student_bookings")
+      .select(
+        "id, student_id, property_id, property_table, property_name, category, status, joined_date, created_at"
+      )
+      .eq(
+        "student_id",
+        currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (error) {
+
+    console.error(
+      "Bookings error:",
+      error
+    );
+
+    $("bookingsList").innerHTML = `
+      <div class="card p-8 text-center">
+        <div class="text-3xl mb-3">⚠️</div>
+        <div class="font-bold">
+          Unable to load bookings
+        </div>
+        <div class="text-sm text-gray-400 mt-2">
+          Please try again later.
+        </div>
+      </div>
+    `;
+
+    $("overviewBookings").innerHTML = `
+      <div class="empty-state">
+        Unable to load bookings.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  const bookings =
+    data || [];
+
+
+  $("bookingCount").textContent =
+    bookings.length;
+
+
+  $("activeBookingCount").textContent =
+    bookings.filter(
+      booking =>
+        String(booking.status || "")
+          .toLowerCase() === "active"
+    ).length;
+
+
+  renderBookings(
+    bookings,
+    "bookingsList"
+  );
+
+
+  renderBookings(
+    bookings.slice(0, 3),
+    "overviewBookings"
+  );
+}
+
+
+function renderBookings(
+  bookings,
+  targetId
+) {
+
+  const target =
+    $(targetId);
+
+
+  if (!bookings.length) {
+
+    target.innerHTML = `
+      <div class="empty-state">
+
+        <div class="text-4xl mb-4">
+          📋
+        </div>
+
+        <div class="font-bold text-gray-700">
+          No bookings yet
+        </div>
+
+        <p class="text-sm mt-2">
+          Explore services and join one to see it here.
+        </p>
+
+      </div>
+    `;
+
+    return;
+  }
+
+
+  target.innerHTML =
+    bookings.map(
+      booking => {
+
+        const status =
+          String(
+            booking.status || "pending"
+          ).toLowerCase();
+
+
+        return `
+          <div class="card p-5">
+
+            <div
+              class="flex flex-col md:flex-row
+                     md:items-center
+                     md:justify-between gap-4">
+
+              <div class="flex items-start gap-4">
+
+                <div
+                  class="w-12 h-12 rounded-xl
+                         bg-[#eef2f7]
+                         flex items-center
+                         justify-center text-xl">
+
+                  ${getCategoryIcon(
+                    booking.category
+                  )}
+
+                </div>
+
+                <div>
+
+                  <h3 class="font-bold text-lg">
+                    ${escapeHtml(
+                      booking.property_name
+                    )}
+                  </h3>
+
+                  <div
+                    class="text-sm text-gray-400 mt-1">
+
+                    ${escapeHtml(
+                      booking.category || "Service"
+                    )}
+
+                    ${
+                      booking.property_table
+                        ? `
+                          <span class="mx-1">
+                            •
+                          </span>
+                          ${escapeHtml(
+                            booking.property_table
+                          )}
+                        `
+                        : ""
+                    }
+
+                  </div>
+
+                  <div
+                    class="text-xs text-gray-400 mt-2">
+
+                    Joined:
+                    ${formatDate(
+                      booking.joined_date ||
+                      booking.created_at
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <div class="flex items-center gap-3">
+
+                ${statusBadge(status)}
+
+              </div>
+
+            </div>
+
+          </div>
+        `;
+      }
+    ).join("");
+}
+
+
+/* ========================================================
+   CATEGORY ICON
+======================================================== */
+
+function getCategoryIcon(category) {
+
+  const value =
+    String(category || "")
+      .toLowerCase();
+
+
+  if (
+    value.includes("hostel") ||
+    value.includes("pg")
+  ) {
+    return "🏠";
+  }
+
+
+  if (
+    value.includes("tiffin") ||
+    value.includes("mess")
+  ) {
+    return "🍱";
+  }
+
+
+  if (
+    value.includes("library")
+  ) {
+    return "📚";
+  }
+
+
+  if (
+    value.includes("cafe")
+  ) {
+    return "☕";
+  }
+
+
+  if (
+    value.includes("book")
+  ) {
+    return "📖";
+  }
+
+
+  return "▣";
+}
+
+
+/* ========================================================
+   REVIEWS
+======================================================== */
+
+async function loadReviews() {
+
+  /*
+    Current DB schema:
+    id
+    property_id
+    user_id
+    user_name
+    rating
+    review_text
+    status
+    created_at
+    student_id
+  */
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("reviews")
+      .select(
+        "id, property_id, user_id, user_name, rating, review_text, status, created_at, student_id"
+      )
+      .eq(
+        "student_id",
+        currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (error) {
+
+    console.error(
+      "Reviews error:",
+      error
+    );
+
+    $("reviewsList").innerHTML = `
+      <div class="card p-8 text-center">
+        <div class="text-3xl mb-3">⚠️</div>
+        <div class="font-bold">
+          Unable to load reviews
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  const reviews =
+    data || [];
+
+
+  $("reviewCount").textContent =
+    reviews.length;
+
+
+  renderReviews(
+    reviews
+  );
+}
+
+
+function renderReviews(reviews) {
+
+  if (!reviews.length) {
+
+    $("reviewsList").innerHTML = `
+      <div class="card">
+        <div class="empty-state">
+
+          <div class="text-4xl mb-4">
+            ★
+          </div>
+
+          <div class="font-bold text-gray-700">
+            No reviews yet
+          </div>
+
+          <p class="text-sm mt-2">
+            Reviews you submit will appear here.
+          </p>
+
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  $("reviewsList").innerHTML =
+    reviews.map(
+      review => {
+
+        const rating =
+          Number(review.rating || 0);
+
+
+        const stars =
+          "★".repeat(
+            Math.max(
+              0,
+              Math.min(
+                5,
+                rating
+              )
+            )
+          ) +
+          "☆".repeat(
+            Math.max(
+              0,
+              5 - rating
+            )
+          );
+
+
+        return `
+          <div class="card p-5">
+
+            <div
+              class="flex flex-col md:flex-row
+                     md:items-start
+                     md:justify-between gap-4">
+
+              <div>
+
+                <div
+                  class="rating-stars
+                         text-[#d89b00]
+                         text-lg">
+
+                  ${stars}
+
+                </div>
+
+                <div
+                  class="text-xs text-gray-400 mt-2">
+
+                  Property ID:
+                  ${escapeHtml(
+                    review.property_id
+                  )}
+
+                </div>
+
+              </div>
+
+
+              <div class="text-right">
+
+                <div class="text-xs text-gray-400">
+                  ${formatDate(
+                    review.created_at
+                  )}
+                </div>
+
+                ${
+                  review.status
+                    ? `
+                      <div class="mt-2">
+                        ${statusBadge(
+                          review.status
+                        )}
+                      </div>
+                    `
+                    : ""
+                }
+
+              </div>
+
+            </div>
+
+
+            <div
+              class="mt-4
+                     text-gray-700
+                     leading-7">
+
+              ${escapeHtml(
+                review.review_text
+              )}
+
+            </div>
+
+          </div>
+        `;
+      }
+    ).join("");
+}
+
+
+/* ========================================================
+   SAVE PROFILE
+======================================================== */
+
+$("saveProfileBtn")
+  .addEventListener(
+    "click",
+    async () => {
+
+      if (!currentUser) return;
+
+
+      const fullName =
+        $("profileFullName")
+          .value
+          .trim();
+
+
+      const phone =
+        $("profilePhone")
+          .value
+          .trim();
+
+
+      const address =
+        $("profileAddress")
+          .value
+          .trim();
+
+
+      if (!fullName) {
+
+        showToast(
+          "Please enter your name."
+        );
+
+        return;
+      }
+
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("profiles")
+          .update({
+            full_name: fullName,
+            phone: phone || null,
+            address: address || null
+          })
+          .eq(
+            "id",
+            currentUser.id
+          )
+          .select(
+            "id, full_name, phone, email, address, role"
+          )
+          .single();
+
+
+      if (error) {
+
+        console.error(
+          "Profile update error:",
+          error
+        );
+
+        showToast(
+          "Profile could not be updated."
+        );
+
+        return;
+      }
+
+
+      currentProfile =
+        data;
+
+
+      renderProfile();
+
+
+      showToast(
+        "Profile updated successfully."
+      );
+    }
+  );
+
+
+/* ========================================================
+   LOGOUT
+======================================================== */
+
+async function logout() {
+
+  await supabaseClient.auth.signOut();
+
+  window.location.href =
+    "login.html";
+}
+
+
+$("logoutBtn")
+  .addEventListener(
+    "click",
+    logout
+  );
+
+
+/* ========================================================
+   REALTIME
+======================================================== */
+
+function subscribeRealtime() {
+
+  if (!currentUser) return;
+
+
+  supabaseClient
+    .channel(
+      "student-dashboard-" +
+      currentUser.id
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "student_bookings",
+        filter:
+          "student_id=eq." +
+          currentUser.id
+      },
+      () => {
+
+        loadBookings();
+
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "reviews",
+        filter:
+          "student_id=eq." +
+          currentUser.id
+      },
+      () => {
+
+        loadReviews();
+
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "profiles",
+        filter:
+          "id=eq." +
+          currentUser.id
+      },
+      () => {
+
+        loadAccount()
+          .then(
+            ok => {
+
+              if (ok) {
+                loadBookings();
+                loadReviews();
+              }
+
+            }
+          );
+
+      }
+    )
+    .subscribe();
+}
+
+
+/* ========================================================
+   INITIALIZE
+======================================================== */
+
+async function init() {
+
+  const accountLoaded =
+    await loadAccount();
+
+
+  if (!accountLoaded) {
+    return;
+  }
+
+
+  await Promise.all([
+    loadBookings(),
+    loadReviews()
+  ]);
+
+
+  subscribeRealtime();
+}
+
+
+init();
+
+</script>
+
+</body>
+</html>
