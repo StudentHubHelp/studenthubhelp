@@ -4,49 +4,75 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Dashboard | StudentHubHelp</title>
+  <title>StudentHubHelp — User Dashboard</title>
+  <meta name="description"
+        content="StudentHubHelp professional student and owner dashboard.">
+
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root{
       --navy:#071426;
-      --navy-2:#0c1d34;
-      --blue:#2563eb;
-      --blue-soft:#eff6ff;
+      --navy2:#0d2340;
+      --navy3:#132f52;
+
       --gold:#d6a84f;
-      --gold-soft:#fff8e8;
-      --green:#16a34a;
-      --green-soft:#ecfdf3;
-      --orange:#ea580c;
-      --orange-soft:#fff7ed;
-      --red:#dc2626;
-      --red-soft:#fef2f2;
-      --bg:#f5f7fb;
+      --gold2:#f1ce78;
+
+      --bg:#f4f7fb;
       --card:#ffffff;
-      --text:#172033;
-      --muted:#697386;
-      --border:#e7ebf2;
-      --shadow:0 12px 35px rgba(15,23,42,.07);
-      --radius:20px;
+      --text:#152238;
+      --muted:#718096;
+
+      --border:#e4eaf1;
+
+      --green:#139866;
+      --green-bg:#e8f8f0;
+
+      --orange:#b7791f;
+      --orange-bg:#fff6df;
+
+      --red:#c53b3b;
+      --red-bg:#ffeded;
+
+      --blue:#2563a8;
+      --blue-bg:#edf5ff;
+
+      --shadow:0 16px 45px rgba(7,20,38,.08);
+      --shadow2:0 8px 25px rgba(7,20,38,.06);
+
+      --radius:22px;
     }
 
     *{
       box-sizing:border-box;
-      margin:0;
-      padding:0;
+    }
+
+    html{
+      scroll-behavior:smooth;
     }
 
     body{
-      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      margin:0;
       background:var(--bg);
       color:var(--text);
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
     }
 
     button,
     input,
-    textarea,
-    select{
+    select,
+    textarea{
       font:inherit;
     }
 
@@ -55,227 +81,332 @@
     }
 
     a{
-      text-decoration:none;
       color:inherit;
+      text-decoration:none;
     }
 
-    /* =========================
+    .hidden{
+      display:none !important;
+    }
+
+    /* =========================================================
        TOPBAR
-    ========================== */
+    ========================================================= */
 
     .topbar{
-      height:72px;
-      background:var(--navy);
-      color:#fff;
+      height:76px;
+      position:sticky;
+      top:0;
+      z-index:100;
+
       display:flex;
       align-items:center;
       justify-content:space-between;
+
       padding:0 28px;
-      position:fixed;
-      top:0;
-      left:0;
-      right:0;
-      z-index:1000;
-      border-bottom:1px solid rgba(255,255,255,.08);
+
+      color:#fff;
+
+      background:
+        radial-gradient(
+          circle at 90% 10%,
+          rgba(214,168,79,.18),
+          transparent 26%
+        ),
+        linear-gradient(
+          135deg,
+          var(--navy),
+          var(--navy2)
+        );
+
+      box-shadow:0 8px 30px rgba(0,0,0,.18);
     }
 
     .brand{
       display:flex;
       align-items:center;
-      gap:12px;
+      gap:13px;
+      min-width:0;
     }
 
     .brand img{
-      width:42px;
-      height:42px;
-      border-radius:12px;
-      object-fit:cover;
+      width:45px;
+      height:45px;
+      object-fit:contain;
+      border-radius:13px;
       background:#fff;
+      padding:2px;
+      flex:none;
     }
 
     .brand-title{
       font-size:18px;
-      font-weight:800;
+      font-weight:900;
+      letter-spacing:.2px;
+      line-height:1.1;
     }
 
-    .brand-sub{
+    .brand-subtitle{
+      margin-top:4px;
+      color:#aebed1;
       font-size:11px;
-      color:#9eacbf;
-      margin-top:2px;
+      font-weight:600;
     }
 
     .top-actions{
       display:flex;
       align-items:center;
-      gap:14px;
+      gap:12px;
     }
 
-    .live-pill{
+    .live-sync{
       display:flex;
       align-items:center;
-      gap:7px;
-      padding:7px 11px;
-      border:1px solid rgba(255,255,255,.1);
+      gap:8px;
+
+      padding:8px 12px;
+
+      border:1px solid rgba(255,255,255,.12);
       border-radius:999px;
-      color:#b8c4d5;
+
+      background:rgba(255,255,255,.045);
+
+      color:#d8e3ef;
       font-size:11px;
-      font-weight:700;
+      font-weight:800;
     }
 
     .live-dot{
-      width:7px;
-      height:7px;
+      width:8px;
+      height:8px;
       border-radius:50%;
-      background:#22c55e;
-      box-shadow:0 0 0 4px rgba(34,197,94,.12);
+      background:#18c77b;
+      box-shadow:0 0 0 4px rgba(24,199,123,.12);
     }
 
     .user-chip{
       display:flex;
       align-items:center;
-      gap:9px;
-      padding:7px 11px 7px 7px;
+      gap:10px;
+
+      padding:7px 12px 7px 7px;
+
+      border:1px solid rgba(255,255,255,.13);
       border-radius:999px;
-      background:rgba(255,255,255,.07);
+
+      background:rgba(255,255,255,.06);
     }
 
     .avatar{
-      width:34px;
-      height:34px;
-      border-radius:50%;
+      width:36px;
+      height:36px;
       display:grid;
       place-items:center;
-      background:linear-gradient(135deg,#2563eb,#7c3aed);
-      color:#fff;
-      font-weight:800;
-      font-size:13px;
-    }
 
-    .user-chip-text{
-      line-height:1.2;
+      border-radius:50%;
+
+      background:linear-gradient(
+        135deg,
+        var(--gold2),
+        var(--gold)
+      );
+
+      color:var(--navy);
+      font-size:12px;
+      font-weight:950;
     }
 
     .user-chip-name{
       font-size:12px;
-      font-weight:800;
+      font-weight:900;
+      line-height:1.1;
     }
 
     .user-chip-role{
-      font-size:10px;
-      color:#9eacbf;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-    }
-
-    .menu-btn{
-      display:none;
-      width:40px;
-      height:40px;
-      border:0;
-      border-radius:12px;
-      background:rgba(255,255,255,.08);
-      color:#fff;
-      font-size:20px;
-    }
-
-    /* =========================
-       SIDEBAR
-    ========================== */
-
-    .sidebar{
-      position:fixed;
-      top:72px;
-      bottom:0;
-      left:0;
-      width:250px;
-      background:#fff;
-      border-right:1px solid var(--border);
-      padding:22px 15px;
-      overflow-y:auto;
-      z-index:900;
-    }
-
-    .sidebar-label{
-      padding:0 11px;
-      font-size:10px;
+      margin-top:3px;
+      color:#b7c7d8;
+      font-size:9px;
       font-weight:800;
-      color:#9aa4b2;
-      text-transform:uppercase;
-      letter-spacing:.09em;
-      margin:12px 0 8px;
+      letter-spacing:.7px;
     }
 
-    .side-link{
-      width:100%;
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:11px 12px;
-      margin-bottom:4px;
-      border:0;
-      border-radius:13px;
-      background:transparent;
-      color:#687386;
-      font-weight:700;
-      font-size:13px;
-      text-align:left;
+    .logout-btn{
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+
+      padding:10px 14px;
+      border-radius:12px;
+
+      font-size:12px;
+      font-weight:800;
+
       transition:.2s;
     }
 
-    .side-link:hover{
-      background:#f6f8fc;
-      color:var(--text);
+    .logout-btn:hover{
+      background:rgba(255,255,255,.12);
     }
 
-    .side-link.active{
-      background:var(--blue-soft);
-      color:var(--blue);
+    /* =========================================================
+       APP LAYOUT
+    ========================================================= */
+
+    .app-layout{
+      max-width:1500px;
+      margin:auto;
+
+      display:grid;
+      grid-template-columns:260px minmax(0,1fr);
+
+      min-height:calc(100vh - 76px);
     }
 
-    .side-icon{
-      width:24px;
-      text-align:center;
-      font-size:17px;
+    .sidebar{
+      position:sticky;
+      top:76px;
+
+      height:calc(100vh - 76px);
+
+      overflow-y:auto;
+
+      padding:22px 14px;
+
+      background:#fff;
+      border-right:1px solid var(--border);
     }
 
-    .owner-section{
-      display:none;
+    .nav-label{
+      padding:10px 12px 8px;
+
+      color:#9aa7b7;
+      font-size:10px;
+      font-weight:900;
+
+      letter-spacing:1.2px;
+      text-transform:uppercase;
     }
 
-    body.owner-mode .owner-section{
-      display:block;
+    .nav-group{
+      margin-bottom:20px;
     }
 
-    body.student-mode .student-only{
-      display:block;
+    .nav-btn{
+      width:100%;
+
+      display:flex;
+      align-items:center;
+      gap:12px;
+
+      border:0;
+      background:transparent;
+
+      padding:12px 13px;
+      margin:3px 0;
+
+      border-radius:13px;
+
+      color:#5b697d;
+      text-align:left;
+
+      font-size:12px;
+      font-weight:800;
+
+      transition:.2s;
     }
 
-    .logout-link{
-      color:#dc2626;
+    .nav-btn .nav-icon{
+      width:28px;
+      height:28px;
+
+      display:grid;
+      place-items:center;
+
+      border-radius:9px;
+
+      background:#f2f5f8;
+
+      font-size:14px;
     }
 
-    /* =========================
+    .nav-btn:hover{
+      background:#f3f6fa;
+      color:var(--navy);
+    }
+
+    .nav-btn.active{
+      color:var(--navy);
+
+      background:
+        linear-gradient(
+          90deg,
+          #eef4fb,
+          #f7f9fc
+        );
+
+      box-shadow:
+        inset 3px 0 var(--gold);
+    }
+
+    .nav-btn.active .nav-icon{
+      background:var(--navy);
+      color:#fff;
+    }
+
+    .sidebar-card{
+      margin:25px 7px 0;
+
+      padding:17px;
+
+      border-radius:18px;
+
+      background:
+        radial-gradient(
+          circle at 90% 10%,
+          rgba(214,168,79,.17),
+          transparent 28%
+        ),
+        linear-gradient(
+          145deg,
+          #091a30,
+          #15375e
+        );
+
+      color:#fff;
+    }
+
+    .sidebar-card-title{
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .sidebar-card p{
+      margin:7px 0 0;
+
+      color:#c3d0df;
+      font-size:11px;
+      line-height:1.6;
+    }
+
+    /* =========================================================
        MAIN
-    ========================== */
+    ========================================================= */
 
-    .main{
-      margin-left:250px;
-      padding:100px 30px 45px;
-      min-height:100vh;
+    main{
+      min-width:0;
+      padding:30px;
     }
 
     .page{
       display:none;
-      max-width:1450px;
-      margin:auto;
+      animation:pageIn .25s ease;
     }
 
     .page.active{
       display:block;
-      animation:fadeIn .22s ease;
     }
 
-    @keyframes fadeIn{
+    @keyframes pageIn{
       from{
         opacity:0;
         transform:translateY(5px);
@@ -286,819 +417,1778 @@
       }
     }
 
-    .page-head{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:20px;
-      margin-bottom:25px;
-    }
-
-    .eyebrow{
-      color:var(--blue);
-      font-size:11px;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.1em;
-      margin-bottom:7px;
-    }
-
-    .page-title{
-      font-size:30px;
-      line-height:1.15;
-      font-weight:850;
-      letter-spacing:-.03em;
-    }
-
-    .page-description{
-      color:var(--muted);
-      font-size:13px;
-      margin-top:7px;
-    }
-
-    /* =========================
+    /* =========================================================
        HERO
-    ========================== */
+    ========================================================= */
 
-    .dashboard-hero{
-      background:
-        radial-gradient(circle at 85% 15%,rgba(59,130,246,.28),transparent 30%),
-        linear-gradient(135deg,#08172b,#102744);
-      color:#fff;
-      border-radius:26px;
-      padding:30px;
+    .hero{
       position:relative;
       overflow:hidden;
-      margin-bottom:22px;
-      box-shadow:0 18px 45px rgba(7,20,38,.14);
+
+      padding:32px;
+
+      border-radius:28px;
+
+      color:#fff;
+
+      background:
+        radial-gradient(
+          circle at 85% 20%,
+          rgba(214,168,79,.25),
+          transparent 28%
+        ),
+        radial-gradient(
+          circle at 100% 100%,
+          rgba(41,113,185,.18),
+          transparent 34%
+        ),
+        linear-gradient(
+          135deg,
+          #08182d,
+          #123a63
+        );
+
+      box-shadow:var(--shadow);
     }
 
-    .dashboard-hero:after{
+    .hero::after{
       content:"";
+
       position:absolute;
-      width:250px;
-      height:250px;
+
+      right:-80px;
+      bottom:-100px;
+
+      width:260px;
+      height:260px;
+
       border:1px solid rgba(255,255,255,.08);
       border-radius:50%;
-      right:-90px;
-      bottom:-130px;
     }
 
-    .hero-kicker{
-      color:#91b7ff;
-      font-size:11px;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.1em;
-      margin-bottom:10px;
+    .hero-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+
+      padding:7px 11px;
+
+      border:1px solid rgba(241,206,120,.28);
+      border-radius:999px;
+
+      background:rgba(214,168,79,.12);
+
+      color:var(--gold2);
+
+      font-size:9px;
+      font-weight:900;
+
+      letter-spacing:1px;
     }
 
-    .hero-title{
-      font-size:32px;
-      line-height:1.15;
-      max-width:650px;
-      font-weight:850;
+    .hero h1{
+      position:relative;
+      z-index:2;
+
+      margin:15px 0 8px;
+
+      font-size:clamp(27px,4vw,42px);
+      line-height:1.05;
+      font-weight:950;
     }
 
-    .hero-text{
-      color:#b8c5d7;
+    .hero p{
+      position:relative;
+      z-index:2;
+
+      max-width:720px;
+
+      margin:0;
+
+      color:#c9d7e7;
+
       font-size:13px;
-      margin-top:10px;
-      max-width:680px;
       line-height:1.7;
     }
 
-    /* =========================
-       STATS
-    ========================== */
+    .hero-role{
+      margin-top:20px;
 
-    .stats{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
+      display:inline-flex;
+
+      padding:8px 12px;
+
+      border-radius:10px;
+
+      background:rgba(255,255,255,.07);
+
+      color:#e8eef5;
+
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.8px;
+    }
+
+    /* =========================================================
+       SECTION HEADER
+    ========================================================= */
+
+    .section-head{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
       gap:15px;
-      margin-bottom:24px;
+
+      margin:28px 0 15px;
+    }
+
+    .section-title{
+      margin:0;
+
+      font-size:22px;
+      font-weight:950;
+
+      color:var(--navy);
+    }
+
+    .section-subtitle{
+      margin:5px 0 0;
+
+      color:var(--muted);
+
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    /* =========================================================
+       STATS
+    ========================================================= */
+
+    .stats-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:15px;
+
+      margin-top:22px;
     }
 
     .stat-card{
+      position:relative;
+      overflow:hidden;
+
+      padding:19px;
+
       background:#fff;
+
       border:1px solid var(--border);
-      border-radius:18px;
-      padding:20px;
+      border-radius:19px;
+
+      box-shadow:var(--shadow2);
+
+      transition:.2s;
+    }
+
+    .stat-card:hover{
+      transform:translateY(-2px);
       box-shadow:var(--shadow);
     }
 
     .stat-top{
       display:flex;
-      justify-content:space-between;
       align-items:center;
+      justify-content:space-between;
     }
 
     .stat-icon{
-      width:40px;
-      height:40px;
+      width:38px;
+      height:38px;
+
       display:grid;
       place-items:center;
+
       border-radius:12px;
-      background:var(--blue-soft);
-      font-size:19px;
+
+      background:#edf3fa;
+
+      font-size:17px;
     }
 
     .stat-label{
-      color:var(--muted);
-      font-size:11px;
-      font-weight:700;
-      margin-top:15px;
+      color:#7d8998;
+
+      font-size:9px;
+      font-weight:900;
+
+      letter-spacing:.7px;
+      text-transform:uppercase;
     }
 
     .stat-value{
+      margin-top:11px;
+
+      color:var(--navy);
+
       font-size:27px;
-      font-weight:850;
-      margin-top:3px;
+      line-height:1;
+      font-weight:950;
     }
 
-    /* =========================
-       GRID / CARDS
-    ========================== */
+    .stat-foot{
+      margin-top:8px;
 
-    .grid-2{
-      display:grid;
-      grid-template-columns:1.35fr .85fr;
-      gap:20px;
-    }
+      color:#8c98a7;
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:22px;
-      margin-bottom:20px;
-    }
-
-    .card-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:15px;
-      margin-bottom:18px;
-    }
-
-    .card-title{
-      font-size:16px;
-      font-weight:850;
-    }
-
-    .card-subtitle{
-      color:var(--muted);
-      font-size:11px;
-      margin-top:4px;
-    }
-
-    .view-link{
-      color:var(--blue);
-      font-size:11px;
-      font-weight:800;
-    }
-
-    /* =========================
-       PROFILE
-    ========================== */
-
-    .profile-summary{
-      display:flex;
-      align-items:center;
-      gap:15px;
-      padding:5px 0;
-    }
-
-    .big-avatar{
-      width:58px;
-      height:58px;
-      border-radius:18px;
-      display:grid;
-      place-items:center;
-      background:linear-gradient(135deg,#2563eb,#7c3aed);
-      color:#fff;
-      font-size:21px;
-      font-weight:850;
-    }
-
-    .profile-name{
-      font-size:17px;
-      font-weight:850;
-    }
-
-    .profile-email{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:4px;
-    }
-
-    .info-list{
-      margin-top:18px;
-      display:grid;
-      gap:10px;
-    }
-
-    .info-row{
-      display:flex;
-      justify-content:space-between;
-      gap:15px;
-      padding:10px 0;
-      border-bottom:1px solid #f0f2f6;
-      font-size:12px;
-    }
-
-    .info-row:last-child{
-      border-bottom:0;
-    }
-
-    .info-label{
-      color:var(--muted);
-    }
-
-    .info-value{
-      font-weight:700;
-      text-align:right;
-      max-width:65%;
-    }
-
-    /* =========================
-       QUICK ACCESS
-    ========================== */
-
-    .quick-grid{
-      display:grid;
-      grid-template-columns:repeat(5,1fr);
-      gap:12px;
-    }
-
-    .quick-card{
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:17px 13px;
-      background:#fff;
-      transition:.2s;
-    }
-
-    .quick-card:hover{
-      transform:translateY(-3px);
-      box-shadow:0 12px 25px rgba(15,23,42,.08);
-      border-color:#cbd5e1;
-    }
-
-    .quick-icon{
-      font-size:23px;
-    }
-
-    .quick-name{
-      margin-top:10px;
-      font-size:12px;
-      font-weight:800;
-    }
-
-    .quick-desc{
-      color:var(--muted);
       font-size:10px;
-      margin-top:4px;
     }
 
-    /* =========================
-       JOINED PROPERTY
-    ========================== */
-
-    .joined-box{
-      border:1px dashed #cbd5e1;
-      background:#f8fafc;
-      border-radius:16px;
-      padding:20px;
-    }
-
-    .joined-empty-icon{
-      font-size:30px;
-      margin-bottom:10px;
-    }
-
-    .joined-empty-title{
-      font-size:14px;
-      font-weight:850;
-    }
-
-    .joined-empty-text{
-      color:var(--muted);
-      font-size:11px;
-      line-height:1.6;
-      margin-top:5px;
-    }
-
-    .schema-note{
-      display:inline-block;
-      margin-top:12px;
-      padding:6px 9px;
-      border-radius:8px;
-      background:#eef2ff;
-      color:#4f46e5;
-      font-size:10px;
-      font-weight:800;
-    }
-
-    /* =========================
-       SERVICES
-    ========================== */
+    /* =========================================================
+       SERVICE CARDS
+    ========================================================= */
 
     .service-grid{
       display:grid;
-      grid-template-columns:repeat(5,1fr);
-      gap:16px;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:14px;
     }
 
     .service-card{
+      padding:19px;
+
       background:#fff;
+
       border:1px solid var(--border);
-      border-radius:20px;
-      padding:22px;
-      box-shadow:var(--shadow);
-      transition:.2s;
+      border-radius:19px;
+
+      box-shadow:var(--shadow2);
+
+      transition:.22s;
     }
 
     .service-card:hover{
       transform:translateY(-4px);
+      box-shadow:var(--shadow);
+      border-color:#d6dee8;
     }
 
     .service-icon{
-      width:48px;
-      height:48px;
+      width:45px;
+      height:45px;
+
       display:grid;
       place-items:center;
-      border-radius:15px;
-      background:var(--blue-soft);
-      font-size:24px;
+
+      border-radius:13px;
+
+      background:#f0f4f8;
+
+      font-size:21px;
     }
 
-    .service-title{
-      margin-top:15px;
-      font-size:15px;
-      font-weight:850;
+    .service-card h3{
+      margin:14px 0 6px;
+
+      color:var(--navy);
+
+      font-size:14px;
+      font-weight:900;
     }
 
-    .service-text{
+    .service-card p{
+      min-height:45px;
+
+      margin:0;
+
       color:var(--muted);
+
       font-size:11px;
-      line-height:1.6;
-      margin-top:6px;
+      line-height:1.55;
     }
 
-    .service-btn{
-      display:inline-block;
-      margin-top:14px;
-      color:var(--blue);
-      font-size:11px;
-      font-weight:850;
-    }
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
 
-    /* =========================
-       FORM
-    ========================== */
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
 
-    .form-grid{
-      display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:15px;
-    }
-
-    .form-group{
-      display:grid;
-      gap:6px;
-    }
-
-    .form-group.full{
-      grid-column:1/-1;
-    }
-
-    .form-label{
-      font-size:11px;
-      font-weight:800;
-      color:#4b5563;
-    }
-
-    .form-input,
-    .form-select,
-    .form-textarea{
-      width:100%;
-      border:1px solid #dfe4ec;
-      background:#fff;
+      border:0;
       border-radius:12px;
-      padding:11px 12px;
-      outline:none;
-      color:var(--text);
-      font-size:12px;
+
+      padding:11px 15px;
+
+      font-size:11px;
+      font-weight:900;
+
       transition:.2s;
     }
 
-    .form-textarea{
+    .btn-primary{
+      background:var(--navy);
+      color:#fff;
+    }
+
+    .btn-primary:hover{
+      background:#102d50;
+      transform:translateY(-1px);
+    }
+
+    .btn-gold{
+      background:linear-gradient(
+        135deg,
+        var(--gold2),
+        var(--gold)
+      );
+
+      color:#18283d;
+    }
+
+    .btn-gold:hover{
+      transform:translateY(-1px);
+      box-shadow:0 8px 20px rgba(214,168,79,.22);
+    }
+
+    .btn-light{
+      background:#eef3f7;
+      color:var(--navy);
+    }
+
+    .btn-light:hover{
+      background:#e5ebf1;
+    }
+
+    .btn-outline{
+      background:#fff;
+      color:var(--navy);
+      border:1px solid var(--border);
+    }
+
+    .btn-outline:hover{
+      border-color:#c9d3df;
+    }
+
+    .btn-danger{
+      background:var(--red-bg);
+      color:var(--red);
+    }
+
+    .btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none !important;
+    }
+
+    /* =========================================================
+       CARDS / FORMS
+    ========================================================= */
+
+    .card{
+      background:#fff;
+
+      border:1px solid var(--border);
+      border-radius:22px;
+
+      padding:22px;
+
+      box-shadow:var(--shadow2);
+    }
+
+    .profile-layout{
+      display:grid;
+      grid-template-columns:250px minmax(0,1fr);
+      gap:22px;
+    }
+
+    .profile-summary{
+      padding:20px;
+
+      border-radius:18px;
+
+      background:
+        linear-gradient(
+          145deg,
+          #091a30,
+          #15385e
+        );
+
+      color:#fff;
+    }
+
+    .profile-big-avatar{
+      width:65px;
+      height:65px;
+
+      display:grid;
+      place-items:center;
+
+      margin-bottom:15px;
+
+      border-radius:20px;
+
+      background:linear-gradient(
+        135deg,
+        var(--gold2),
+        var(--gold)
+      );
+
+      color:var(--navy);
+
+      font-size:19px;
+      font-weight:950;
+    }
+
+    .profile-summary h3{
+      margin:0;
+
+      font-size:17px;
+      font-weight:950;
+    }
+
+    .profile-summary p{
+      margin:6px 0 0;
+
+      color:#b8c8da;
+
+      font-size:11px;
+      line-height:1.5;
+    }
+
+    .profile-role-badge{
+      display:inline-flex;
+
+      margin-top:15px;
+
+      padding:7px 10px;
+
+      border:1px solid rgba(241,206,120,.22);
+      border-radius:999px;
+
+      background:rgba(214,168,79,.1);
+
+      color:var(--gold2);
+
+      font-size:9px;
+      font-weight:900;
+
+      letter-spacing:.8px;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:15px;
+    }
+
+    .field{
+      min-width:0;
+    }
+
+    .field.full{
+      grid-column:1/-1;
+    }
+
+    label{
+      display:block;
+
+      margin-bottom:7px;
+
+      color:#526174;
+
+      font-size:10px;
+      font-weight:900;
+
+      letter-spacing:.5px;
+      text-transform:uppercase;
+    }
+
+    input,
+    select,
+    textarea{
+      width:100%;
+
+      border:1px solid #dce4ec;
+      border-radius:12px;
+
+      background:#fbfcfe;
+
+      padding:12px 13px;
+
+      outline:none;
+
+      color:var(--text);
+
+      font-size:12px;
+
+      transition:.2s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus{
+      border-color:var(--gold);
+
+      box-shadow:
+        0 0 0 3px rgba(214,168,79,.12);
+    }
+
+    input:disabled{
+      background:#f2f5f8;
+      color:#7b8796;
+      cursor:not-allowed;
+    }
+
+    textarea{
       min-height:105px;
       resize:vertical;
     }
 
-    .form-input:focus,
-    .form-select:focus,
-    .form-textarea:focus{
-      border-color:#93c5fd;
-      box-shadow:0 0 0 3px #eff6ff;
-    }
-
-    .form-input:disabled{
-      background:#f8fafc;
-      color:#94a3b8;
-    }
-
-    .primary-btn{
-      border:0;
-      border-radius:12px;
-      padding:11px 17px;
-      background:var(--blue);
-      color:#fff;
-      font-size:12px;
-      font-weight:800;
-    }
-
-    .secondary-btn{
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:11px 17px;
-      background:#fff;
-      color:var(--text);
-      font-size:12px;
-      font-weight:800;
-    }
-
     .form-actions{
       display:flex;
+      align-items:center;
       gap:10px;
+
       margin-top:18px;
     }
 
-    /* =========================
-       REQUESTS
-    ========================== */
+    .info-note{
+      margin-bottom:18px;
+
+      padding:13px 15px;
+
+      border:1px solid #ead8a7;
+      border-radius:13px;
+
+      background:#fff9e9;
+
+      color:#725719;
+
+      font-size:11px;
+      line-height:1.6;
+    }
+
+    /* =========================================================
+       OWNER CENTRE
+    ========================================================= */
+
+    .owner-profile-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:15px;
+
+      margin-bottom:20px;
+    }
+
+    .owner-profile-main{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .owner-profile-avatar{
+      width:58px;
+      height:58px;
+
+      display:grid;
+      place-items:center;
+
+      border-radius:18px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--gold2),
+          var(--gold)
+        );
+
+      color:var(--navy);
+
+      font-size:16px;
+      font-weight:950;
+    }
+
+    .owner-profile-main h3{
+      margin:0;
+
+      color:var(--navy);
+
+      font-size:18px;
+      font-weight:950;
+    }
+
+    .owner-profile-main p{
+      margin:4px 0 0;
+
+      color:var(--muted);
+
+      font-size:11px;
+    }
+
+    .owner-summary-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+    }
+
+    .summary-box{
+      padding:16px;
+
+      border:1px solid var(--border);
+      border-radius:15px;
+
+      background:#fafbfd;
+    }
+
+    .summary-box span{
+      display:block;
+
+      color:#8995a4;
+
+      font-size:9px;
+      font-weight:900;
+
+      text-transform:uppercase;
+      letter-spacing:.6px;
+    }
+
+    .summary-box strong{
+      display:block;
+
+      margin-top:6px;
+
+      color:var(--navy);
+
+      font-size:19px;
+      font-weight:950;
+    }
+
+    /* =========================================================
+       REQUEST LIST
+    ========================================================= */
 
     .request-list{
       display:grid;
       gap:12px;
     }
 
-    .request-item{
-      border:1px solid var(--border);
-      border-radius:15px;
-      padding:16px;
+    .request-card{
       display:flex;
+      align-items:center;
       justify-content:space-between;
       gap:15px;
-      align-items:center;
+
+      padding:17px;
+
+      border:1px solid var(--border);
+      border-radius:17px;
+
+      background:#fff;
+
+      transition:.2s;
     }
 
-    .request-name{
-      font-size:13px;
-      font-weight:850;
+    .request-card:hover{
+      border-color:#d4dde7;
+      box-shadow:var(--shadow2);
+    }
+
+    .request-main{
+      min-width:0;
+    }
+
+    .request-title{
+      margin:0;
+
+      color:var(--navy);
+
+      font-size:14px;
+      font-weight:950;
     }
 
     .request-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px 12px;
+
+      margin-top:7px;
+
       color:var(--muted);
+
       font-size:10px;
-      margin-top:5px;
     }
+
+    .request-note{
+      margin-top:8px;
+
+      color:#687588;
+
+      font-size:10px;
+      line-height:1.5;
+    }
+
+    .request-actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:none;
+    }
+
+    /* =========================================================
+       STATUS
+    ========================================================= */
 
     .status{
       display:inline-flex;
       align-items:center;
+      justify-content:center;
+
+      padding:7px 10px;
+
       border-radius:999px;
-      padding:6px 10px;
-      font-size:10px;
-      font-weight:850;
+
+      font-size:9px;
+      font-weight:950;
+
+      letter-spacing:.5px;
+      text-transform:uppercase;
       white-space:nowrap;
     }
 
     .status.pending{
-      background:var(--orange-soft);
+      background:var(--orange-bg);
       color:var(--orange);
     }
 
     .status.approved{
-      background:var(--green-soft);
+      background:var(--green-bg);
       color:var(--green);
     }
 
     .status.rejected{
-      background:var(--red-soft);
+      background:var(--red-bg);
       color:var(--red);
     }
 
-    /* =========================
-       TIMELINE
-    ========================== */
+    /* =========================================================
+       APPROVAL TIMELINE
+    ========================================================= */
 
     .timeline{
-      position:relative;
       display:grid;
+      grid-template-columns:repeat(3,1fr);
       gap:0;
+
+      margin-top:20px;
     }
 
-    .timeline-item{
+    .timeline-step{
       position:relative;
-      padding:0 0 22px 34px;
+
+      padding-right:25px;
     }
 
-    .timeline-item:last-child{
-      padding-bottom:0;
-    }
-
-    .timeline-item:before{
+    .timeline-step:not(:last-child)::after{
       content:"";
-      position:absolute;
-      left:8px;
-      top:23px;
-      bottom:-2px;
-      width:1px;
-      background:#dbe2eb;
-    }
 
-    .timeline-item:last-child:before{
-      display:none;
+      position:absolute;
+
+      top:15px;
+      left:33px;
+      right:10px;
+
+      height:2px;
+
+      background:#dfe5ec;
     }
 
     .timeline-dot{
-      position:absolute;
-      left:0;
-      top:2px;
-      width:17px;
-      height:17px;
+      position:relative;
+      z-index:2;
+
+      width:32px;
+      height:32px;
+
+      display:grid;
+      place-items:center;
+
       border-radius:50%;
-      background:#dbeafe;
-      border:4px solid #fff;
-      box-shadow:0 0 0 1px #93c5fd;
+
+      background:#eef2f6;
+      color:#8793a2;
+
+      font-size:11px;
+      font-weight:950;
     }
 
-    .timeline-item.done .timeline-dot{
-      background:#22c55e;
-      box-shadow:0 0 0 1px #86efac;
+    .timeline-step.done .timeline-dot{
+      background:var(--navy);
+      color:#fff;
+    }
+
+    .timeline-step.current .timeline-dot{
+      background:var(--gold);
+      color:var(--navy);
+      box-shadow:0 0 0 5px rgba(214,168,79,.12);
     }
 
     .timeline-title{
-      font-size:12px;
-      font-weight:850;
+      margin-top:10px;
+
+      color:var(--navy);
+
+      font-size:11px;
+      font-weight:950;
     }
 
     .timeline-text{
-      color:var(--muted);
-      font-size:10px;
       margin-top:4px;
+
+      color:var(--muted);
+
+      font-size:9px;
+      line-height:1.45;
     }
 
-    /* =========================
-       PROPERTY CARDS
-    ========================== */
+    /* =========================================================
+       LIVE PROPERTY CARDS
+    ========================================================= */
 
     .property-grid{
       display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:16px;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:18px;
     }
 
     .property-card{
+      overflow:hidden;
+
       background:#fff;
+
       border:1px solid var(--border);
-      border-radius:18px;
-      padding:18px;
+      border-radius:21px;
+
+      box-shadow:var(--shadow2);
+
+      transition:.22s;
+    }
+
+    .property-card:hover{
+      transform:translateY(-3px);
       box-shadow:var(--shadow);
     }
 
-    .property-type{
-      color:var(--blue);
-      background:var(--blue-soft);
-      display:inline-block;
-      padding:5px 8px;
-      border-radius:7px;
-      font-size:9px;
-      font-weight:850;
+    .property-banner{
+      position:relative;
+
+      height:175px;
+
+      overflow:hidden;
+
+      background:#dce5ee;
     }
 
-    .property-name{
-      margin-top:11px;
-      font-size:15px;
-      font-weight:850;
+    .property-banner img{
+      width:100%;
+      height:100%;
+
+      object-fit:cover;
+
+      display:block;
+
+      transition:.35s;
+    }
+
+    .property-card:hover .property-banner img{
+      transform:scale(1.035);
+    }
+
+    .property-banner::after{
+      content:"";
+
+      position:absolute;
+      inset:0;
+
+      background:
+        linear-gradient(
+          180deg,
+          transparent 35%,
+          rgba(0,0,0,.48)
+        );
+    }
+
+    .live-label{
+      position:absolute;
+      z-index:3;
+
+      top:12px;
+      left:12px;
+
+      display:flex;
+      align-items:center;
+      gap:6px;
+
+      padding:7px 10px;
+
+      border-radius:999px;
+
+      background:rgba(5,18,34,.78);
+
+      color:#fff;
+
+      font-size:8px;
+      font-weight:950;
+
+      letter-spacing:.6px;
+    }
+
+    .live-label .live-dot{
+      width:6px;
+      height:6px;
+    }
+
+    .property-category{
+      position:absolute;
+      z-index:3;
+
+      right:12px;
+      top:12px;
+
+      padding:7px 10px;
+
+      border-radius:999px;
+
+      background:rgba(255,255,255,.92);
+
+      color:var(--navy);
+
+      font-size:8px;
+      font-weight:950;
+
+      text-transform:uppercase;
+    }
+
+    .property-banner-title{
+      position:absolute;
+      z-index:3;
+
+      left:15px;
+      right:15px;
+      bottom:13px;
+
+      color:#fff;
+
+      font-size:18px;
+      font-weight:950;
+
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .property-body{
+      padding:17px;
     }
 
     .property-info{
       display:grid;
-      gap:7px;
-      margin-top:12px;
-      color:var(--muted);
+      gap:8px;
+
+      margin-bottom:15px;
+    }
+
+    .property-row{
+      display:flex;
+      gap:9px;
+
+      color:#657286;
+
       font-size:10px;
+      line-height:1.45;
+    }
+
+    .property-row-icon{
+      width:18px;
+      flex:none;
+
+      color:var(--gold);
+
+      font-size:11px;
+      text-align:center;
     }
 
     .property-actions{
       display:flex;
       gap:8px;
-      margin-top:15px;
     }
 
-    .small-btn{
+    .property-actions .btn{
       flex:1;
-      padding:9px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      background:#fff;
-      font-size:10px;
-      font-weight:800;
     }
 
-    .small-btn.primary{
-      background:var(--navy);
-      color:#fff;
-      border-color:var(--navy);
-    }
-
-    /* =========================
-       REVIEW
-    ========================== */
+    /* =========================================================
+       REVIEW CARDS
+    ========================================================= */
 
     .review-card{
+      padding:17px;
+
       border:1px solid var(--border);
-      border-radius:15px;
-      padding:16px;
+      border-radius:17px;
+
       background:#fff;
     }
 
-    .review-top{
+    .review-head{
       display:flex;
       justify-content:space-between;
-      gap:15px;
+      gap:10px;
     }
 
     .review-property{
-      font-size:12px;
-      font-weight:850;
+      color:var(--navy);
+      font-size:13px;
+      font-weight:950;
     }
 
-    .review-rating{
-      color:#d97706;
-      font-weight:850;
-      font-size:11px;
+    .stars{
+      margin-top:7px;
+
+      color:#d09a2f;
+
+      letter-spacing:2px;
+      font-size:13px;
     }
 
     .review-text{
-      color:#596477;
+      margin:10px 0 0;
+
+      color:#637084;
+
       font-size:11px;
       line-height:1.65;
-      margin-top:9px;
     }
 
     .review-date{
-      color:#9aa4b2;
+      margin-top:10px;
+
+      color:#9aa4b1;
+
       font-size:9px;
-      margin-top:8px;
     }
 
-    /* =========================
-       EMPTY
-    ========================== */
+    /* =========================================================
+       JOINED PROPERTY
+    ========================================================= */
+
+    .joined-card{
+      position:relative;
+      overflow:hidden;
+
+      display:grid;
+      grid-template-columns:145px minmax(0,1fr);
+
+      gap:20px;
+
+      padding:18px;
+
+      background:#fff;
+
+      border:1px solid var(--border);
+      border-radius:20px;
+
+      box-shadow:var(--shadow2);
+    }
+
+    .joined-visual{
+      min-height:150px;
+
+      display:grid;
+      place-items:center;
+
+      border-radius:16px;
+
+      background:
+        linear-gradient(
+          145deg,
+          #091b31,
+          #1b436b
+        );
+
+      color:#fff;
+
+      font-size:38px;
+    }
+
+    .joined-content h3{
+      margin:0;
+
+      color:var(--navy);
+
+      font-size:19px;
+      font-weight:950;
+    }
+
+    .joined-meta{
+      margin-top:7px;
+
+      color:var(--muted);
+
+      font-size:10px;
+    }
+
+    .rent-boxes{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+
+      margin-top:18px;
+    }
+
+    .rent-box{
+      padding:13px;
+
+      border:1px solid var(--border);
+      border-radius:13px;
+
+      background:#fafbfd;
+    }
+
+    .rent-box span{
+      display:block;
+
+      color:#8c98a7;
+
+      font-size:8px;
+      font-weight:900;
+
+      text-transform:uppercase;
+    }
+
+    .rent-box strong{
+      display:block;
+
+      margin-top:5px;
+
+      color:var(--navy);
+
+      font-size:13px;
+      font-weight:950;
+    }
+
+    .joined-empty{
+      padding:30px;
+
+      border:1px dashed #d4dde7;
+      border-radius:18px;
+
+      background:#fafbfd;
+
+      text-align:center;
+    }
+
+    .joined-empty-icon{
+      font-size:30px;
+    }
+
+    .joined-empty h3{
+      margin:10px 0 5px;
+
+      color:var(--navy);
+
+      font-size:15px;
+      font-weight:950;
+    }
+
+    .joined-empty p{
+      max-width:500px;
+
+      margin:0 auto;
+
+      color:var(--muted);
+
+      font-size:11px;
+      line-height:1.6;
+    }
+
+    /* =========================================================
+       EMPTY / LOADING
+    ========================================================= */
 
     .empty{
-      padding:35px 20px;
+      padding:45px 20px;
+
+      color:var(--muted);
+
       text-align:center;
-      border:1px dashed #d8dee8;
-      border-radius:16px;
-      background:#fafbfc;
     }
 
     .empty-icon{
-      font-size:29px;
+      margin-bottom:10px;
+
+      font-size:30px;
     }
 
-    .empty-title{
+    .empty strong{
+      display:block;
+
+      color:var(--navy);
+
       font-size:13px;
-      font-weight:850;
-      margin-top:8px;
     }
 
-    .empty-text{
+    .empty p{
+      margin:6px auto 0;
+
+      max-width:500px;
+
+      font-size:10px;
+      line-height:1.6;
+    }
+
+    .loading{
+      padding:45px 20px;
+
       color:var(--muted);
+
+      text-align:center;
+
       font-size:11px;
-      margin-top:5px;
     }
 
-    /* =========================
-       MOBILE
-    ========================== */
+    .spinner{
+      width:28px;
+      height:28px;
 
-    @media(max-width:1050px){
-      .stats{
-        grid-template-columns:repeat(2,1fr);
+      margin:0 auto 10px;
+
+      border:3px solid #e5eaf0;
+      border-top-color:var(--gold);
+
+      border-radius:50%;
+
+      animation:spin .8s linear infinite;
+    }
+
+    @keyframes spin{
+      to{
+        transform:rotate(360deg);
       }
+    }
 
-      .quick-grid,
+    /* =========================================================
+       MESSAGE
+    ========================================================= */
+
+    .message{
+      display:none;
+
+      margin-bottom:15px;
+
+      padding:12px 14px;
+
+      border-radius:12px;
+
+      font-size:11px;
+      line-height:1.5;
+    }
+
+    .message.show{
+      display:block;
+    }
+
+    .message.success{
+      background:var(--green-bg);
+      color:#087347;
+    }
+
+    .message.error{
+      background:var(--red-bg);
+      color:#a72d2d;
+    }
+
+    .message.info{
+      background:var(--blue-bg);
+      color:#24598e;
+    }
+
+    /* =========================================================
+       MODAL
+    ========================================================= */
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      z-index:500;
+
+      display:none;
+      align-items:center;
+      justify-content:center;
+
+      padding:20px;
+
+      background:rgba(2,11,24,.68);
+
+      backdrop-filter:blur(7px);
+    }
+
+    .modal-backdrop.show{
+      display:flex;
+    }
+
+    .modal{
+      width:min(760px,100%);
+      max-height:92vh;
+
+      overflow:auto;
+
+      background:#fff;
+
+      border-radius:25px;
+
+      box-shadow:
+        0 30px 100px rgba(0,0,0,.35);
+
+      animation:modalIn .22s ease;
+    }
+
+    @keyframes modalIn{
+      from{
+        opacity:0;
+        transform:translateY(12px) scale(.985);
+      }
+      to{
+        opacity:1;
+        transform:none;
+      }
+    }
+
+    .modal-head{
+      position:sticky;
+      top:0;
+      z-index:5;
+
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      gap:15px;
+
+      padding:19px 21px;
+
+      background:#fff;
+
+      border-bottom:1px solid var(--border);
+    }
+
+    .modal-title{
+      margin:0;
+
+      color:var(--navy);
+
+      font-size:17px;
+      font-weight:950;
+    }
+
+    .modal-subtitle{
+      margin:4px 0 0;
+
+      color:var(--muted);
+
+      font-size:9px;
+    }
+
+    .close-btn{
+      width:36px;
+      height:36px;
+
+      display:grid;
+      place-items:center;
+
+      border:0;
+      border-radius:50%;
+
+      background:#eef2f6;
+
+      color:var(--navy);
+
+      font-size:18px;
+      font-weight:900;
+    }
+
+    .close-btn:hover{
+      background:#e5ebf1;
+    }
+
+    .modal-body{
+      padding:21px;
+    }
+
+    .detail-hero{
+      overflow:hidden;
+
+      border-radius:18px;
+
+      margin-bottom:18px;
+
+      background:#e9eef4;
+    }
+
+    .detail-hero img{
+      width:100%;
+      height:230px;
+
+      display:block;
+
+      object-fit:cover;
+    }
+
+    .detail-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:11px;
+    }
+
+    .detail-item{
+      padding:13px;
+
+      border:1px solid var(--border);
+      border-radius:13px;
+
+      background:#fafbfd;
+    }
+
+    .detail-item.full{
+      grid-column:1/-1;
+    }
+
+    .detail-label{
+      color:#8b97a5;
+
+      font-size:8px;
+      font-weight:900;
+
+      text-transform:uppercase;
+      letter-spacing:.6px;
+    }
+
+    .detail-value{
+      margin-top:5px;
+
+      color:var(--navy);
+
+      font-size:11px;
+      line-height:1.55;
+      font-weight:800;
+
+      word-break:break-word;
+    }
+
+    .modal-footer{
+      display:flex;
+      justify-content:flex-end;
+      gap:9px;
+
+      padding:15px 21px;
+
+      border-top:1px solid var(--border);
+      background:#fafbfd;
+    }
+
+    /* =========================================================
+       TOAST
+    ========================================================= */
+
+    .toast-container{
+      position:fixed;
+      right:20px;
+      bottom:20px;
+      z-index:900;
+
+      display:grid;
+      gap:9px;
+
+      width:min(360px,calc(100vw - 40px));
+    }
+
+    .toast{
+      padding:13px 15px;
+
+      border:1px solid var(--border);
+      border-radius:14px;
+
+      background:#fff;
+
+      box-shadow:0 15px 40px rgba(0,0,0,.15);
+
+      color:var(--navy);
+
+      font-size:11px;
+      font-weight:800;
+
+      animation:toastIn .22s ease;
+    }
+
+    .toast.success{
+      border-left:4px solid var(--green);
+    }
+
+    .toast.error{
+      border-left:4px solid var(--red);
+    }
+
+    @keyframes toastIn{
+      from{
+        opacity:0;
+        transform:translateY(8px);
+      }
+      to{
+        opacity:1;
+        transform:none;
+      }
+    }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media(max-width:1200px){
       .service-grid{
         grid-template-columns:repeat(3,1fr);
       }
 
-      .property-grid{
+      .stats-grid{
         grid-template-columns:repeat(2,1fr);
       }
+    }
 
-      .grid-2{
+    @media(max-width:950px){
+      .app-layout{
+        grid-template-columns:215px minmax(0,1fr);
+      }
+
+      main{
+        padding:22px;
+      }
+
+      .property-grid{
+        grid-template-columns:1fr;
+      }
+
+      .profile-layout{
         grid-template-columns:1fr;
       }
     }
 
-    @media(max-width:800px){
+    @media(max-width:760px){
       .topbar{
-        padding:0 15px;
+        height:68px;
+        padding:0 13px;
       }
 
-      .menu-btn{
+      .brand img{
+        width:39px;
+        height:39px;
+      }
+
+      .brand-title{
+        font-size:15px;
+      }
+
+      .brand-subtitle{
+        font-size:9px;
+      }
+
+      .live-sync{
+        display:none;
+      }
+
+      .user-chip-name,
+      .user-chip-role{
+        display:none;
+      }
+
+      .logout-btn{
+        padding:9px 10px;
+        font-size:10px;
+      }
+
+      .app-layout{
         display:block;
       }
 
-      .live-pill{
-        display:none;
-      }
-
       .sidebar{
-        transform:translateX(-100%);
-        transition:.25s;
-        box-shadow:15px 0 35px rgba(0,0,0,.08);
+        position:sticky;
+        top:68px;
+        z-index:80;
+
+        width:100%;
+        height:auto;
+
+        display:flex;
+        gap:4px;
+
+        overflow-x:auto;
+        overflow-y:hidden;
+
+        padding:7px;
+
+        border-right:0;
+        border-bottom:1px solid var(--border);
       }
 
-      .sidebar.open{
-        transform:translateX(0);
+      .nav-group{
+        display:flex;
+        gap:4px;
+        margin:0;
       }
 
-      .main{
-        margin-left:0;
-        padding:92px 15px 35px;
-      }
-
-      .brand-sub{
+      .nav-label,
+      .sidebar-card{
         display:none;
       }
 
-      .user-chip-text{
-        display:none;
+      .nav-btn{
+        width:auto;
+        flex:none;
+
+        margin:0;
+
+        white-space:nowrap;
+        padding:9px 11px;
+
+        font-size:10px;
       }
 
-      .page-title{
-        font-size:25px;
+      .nav-btn .nav-icon{
+        width:25px;
+        height:25px;
       }
 
-      .hero-title{
-        font-size:25px;
+      main{
+        padding:16px 13px 30px;
+      }
+
+      .hero{
+        padding:24px;
+        border-radius:22px;
+      }
+
+      .section-head{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .service-grid{
+        grid-template-columns:repeat(2,1fr);
       }
 
       .form-grid{
         grid-template-columns:1fr;
       }
 
-      .form-group.full{
+      .field.full{
         grid-column:auto;
       }
-    }
 
-    @media(max-width:560px){
-      .stats{
-        grid-template-columns:1fr 1fr;
-        gap:10px;
-      }
-
-      .stat-card{
-        padding:15px;
-      }
-
-      .stat-value{
-        font-size:22px;
-      }
-
-      .quick-grid,
-      .service-grid,
-      .property-grid{
+      .joined-card{
         grid-template-columns:1fr;
       }
 
-      .dashboard-hero{
-        padding:23px;
+      .joined-visual{
+        min-height:110px;
       }
 
-      .card{
-        padding:17px;
+      .rent-boxes{
+        grid-template-columns:1fr;
       }
 
-      .request-item{
+      .request-card{
         align-items:flex-start;
         flex-direction:column;
       }
 
-      .page-head{
-        align-items:flex-start;
+      .request-actions{
+        width:100%;
+      }
+
+      .request-actions .btn{
+        flex:1;
+      }
+
+      .timeline{
+        grid-template-columns:1fr;
+        gap:18px;
+      }
+
+      .timeline-step{
+        padding-right:0;
+      }
+
+      .timeline-step:not(:last-child)::after{
+        left:15px;
+        top:32px;
+        width:2px;
+        height:30px;
+        right:auto;
+      }
+
+      .timeline-step{
+        display:grid;
+        grid-template-columns:32px 1fr;
+        column-gap:12px;
+      }
+
+      .timeline-title{
+        margin-top:0;
+      }
+
+      .detail-grid{
+        grid-template-columns:1fr;
+      }
+
+      .detail-item.full{
+        grid-column:auto;
+      }
+
+      .modal{
+        border-radius:20px;
+      }
+    }
+
+    @media(max-width:480px){
+      .stats-grid{
+        grid-template-columns:1fr;
+      }
+
+      .service-grid{
+        grid-template-columns:1fr;
+      }
+
+      .hero h1{
+        font-size:28px;
+      }
+
+      .property-banner{
+        height:155px;
+      }
+
+      .property-actions{
         flex-direction:column;
+      }
+
+      .owner-summary-grid{
+        grid-template-columns:1fr;
+      }
+
+      .form-actions{
+        flex-direction:column;
+        align-items:stretch;
+      }
+
+      .modal-backdrop{
+        padding:8px;
       }
     }
   </style>
@@ -1106,484 +2196,449 @@
 
 <body>
 
-  <!-- =========================
-       TOPBAR
-  ========================== -->
+<!-- =========================================================
+     TOPBAR
+========================================================= -->
 
-  <header class="topbar">
+<header class="topbar">
 
-    <div class="brand">
-      <img src="logo.png" alt="StudentHubHelp">
+  <a href="index.html" class="brand">
+    <img src="logo.png" alt="StudentHubHelp">
+
+    <div>
+      <div class="brand-title">StudentHubHelp</div>
+      <div class="brand-subtitle">
+        India Student Discovery Platform
+      </div>
+    </div>
+  </a>
+
+  <div class="top-actions">
+
+    <div class="live-sync">
+      <span class="live-dot"></span>
+      Live Sync
+    </div>
+
+    <div class="user-chip">
+      <div class="avatar" id="topAvatar">U</div>
 
       <div>
-        <div class="brand-title">StudentHubHelp</div>
-        <div class="brand-sub">
-          India Student Discovery Platform
+        <div class="user-chip-name" id="topUserName">
+          Loading...
+        </div>
+
+        <div class="user-chip-role" id="topUserRole">
+          USER
         </div>
       </div>
     </div>
 
-    <div class="top-actions">
-
-      <div class="live-pill">
-        <span class="live-dot"></span>
-        Live Sync
-      </div>
-
-      <div class="user-chip">
-
-        <div class="avatar" id="topAvatar">
-          U
-        </div>
-
-        <div class="user-chip-text">
-          <div class="user-chip-name" id="topName">
-            Loading...
-          </div>
-
-          <div class="user-chip-role" id="topRole">
-            Account
-          </div>
-        </div>
-
-      </div>
-
-      <button
-        class="menu-btn"
-        id="menuBtn"
-        type="button"
-      >
-        ☰
-      </button>
-
-    </div>
-
-  </header>
-
-
-  <!-- =========================
-       SIDEBAR
-  ========================== -->
-
-  <aside class="sidebar" id="sidebar">
-
-    <div class="sidebar-label">
-      Dashboard
-    </div>
-
-    <button
-      class="side-link active"
-      data-page="overview"
-    >
-      <span class="side-icon">⌂</span>
-      Overview
-    </button>
-
-
-    <div class="student-section">
-
-      <div class="sidebar-label">
-        Student
-      </div>
-
-      <button
-        class="side-link"
-        data-page="profile"
-      >
-        <span class="side-icon">👤</span>
-        My Profile
-      </button>
-
-      <button
-        class="side-link"
-        data-page="explore"
-      >
-        <span class="side-icon">🔎</span>
-        Find / Explore Services
-      </button>
-
-      <button
-        class="side-link"
-        data-page="joined"
-      >
-        <span class="side-icon">🏠</span>
-        My Joined Property
-      </button>
-
-      <button
-        class="side-link"
-        data-page="reviews"
-      >
-        <span class="side-icon">⭐</span>
-        My Reviews
-      </button>
-
-      <button
-        class="side-link"
-        data-page="activity"
-      >
-        <span class="side-icon">◷</span>
-        My Activity
-      </button>
-
-    </div>
-
-
-    <!-- OWNER -->
-
-    <div class="owner-section">
-
-      <div class="sidebar-label">
-        Owner Centre
-      </div>
-
-      <button
-        class="side-link"
-        data-page="owner-centre"
-      >
-        <span class="side-icon">🏢</span>
-        Owner Centre
-      </button>
-
-      <button
-        class="side-link"
-        data-page="add-listing"
-      >
-        <span class="side-icon">＋</span>
-        Add Listing
-      </button>
-
-      <button
-        class="side-link"
-        data-page="requests"
-      >
-        <span class="side-icon">📋</span>
-        My Requests
-      </button>
-
-      <button
-        class="side-link"
-        data-page="approval"
-      >
-        <span class="side-icon">✓</span>
-        Approval Status
-      </button>
-
-      <button
-        class="side-link"
-        data-page="live-properties"
-      >
-        <span class="side-icon">🏠</span>
-        Live Properties
-      </button>
-
-      <button
-        class="side-link"
-        data-page="manage-properties"
-      >
-        <span class="side-icon">⚙</span>
-        Manage Properties
-      </button>
-
-      <button
-        class="side-link"
-        data-page="owner-reviews"
-      >
-        <span class="side-icon">⭐</span>
-        Owner Reviews
-      </button>
-
-    </div>
-
-
-    <div class="sidebar-label">
-      Account
-    </div>
-
-    <button
-      class="side-link logout-link"
-      id="logoutBtn"
-    >
-      <span class="side-icon">↪</span>
+    <button class="logout-btn" id="logoutBtn">
       Logout
     </button>
+
+  </div>
+
+</header>
+
+
+<!-- =========================================================
+     APP
+========================================================= -->
+
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="nav-group">
+
+      <div class="nav-label">
+        Dashboard
+      </div>
+
+      <button class="nav-btn active"
+              data-page="overview">
+
+        <span class="nav-icon">⌂</span>
+        <span>Overview</span>
+
+      </button>
+
+      <button class="nav-btn"
+              data-page="profile">
+
+        <span class="nav-icon">◉</span>
+        <span>My Profile</span>
+
+      </button>
+
+      <button class="nav-btn student-only"
+              data-page="joined">
+
+        <span class="nav-icon">⌂</span>
+        <span>My Joined Property</span>
+
+      </button>
+
+      <button class="nav-btn"
+              data-page="find">
+
+        <span class="nav-icon">⌕</span>
+        <span>Explore Services</span>
+
+      </button>
+
+      <button class="nav-btn"
+              data-page="reviews">
+
+        <span class="nav-icon">★</span>
+        <span>My Reviews</span>
+
+      </button>
+
+      <button class="nav-btn student-only"
+              data-page="activity">
+
+        <span class="nav-icon">↗</span>
+        <span>My Activity</span>
+
+      </button>
+
+    </div>
+
+
+    <!-- OWNER NAV -->
+
+    <div class="nav-group owner-only">
+
+      <div class="nav-label">
+        Owner Centre
+      </div>
+
+      <button class="nav-btn"
+              data-page="owner-centre">
+
+        <span class="nav-icon">▦</span>
+        <span>Owner Centre</span>
+
+      </button>
+
+      <button class="nav-btn"
+              data-page="listing">
+
+        <span class="nav-icon">＋</span>
+        <span>Add Listing</span>
+
+      </button>
+
+      <button class="nav-btn"
+              data-page="requests">
+
+        <span class="nav-icon">▤</span>
+        <span>My Requests</span>
+
+      </button>
+
+      <button class="nav-btn"
+              data-page="approval">
+
+        <span class="nav-icon">✓</span>
+        <span>Approval Status</span>
+
+      </button>
+
+      <button class="nav-btn"
+              data-page="live-properties">
+
+        <span class="nav-icon">⌂</span>
+        <span>Live Properties</span>
+
+      </button>
+
+      <button class="nav-btn"
+              data-page="owner-reviews">
+
+        <span class="nav-icon">★</span>
+        <span>Owner Reviews</span>
+
+      </button>
+
+    </div>
+
+
+    <div class="nav-group">
+
+      <div class="nav-label">
+        Account
+      </div>
+
+      <button class="nav-btn"
+              id="logoutSideBtn">
+
+        <span class="nav-icon">↪</span>
+        <span>Logout</span>
+
+      </button>
+
+    </div>
+
+
+    <div class="sidebar-card">
+
+      <div class="sidebar-card-title">
+        StudentHubHelp
+      </div>
+
+      <p>
+        Your profile, requests and live platform data
+        stay connected with Supabase.
+      </p>
+
+    </div>
 
   </aside>
 
 
-  <!-- =========================
-       MAIN
-  ========================== -->
-
-  <main class="main">
+  <!-- MAIN -->
+  <main>
 
 
-    <!-- ======================
+    <!-- =====================================================
          OVERVIEW
-    ======================= -->
+    ====================================================== -->
 
-    <section
-      class="page active"
-      id="page-overview"
-    >
+    <section class="page active"
+             id="page-overview">
 
-      <div class="dashboard-hero">
+      <div class="hero">
 
-        <div class="hero-kicker">
-          StudentHubHelp Dashboard
-        </div>
+        <span class="hero-badge">
+          ● SECURE USER DASHBOARD
+        </span>
 
-        <h1
-          class="hero-title"
-          id="welcomeTitle"
-        >
-          Welcome back
+        <h1>
+          Welcome,
+          <span id="heroName">User</span> 👋
         </h1>
 
-        <p class="hero-text">
-          Manage your StudentHubHelp account,
-          discover student services and stay connected
-          with your latest activity.
+        <p id="heroText">
+          Manage your StudentHubHelp account and
+          discover useful student services across India.
         </p>
+
+        <div class="hero-role"
+             id="heroRole">
+          STUDENT ACCOUNT
+        </div>
 
       </div>
 
 
-      <div class="stats">
+      <!-- STUDENT STATS -->
+
+      <div class="stats-grid student-stats">
 
         <div class="stat-card">
+
           <div class="stat-top">
-            <div>
-              <div class="stat-label">
-                ACCOUNT ROLE
-              </div>
-              <div
-                class="stat-value"
-                id="roleStat"
-              >
-                —
-              </div>
+
+            <div class="stat-label">
+              Account
             </div>
 
             <div class="stat-icon">
               👤
             </div>
+
           </div>
+
+          <div class="stat-value"
+               id="studentStatRole">
+            STUDENT
+          </div>
+
+          <div class="stat-foot">
+            Verified account role
+          </div>
+
         </div>
 
 
         <div class="stat-card">
+
           <div class="stat-top">
-            <div>
-              <div class="stat-label">
-                MY REVIEWS
-              </div>
-              <div
-                class="stat-value"
-                id="reviewStat"
-              >
-                0
-              </div>
+
+            <div class="stat-label">
+              Reviews
             </div>
 
             <div class="stat-icon">
-              ⭐
+              ★
             </div>
+
           </div>
+
+          <div class="stat-value"
+               id="studentStatReviews">
+            0
+          </div>
+
+          <div class="stat-foot">
+            Reviews submitted
+          </div>
+
         </div>
 
 
-        <div
-          class="stat-card owner-stat"
-          style="display:none"
-        >
+        <div class="stat-card">
+
           <div class="stat-top">
-            <div>
-              <div class="stat-label">
-                PENDING REQUESTS
-              </div>
-              <div
-                class="stat-value"
-                id="pendingStat"
-              >
-                0
-              </div>
+
+            <div class="stat-label">
+              Activity
             </div>
 
             <div class="stat-icon">
-              📋
+              ↗
             </div>
+
           </div>
+
+          <div class="stat-value">
+            —
+          </div>
+
+          <div class="stat-foot">
+            Discovery activity
+          </div>
+
         </div>
 
 
-        <div
-          class="stat-card owner-stat"
-          style="display:none"
-        >
+        <div class="stat-card">
+
           <div class="stat-top">
-            <div>
-              <div class="stat-label">
-                LIVE PROPERTIES
-              </div>
-              <div
-                class="stat-value"
-                id="liveStat"
-              >
-                0
-              </div>
+
+            <div class="stat-label">
+              Services
             </div>
 
             <div class="stat-icon">
-              🏠
+              ◈
             </div>
+
           </div>
+
+          <div class="stat-value">
+            5
+          </div>
+
+          <div class="stat-foot">
+            Categories available
+          </div>
+
         </div>
 
       </div>
 
 
-      <div class="grid-2">
+      <!-- OWNER STATS -->
 
+      <div class="stats-grid owner-stats hidden">
 
-        <!-- PROFILE SUMMARY -->
+        <div class="stat-card">
 
-        <div class="card">
-
-          <div class="card-head">
-
-            <div>
-              <div class="card-title">
-                Profile Summary
-              </div>
-
-              <div class="card-subtitle">
-                Your current StudentHubHelp account
-              </div>
+          <div class="stat-top">
+            <div class="stat-label">
+              Total Listings
             </div>
 
-            <button
-              class="view-link"
-              data-page-link="profile"
-            >
-              Edit Profile
-            </button>
-
+            <div class="stat-icon">
+              ⌂
+            </div>
           </div>
 
-
-          <div class="profile-summary">
-
-            <div
-              class="big-avatar"
-              id="profileAvatar"
-            >
-              U
-            </div>
-
-            <div>
-
-              <div
-                class="profile-name"
-                id="profileName"
-              >
-                Loading...
-              </div>
-
-              <div
-                class="profile-email"
-                id="profileEmail"
-              >
-                —
-              </div>
-
-            </div>
-
+          <div class="stat-value"
+               id="ownerStatListings">
+            0
           </div>
 
-
-          <div class="info-list">
-
-            <div class="info-row">
-              <span class="info-label">
-                Phone
-              </span>
-
-              <span
-                class="info-value"
-                id="profilePhone"
-              >
-                —
-              </span>
-            </div>
-
-            <div class="info-row">
-              <span class="info-label">
-                Address
-              </span>
-
-              <span
-                class="info-value"
-                id="profileAddress"
-              >
-                —
-              </span>
-            </div>
-
-            <div class="info-row">
-              <span class="info-label">
-                Account Type
-              </span>
-
-              <span
-                class="info-value"
-                id="profileRole"
-              >
-                —
-              </span>
-            </div>
-
+          <div class="stat-foot">
+            Approved live properties
           </div>
 
         </div>
 
 
-        <!-- RECENT ACTIVITY -->
+        <div class="stat-card">
 
-        <div class="card">
-
-          <div class="card-head">
-
-            <div>
-              <div class="card-title">
-                Recent Activity
-              </div>
-
-              <div class="card-subtitle">
-                Your latest account activity
-              </div>
+          <div class="stat-top">
+            <div class="stat-label">
+              Pending Requests
             </div>
 
+            <div class="stat-icon">
+              ◷
+            </div>
           </div>
 
-          <div id="recentActivity">
+          <div class="stat-value"
+               id="ownerStatPending">
+            0
+          </div>
 
-            <div class="empty">
+          <div class="stat-foot">
+            Awaiting review
+          </div>
 
-              <div class="empty-icon">
-                ◷
-              </div>
+        </div>
 
-              <div class="empty-title">
-                No recent activity
-              </div>
 
-              <div class="empty-text">
-                Your activity will appear here.
-              </div>
+        <div class="stat-card">
 
+          <div class="stat-top">
+            <div class="stat-label">
+              Live Properties
             </div>
 
+            <div class="stat-icon">
+              ✓
+            </div>
+          </div>
+
+          <div class="stat-value"
+               id="ownerStatLive">
+            0
+          </div>
+
+          <div class="stat-foot">
+            Currently visible
+          </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+          <div class="stat-top">
+            <div class="stat-label">
+              Reviews
+            </div>
+
+            <div class="stat-icon">
+              ★
+            </div>
+          </div>
+
+          <div class="stat-value"
+               id="ownerStatReviews">
+            0
+          </div>
+
+          <div class="stat-foot">
+            Student reviews
           </div>
 
         </div>
@@ -1593,347 +2648,16 @@
 
       <!-- QUICK ACCESS -->
 
-      <div class="card">
-
-        <div class="card-head">
-
-          <div>
-            <div class="card-title">
-              Quick Access
-            </div>
-
-            <div class="card-subtitle">
-              Explore student services across India
-            </div>
-          </div>
-
-        </div>
-
-
-        <div class="quick-grid">
-
-          <a
-            class="quick-card"
-            href="pg-finder.html"
-          >
-            <div class="quick-icon">
-              🏠
-            </div>
-
-            <div class="quick-name">
-              Hostel / PG
-            </div>
-
-            <div class="quick-desc">
-              Find accommodation
-            </div>
-          </a>
-
-
-          <a
-            class="quick-card"
-            href="tiffin-finder.html"
-          >
-            <div class="quick-icon">
-              🍱
-            </div>
-
-            <div class="quick-name">
-              Tiffin / Mess
-            </div>
-
-            <div class="quick-desc">
-              Find food services
-            </div>
-          </a>
-
-
-          <a
-            class="quick-card"
-            href="library-finder.html"
-          >
-            <div class="quick-icon">
-              📚
-            </div>
-
-            <div class="quick-name">
-              Library
-            </div>
-
-            <div class="quick-desc">
-              Find study spaces
-            </div>
-          </a>
-
-
-          <a
-            class="quick-card"
-            href="cafe-finder.html"
-          >
-            <div class="quick-icon">
-              ☕
-            </div>
-
-            <div class="quick-name">
-              Cafe
-            </div>
-
-            <div class="quick-desc">
-              Find student cafes
-            </div>
-          </a>
-
-
-          <a
-            class="quick-card"
-            href="bookstore-finder.html"
-          >
-            <div class="quick-icon">
-              📖
-            </div>
-
-            <div class="quick-name">
-              Book Store
-            </div>
-
-            <div class="quick-desc">
-              Find books & stores
-            </div>
-          </a>
-
-        </div>
-
-      </div>
-
-
-      <!-- STUDENT JOINED PROPERTY -->
-
-      <div class="student-overview-card card">
-
-        <div class="card-head">
-
-          <div>
-            <div class="card-title">
-              My Joined Property
-            </div>
-
-            <div class="card-subtitle">
-              Accommodation and payment information
-            </div>
-          </div>
-
-          <button
-            class="view-link"
-            data-page-link="joined"
-          >
-            View Details
-          </button>
-
-        </div>
-
-
-        <div class="joined-box">
-
-          <div class="joined-empty-icon">
-            🏠
-          </div>
-
-          <div class="joined-empty-title">
-            Joining information is not available yet
-          </div>
-
-          <div class="joined-empty-text">
-            Your current Supabase property tables do not
-            contain joining date, rent amount or rent payment
-            history fields. No fake payment information is
-            shown here.
-          </div>
-
-          <span class="schema-note">
-            Waiting for existing joined-property data
-          </span>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- ======================
-         PROFILE
-    ======================= -->
-
-    <section
-      class="page"
-      id="page-profile"
-    >
-
-      <div class="page-head">
+      <div class="section-head">
 
         <div>
-
-          <div class="eyebrow">
-            Account
-          </div>
-
-          <h2 class="page-title">
-            My Profile
+          <h2 class="section-title">
+            Quick Access
           </h2>
 
-          <p class="page-description">
-            Manage your personal account information.
+          <p class="section-subtitle">
+            Find the service you need quickly.
           </p>
-
-        </div>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="form-grid">
-
-          <div class="form-group">
-
-            <label class="form-label">
-              Full Name
-            </label>
-
-            <input
-              class="form-input"
-              id="editName"
-              type="text"
-              placeholder="Your full name"
-            >
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label class="form-label">
-              Phone
-            </label>
-
-            <input
-              class="form-input"
-              id="editPhone"
-              type="tel"
-              placeholder="Your phone"
-            >
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label class="form-label">
-              Email
-            </label>
-
-            <input
-              class="form-input"
-              id="editEmail"
-              type="email"
-              disabled
-            >
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label class="form-label">
-              Account Role
-            </label>
-
-            <input
-              class="form-input"
-              id="editRole"
-              disabled
-            >
-
-          </div>
-
-
-          <div class="form-group full">
-
-            <label class="form-label">
-              Address
-            </label>
-
-            <textarea
-              class="form-textarea"
-              id="editAddress"
-              placeholder="Your address"
-            ></textarea>
-
-          </div>
-
-        </div>
-
-
-        <div class="form-actions">
-
-          <button
-            class="primary-btn"
-            id="saveProfileBtn"
-            type="button"
-          >
-            Save Changes
-          </button>
-
-          <button
-            class="secondary-btn"
-            id="cancelProfileBtn"
-            type="button"
-          >
-            Cancel
-          </button>
-
-        </div>
-
-
-        <div
-          id="profileStatus"
-          style="
-            margin-top:12px;
-            font-size:11px;
-            color:#697386;
-          "
-        ></div>
-
-      </div>
-
-    </section>
-
-
-    <!-- ======================
-         EXPLORE
-    ======================= -->
-
-    <section
-      class="page"
-      id="page-explore"
-    >
-
-      <div class="page-head">
-
-        <div>
-
-          <div class="eyebrow">
-            Discover
-          </div>
-
-          <h2 class="page-title">
-            Find / Explore Services
-          </h2>
-
-          <p class="page-description">
-            Discover student-friendly services anywhere in India.
-          </p>
-
         </div>
 
       </div>
@@ -1943,123 +2667,110 @@
 
         <div class="service-card">
 
-          <div class="service-icon">
-            🏠
-          </div>
+          <div class="service-icon">🏠</div>
 
-          <div class="service-title">
+          <h3>
             Hostel / PG
-          </div>
+          </h3>
 
-          <div class="service-text">
-            Search hostels and PG accommodation
-            by city, district or area.
-          </div>
+          <p>
+            Find student accommodation by
+            city, district or area.
+          </p>
 
-          <a
-            class="service-btn"
-            href="pg-finder.html"
-          >
+          <button class="btn btn-light"
+                  style="margin-top:13px"
+                  onclick="goFinder('pg-finder.html')">
             Explore →
-          </a>
+          </button>
 
         </div>
 
 
         <div class="service-card">
 
-          <div class="service-icon">
-            🍱
-          </div>
+          <div class="service-icon">🍱</div>
 
-          <div class="service-title">
+          <h3>
             Tiffin / Mess
-          </div>
+          </h3>
 
-          <div class="service-text">
-            Find student-friendly tiffin and mess
-            services.
-          </div>
+          <p>
+            Discover food and mess services
+            suitable for students.
+          </p>
 
-          <a
-            class="service-btn"
-            href="tiffin-finder.html"
-          >
+          <button class="btn btn-light"
+                  style="margin-top:13px"
+                  onclick="goFinder('tiffin-finder.html')">
             Explore →
-          </a>
+          </button>
 
         </div>
 
 
         <div class="service-card">
 
-          <div class="service-icon">
-            📚
-          </div>
+          <div class="service-icon">📚</div>
 
-          <div class="service-title">
+          <h3>
             Library
-          </div>
+          </h3>
 
-          <div class="service-text">
-            Discover reading rooms and study libraries.
-          </div>
+          <p>
+            Find libraries and study spaces
+            near your location.
+          </p>
 
-          <a
-            class="service-btn"
-            href="library-finder.html"
-          >
+          <button class="btn btn-light"
+                  style="margin-top:13px"
+                  onclick="goFinder('library-finder.html')">
             Explore →
-          </a>
+          </button>
 
         </div>
 
 
         <div class="service-card">
 
-          <div class="service-icon">
-            ☕
-          </div>
+          <div class="service-icon">☕</div>
 
-          <div class="service-title">
+          <h3>
             Cafe
-          </div>
+          </h3>
 
-          <div class="service-text">
-            Find study-friendly and student cafes.
-          </div>
+          <p>
+            Find cafes and student-friendly
+            study places.
+          </p>
 
-          <a
-            class="service-btn"
-            href="cafe-finder.html"
-          >
+          <button class="btn btn-light"
+                  style="margin-top:13px"
+                  onclick="goFinder('cafe-finder.html')">
             Explore →
-          </a>
+          </button>
 
         </div>
 
 
         <div class="service-card">
 
-          <div class="service-icon">
-            📖
-          </div>
+          <div class="service-icon">📖</div>
 
-          <div class="service-title">
+          <h3>
             Book Store
-          </div>
+          </h3>
 
-          <div class="service-text">
-            Find book stores for academic and
-            competitive exam books.
-          </div>
+          <p>
+            Find nearby book stores and
+            study material providers.
+          </p>
 
-          <a
-            class="service-btn"
-            href="bookstore-finder.html"
-          >
+          <button class="btn btn-light"
+                  style="margin-top:13px"
+                  onclick="goFinder('bookstore-finder.html')">
             Explore →
-          </a>
+          </button>
 
         </div>
 
@@ -2068,160 +2779,140 @@
     </section>
 
 
-    <!-- ======================
-         JOINED PROPERTY
-    ======================= -->
+    <!-- =====================================================
+         PROFILE
+    ====================================================== -->
 
-    <section
-      class="page"
-      id="page-joined"
-    >
+    <section class="page"
+             id="page-profile">
 
-      <div class="page-head">
+      <div class="section-head">
+
+        <div>
+          <h2 class="section-title">
+            My Profile
+          </h2>
+
+          <p class="section-subtitle">
+            Your account information connected to Supabase.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div id="profileMessage"
+           class="message">
+      </div>
+
+
+      <div class="card profile-layout">
+
+        <div class="profile-summary">
+
+          <div class="profile-big-avatar"
+               id="profileAvatar">
+            U
+          </div>
+
+          <h3 id="profileSummaryName">
+            User
+          </h3>
+
+          <p id="profileSummaryEmail">
+            —
+          </p>
+
+          <span class="profile-role-badge"
+                id="profileSummaryRole">
+            STUDENT
+          </span>
+
+        </div>
+
 
         <div>
 
-          <div class="eyebrow">
-            Student
+          <div class="form-grid">
+
+            <div class="field">
+
+              <label>
+                Full Name
+              </label>
+
+              <input
+                id="profileName"
+                type="text"
+                placeholder="Your full name">
+
+            </div>
+
+
+            <div class="field">
+
+              <label>
+                Phone
+              </label>
+
+              <input
+                id="profilePhone"
+                type="tel"
+                placeholder="Your phone number">
+
+            </div>
+
+
+            <div class="field">
+
+              <label>
+                Email
+              </label>
+
+              <input
+                id="profileEmail"
+                type="email"
+                disabled>
+
+            </div>
+
+
+            <div class="field">
+
+              <label>
+                Role
+              </label>
+
+              <input
+                id="profileRole"
+                disabled>
+
+            </div>
+
+
+            <div class="field full">
+
+              <label>
+                Address
+              </label>
+
+              <textarea
+                id="profileAddress"
+                placeholder="Your address">
+              </textarea>
+
+            </div>
+
           </div>
 
-          <h2 class="page-title">
-            My Joined Property
-          </h2>
 
-          <p class="page-description">
-            Your accommodation, joining and rent information.
-          </p>
+          <div class="form-actions">
 
-        </div>
+            <button class="btn btn-gold"
+                    id="saveProfileBtn">
+              Save Profile
+            </button>
 
-      </div>
-
-
-      <div class="card">
-
-        <div class="joined-box">
-
-          <div class="joined-empty-icon">
-            🏠
-          </div>
-
-          <div class="joined-empty-title">
-            Joined-property data is not present
-            in the current database structure
-          </div>
-
-          <div class="joined-empty-text">
-            Joining date, rent amount, rent due dates
-            and payment history will only be displayed
-            when those values exist in the connected
-            Supabase data.
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- ======================
-         STUDENT REVIEWS
-    ======================= -->
-
-    <section
-      class="page"
-      id="page-reviews"
-    >
-
-      <div class="page-head">
-
-        <div>
-
-          <div class="eyebrow">
-            Student
-          </div>
-
-          <h2 class="page-title">
-            My Reviews
-          </h2>
-
-          <p class="page-description">
-            Reviews and ratings you have submitted.
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <div
-        class="card"
-        id="studentReviews"
-      >
-
-        <div class="empty">
-
-          <div class="empty-icon">
-            ⭐
-          </div>
-
-          <div class="empty-title">
-            Loading reviews...
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- ======================
-         ACTIVITY
-    ======================= -->
-
-    <section
-      class="page"
-      id="page-activity"
-    >
-
-      <div class="page-head">
-
-        <div>
-
-          <div class="eyebrow">
-            Account
-          </div>
-
-          <h2 class="page-title">
-            My Activity
-          </h2>
-
-          <p class="page-description">
-            Your recent interactions on StudentHubHelp.
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="empty">
-
-          <div class="empty-icon">
-            ◷
-          </div>
-
-          <div class="empty-title">
-            Activity tracking is not available yet
-          </div>
-
-          <div class="empty-text">
-            Recent viewed listings and interactions
-            will appear here when available.
           </div>
 
         </div>
@@ -2232,28 +2923,199 @@
 
 
     <!-- =====================================================
-         OWNER CENTRE
+         STUDENT JOINED PROPERTY
     ====================================================== -->
 
-    <section
-      class="page owner-page"
-      id="page-owner-centre"
-    >
+    <section class="page student-only-page"
+             id="page-joined">
 
-      <div class="page-head">
+      <div class="section-head">
 
         <div>
-
-          <div class="eyebrow">
-            Owner Centre
-          </div>
-
-          <h2 class="page-title">
-            Business / Owner Profile
+          <h2 class="section-title">
+            My Joined Property
           </h2>
 
-          <p class="page-description">
-            Manage your owner information and listing overview.
+          <p class="section-subtitle">
+            Your accommodation and rent information.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="joined-empty">
+
+        <div class="joined-empty-icon">
+          🏠
+        </div>
+
+        <h3>
+          No Joined Property Yet
+        </h3>
+
+        <p>
+          Once your student property membership/
+          joining information is connected with
+          the platform, your joining date, rent amount,
+          rent payment dates and payment history will
+          appear here.
+        </p>
+
+        <button class="btn btn-primary"
+                style="margin-top:14px"
+                onclick="goFinder('pg-finder.html')">
+          Find Hostel / PG
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         FIND
+    ====================================================== -->
+
+    <section class="page"
+             id="page-find">
+
+      <div class="section-head">
+
+        <div>
+          <h2 class="section-title">
+            Explore Student Services
+          </h2>
+
+          <p class="section-subtitle">
+            Explore five live discovery categories.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="service-grid">
+
+        <div class="service-card">
+          <div class="service-icon">🏠</div>
+          <h3>Hostel / PG</h3>
+          <p>Accommodation and student living spaces.</p>
+          <button class="btn btn-primary"
+                  style="margin-top:13px"
+                  onclick="goFinder('pg-finder.html')">
+            Open Finder
+          </button>
+        </div>
+
+
+        <div class="service-card">
+          <div class="service-icon">🍱</div>
+          <h3>Tiffin / Mess</h3>
+          <p>Daily meals, tiffin and mess services.</p>
+          <button class="btn btn-primary"
+                  style="margin-top:13px"
+                  onclick="goFinder('tiffin-finder.html')">
+            Open Finder
+          </button>
+        </div>
+
+
+        <div class="service-card">
+          <div class="service-icon">📚</div>
+          <h3>Library</h3>
+          <p>Study libraries and focused learning spaces.</p>
+          <button class="btn btn-primary"
+                  style="margin-top:13px"
+                  onclick="goFinder('library-finder.html')">
+            Open Finder
+          </button>
+        </div>
+
+
+        <div class="service-card">
+          <div class="service-icon">☕</div>
+          <h3>Cafe</h3>
+          <p>Cafes and student-friendly places.</p>
+          <button class="btn btn-primary"
+                  style="margin-top:13px"
+                  onclick="goFinder('cafe-finder.html')">
+            Open Finder
+          </button>
+        </div>
+
+
+        <div class="service-card">
+          <div class="service-icon">📖</div>
+          <h3>Book Store</h3>
+          <p>Books, study material and book stores.</p>
+          <button class="btn btn-primary"
+                  style="margin-top:13px"
+                  onclick="goFinder('bookstore-finder.html')">
+            Open Finder
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         STUDENT REVIEWS
+    ====================================================== -->
+
+    <section class="page"
+             id="page-reviews">
+
+      <div class="section-head">
+
+        <div>
+          <h2 class="section-title">
+            My Reviews
+          </h2>
+
+          <p class="section-subtitle">
+            Reviews submitted from your student account.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div id="reviewsContainer"
+             class="request-list">
+
+          <div class="loading">
+            <div class="spinner"></div>
+            Loading reviews...
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         STUDENT ACTIVITY
+    ====================================================== -->
+
+    <section class="page"
+             id="page-activity">
+
+      <div class="section-head">
+
+        <div>
+          <h2 class="section-title">
+            My Activity
+          </h2>
+
+          <p class="section-subtitle">
+            Recent discovery activity and interactions.
           </p>
 
         </div>
@@ -2261,141 +3123,174 @@
       </div>
 
 
-      <div class="grid-2">
+      <div class="joined-empty">
 
-        <div class="card">
+        <div class="joined-empty-icon">
+          ↗
+        </div>
 
-          <div class="card-head">
+        <h3>
+          Activity Tracking
+        </h3>
+
+        <p>
+          Your recent listing views and interactions
+          will appear here as activity tracking is
+          connected to the platform.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         OWNER CENTRE
+    ====================================================== -->
+
+    <section class="page owner-page"
+             id="page-owner-centre">
+
+      <div class="section-head">
+
+        <div>
+          <h2 class="section-title">
+            Owner Centre
+          </h2>
+
+          <p class="section-subtitle">
+            Your business profile and listing overview.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="owner-profile-header">
+
+          <div class="owner-profile-main">
+
+            <div class="owner-profile-avatar"
+                 id="ownerCentreAvatar">
+              O
+            </div>
 
             <div>
-              <div class="card-title">
-                Owner Information
-              </div>
 
-              <div class="card-subtitle">
-                Connected to your Supabase profile
-              </div>
+              <h3 id="ownerCentreName">
+                Owner
+              </h3>
+
+              <p id="ownerCentreContact">
+                —
+              </p>
+
             </div>
 
           </div>
 
+          <span class="status approved">
+            VERIFIED ACCOUNT
+          </span>
 
-          <div class="info-list">
+        </div>
 
-            <div class="info-row">
-              <span class="info-label">
-                Owner Name
-              </span>
 
-              <span
-                class="info-value"
-                id="ownerName"
-              >
-                —
-              </span>
-            </div>
+        <div class="owner-summary-grid">
 
-            <div class="info-row">
-              <span class="info-label">
-                Phone
-              </span>
+          <div class="summary-box">
 
-              <span
-                class="info-value"
-                id="ownerPhone"
-              >
-                —
-              </span>
-            </div>
+            <span>
+              Owner Name
+            </span>
 
-            <div class="info-row">
-              <span class="info-label">
-                Email
-              </span>
+            <strong id="ownerCentreName2">
+              —
+            </strong>
 
-              <span
-                class="info-value"
-                id="ownerEmail"
-              >
-                —
-              </span>
-            </div>
+          </div>
 
-            <div class="info-row">
-              <span class="info-label">
-                Address
-              </span>
 
-              <span
-                class="info-value"
-                id="ownerAddress"
-              >
-                —
-              </span>
-            </div>
+          <div class="summary-box">
+
+            <span>
+              Phone
+            </span>
+
+            <strong id="ownerCentrePhone">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="summary-box">
+
+            <span>
+              Email
+            </span>
+
+            <strong id="ownerCentreEmail">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="summary-box">
+
+            <span>
+              Total Properties
+            </span>
+
+            <strong id="ownerCentreProperties">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="summary-box">
+
+            <span>
+              Live
+            </span>
+
+            <strong id="ownerCentreLive">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="summary-box">
+
+            <span>
+              Pending
+            </span>
+
+            <strong id="ownerCentrePending">
+              0
+            </strong>
 
           </div>
 
         </div>
 
 
-        <div class="card">
+        <div style="margin-top:18px">
 
-          <div class="card-head">
+          <div class="summary-box">
 
-            <div>
-              <div class="card-title">
-                Listing Summary
-              </div>
+            <span>
+              Address
+            </span>
 
-              <div class="card-subtitle">
-                Current owner activity
-              </div>
-            </div>
-
-          </div>
-
-
-          <div class="info-list">
-
-            <div class="info-row">
-              <span class="info-label">
-                Total Properties
-              </span>
-
-              <span
-                class="info-value"
-                id="ownerTotalProperties"
-              >
-                0
-              </span>
-            </div>
-
-            <div class="info-row">
-              <span class="info-label">
-                Pending Requests
-              </span>
-
-              <span
-                class="info-value"
-                id="ownerPendingRequests"
-              >
-                0
-              </span>
-            </div>
-
-            <div class="info-row">
-              <span class="info-label">
-                Live Properties
-              </span>
-
-              <span
-                class="info-value"
-                id="ownerLiveProperties"
-              >
-                0
-              </span>
-            </div>
+            <strong id="ownerCentreAddress">
+              —
+            </strong>
 
           </div>
 
@@ -2410,75 +3305,95 @@
          OWNER ADD LISTING
     ====================================================== -->
 
-    <section
-      class="page owner-page"
-      id="page-add-listing"
-    >
+    <section class="page owner-page"
+             id="page-listing">
 
-      <div class="page-head">
+      <div class="section-head">
 
         <div>
-
-          <div class="eyebrow">
-            Owner Centre
-          </div>
-
-          <h2 class="page-title">
+          <h2 class="section-title">
             Add Listing
           </h2>
 
-          <p class="page-description">
-            Submit a new property for Admin approval.
+          <p class="section-subtitle">
+            Submit a new property for Director Admin review.
           </p>
-
         </div>
 
       </div>
 
 
+      <div id="listingMessage"
+           class="message">
+      </div>
+
+
       <div class="card">
+
+        <div class="info-note">
+
+          <strong>
+            Approval process:
+          </strong>
+
+          Submit your property →
+          Admin Review →
+          Approved →
+          Live on StudentHubHelp.
+
+          <br>
+
+          Your listing will not directly modify a
+          live property until it is approved.
+
+        </div>
+
 
         <form id="listingForm">
 
           <div class="form-grid">
 
-            <div class="form-group">
+            <div class="field">
 
-              <label class="form-label">
-                Property / Business Name
+              <label>
+                Property / Business Name *
               </label>
 
               <input
-                class="form-input"
                 id="listingName"
                 required
-              >
+                placeholder="Example: Sunrise Boys PG">
 
             </div>
 
 
-            <div class="form-group">
+            <div class="field">
 
-              <label class="form-label">
-                Category
+              <label>
+                Property Type *
               </label>
 
-              <select
-                class="form-select"
-                id="listingCategory"
-                required
-              >
+              <select id="listingCategory"
+                      required>
 
                 <option value="">
-                  Select Category
+                  Select property type
                 </option>
 
                 <option value="hostel">
-                  Hostel / PG
+                  Hostel
+                </option>
+
+                <option value="pg">
+                  PG
                 </option>
 
                 <option value="tiffin">
-                  Tiffin / Mess
+                  Tiffin
+                </option>
+
+                <option value="mess">
+                  Mess
                 </option>
 
                 <option value="library">
@@ -2498,95 +3413,87 @@
             </div>
 
 
-            <div class="form-group">
+            <div class="field">
 
-              <label class="form-label">
-                Area
+              <label>
+                Area / City / District / State *
               </label>
 
               <input
-                class="form-input"
                 id="listingArea"
                 required
-              >
+                placeholder="Example: Sikar, Rajasthan">
 
             </div>
 
 
-            <div class="form-group">
+            <div class="field">
 
-              <label class="form-label">
-                Phone
+              <label>
+                Property Phone *
               </label>
 
               <input
-                class="form-input"
                 id="listingPhone"
+                type="tel"
                 required
-              >
+                placeholder="Property contact number">
 
             </div>
 
 
-            <div class="form-group full">
+            <div class="field full">
 
-              <label class="form-label">
-                Address
+              <label>
+                Full Address *
               </label>
 
               <textarea
-                class="form-textarea"
                 id="listingAddress"
                 required
-              ></textarea>
+                placeholder="Complete property address">
+              </textarea>
 
             </div>
 
 
-            <div class="form-group">
+            <div class="field">
 
-              <label class="form-label">
+              <label>
                 Timing
               </label>
 
               <input
-                class="form-input"
                 id="listingTiming"
-              >
+                placeholder="Example: 7 AM - 10 PM">
 
             </div>
 
 
-            <div class="form-group">
+            <div class="field">
 
-              <label class="form-label">
-                Rating
+              <label>
+                Image URL
               </label>
 
               <input
-                class="form-input"
-                id="listingRating"
-                type="number"
-                min="0"
-                max="5"
-                step="0.1"
-                placeholder="Optional"
-              >
+                id="listingImage"
+                type="url"
+                placeholder="https://...">
 
             </div>
 
 
-            <div class="form-group full">
+            <div class="field full">
 
-              <label class="form-label">
+              <label>
                 Facilities
               </label>
 
               <textarea
-                class="form-textarea"
                 id="listingFacilities"
-                placeholder="Wi-Fi, AC, food, parking, etc."
-              ></textarea>
+                placeholder="Wi-Fi, AC, parking, meals, study table, etc.">
+              </textarea>
 
             </div>
 
@@ -2596,23 +3503,15 @@
           <div class="form-actions">
 
             <button
-              class="primary-btn"
+              class="btn btn-gold"
               type="submit"
-            >
+              id="submitListingBtn">
+
               Submit Listing Request
+
             </button>
 
           </div>
-
-
-          <div
-            id="listingStatus"
-            style="
-              margin-top:12px;
-              font-size:11px;
-              color:#697386;
-            "
-          ></div>
 
         </form>
 
@@ -2625,39 +3524,40 @@
          OWNER REQUESTS
     ====================================================== -->
 
-    <section
-      class="page owner-page"
-      id="page-requests"
-    >
+    <section class="page owner-page"
+             id="page-requests">
 
-      <div class="page-head">
+      <div class="section-head">
 
         <div>
-
-          <div class="eyebrow">
-            Owner Centre
-          </div>
-
-          <h2 class="page-title">
+          <h2 class="section-title">
             My Requests
           </h2>
 
-          <p class="page-description">
-            Track your submitted property listing requests.
+          <p class="section-subtitle">
+            Track all property listing and edit requests.
           </p>
 
         </div>
 
+        <button class="btn btn-light"
+                onclick="loadRequests()">
+          ↻ Refresh
+        </button>
+
       </div>
 
 
-      <div
-        class="card"
-        id="requestsList"
-      >
+      <div class="card">
 
-        <div class="empty">
-          Loading requests...
+        <div id="requestsContainer"
+             class="request-list">
+
+          <div class="loading">
+            <div class="spinner"></div>
+            Loading requests...
+          </div>
+
         </div>
 
       </div>
@@ -2666,28 +3566,21 @@
 
 
     <!-- =====================================================
-         APPROVAL
+         APPROVAL STATUS
     ====================================================== -->
 
-    <section
-      class="page owner-page"
-      id="page-approval"
-    >
+    <section class="page owner-page"
+             id="page-approval">
 
-      <div class="page-head">
+      <div class="section-head">
 
         <div>
-
-          <div class="eyebrow">
-            Owner Centre
-          </div>
-
-          <h2 class="page-title">
+          <h2 class="section-title">
             Listing Approval Status
           </h2>
 
-          <p class="page-description">
-            Follow your listing from submission to approval.
+          <p class="section-subtitle">
+            Track your latest listing request.
           </p>
 
         </div>
@@ -2697,52 +3590,22 @@
 
       <div class="card">
 
-        <div
-          class="timeline"
-          id="approvalTimeline"
-        >
+        <div id="approvalContainer">
 
-          <div class="timeline-item done">
+          <div class="empty">
 
-            <span class="timeline-dot"></span>
-
-            <div class="timeline-title">
-              Submitted
+            <div class="empty-icon">
+              ✓
             </div>
 
-            <div class="timeline-text">
-              Your listing request has been submitted.
-            </div>
+            <strong>
+              No listing request yet
+            </strong>
 
-          </div>
-
-
-          <div class="timeline-item">
-
-            <span class="timeline-dot"></span>
-
-            <div class="timeline-title">
-              Under Review
-            </div>
-
-            <div class="timeline-text">
-              Admin review status will appear here.
-            </div>
-
-          </div>
-
-
-          <div class="timeline-item">
-
-            <span class="timeline-dot"></span>
-
-            <div class="timeline-title">
-              Approved / Rejected
-            </div>
-
-            <div class="timeline-text">
-              Final decision and Admin note will appear here.
-            </div>
+            <p>
+              Submit a listing from Add Listing
+              to start the approval process.
+            </p>
 
           </div>
 
@@ -2754,87 +3617,49 @@
 
 
     <!-- =====================================================
-         LIVE PROPERTIES
+         OWNER LIVE PROPERTIES
     ====================================================== -->
 
-    <section
-      class="page owner-page"
-      id="page-live-properties"
-    >
+    <section class="page owner-page"
+             id="page-live-properties">
 
-      <div class="page-head">
+      <div class="section-head">
 
         <div>
 
-          <div class="eyebrow">
-            Owner Centre
-          </div>
-
-          <h2 class="page-title">
+          <h2 class="section-title">
             Live Properties
           </h2>
 
-          <p class="page-description">
-            Approved properties connected to your owner account.
+          <p class="section-subtitle">
+            Your approved properties currently live on
+            StudentHubHelp.
           </p>
 
         </div>
 
-      </div>
-
-
-      <div
-        class="property-grid"
-        id="liveProperties"
-      >
-
-        <div class="empty">
-          Loading live properties...
-        </div>
+        <button class="btn btn-light"
+                onclick="loadLiveProperties()">
+          ↻ Refresh
+        </button>
 
       </div>
 
-    </section>
 
+      <div class="card">
 
-    <!-- =====================================================
-         MANAGE PROPERTIES
-    ====================================================== -->
+        <div id="livePropertiesContainer"
+             class="property-grid">
 
-    <section
-      class="page owner-page"
-      id="page-manage-properties"
-    >
+          <div class="loading"
+               style="grid-column:1/-1">
 
-      <div class="page-head">
+            <div class="spinner"></div>
 
-        <div>
+            Loading live properties...
 
-          <div class="eyebrow">
-            Owner Centre
           </div>
 
-          <h2 class="page-title">
-            Manage Properties
-          </h2>
-
-          <p class="page-description">
-            View your live property information.
-            Sensitive Admin fields remain protected.
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <div
-        class="property-grid"
-        id="manageProperties"
-      >
-
-        <div class="empty">
-          Loading properties...
         </div>
 
       </div>
@@ -2846,25 +3671,19 @@
          OWNER REVIEWS
     ====================================================== -->
 
-    <section
-      class="page owner-page"
-      id="page-owner-reviews"
-    >
+    <section class="page owner-page"
+             id="page-owner-reviews">
 
-      <div class="page-head">
+      <div class="section-head">
 
         <div>
 
-          <div class="eyebrow">
-            Owner Centre
-          </div>
-
-          <h2 class="page-title">
+          <h2 class="section-title">
             Owner Reviews
           </h2>
 
-          <p class="page-description">
-            Student reviews for your properties.
+          <p class="section-subtitle">
+            Student reviews received on your properties.
           </p>
 
         </div>
@@ -2872,13 +3691,19 @@
       </div>
 
 
-      <div
-        class="card"
-        id="ownerReviews"
-      >
+      <div class="card">
 
-        <div class="empty">
-          Loading reviews...
+        <div id="ownerReviewsContainer"
+             class="request-list">
+
+          <div class="loading">
+
+            <div class="spinner"></div>
+
+            Loading owner reviews...
+
+          </div>
+
         </div>
 
       </div>
@@ -2887,1513 +3712,3048 @@
 
   </main>
 
+</div>
+
+
+<!-- =========================================================
+     MODAL
+========================================================= -->
+
+<div class="modal-backdrop"
+     id="modalBackdrop">
+
+  <div class="modal">
+
+    <div class="modal-head">
+
+      <div>
+
+        <h2 class="modal-title"
+            id="modalTitle">
+          Property Details
+        </h2>
+
+        <p class="modal-subtitle"
+           id="modalSubtitle">
+          StudentHubHelp
+        </p>
+
+      </div>
+
+      <button class="close-btn"
+              onclick="closeModal()">
+        ×
+      </button>
+
+    </div>
+
+
+    <div class="modal-body"
+         id="modalBody">
+    </div>
+
+    <div class="modal-footer"
+         id="modalFooter">
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     TOAST
+========================================================= -->
+
+<div class="toast-container"
+     id="toastContainer">
+</div>
+
 
 <script>
 
-  /* =====================================================
-     SUPABASE
-  ===================================================== */
+/* =========================================================
+   SUPABASE
+========================================================= */
 
-  const SUPABASE_URL =
-    "https://idurlccrarznnnqixxsd.supabase.co";
+const SUPABASE_URL =
+  "https://idurlccrarznnnqixxsd.supabase.co";
 
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
-  const db =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
+const sb =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let currentUser = null;
+let currentProfile = null;
+
+let listingRequests = [];
+let liveProperties = [];
+let ownerReviews = [];
+
+let realtimeChannels = [];
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function $(id){
+  return document.getElementById(id);
+}
+
+
+function escapeHtml(value){
+
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+
+function initials(name){
+
+  return String(name || "User")
+    .trim()
+    .split(/\s+/)
+    .slice(0,2)
+    .map(x => x[0])
+    .join("")
+    .toUpperCase() || "U";
+}
+
+
+function normalizePhone(phone){
+
+  return String(phone || "")
+    .replace(/\D/g,"")
+    .slice(-10);
+}
+
+
+function roleName(role){
+
+  const r =
+    String(role || "")
+      .toLowerCase();
+
+  if(r === "owner") return "OWNER";
+  if(r === "student") return "STUDENT";
+  if(r === "admin") return "ADMIN";
+
+  return "USER";
+}
+
+
+function formatCategory(value){
+
+  const v =
+    String(value || "")
+      .toLowerCase();
+
+  const map = {
+
+    hostel:"Hostel",
+
+    pg:"PG",
+
+    tiffin:"Tiffin",
+
+    mess:"Mess",
+
+    library:"Library",
+
+    cafe:"Cafe",
+
+    bookstore:"Book Store"
+
+  };
+
+  return map[v] || value || "—";
+}
+
+
+function formatDate(value){
+
+  if(!value) return "—";
+
+  const d = new Date(value);
+
+  if(Number.isNaN(d.getTime()))
+    return "—";
+
+  return d.toLocaleString(
+    "en-IN",
+    {
+      dateStyle:"medium",
+      timeStyle:"short"
+    }
+  );
+}
+
+
+function showMessage(
+  id,
+  text,
+  type="info"
+){
+
+  const el = $(id);
+
+  if(!el) return;
+
+  el.className =
+    "message show " + type;
+
+  el.textContent = text;
+}
+
+
+function hideMessage(id){
+
+  const el = $(id);
+
+  if(el)
+    el.className = "message";
+}
+
+
+function toast(
+  text,
+  type="success"
+){
+
+  const container =
+    $("toastContainer");
+
+  const item =
+    document.createElement("div");
+
+  item.className =
+    "toast " + type;
+
+  item.textContent = text;
+
+  container.appendChild(item);
+
+  setTimeout(() => {
+
+    item.remove();
+
+  }, 3800);
+}
+
+
+function safeUrl(value){
+
+  try{
+
+    const u =
+      new URL(
+        value,
+        window.location.href
+      );
+
+    if(
+      u.protocol === "http:" ||
+      u.protocol === "https:"
+    ){
+      return u.href;
+    }
+
+  }catch(e){}
+
+  return "";
+}
+
+
+/* =========================================================
+   BANNER
+   Property tables currently do not expose image column.
+   Use category-specific platform banner.
+========================================================= */
+
+function propertyBanner(type){
+
+  const t =
+    String(type || "")
+      .toLowerCase();
+
+  if(t === "hostels")
+    return "hostel-banner.png";
+
+  if(t === "tiffins")
+    return "tiffin-banner.png";
+
+  if(t === "libraries")
+    return "library-banner.png";
+
+  if(t === "cafes")
+    return "cafe-banner.png";
+
+  if(t === "bookstores")
+    return "bookstore-banner.png";
+
+  return "hostel-banner.png";
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+function showPage(page){
+
+  const target =
+    $("page-" + page);
+
+  if(!target) return;
+
+  document
+    .querySelectorAll(".page")
+    .forEach(el =>
+      el.classList.remove("active")
     );
 
+  target.classList.add("active");
 
-  /* =====================================================
-     STATE
-  ===================================================== */
+  document
+    .querySelectorAll(".nav-btn[data-page]")
+    .forEach(btn => {
 
-  let currentUser = null;
-  let currentProfile = null;
+      btn.classList.toggle(
+        "active",
+        btn.dataset.page === page
+      );
 
-  let ownerRequests = [];
-  let ownerProperties = [];
+    });
 
-  const propertyTables = [
-    {
-      table:"hostels",
-      label:"Hostel / PG"
-    },
-    {
-      table:"tiffins",
-      label:"Tiffin / Mess"
-    },
-    {
-      table:"libraries",
-      label:"Library"
-    },
-    {
-      table:"cafes",
-      label:"Cafe"
-    },
-    {
-      table:"bookstores",
-      label:"Book Store"
-    }
-  ];
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
 
 
-  /* =====================================================
-     HELPERS
-  ===================================================== */
+  if(page === "reviews")
+    loadReviews();
 
-  function clean(value){
-    if(
-      value === null ||
-      value === undefined
-    ){
-      return "";
-    }
+  if(page === "requests")
+    loadRequests();
 
-    return String(value).trim();
+  if(page === "approval")
+    renderApprovalStatus();
+
+  if(page === "live-properties")
+    loadLiveProperties();
+
+  if(page === "owner-reviews")
+    loadOwnerReviews();
+
+  if(page === "owner-centre")
+    loadOwnerCentre();
+
+}
+
+
+document
+  .querySelectorAll(".nav-btn[data-page]")
+  .forEach(btn => {
+
+    btn.addEventListener(
+      "click",
+      () => {
+
+        showPage(
+          btn.dataset.page
+        );
+
+      }
+    );
+
+  });
+
+
+function goFinder(url){
+
+  window.location.href = url;
+
+}
+
+
+/* =========================================================
+   ROLE UI
+========================================================= */
+
+function configureRoleUI(){
+
+  const role =
+    String(currentProfile?.role || "")
+      .toLowerCase();
+
+  const isOwner =
+    role === "owner";
+
+  const isStudent =
+    role === "student";
+
+
+  document
+    .querySelectorAll(".owner-only")
+    .forEach(el => {
+
+      el.style.display =
+        isOwner ? "" : "none";
+
+    });
+
+
+  document
+    .querySelectorAll(".student-only")
+    .forEach(el => {
+
+      el.style.display =
+        isStudent ? "" : "none";
+
+    });
+
+
+  document
+    .querySelectorAll(".owner-page")
+    .forEach(el => {
+
+      el.style.display =
+        isOwner ? "" : "none";
+
+    });
+
+
+  document
+    .querySelectorAll(".student-only-page")
+    .forEach(el => {
+
+      el.style.display =
+        isStudent ? "" : "none";
+
+    });
+
+
+  if(isOwner){
+
+    document
+      .querySelector(".student-stats")
+      ?.classList.add("hidden");
+
+    document
+      .querySelector(".owner-stats")
+      ?.classList.remove("hidden");
+
+  }else{
+
+    document
+      .querySelector(".student-stats")
+      ?.classList.remove("hidden");
+
+    document
+      .querySelector(".owner-stats")
+      ?.classList.add("hidden");
+
   }
 
 
-  function escapeHTML(value){
+  if(isOwner){
 
-    return String(value ?? "")
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;")
-      .replace(/'/g,"&#039;");
+    $("heroText").textContent =
+      "Manage your owner profile, submit property requests, track approvals and view your live properties.";
+
+    $("heroRole").textContent =
+      "OWNER ACCOUNT";
+
+  }else{
+
+    $("heroText").textContent =
+      "Discover Hostel / PG, Tiffin / Mess, Library, Cafe and Book Store services across India.";
+
+    $("heroRole").textContent =
+      "STUDENT ACCOUNT";
+
+  }
+
+}
+
+
+/* =========================================================
+   BOOT
+========================================================= */
+
+async function boot(){
+
+  const {
+    data,
+    error
+  } =
+    await sb.auth.getSession();
+
+
+  if(error){
+
+    console.error(error);
+
+    window.location.href =
+      "auth.html";
+
+    return;
+  }
+
+
+  if(!data?.session){
+
+    window.location.href =
+      "auth.html";
+
+    return;
+  }
+
+
+  currentUser =
+    data.session.user;
+
+
+  await loadProfile();
+
+
+  const role =
+    String(currentProfile?.role || "")
+      .toLowerCase();
+
+
+  /*
+    Admin never stays on user dashboard.
+  */
+
+  if(role === "admin"){
+
+    window.location.href =
+      "admin-dashboard.html";
+
+    return;
+  }
+
+
+  /*
+    Missing role fails closed.
+  */
+
+  if(
+    role !== "student" &&
+    role !== "owner"
+  ){
+
+    toast(
+      "Your account role is not configured.",
+      "error"
+    );
 
   }
 
 
-  function normalizePhone(phone){
+  configureRoleUI();
 
-    const digits =
-      clean(phone).replace(/\D/g,"");
+  await loadRequests();
+  await loadReviews();
+  await loadLiveProperties();
+  await loadOwnerReviews();
+  await loadOwnerCentre();
 
-    if(
-      digits.length >= 10
-    ){
-      return digits.slice(-10);
-    }
+  subscribeRealtime();
 
-    return digits;
-  }
+}
 
 
-  function initials(name){
+/* =========================================================
+   PROFILE
+========================================================= */
 
-    const value =
-      clean(name);
+async function loadProfile(){
 
-    if(!value){
-      return "U";
-    }
-
-    return value
-      .split(/\s+/)
-      .slice(0,2)
-      .map(
-        part => part.charAt(0)
+  const {
+    data,
+    error
+  } =
+    await sb
+      .from("profiles")
+      .select(
+        "id,full_name,phone,email,address,role"
       )
-      .join("")
-      .toUpperCase();
+      .eq(
+        "id",
+        currentUser.id
+      )
+      .maybeSingle();
 
-  }
 
+  if(error){
 
-  function formatCategory(category){
+    console.error(
+      "Profile load error:",
+      error
+    );
 
-    const value =
-      clean(category).toLowerCase();
+    currentProfile = {
 
-    const map = {
-      hostel:"Hostel / PG",
-      pg:"Hostel / PG",
-      tiffin:"Tiffin / Mess",
-      mess:"Tiffin / Mess",
-      library:"Library",
-      cafe:"Cafe",
-      bookstore:"Book Store"
+      id:currentUser.id,
+
+      full_name:
+        currentUser
+          .user_metadata
+          ?.full_name ||
+        "User",
+
+      phone:"",
+
+      email:
+        currentUser.email || "",
+
+      address:"",
+
+      role:""
+
     };
 
-    return map[value] || value || "Listing";
-
-  }
-
-
-  function formatDate(value){
-
-    if(!value){
-      return "—";
-    }
-
-    const date =
-      new Date(value);
-
-    if(
-      Number.isNaN(date.getTime())
-    ){
-      return "—";
-    }
-
-    return date.toLocaleDateString(
-      "en-IN",
-      {
-        day:"2-digit",
-        month:"short",
-        year:"numeric"
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     AUTH + ROLE
-  ===================================================== */
-
-  async function loadAccount(){
-
-    const {
-      data:{
-        session
-      },
-      error
-    } =
-      await db.auth.getSession();
-
-    if(error){
-      throw error;
-    }
-
-    if(!session){
-      window.location.href =
-        "auth.html";
-
-      return false;
-    }
-
-    currentUser =
-      session.user;
-
-
-    const {
-      data:profile,
-      error:profileError
-    } =
-      await db
-        .from("profiles")
-        .select(
-          "id,full_name,phone,email,address,role"
-        )
-        .eq(
-          "id",
-          currentUser.id
-        )
-        .maybeSingle();
-
-
-    if(profileError){
-      throw profileError;
-    }
-
-
-    if(!profile){
-      showFatal(
-        "Your profile could not be loaded."
-      );
-
-      return false;
-    }
-
+  }else{
 
     currentProfile =
-      profile;
+      data || {
+
+        id:currentUser.id,
+
+        full_name:
+          currentUser
+            .user_metadata
+            ?.full_name ||
+          "User",
+
+        phone:"",
+
+        email:
+          currentUser.email || "",
+
+        address:"",
+
+        role:""
+
+      };
+
+  }
 
 
-    const role =
-      clean(profile.role)
-        .toLowerCase();
+  const name =
+    currentProfile.full_name ||
+    "User";
 
+  const role =
+    roleName(
+      currentProfile.role
+    );
+
+
+  $("topUserName").textContent =
+    name;
+
+  $("topUserRole").textContent =
+    role;
+
+  $("topAvatar").textContent =
+    initials(name);
+
+  $("heroName").textContent =
+    name;
+
+
+  $("studentStatRole").textContent =
+    role;
+
+
+  $("profileName").value =
+    currentProfile.full_name || "";
+
+  $("profilePhone").value =
+    currentProfile.phone || "";
+
+  $("profileEmail").value =
+    currentProfile.email ||
+    currentUser.email ||
+    "";
+
+  $("profileRole").value =
+    role;
+
+  $("profileAddress").value =
+    currentProfile.address || "";
+
+
+  $("profileAvatar").textContent =
+    initials(name);
+
+  $("profileSummaryName").textContent =
+    name;
+
+  $("profileSummaryEmail").textContent =
+    currentProfile.email ||
+    currentUser.email ||
+    "—";
+
+  $("profileSummaryRole").textContent =
+    role;
+
+
+  $("ownerCentreAvatar").textContent =
+    initials(name);
+
+  $("ownerCentreName").textContent =
+    name;
+
+  $("ownerCentreName2").textContent =
+    name;
+
+  $("ownerCentreContact").textContent =
+    currentProfile.phone ||
+    "Phone not provided";
+
+  $("ownerCentrePhone").textContent =
+    currentProfile.phone ||
+    "—";
+
+  $("ownerCentreEmail").textContent =
+    currentProfile.email ||
+    currentUser.email ||
+    "—";
+
+  $("ownerCentreAddress").textContent =
+    currentProfile.address ||
+    "Address not provided";
+
+}
+
+
+/* =========================================================
+   SAVE PROFILE
+========================================================= */
+
+async function saveProfile(){
+
+  const btn =
+    $("saveProfileBtn");
+
+  btn.disabled = true;
+  btn.textContent =
+    "Saving...";
+
+
+  hideMessage(
+    "profileMessage"
+  );
+
+
+  const payload = {
+
+    full_name:
+      $("profileName")
+        .value
+        .trim(),
+
+    phone:
+      $("profilePhone")
+        .value
+        .trim(),
+
+    address:
+      $("profileAddress")
+        .value
+        .trim()
+
+  };
+
+
+  if(!payload.full_name){
+
+    showMessage(
+      "profileMessage",
+      "Full name is required.",
+      "error"
+    );
+
+    btn.disabled = false;
+    btn.textContent =
+      "Save Profile";
+
+    return;
+  }
+
+
+  const {
+    error
+  } =
+    await sb
+      .from("profiles")
+      .update(payload)
+      .eq(
+        "id",
+        currentUser.id
+      );
+
+
+  if(error){
+
+    console.error(error);
+
+    showMessage(
+      "profileMessage",
+      error.message,
+      "error"
+    );
+
+  }else{
+
+    currentProfile = {
+      ...currentProfile,
+      ...payload
+    };
+
+
+    await loadProfile();
+
+
+    showMessage(
+      "profileMessage",
+      "Profile saved successfully.",
+      "success"
+    );
+
+    toast(
+      "Profile updated successfully."
+    );
+
+  }
+
+
+  btn.disabled = false;
+
+  btn.textContent =
+    "Save Profile";
+
+}
+
+
+$("saveProfileBtn")
+  .addEventListener(
+    "click",
+    saveProfile
+  );
+
+
+/* =========================================================
+   LISTING REQUEST
+========================================================= */
+
+async function submitListing(e){
+
+  e.preventDefault();
+
+
+  const btn =
+    $("submitListingBtn");
+
+  btn.disabled = true;
+  btn.textContent =
+    "Submitting...";
+
+
+  hideMessage(
+    "listingMessage"
+  );
+
+
+  if(
+    String(currentProfile?.role || "")
+      .toLowerCase() !== "owner"
+  ){
+
+    showMessage(
+      "listingMessage",
+      "Only owner accounts can submit listings.",
+      "error"
+    );
+
+    btn.disabled = false;
+    btn.textContent =
+      "Submit Listing Request";
+
+    return;
+  }
+
+
+  if(
+    !normalizePhone(
+      currentProfile?.phone
+    )
+  ){
+
+    showMessage(
+      "listingMessage",
+      "Please add your registered owner phone number in My Profile first.",
+      "error"
+    );
+
+    btn.disabled = false;
+    btn.textContent =
+      "Submit Listing Request";
+
+    return;
+  }
+
+
+  const payload = {
+
+    owner_id:
+      currentUser.id,
+
+    owner_name:
+      currentProfile.full_name ||
+      "Owner",
+
+    owner_phone:
+      currentProfile.phone,
+
+    name:
+      $("listingName")
+        .value
+        .trim(),
+
+    category:
+      $("listingCategory")
+        .value,
+
+    area:
+      $("listingArea")
+        .value
+        .trim(),
+
+    address:
+      $("listingAddress")
+        .value
+        .trim(),
+
+    phone:
+      $("listingPhone")
+        .value
+        .trim(),
+
+    timing:
+      $("listingTiming")
+        .value
+        .trim() ||
+      null,
+
+    facilities:
+      $("listingFacilities")
+        .value
+        .trim() ||
+      null,
+
+    image:
+      $("listingImage")
+        .value
+        .trim() ||
+      null,
+
+    rating:null,
+
+    status:"pending"
+
+  };
+
+
+  const {
+    error
+  } =
+    await sb
+      .from("listing_requests")
+      .insert(payload);
+
+
+  if(error){
+
+    console.error(error);
+
+    showMessage(
+      "listingMessage",
+      error.message,
+      "error"
+    );
+
+  }else{
+
+    showMessage(
+      "listingMessage",
+      "Listing request submitted successfully. It is now pending Admin verification.",
+      "success"
+    );
+
+
+    $("listingForm").reset();
+
+
+    $("listingPhone").value =
+      currentProfile.phone || "";
+
+
+    await loadRequests();
+
+    renderApprovalStatus();
+
+
+    toast(
+      "Listing request submitted."
+    );
+
+  }
+
+
+  btn.disabled = false;
+
+  btn.textContent =
+    "Submit Listing Request";
+
+}
+
+
+$("listingForm")
+  .addEventListener(
+    "submit",
+    submitListing
+  );
+
+
+/* =========================================================
+   REQUESTS
+========================================================= */
+
+async function loadRequests(){
+
+  if(!currentUser)
+    return;
+
+
+  const box =
+    $("requestsContainer");
+
+  if(!box)
+    return;
+
+
+  box.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Loading requests...
+    </div>
+  `;
+
+
+  const {
+    data,
+    error
+  } =
+    await sb
+      .from("listing_requests")
+      .select(
+        "id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at"
+      )
+      .eq(
+        "owner_id",
+        currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      );
+
+
+  if(error){
+
+    console.error(error);
+
+    box.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">!</div>
+        <strong>Unable to load requests</strong>
+        <p>${escapeHtml(error.message)}</p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  listingRequests =
+    data || [];
+
+
+  updateOwnerStats();
+
+
+  if(!listingRequests.length){
+
+    box.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">▤</div>
+        <strong>No listing requests yet</strong>
+        <p>
+          Your submitted listing requests will appear here.
+        </p>
+      </div>
+    `;
+
+    renderApprovalStatus();
+
+    return;
+  }
+
+
+  box.innerHTML =
+    listingRequests
+      .map(requestCardHtml)
+      .join("");
+
+
+  renderApprovalStatus();
+
+}
+
+
+function requestCardHtml(r){
+
+  const status =
+    String(r.status || "pending")
+      .toLowerCase();
+
+
+  const isEdit =
+    String(r.admin_note || "")
+      .toUpperCase()
+      .includes("EDIT_REQUEST");
+
+
+  return `
+
+    <div class="request-card">
+
+      <div class="request-main">
+
+        <h3 class="request-title">
+          ${escapeHtml(r.name || "Unnamed Property")}
+        </h3>
+
+        <div class="request-meta">
+
+          <span>
+            ${escapeHtml(formatCategory(r.category))}
+          </span>
+
+          <span>
+            ${escapeHtml(r.area || "Area not provided")}
+          </span>
+
+          <span>
+            ${isEdit ? "Edit Request" : "New Listing"}
+          </span>
+
+          <span>
+            ${formatDate(r.created_at)}
+          </span>
+
+        </div>
+
+
+        ${
+          r.admin_note &&
+          !String(r.admin_note)
+            .toUpperCase()
+            .includes("EDIT_REQUEST")
+          ?
+
+          `<div class="request-note">
+             <strong>Admin Note:</strong>
+             ${escapeHtml(r.admin_note)}
+           </div>`
+
+          : ""
+
+        }
+
+      </div>
+
+
+      <div class="request-actions">
+
+        <span class="status ${escapeHtml(status)}">
+          ${escapeHtml(status)}
+        </span>
+
+        <button
+          class="btn btn-light"
+          onclick="viewRequest('${escapeHtml(r.id)}')">
+
+          View
+
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+}
+
+
+/* =========================================================
+   VIEW REQUEST
+========================================================= */
+
+async function viewRequest(id){
+
+  const row =
+    listingRequests.find(
+      x => String(x.id) === String(id)
+    );
+
+
+  if(!row)
+    return;
+
+
+  openModal(
+    "Listing Request",
+    "Request submitted for Admin review.",
+    `
+      ${
+        row.image
+        ?
+        `
+        <div class="detail-hero">
+          <img
+            src="${safeUrl(row.image) || "hostel-banner.png"}"
+            onerror="this.src='hostel-banner.png'"
+            alt="">
+        </div>
+        `
+        :
+        ""
+      }
+
+
+      <div class="detail-grid">
+
+        <div class="detail-item">
+          <div class="detail-label">
+            Property Name
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(row.name || "—")}
+          </div>
+        </div>
+
+
+        <div class="detail-item">
+          <div class="detail-label">
+            Category
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(formatCategory(row.category))}
+          </div>
+        </div>
+
+
+        <div class="detail-item">
+          <div class="detail-label">
+            Area
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(row.area || "—")}
+          </div>
+        </div>
+
+
+        <div class="detail-item">
+          <div class="detail-label">
+            Phone
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(row.phone || "—")}
+          </div>
+        </div>
+
+
+        <div class="detail-item full">
+          <div class="detail-label">
+            Address
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(row.address || "—")}
+          </div>
+        </div>
+
+
+        <div class="detail-item">
+          <div class="detail-label">
+            Timing
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(row.timing || "—")}
+          </div>
+        </div>
+
+
+        <div class="detail-item">
+          <div class="detail-label">
+            Status
+          </div>
+
+          <div class="detail-value">
+            <span class="status ${escapeHtml(String(row.status || "pending").toLowerCase())}">
+              ${escapeHtml(row.status || "pending")}
+            </span>
+          </div>
+        </div>
+
+
+        <div class="detail-item full">
+          <div class="detail-label">
+            Facilities
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(row.facilities || "—")}
+          </div>
+        </div>
+
+
+        ${
+          row.admin_note &&
+          !String(row.admin_note)
+            .toUpperCase()
+            .includes("EDIT_REQUEST")
+
+          ?
+
+          `
+          <div class="detail-item full">
+            <div class="detail-label">
+              Admin Note
+            </div>
+
+            <div class="detail-value">
+              ${escapeHtml(row.admin_note)}
+            </div>
+          </div>
+          `
+
+          : ""
+
+        }
+
+      </div>
+    `,
+
+    `
+      <button
+        class="btn btn-light"
+        onclick="closeModal()">
+        Close
+      </button>
+    `
+  );
+
+}
+
+
+/* =========================================================
+   APPROVAL STATUS
+========================================================= */
+
+function renderApprovalStatus(){
+
+  const box =
+    $("approvalContainer");
+
+  if(!box)
+    return;
+
+
+  const latest =
+    listingRequests[0];
+
+
+  if(!latest){
+
+    box.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">✓</div>
+        <strong>No listing request yet</strong>
+        <p>
+          Submit a listing from Add Listing
+          to start the approval process.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  const status =
+    String(
+      latest.status || "pending"
+    ).toLowerCase();
+
+
+  let submittedDone = true;
+  let reviewDone = false;
+  let approvedDone = false;
+
+
+  if(status === "pending"){
+
+    reviewDone = true;
+
+  }
+
+
+  if(status === "approved"){
+
+    reviewDone = true;
+    approvedDone = true;
+
+  }
+
+
+  if(status === "rejected"){
+
+    reviewDone = true;
+
+  }
+
+
+  box.innerHTML = `
+
+    <div>
+
+      <div>
+
+        <strong style="
+          color:var(--navy);
+          font-size:15px;
+          font-weight:950;
+        ">
+          ${escapeHtml(latest.name || "Property")}
+        </strong>
+
+        <div style="
+          margin-top:5px;
+          color:var(--muted);
+          font-size:10px;
+        ">
+          ${escapeHtml(formatCategory(latest.category))}
+          ·
+          ${escapeHtml(latest.area || "—")}
+        </div>
+
+      </div>
+
+
+      <div class="timeline">
+
+        <div class="timeline-step done">
+
+          <div class="timeline-dot">
+            ✓
+          </div>
+
+          <div>
+
+            <div class="timeline-title">
+              Submitted
+            </div>
+
+            <div class="timeline-text">
+              Request received
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="timeline-step ${reviewDone ? "current" : ""}">
+
+          <div class="timeline-dot">
+            ${reviewDone ? "✓" : "2"}
+          </div>
+
+          <div>
+
+            <div class="timeline-title">
+              Under Review
+            </div>
+
+            <div class="timeline-text">
+              Director Admin verification
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="timeline-step ${approvedDone ? "done" : ""}">
+
+          <div class="timeline-dot">
+
+            ${
+              status === "rejected"
+              ? "!"
+              : approvedDone
+                ? "✓"
+                : "3"
+            }
+
+          </div>
+
+          <div>
+
+            <div class="timeline-title">
+
+              ${
+                status === "rejected"
+                ? "Rejected"
+                : "Approved"
+              }
+
+            </div>
+
+            <div class="timeline-text">
+
+              ${
+                status === "rejected"
+                ? "See Admin note in My Requests"
+                : "Property goes live after approval"
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div style="margin-top:22px">
+
+        <span class="status ${escapeHtml(status)}">
+          ${escapeHtml(status)}
+        </span>
+
+        <button
+          class="btn btn-light"
+          style="margin-left:8px"
+          onclick="viewRequest('${escapeHtml(latest.id)}')">
+
+          View Request
+
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   LIVE PROPERTIES
+========================================================= */
+
+const propertyTables = [
+
+  {
+    table:"hostels",
+    category:"Hostel",
+    banner:"hostel-banner.png"
+  },
+
+  {
+    table:"tiffins",
+    category:"Tiffin",
+    banner:"tiffin-banner.png"
+  },
+
+  {
+    table:"libraries",
+    category:"Library",
+    banner:"library-banner.png"
+  },
+
+  {
+    table:"cafes",
+    category:"Cafe",
+    banner:"cafe-banner.png"
+  },
+
+  {
+    table:"bookstores",
+    category:"Book Store",
+    banner:"bookstore-banner.png"
+  }
+
+];
+
+
+async function loadLiveProperties(){
+
+  if(!currentUser)
+    return;
+
+
+  if(
+    String(currentProfile?.role || "")
+      .toLowerCase() !== "owner"
+  )
+    return;
+
+
+  const box =
+    $("livePropertiesContainer");
+
+  if(!box)
+    return;
+
+
+  box.innerHTML = `
+    <div class="loading"
+         style="grid-column:1/-1">
+      <div class="spinner"></div>
+      Loading live properties...
+    </div>
+  `;
+
+
+  const ownerPhone =
+    normalizePhone(
+      currentProfile?.phone
+    );
+
+
+  if(!ownerPhone){
+
+    box.innerHTML = `
+      <div class="empty"
+           style="grid-column:1/-1">
+
+        <div class="empty-icon">
+          ☎
+        </div>
+
+        <strong>
+          Owner phone number required
+        </strong>
+
+        <p>
+          Add your registered owner phone number
+          in My Profile to connect live properties.
+        </p>
+
+      </div>
+    `;
+
+    return;
+  }
+
+
+  const results = [];
+
+
+  for(
+    const config of propertyTables
+  ){
+
+    const {
+      data,
+      error
+    } =
+      await sb
+        .from(config.table)
+        .select(
+          "id,name,category,area,address,phone,timing,facilities,rating"
+        );
+
+
+    if(error){
+
+      console.warn(
+        config.table,
+        error.message
+      );
+
+      continue;
+    }
+
+
+    const matches =
+      (data || [])
+        .filter(row =>
+          normalizePhone(
+            row.phone
+          ) === ownerPhone
+        )
+        .map(row => ({
+
+          ...row,
+
+          table:
+            config.table,
+
+          banner:
+            config.banner,
+
+          displayCategory:
+            row.category ||
+            config.category
+
+        }));
+
+
+    results.push(
+      ...matches
+    );
+
+  }
+
+
+  liveProperties =
+    results;
+
+
+  renderLiveProperties();
+
+  updateOwnerStats();
+
+}
+
+
+/* =========================================================
+   RENDER LIVE PROPERTIES
+========================================================= */
+
+function renderLiveProperties(){
+
+  const box =
+    $("livePropertiesContainer");
+
+
+  if(!box)
+    return;
+
+
+  if(!liveProperties.length){
+
+    box.innerHTML = `
+      <div class="empty"
+           style="grid-column:1/-1">
+
+        <div class="empty-icon">
+          ⌂
+        </div>
+
+        <strong>
+          No live properties found
+        </strong>
+
+        <p>
+          Approved properties connected to your
+          registered owner phone number will appear here.
+        </p>
+
+        <button
+          class="btn btn-gold"
+          style="margin-top:14px"
+          onclick="showPage('listing')">
+
+          Add New Listing
+
+        </button>
+
+      </div>
+    `;
+
+    return;
+  }
+
+
+  box.innerHTML =
+    liveProperties
+      .map((property,index) =>
+        propertyCardHtml(
+          property,
+          index
+        )
+      )
+      .join("");
+
+}
+
+
+function propertyCardHtml(
+  p,
+  index
+){
+
+  const banner =
+    p.banner ||
+    propertyBanner(
+      p.table
+    );
+
+
+  return `
+
+    <article class="property-card">
+
+      <div class="property-banner">
+
+        <img
+          src="${escapeHtml(banner)}"
+          alt="${escapeHtml(p.name || "Property")}"
+          onerror="this.src='hostel-banner.png'">
+
+        <div class="live-label">
+          <span class="live-dot"></span>
+          LIVE PROPERTY
+        </div>
+
+        <div class="property-category">
+          ${escapeHtml(formatCategory(p.displayCategory))}
+        </div>
+
+        <div class="property-banner-title">
+          ${escapeHtml(p.name || "Property")}
+        </div>
+
+      </div>
+
+
+      <div class="property-body">
+
+        <div class="property-info">
+
+          <div class="property-row">
+
+            <span class="property-row-icon">
+              ◉
+            </span>
+
+            <span>
+              ${escapeHtml(p.area || "Area not provided")}
+            </span>
+
+          </div>
+
+
+          <div class="property-row">
+
+            <span class="property-row-icon">
+              ⌂
+            </span>
+
+            <span>
+              ${escapeHtml(p.address || "Address not provided")}
+            </span>
+
+          </div>
+
+
+          <div class="property-row">
+
+            <span class="property-row-icon">
+              ◷
+            </span>
+
+            <span>
+              ${escapeHtml(p.timing || "Timing not provided")}
+            </span>
+
+          </div>
+
+
+          <div class="property-row">
+
+            <span class="property-row-icon">
+              ★
+            </span>
+
+            <span>
+              Rating:
+              ${escapeHtml(
+                p.rating ?? "Not rated"
+              )}
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div class="property-actions">
+
+          <button
+            class="btn btn-primary"
+            onclick="viewLiveProperty(${index})">
+
+            View Details
+
+          </button>
+
+          <button
+            class="btn btn-light"
+            onclick="openEditRequest(${index})">
+
+            Request Edit
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </article>
+
+  `;
+
+}
+
+
+/* =========================================================
+   VIEW LIVE PROPERTY MODAL
+========================================================= */
+
+function viewLiveProperty(index){
+
+  const property =
+    liveProperties[index];
+
+  if(!property)
+    return;
+
+
+  const banner =
+    property.banner ||
+    propertyBanner(
+      property.table
+    );
+
+
+  openModal(
+
+    property.name ||
+    "Property Details",
+
+    "Live property details",
+
+    `
+
+      <div class="detail-hero">
+
+        <img
+          src="${escapeHtml(banner)}"
+          alt=""
+          onerror="this.src='hostel-banner.png'">
+
+      </div>
+
+
+      <div class="detail-grid">
+
+        <div class="detail-item">
+
+          <div class="detail-label">
+            Property Name
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(property.name || "—")}
+          </div>
+
+        </div>
+
+
+        <div class="detail-item">
+
+          <div class="detail-label">
+            Category
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(
+              formatCategory(
+                property.displayCategory
+              )
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="detail-item">
+
+          <div class="detail-label">
+            Area
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(property.area || "—")}
+          </div>
+
+        </div>
+
+
+        <div class="detail-item">
+
+          <div class="detail-label">
+            Phone
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(property.phone || "—")}
+          </div>
+
+        </div>
+
+
+        <div class="detail-item full">
+
+          <div class="detail-label">
+            Address
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(property.address || "—")}
+          </div>
+
+        </div>
+
+
+        <div class="detail-item">
+
+          <div class="detail-label">
+            Timing
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(property.timing || "—")}
+          </div>
+
+        </div>
+
+
+        <div class="detail-item">
+
+          <div class="detail-label">
+            Rating
+          </div>
+
+          <div class="detail-value">
+            ★ ${escapeHtml(property.rating ?? "Not rated")}
+          </div>
+
+        </div>
+
+
+        <div class="detail-item full">
+
+          <div class="detail-label">
+            Facilities
+          </div>
+
+          <div class="detail-value">
+            ${escapeHtml(property.facilities || "—")}
+          </div>
+
+        </div>
+
+      </div>
+
+    `,
+
+    `
+
+      <button
+        class="btn btn-light"
+        onclick="closeModal()">
+        Close
+      </button>
+
+      <button
+        class="btn btn-gold"
+        onclick="closeModal();openEditRequest(${index})">
+
+        Request Edit
+
+      </button>
+
+    `
+
+  );
+
+}
+
+
+/* =========================================================
+   REQUEST EDIT MODAL
+========================================================= */
+
+function openEditRequest(index){
+
+  const property =
+    liveProperties[index];
+
+  if(!property)
+    return;
+
+
+  const banner =
+    property.banner ||
+    propertyBanner(
+      property.table
+    );
+
+
+  openModal(
+
+    "Request Property Edit",
+
+    "Changes go to Director Admin for review.",
+
+    `
+
+      <div class="info-note">
+
+        <strong>
+          Important:
+        </strong>
+
+        This does not directly modify your live property.
+        Submit the requested changes and Admin will review
+        them before the live listing is updated.
+
+      </div>
+
+
+      <form id="editRequestForm">
+
+        <input
+          type="hidden"
+          id="editPropertyId"
+          value="${escapeHtml(property.id)}">
+
+        <input
+          type="hidden"
+          id="editPropertyTable"
+          value="${escapeHtml(property.table)}">
+
+
+        <div class="form-grid">
+
+          <div class="field">
+
+            <label>
+              Property Name *
+            </label>
+
+            <input
+              id="editName"
+              required
+              value="${escapeHtml(property.name || "")}">
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Property Type
+            </label>
+
+            <select
+              id="editCategory">
+
+              <option value="hostel"
+                ${property.table==="hostels" ? "selected" : ""}>
+                Hostel
+              </option>
+
+              <option value="pg"
+                ${String(property.category).toLowerCase()==="pg" ? "selected" : ""}>
+                PG
+              </option>
+
+              <option value="tiffin"
+                ${property.table==="tiffins" ? "selected" : ""}>
+                Tiffin
+              </option>
+
+              <option value="mess"
+                ${String(property.category).toLowerCase()==="mess" ? "selected" : ""}>
+                Mess
+              </option>
+
+              <option value="library"
+                ${property.table==="libraries" ? "selected" : ""}>
+                Library
+              </option>
+
+              <option value="cafe"
+                ${property.table==="cafes" ? "selected" : ""}>
+                Cafe
+              </option>
+
+              <option value="bookstore"
+                ${property.table==="bookstores" ? "selected" : ""}>
+                Book Store
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Area / City / District *
+            </label>
+
+            <input
+              id="editArea"
+              required
+              value="${escapeHtml(property.area || "")}">
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Phone *
+            </label>
+
+            <input
+              id="editPhone"
+              type="tel"
+              required
+              value="${escapeHtml(property.phone || "")}">
+
+          </div>
+
+
+          <div class="field full">
+
+            <label>
+              Full Address *
+            </label>
+
+            <textarea
+              id="editAddress"
+              required>${escapeHtml(property.address || "")}</textarea>
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Timing
+            </label>
+
+            <input
+              id="editTiming"
+              value="${escapeHtml(property.timing || "")}">
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Current Rating
+            </label>
+
+            <input
+              value="${escapeHtml(property.rating ?? "")}"
+              disabled>
+
+          </div>
+
+
+          <div class="field full">
+
+            <label>
+              Facilities
+            </label>
+
+            <textarea
+              id="editFacilities">${escapeHtml(property.facilities || "")}</textarea>
+
+          </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+          <button
+            type="button"
+            class="btn btn-light"
+            onclick="closeModal()">
+
+            Cancel
+
+          </button>
+
+
+          <button
+            type="submit"
+            class="btn btn-gold"
+            id="submitEditRequestBtn">
+
+            Submit Edit Request
+
+          </button>
+
+        </div>
+
+      </form>
+
+    `,
+
+    ""
+  );
+
+
+  $("editRequestForm")
+    .addEventListener(
+      "submit",
+      () =>
+        submitEditRequest(
+          property
+        )
+    );
+
+}
+
+
+/* =========================================================
+   SUBMIT EDIT REQUEST
+========================================================= */
+
+async function submitEditRequest(
+  property
+){
+
+  const btn =
+    $("submitEditRequestBtn");
+
+  btn.disabled = true;
+  btn.textContent =
+    "Submitting...";
+
+
+  const payload = {
+
+    owner_id:
+      currentUser.id,
+
+    owner_name:
+      currentProfile?.full_name ||
+      "Owner",
+
+    owner_phone:
+      currentProfile?.phone ||
+      "",
+
+    name:
+      $("editName")
+        .value
+        .trim(),
+
+    category:
+      $("editCategory")
+        .value,
+
+    area:
+      $("editArea")
+        .value
+        .trim(),
+
+    address:
+      $("editAddress")
+        .value
+        .trim(),
+
+    phone:
+      $("editPhone")
+        .value
+        .trim(),
+
+    timing:
+      $("editTiming")
+        .value
+        .trim() ||
+      null,
+
+    facilities:
+      $("editFacilities")
+        .value
+        .trim() ||
+      null,
+
+    image:null,
+
+    rating:
+      property.rating ?? null,
+
+    status:"pending",
 
     /*
-      IMPORTANT:
-      No USER fallback.
+      Current listing_requests schema has
+      admin_note but no request_type column.
+      This marker lets Admin identify an
+      owner edit request without changing DB schema.
     */
 
-    if(role === "admin"){
+    admin_note:
+      "EDIT_REQUEST | Property ID: " +
+      String(property.id) +
+      " | Source: " +
+      String(property.table)
 
-      window.location.href =
-        "admin-dashboard.html";
+  };
 
-      return false;
-    }
 
+  const {
+    error
+  } =
+    await sb
+      .from("listing_requests")
+      .insert(payload);
 
-    if(
-      role !== "student" &&
-      role !== "owner"
-    ){
 
-      showFatal(
-        "Your account role is not configured correctly."
-      );
+  if(error){
 
-      return false;
-    }
+    console.error(error);
 
-
-    if(role === "student"){
-
-      document.body.classList.add(
-        "student-mode"
-      );
-
-      document.body.classList.remove(
-        "owner-mode"
-      );
-
-      setupStudentMode();
-
-    }
-
-
-    if(role === "owner"){
-
-      document.body.classList.add(
-        "owner-mode"
-      );
-
-      document.body.classList.remove(
-        "student-mode"
-      );
-
-      setupOwnerMode();
-
-    }
-
-
-    fillProfile();
-
-    return true;
-
-  }
-
-
-  function setupStudentMode(){
-
-    document
-      .querySelectorAll(".owner-stat")
-      .forEach(
-        element => {
-          element.style.display =
-            "none";
-        }
-      );
-
-    document
-      .querySelectorAll(".student-section")
-      .forEach(
-        element => {
-          element.style.display =
-            "block";
-        }
-      );
-
-  }
-
-
-  function setupOwnerMode(){
-
-    document
-      .querySelectorAll(".owner-stat")
-      .forEach(
-        element => {
-          element.style.display =
-            "block";
-        }
-      );
-
-    document
-      .querySelectorAll(".student-section")
-      .forEach(
-        element => {
-          element.style.display =
-            "none";
-        }
-      );
-
-  }
-
-
-  /* =====================================================
-     PROFILE
-  ===================================================== */
-
-  function fillProfile(){
-
-    const name =
-      clean(currentProfile.full_name) ||
-      "StudentHubHelp User";
-
-    const email =
-      clean(
-        currentProfile.email ||
-        currentUser.email
-      );
-
-    const phone =
-      clean(currentProfile.phone);
-
-    const address =
-      clean(currentProfile.address);
-
-    const role =
-      clean(currentProfile.role);
-
-
-    document.getElementById(
-      "topName"
-    ).textContent = name;
-
-    document.getElementById(
-      "topRole"
-    ).textContent =
-      role.toUpperCase();
-
-
-    document.getElementById(
-      "topAvatar"
-    ).textContent =
-      initials(name);
-
-
-    document.getElementById(
-      "profileAvatar"
-    ).textContent =
-      initials(name);
-
-
-    document.getElementById(
-      "profileName"
-    ).textContent =
-      name;
-
-
-    document.getElementById(
-      "profileEmail"
-    ).textContent =
-      email || "Email not available";
-
-
-    document.getElementById(
-      "profilePhone"
-    ).textContent =
-      phone || "Not provided";
-
-
-    document.getElementById(
-      "profileAddress"
-    ).textContent =
-      address || "Not provided";
-
-
-    document.getElementById(
-      "profileRole"
-    ).textContent =
-      role.toUpperCase();
-
-
-    document.getElementById(
-      "roleStat"
-    ).textContent =
-      role.toUpperCase();
-
-
-    document.getElementById(
-      "editName"
-    ).value =
-      name === "StudentHubHelp User"
-        ? ""
-        : name;
-
-
-    document.getElementById(
-      "editPhone"
-    ).value =
-      phone;
-
-
-    document.getElementById(
-      "editEmail"
-    ).value =
-      email;
-
-
-    document.getElementById(
-      "editRole"
-    ).value =
-      role.toUpperCase();
-
-
-    document.getElementById(
-      "editAddress"
-    ).value =
-      address;
-
-
-    if(role === "owner"){
-
-      document.getElementById(
-        "ownerName"
-      ).textContent =
-        name;
-
-      document.getElementById(
-        "ownerPhone"
-      ).textContent =
-        phone || "Not provided";
-
-      document.getElementById(
-        "ownerEmail"
-      ).textContent =
-        email || "Not provided";
-
-      document.getElementById(
-        "ownerAddress"
-      ).textContent =
-        address || "Not provided";
-
-    }
-
-  }
-
-
-  /* =====================================================
-     SAVE PROFILE
-  ===================================================== */
-
-  document
-    .getElementById("saveProfileBtn")
-    .addEventListener(
-      "click",
-      async () => {
-
-        const name =
-          clean(
-            document.getElementById(
-              "editName"
-            ).value
-          );
-
-        const phone =
-          clean(
-            document.getElementById(
-              "editPhone"
-            ).value
-          );
-
-        const address =
-          clean(
-            document.getElementById(
-              "editAddress"
-            ).value
-          );
-
-
-        const status =
-          document.getElementById(
-            "profileStatus"
-          );
-
-
-        status.textContent =
-          "Saving...";
-
-
-        const {
-          error
-        } =
-          await db
-            .from("profiles")
-            .update({
-              full_name:name,
-              phone:phone,
-              address:address
-            })
-            .eq(
-              "id",
-              currentUser.id
-            );
-
-
-        if(error){
-
-          console.error(error);
-
-          status.textContent =
-            "Unable to save profile.";
-
-          return;
-        }
-
-
-        currentProfile.full_name =
-          name;
-
-        currentProfile.phone =
-          phone;
-
-        currentProfile.address =
-          address;
-
-
-        fillProfile();
-
-
-        status.textContent =
-          "Profile updated successfully.";
-
-      }
+    toast(
+      error.message,
+      "error"
     );
 
+    btn.disabled = false;
+    btn.textContent =
+      "Submit Edit Request";
 
-  document
-    .getElementById("cancelProfileBtn")
-    .addEventListener(
-      "click",
-      fillProfile
-    );
-
-
-  /* =====================================================
-     STUDENT REVIEWS
-  ===================================================== */
-
-  async function loadStudentReviews(){
-
-    if(
-      !currentUser ||
-      currentProfile.role !== "student"
-    ){
-      return;
-    }
+    return;
+  }
 
 
-    const box =
-      document.getElementById(
-        "studentReviews"
+  closeModal();
+
+  toast(
+    "Edit request submitted to Admin."
+  );
+
+
+  await loadRequests();
+
+}
+
+
+/* =========================================================
+   STUDENT REVIEWS
+========================================================= */
+
+async function loadReviews(){
+
+  if(!currentUser)
+    return;
+
+
+  const box =
+    $("reviewsContainer");
+
+  if(!box)
+    return;
+
+
+  box.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Loading reviews...
+    </div>
+  `;
+
+
+  const {
+    data,
+    error
+  } =
+    await sb
+      .from("reviews")
+      .select(
+        "id,property_id,rating,review_text,status,created_at"
+      )
+      .eq(
+        "student_id",
+        currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
       );
 
 
-    const {
-      data,
-      error
-    } =
-      await db
-        .from("reviews")
-        .select(
-          "id,property_id,rating,review_text,status,created_at"
-        )
-        .eq(
-          "student_id",
-          currentUser.id
-        )
-        .order(
-          "created_at",
-          {
-            ascending:false
-          }
-        );
+  if(error){
+
+    console.warn(
+      "Reviews unavailable:",
+      error.message
+    );
+
+    box.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">★</div>
+        <strong>No reviews available</strong>
+        <p>
+          Reviews could not be loaded at the moment.
+        </p>
+      </div>
+    `;
+
+    $("studentStatReviews").textContent =
+      "0";
+
+    return;
+  }
 
 
-    if(error){
-
-      console.error(error);
-
-      box.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">⚠</div>
-          <div class="empty-title">
-            Unable to load reviews
-          </div>
-          <div class="empty-text">
-            Please try again later.
-          </div>
-        </div>
-      `;
-
-      return;
-    }
+  const rows =
+    data || [];
 
 
-    document.getElementById(
-      "reviewStat"
-    ).textContent =
-      data?.length || 0;
+  $("studentStatReviews").textContent =
+    rows.length;
 
 
-    if(!data?.length){
+  if(!rows.length){
 
-      box.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">⭐</div>
-          <div class="empty-title">
-            No reviews yet
-          </div>
-          <div class="empty-text">
-            Reviews you submit will appear here.
-          </div>
-        </div>
-      `;
+    box.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">★</div>
+        <strong>You have not submitted any reviews yet.</strong>
+        <p>
+          Your reviews will appear here after you review a property.
+        </p>
+      </div>
+    `;
 
-      return;
-    }
+    return;
+  }
 
 
-    box.innerHTML = data.map(
-      review => {
+  box.innerHTML =
+    rows
+      .map(review => {
 
         const rating =
-          Number(review.rating || 0);
+          Math.max(
+            0,
+            Math.min(
+              5,
+              Number(review.rating) || 0
+            )
+          );
+
 
         return `
-          <div class="review-card"
-               style="margin-bottom:12px">
 
-            <div class="review-top">
+          <div class="review-card">
 
-              <div class="review-property">
-                Property #${escapeHTML(
-                  review.property_id
-                )}
-              </div>
-
-              <div class="review-rating">
-                ⭐ ${rating.toFixed(1)}
-              </div>
-
-            </div>
-
-            <div class="review-text">
-              ${escapeHTML(
-                review.review_text ||
-                "No review text"
-              )}
-            </div>
-
-            <div class="review-date">
-              ${formatDate(
-                review.created_at
-              )}
-              ·
-              ${escapeHTML(
-                review.status || "Submitted"
-              )}
-            </div>
-
-          </div>
-        `;
-
-      }
-    ).join("");
-
-  }
-
-
-  /* =====================================================
-     OWNER REQUESTS
-  ===================================================== */
-
-  async function loadOwnerRequests(){
-
-    if(
-      !currentUser ||
-      currentProfile.role !== "owner"
-    ){
-      return;
-    }
-
-
-    const box =
-      document.getElementById(
-        "requestsList"
-      );
-
-
-    const {
-      data,
-      error
-    } =
-      await db
-        .from("listing_requests")
-        .select(
-          "id,name,category,area,address,phone,timing,facilities,image,rating,status,admin_note,created_at,updated_at,owner_id,owner_name,owner_phone"
-        )
-        .eq(
-          "owner_id",
-          currentUser.id
-        )
-        .order(
-          "created_at",
-          {
-            ascending:false
-          }
-        );
-
-
-    if(error){
-
-      console.error(error);
-
-      box.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">⚠</div>
-          <div class="empty-title">
-            Unable to load requests
-          </div>
-        </div>
-      `;
-
-      return;
-    }
-
-
-    ownerRequests =
-      Array.isArray(data)
-        ? data
-        : [];
-
-
-    const pending =
-      ownerRequests.filter(
-        item =>
-          clean(item.status)
-            .toLowerCase() === "pending"
-      ).length;
-
-
-    document.getElementById(
-      "pendingStat"
-    ).textContent =
-      pending;
-
-
-    document.getElementById(
-      "ownerPendingRequests"
-    ).textContent =
-      pending;
-
-
-    document.getElementById(
-      "ownerTotalProperties"
-    ).textContent =
-      ownerProperties.length;
-
-
-    document.getElementById(
-      "ownerPendingRequests"
-    ).textContent =
-      pending;
-
-
-    if(!ownerRequests.length){
-
-      box.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">📋</div>
-          <div class="empty-title">
-            No listing requests yet
-          </div>
-          <div class="empty-text">
-            Submit your first property from Add Listing.
-          </div>
-        </div>
-      `;
-
-      return;
-    }
-
-
-    box.innerHTML =
-      `<div class="request-list">` +
-      ownerRequests.map(
-        request => {
-
-          const status =
-            clean(
-              request.status
-            ).toLowerCase();
-
-          const statusClass =
-            status === "approved"
-              ? "approved"
-              : status === "rejected"
-                ? "rejected"
-                : "pending";
-
-
-          return `
-            <div class="request-item">
+            <div class="review-head">
 
               <div>
 
-                <div class="request-name">
-                  ${escapeHTML(
-                    request.name
-                  )}
+                <div class="review-property">
+                  Property #${escapeHtml(review.property_id || "—")}
                 </div>
 
-                <div class="request-meta">
-                  ${escapeHTML(
-                    formatCategory(
-                      request.category
-                    )
-                  )}
-                  ·
-                  ${escapeHTML(
-                    request.area
-                  )}
-                  ·
-                  Submitted
-                  ${formatDate(
-                    request.created_at
-                  )}
+                <div class="stars">
+                  ${"★".repeat(rating)}
+                  ${"☆".repeat(5-rating)}
                 </div>
-
-                ${
-                  request.admin_note
-                    ? `
-                      <div
-                        class="request-meta"
-                        style="
-                          margin-top:7px;
-                          color:#4f46e5;
-                        "
-                      >
-                        Admin Note:
-                        ${escapeHTML(
-                          request.admin_note
-                        )}
-                      </div>
-                    `
-                    : ""
-                }
 
               </div>
 
-              <span class="status ${statusClass}">
-                ${
-                  status
-                    ? status.charAt(0).toUpperCase() +
-                      status.slice(1)
-                    : "Pending"
-                }
+              <span class="status ${
+                review.status === "approved"
+                ? "approved"
+                : "pending"
+              }">
+
+                ${escapeHtml(review.status || "pending")}
+
               </span>
 
             </div>
-          `;
 
-        }
-      ).join("") +
-      `</div>`;
 
+            <div class="review-text">
+
+              ${escapeHtml(
+                review.review_text ||
+                "No review text"
+              )}
+
+            </div>
+
+
+            <div class="review-date">
+
+              ${formatDate(review.created_at)}
+
+            </div>
+
+          </div>
+
+        `;
+
+      })
+      .join("");
+
+}
+
+
+/* =========================================================
+   OWNER REVIEWS
+========================================================= */
+
+async function loadOwnerReviews(){
+
+  if(
+    String(currentProfile?.role || "")
+      .toLowerCase() !== "owner"
+  )
+    return;
+
+
+  const box =
+    $("ownerReviewsContainer");
+
+  if(!box)
+    return;
+
+
+  if(!liveProperties.length){
+
+    box.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">★</div>
+        <strong>No owner reviews yet</strong>
+        <p>
+          Reviews on your live properties will appear here.
+        </p>
+      </div>
+    `;
+
+    $("ownerStatReviews").textContent =
+      "0";
+
+    return;
   }
 
 
-  /* =====================================================
-     OWNER LIVE PROPERTIES
-  ===================================================== */
-
-  async function loadOwnerProperties(){
-
-    if(
-      !currentUser ||
-      currentProfile.role !== "owner"
-    ){
-      return;
-    }
+  const propertyIds =
+    liveProperties
+      .map(p => String(p.id));
 
 
-    const ownerPhone =
-      normalizePhone(
-        currentProfile.phone
+  if(!propertyIds.length){
+
+    return;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await sb
+      .from("reviews")
+      .select(
+        "id,property_id,rating,review_text,status,created_at"
+      )
+      .in(
+        "property_id",
+        propertyIds
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
       );
 
 
-    if(!ownerPhone){
+  if(error){
 
-      renderOwnerProperties([]);
+    console.warn(
+      "Owner reviews:",
+      error.message
+    );
 
-      return;
-    }
+    box.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">★</div>
+        <strong>Reviews unavailable</strong>
+        <p>
+          ${escapeHtml(error.message)}
+        </p>
+      </div>
+    `;
+
+    return;
+  }
 
 
-    const result = [];
+  ownerReviews =
+    data || [];
 
 
-    for(
-      const item of propertyTables
-    ){
+  $("ownerStatReviews").textContent =
+    ownerReviews.length;
 
-      const {
-        data,
-        error
-      } =
-        await db
-          .from(item.table)
-          .select(
-            "id,name,category,area,address,phone,timing,facilities,rating"
+
+  if(!ownerReviews.length){
+
+    box.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">★</div>
+        <strong>No student reviews yet</strong>
+        <p>
+          Student reviews for your properties will appear here.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  box.innerHTML =
+    ownerReviews
+      .map(review => {
+
+        const property =
+          liveProperties.find(
+            p =>
+              String(p.id) ===
+              String(review.property_id)
           );
 
 
-      if(error){
-
-        console.warn(
-          "Property table error:",
-          item.table,
-          error
-        );
-
-        continue;
-      }
+        const rating =
+          Math.max(
+            0,
+            Math.min(
+              5,
+              Number(review.rating) || 0
+            )
+          );
 
 
-      (data || []).forEach(
-        property => {
+        return `
 
-          if(
-            normalizePhone(
-              property.phone
-            ) === ownerPhone
-          ){
+          <div class="review-card">
 
-            result.push({
-              ...property,
-              sourceTable:item.table,
-              sourceLabel:item.label
-            });
+            <div class="review-head">
 
-          }
+              <div>
 
-        }
-      );
+                <div class="review-property">
 
-    }
+                  ${
+                    escapeHtml(
+                      property?.name ||
+                      "Property #" +
+                      review.property_id
+                    )
+                  }
 
+                </div>
 
-    ownerProperties =
-      result;
+                <div class="stars">
+                  ${"★".repeat(rating)}
+                  ${"☆".repeat(5-rating)}
+                </div>
 
-
-    renderOwnerProperties(
-      ownerProperties
-    );
-
-  }
+              </div>
 
 
-  function renderOwnerProperties(
-    properties
-  ){
+              <span class="status ${
+                review.status === "approved"
+                ? "approved"
+                : "pending"
+              }">
 
-    const liveBox =
-      document.getElementById(
-        "liveProperties"
-      );
-
-    const manageBox =
-      document.getElementById(
-        "manageProperties"
-      );
-
-
-    document.getElementById(
-      "liveStat"
-    ).textContent =
-      properties.length;
-
-
-    document.getElementById(
-      "ownerLiveProperties"
-    ).textContent =
-      properties.length;
-
-
-    document.getElementById(
-      "ownerTotalProperties"
-    ).textContent =
-      properties.length;
-
-
-    if(!properties.length){
-
-      const html = `
-        <div class="empty">
-          <div class="empty-icon">🏠</div>
-          <div class="empty-title">
-            No live properties found
-          </div>
-          <div class="empty-text">
-            Approved properties connected to your
-            registered owner phone will appear here.
-          </div>
-        </div>
-      `;
-
-      liveBox.innerHTML =
-        html;
-
-      manageBox.innerHTML =
-        html;
-
-      return;
-    }
-
-
-    const html =
-      properties.map(
-        property => {
-
-          return `
-            <article class="property-card">
-
-              <span class="property-type">
-                ${escapeHTML(
-                  property.sourceLabel
+                ${escapeHtml(
+                  review.status || "pending"
                 )}
+
               </span>
 
-              <div class="property-name">
-                ${escapeHTML(
-                  property.name
-                )}
-              </div>
-
-              <div class="property-info">
-
-                <div>
-                  📍
-                  ${escapeHTML(
-                    property.area ||
-                    "Area not provided"
-                  )}
-                </div>
-
-                <div>
-                  🏠
-                  ${escapeHTML(
-                    property.address ||
-                    "Address not provided"
-                  )}
-                </div>
-
-                <div>
-                  🕒
-                  ${escapeHTML(
-                    property.timing ||
-                    "Timing not provided"
-                  )}
-                </div>
-
-                <div>
-                  ⭐
-                  ${
-                    Number(
-                      property.rating
-                    ) > 0
-                      ? Number(
-                          property.rating
-                        ).toFixed(1)
-                      : "Not rated"
-                  }
-                </div>
-
-              </div>
-
-              <div class="property-actions">
-
-                <button
-                  class="small-btn primary"
-                  type="button"
-                  onclick="showPropertyDetails(${JSON.stringify(
-                    property
-                  ).replace(/"/g,"&quot;")})"
-                >
-                  View Details
-                </button>
-
-                <button
-                  class="small-btn"
-                  type="button"
-                  onclick="requestPropertyEdit()"
-                >
-                  Request Edit
-                </button>
-
-              </div>
-
-            </article>
-          `;
-
-        }
-      ).join("");
-
-
-    liveBox.innerHTML =
-      html;
-
-    manageBox.innerHTML =
-      html;
-
-  }
-
-
-  /* =====================================================
-     PROPERTY DETAILS
-  ===================================================== */
-
-  function showPropertyDetails(
-    property
-  ){
-
-    alert(
-      [
-        property.name || "Property",
-        "",
-        "Category: " +
-          formatCategory(
-            property.category
-          ),
-        "Area: " +
-          (property.area || "—"),
-        "Address: " +
-          (property.address || "—"),
-        "Phone: " +
-          (property.phone || "—"),
-        "Timing: " +
-          (property.timing || "—"),
-        "Facilities: " +
-          (property.facilities || "—"),
-        "Rating: " +
-          (
-            Number(property.rating) > 0
-              ? Number(property.rating).toFixed(1)
-              : "Not rated"
-          )
-      ].join("\n")
-    );
-
-  }
-
-
-  function requestPropertyEdit(){
-
-    alert(
-      "Property editing will use the secure Request Edit → Admin Review flow."
-    );
-
-  }
-
-
-  /* =====================================================
-     ADD LISTING
-  ===================================================== */
-
-  document
-    .getElementById("listingForm")
-    .addEventListener(
-      "submit",
-      async event => {
-
-        event.preventDefault();
-
-
-        if(
-          !currentUser ||
-          currentProfile.role !== "owner"
-        ){
-          return;
-        }
-
-
-        const status =
-          document.getElementById(
-            "listingStatus"
-          );
-
-
-        status.textContent =
-          "Submitting listing request...";
-
-
-        const category =
-          clean(
-            document.getElementById(
-              "listingCategory"
-            ).value
-          );
+            </div>
 
 
-        const payload = {
+            <div class="review-text">
 
-          name:
-            clean(
-              document.getElementById(
-                "listingName"
-              ).value
-            ),
+              ${escapeHtml(
+                review.review_text ||
+                "No review text"
+              )}
 
-          category,
+            </div>
 
-          area:
-            clean(
-              document.getElementById(
-                "listingArea"
-              ).value
-            ),
 
-          address:
-            clean(
-              document.getElementById(
-                "listingAddress"
-              ).value
-            ),
+            <div class="review-date">
 
-          phone:
-            clean(
-              document.getElementById(
-                "listingPhone"
-              ).value
-            ),
+              ${formatDate(
+                review.created_at
+              )}
 
-          timing:
-            clean(
-              document.getElementById(
-                "listingTiming"
-              ).value
-            ),
+            </div>
 
-          facilities:
-            clean(
-              document.getElementById(
-                "listingFacilities"
-              ).value
-            ),
+          </div>
 
-          rating:
-            document.getElementById(
-              "listingRating"
-            ).value
-              ? Number(
-                  document.getElementById(
-                    "listingRating"
-                  ).value
-                )
-              : null,
+        `;
 
-          owner_id:
-            currentUser.id,
+      })
+      .join("");
 
-          owner_name:
-            currentProfile.full_name,
+}
 
-          owner_phone:
-            currentProfile.phone,
 
-          status:"pending"
+/* =========================================================
+   OWNER CENTRE
+========================================================= */
 
-        };
+function loadOwnerCentre(){
 
+  if(
+    String(currentProfile?.role || "")
+      .toLowerCase() !== "owner"
+  )
+    return;
 
-        const {
-          error
-        } =
-          await db
-            .from("listing_requests")
-            .insert(
-              payload
-            );
 
+  $("ownerCentreProperties").textContent =
+    liveProperties.length;
 
-        if(error){
+  $("ownerCentreLive").textContent =
+    liveProperties.length;
 
-          console.error(error);
+  $("ownerCentrePending").textContent =
+    listingRequests.filter(
+      r =>
+        String(r.status || "")
+          .toLowerCase() === "pending"
+    ).length;
 
-          status.textContent =
-            "Unable to submit listing request.";
+}
 
-          return;
-        }
 
+function updateOwnerStats(){
 
-        status.textContent =
-          "Listing request submitted successfully. Admin review is pending.";
+  if(
+    String(currentProfile?.role || "")
+      .toLowerCase() !== "owner"
+  )
+    return;
 
 
-        event.target.reset();
+  const totalRequests =
+    listingRequests.length;
 
 
-        await loadOwnerRequests();
+  const pending =
+    listingRequests.filter(
+      r =>
+        String(r.status || "")
+          .toLowerCase() === "pending"
+    ).length;
 
-      }
-    );
 
+  const live =
+    liveProperties.length;
 
-  /* =====================================================
-     APPROVAL TIMELINE
-  ===================================================== */
 
-  function renderApproval(){
+  $("ownerStatListings").textContent =
+    live;
 
-    if(
-      currentProfile.role !== "owner"
-    ){
-      return;
-    }
+  $("ownerStatPending").textContent =
+    pending;
 
+  $("ownerStatLive").textContent =
+    live;
 
-    const timeline =
-      document.getElementById(
-        "approvalTimeline"
-      );
+  $("ownerCentreProperties").textContent =
+    live;
 
+  $("ownerCentreLive").textContent =
+    live;
 
-    if(!ownerRequests.length){
+  $("ownerCentrePending").textContent =
+    pending;
 
-      return;
-    }
+}
 
 
-    const latest =
-      ownerRequests[0];
+/* =========================================================
+   MODAL
+========================================================= */
 
+function openModal(
+  title,
+  subtitle,
+  body,
+  footer=""
+){
 
-    const status =
-      clean(
-        latest.status
-      ).toLowerCase();
+  $("modalTitle").textContent =
+    title;
 
+  $("modalSubtitle").textContent =
+    subtitle;
 
-    const submitted =
-      timeline.children[0];
+  $("modalBody").innerHTML =
+    body;
 
-    const review =
-      timeline.children[1];
+  $("modalFooter").innerHTML =
+    footer;
 
-    const final =
-      timeline.children[2];
 
+  $("modalBackdrop")
+    .classList.add("show");
 
-    submitted.classList.add(
-      "done"
-    );
+  document.body.style.overflow =
+    "hidden";
 
+}
 
-    if(
-      status === "approved" ||
-      status === "rejected"
-    ){
 
-      review.classList.add(
-        "done"
-      );
+function closeModal(){
 
-      final.classList.add(
-        "done"
-      );
+  $("modalBackdrop")
+    .classList.remove("show");
 
+  document.body.style.overflow =
+    "";
 
-      final.querySelector(
-        ".timeline-text"
-      ).textContent =
-        status === "approved"
-          ? "Approved by Admin."
-          : "Rejected by Admin.";
+}
 
+
+$("modalBackdrop")
+  .addEventListener(
+    "click",
+    e => {
 
       if(
-        latest.admin_note
+        e.target.id ===
+        "modalBackdrop"
       ){
 
-        final.querySelector(
-          ".timeline-text"
-        ).textContent +=
-          " Admin Note: " +
-          latest.admin_note;
+        closeModal();
 
       }
 
     }
-    else{
+  );
 
-      review.classList.add(
-        "done"
-      );
 
-      review.querySelector(
-        ".timeline-text"
-      ).textContent =
-        "Your listing is currently under Admin review.";
+document.addEventListener(
+  "keydown",
+  e => {
 
-    }
+    if(e.key === "Escape")
+      closeModal();
 
   }
+);
 
 
-  /* =====================================================
-     REALTIME
-  ===================================================== */
+/* =========================================================
+   REALTIME
+========================================================= */
 
-  function setupRealtime(){
+function subscribeRealtime(){
 
-    db
+  realtimeChannels.forEach(
+    channel =>
+      sb.removeChannel(channel)
+  );
+
+  realtimeChannels = [];
+
+
+  /*
+    Listing requests
+  */
+
+  const requestChannel =
+    sb
       .channel(
-        "studenthub-user-dashboard"
+        "user-dashboard-requests-" +
+        currentUser.id
       )
-
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"profiles",
-          filter:
-            `id=eq.${currentUser.id}`
-        },
-        async () => {
-
-          const {
-            data
-          } =
-            await db
-              .from("profiles")
-              .select(
-                "id,full_name,phone,email,address,role"
-              )
-              .eq(
-                "id",
-                currentUser.id
-              )
-              .maybeSingle();
-
-
-          if(data){
-
-            currentProfile =
-              data;
-
-            fillProfile();
-
-          }
-
-        }
-      )
-
       .on(
         "postgres_changes",
         {
@@ -4401,345 +6761,120 @@
           schema:"public",
           table:"listing_requests",
           filter:
-            `owner_id=eq.${currentUser.id}`
+            "owner_id=eq." +
+            currentUser.id
         },
         async () => {
 
-          await loadOwnerRequests();
+          await loadRequests();
 
-          renderApproval();
-
-        }
-      )
-
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"reviews",
-          filter:
-            `student_id=eq.${currentUser.id}`
-        },
-        async () => {
-
-          await loadStudentReviews();
+          await loadOwnerCentre();
 
         }
       )
-
       .subscribe();
 
-  }
+
+  realtimeChannels.push(
+    requestChannel
+  );
 
 
-  /* =====================================================
-     NAVIGATION
-  ===================================================== */
+  /*
+    Live property tables
+  */
 
-  function openPage(
-    pageName
-  ){
+  propertyTables.forEach(
+    config => {
 
-    const target =
-      document.getElementById(
-        "page-" + pageName
+      const channel =
+        sb
+          .channel(
+            "user-dashboard-" +
+            config.table +
+            "-" +
+            currentUser.id
+          )
+          .on(
+            "postgres_changes",
+            {
+              event:"*",
+              schema:"public",
+              table:config.table
+            },
+            async () => {
+
+              await loadLiveProperties();
+
+              await loadOwnerReviews();
+
+              await loadOwnerCentre();
+
+            }
+          )
+          .subscribe();
+
+
+      realtimeChannels.push(
+        channel
       );
 
-
-    if(!target){
-      return;
     }
+  );
+
+}
 
 
-    document
-      .querySelectorAll(".page")
-      .forEach(
-        page => {
-          page.classList.remove(
-            "active"
-          );
-        }
-      );
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logout(){
+
+  await sb.auth.signOut();
+
+  window.location.href =
+    "auth.html";
+
+}
 
 
-    target.classList.add(
-      "active"
+$("logoutBtn")
+  .addEventListener(
+    "click",
+    logout
+  );
+
+
+$("logoutSideBtn")
+  .addEventListener(
+    "click",
+    logout
+  );
+
+
+/* =========================================================
+   CLEANUP
+========================================================= */
+
+window.addEventListener(
+  "beforeunload",
+  () => {
+
+    realtimeChannels.forEach(
+      channel =>
+        sb.removeChannel(channel)
     );
-
-
-    document
-      .querySelectorAll(".side-link")
-      .forEach(
-        link => {
-
-          link.classList.toggle(
-            "active",
-            link.dataset.page === pageName
-          );
-
-        }
-      );
-
-
-    document
-      .getElementById(
-        "sidebar"
-      )
-      .classList.remove(
-        "open"
-      );
-
-
-    if(
-      pageName === "reviews"
-    ){
-
-      loadStudentReviews();
-
-    }
-
-
-    if(
-      pageName === "requests"
-    ){
-
-      loadOwnerRequests();
-
-    }
-
-
-    if(
-      pageName === "approval"
-    ){
-
-      renderApproval();
-
-    }
-
-
-    if(
-      pageName === "live-properties" ||
-      pageName === "manage-properties"
-    ){
-
-      loadOwnerProperties();
-
-    }
 
   }
+);
 
 
-  document
-    .querySelectorAll(".side-link")
-    .forEach(
-      link => {
+/* =========================================================
+   START
+========================================================= */
 
-        link.addEventListener(
-          "click",
-          () => {
-
-            openPage(
-              link.dataset.page
-            );
-
-          }
-        );
-
-      }
-    );
-
-
-  document
-    .querySelectorAll("[data-page-link]")
-    .forEach(
-      element => {
-
-        element.addEventListener(
-          "click",
-          () => {
-
-            openPage(
-              element.dataset.pageLink
-            );
-
-          }
-        );
-
-      }
-    );
-
-
-  /* =====================================================
-     MOBILE MENU
-  ===================================================== */
-
-  document
-    .getElementById("menuBtn")
-    .addEventListener(
-      "click",
-      () => {
-
-        document
-          .getElementById("sidebar")
-          .classList.toggle(
-            "open"
-          );
-
-      }
-    );
-
-
-  /* =====================================================
-     LOGOUT
-  ===================================================== */
-
-  document
-    .getElementById("logoutBtn")
-    .addEventListener(
-      "click",
-      async () => {
-
-        await db.auth.signOut();
-
-        window.location.href =
-          "auth.html";
-
-      }
-    );
-
-
-  /* =====================================================
-     FATAL ERROR
-  ===================================================== */
-
-  function showFatal(
-    message
-  ){
-
-    document.querySelector(
-      ".main"
-    ).innerHTML = `
-      <div
-        style="
-          max-width:600px;
-          margin:80px auto;
-          background:#fff;
-          border:1px solid #e7ebf2;
-          border-radius:22px;
-          padding:35px;
-          text-align:center;
-          box-shadow:0 15px 40px rgba(15,23,42,.08);
-        "
-      >
-
-        <div style="font-size:38px">
-          ⚠
-        </div>
-
-        <h2
-          style="
-            margin-top:12px;
-            font-size:22px;
-          "
-        >
-          Dashboard unavailable
-        </h2>
-
-        <p
-          style="
-            color:#697386;
-            font-size:13px;
-            margin-top:8px;
-          "
-        >
-          ${escapeHTML(message)}
-        </p>
-
-        <a
-          href="auth.html"
-          style="
-            display:inline-block;
-            margin-top:20px;
-            background:#2563eb;
-            color:#fff;
-            padding:11px 18px;
-            border-radius:11px;
-            font-size:12px;
-            font-weight:800;
-          "
-        >
-          Back to Login
-        </a>
-
-      </div>
-    `;
-
-  }
-
-
-  /* =====================================================
-     INITIAL LOAD
-  ===================================================== */
-
-  async function init(){
-
-    try{
-
-      const loaded =
-        await loadAccount();
-
-
-      if(!loaded){
-        return;
-      }
-
-
-      if(
-        currentProfile.role ===
-        "student"
-      ){
-
-        await loadStudentReviews();
-
-      }
-
-
-      if(
-        currentProfile.role ===
-        "owner"
-      ){
-
-        await loadOwnerProperties();
-
-        await loadOwnerRequests();
-
-        renderApproval();
-
-      }
-
-
-      setupRealtime();
-
-    }
-    catch(error){
-
-      console.error(
-        "Dashboard error:",
-        error
-      );
-
-      showFatal(
-        error.message ||
-        "Unable to load dashboard."
-      );
-
-    }
-
-  }
-
-
-  init();
+boot();
 
 </script>
 
