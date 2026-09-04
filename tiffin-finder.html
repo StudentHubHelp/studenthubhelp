@@ -2574,6 +2574,8 @@
 
         renderRecords();
 
+        await handleBookingQuery();
+
         hideStatus();
 
       } catch (error) {
@@ -2919,7 +2921,32 @@
 
 
     /* =====================================================
-       OPEN DETAILS
+       BOOKING FROM DETAILS PAGE
+    ===================================================== */
+
+    async function handleBookingQuery() {
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("book") !== "1") return;
+
+      const querySlug = clean(params.get("slug"));
+      const queryId = clean(params.get("id"));
+
+      const record = allRecords.find(item =>
+        (querySlug && clean(item.slug) === querySlug) ||
+        (queryId && clean(item.id) === queryId)
+      );
+
+      if (!record) return;
+
+      currentRecord = record;
+      await openBookingForm();
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+
+    /* =====================================================
     ===================================================== */
 
     function openDetails(record) {
