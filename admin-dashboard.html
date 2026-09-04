@@ -914,19 +914,44 @@ document.addEventListener("click",async e=>{
 /* ================= PROPERTY CREATE/EDIT ================= */
 
 function openCreate(type){
-  $("formTitle").textContent="Add "+propertyConfig[type].singular;
-  $("formId").value="";
-  $("formType").value=type;
-  $("fName").value="";
-  $("fCategory").value=propertyConfig[type].category;
-  $("fPhone").value="";
-  $("fArea").value="";
-  $("fAddress").value="";
-  $("fTiming").value=type==="libraries"?"24/7 Open":"";
-  $("fFacilities").value="";
-  $("fRating").value="";
-  $("fImage").value="";
-  openModal("formModal");
+  if(!masterMeta[type]){
+    toast("Invalid property type.",true);
+    return;
+  }
+
+  // New records now use the same complete Master Property Editor
+  // as Edit, so every category gets all common + category-specific fields.
+  $("advPropId").value="";
+  $("advPropType").value=type;
+  $("advPropTitle").textContent=`Add ${masterMeta[type].singular}`;
+  $("advPropSub").textContent=`Create new ${masterMeta[type].category} • Complete listing form`;
+
+  $("advName").value="";
+  $("advCategory").value=masterMeta[type].category;
+  $("advBusinessType").value="";
+  $("advOwnerId").value="";
+  $("advOwnerName").value="";
+  $("advPhone").value="";
+  $("advWhatsapp").value="";
+  $("advEmail").value="";
+  $("advArea").value="";
+  $("advCity").value="";
+  $("advPincode").value="";
+  $("advAddress").value="";
+  $("advLat").value="";
+  $("advLng").value="";
+  $("advMaps").value="";
+  $("advStatus").value="pending";
+  $("advVerified").value="false";
+  $("advFeatured").value="false";
+  $("advRating").value="";
+  $("advPrice").value="";
+  $("advTiming").value=type==="libraries"?"24/7 Open":"";
+  $("advFacilities").value="";
+  $("advDescription").value="";
+
+  $("categorySpecificFields").innerHTML=buildCategoryFields(type,{});
+  openModal("advancedPropertyModal");
 }
 
 function openEdit(type,index){
@@ -1519,26 +1544,117 @@ async function updateCompatibleRow(table,id,payload){
 }
 $("advancedPropertyForm")?.addEventListener("submit",async e=>{
   e.preventDefault();
-  const type=$("advPropType").value,id=$("advPropId").value,x=state[type]?.find(y=>String(y.id)===String(id));
-  if(!x){toast("Property record not found.",true);return}
+
+  const type=$("advPropType").value;
+  const id=mtext($("advPropId").value);
+  const x=id ? state[type]?.find(y=>String(y.id)===String(id)) : null;
+
+  if(!masterMeta[type]){
+    toast("Invalid property type.",true);
+    return;
+  }
+
+  const name=mtext($("advName").value);
+  const phone=mtext($("advPhone").value);
+  const area=mtext($("advArea").value);
+  const address=mtext($("advAddress").value);
+
+  if(!name||!phone||!area||!address){
+    toast("Property Name, Phone, Area and Full Address are required.",true);
+    return;
+  }
+
+  const ratingRaw=mtext($("advRating").value);
+  const rating=ratingRaw===""?null:Number(ratingRaw);
+  if(rating!==null&&(Number.isNaN(rating)||rating<0||rating>5)){
+    toast("Rating must be between 0 and 5.",true);
+    return;
+  }
+
   const payload={
-    name:mtext($("advName").value),category:mtext($("advCategory").value),type:mtext($("advBusinessType").value),
-    owner_id:mtext($("advOwnerId").value)||null,owner_name:mtext($("advOwnerName").value)||null,phone:mtext($("advPhone").value),
-    whatsapp:mtext($("advWhatsapp").value)||null,email:mtext($("advEmail").value)||null,area:mtext($("advArea").value),city:mtext($("advCity").value)||null,
-    pincode:mtext($("advPincode").value)||null,address:mtext($("advAddress").value),latitude:mtext($("advLat").value)===""?null:Number($("advLat").value),
-    longitude:mtext($("advLng").value)===""?null:Number($("advLng").value),google_maps_url:mtext($("advMaps").value)||null,
-    status:$("advStatus").value,verified:$("advVerified").value==="true",featured:$("advFeatured").value==="true",
-    rating:mtext($("advRating").value)===""?null:Number($("advRating").value),price:mtext($("advPrice").value)||null,timing:mtext($("advTiming").value)||null,
-    facilities:mtext($("advFacilities").value)||null,description:mtext($("advDescription").value)||null
+    name,
+    category:mtext($("advCategory").value)||masterMeta[type].category,
+    type:mtext($("advBusinessType").value)||null,
+    owner_id:mtext($("advOwnerId").value)||null,
+    owner_name:mtext($("advOwnerName").value)||null,
+    phone,
+    whatsapp:mtext($("advWhatsapp").value)||null,
+    email:mtext($("advEmail").value)||null,
+    area,
+    city:mtext($("advCity").value)||null,
+    pincode:mtext($("advPincode").value)||null,
+    address,
+    latitude:mtext($("advLat").value)===""?null:Number($("advLat").value),
+    longitude:mtext($("advLng").value)===""?null:Number($("advLng").value),
+    google_maps_url:mtext($("advMaps").value)||null,
+    status:$("advStatus").value,
+    verified:$("advVerified").value==="true",
+    featured:$("advFeatured").value==="true",
+    rating,
+    price:mtext($("advPrice").value)||null,
+    timing:mtext($("advTiming").value)||null,
+    facilities:mtext($("advFacilities").value)||null,
+    description:mtext($("advDescription").value)||null
   };
-  document.querySelectorAll("[data-cat-field]").forEach(i=>payload[i.dataset.catField]=mtext(i.value)||null);
-  const btn=e.submitter;setBusy(btn,true);
+
+  document.querySelectorAll("[data-cat-field]").forEach(i=>{
+    payload[i.dataset.catField]=mtext(i.value)||null;
+  });
+
+  const btn=e.submitter;
+  setBusy(btn,true);
+
   try{
-    await updateCompatibleRow(type,id,payload);
-    await logAdminAction("update",type,id,x,payload);
-    closeAdvancedProperty();toast("Property updated successfully.");
+    if(id){
+      if(!x){
+        throw new Error("Property record not found.");
+      }
+      await updateCompatibleRow(type,id,payload);
+      await logAdminAction("update",type,id,x,payload);
+      closeAdvancedProperty();
+      toast("Property updated successfully.");
+    }else{
+      // Use an existing row as a schema map when available, preventing
+      // unknown-column errors while preserving all fields supported by
+      // the selected Supabase table.
+      const sample=(state[type]||[])[0]||{};
+      const clean={};
+
+      if(Object.keys(sample).length){
+        for(const [k,v] of Object.entries(payload)){
+          if(hasKey(sample,k)) clean[k]=v;
+        }
+      }else{
+        // Empty table: send the complete requested payload. Supabase will
+        // accept it when the table has the matching migration/schema.
+        Object.assign(clean,payload);
+      }
+
+      const newId=(globalThis.crypto&&crypto.randomUUID)
+        ?crypto.randomUUID()
+        :"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0").slice(0,12);
+
+      if(hasKey(sample,"id") || !Object.keys(sample).length) clean.id=newId;
+
+      if(!Object.keys(clean).length){
+        throw new Error("No compatible columns found. Run the Master Admin SQL migration for this category.");
+      }
+
+      const result=await supabaseClient.from(type).insert(clean);
+      if(result.error)throw result.error;
+
+      await logAdminAction("create",type,clean.id||newId,null,clean);
+      closeAdvancedProperty();
+      toast(`${masterMeta[type].singular} added successfully.`);
+    }
+
     await loadAll();
-  }catch(err){console.error(err);toast(err.message,true)}finally{setBusy(btn,false,"Save Property")}
+  }catch(err){
+    console.error(err);
+    toast(err.message,true);
+  }finally{
+    setBusy(btn,false,"Save Property");
+  }
 });
 
 function previewPublic(type,index){
