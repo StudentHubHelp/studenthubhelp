@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -29,6 +29,38 @@ body{overflow-x:hidden;background:linear-gradient(rgba(4,8,20,.80),rgba(4,8,20,.
 button:disabled{opacity:.55;cursor:not-allowed}
 .table-wrap{overflow-x:auto}
 .toast{animation:toast .2s ease-out}@keyframes toast{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+</style>
+<style id="studenthubhelp-theme-system">
+/* ===== STUDENTHUBHELP NAVY + GOLD THEME SYSTEM ===== */
+:root{
+  --navy:#071a33;
+  --navy-2:#0b2344;
+  --navy-3:#102d52;
+  --gold:#d7a63d;
+  --gold-2:#f0c85a;
+  --gold-3:#b88924;
+  --bg:#040814;
+  --surface:#081026;
+  --surface-2:#0d1838;
+  --text:#f8fafc;
+  --muted:#94a3b8;
+  --green:#16834b;
+  --red:#c62828;
+  --blue:#2563eb;
+  --radius:20px;
+  --shadow-sm:0 4px 14px rgba(0,0,0,.18);
+  --shadow:0 10px 35px rgba(0,0,0,.22);
+  --shadow-lg:0 22px 70px rgba(0,0,0,.34);
+}
+body{background-color:var(--bg);color:var(--text);font-family:Inter,"Noto Sans Devanagari",sans-serif}
+.font-display,h1,h2,h3{font-family:"Playfair Display",Cinzel,serif}
+#app>aside,.card,.master-mini-card{box-shadow:var(--shadow-sm)}
+#app>aside{background:linear-gradient(180deg,rgba(7,26,51,.99),rgba(4,8,20,.99))!important}
+.master-action.view-details{border-color:rgba(215,166,61,.42);color:#f0c85a;background:rgba(215,166,61,.07);font-weight:800}
+.master-action.view-details:hover{background:rgba(215,166,61,.14);border-color:#d7a63d;color:#fff}
+.property-actions{display:flex;align-items:center;justify-content:flex-end;gap:.35rem;flex-wrap:wrap}
+.property-actions .master-action{white-space:nowrap}
+@media(max-width:900px){.property-actions{justify-content:flex-start}}
 </style>
 <link rel="stylesheet" href="css/premium.css">
 <meta name="robots" content="noindex, nofollow, noarchive">
@@ -632,7 +664,10 @@ function showSection(name){
   // Every section opens from its own top, never from the previous dashboard scroll.
   window.scrollTo({top:0,left:0,behavior:"instant"});
   const main=document.querySelector("#app main");
-  if(main) main.scrollTop=0;
+  if(main){main.scrollTop=0;main.querySelectorAll(":scope > .section").forEach(s=>{if(!s.classList.contains("hidden"))s.scrollTop=0})}
+  const activeSection=$("section-"+name);
+  if(activeSection)activeSection.scrollIntoView({block:"start",inline:"nearest"});
+  window.scrollTo({top:0,left:0,behavior:"auto"});
 }
 
 document.querySelectorAll(".nav").forEach(b=>{
@@ -741,7 +776,7 @@ function renderOwners(){
 /* ================= PROPERTIES ================= */
 
 function renderProperty(type){
-  const cfg=propertyConfig[type];
+  const cfg=propertyConfig[type]||masterMeta[type];
   const arr=state[type]||[];
 
   $("section-"+type).innerHTML=`
@@ -774,20 +809,28 @@ function renderProperty(type){
           ${arr.length?arr.map((x,i)=>`
             <tr class="border-t border-navy-800 hover:bg-navy-850 cursor-pointer" data-view="${type}" data-index="${i}">
               <td class="p-4 font-mono">#${i+1}</td>
-              <td class="p-4 font-bold">${esc(x.name||cfg.singular)}</td>
+              <td class="p-4 font-bold">
+                ${esc(x.name||cfg.singular)}
+                <div class="text-[10px] text-slate-500 mt-1">${esc(x.slug||x.id||"")}</div>
+              </td>
               <td class="p-4">${esc(x.category||cfg.category)}</td>
               <td class="p-4">${esc(x.area||"—")}</td>
               <td class="p-4 font-mono">${esc(x.phone||"—")}</td>
               <td class="p-4 max-w-xs">${esc(x.address||"—")}</td>
-              <td class="p-4">${esc(x.timing||"—")}</td>
+              <td class="p-4">${esc(x.timing||x.opening_time||"—")}</td>
               <td class="p-4 text-gold-300">${esc(x.rating??"—")}</td>
-              <td class="p-4 text-right whitespace-nowrap">
-                <button class="p-2 bg-navy-800 rounded text-gold-300" data-edit="${type}" data-index="${i}" title="Edit">
-                  <i class="fa-solid fa-pen"></i>
-                </button>
-                <button class="p-2 bg-red-500/10 rounded text-red-300 ml-1" data-delete="${type}" data-id="${esc(x.id)}" title="Delete">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
+              <td class="p-4 text-right">
+                <div class="property-actions">
+                  <button type="button" class="master-action view-details" data-public-view="${type}" data-index="${i}" title="View public property details">
+                    <i class="fa-solid fa-eye mr-1"></i>View Details
+                  </button>
+                  <button type="button" class="master-action" data-edit="${type}" data-index="${i}" title="Edit">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                  <button type="button" class="master-action danger" data-delete="${type}" data-id="${esc(x.id)}" title="Delete">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           `).join(""):emptyRow(9)}
@@ -796,7 +839,6 @@ function renderProperty(type){
     </div>
   `;
 }
-
 function renderAll(){
   updateStats();
   renderStudents($("studentFilter").value);
@@ -812,6 +854,9 @@ document.addEventListener("click",async e=>{
 
   const add=e.target.closest("[data-add]");
   if(add){openCreate(add.dataset.add);return}
+
+  const publicView=e.target.closest("[data-public-view]");
+  if(publicView){previewPublic(publicView.dataset.publicView,Number(publicView.dataset.index));return}
 
   const edit=e.target.closest("[data-edit]");
   if(edit){openEdit(edit.dataset.edit,Number(edit.dataset.index));return}
@@ -1398,7 +1443,7 @@ function renderPropertiesMaster(){
   });
   const sort=$("propFilterSort")?.value||"newest";
   f.sort((a,b)=>sort==="rating-high"?propRating(b)-propRating(a):sort==="rating-low"?propRating(a)-propRating(b):sort==="views"?propViews(b)-propViews(a):sort==="bookings"?propBookings(b)-propBookings(a):sort==="az"?String(a.name||"").localeCompare(String(b.name||"")):(sort==="oldest"?new Date(dateCreated(a)||0)-new Date(dateCreated(b)||0):new Date(dateCreated(b)||0)-new Date(dateCreated(a)||0)));
-  $("masterPropertyBody").innerHTML=f.length?f.map(x=>{const o=rowOwner(x);return `<tr><td class="p-3"><input type="checkbox" class="prop-select" data-type="${x.__type}" data-id="${esc(x.id)}"></td><td class="p-3"><button class="text-left font-bold hover:text-gold-300" onclick="openAdvancedProperty('${x.__type}',${x.__index})">${esc(x.name||masterMeta[x.__type].singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td><td class="p-3">${masterBadge(masterMeta[x.__type].category)}</td><td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td><td class="p-3">${esc(x.phone||"—")}</td><td class="p-3">${esc(x.area||"—")}</td><td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td><td class="p-3">${propVerified(x)?masterBadge("Verified","green"):masterBadge("Not Verified")}</td><td class="p-3 text-gold-300">${propRating(x)||"—"}</td><td class="p-3">${propViews(x)}</td><td class="p-3">${propBookings(x)}</td><td class="p-3 whitespace-nowrap"><button class="master-action" onclick="openAdvancedProperty('${x.__type}',${x.__index})"><i class="fa-solid fa-pen"></i></button><button class="master-action ml-1" onclick="previewPublic('${x.__type}',${x.__index})"><i class="fa-solid fa-globe"></i></button></td></tr>`}).join(""):emptyRow(12,"No properties match these filters.");
+  $("masterPropertyBody").innerHTML=f.length?f.map(x=>{const o=rowOwner(x);return `<tr><td class="p-3"><input type="checkbox" class="prop-select" data-type="${x.__type}" data-id="${esc(x.id)}"></td><td class="p-3"><button class="text-left font-bold hover:text-gold-300" onclick="openAdvancedProperty('${x.__type}',${x.__index})">${esc(x.name||masterMeta[x.__type].singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td><td class="p-3">${masterBadge(masterMeta[x.__type].category)}</td><td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td><td class="p-3">${esc(x.phone||"—")}</td><td class="p-3">${esc(x.area||"—")}</td><td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td><td class="p-3">${propVerified(x)?masterBadge("Verified","green"):masterBadge("Not Verified")}</td><td class="p-3 text-gold-300">${propRating(x)||"—"}</td><td class="p-3">${propViews(x)}</td><td class="p-3">${propBookings(x)}</td><td class="p-3 whitespace-nowrap"><button class="master-action view-details" onclick="previewPublic('${x.__type}',${x.__index})"><i class="fa-solid fa-eye mr-1"></i>View Details</button><button class="master-action ml-1" onclick="openAdvancedProperty('${x.__type}',${x.__index})"><i class="fa-solid fa-pen"></i></button></td></tr>`}).join(""):emptyRow(12,"No properties match these filters.");
   $("selectAllProps")?.addEventListener("change",e=>document.querySelectorAll(".prop-select").forEach(c=>c.checked=e.target.checked));
 }
 function setPropertyFilter(type){showSection("properties");setTimeout(()=>{if($("propFilterCategory")){$("propFilterCategory").value=type;renderPropertiesMaster();}},10)}
@@ -1467,8 +1512,9 @@ $("advancedPropertyForm")?.addEventListener("submit",async e=>{
 function previewPublic(type,index){
   const x=state[type]?.[index];if(!x)return;
   const slug=firstVal(x,["slug"],"");
-  if(!slug){toast("Public preview requires a property slug.",true);return}
-  window.open(`property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`,"_blank","noopener");
+  if(!slug){toast("This property has no slug, so property-details.html cannot locate it.",true);return}
+  const url=`property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`;
+  window.open(url,"_blank","noopener,noreferrer");
 }
 async function togglePropertyField(type,id,field,value,label){
   const x=state[type]?.find(y=>String(y.id)===String(id));if(!x)return;
