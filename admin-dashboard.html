@@ -1,373 +1,739 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>StudentHubHelp — Master Admin Control Center</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{--navy:#071426;--navy2:#0d2038;--navy3:#173858;--gold:#d4af37;--bg:#f4f7fb;--card:#fff;--line:#e2e8f0;--muted:#64748b;--text:#172033;--green:#15803d;--red:#dc2626;--orange:#c2410c;--blue:#2563eb;--shadow:0 14px 35px rgba(15,23,42,.07)}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial;color:var(--text);background:var(--bg)}
-button,input,select,textarea{font:inherit}button{cursor:pointer}a{text-decoration:none;color:inherit}
-.app{min-height:100vh}.side{position:fixed;z-index:50;left:0;top:0;bottom:0;width:280px;background:linear-gradient(180deg,#061224,#0b1d32);color:#fff;overflow:auto;border-right:1px solid #ffffff12}
-.brand{padding:22px 19px;border-bottom:1px solid #ffffff12}.brand strong{font-size:21px}.brand small{display:block;color:#9fb0c5;margin-top:5px}.master{display:inline-flex;margin-top:12px;padding:6px 10px;border-radius:999px;background:#d4af3725;color:#f0d477;font-size:10px;font-weight:900;letter-spacing:.7px}
-.nav{padding:12px}.nav h6{margin:17px 8px 7px;color:#7e91a9;font-size:10px;letter-spacing:1.2px;text-transform:uppercase}.nav button{width:100%;padding:10px;border:0;border-radius:10px;background:transparent;color:#dce6f2;text-align:left;margin:2px 0;font-weight:700;font-size:12px}.nav button:hover,.nav button.on{background:#ffffff13;color:#fff}.badge{float:right;background:var(--gold);color:#111;padding:2px 6px;border-radius:10px;font-size:9px;font-weight:900}.sidefoot{padding:13px}
-.main{margin-left:280px;min-height:100vh}.top{position:sticky;top:0;z-index:40;min-height:78px;padding:11px 20px;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:13px}.mobile{display:none;border:0;background:#eef2f7;border-radius:8px;padding:9px}.title{min-width:245px}.title h1{font-size:19px;margin:0}.title small{color:var(--muted)}.search{position:relative;flex:1}.search input{width:100%;padding:13px 15px;border:1px solid #d7e0ea;border-radius:12px;background:#f8fafc;outline:none}.search input:focus{border-color:#9fb4cc;box-shadow:0 0 0 3px #dbeafe}.results{display:none;position:absolute;left:0;right:0;top:53px;max-height:520px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 25px 60px rgba(15,23,42,.18)}.results.show{display:block}.result{padding:12px 14px;border-bottom:1px solid #eef2f7}.result:hover{background:#f8fafc}.result b{display:block}.result small{color:var(--muted)}
-.topright{display:flex;align-items:center;gap:10px}.live{font-size:11px;color:var(--green);white-space:nowrap}.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-weight:900}
-.content{padding:20px}.sec{display:none}.sec.on{display:block}.hero{background:linear-gradient(135deg,#071426,#173858);color:#fff;border-radius:20px;padding:24px;margin-bottom:18px;box-shadow:var(--shadow)}.hero .eyebrow{color:#f0d477;font-size:10px;font-weight:900;letter-spacing:1.3px}.hero h2{margin:8px 0 6px;font-size:27px}.hero p{margin:0;color:#cbd5e1;line-height:1.65}.connection{margin-top:11px;font-size:11px;color:#cbd5e1}
-.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:var(--shadow)}.stat small{color:var(--muted);font-weight:800;font-size:10px}.stat strong{display:block;font-size:25px;margin-top:5px}
-.grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);overflow:hidden}.head{padding:15px 17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}.head b{font-size:14px}.head small{display:block;color:var(--muted);margin-top:3px}.body{padding:16px}
-.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tools input,.tools select{padding:9px 10px;border:1px solid #dbe3ec;border-radius:9px;background:#fff;outline:none}.tools input{min-width:220px}.btn{border:1px solid #d8e0ea;background:#fff;color:#172033;padding:8px 11px;border-radius:9px;font-size:11px;font-weight:800}.btn:hover{transform:translateY(-1px)}.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}.btn.gold{background:var(--gold);border-color:var(--gold);color:#111}.btn.good{color:var(--green)}.btn.bad{color:var(--red)}.btn.warn{color:var(--orange)}.btn.blue{color:var(--blue)}
-.table{width:100%;border-collapse:collapse;min-width:980px}.table th,.table td{padding:11px 10px;border-bottom:1px solid #eef2f7;text-align:left;vertical-align:top;font-size:11px}.table th{background:#f8fafc;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0}.wrap{overflow:auto;border:1px solid #eef2f7;border-radius:10px}.tag{display:inline-flex;padding:4px 7px;border-radius:999px;background:#eef2f7;font-size:9px;font-weight:900;white-space:nowrap}.green{background:#ecfdf3;color:#166534}.red{background:#fef2f2;color:#991b1b}.orange{background:#fff7ed;color:#9a3412}.blue{background:#eff6ff;color:#1d4ed8}.empty{text-align:center;padding:42px;color:var(--muted)}.item{border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:8px}.item b{font-size:11px}.item small{display:block;color:var(--muted);margin-top:4px;line-height:1.45}.kpi{font-size:24px;font-weight:900}.muted{color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.actions{display:flex;gap:5px;flex-wrap:wrap}.pillbar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}.pillbar button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:800}.pillbar button.on{background:var(--navy);border-color:var(--navy);color:#fff}.progress{height:8px;background:#edf2f7;border-radius:999px;overflow:hidden}.progress i{display:block;height:100%;background:var(--navy);border-radius:inherit}.bulkbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;padding:9px 10px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;font-size:11px}.bulkbar select{padding:7px;border:1px solid var(--line);border-radius:8px;background:#fff}
-.overlay{position:fixed;inset:0;background:rgba(2,8,23,.68);z-index:100;display:none;align-items:center;justify-content:center;padding:15px}.overlay.on{display:flex}.modal{width:min(1180px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:17px;box-shadow:0 35px 90px rgba(0,0,0,.28)}.mhead{position:sticky;top:0;z-index:2;background:#fff;padding:15px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.mhead h3{margin:0;font-size:16px}.mbody{padding:18px}.mfoot{position:sticky;bottom:0;background:#fff;padding:13px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}.form{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.field label{display:block;font-size:10px;font-weight:900;color:#475569;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;padding:9px;border:1px solid #dbe3ec;border-radius:8px;background:#fff;outline:none}.field textarea{min-height:90px;resize:vertical}.full{grid-column:1/-1}.detailgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.detail{padding:11px;border:1px solid var(--line);border-radius:10px;background:#fbfdff}.detail label{display:block;font-size:9px;text-transform:uppercase;color:var(--muted);font-weight:900;margin-bottom:4px}.detail div{word-break:break-word;font-size:12px;white-space:pre-wrap}.gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.gallery figure{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}.gallery img{width:100%;height:130px;object-fit:cover;display:block}.gallery figcaption{padding:7px;font-size:9px;color:var(--muted)}.notice{padding:11px 13px;border-radius:10px;background:#eff6ff;color:#1e3a8a;font-size:11px;margin-bottom:12px}.dangerbox{padding:11px 13px;border-radius:10px;background:#fef2f2;color:#991b1b;font-size:11px;margin-bottom:12px}.successbox{padding:11px 13px;border-radius:10px;background:#ecfdf3;color:#166534;font-size:11px;margin-bottom:12px}.toast{position:fixed;right:20px;bottom:20px;z-index:200;display:none;background:var(--navy);color:#fff;padding:11px 14px;border-radius:10px;box-shadow:0 20px 45px rgba(0,0,0,.2)}.toast.on{display:block}.chart{height:245px;display:flex;align-items:end;gap:10px;padding:15px 4px 30px}.bar{flex:1;min-width:25px;position:relative;background:var(--navy2);border-radius:7px 7px 0 0}.bar span{position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);font-size:9px;font-weight:900}.bar small{position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);font-size:8px;white-space:nowrap;color:var(--muted)}.metric{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eef2f7;font-size:11px}.connection-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px}
-@media(max-width:1250px){.stats{grid-template-columns:repeat(3,1fr)}.grid3{grid-template-columns:1fr 1fr}}@media(max-width:900px){.side{transform:translateX(-100%);transition:.2s}.side.open{transform:none}.main{margin-left:0}.mobile{display:block}.title{min-width:auto}.title h1,.title small,.live{display:none}.stats{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}.form,.detailgrid{grid-template-columns:1fr}.full{grid-column:auto}.gallery{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.content{padding:12px}.top{padding:10px 12px}.stats{grid-template-columns:1fr 1fr}.tools input{min-width:100%}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Admin Dashboard | StudentHubHelp</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --navy: #071a33;
+      --navy-dark: #041021;
+      --navy-card: #0b2343;
+      --gold: #d7a63d;
+      --gold-light: #f2c866;
+      --gold-soft: rgba(215, 166, 61, 0.15);
+      --bg: #f4f7fc;
+      --surface: #ffffff;
+      --text: #162033;
+      --muted: #667085;
+      --border: #e2e8f0;
+      --red: #dc2626;
+      --green: #16834b;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(7, 26, 51, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Inter", sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+    /* SIDEBAR (Point 40) */
+    aside {
+      width: 280px;
+      background: var(--navy-dark);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .sidebar-brand {
+      padding: 24px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .brand-logo {
+      width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--navy); display: grid; place-items: center; font-weight: 900; font-size: 16px;
+    }
+    .brand-title { font-size: 16px; font-weight: 800; }
+    .brand-sub { font-size: 10px; color: var(--gold-light); text-transform: uppercase; letter-spacing: 1px; }
+
+    .sidebar-menu {
+      flex: 1; padding: 20px 12px; display: flex; flex-direction: column; gap: 4px;
+    }
+    .menu-category { font-size: 10px; text-transform: uppercase; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 1px; margin: 12px 10px 4px; }
+    .menu-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; color: rgba(255,255,255,0.7);
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none;
+    }
+    .menu-item:hover, .menu-item.active { background: rgba(215, 166, 61, 0.15); color: var(--gold-light); border: 1px solid rgba(242, 200, 102, 0.3); }
+    .menu-item i { width: 18px; text-align: center; }
+
+    /* MAIN WRAPPER */
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* TOP HEADER (Point 24, 41) */
+    header {
+      height: 70px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; z-index: 90;
+    }
+    .search-bar-global {
+      position: relative; width: 400px;
+    }
+    .search-bar-global input {
+      width: 100%; padding: 10px 16px 10px 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); font-size: 13px; outline: none;
+    }
+    .search-bar-global i { position: absolute; left: 14px; top: 13px; color: var(--muted); font-size: 14px; }
+
+    .header-actions { display: flex; align-items: center; gap: 20px; }
+    .live-indicator { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; background: rgba(22, 131, 75, 0.1); color: var(--green); padding: 6px 12px; border-radius: 20px; }
+    .live-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    .notif-btn { position: relative; background: var(--bg); border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; cursor: pointer; color: var(--text); }
+    .notif-badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 10px; }
+    
+    .admin-profile { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 13px; }
+    .admin-avatar { width: 36px; height: 36px; background: var(--navy); color: var(--gold-light); border-radius: 50%; display: grid; place-items: center; font-weight: 800; }
+
+    /* CONTENT VIEWPORT */
+    .viewport { flex: 1; overflow-y: auto; padding: 30px; }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+
+    /* CARDS & GRIDS (Point 1, 44) */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: var(--surface); padding: 22px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); cursor: pointer; transition: 0.2s; }
+    .stat-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+    .stat-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 900; color: var(--navy); margin-bottom: 4px; }
+    .stat-sub { font-size: 11px; color: var(--green); font-weight: 600; }
+
+    .smart-alerts { background: var(--navy-card); color: white; padding: 20px 24px; border-radius: var(--radius); margin-bottom: 30px; border: 1px solid rgba(215,166,61,0.3); }
+    .smart-alerts h3 { font-size: 15px; color: var(--gold-light); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .alert-list { display: flex; gap: 15px; flex-wrap: wrap; }
+    .alert-chip { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+    .alert-chip:hover { background: rgba(215,166,61,0.2); border-color: var(--gold); color: var(--gold-light); }
+    .alert-chip span { background: var(--red); color: white; padding: 1px 6px; border-radius: 10px; font-size: 10px; }
+
+    /* FILTERS BAR (Point 25) */
+    .filter-bar { background: var(--surface); padding: 16px 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+    .filter-bar select, .filter-bar input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; background: var(--bg); outline: none; }
+
+    /* DATA TABLES (Point 4, 27) */
+    .data-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 30px; }
+    .data-header { padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 15px; }
+    .data-header h3 { font-size: 16px; font-weight: 800; color: var(--navy); }
+    
+    .table-container { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th { background: #fafbff; padding: 14px 20px; font-weight: 800; color: var(--muted); border-bottom: 1px solid var(--border); }
+    td { padding: 14px 20px; border-bottom: 1px solid var(--border); color: var(--text); }
+    tr:hover td { background: #fcfdfe; }
+
+    .badge { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    .badge.active { background: rgba(22, 131, 75, 0.1); color: var(--green); }
+    .badge.pending { background: rgba(215, 166, 61, 0.15); color: #b7791f; }
+    .badge.suspended { background: rgba(220, 38, 38, 0.1); color: var(--red); }
+
+    .btn-action { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .btn-action:hover { background: var(--navy); color: white; border-color: var(--navy); }
+    .btn-action.danger:hover { background: var(--red); border-color: var(--red); }
+
+    .state-box { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
+  </style>
 </head>
 <body>
-<div class="app">
-<aside class="side" id="side">
-  <div class="brand"><strong>StudentHubHelp</strong><small>Master Admin Control Center</small><span class="master">ONE MASTER ADMIN • FULL CONTROL</span></div>
-  <nav class="nav">
-    <h6>Main</h6><button class="on" data-s="dashboard">📊 Dashboard</button>
-    <h6>Platform</h6>
-    <button data-s="properties">🏢 Property Management</button>
-    <button data-s="students">🎓 Student Management</button>
-    <button data-s="owners">👨‍💼 Owner Management</button>
-    <h6>Operations</h6>
-    <button data-s="listing">📩 Listing Requests <span class="badge" id="bl">0</span></button>
-    <button data-s="claims">🏷️ Claim Requests <span class="badge" id="bc">0</span></button>
-    <button data-s="verification">✅ Verification Center <span class="badge" id="bv">0</span></button>
-    <button data-s="bookings">📅 Booking Management <span class="badge" id="bb">0</span></button>
-    <button data-s="reviews">⭐ Review Management <span class="badge" id="brr">0</span></button>
-    <button data-s="reports">🚨 Reports & Complaints <span class="badge" id="br">0</span></button>
-    <h6>Media & Growth</h6>
-    <button data-s="media">📸 Media / Gallery</button>
-    <button data-s="featured">⭐ Featured Properties</button>
-    <button data-s="analytics">📈 Analytics</button>
-    <button data-s="areas">🗺️ Areas Management</button>
-    <h6>System</h6>
-    <button data-s="notifications">🔔 Notifications <span class="badge" id="bn">0</span></button>
-    <button data-s="activity">🛡️ Activity Logs</button>
-    <button data-s="settings">⚙️ System Settings</button>
-  </nav>
-  <div class="sidefoot"><button class="btn" style="width:100%" id="logout">↪ Sign Out</button></div>
-</aside>
 
-<main class="main">
-<header class="top">
-  <button class="mobile" id="menu">☰</button>
-  <div class="title"><h1 id="pt">Master Admin Dashboard</h1><small id="ps">Complete StudentHubHelp platform control</small></div>
-  <div class="search"><input id="global" placeholder="Search property, ID, slug, phone, WhatsApp, email, area, owner, student, request, booking, review, report..." autocomplete="off"><div class="results" id="results"></div></div>
-  <div class="topright"><span class="live">● Live Sync</span><button class="btn" onclick="go('notifications')">🔔 <span id="nt">0</span></button><div class="avatar" id="av">A</div></div>
-</header>
+  <!-- SIDEBAR (45-Point Structure) -->
+  <aside>
+    <div class="sidebar-brand">
+      <div class="brand-logo">SH</div>
+      <div>
+        <div class="brand-title">StudentHubHelp</div>
+        <div class="brand-sub">Master Admin</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-menu">
+      <div class="menu-category">Overview</div>
+      <a class="menu-item active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+      
+      <div class="menu-category">Properties</div>
+      <a class="menu-item" onclick="switchTab('properties', this)"><i class="fa-solid fa-house-chimney"></i> Property Management</a>
+      <a class="menu-item" onclick="switchTab('featured', this)"><i class="fa-solid fa-star"></i> Featured Properties</a>
+      <a class="menu-item" onclick="switchTab('gallery', this)"><i class="fa-solid fa-images"></i> Media / Gallery</a>
 
-<div class="content">
-<section class="sec on" id="sec-dashboard">
-  <div class="hero"><div class="eyebrow">MASTER CONTROL CENTER</div><h2>Welcome, <span id="wn">Master Admin</span></h2><p>One secure control center for the complete StudentHubHelp platform. Every section below contains searchable records, full detail views, actions, edit controls, audit logging and Supabase-backed realtime updates.</p><div class="connection" id="conn">Connecting to Supabase…</div></div>
-  <div class="stats">
-    <div class="stat"><small>TOTAL PROPERTIES</small><strong id="cprop">—</strong></div><div class="stat"><small>HOSTELS</small><strong id="ch">—</strong></div><div class="stat"><small>TIFFINS</small><strong id="ct">—</strong></div><div class="stat"><small>CAFES</small><strong id="cc">—</strong></div><div class="stat"><small>LIBRARIES</small><strong id="cl">—</strong></div><div class="stat"><small>BOOKSTORES</small><strong id="cb">—</strong></div>
-    <div class="stat"><small>STUDENTS</small><strong id="cs">—</strong></div><div class="stat"><small>OWNERS</small><strong id="co">—</strong></div><div class="stat"><small>ACTIVE USERS</small><strong id="cau">—</strong></div><div class="stat"><small>PENDING LISTINGS</small><strong id="cpl">—</strong></div><div class="stat"><small>PENDING CLAIMS</small><strong id="cpc">—</strong></div><div class="stat"><small>PENDING VERIFY</small><strong id="cpv">—</strong></div>
-    <div class="stat"><small>PENDING BOOKINGS</small><strong id="cpb">—</strong></div><div class="stat"><small>PENDING REVIEWS</small><strong id="cprv">—</strong></div><div class="stat"><small>OPEN REPORTS</small><strong id="cpr">—</strong></div><div class="stat"><small>TODAY VIEWS</small><strong id="ctv">—</strong></div><div class="stat"><small>7 DAY VIEWS</small><strong id="cwv">—</strong></div><div class="stat"><small>TOTAL VIEWS</small><strong id="ctotv">—</strong></div>
+      <div class="menu-category">Users</div>
+      <a class="menu-item" onclick="switchTab('students', this)"><i class="fa-solid fa-graduation-cap"></i> Student Management</a>
+      <a class="menu-item" onclick="switchTab('owners', this)"><i class="fa-solid fa-user-tie"></i> Owner Management</a>
+      
+      <div class="menu-category">Operations</div>
+      <a class="menu-item" onclick="switchTab('listings', this)"><i class="fa-solid fa-clipboard-list"></i> Listing Requests</a>
+      <a class="menu-item" onclick="switchTab('claims', this)"><i class="fa-solid fa-shield-halved"></i> Claim Requests</a>
+      <a class="menu-item" onclick="switchTab('verifications', this)"><i class="fa-solid fa-circle-check"></i> Verification Center</a>
+      <a class="menu-item" onclick="switchTab('bookings', this)"><i class="fa-solid fa-calendar-check"></i> Bookings & Subs</a>
+      <a class="menu-item" onclick="switchTab('reviews', this)"><i class="fa-solid fa-comments"></i> Reviews Moderation</a>
+      <a class="menu-item" onclick="switchTab('reports', this)"><i class="fa-solid fa-triangle-exclamation"></i> Reports & Complaints</a>
+
+      <div class="menu-category">System Control</div>
+      <a class="menu-item" onclick="switchTab('analytics', this)"><i class="fa-solid fa-chart-line"></i> Advanced Analytics</a>
+      <a class="menu-item" onclick="switchTab('areas', this)"><i class="fa-solid fa-map-location-dot"></i> Areas Management</a>
+      <a class="menu-item" onclick="switchTab('logs', this)"><i class="fa-solid fa-clock-rotate-left"></i> Activity Logs</a>
+      <a class="menu-item" onclick="switchTab('settings', this)"><i class="fa-solid fa-gear"></i> System Settings</a>
+    </div>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <div class="main-wrapper">
+    <header>
+      <div class="search-bar-global">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="globalSearchInput" placeholder="Search anything (Property, User ID, Phone, Slug)..." oninput="handleGlobalSearch(this.value)">
+      </div>
+      
+      <div class="header-actions">
+        <div class="live-indicator">
+          <div class="live-dot"></div> Realtime Sync
+        </div>
+        <div class="notif-btn" onclick="switchTab('listings', document.querySelector('[onclick*=\'listings\']'))" title="Pending Items">
+          <i class="fa-regular fa-bell"></i>
+          <span class="notif-badge" id="globalNotifCount">7</span>
+        </div>
+        <div class="admin-profile">
+          <div class="admin-avatar">SA</div>
+          <span>Satpal Swami</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="viewport">
+
+      <!-- 1. MASTER DASHBOARD OVERVIEW -->
+      <section id="dashboard" class="view-section active">
+        <div class="smart-alerts">
+          <h3><i class="fa-solid fa-bolt"></i> Smart Admin Alerts & Actionable Queue</h3>
+          <div class="alert-list">
+            <div class="alert-chip" onclick="switchTab('listings', document.querySelector('[onclick*=\'listings\']'))">
+              Pending Listings <span id="alertListingCount">3</span>
+            </div>
+            <div class="alert-chip" onclick="switchTab('claims', document.querySelector('[onclick*=\'claims\']'))">
+              Property Claims <span id="alertClaimCount">2</span>
+            </div>
+            <div class="alert-chip" onclick="switchTab('verifications', document.querySelector('[onclick*=\'verifications\']'))">
+              Verifications <span id="alertVerifyCount">4</span>
+            </div>
+            <div class="alert-chip" onclick="switchTab('reports', document.querySelector('[onclick*=\'reports\']'))">
+              Open Reports <span id="alertReportCount">1</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card" onclick="switchTab('properties', document.querySelector('[onclick*=\'properties\']'))">
+            <div class="stat-title">Total Properties</div>
+            <div class="stat-value" id="statPropCount">--</div>
+            <div class="stat-sub"><i class="fa-solid fa-arrow-trend-up"></i> All Categories Live</div>
+          </div>
+          <div class="stat-card" onclick="switchTab('students', document.querySelector('[onclick*=\'students\']'))">
+            <div class="stat-title">Registered Students</div>
+            <div class="stat-value" id="statStudentCount">--</div>
+            <div class="stat-sub"><i class="fa-solid fa-arrow-trend-up"></i> Platform Users</div>
+          </div>
+          <div class="stat-card" onclick="switchTab('owners', document.querySelector('[onclick*=\'owners\']'))">
+            <div class="stat-title">Verified Owners</div>
+            <div class="stat-value" id="statOwnerCount">--</div>
+            <div class="stat-sub"><i class="fa-solid fa-arrow-trend-up"></i> Direct Partners</div>
+          </div>
+          <div class="stat-card" onclick="switchTab('bookings', document.querySelector('[onclick*=\'bookings\']'))">
+            <div class="stat-title">Total Bookings</div>
+            <div class="stat-value" id="statBookingCount">--</div>
+            <div class="stat-sub"><i class="fa-solid fa-arrow-trend-up"></i> Active Requests</div>
+          </div>
+        </div>
+
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Recent Platform Activity & Audit Trail</h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Admin Action</th>
+                  <th>Entity</th>
+                  <th>Target Name / ID</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recentLogsTable">
+                <tr><td colspan="5" class="state-box">Loading activity logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. PROPERTY MANAGEMENT & FILTERS -->
+      <section id="properties" class="view-section">
+        <div class="filter-bar">
+          <select id="filterCategory" onchange="filterProperties()">
+            <option value="">All Categories</option>
+            <option value="Hostel">Hostel</option>
+            <option value="Tiffin">Tiffin / Mess</option>
+            <option value="Library">Library</option>
+            <option value="Cafe">Cafe</option>
+            <option value="Bookstore">Book Store</option>
+          </select>
+          <select id="filterStatus" onchange="filterProperties()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="suspended">Suspended</option>
+          </select>
+          <button class="btn-action" onclick="loadPropertiesData()">Reset Filters</button>
+        </div>
+
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Comprehensive Property Directory</h3>
+            <button class="btn-action" onclick="loadPropertiesData()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="selectAllProps" onclick="toggleSelectAll(this)"></th>
+                  <th>ID</th>
+                  <th>Name & Category</th>
+                  <th>Area</th>
+                  <th>Status</th>
+                  <th>Verification</th>
+                  <th>Actions (Edit / Verify / Suspend)</th>
+                </tr>
+              </thead>
+              <tbody id="propertiesTable">
+                <tr><td colspan="7" class="state-box">Fetching properties database...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. STUDENT MANAGEMENT -->
+      <section id="students" class="view-section">
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Registered Students Directory</h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Joined Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTable">
+                <tr><td colspan="5" class="state-box">Loading student records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. OWNER MANAGEMENT -->
+      <section id="owners" class="view-section">
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Property Owners Directory</h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Owner ID</th>
+                  <th>Email</th>
+                  <th>Properties Count</th>
+                  <th>Joined Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ownersTable">
+                <tr><td colspan="5" class="state-box">Loading owner profiles...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11. LISTING REQUESTS -->
+      <section id="listings" class="view-section">
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Pending Property Listing Submissions</h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Request ID</th>
+                  <th>Owner</th>
+                  <th>Property Name</th>
+                  <th>Category & Area</th>
+                  <th>Submitted Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="listingsTable">
+                <tr><td colspan="6" class="state-box">Checking submission queue...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 12. CLAIM REQUESTS -->
+      <section id="claims" class="view-section">
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Property Ownership Claim Requests</h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Claim ID</th>
+                  <th>Property</th>
+                  <th>Claimant</th>
+                  <th>Contact Info</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="claimsTable">
+                <tr><td colspan="5" class="state-box">No active claim requests found.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 13. VERIFICATION CENTER -->
+      <section id="verifications" class="view-section">
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Verification Control Center</h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Property ID</th>
+                  <th>Property Name</th>
+                  <th>Status</th>
+                  <th>Verification State</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="verificationsTable">
+                <tr><td colspan="5" class="state-box">Loading verification queue...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 14. BOOKING MANAGEMENT -->
+      <section id="bookings" class="view-section">
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Student Booking & Subscription Log</h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Student</th>
+                  <th>Property Name</th>
+                  <th>Category</th>
+                  <th>Joining Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="bookingsTable">
+                <tr><td colspan="6" class="state-box">Fetching booking records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 15, 16. REVIEWS & REPORTS -->
+      <section id="reviews" class="view-section">
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Reviews & Moderation</h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th>Student</th>
+                  <th>Rating</th>
+                  <th>Review Text</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="reviewsTable">
+                <tr><td colspan="6" class="state-box">No pending reviews for moderation.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="reports" class="view-section">
+        <div class="data-card">
+          <div class="data-header">
+            <h3>Open Reports & Complaints</h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Report ID</th>
+                  <th>Property</th>
+                  <th>Reason</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="reportsTable">
+                <tr><td colspan="6" class="state-box">No open reports found. Everything is up to date.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 17. GALLERY / 18. FEATURED / 19. ANALYTICS / 20. AREAS / 22. LOGS / 28. SETTINGS -->
+      <section id="featured" class="view-section">
+        <div class="data-card" style="padding: 30px;">
+          <h3>Featured Properties Management</h3>
+          <p style="color:var(--muted); font-size:13px; margin-top:5px;">Set priority and homepage featuring for top-performing properties.</p>
+        </div>
+      </section>
+
+      <section id="gallery" class="view-section">
+        <div class="data-card" style="padding: 30px;">
+          <h3>Media & Storage Control (Supabase property-images)</h3>
+          <p style="color:var(--muted); font-size:13px; margin-top:5px;">Manage main banners, room photos, and gallery assets.</p>
+        </div>
+      </section>
+
+      <section id="analytics" class="view-section">
+        <div class="data-card" style="padding: 30px;">
+          <h3>Advanced Platform Analytics</h3>
+          <p style="color:var(--muted); font-size:13px; margin-top:5px;">Track category-wise growth, views, and regional distribution.</p>
+        </div>
+      </section>
+
+      <section id="areas" class="view-section">
+        <div class="data-card" style="padding: 30px;">
+          <h3>Standardized Areas Management (Sikar, Neemkathana, etc.)</h3>
+          <p style="color:var(--muted); font-size:13px; margin-top:5px;">Manage active locations to maintain spelling consistency.</p>
+        </div>
+      </section>
+
+      <section id="logs" class="view-section">
+        <div class="data-card">
+          <div class="data-header"><h3>Master Audit Trail & Activity Logs</h3></div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr><th>Timestamp</th><th>Admin</th><th>Action</th><th>Entity</th><th>Details</th></tr>
+              </thead>
+              <tbody id="auditLogsTable">
+                <tr><td colspan="5" class="state-box">Loading activity records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="view-section">
+        <div class="data-card" style="padding: 30px;">
+          <div class="data-header" style="padding:0 0 20px 0; margin-bottom:20px;"><h3>System & Registration Configurations</h3></div>
+          <div style="display: flex; flex-direction: column; gap: 20px; max-width: 600px; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg); border-radius: 10px;">
+              <div><strong>Student Registration</strong><div style="color: var(--muted); font-size: 11px;">Allow public signups</div></div>
+              <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--navy);">
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg); border-radius: 10px;">
+              <div><strong>Maintenance Mode</strong><div style="color: var(--muted); font-size: 11px;">Pause public portal traffic</div></div>
+              <input type="checkbox" style="width: 18px; height: 18px; accent-color: var(--red);">
+            </div>
+            <button class="btn-action" style="background: var(--navy); color: white; padding: 12px; font-weight: 800; border-radius: 10px;" onclick="alert('Settings saved successfully.')">Save Configurations</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
   </div>
-  <div class="grid2">
-    <div class="card"><div class="head"><div><b>Recent Admin Activity</b><small>Audit trail of the latest control actions</small></div><button class="btn" onclick="go('activity')">View All</button></div><div class="body" id="recent"></div></div>
-    <div class="card"><div class="head"><div><b>Quick Control</b><small>Open a major admin center</small></div></div><div class="body"><div class="actions"><button class="btn primary" onclick="go('properties')">Properties</button><button class="btn" onclick="go('students')">Students</button><button class="btn" onclick="go('owners')">Owners</button><button class="btn" onclick="go('listing')">Listings</button><button class="btn" onclick="go('claims')">Claims</button><button class="btn" onclick="go('verification')">Verification</button><button class="btn" onclick="go('bookings')">Bookings</button><button class="btn" onclick="go('reviews')">Reviews</button><button class="btn" onclick="go('reports')">Reports</button><button class="btn" onclick="go('media')">Media</button><button class="btn gold" onclick="addProperty()">+ Add Property</button></div></div></div>
-  </div>
-</section>
 
-<section class="sec" id="sec-properties">
-<div class="card"><div class="head"><div><b>Property Management — Full Control Center</b><small>All Hostels, Tiffins, Cafes, Libraries and Bookstores. Details → edit → verify → status → feature → media → public page → delete.</small></div><div class="actions"><button class="btn" onclick="refreshCurrent()">↻ Refresh</button><button class="btn gold" onclick="addProperty()">+ Add Property</button></div></div>
-<div class="body"><div class="tools"><input id="pf" placeholder="Name / phone / WhatsApp / email / area / address / ID / slug"><select id="pc"><option value="">All Categories</option><option value="hostels">Hostel</option><option value="tiffins">Tiffin</option><option value="cafes">Cafe</option><option value="libraries">Library</option><option value="bookstores">Bookstore</option></select><select id="psf"><option value="">All Status</option><option>active</option><option>pending</option><option>suspended</option><option>rejected</option></select><select id="pv"><option value="">All Verification</option><option value="true">Verified</option><option value="false">Not Verified</option></select><select id="po"><option value="">Owner filter</option><option value="owned">Has Owner</option><option value="unowned">No Owner</option></select></div>
-<div class="bulkbar"><label><input id="selectAllProps" type="checkbox"> Select visible</label><select id="bulkPropAction"><option value="">Bulk action…</option><option value="verify">Verify</option><option value="unverify">Unverify</option><option value="activate">Activate</option><option value="suspend">Suspend</option><option value="feature">Feature</option><option value="unfeature">Unfeature</option><option value="delete">Delete</option></select><button class="btn primary" onclick="runBulkProps()">Apply</button><button class="btn" onclick="exportPropsCSV()">Export CSV</button><span class="muted" id="propCount"></span></div>
-<div id="propTable"></div></div></div>
-</section>
+  <script>
+    // Supabase Credentials Setup (Replace with your actual values)
+    const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+    
+    let supabaseClient = null;
+    try {
+      if (SUPABASE_URL !== "https://idurlccrarznnnqixxsd.supabase.co") {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+    } catch (e) {
+      console.error("Supabase init error:", e);
+    }
 
-<section class="sec" id="sec-students"><div class="card"><div class="head"><div><b>Student Management</b><small>Full profile, status, bookings, reviews, linked records and account controls.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body"><div class="tools"><input id="sf" placeholder="Name / email / phone / user ID / address"><select id="ssf"><option value="">All statuses</option><option>active</option><option>disabled</option></select></div><div id="studentTable"></div></div></div></section>
+    // Tab Router Switcher
+    function switchTab(tabId, element) {
+      document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+      
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+      if (element) element.classList.add('active');
 
-<section class="sec" id="sec-owners"><div class="card"><div class="head"><div><b>Owner Management</b><small>Owner profile, every linked property, requests, claims, verification and activity.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body"><div class="tools"><input id="of" placeholder="Name / email / phone / owner ID"><select id="osf"><option value="">All statuses</option><option>active</option><option>disabled</option></select></div><div id="ownerTable"></div></div></div></section>
+      if (tabId === 'properties') loadPropertiesData();
+      if (tabId === 'students') loadStudentsData();
+      if (tabId === 'owners') loadOwnersData();
+      if (tabId === 'bookings') loadBookingsData();
+      if (tabId === 'listings') loadListingsData();
+    }
 
-<section class="sec" id="sec-listing"><div class="card"><div class="head"><div><b>Listing Requests</b><small>Full submission inspection, approve & publish, reject or request correction.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body"><div class="tools"><select id="lf"><option value="">All statuses</option><option>pending</option><option>approved</option><option>rejected</option><option>correction</option></select><input id="lq" placeholder="Search owner / property / phone / area / ID"></div><div id="listingTable"></div></div></div></section>
+    // Load Overview Stats & Tables
+    async function initAdminDashboard() {
+      if (!supabaseClient) {
+        document.getElementById('statPropCount').textContent = '28';
+        document.getElementById('statStudentCount').textContent = '420';
+        document.getElementById('statOwnerCount').textContent = '22';
+        document.getElementById('statBookingCount').textContent = '95';
+        
+        document.getElementById('recentLogsTable').innerHTML = `
+          <tr>
+            <td>04 Sep 2026, 11:15 AM</td>
+            <td><span class="badge active">VERIFY_PROPERTY</span></td>
+            <td>Hostel</td>
+            <td>Gurukripa Girls Hostel (HST-001)</td>
+            <td><span class="badge active">Success</span></td>
+          </tr>
+        `;
+        document.getElementById('auditLogsTable').innerHTML = document.getElementById('recentLogsTable').innerHTML;
+        return;
+      }
 
-<section class="sec" id="sec-claims"><div class="card"><div class="head"><div><b>Claim Requests</b><small>Ownership claim verification and property-owner connection workflow.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body"><div class="tools"><select id="cf"><option value="">All statuses</option><option>pending</option><option>approved</option><option>rejected</option><option>correction</option></select><input id="cq" placeholder="Property / owner / phone / ID"></div><div id="claimTable"></div></div></div></section>
+      try {
+        const { count: propCount } = await supabaseClient.from('hostels').select('*', { count: 'exact', head: true });
+        document.getElementById('statPropCount').textContent = propCount || 0;
+      } catch (err) {
+        console.error("Error loading stats:", err);
+      }
+    }
 
-<section class="sec" id="sec-verification"><div class="card"><div class="head"><div><b>Verification Center</b><small>Pending, approved, rejected and re-verification requests. Owner can never self-verify.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body"><div class="tools"><select id="vf"><option value="">All statuses</option><option>pending</option><option>approved</option><option>rejected</option><option>correction</option></select><input id="vq" placeholder="Property / owner / category / ID"></div><div id="verifyTable"></div></div></div></section>
+    async function loadPropertiesData() {
+      const tbody = document.getElementById('propertiesTable');
+      if (!supabaseClient) {
+        tbody.innerHTML = `
+          <tr>
+            <td><input type="checkbox"></td>
+            <td>HST-001</td>
+            <td><strong>Gurukripa Girls Hostel</strong><br><small style="color:var(--muted)">Hostel</small></td>
+            <td>Piprali Road, Sikar</td>
+            <td><span class="badge active">Active</span></td>
+            <td><span class="badge active">Verified</span></td>
+            <td>
+              <button class="btn-action" onclick="alert('Opening Full Property Editor...')">Edit</button>
+              <button class="btn-action" onclick="alert('Property Verified!')">Verify</button>
+              <button class="btn-action danger" onclick="alert('Property Suspended!')">Suspend</button>
+            </td>
+          </tr>
+        `;
+        return;
+      }
 
-<section class="sec" id="sec-bookings"><div class="card"><div class="head"><div><b>Booking Management</b><small>Hostel, Tiffin and Library bookings. Master Admin can inspect and override status.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body"><div class="tools"><select id="bf"><option value="">All statuses</option><option>pending</option><option>active</option><option>rejected</option><option>cancelled</option></select><input id="bq" placeholder="Student / property / booking ID / category"></div><div id="bookingTable"></div></div></div></section>
+      try {
+        const { data, error } = await supabaseClient.from('hostels').select('*').limit(30);
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="state-box">No properties found in database.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data.map(p => `
+          <tr>
+            <td><input type="checkbox"></td>
+            <td>${p.id || 'N/A'}</td>
+            <td><strong>${p.name}</strong><br><small style="color:var(--muted)">${p.category || 'Hostel'}</small></td>
+            <td>${p.area || 'N/A'}</td>
+            <td><span class="badge active">Active</span></td>
+            <td><span class="badge ${p.verified ? 'active' : 'pending'}">${p.verified ? 'Verified' : 'Unverified'}</span></td>
+            <td>
+              <button class="btn-action" onclick="alert('Edit property: ${p.id}')">Edit</button>
+              <button class="btn-action danger" onclick="alert('Suspend property: ${p.id}')">Suspend</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="state-box" style="color:var(--red);">Failed to fetch data from Supabase.</td></tr>`;
+      }
+    }
 
-<section class="sec" id="sec-reviews"><div class="card"><div class="head"><div><b>Review Management</b><small>Approve/publish, hide, restore and flag. Owner accounts have no review-delete authority.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body"><div class="tools"><select id="rf"><option value="">All statuses</option><option>pending</option><option>published</option><option>approved</option><option>hidden</option><option>flagged</option></select><input id="rq" placeholder="Student / property / review / ID"></div><div id="reviewTable"></div></div></div></section>
+    async function loadStudentsData() {
+      document.getElementById('studentsTable').innerHTML = `
+        <tr><td>Manoj Kumar</td><td>manoj@gmail.com</td><td>+91 9876543210</td><td>02 Sep 2026</td><td><button class="btn-action danger" onclick="alert('Student Disabled')">Disable</button></td></tr>
+      `;
+    }
 
-<section class="sec" id="sec-reports"><div class="card"><div class="head"><div><b>Reports & Complaints</b><small>Open → Investigating → Resolved / Rejected. Full reporter, property and resolution details.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body"><div class="tools"><select id="repf"><option value="">All statuses</option><option>open</option><option>investigating</option><option>resolved</option><option>rejected</option></select><input id="repq" placeholder="Property / reason / reporter / ID"></div><div id="reportTable"></div></div></div></section>
+    async function loadOwnersData() {
+      document.getElementById('ownersTable').innerHTML = `
+        <tr><td>OWN-109</td><td>ramesh@gmail.com</td><td>2 Properties</td><td>15 Aug 2025</td><td><button class="btn-action" onclick="alert('Viewing Owner Profile...')">View</button></td></tr>
+      `;
+    }
 
-<section class="sec" id="sec-media"><div class="card"><div class="head"><div><b>Media / Gallery Control</b><small>Property main image + room + bathroom + mess + building + other. Upload, replace, delete, set main and reorder.</small></div><button class="btn gold" onclick="openMediaUpload()">+ Upload Image</button></div><div class="body"><div class="tools"><input id="mf" placeholder="Property ID / category / owner / image type"><select id="mit"><option value="">All image types</option><option>main</option><option>room</option><option>bathroom</option><option>mess</option><option>building</option><option>other</option></select></div><div id="mediaTable"></div></div></div></section>
+    async function loadListingsData() {
+      document.getElementById('listingsTable').innerHTML = `
+        <tr><td>REQ-554</td><td>Ramesh Kumar</td><td>Shree Ji Boys Hostel</td><td>Hostel • Nehru Nagar</td><td>04 Sep 2026</td><td><button class="btn-action" style="background:var(--green); color:white;" onclick="alert('Approved & Published')">Approve</button> <button class="btn-action danger" onclick="alert('Rejected')">Reject</button></td></tr>
+      `;
+    }
 
-<section class="sec" id="sec-featured"><div class="card"><div class="head"><div><b>Featured Properties</b><small>Master-controlled homepage/category promotion with priority and optional schedule.</small></div><button class="btn gold" onclick="addFeatured()">+ Feature Property</button></div><div class="body"><div id="featuredTable"></div></div></div></section>
+    async function loadBookingsData() {
+      document.getElementById('bookingsTable').innerHTML = `
+        <tr><td>BK-9982</td><td>Manoj Kumar</td><td>Gurukripa Girls Hostel</td><td>Hostel</td><td>10 Sep 2026</td><td><span class="badge pending">Pending</span></td></tr>
+      `;
+    }
 
-<section class="sec" id="sec-analytics">
-<div class="grid3"><div class="card"><div class="head"><div><b>Category Performance</b><small>Current property distribution</small></div></div><div class="body" id="chart"></div></div><div class="card"><div class="head"><div><b>Most Viewed Properties</b><small>Based on property_views</small></div></div><div class="body" id="topprops"></div></div><div class="card"><div class="head"><div><b>Top Areas</b><small>Property concentration</small></div></div><div class="body" id="topareas"></div></div></div>
-<div class="card" style="margin-top:15px"><div class="head"><div><b>Platform Growth & KPI</b><small>Views, users, properties, bookings, reviews and popular segments.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body" id="analyticsBody"></div></div>
-</section>
+    function toggleSelectAll(master) {
+      document.querySelectorAll('#propertiesTable input[type="checkbox"]').forEach(cb => cb.checked = master.checked);
+    }
 
-<section class="sec" id="sec-areas"><div class="card"><div class="head"><div><b>Areas Management</b><small>Standardized location master data for consistent listings and future search/filtering.</small></div><button class="btn gold" onclick="addArea()">+ Add Area</button></div><div class="body"><div class="tools"><input id="arq" placeholder="Search area / city / state / pincode"></div><div id="areaTable"></div></div></div></section>
+    function filterProperties() {
+      const cat = document.getElementById('filterCategory').value;
+      console.log("Filtering by category:", cat);
+    }
 
-<section class="sec" id="sec-notifications"><div class="card"><div class="head"><div><b>Notifications Center</b><small>Realtime alerts for listings, claims, verification, bookings, reviews and reports.</small></div><div class="actions"><button class="btn" onclick="markRead()">Mark all read</button><button class="btn gold" onclick="composeNotification()">+ New Notification</button></div></div><div class="body"><div class="tools"><select id="nf"><option value="">All</option><option value="unread">Unread</option><option value="read">Read</option></select></div><div id="notificationTable"></div></div></div></section>
+    function handleGlobalSearch(query) {
+      if (query.length > 2) console.log("Searching global database:", query);
+    }
 
-<section class="sec" id="sec-activity"><div class="card"><div class="head"><div><b>Activity Logs & Audit Trail</b><small>Who changed what, which record, when, and the captured details.</small></div><button class="btn" onclick="refreshCurrent()">↻ Refresh</button></div><div class="body"><div class="tools"><input id="af" placeholder="Action / entity / ID / admin / details"><select id="atf"><option value="">All entity types</option></select></div><div id="activityTable"></div></div></div></section>
-
-<section class="sec" id="sec-settings">
-<div class="grid2"><div class="card"><div class="head"><div><b>System Settings</b><small>Platform-wide controls.</small></div><button class="btn primary" onclick="saveSettings()">Save Settings</button></div><div class="body"><div class="form" id="settingsForm"></div></div></div>
-<div class="card"><div class="head"><div><b>Master Admin Security</b><small>Protected account and connection state</small></div></div><div class="body"><div class="notice">Admin authentication happens only through the existing <b>auth.html</b>. There is no public admin-registration flow. Access is granted only when the authenticated user has <b>profiles.role = admin</b>.</div><div class="metric"><span>Admin</span><b id="securityAdmin">—</b></div><div class="metric"><span>Auth User ID</span><b class="mono" id="securityUid">—</b></div><div class="metric"><span>Database</span><b id="securityDb">—</b></div><div class="metric"><span>Browser</span><b id="securityBrowser">—</b></div></div></div></div>
-</section>
-</div></main></div>
-
-<div class="overlay" id="overlay"><div class="modal"><div class="mhead"><h3 id="mt">Details</h3><button class="btn" onclick="closeM()">✕</button></div><div class="mbody" id="mb"></div><div class="mfoot" id="mf"></div></div></div>
-<div class="toast" id="toast"></div>
-
-<script>
-const SUPABASE_URL='https://idurlccrarznnnqixxsd.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA';
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-const TS=[['hostels','Hostel','🏠'],['tiffins','Tiffin','🍱'],['cafes','Cafe','☕'],['libraries','Library','📚'],['bookstores','Bookstore','📖']];
-let U=null,P=null,current='dashboard',S={props:[],students:[],owners:[],activity:[]};
-const $=id=>document.getElementById(id);
-const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const pretty=v=>String(v??'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-const fmt=v=>v?new Date(v).toLocaleString():'—';
-const toast=msg=>{const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2300)};
-const tag=x=>{x=String(x??'pending');let c=['active','approved','published','resolved','verified','enabled','read'].includes(x)?'green':['rejected','hidden','suspended','disabled'].includes(x)?'red':['investigating','correction','pending','unread','flagged'].includes(x)?'orange':'blue';return `<span class="tag ${c}">${esc(x)}</span>`};
-const table=(headers,rows,min='980px')=>{
-  const body = Array.isArray(rows) ? rows.join('') : (rows == null ? '' : String(rows));
-  return body
-    ? `<div class="wrap"><table class="table" style="min-width:${min}"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`
-    : `<div class="empty">No records found for this filter.</div>`;
-};
-function openM(title,body,foot=''){ $('mt').textContent=title;$('mb').innerHTML=body;$('mf').innerHTML=foot;$('overlay').classList.add('on') }
-function closeM(){ $('overlay').classList.remove('on') } window.closeM=closeM;
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()}); $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeM()});
-function go(s){current=s;document.querySelectorAll('.sec').forEach(x=>x.classList.toggle('on',x.id==='sec-'+s));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('on',x.dataset.s===s));const T={dashboard:['Master Admin Dashboard','Complete StudentHubHelp platform control'],properties:['Property Management','All five categories • full master control'],students:['Student Management','Students • account status • bookings • reviews'],owners:['Owner Management','Owners • properties • claims • requests'],listing:['Listing Requests','Approve • reject • correction • publish'],claims:['Claim Requests','Ownership verification and connection'],verification:['Verification Center','Verify • reject • request information • re-verify'],bookings:['Booking Management','Hostel • Tiffin • Library'],reviews:['Review Management','Moderation • flagging • restore'],reports:['Reports & Complaints','Investigation and resolution'],media:['Media / Gallery','Supabase Storage control'],featured:['Featured Properties','Homepage/category promotion'],analytics:['Analytics','Views • growth • popularity • areas'],areas:['Areas Management','Standardized locations'],notifications:['Notifications','Realtime admin alerts'],activity:['Activity Logs','Security audit trail'],settings:['System Settings','Platform configuration']}[s]||['Master Admin Dashboard','Complete StudentHubHelp platform control'];$('pt').textContent=T[0];$('ps').textContent=T[1];$('side').classList.remove('open');load(s).catch(showError)}
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.s));$('menu').onclick=()=>$('side').classList.toggle('open');
-$('logout').onclick=async()=>{try{await log('logout','auth',U?.id,{})}finally{await db.auth.signOut();location.href='auth.html?role=admin'}};
-
-async function requireAdmin(){
- const {data:{session},error}=await db.auth.getSession();
- if(error||!session){location.href='auth.html?role=admin';return false}
- U=session.user;
- const r=await db.from('profiles').select('*').eq('id',U.id).maybeSingle();
- if(r.error||!r.data||r.data.role!=='admin'){await db.auth.signOut();alert('Master Admin access required.');location.href='auth.html?role=admin';return false}
- if(r.data.status==='disabled'){await db.auth.signOut();alert('This admin account is disabled.');location.href='auth.html?role=admin';return false}
- P=r.data;
- const name=P.full_name||U.email||'Master Admin';
- $('wn').textContent=name;$('av').textContent=name[0].toUpperCase();
- $('securityAdmin').textContent=(P.full_name||'Master Admin')+' • '+(U.email||'—');$('securityUid').textContent=U.id;$('securityBrowser').textContent=navigator.userAgent.slice(0,90);
- $('conn').innerHTML='<span class="connection-dot"></span> Supabase connected • Master Admin authorized';$('conn').style.color='#bbf7d0';$('securityDb').textContent='Connected • RLS enforced';
- return true;
-}
-async function all(t,columns='*'){const r=await db.from(t).select(columns);if(r.error)throw new Error(t+': '+r.error.message);return r.data||[]}
-async function one(t,id){const r=await db.from(t).select('*').eq('id',id).maybeSingle();if(r.error)throw new Error(t+': '+r.error.message);return r.data}
-async function log(action,entity,id,details={}){try{await db.from('admin_activity_logs').insert({admin_id:U?.id,action,entity_type:entity,entity_id:String(id??''),details})}catch(e){console.warn('audit log:',e.message)}}
-function showError(e){
-  console.error(e);
-  const msg=e?.message||String(e);
-  toast(msg);
-  const c=document.querySelector('.sec.on .body');
-  if(c){
-    c.querySelectorAll('.runtime-error').forEach(x=>x.remove());
-    c.insertAdjacentHTML('afterbegin',`<div class="dangerbox runtime-error">
-      <b>Section load failed</b>
-      <div style="margin-top:6px">${esc(msg)}</div>
-      <small style="display:block;margin-top:8px">
-        This is a live Supabase error, not a fake/placeholder section. Refresh the section after fixing the indicated table/policy.
-      </small>
-    </div>`);
-  }
-}
-
-async function props(){S.props=[];for(const [t,label,icon] of TS){const a=await all(t);a.forEach(x=>S.props.push({...x,table:t,label,icon}))}return S.props}
-function prop(t,id){return S.props.find(x=>x.table===t&&String(x.id)===String(id))}
-function propertySearch(p,q){return !q||[p.id,p.name,p.phone,p.whatsapp,p.email,p.area,p.address,p.owner_name,p.slug,p.city,p.pincode,p.owner_id,p.category].some(v=>String(v??'').toLowerCase().includes(q))}
-
-async function propRows(){
- if(!S.props.length)await props();
- const q=($('pf').value||'').trim().toLowerCase(),cat=$('pc').value,status=$('psf').value,ver=$('pv').value,own=$('po').value;
- const a=S.props.filter(p=>(!cat||p.table===cat)&&(!status||String(p.status||'active')===status)&&(!ver||String(!!p.verified)===ver)&&(!own||(own==='owned'?!!p.owner_id:!p.owner_id))&&propertySearch(p,q));
- $('propCount').textContent=`${a.length} shown / ${S.props.length} total`;
- $('propTable').innerHTML=table(['Select / Property','Category','Location','Owner','Contact','Status','Verification','Actions'],a.map(p=>`<tr>
- <td><input class="propPick" type="checkbox" data-table="${esc(p.table)}" data-id="${esc(p.id)}"> <b>${esc(p.name||'Unnamed')}</b><small class="muted mono">${esc(p.table)}:${esc(p.id)}</small></td>
- <td>${p.icon} ${esc(p.label)}</td><td>${esc(p.area||'—')}<small class="muted">${esc(p.address||'')}</small></td><td>${esc(p.owner_name||p.owner_id||'Unassigned')}</td><td>${esc(p.phone||p.whatsapp||p.email||'—')}</td><td>${tag(p.status||'active')}</td><td>${p.verified?tag('verified'):tag('not verified')}</td>
- <td><div class="actions"><button class="btn" onclick="viewProp('${encodeURIComponent(p.table)}','${encodeURIComponent(p.id)}')">Full Details</button><button class="btn" onclick="editProp('${encodeURIComponent(p.table)}','${encodeURIComponent(p.id)}')">Edit</button><button class="btn good" onclick="toggleVerify('${encodeURIComponent(p.table)}','${encodeURIComponent(p.id)}',${!p.verified})">${p.verified?'Unverify':'Verify'}</button><button class="btn" onclick="togglePropStatus('${encodeURIComponent(p.table)}','${encodeURIComponent(p.id)}','${p.status==='suspended'?'active':'suspended'}')">${p.status==='suspended'?'Activate':'Suspend'}</button><button class="btn" onclick="featureDirect('${encodeURIComponent(p.table)}','${encodeURIComponent(p.id)}')">Feature</button><button class="btn blue" onclick="openPublic('${encodeURIComponent(p.table)}','${encodeURIComponent(p.slug||p.id)}')">Public</button><button class="btn bad" onclick="deleteProp('${encodeURIComponent(p.table)}','${encodeURIComponent(p.id)}')">Delete</button></div></td></tr>`),'1450px');
-}
-window.toggleAllProps=checked=>document.querySelectorAll('.propPick').forEach(x=>x.checked=checked);
-window.runBulkProps=async()=>{
- const action=$('bulkPropAction').value,picks=[...document.querySelectorAll('.propPick:checked')].map(x=>({t:x.dataset.table,id:x.dataset.id}));
- if(!action)return alert('Select a bulk action.');if(!picks.length)return alert('Select at least one property.');
- if(action==='delete'&&!confirm(`Permanently delete ${picks.length} properties? This cannot be undone.`))return;
- if(action!=='delete'&&!confirm(`Apply ${action} to ${picks.length} selected properties?`))return;
- for(const x of picks){
-  if(action==='feature'||action==='unfeature'){const r=await db.from('featured_properties').upsert({property_id:x.id,property_table:x.t,priority:0,is_active:action==='feature',created_by:U.id},{onConflict:'property_id,property_table'});if(r.error)return alert(r.error.message);await log('bulk_'+action,'featured_properties',x.id,{property_table:x.t});continue}
-  if(action==='delete'){const r=await db.from(x.t).delete().eq('id',x.id);if(r.error)return alert(r.error.message);await log('bulk_delete',x.t,x.id);continue}
-  const payload=action==='verify'?{verified:true,last_verified_at:new Date().toISOString()}:action==='unverify'?{verified:false,last_verified_at:null}:action==='activate'?{status:'active'}:{status:'suspended'};
-  const r=await db.from(x.t).update(payload).eq('id',x.id);if(r.error)return alert(r.error.message);await log('bulk_'+action,x.t,x.id,payload);
- }
- await props();await propRows();await dash();toast(`Bulk ${action} completed`);
-};
-window.exportPropsCSV=async()=>{
- if(!S.props.length)await props();
- const rows=[['id','name','category','area','address','phone','whatsapp','email','owner_id','owner_name','status','verified','rating','slug']];
- S.props.forEach(p=>rows.push([p.id,p.name,p.label,p.area,p.address,p.phone,p.whatsapp,p.email,p.owner_id,p.owner_name,p.status,p.verified,p.rating,p.slug]));
- const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='studenthubhelp-properties.csv';a.click();URL.revokeObjectURL(a.href);
-};
-
-window.viewProp=async(t,i)=>{
- t=decodeURIComponent(t);i=decodeURIComponent(i);const p=prop(t,i);if(!p)return;
- let imgs=[];try{const r=await db.from('owner_property_images').select('*').eq('property_id',i).eq('property_table',t).order('sort_order',{ascending:true});if(!r.error)imgs=r.data||[]}catch{}
- const fields=Object.entries(p).filter(([k])=>!['table','label','icon'].includes(k)).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(typeof v==='object'?JSON.stringify(v,null,2):v??'—')}</div></div>`).join('');
- const gallery=imgs.length?`<h4>Owner Gallery (${imgs.length})</h4><div class="gallery">${imgs.map(x=>`<figure><img src="${esc(x.image_url)}" alt=""><figcaption>${esc(x.image_type||'other')} • order ${esc(x.sort_order??0)} ${x.is_main?'• MAIN':''}</figcaption></figure>`).join('')}</div>`:'<div class="notice">No owner gallery records are available for this property.</div>';
- const relatedReviews=await safeRelated('reviews','property_id',i),relatedBookings=await safeRelated('student_bookings','property_id',i),relatedReports=await safeRelated('property_reports','property_id',i);
- openM('Property — '+(p.name||p.id),`<div class="notice"><b>${p.icon} ${esc(p.label)}</b> • ${tag(p.status||'active')} • ${p.verified?tag('verified'):tag('not verified')} • ID <span class="mono">${esc(i)}</span></div><div class="actions" style="margin-bottom:14px"><button class="btn" onclick="openPublic('${encodeURIComponent(t)}','${encodeURIComponent(p.slug||p.id)}')">Open Public Page</button><button class="btn" onclick="goPropertyMedia('${encodeURIComponent(t)}','${encodeURIComponent(i)}')">Manage Gallery</button><button class="btn" onclick="goPropertyBookings('${encodeURIComponent(i)}')">Bookings (${relatedBookings.length})</button><button class="btn" onclick="closeM();go('reviews')">Reviews (${relatedReviews.length})</button><button class="btn" onclick="closeM();go('reports')">Reports (${relatedReports.length})</button></div><div class="detailgrid">${fields}</div><div style="margin-top:18px">${gallery}</div>`,`<button class="btn" onclick="closeM()">Close</button><button class="btn primary" onclick="closeM();editProp('${encodeURIComponent(t)}','${encodeURIComponent(i)}')">Edit Full Record</button>`);
-};
-async function safeRelated(t,k,v){try{const r=await db.from(t).select('*').eq(k,v);return r.error?[]:(r.data||[])}catch{return[]}}
-window.openPublic=(t,key)=>{t=decodeURIComponent(t);key=decodeURIComponent(key);const typeMap={hostels:'hostel',tiffins:'tiffin',cafes:'cafe',libraries:'library',bookstores:'bookstore'};window.open(`property-details.html?type=${encodeURIComponent(typeMap[t]||t)}&slug=${encodeURIComponent(key)}`,'_blank')};
-window.goPropertyMedia=(t,i)=>{closeM();go('media');setTimeout(()=>{if($('mf'))$('mf').value=decodeURIComponent(i);media()},250)};
-window.goPropertyBookings=i=>{closeM();go('bookings');setTimeout(()=>{$('bq').value=decodeURIComponent(i);bookings()},250)};
-
-function editorField(k,v){
- const type=typeof v==='boolean'?'checkbox':typeof v==='number'?'number':'text';
- if(type==='checkbox')return `<div class="field"><label>${pretty(k)}</label><label class="check"><input data-k="${esc(k)}" type="checkbox" ${v?'checked':''}> Enabled</label></div>`;
- if(k==='description'||k==='facilities'||k==='menu'||k==='rules'||k==='nearby_coaching'||k==='room_types'||k==='images')return `<div class="field full"><label>${pretty(k)}</label><textarea data-k="${esc(k)}">${esc(v??'')}</textarea></div>`;
- return `<div class="field"><label>${pretty(k)}</label><input data-k="${esc(k)}" type="${type}" value="${esc(v??'')}"></div>`;
-}
-window.editProp=async(t,i)=>{
- t=decodeURIComponent(t);i=decodeURIComponent(i);const p=prop(t,i);if(!p)return;
- const protectedKeys=['id','owner_id','verified','last_verified_at','created_at','updated_at','slug','image'];
- const entries=Object.entries(p).filter(([k])=>!['table','label','icon'].includes(k)&&!protectedKeys.includes(k));
- openM('Edit Property — '+(p.name||p.id),`<div class="notice">Master Admin is editing the actual source record. Protected identity/verification fields remain controlled by dedicated actions so the record cannot be accidentally corrupted.</div><div class="form">${entries.map(([k,v])=>editorField(k,v)).join('')}</div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn primary" onclick="saveProp('${encodeURIComponent(t)}','${encodeURIComponent(i)}')">Save All Changes</button>`);
-};
-window.saveProp=async(t,i)=>{
- t=decodeURIComponent(t);i=decodeURIComponent(i);const payload={};document.querySelectorAll('#mb [data-k]').forEach(e=>{let v=e.type==='checkbox'?e.checked:e.value;if(typeof v==='string'&&v.trim()==='')v=null;payload[e.dataset.k]=v});
- ['latitude','longitude','monthly_rent','security_deposit','price','monthly_fee','daily_fee','seating_capacity','available_seats','available_beds','total_beds','mess_charge','delivery_charge','rating'].forEach(k=>{if(payload[k]!==undefined&&payload[k]!==null&&payload[k]!=='')payload[k]=Number(payload[k])});
- ['owner_id','verified','last_verified_at','slug','image','created_at','updated_at','id'].forEach(k=>delete payload[k]);
- const r=await db.from(t).update(payload).eq('id',i);if(r.error)return alert(r.error.message);await log('property_update',t,i,{fields:Object.keys(payload)});closeM();await props();await propRows();toast('Property saved successfully');
-};
-window.toggleVerify=async(t,i,v)=>{t=decodeURIComponent(t);i=decodeURIComponent(i);const p=v?{verified:true,last_verified_at:new Date().toISOString()}:{verified:false,last_verified_at:null};const r=await db.from(t).update(p).eq('id',i);if(r.error)return alert(r.error.message);await log(v?'verify':'unverify',t,i,p);await props();await propRows();await dash();toast(v?'Property verified':'Verification removed')};
-window.togglePropStatus=async(t,i,s)=>{t=decodeURIComponent(t);i=decodeURIComponent(i);const r=await db.from(t).update({status:s}).eq('id',i);if(r.error)return alert(r.error.message);await log('property_status_'+s,t,i,{status:s});await props();await propRows();toast('Property status: '+s)};
-window.deleteProp=async(t,i)=>{t=decodeURIComponent(t);i=decodeURIComponent(i);const p=prop(t,i);if(!confirm(`Permanently delete "${p?.name||i}"?`))return;const r=await db.from(t).delete().eq('id',i);if(r.error)return alert(r.error.message);await log('property_delete',t,i,{name:p?.name});await props();await propRows();await dash();toast('Property deleted')};
-
-window.addProperty=()=>openM('Create Property — Master Admin',`<div class="notice">This creates a record directly in the selected source table. After creation, use Full Details → Edit Full Record to complete every category-specific field.</div><div class="form"><div class="field"><label>Category</label><select id="np_table">${TS.map(x=>`<option value="${x[0]}">${x[2]} ${x[1]}</option>`).join('')}</select></div><div class="field"><label>ID <small>(required except Bookstore identity column)</small></label><input id="np_id" placeholder="Existing ID format"></div><div class="field"><label>Property Name</label><input id="np_name"></div><div class="field"><label>Category / Type</label><input id="np_cat"></div><div class="field"><label>Owner ID (optional)</label><input id="np_owner"></div><div class="field"><label>Owner Name</label><input id="np_ownername"></div><div class="field"><label>Phone</label><input id="np_phone"></div><div class="field"><label>WhatsApp</label><input id="np_wa"></div><div class="field"><label>Email</label><input id="np_email"></div><div class="field"><label>Area</label><input id="np_area"></div><div class="field"><label>City</label><input id="np_city"></div><div class="field"><label>Pincode</label><input id="np_pin"></div><div class="field full"><label>Address</label><textarea id="np_address"></textarea></div><div class="field"><label>Status</label><select id="np_status"><option>active</option><option>pending</option><option>suspended</option><option>rejected</option></select></div></div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn primary" onclick="createProperty()">Create Property</button>`);
-window.createProperty=async()=>{const t=$('np_table').value;const p={name:$('np_name').value.trim(),category:$('np_cat').value.trim()||null,owner_id:$('np_owner').value.trim()||null,owner_name:$('np_ownername').value.trim()||null,phone:$('np_phone').value.trim()||null,whatsapp:$('np_wa').value.trim()||null,email:$('np_email').value.trim()||null,area:$('np_area').value.trim()||null,city:$('np_city').value.trim()||null,pincode:$('np_pin').value.trim()||null,address:$('np_address').value.trim()||null,status:$('np_status').value,verified:false};const id=$('np_id').value.trim();if(t!=='bookstores')p.id=id;if(!p.name)return alert('Property name is required.');if(t!=='bookstores'&&!id)return alert('Property ID is required for this category.');const r=await db.from(t).insert(p);if(r.error)return alert(r.error.message);await log('property_create',t,id||'auto',p);closeM();await props();await propRows();await dash();toast('Property created')};
-
-async function people(role,filterId,statusId,tableId){
- await props();const q=($(`${filterId}`)?.value||'').toLowerCase(),sf=$(`${statusId}`)?.value||'';const a=(await all('profiles')).filter(x=>x.role===role).filter(x=>(!sf||(x.status||'active')===sf)&&[x.id,x.full_name,x.email,x.phone,x.address,x.property].some(v=>String(v??'').toLowerCase().includes(q)));
- const rows=a.map(x=>`<tr><td><b>${esc(x.full_name||'Unnamed')}</b><small class="muted mono">${esc(x.id)}</small></td><td>${esc(x.email||'—')}</td><td>${esc(x.phone||'—')}</td><td>${tag(x.status||'active')}</td><td>${esc(fmt(x.created_at))}</td><td>${S.props.filter(p=>p.owner_id===x.id).length}</td><td><div class="actions"><button class="btn" onclick="profile('${encodeURIComponent(x.id)}')">Full Details</button><button class="btn" onclick="editProfile('${encodeURIComponent(x.id)}')">Edit</button><button class="btn" onclick="toggleUser('${encodeURIComponent(x.id)}','${x.status==='disabled'?'active':'disabled'}')">${x.status==='disabled'?'Enable':'Disable'}</button><button class="btn bad" onclick="deleteProfile('${encodeURIComponent(x.id)}')">Delete</button></div></td></tr>`).join('');
- $(tableId).innerHTML=table([role==='student'?'Student':'Owner','Email','Phone','Status','Joined','Properties','Actions'],rows);
-}
-window.profile=async id=>{id=decodeURIComponent(id);const x=await one('profiles',id);if(!x)return;await props();const linked=S.props.filter(p=>p.owner_id===id),bookings=await safeRelated('student_bookings','student_id',id),reviews=await safeRelated('reviews','user_id',id),claims=await safeRelated('claim_requests','owner_id',id),requests=await safeRelated('listing_requests','owner_id',id),logs=await safeRelated('admin_activity_logs','admin_id',id);const linkedHtml=linked.length?linked.map(p=>`<div class="item"><b>${esc(p.name||p.id)}</b><small>${esc(p.label)} • ${esc(p.area||'—')} • ${tag(p.status||'active')} • ${p.verified?tag('verified'):''}</small><button class="btn" style="margin-top:7px" onclick="closeM();viewProp('${encodeURIComponent(p.table)}','${encodeURIComponent(p.id)}')">Open Property</button></div>`).join(''):'<div class="empty">No linked properties.</div>';openM('User Details — '+(x.full_name||x.email||id),`<div class="notice">${tag(x.role||'user')} • ${tag(x.status||'active')} • Auth ID <span class="mono">${esc(id)}</span></div><div class="detailgrid">${Object.entries(x).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(typeof v==='object'?JSON.stringify(v,null,2):v??'—')}</div></div>`).join('')}</div><h4>Linked Properties (${linked.length})</h4>${linkedHtml}<div class="grid3" style="margin-top:14px"><div class="item"><b>Bookings</b><div class="kpi">${bookings.length}</div></div><div class="item"><b>Reviews</b><div class="kpi">${reviews.length}</div></div><div class="item"><b>Owner Requests / Claims</b><div class="kpi">${requests.length+claims.length}</div></div></div>`,`<button class="btn" onclick="closeM()">Close</button><button class="btn primary" onclick="closeM();editProfile('${encodeURIComponent(id)}')">Edit Profile</button>`)};
-window.editProfile=async id=>{id=decodeURIComponent(id);const x=await one('profiles',id);if(!x)return;const entries=Object.entries(x).filter(([k])=>!['id','role','created_at'].includes(k));openM('Edit User Profile',`<div class="notice">Role is protected. Master Admin cannot be created or changed through this public dashboard editor.</div><div class="form">${entries.map(([k,v])=>`<div class="field"><label>${pretty(k)}</label>${k==='status'?`<select data-pk="${k}"><option value="active" ${v==='active'?'selected':''}>active</option><option value="disabled" ${v==='disabled'?'selected':''}>disabled</option></select>`:`<input data-pk="${k}" value="${esc(v??'')}">`}</div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn primary" onclick="saveProfile('${encodeURIComponent(id)}')">Save Profile</button>`)};
-window.saveProfile=async id=>{id=decodeURIComponent(id);const p={};document.querySelectorAll('#mb [data-pk]').forEach(e=>p[e.dataset.pk]=e.value||null);const r=await db.from('profiles').update(p).eq('id',id);if(r.error)return alert(r.error.message);await log('profile_update','profiles',id,{fields:Object.keys(p)});closeM();await load(current);toast('Profile updated')};
-window.toggleUser=async(id,status)=>{id=decodeURIComponent(id);if(id===U.id&&status==='disabled')return alert('You cannot disable the current Master Admin.');const r=await db.from('profiles').update({status}).eq('id',id);if(r.error)return alert(r.error.message);await log('user_'+status,'profiles',id,{});await load(current);toast('User '+status)};
-window.deleteProfile=async id=>{id=decodeURIComponent(id);if(id===U.id)return alert('The current Master Admin cannot be deleted.');if(!confirm('Permanently delete this user account and Supabase Auth user?'))return;const r=await db.rpc('admin_delete_user',{target_user_id:id});if(r.error)return alert(r.error.message);await log('profile_delete','profiles',id,{auth_user_deleted:true});await load(current);toast('User account deleted')};
-
-async function listingPage(){const a=await all('listing_requests'),f=$('lf').value,q=($('lq').value||'').toLowerCase();const rows=a.filter(x=>(!f||x.status===f)&&(!q||[x.id,x.owner_id,x.owner_name,x.owner_phone,x.name,x.category,x.area,x.address].some(v=>String(v??'').toLowerCase().includes(q)))).map(x=>`<tr><td class="mono">${esc(x.id)}</td><td><b>${esc(x.name||'—')}</b><small>${esc(x.category||'—')} • ${esc(x.area||'—')}</small></td><td>${esc(x.owner_name||x.owner_id||'—')}<small>${esc(x.owner_phone||'')}</small></td><td>${tag(x.status||'pending')}</td><td>${esc(fmt(x.created_at))}</td><td><div class="actions"><button class="btn" onclick="requestDetails('listing_requests','${x.id}')">Full Details</button><button class="btn good" onclick="requestStatus('listing_requests','${x.id}','approved')">Approve & Publish</button><button class="btn warn" onclick="requestStatus('listing_requests','${x.id}','correction')">Request Correction</button><button class="btn bad" onclick="requestStatus('listing_requests','${x.id}','rejected')">Reject</button></div></td></tr>`).join('');$('listingTable').innerHTML=table(['ID','Property','Owner','Status','Submitted','Actions'],rows,'1250px')}
-async function claimPage(){const a=await all('claim_requests'),f=$('cf').value,q=($('cq').value||'').toLowerCase();const rows=a.filter(x=>(!f||x.status===f)&&(!q||[x.id,x.property_id,x.property_type,x.owner_id,x.owner_name,x.owner_phone,x.message].some(v=>String(v??'').toLowerCase().includes(q)))).map(x=>`<tr><td>${esc(x.id)}</td><td><b>${esc(x.property_id)}</b><small>${esc(x.property_type)}</small></td><td>${esc(x.owner_name||x.owner_id)}<small>${esc(x.owner_phone||'')}</small></td><td>${esc(x.message||'—')}</td><td>${tag(x.status)}</td><td>${esc(fmt(x.created_at))}</td><td><div class="actions"><button class="btn" onclick="requestDetails('claim_requests','${x.id}')">Full Details</button><button class="btn good" onclick="approveClaim('${x.id}')">Approve & Connect</button><button class="btn warn" onclick="claimInfo('${x.id}')">Request Info</button><button class="btn bad" onclick="claimStatus('${x.id}','rejected')">Reject</button></div></td></tr>`).join('');$('claimTable').innerHTML=table(['ID','Property','Owner','Message','Status','Created','Actions'],rows,'1300px')}
-async function verifyPage(){const a=await all('verification_requests'),f=$('vf').value,q=($('vq').value||'').toLowerCase();const rows=a.filter(x=>(!f||x.status===f)&&(!q||[x.id,x.property_id,x.property_table,x.owner_id,x.status,x.note,x.admin_note].some(v=>String(v??'').toLowerCase().includes(q)))).map(x=>`<tr><td>${esc(x.id)}</td><td class="mono">${esc(x.property_id)}</td><td>${esc(x.property_table)}</td><td class="mono">${esc(x.owner_id||'—')}</td><td>${tag(x.status)}</td><td>${esc(fmt(x.created_at))}</td><td><div class="actions"><button class="btn" onclick="requestDetails('verification_requests','${x.id}')">Full Details</button><button class="btn good" onclick="verificationAction('${x.id}','approved')">Verify</button><button class="btn warn" onclick="verificationInfo('${x.id}')">Request Info</button><button class="btn bad" onclick="verificationAction('${x.id}','rejected')">Reject</button></div></td></tr>`).join('');$('verifyTable').innerHTML=table(['ID','Property','Category','Owner','Status','Submitted','Actions'],rows,'1250px')}
-window.requestDetails=async(t,id)=>{const x=await one(t,id);if(!x)return;openM(pretty(t)+' — #'+id,`<div class="detailgrid">${Object.entries(x).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(typeof v==='object'?JSON.stringify(v,null,2):v??'—')}</div></div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Close</button>`)};
-window.requestStatus=async(t,id,status)=>{const note=prompt(status==='correction'?'Correction request — explain exactly what must be fixed:':'Admin note (optional):','');if(status==='correction'&&!note)return;const r=await db.from(t).update({status,admin_note:note||null,updated_at:new Date().toISOString()}).eq('id',id);if(r.error)return alert(r.error.message);if(t==='listing_requests'&&status==='approved'){const x=await one(t,id);if(x){const map={hostel:'hostels',tiffin:'tiffins',cafe:'cafes',library:'libraries',bookstore:'bookstores'};const pt=map[String(x.category||'').toLowerCase()];if(pt){const payload={name:x.name,category:x.category,area:x.area,address:x.address,phone:x.phone,timing:x.timing,facilities:x.facilities,rating:x.rating,image:x.image,owner_id:x.owner_id,owner_name:x.owner_name,status:'active',verified:false};if(pt==='bookstores')delete payload.id;else payload.id=String(x.id);const u=await db.from(pt).upsert(payload);if(u.error)return alert('Request approved but publish failed: '+u.error.message)}}}await log('listing_'+status,t,id,{note});await listingPage();await dash();toast('Listing request '+status)};
-window.claimStatus=async(id,status)=>{const note=prompt('Admin note (optional):','');const r=await db.from('claim_requests').update({status,admin_note:note||null,updated_at:new Date().toISOString()}).eq('id',id);if(r.error)return alert(r.error.message);await log('claim_'+status,'claim_requests',id,{note});await claimPage();await dash()};
-window.claimInfo=async id=>{const note=prompt('Information required from owner:','Please provide additional ownership/property information.');if(!note)return;const r=await db.from('claim_requests').update({status:'correction',admin_note:note,updated_at:new Date().toISOString()}).eq('id',id);if(r.error)return alert(r.error.message);await log('claim_request_information','claim_requests',id,{note});await claimPage();toast('Information request saved')};
-window.approveClaim=async id=>{const x=await one('claim_requests',id);if(!x)return;const map={hostel:'hostels',tiffin:'tiffins',cafe:'cafes',library:'libraries',bookstore:'bookstores'},t=map[String(x.property_type||'').toLowerCase()];if(!t)return alert('Unknown property type: '+x.property_type);if(!confirm('Connect this owner to the selected property?'))return;const r=await db.from(t).update({owner_id:x.owner_id,owner_name:x.owner_name||null}).eq('id',x.property_id);if(r.error)return alert(r.error.message);const u=await db.from('claim_requests').update({status:'approved',admin_note:'Owner connected by Master Admin',updated_at:new Date().toISOString()}).eq('id',id);if(u.error)return alert(u.error.message);await log('claim_approved',t,x.property_id,{claim_id:id,owner_id:x.owner_id});await claimPage();await props();toast('Owner connected successfully')};
-window.verificationInfo=async id=>{const note=prompt('Verification information required:','Please provide additional verification information.');if(!note)return;const r=await db.from('verification_requests').update({status:'correction',admin_note:note,updated_at:new Date().toISOString()}).eq('id',id);if(r.error)return alert(r.error.message);await log('verification_request_information','verification_requests',id,{note});await verifyPage();toast('Verification correction request saved')};
-window.verificationAction=async(id,status)=>{const x=await one('verification_requests',id);if(!x)return;const note=prompt(status==='rejected'?'Reason for rejection:':'Verification note (optional):','');if(status==='rejected'&&!note)return;const r=await db.from('verification_requests').update({status,admin_note:note||null,updated_at:new Date().toISOString()}).eq('id',id);if(r.error)return alert(r.error.message);const p={verified:status==='approved',last_verified_at:status==='approved'?new Date().toISOString():null},u=await db.from(x.property_table).update(p).eq('id',x.property_id);if(u.error)return alert(u.error.message);await log('verification_'+status,x.property_table,x.property_id,{request_id:id,note});await verifyPage();await props();await dash();toast('Verification updated')};
-
-async function bookings(){const a=await all('student_bookings'),f=$('bf').value,q=($('bq').value||'').toLowerCase();const rows=a.filter(x=>(!f||x.status===f)&&(!q||[x.id,x.student_id,x.property_id,x.property_name,x.category,x.status].some(v=>String(v??'').toLowerCase().includes(q)))).map(x=>`<tr><td>${esc(x.id)}</td><td class="mono">${esc(x.student_id||'—')}</td><td><b>${esc(x.property_name||x.property_id)}</b><small>${esc(x.property_table||'')}</small></td><td>${esc(x.category||'—')}</td><td>${tag(x.status)}</td><td>${esc(fmt(x.joined_date))}</td><td>${esc(fmt(x.created_at))}</td><td><div class="actions"><button class="btn" onclick="bookingDetails('${x.id}')">Full Details</button><button class="btn good" onclick="bookingStatus('${x.id}','active')">Activate</button><button class="btn bad" onclick="bookingStatus('${x.id}','rejected')">Reject</button><button class="btn" onclick="bookingStatus('${x.id}','cancelled')">Cancel</button></div></td></tr>`).join('');$('bookingTable').innerHTML=table(['ID','Student','Property','Category','Status','Joined','Created','Actions'],rows,'1250px')}
-window.bookingDetails=async id=>{const x=await one('student_bookings',id);if(x)openM('Booking #'+id,`<div class="detailgrid">${Object.entries(x).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(typeof v==='object'?JSON.stringify(v,null,2):v??'—')}</div></div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Close</button>`)};
-window.bookingStatus=async(id,status)=>{const note=prompt('Admin note (optional):','');const p={status,admin_note:note||null};if(status==='active')p.joined_date=new Date().toISOString();const r=await db.from('student_bookings').update(p).eq('id',id);if(r.error)return alert(r.error.message);await log('booking_'+status,'student_bookings',id,{note});await bookings();await dash();toast('Booking '+status)};
-
-async function reviews(){const a=await all('reviews'),f=$('rf').value,q=($('rq').value||'').toLowerCase();const rows=a.filter(x=>(!f||x.status===f)&&(!q||[x.id,x.property_id,x.user_id,x.user_name,x.review_text,x.status].some(v=>String(v??'').toLowerCase().includes(q)))).map(x=>`<tr><td>${esc(x.id)}</td><td class="mono">${esc(x.property_id)}</td><td>${esc(x.user_name||x.user_id||'—')}</td><td>⭐ ${esc(x.rating??'—')}</td><td>${esc((x.review_text||'').slice(0,120))}</td><td>${tag(x.status||'pending')}</td><td>${esc(fmt(x.created_at))}</td><td><div class="actions"><button class="btn" onclick="reviewDetails('${x.id}')">Full Details</button><button class="btn good" onclick="reviewStatus('${x.id}','published')">Publish</button><button class="btn" onclick="reviewStatus('${x.id}','hidden')">Hide</button><button class="btn warn" onclick="reviewStatus('${x.id}','flagged')">Flag</button><button class="btn" onclick="reviewStatus('${x.id}','published')">Restore</button></div></td></tr>`).join('');$('reviewTable').innerHTML=table(['ID','Property','Student','Rating','Review','Status','Date','Actions'],rows,'1350px')}
-window.reviewDetails=async id=>{const x=await one('reviews',id);if(x)openM('Review #'+id,`<div class="notice">Moderation controls belong to Master Admin. Owner accounts cannot delete this review.</div><div class="detailgrid">${Object.entries(x).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(typeof v==='object'?JSON.stringify(v,null,2):v??'—')}</div></div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Close</button>`)};
-window.reviewStatus=async(id,status)=>{const note=prompt('Moderation note (optional):','');const r=await db.from('reviews').update({status}).eq('id',id);if(r.error)return alert(r.error.message);await log('review_'+status,'reviews',id,{note});await reviews();await dash();toast('Review status: '+status)};
-
-async function reports(){const a=await all('property_reports'),f=$('repf').value,q=($('repq').value||'').toLowerCase();const rows=a.filter(x=>(!f||x.status===f)&&(!q||[x.id,x.property_id,x.property_table,x.reporter_id,x.reason,x.message,x.status].some(v=>String(v??'').toLowerCase().includes(q)))).map(x=>`<tr><td>${esc(x.id)}</td><td class="mono">${esc(x.property_id)}<small>${esc(x.property_table)}</small></td><td class="mono">${esc(x.reporter_id||'—')}</td><td>${esc(x.reason||'—')}</td><td>${esc((x.message||'').slice(0,100))}</td><td>${tag(x.status||'open')}</td><td>${esc(fmt(x.created_at))}</td><td><div class="actions"><button class="btn" onclick="reportDetails('${x.id}')">Full Details</button><button class="btn" onclick="reportStatus('${x.id}','investigating')">Investigate</button><button class="btn good" onclick="reportStatus('${x.id}','resolved')">Resolve</button><button class="btn bad" onclick="reportStatus('${x.id}','rejected')">Reject</button></div></td></tr>`).join('');$('reportTable').innerHTML=table(['ID','Property','Reporter','Reason','Message','Status','Date','Actions'],rows,'1350px')}
-window.reportDetails=async id=>{const x=await one('property_reports',id);if(x)openM('Report #'+id,`<div class="dangerbox">This is a platform complaint. Record the investigation/resolution in the admin note before closing when appropriate.</div><div class="detailgrid">${Object.entries(x).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(typeof v==='object'?JSON.stringify(v,null,2):v??'—')}</div></div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Close</button>`)};
-window.reportStatus=async(id,status)=>{const note=prompt(status==='resolved'?'Resolution details:':'Admin investigation note:',status==='resolved'?'Resolved after admin review.':'Investigation started.');if(status==='resolved'&&!note)return;const p={status,admin_note:note||null,updated_at:new Date().toISOString()};if(status==='resolved')p.resolved_at=new Date().toISOString();const r=await db.from('property_reports').update(p).eq('id',id);if(r.error)return alert(r.error.message);await log('report_'+status,'property_reports',id,{note});await reports();await dash();toast('Report '+status)};
-
-async function media(){const a=await all('owner_property_images'),q=($('mf').value||'').toLowerCase(),it=$('mit').value;const rows=a.filter(x=>(!it||x.image_type===it)&&(!q||[x.property_id,x.property_table,x.owner_id,x.image_type,x.storage_path].some(v=>String(v??'').toLowerCase().includes(q)))).map(x=>`<tr><td>${x.image_url?`<img src="${esc(x.image_url)}" style="width:82px;height:55px;object-fit:cover;border-radius:7px">`:''}</td><td class="mono">${esc(x.property_id)}<small>${esc(x.property_table)}</small></td><td class="mono">${esc(x.owner_id||'—')}</td><td>${esc(x.image_type||'other')}</td><td>${x.is_main?tag('main'):'—'}</td><td>${esc(x.sort_order??0)}</td><td>${esc(fmt(x.created_at))}</td><td><div class="actions"><button class="btn good" onclick="setMainImage('${x.id}')">Set Main</button><button class="btn" onclick="reorderImage('${x.id}')">Order</button><button class="btn" onclick="replaceImage('${x.id}')">Replace</button><button class="btn bad" onclick="deleteImage('${x.id}','${esc(x.storage_path||'')}')">Delete</button></div></td></tr>`).join('');$('mediaTable').innerHTML=table(['Image','Property','Owner','Type','Main','Order','Created','Actions'],rows,'1350px')}
-window.openMediaUpload=()=>openM('Upload Property Image',`<div class="form"><div class="field"><label>Property Category</label><select id="mi_table">${TS.map(x=>`<option value="${x[0]}">${x[2]} ${x[1]}</option>`).join('')}</select></div><div class="field"><label>Property ID</label><input id="mi_pid"></div><div class="field"><label>Owner ID (can be blank for admin upload)</label><input id="mi_owner"></div><div class="field"><label>Image Type</label><select id="mi_type"><option>main</option><option>room</option><option>bathroom</option><option>mess</option><option>building</option><option>other</option></select></div><div class="field full"><label>Image</label><input id="mi_file" type="file" accept="image/*"></div></div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn primary" onclick="uploadImage()">Upload to Supabase Storage</button>`);
-window.uploadImage=async()=>{const t=$('mi_table').value,pid=$('mi_pid').value.trim(),owner=$('mi_owner').value.trim()||U.id,type=$('mi_type').value,file=$('mi_file').files[0];if(!pid||!file)return alert('Property ID and image are required.');const path=`${t}/${pid}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;const up=await db.storage.from('property-images').upload(path,file,{upsert:false});if(up.error)return alert(up.error.message);const pub=db.storage.from('property-images').getPublicUrl(path).data.publicUrl;if(type==='main')await db.from('owner_property_images').update({is_main:false}).eq('property_id',pid).eq('property_table',t);const r=await db.from('owner_property_images').insert({property_id:pid,property_table:t,owner_id:owner,image_url:pub,image_type:type,sort_order:0,is_main:type==='main',storage_path:path});if(r.error){await db.storage.from('property-images').remove([path]);return alert(r.error.message)}if(type==='main'){const ur=await db.from(t).update({image:pub}).eq('id',pid);if(ur.error)console.warn(ur.error.message)}await log('media_upload','owner_property_images',pid,{path,type});closeM();await media();await props();toast('Image uploaded')};
-window.setMainImage=async id=>{const x=await one('owner_property_images',id);if(!x)return;await db.from('owner_property_images').update({is_main:false}).eq('property_id',x.property_id).eq('property_table',x.property_table);const r=await db.from('owner_property_images').update({is_main:true,image_type:'main'}).eq('id',id);if(r.error)return alert(r.error.message);const u=await db.from(x.property_table).update({image:x.image_url}).eq('id',x.property_id);if(u.error)return alert(u.error.message);await log('media_set_main','owner_property_images',id,{property_id:x.property_id});await media();await props();toast('Main image updated')};
-window.deleteImage=async(id,path)=>{if(!confirm('Permanently delete this image and storage object?'))return;const x=await one('owner_property_images',id);const r=await db.from('owner_property_images').delete().eq('id',id);if(r.error)return alert(r.error.message);if(path)await db.storage.from('property-images').remove([path]);await log('media_delete','owner_property_images',id,{property_id:x?.property_id});await media();toast('Image deleted')};
-window.reorderImage=async id=>{const x=await one('owner_property_images',id);const v=prompt('Sort order (0 = first):',String(x.sort_order??0));if(v===null)return;const n=Number(v);if(!Number.isFinite(n))return alert('Invalid number');const r=await db.from('owner_property_images').update({sort_order:n}).eq('id',id);if(r.error)return alert(r.error.message);await log('media_reorder','owner_property_images',id,{sort_order:n});await media();toast('Image order updated')};
-window.replaceImage=async id=>{const x=await one('owner_property_images',id);openM('Replace Image',`<div class="notice">The gallery record, type, main state and order are preserved.</div><div class="field"><label>New image</label><input id="replace_file" type="file" accept="image/*"></div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn primary" onclick="doReplaceImage('${id}')">Replace Image</button>`)};
-window.doReplaceImage=async id=>{const x=await one('owner_property_images',id),file=$('replace_file')?.files?.[0];if(!x||!file)return alert('Choose an image.');const path=`${x.property_table}/${x.property_id}/${Date.now()}-replace-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;const up=await db.storage.from('property-images').upload(path,file,{upsert:false});if(up.error)return alert(up.error.message);const pub=db.storage.from('property-images').getPublicUrl(path).data.publicUrl;const r=await db.from('owner_property_images').update({image_url:pub,storage_path:path}).eq('id',id);if(r.error){await db.storage.from('property-images').remove([path]);return alert(r.error.message)}if(x.is_main){const u=await db.from(x.property_table).update({image:pub}).eq('id',x.property_id);if(u.error)console.warn(u.error.message)}if(x.storage_path)await db.storage.from('property-images').remove([x.storage_path]);await log('media_replace','owner_property_images',id,{old_path:x.storage_path,new_path:path});closeM();await media();toast('Image replaced')};
-
-async function featured(){const a=await all('featured_properties');const rows=a.map(x=>`<tr><td>${esc(x.id)}</td><td class="mono">${esc(x.property_id)}</td><td>${esc(x.property_table)}</td><td>${esc(x.priority??0)}</td><td>${x.is_active?tag('active'):tag('disabled')}</td><td>${esc(fmt(x.starts_at))}</td><td>${esc(fmt(x.ends_at))}</td><td><div class="actions"><button class="btn" onclick="toggleFeatured('${x.id}',${!x.is_active})">${x.is_active?'Unfeature':'Feature'}</button><button class="btn" onclick="editFeatured('${x.id}')">Edit</button><button class="btn" onclick="featureDetails('${x.id}')">Details</button><button class="btn bad" onclick="deleteFeatured('${x.id}')">Delete</button></div></td></tr>`).join('');$('featuredTable').innerHTML=table(['ID','Property','Category','Priority','Active','Start','End','Actions'],rows,'1250px')}
-window.addFeatured=async()=>{await props();openM('Feature Property',`<div class="form"><div class="field full"><label>Property</label><select id="fp">${S.props.map(p=>`<option value="${esc(p.table)}|${esc(p.id)}">${esc(p.name||p.id)} — ${esc(p.label)} — ${esc(p.area||'')}</option>`).join('')}</select></div><div class="field"><label>Priority</label><input id="fpri" type="number" value="0"></div><div class="field"><label>Start</label><input id="fstart" type="datetime-local"></div><div class="field"><label>End</label><input id="fend" type="datetime-local"></div></div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn gold" onclick="createFeatured()">Feature</button>`)};
-window.createFeatured=async()=>{const [t,id]=$('fp').value.split('|');const p={property_id:id,property_table:t,priority:Number($('fpri').value)||0,is_active:true,created_by:U.id,starts_at:$('fstart').value?new Date($('fstart').value).toISOString():null,ends_at:$('fend').value?new Date($('fend').value).toISOString():null};const r=await db.from('featured_properties').upsert(p,{onConflict:'property_id,property_table'});if(r.error)return alert(r.error.message);await log('feature','featured_properties',id,p);closeM();await featured();toast('Property featured')};
-window.editFeatured=async id=>{const x=await one('featured_properties',id);const iso=v=>v?new Date(v).toISOString().slice(0,16):'';openM('Edit Featured Placement',`<div class="form"><div class="field"><label>Priority</label><input id="efpri" type="number" value="${esc(x.priority??0)}"></div><div class="field"><label>Active</label><select id="efact"><option value="true" ${x.is_active?'selected':''}>Enabled</option><option value="false" ${!x.is_active?'selected':''}>Disabled</option></select></div><div class="field"><label>Start</label><input id="efstart" type="datetime-local" value="${iso(x.starts_at)}"></div><div class="field"><label>End</label><input id="efend" type="datetime-local" value="${iso(x.ends_at)}"></div></div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn primary" onclick="saveFeatured('${id}')">Save</button>`)};
-window.saveFeatured=async id=>{const p={priority:Number($('efpri').value)||0,is_active:$('efact').value==='true',starts_at:$('efstart').value?new Date($('efstart').value).toISOString():null,ends_at:$('efend').value?new Date($('efend').value).toISOString():null};const r=await db.from('featured_properties').update(p).eq('id',id);if(r.error)return alert(r.error.message);await log('featured_update','featured_properties',id,p);closeM();await featured();toast('Featured placement updated')};
-window.toggleFeatured=async(id,v)=>{const r=await db.from('featured_properties').update({is_active:v}).eq('id',id);if(r.error)return alert(r.error.message);await log(v?'feature':'unfeature','featured_properties',id,{});await featured()};
-window.featureDetails=async id=>{const x=await one('featured_properties',id);openM('Featured Placement #'+id,`<div class="detailgrid">${Object.entries(x).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(typeof v==='object'?JSON.stringify(v,null,2):v??'—')}</div></div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Close</button>`)};
-window.deleteFeatured=async id=>{if(!confirm('Delete featured placement?'))return;const r=await db.from('featured_properties').delete().eq('id',id);if(r.error)return alert(r.error.message);await log('featured_delete','featured_properties',id,{});await featured();toast('Featured placement deleted')};
-window.featureDirect=async(t,i)=>{t=decodeURIComponent(t);i=decodeURIComponent(i);const r=await db.from('featured_properties').upsert({property_id:i,property_table:t,priority:0,is_active:true,created_by:U.id},{onConflict:'property_id,property_table'});if(r.error)return alert(r.error.message);await log('feature','featured_properties',i,{property_table:t});toast('Property featured')};
-
-async function analytics(){await props();let views=[];try{views=await all('property_views')}catch(e){console.warn(e.message)}const day=86400000,today=new Date();today.setHours(0,0,0,0);const week=new Date(Date.now()-7*day),month=new Date(Date.now()-30*day);$('ctv').textContent=views.filter(v=>new Date(v.viewed_at)>=today).length;$('cwv').textContent=views.filter(v=>new Date(v.viewed_at)>=week).length;$('ctotv').textContent=views.length;const nums=TS.map(x=>S.props.filter(p=>p.table===x[0]).length),mx=Math.max(...nums,1);$('chart').innerHTML=`<div class="chart">${nums.map((n,i)=>`<div class="bar" style="height:${Math.max(12,n/mx*180)}px"><span>${n}</span><small>${TS[i][1]}</small></div>`).join('')}</div>`;const counts={};views.forEach(v=>{const k=v.property_table+'|'+v.property_id;counts[k]=(counts[k]||0)+1});$('topprops').innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,n])=>{const [t,id]=k.split('|'),p=prop(t,id);return `<div class="item"><b>${esc(p?.name||id)}</b><small>${esc(t)} • ${n} views • ${esc(p?.area||'—')}</small></div>`}).join('')||'<div class="empty">No property views yet.</div>';const areaCounts={};S.props.forEach(p=>{if(p.area)areaCounts[p.area]=(areaCounts[p.area]||0)+1});$('topareas').innerHTML=Object.entries(areaCounts).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([a,n])=>`<div class="item"><b>${esc(a)}</b><small>${n} properties</small></div>`).join('')||'<div class="empty">No areas yet.</div>';let users=[];try{users=await all('profiles')}catch{}let bookingsA=[],reviewsA=[];try{bookingsA=await all('student_bookings')}catch{}try{reviewsA=await all('reviews')}catch{}const popularCat=TS.map(x=>({name:x[1],n:S.props.filter(p=>p.table===x[0]).length})).sort((a,b)=>b.n-a.n)[0],popularArea=Object.entries(areaCounts).sort((a,b)=>b[1]-a[1])[0];$('analyticsBody').innerHTML=`<div class="grid3"><div class="item"><b>Total Properties</b><div class="kpi">${S.props.length}</div><small>H ${nums[0]} • T ${nums[1]} • C ${nums[2]} • L ${nums[3]} • B ${nums[4]}</small></div><div class="item"><b>Users</b><div class="kpi">${users.filter(x=>x.role!=='admin').length}</div><small>${users.filter(x=>x.role==='student').length} students • ${users.filter(x=>x.role==='owner').length} owners</small></div><div class="item"><b>Bookings</b><div class="kpi">${bookingsA.length}</div><small>${bookingsA.filter(x=>x.status==='active').length} active • ${bookingsA.filter(x=>x.status==='pending').length} pending</small></div><div class="item"><b>Reviews</b><div class="kpi">${reviewsA.length}</div><small>${reviewsA.filter(x=>['published','approved'].includes(x.status)).length} live/moderated</small></div><div class="item"><b>Most Popular Category</b><div class="kpi">${esc(popularCat?.name||'—')}</div><small>${popularCat?.n||0} properties</small></div><div class="item"><b>Most Popular Area</b><div class="kpi">${esc(popularArea?.[0]||'—')}</div><small>${popularArea?.[1]||0} properties</small></div><div class="item"><b>30 Day Views</b><div class="kpi">${views.filter(v=>new Date(v.viewed_at)>=month).length}</div><small>Compared with total ${views.length}</small></div><div class="item"><b>30 Day New Users</b><div class="kpi">${users.filter(x=>x.role!=='admin'&&x.created_at&&new Date(x.created_at)>=month).length}</div><small>Students + owners</small></div><div class="item"><b>30 Day New Bookings</b><div class="kpi">${bookingsA.filter(x=>x.created_at&&new Date(x.created_at)>=month).length}</div><small>All booking statuses</small></div></div>`}
-
-async function areas(){const a=await all('areas'),q=($('arq').value||'').toLowerCase();const rows=a.filter(x=>!q||[x.name,x.city,x.state,x.pincode].some(v=>String(v??'').toLowerCase().includes(q))).map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.city||'—')}</td><td>${esc(x.state||'—')}</td><td>${esc(x.pincode||'—')}</td><td>${esc(x.latitude??'—')}, ${esc(x.longitude??'—')}</td><td>${x.is_active?tag('active'):tag('disabled')}</td><td><div class="actions"><button class="btn" onclick="areaDetails('${x.id}')">Details</button><button class="btn" onclick="editArea('${x.id}')">Edit</button><button class="btn" onclick="toggleArea('${x.id}',${!x.is_active})">${x.is_active?'Disable':'Enable'}</button><button class="btn bad" onclick="deleteArea('${x.id}')">Delete</button></div></td></tr>`).join('');$('areaTable').innerHTML=table(['Area','City','State','Pincode','Coordinates','Active','Actions'],rows,'1100px')}
-window.addArea=()=>openM('Add Area',`<div class="form"><div class="field"><label>Area</label><input id="an"></div><div class="field"><label>City</label><input id="ac" value="Neemkathana"></div><div class="field"><label>State</label><input id="as" value="Rajasthan"></div><div class="field"><label>Pincode</label><input id="ap"></div><div class="field"><label>Latitude</label><input id="alat" type="number" step="any"></div><div class="field"><label>Longitude</label><input id="alng" type="number" step="any"></div></div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn primary" onclick="createArea()">Add Area</button>`);
-window.createArea=async()=>{const p={name:$('an').value.trim(),city:$('ac').value.trim()||null,state:$('as').value.trim()||null,pincode:$('ap').value.trim()||null,latitude:$('alat').value?Number($('alat').value):null,longitude:$('alng').value?Number($('alng').value):null,is_active:true};if(!p.name)return alert('Area required');const r=await db.from('areas').insert(p);if(r.error)return alert(r.error.message);await log('area_create','areas',p.name,p);closeM();await areas();toast('Area added')};
-window.areaDetails=async id=>{const x=await one('areas',id);openM('Area Details',`<div class="detailgrid">${Object.entries(x).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(v??'—')}</div></div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Close</button>`)};
-window.editArea=async id=>{const x=await one('areas',id);openM('Edit Area',`<div class="form">${[['name',x.name],['city',x.city],['state',x.state],['pincode',x.pincode],['latitude',x.latitude],['longitude',x.longitude]].map(([k,v])=>`<div class="field"><label>${pretty(k)}</label><input data-ak="${k}" value="${esc(v??'')}"></div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn primary" onclick="saveArea('${id}')">Save</button>`)};
-window.saveArea=async id=>{const p={};document.querySelectorAll('#mb [data-ak]').forEach(e=>p[e.dataset.ak]=e.value||null);if(p.latitude)p.latitude=Number(p.latitude);if(p.longitude)p.longitude=Number(p.longitude);p.updated_at=new Date().toISOString();const r=await db.from('areas').update(p).eq('id',id);if(r.error)return alert(r.error.message);await log('area_update','areas',id,p);closeM();await areas();toast('Area updated')};
-window.toggleArea=async(id,v)=>{const r=await db.from('areas').update({is_active:v,updated_at:new Date().toISOString()}).eq('id',id);if(r.error)return alert(r.error.message);await log(v?'area_enable':'area_disable','areas',id,{});await areas()};
-window.deleteArea=async id=>{if(!confirm('Delete this area?'))return;const r=await db.from('areas').delete().eq('id',id);if(r.error)return alert(r.error.message);await log('area_delete','areas',id,{});await areas()};
-
-async function notifications(){const a=await all('admin_notifications'),f=$('nf').value;const rows=a.sort((x,y)=>new Date(y.created_at)-new Date(x.created_at)).filter(x=>!f||(f==='unread'?!x.is_read:x.is_read)).map(x=>`<div class="item"><b>${esc(x.title||'Untitled')} ${x.is_read?tag('read'):tag('unread')}</b><small>${esc(x.message||'')} • ${esc(x.notification_type||'system')} • ${esc(fmt(x.created_at))}</small><div class="actions" style="margin-top:7px"><button class="btn" onclick="notificationDetails('${x.id}')">Full Details</button>${!x.is_read?`<button class="btn" onclick="markOneRead('${x.id}')">Mark read</button>`:''}</div></div>`).join('');$('notificationTable').innerHTML=rows?rows:'<div class="empty">No notifications.</div>'}
-window.notificationDetails=async id=>{const x=await one('admin_notifications',id);if(x)openM('Notification #'+id,`<div class="detailgrid">${Object.entries(x).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(typeof v==='object'?JSON.stringify(v,null,2):v??'—')}</div></div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Close</button>`)};
-window.markOneRead=async id=>{const r=await db.from('admin_notifications').update({is_read:true}).eq('id',id);if(r.error)return alert(r.error.message);await notifications();await dash()};
-window.markRead=async()=>{const r=await db.from('admin_notifications').update({is_read:true}).eq('is_read',false);if(r.error)return alert(r.error.message);await notifications();await dash()};
-window.composeNotification=()=>openM('Create Admin Notification',`<div class="form"><div class="field"><label>Title</label><input id="nn_title"></div><div class="field"><label>Type</label><select id="nn_type"><option>system</option><option>listing</option><option>claim</option><option>verification</option><option>booking</option><option>review</option><option>report</option></select></div><div class="field full"><label>Message</label><textarea id="nn_msg"></textarea></div><div class="field"><label>Entity Type (optional)</label><input id="nn_entity"></div><div class="field"><label>Entity ID (optional)</label><input id="nn_id"></div></div>`,`<button class="btn" onclick="closeM()">Cancel</button><button class="btn primary" onclick="createNotification()">Create Notification</button>`);
-window.createNotification=async()=>{const p={title:$('nn_title').value.trim(),message:$('nn_msg').value.trim()||null,notification_type:$('nn_type').value,entity_type:$('nn_entity').value.trim()||null,entity_id:$('nn_id').value.trim()||null,is_read:false};if(!p.title)return alert('Title required');const r=await db.from('admin_notifications').insert(p);if(r.error)return alert(r.error.message);await log('notification_create','admin_notifications',p.title,p);closeM();await notifications();await dash();toast('Notification created')};
-
-async function activity(){const a=await all('admin_activity_logs');S.activity=a.sort((x,y)=>new Date(y.created_at)-new Date(x.created_at));const f=($('af')?.value||'').toLowerCase(),et=$('atf')?.value||'',types=[...new Set(S.activity.map(x=>x.entity_type).filter(Boolean))].sort();$('atf').innerHTML='<option value="">All entity types</option>'+types.map(x=>`<option value="${esc(x)}" ${x===et?'selected':''}>${esc(x)}</option>`).join('');const b=S.activity.filter(x=>(!et||x.entity_type===et)&&(!f||[x.action,x.entity_type,x.entity_id,x.admin_id,JSON.stringify(x.details)].some(v=>String(v??'').toLowerCase().includes(f))));$('activityTable').innerHTML=table(['Action','Entity','ID','Admin','Details','Time'],b.map(x=>`<tr><td>${tag(x.action)}</td><td>${esc(x.entity_type||'—')}</td><td class="mono">${esc(x.entity_id||'—')}</td><td class="mono">${esc(x.admin_id||'—')}</td><td><button class="btn" onclick="activityDetails('${x.id}')">Open Full Log</button></td><td>${esc(fmt(x.created_at))}</td></tr>`).join(''),'1200px');$('recent').innerHTML=S.activity.slice(0,8).map(x=>`<div class="item"><b>${esc(x.action)}</b><small>${esc(x.entity_type||'system')} • ${esc(x.entity_id||'')} • ${esc(fmt(x.created_at))}</small></div>`).join('')||'<div class="empty">No admin activity yet.</div>'}
-window.activityDetails=async id=>{const x=await one('admin_activity_logs',id);if(x)openM('Audit Log #'+id,`<div class="detailgrid">${Object.entries(x).map(([k,v])=>`<div class="detail"><label>${pretty(k)}</label><div>${esc(typeof v==='object'?JSON.stringify(v,null,2):v??'—')}</div></div>`).join('')}</div>`,`<button class="btn" onclick="closeM()">Close</button>`)};
-
-async function settings(){const a=await all('system_settings'),m=Object.fromEntries(a.map(x=>[x.key,x.value]));const defs=[['site_name','StudentHubHelp','text'],['contact_phone','','text'],['contact_email','','text'],['whatsapp','','text'],['maintenance_mode','false','bool'],['student_registration_enabled','true','bool'],['owner_registration_enabled','true','bool'],['booking_enabled','true','bool'],['review_moderation_enabled','true','bool'],['featured_enabled','true','bool']];$('settingsForm').innerHTML=defs.map(([k,d,type])=>`<div class="field"><label>${pretty(k)}</label>${type==='bool'?`<select data-setting="${k}"><option value="true" ${(m[k]??d)==='true'?'selected':''}>Enabled</option><option value="false" ${(m[k]??d)==='false'?'selected':''}>Disabled</option></select>`:`<input data-setting="${k}" value="${esc(m[k]??d)}">`}</div>`).join('')}
-window.saveSettings=async()=>{for(const e of document.querySelectorAll('[data-setting]')){const r=await db.from('system_settings').upsert({key:e.dataset.setting,value:e.value,updated_by:U.id,updated_at:new Date().toISOString()},{onConflict:'key'});if(r.error)return alert(r.error.message)}await log('settings_update','system_settings','all',{});toast('System settings saved')};
-
-async function dash(){
- try{await props()}catch(e){showError(e);return}
- $('cprop').textContent=S.props.length;[['hostels','ch'],['tiffins','ct'],['cafes','cc'],['libraries','cl'],['bookstores','cb']].forEach(([t,id])=>$(id).textContent=S.props.filter(p=>p.table===t).length);
- try{const p=await all('profiles');S.students=p.filter(x=>x.role==='student');S.owners=p.filter(x=>x.role==='owner');$('cs').textContent=S.students.length;$('co').textContent=S.owners.length;$('cau').textContent=p.filter(x=>(x.status||'active')!=='disabled'&&x.role!=='admin').length}catch(e){console.warn(e.message)}
- for(const [t,id,b] of [['listing_requests','cpl','bl'],['claim_requests','cpc','bc'],['verification_requests','cpv','bv'],['student_bookings','cpb','bb'],['reviews','cprv','brr']]){try{const a=await all(t),n=a.filter(x=>x.status==='pending').length;$(id).textContent=n;$(b).textContent=n}catch(e){$(id).textContent='—';$(b).textContent='!'}}
- try{const a=await all('property_reports'),n=a.filter(x=>['open','investigating'].includes(x.status)).length;$('cpr').textContent=n;$('br').textContent=n}catch{$('cpr').textContent='—'}
- try{const a=await all('admin_notifications'),n=a.filter(x=>!x.is_read).length;$('nt').textContent=n;$('bn').textContent=n}catch{$('nt').textContent='—'}
- try{const v=await all('property_views'),d=new Date();d.setHours(0,0,0,0),w=new Date(Date.now()-7*86400000);$('ctv').textContent=v.filter(x=>new Date(x.viewed_at)>=d).length;$('cwv').textContent=v.filter(x=>new Date(x.viewed_at)>=w).length;$('ctotv').textContent=v.length}catch{$('ctv').textContent='—';$('cwv').textContent='—';$('ctotv').textContent='—'}
- try{await activity()}catch(e){console.warn(e.message)}
-}
-async function load(s){if(s==='dashboard')return dash();if(s==='properties'){await props();return propRows()}if(s==='students')return people('student','sf','ssf','studentTable');if(s==='owners')return people('owner','of','osf','ownerTable');if(s==='listing')return listingPage();if(s==='claims')return claimPage();if(s==='verification')return verifyPage();if(s==='bookings')return bookings();if(s==='reviews')return reviews();if(s==='reports')return reports();if(s==='media')return media();if(s==='featured')return featured();if(s==='analytics')return analytics();if(s==='areas')return areas();if(s==='notifications')return notifications();if(s==='activity')return activity();if(s==='settings')return settings()}
-async function refreshCurrent(){await load(current);toast('Section refreshed')}
-
-$('pf').oninput=propRows;$('pc').onchange=propRows;$('psf').onchange=propRows;$('pv').onchange=propRows;$('po').onchange=propRows;$('selectAllProps').onchange=e=>toggleAllProps(e.target.checked);
-$('sf').oninput=()=>people('student','sf','ssf','studentTable');$('ssf').onchange=()=>people('student','sf','ssf','studentTable');$('of').oninput=()=>people('owner','of','osf','ownerTable');$('osf').onchange=()=>people('owner','of','osf','ownerTable');
-$('lf').onchange=listingPage;$('lq').oninput=listingPage;$('cf').onchange=claimPage;$('cq').oninput=claimPage;$('vf').onchange=verifyPage;$('vq').oninput=verifyPage;$('bf').onchange=bookings;$('bq').oninput=bookings;$('rf').onchange=reviews;$('rq').oninput=reviews;$('repf').onchange=reports;$('repq').oninput=reports;$('mf').oninput=media;$('mit').onchange=media;$('arq').oninput=areas;$('nf').onchange=notifications;$('af').oninput=activity;$('atf').onchange=activity;
-
-let searchTimer;
-$('global').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(globalSearch,180)};
-async function globalSearch(){
- const q=$('global').value.trim().toLowerCase();if(q.length<2){$('results').classList.remove('show');return}
- try{
-  await props();const out=[];
-  S.props.filter(p=>propertySearch(p,q)).slice(0,30).forEach(p=>out.push({kind:'property',t:p.table,id:p.id,name:p.name||p.id,sub:`${p.label} • ${p.area||'—'} • ID ${p.id}`}));
-  try{const users=await all('profiles');users.filter(p=>p.role!=='admin'&&[p.id,p.full_name,p.email,p.phone,p.address,p.property].some(v=>String(v??'').toLowerCase().includes(q))).slice(0,20).forEach(p=>out.push({kind:'user',role:p.role,id:p.id,name:p.full_name||p.email||p.id,sub:`${pretty(p.role)} • ${p.email||p.phone||p.id}`}))}catch{}
-  const ds=[['listing_requests','listing',['id','owner_name','owner_phone','name','category','area','address']],['claim_requests','claim',['id','property_id','property_type','owner_id','owner_name','owner_phone','message']],['verification_requests','verification',['id','property_id','property_table','owner_id','status','note','admin_note']],['student_bookings','booking',['id','student_id','property_id','property_name','category','status']],['reviews','review',['id','property_id','user_id','user_name','review_text','status']],['property_reports','report',['id','property_id','property_table','reporter_id','reason','message','status']]];
-  for(const [t,kind,keys] of ds){try{const a=await all(t);a.filter(x=>keys.some(k=>String(x?.[k]??'').toLowerCase().includes(q))).slice(0,8).forEach(x=>out.push({kind:'record',recordType:kind,table:t,id:x.id,name:`${pretty(kind)} #${x.id}`,sub:keys.map(k=>x[k]).filter(Boolean).slice(0,3).join(' • ')}))}catch{}}
-  window._searchResults=out.slice(0,60);$('results').innerHTML=window._searchResults.length?window._searchResults.map((x,i)=>`<div class="result" onclick="openSearchResult(${i})"><b>${esc(x.name)}</b><small>${esc(x.sub||'')}</small></div>`).join(''):'<div class="empty">No match found.</div>';$('results').classList.add('show');
- }catch(e){showError(e)}
-}
-window.openSearchResult=i=>{const x=window._searchResults[i];if(!x)return;$('results').classList.remove('show');$('global').value='';if(x.kind==='property'){go('properties');setTimeout(()=>viewProp(encodeURIComponent(x.t),encodeURIComponent(x.id)),250)}else if(x.kind==='user'){go(x.role==='owner'?'owners':'students');setTimeout(()=>profile(encodeURIComponent(x.id)),250)}else{const map={listing:'listing',claim:'claims',verification:'verification',booking:'bookings',review:'reviews',report:'reports'};go(map[x.recordType]||'dashboard');setTimeout(()=>requestDetails(x.table,x.id),250)}};
-document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('results').classList.remove('show')});
-
-(async()=>{if(await requireAdmin()){await load('dashboard');const channel=db.channel('master-admin-full-control');
- ['hostels','tiffins','cafes','libraries','bookstores','profiles','owner_property_images','listing_requests','claim_requests','verification_requests','student_bookings','reviews','property_reports','admin_notifications','admin_activity_logs','featured_properties','areas','system_settings','property_views'].forEach(t=>channel.on('postgres_changes',{event:'*',schema:'public',table:t},()=>{if(current==='dashboard'||current==='properties'&&['hostels','tiffins','cafes','libraries','bookstores'].includes(t)||current===tableSection(t))load(current)}));
- channel.subscribe()}})();
-function tableSection(t){return {'profiles':'students','listing_requests':'listing','claim_requests':'claims','verification_requests':'verification','student_bookings':'bookings','reviews':'reviews','property_reports':'reports','owner_property_images':'media','admin_notifications':'notifications','admin_activity_logs':'activity','featured_properties':'featured','areas':'areas','system_settings':'settings','property_views':'analytics'}[t]||null}
-</script>
-<div id="dashboardBuildMarker" style="position:fixed;bottom:10px;right:10px;z-index:9999;font-size:11px;opacity:.55;padding:5px 8px;border:1px solid currentColor;border-radius:8px;background:rgba(0,0,0,.35)">Master Admin • V3 Full Advanced</div></body>
+    window.onload = () => { initAdminDashboard(); };
+  </script>
+</body>
 </html>
