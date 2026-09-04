@@ -1,5102 +1,6384 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+<title>Owner Dashboard | StudentHubHelp</title>
 
-  <title>Owner Dashboard | StudentHubHelp</title>
+<meta
+  name="description"
+  content="StudentHubHelp professional owner dashboard."
+>
 
-  <meta
-    name="description"
-    content="StudentHubHelp professional owner dashboard."
-  >
+<link rel="icon" href="logo.png">
 
-  <link rel="icon" type="image/png" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap"
+  rel="stylesheet"
+>
 
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap"
-    rel="stylesheet"
-  >
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
+<style>
 
-    /* =========================================================
-       RESET
-       ========================================================= */
+/* =========================================================
+   ROOT
+========================================================= */
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+:root{
+  --navy:#071426;
+  --navy2:#0d2038;
+  --navy3:#132b48;
 
-    :root {
-      --navy: #071426;
-      --navy-2: #0d2038;
-      --navy-3: #132b48;
+  --gold:#d4af37;
+  --gold2:#f0d477;
 
-      --gold: #d4af37;
-      --gold-light: #f0d477;
+  --bg:#f4f7fb;
+  --white:#fff;
 
-      --white: #ffffff;
-      --bg: #f4f7fb;
+  --text:#172033;
+  --muted:#64748b;
 
-      --text: #172033;
-      --muted: #64748b;
+  --border:#e2e8f0;
 
-      --border: #e2e8f0;
+  --green:#15803d;
+  --greenBg:#f0fdf4;
 
-      --green: #15803d;
-      --green-bg: #f0fdf4;
+  --red:#dc2626;
+  --redBg:#fef2f2;
 
-      --red: #dc2626;
-      --red-bg: #fef2f2;
+  --orange:#c2410c;
+  --orangeBg:#fff7ed;
 
-      --orange: #c2410c;
-      --orange-bg: #fff7ed;
+  --blue:#2563eb;
+  --blueBg:#eff6ff;
 
-      --blue: #2563eb;
-      --blue-bg: #eff6ff;
+  --shadow:0 12px 35px rgba(15,23,42,.07);
 
-      --shadow:
-        0 12px 35px rgba(15, 23, 42, .07);
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
+  --radius:18px;
+}
 
-    body {
-      min-height: 100vh;
-      font-family: "Inter", sans-serif;
-      color: var(--text);
-      background: var(--bg);
-    }
 
-    button,
-    input,
-    select,
-    textarea {
-      font-family: inherit;
-    }
+/* =========================================================
+   RESET
+========================================================= */
 
-    button {
-      cursor: pointer;
-    }
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
 
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
+html{
+  scroll-behavior:smooth;
+}
 
-
-    /* =========================================================
-       APP LAYOUT
-       ========================================================= */
-
-    .app {
-      min-height: 100vh;
-      display: flex;
-    }
-
-
-    /* =========================================================
-       SIDEBAR
-       ========================================================= */
-
-    .sidebar {
-      width: 270px;
-      min-height: 100vh;
-      position: fixed;
-      left: 0;
-      top: 0;
-      bottom: 0;
-
-      background:
-        linear-gradient(
-          180deg,
-          var(--navy) 0%,
-          #091a2e 100%
-        );
-
-      color: white;
-      z-index: 1000;
-
-      display: flex;
-      flex-direction: column;
-
-      border-right: 1px solid rgba(255,255,255,.07);
-    }
-
-    .sidebar-brand {
-      padding: 24px 20px 20px;
-
-      display: flex;
-      align-items: center;
-      gap: 12px;
-
-      border-bottom:
-        1px solid rgba(255,255,255,.08);
-    }
+body{
+  min-height:100vh;
+  font-family:"Inter",sans-serif;
+  color:var(--text);
+  background:var(--bg);
+}
 
-    .sidebar-brand img {
-      width: 46px;
-      height: 46px;
-      object-fit: contain;
+button,
+input,
+select,
+textarea{
+  font-family:inherit;
+}
 
-      background: white;
-      border-radius: 12px;
-      padding: 4px;
-    }
+button{
+  cursor:pointer;
+}
 
-    .brand-title {
-      font-family: "Poppins", sans-serif;
-      font-size: 18px;
-      font-weight: 800;
-      line-height: 1.1;
-    }
-
-    .brand-subtitle {
-      margin-top: 4px;
-      color: #94a3b8;
-      font-size: 10px;
-    }
-
-    .owner-badge {
-      margin: 18px 16px;
+a{
+  text-decoration:none;
+  color:inherit;
+}
 
-      padding: 12px;
-
-      background:
-        rgba(212,175,55,.08);
-
-      border:
-        1px solid rgba(212,175,55,.18);
-
-      border-radius: 14px;
-    }
-
-    .owner-badge-label {
-      color: #94a3b8;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
 
-    .owner-badge-name {
-      margin-top: 5px;
-      font-weight: 700;
-      font-size: 14px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+/* =========================================================
+   APP
+========================================================= */
 
-    .owner-badge-role {
-      margin-top: 4px;
-      color: var(--gold-light);
-      font-size: 11px;
-      font-weight: 700;
-    }
+.app{
+  min-height:100vh;
+  display:flex;
+}
 
-    .nav {
-      flex: 1;
-      padding: 4px 12px;
-      overflow-y: auto;
-    }
 
-    .nav-section {
-      margin: 18px 10px 8px;
+/* =========================================================
+   SIDEBAR
+========================================================= */
 
-      color: #64748b;
-      font-size: 10px;
-      font-weight: 800;
+.sidebar{
+  width:270px;
+  min-height:100vh;
 
-      text-transform: uppercase;
-      letter-spacing: .09em;
-    }
+  position:fixed;
+  left:0;
+  top:0;
+  bottom:0;
 
-    .nav-item {
-      width: 100%;
+  background:
+    linear-gradient(
+      180deg,
+      var(--navy),
+      #091a2e
+    );
 
-      border: 0;
-      background: transparent;
+  color:white;
+  z-index:1000;
 
-      color: #cbd5e1;
+  display:flex;
+  flex-direction:column;
 
-      display: flex;
-      align-items: center;
+  border-right:1px solid rgba(255,255,255,.07);
+}
 
-      gap: 12px;
+.sidebar-brand{
+  padding:24px 20px 20px;
 
-      padding: 11px 13px;
+  display:flex;
+  align-items:center;
+  gap:12px;
 
-      border-radius: 11px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
 
-      margin-bottom: 4px;
+.sidebar-brand img{
+  width:46px;
+  height:46px;
 
-      text-align: left;
+  object-fit:contain;
 
-      font-size: 13px;
-      font-weight: 600;
+  background:white;
+  border-radius:12px;
+  padding:4px;
+}
 
-      transition: .2s;
-    }
+.brand-title{
+  font-family:"Poppins",sans-serif;
+  font-size:18px;
+  font-weight:800;
+  line-height:1.1;
+}
 
-    .nav-item:hover {
-      background: rgba(255,255,255,.06);
-      color: white;
-    }
+.brand-subtitle{
+  margin-top:4px;
+  color:#94a3b8;
+  font-size:10px;
+}
 
-    .nav-item.active {
-      background:
-        linear-gradient(
-          135deg,
-          rgba(212,175,55,.18),
-          rgba(212,175,55,.07)
-        );
 
-      color: white;
+.owner-badge{
+  margin:18px 16px;
+  padding:12px;
 
-      border:
-        1px solid rgba(212,175,55,.2);
-    }
+  background:rgba(212,175,55,.08);
+  border:1px solid rgba(212,175,55,.18);
 
-    .nav-icon {
-      width: 20px;
-      text-align: center;
-      font-size: 16px;
-    }
+  border-radius:14px;
+}
 
-    .sidebar-bottom {
-      padding: 15px;
-      border-top:
-        1px solid rgba(255,255,255,.08);
-    }
+.owner-badge-label{
+  color:#94a3b8;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
 
-    .logout-btn {
-      width: 100%;
+.owner-badge-name{
+  margin-top:5px;
 
-      border: 1px solid rgba(255,255,255,.1);
-      background: rgba(255,255,255,.04);
+  font-weight:700;
+  font-size:14px;
 
-      color: #cbd5e1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
-      padding: 11px 13px;
+.owner-badge-role{
+  margin-top:4px;
 
-      border-radius: 10px;
+  color:var(--gold2);
+  font-size:11px;
+  font-weight:700;
+}
 
-      font-weight: 700;
-      font-size: 13px;
 
-      transition: .2s;
-    }
+.nav{
+  flex:1;
+  padding:4px 12px;
+  overflow-y:auto;
+}
 
-    .logout-btn:hover {
-      background: rgba(220,38,38,.15);
-      border-color: rgba(248,113,113,.2);
-      color: #fecaca;
-    }
+.nav-section{
+  margin:18px 10px 8px;
 
+  color:#64748b;
 
-    /* =========================================================
-       MAIN
-       ========================================================= */
+  font-size:10px;
+  font-weight:800;
 
-    .main {
-      margin-left: 270px;
-      width: calc(100% - 270px);
-      min-height: 100vh;
-    }
+  text-transform:uppercase;
+  letter-spacing:.09em;
+}
 
+.nav-item{
+  width:100%;
 
-    /* =========================================================
-       TOPBAR
-       ========================================================= */
+  border:0;
+  background:transparent;
 
-    .topbar {
-      height: 76px;
+  color:#cbd5e1;
 
-      background: rgba(255,255,255,.94);
+  display:flex;
+  align-items:center;
 
-      backdrop-filter: blur(14px);
+  gap:12px;
 
-      border-bottom:
-        1px solid var(--border);
+  padding:11px 13px;
 
-      position: sticky;
-      top: 0;
-      z-index: 900;
+  border-radius:11px;
 
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+  margin-bottom:4px;
 
-      padding: 0 30px;
-    }
+  text-align:left;
 
-    .mobile-menu {
-      display: none;
+  font-size:13px;
+  font-weight:600;
 
-      width: 40px;
-      height: 40px;
+  transition:.2s;
+}
 
-      border: 1px solid var(--border);
-      background: white;
+.nav-item:hover{
+  background:rgba(255,255,255,.06);
+  color:white;
+}
 
-      border-radius: 10px;
+.nav-item.active{
+  background:
+    linear-gradient(
+      135deg,
+      rgba(212,175,55,.18),
+      rgba(212,175,55,.07)
+    );
 
-      font-size: 18px;
-    }
+  color:white;
 
-    .top-title h1 {
-      font-family: "Poppins", sans-serif;
-      font-size: 21px;
-      font-weight: 800;
-    }
+  border:1px solid rgba(212,175,55,.2);
+}
 
-    .top-title p {
-      margin-top: 3px;
-      color: var(--muted);
-      font-size: 11px;
-    }
+.nav-icon{
+  width:20px;
+  text-align:center;
+  font-size:16px;
+}
 
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+.nav-count{
+  margin-left:auto;
 
-    .live-status {
-      display: flex;
-      align-items: center;
-      gap: 7px;
+  min-width:20px;
+  height:20px;
 
-      padding: 8px 11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 
-      background: var(--green-bg);
-      border: 1px solid #bbf7d0;
+  border-radius:50%;
 
-      color: var(--green);
+  background:#dc2626;
+  color:white;
 
-      border-radius: 20px;
+  font-size:9px;
+}
 
-      font-size: 11px;
-      font-weight: 700;
-    }
 
-    .live-dot {
-      width: 7px;
-      height: 7px;
-      background: #22c55e;
-      border-radius: 50%;
-      box-shadow: 0 0 0 4px rgba(34,197,94,.12);
-    }
+.sidebar-bottom{
+  padding:15px;
 
-    .profile-chip {
-      display: flex;
-      align-items: center;
-      gap: 9px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
 
-      padding: 6px 10px 6px 6px;
+.logout-btn{
+  width:100%;
 
-      border:
-        1px solid var(--border);
+  border:1px solid rgba(255,255,255,.1);
 
-      border-radius: 30px;
+  background:rgba(255,255,255,.04);
 
-      background: white;
-    }
+  color:#cbd5e1;
 
-    .avatar {
-      width: 34px;
-      height: 34px;
+  padding:11px 13px;
 
-      border-radius: 50%;
+  border-radius:10px;
 
-      background:
-        linear-gradient(
-          135deg,
-          var(--navy),
-          var(--navy-3)
-        );
+  font-weight:700;
+  font-size:13px;
 
-      color: var(--gold-light);
+  transition:.2s;
+}
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+.logout-btn:hover{
+  background:rgba(220,38,38,.15);
+  color:#fecaca;
+}
 
-      font-weight: 800;
-      font-size: 12px;
-    }
 
-    .profile-chip span {
-      font-size: 12px;
-      font-weight: 700;
-      max-width: 130px;
+/* =========================================================
+   MAIN
+========================================================= */
 
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+.main{
+  margin-left:270px;
 
+  width:calc(100% - 270px);
 
-    /* =========================================================
-       CONTENT
-       ========================================================= */
+  min-height:100vh;
+}
 
-    .content {
-      padding: 30px;
-      max-width: 1500px;
-      margin: auto;
-    }
 
-    .section {
-      display: none;
-    }
+/* =========================================================
+   TOPBAR
+========================================================= */
 
-    .section.active {
-      display: block;
-    }
+.topbar{
+  height:76px;
 
+  background:rgba(255,255,255,.94);
 
-    /* =========================================================
-       WELCOME
-       ========================================================= */
+  backdrop-filter:blur(14px);
 
-    .welcome {
-      padding: 28px;
+  border-bottom:1px solid var(--border);
 
-      border-radius: 20px;
+  position:sticky;
+  top:0;
 
-      color: white;
+  z-index:900;
 
-      background:
-        radial-gradient(
-          circle at 90% 20%,
-          rgba(212,175,55,.25),
-          transparent 30%
-        ),
-        linear-gradient(
-          135deg,
-          var(--navy),
-          var(--navy-2)
-        );
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
 
-      box-shadow:
-        0 15px 40px rgba(7,20,38,.15);
+  padding:0 30px;
+}
 
-      position: relative;
-      overflow: hidden;
-    }
+.mobile-menu{
+  display:none;
 
-    .welcome::after {
-      content: "";
+  width:40px;
+  height:40px;
 
-      position: absolute;
+  border:1px solid var(--border);
 
-      width: 180px;
-      height: 180px;
+  background:white;
 
-      border-radius: 50%;
+  border-radius:10px;
 
-      border:
-        1px solid rgba(240,212,119,.12);
+  font-size:18px;
+}
 
-      right: -50px;
-      bottom: -80px;
-    }
+.top-title h1{
+  font-family:"Poppins",sans-serif;
+  font-size:21px;
+  font-weight:800;
+}
 
-    .welcome-kicker {
-      color: var(--gold-light);
+.top-title p{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:11px;
+}
 
-      font-size: 11px;
-      font-weight: 800;
+.top-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 
-      text-transform: uppercase;
-      letter-spacing: .1em;
-    }
+.live-status{
+  display:flex;
+  align-items:center;
+  gap:7px;
 
-    .welcome h2 {
-      margin-top: 8px;
+  padding:8px 11px;
 
-      font-family: "Poppins", sans-serif;
+  background:var(--greenBg);
 
-      font-size: 28px;
-      font-weight: 800;
-    }
+  border:1px solid #bbf7d0;
 
-    .welcome p {
-      margin-top: 7px;
+  color:var(--green);
 
-      max-width: 700px;
+  border-radius:20px;
 
-      color: #cbd5e1;
+  font-size:11px;
+  font-weight:700;
+}
 
-      font-size: 13px;
-      line-height: 1.7;
-    }
+.live-dot{
+  width:7px;
+  height:7px;
 
+  background:#22c55e;
 
-    /* =========================================================
-       STATS
-       ========================================================= */
+  border-radius:50%;
 
-    .stats-grid {
-      display: grid;
+  box-shadow:0 0 0 4px rgba(34,197,94,.12);
+}
 
-      grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+.profile-chip{
+  display:flex;
+  align-items:center;
+  gap:9px;
 
-      gap: 15px;
+  padding:6px 10px 6px 6px;
 
-      margin-top: 20px;
-    }
+  border:1px solid var(--border);
 
-    .stat-card {
-      background: white;
+  border-radius:30px;
 
-      border:
-        1px solid var(--border);
+  background:white;
+}
 
-      border-radius: 16px;
+.avatar{
+  width:34px;
+  height:34px;
 
-      padding: 19px;
+  border-radius:50%;
 
-      box-shadow: var(--shadow);
+  background:
+    linear-gradient(
+      135deg,
+      var(--navy),
+      var(--navy3)
+    );
 
-      position: relative;
-      overflow: hidden;
-    }
+  color:var(--gold2);
 
-    .stat-card::after {
-      content: "";
+  display:flex;
+  align-items:center;
+  justify-content:center;
 
-      position: absolute;
+  font-weight:800;
+  font-size:12px;
+}
 
-      width: 70px;
-      height: 70px;
+.profile-chip span{
+  font-size:12px;
+  font-weight:700;
 
-      border-radius: 50%;
+  max-width:130px;
 
-      right: -25px;
-      bottom: -30px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 
-      background: rgba(212,175,55,.08);
-    }
 
-    .stat-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+/* =========================================================
+   CONTENT
+========================================================= */
 
-    .stat-label {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 700;
-    }
+.content{
+  padding:30px;
 
-    .stat-icon {
-      width: 35px;
-      height: 35px;
+  max-width:1500px;
+  margin:auto;
+}
 
-      border-radius: 10px;
+.section{
+  display:none;
+}
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+.section.active{
+  display:block;
+}
 
-      background: #f8fafc;
 
-      font-size: 17px;
-    }
+/* =========================================================
+   WELCOME
+========================================================= */
 
-    .stat-value {
-      margin-top: 13px;
+.welcome{
+  padding:28px;
 
-      font-family: "Poppins", sans-serif;
+  border-radius:20px;
 
-      font-size: 25px;
-      font-weight: 800;
-    }
+  color:white;
 
-    .stat-note {
-      margin-top: 4px;
+  background:
+    radial-gradient(
+      circle at 90% 20%,
+      rgba(212,175,55,.25),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      var(--navy),
+      var(--navy2)
+    );
 
-      color: #94a3b8;
+  box-shadow:
+    0 15px 40px rgba(7,20,38,.15);
 
-      font-size: 10px;
-    }
+  position:relative;
+  overflow:hidden;
+}
 
+.welcome-kicker{
+  color:var(--gold2);
 
-    /* =========================================================
-       CARDS
-       ========================================================= */
+  font-size:11px;
+  font-weight:800;
 
-    .card {
-      background: white;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
 
-      border:
-        1px solid var(--border);
+.welcome h2{
+  margin-top:8px;
 
-      border-radius: 18px;
+  font-family:"Poppins",sans-serif;
 
-      box-shadow: var(--shadow);
+  font-size:28px;
+  font-weight:800;
+}
 
-      padding: 22px;
-    }
+.welcome p{
+  margin-top:7px;
 
-    .card-header {
-      display: flex;
+  max-width:700px;
 
-      align-items: center;
-      justify-content: space-between;
+  color:#cbd5e1;
 
-      gap: 15px;
+  font-size:13px;
+  line-height:1.7;
+}
 
-      margin-bottom: 18px;
-    }
 
-    .card-title {
-      font-family: "Poppins", sans-serif;
+/* =========================================================
+   STATS
+========================================================= */
 
-      font-size: 17px;
-      font-weight: 800;
-    }
+.stats-grid{
+  display:grid;
 
-    .card-subtitle {
-      margin-top: 3px;
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
 
-      color: var(--muted);
+  gap:15px;
 
-      font-size: 11px;
-    }
+  margin-top:20px;
+}
 
+.stat-card{
+  background:white;
 
-    /* =========================================================
-       DASHBOARD TWO COLUMN
-       ========================================================= */
+  border:1px solid var(--border);
 
-    .dashboard-grid {
-      display: grid;
+  border-radius:16px;
 
-      grid-template-columns:
-        minmax(0, 1.6fr)
-        minmax(300px, .8fr);
+  padding:19px;
 
-      gap: 20px;
+  box-shadow:var(--shadow);
+}
 
-      margin-top: 20px;
-    }
+.stat-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
 
+.stat-label{
+  color:var(--muted);
 
-    /* =========================================================
-       QUICK ACTIONS
-       ========================================================= */
+  font-size:11px;
+  font-weight:700;
+}
 
-    .quick-grid {
-      display: grid;
+.stat-icon{
+  width:35px;
+  height:35px;
 
-      grid-template-columns:
-        repeat(2, minmax(0, 1fr));
+  border-radius:10px;
 
-      gap: 10px;
-    }
+  display:flex;
+  align-items:center;
+  justify-content:center;
 
-    .quick-btn {
-      border:
-        1px solid var(--border);
+  background:#f8fafc;
 
-      background: #f8fafc;
+  font-size:17px;
+}
 
-      border-radius: 12px;
+.stat-value{
+  margin-top:13px;
 
-      padding: 15px;
+  font-family:"Poppins",sans-serif;
 
-      text-align: left;
+  font-size:25px;
+  font-weight:800;
+}
 
-      transition: .2s;
-    }
+.stat-note{
+  margin-top:4px;
 
-    .quick-btn:hover {
-      border-color: rgba(212,175,55,.55);
+  color:#94a3b8;
 
-      background:
-        rgba(212,175,55,.05);
+  font-size:10px;
+}
 
-      transform: translateY(-1px);
-    }
 
-    .quick-btn-icon {
-      font-size: 20px;
-    }
+/* =========================================================
+   GRID / CARD
+========================================================= */
 
-    .quick-btn strong {
-      display: block;
+.dashboard-grid{
+  display:grid;
 
-      margin-top: 8px;
+  grid-template-columns:
+    minmax(0,1.6fr)
+    minmax(300px,.8fr);
 
-      font-size: 12px;
-    }
+  gap:20px;
 
-    .quick-btn small {
-      display: block;
+  margin-top:20px;
+}
 
-      margin-top: 3px;
+.card{
+  background:white;
 
-      color: var(--muted);
+  border:1px solid var(--border);
 
-      font-size: 10px;
-    }
+  border-radius:18px;
 
+  box-shadow:var(--shadow);
 
-    /* =========================================================
-       PROPERTY LIST
-       ========================================================= */
+  padding:22px;
+}
 
-    .property-list {
-      display: grid;
-      gap: 10px;
-    }
+.card-header{
+  display:flex;
 
-    .property-item {
-      border:
-        1px solid var(--border);
+  align-items:center;
+  justify-content:space-between;
 
-      border-radius: 13px;
+  gap:15px;
 
-      padding: 14px;
+  margin-bottom:18px;
+}
 
-      display: flex;
-      justify-content: space-between;
+.card-title{
+  font-family:"Poppins",sans-serif;
 
-      gap: 15px;
-    }
+  font-size:17px;
+  font-weight:800;
+}
 
-    .property-main {
-      min-width: 0;
-    }
+.card-subtitle{
+  margin-top:3px;
 
-    .property-name {
-      font-weight: 800;
-      font-size: 13px;
+  color:var(--muted);
 
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+  font-size:11px;
+}
 
-    .property-meta {
-      margin-top: 5px;
 
-      color: var(--muted);
+/* =========================================================
+   PROPERTY CARD
+========================================================= */
 
-      font-size: 10px;
-      line-height: 1.6;
-    }
+.property-grid{
+  display:grid;
 
-    .property-actions {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
 
+  gap:15px;
+}
 
-    /* =========================================================
-       BADGES
-       ========================================================= */
+.property-card{
+  border:1px solid var(--border);
 
-    .badge {
-      display: inline-flex;
+  border-radius:16px;
 
-      align-items: center;
+  overflow:hidden;
 
-      padding: 5px 9px;
+  background:white;
 
-      border-radius: 20px;
+  transition:.2s;
+}
 
-      font-size: 10px;
-      font-weight: 800;
-    }
+.property-card:hover{
+  transform:translateY(-2px);
 
-    .badge-active {
-      background: var(--green-bg);
-      color: var(--green);
-    }
+  box-shadow:
+    0 15px 35px rgba(15,23,42,.10);
+}
 
-    .badge-pending {
-      background: var(--orange-bg);
-      color: var(--orange);
-    }
+.property-image{
+  height:150px;
 
-    .badge-rejected {
-      background: var(--red-bg);
-      color: var(--red);
-    }
+  position:relative;
 
-    .badge-cancelled {
-      background: #f1f5f9;
-      color: #475569;
-    }
+  background:#e2e8f0;
+}
 
-    .badge-info {
-      background: var(--blue-bg);
-      color: var(--blue);
-    }
+.property-image img{
+  width:100%;
+  height:100%;
 
+  object-fit:cover;
+}
 
-    /* =========================================================
-       BUTTONS
-       ========================================================= */
+.property-status{
+  position:absolute;
 
-    .btn {
-      border: 0;
+  top:10px;
+  left:10px;
+}
 
-      border-radius: 10px;
+.property-body{
+  padding:15px;
+}
 
-      padding: 10px 14px;
+.property-name{
+  font-weight:800;
+  font-size:14px;
+}
 
-      font-size: 11px;
-      font-weight: 800;
+.property-meta{
+  margin-top:6px;
 
-      transition: .2s;
-    }
+  color:var(--muted);
 
-    .btn-primary {
-      background:
-        linear-gradient(
-          135deg,
-          #b99225,
-          var(--gold),
-          #e5c55e
-        );
+  font-size:10px;
 
-      color: var(--navy);
+  line-height:1.7;
+}
 
-      box-shadow:
-        0 7px 18px rgba(212,175,55,.2);
-    }
+.property-footer{
+  margin-top:14px;
 
-    .btn-primary:hover {
-      transform: translateY(-1px);
-    }
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+}
 
-    .btn-secondary {
-      background: #f1f5f9;
-      color: #334155;
-    }
 
-    .btn-secondary:hover {
-      background: #e2e8f0;
-    }
+/* =========================================================
+   BADGES
+========================================================= */
 
-    .btn-danger {
-      background: var(--red-bg);
-      color: var(--red);
-    }
+.badge{
+  display:inline-flex;
 
-    .btn:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-    }
+  align-items:center;
 
+  padding:5px 9px;
 
-    /* =========================================================
-       FORMS
-       ========================================================= */
+  border-radius:20px;
 
-    .form-grid {
-      display: grid;
+  font-size:9px;
+  font-weight:800;
+}
 
-      grid-template-columns:
-        repeat(2, minmax(0, 1fr));
+.badge-active{
+  background:var(--greenBg);
+  color:var(--green);
+}
 
-      gap: 15px;
-    }
+.badge-pending{
+  background:var(--orangeBg);
+  color:var(--orange);
+}
 
-    .form-group {
-      margin-bottom: 15px;
-    }
+.badge-rejected{
+  background:var(--redBg);
+  color:var(--red);
+}
 
-    .full {
-      grid-column: 1 / -1;
-    }
+.badge-info{
+  background:var(--blueBg);
+  color:var(--blue);
+}
 
-    label {
-      display: block;
+.badge-muted{
+  background:#f1f5f9;
+  color:#475569;
+}
 
-      margin-bottom: 7px;
 
-      color: #334155;
+/* =========================================================
+   BUTTONS
+========================================================= */
 
-      font-size: 11px;
-      font-weight: 800;
-    }
+.btn{
+  border:0;
 
-    input,
-    select,
-    textarea {
-      width: 100%;
+  border-radius:10px;
 
-      border:
-        1px solid var(--border);
+  padding:10px 14px;
 
-      background: white;
+  font-size:11px;
+  font-weight:800;
 
-      color: var(--text);
+  transition:.2s;
+}
 
-      outline: none;
+.btn-primary{
+  background:
+    linear-gradient(
+      135deg,
+      #b99225,
+      var(--gold),
+      #e5c55e
+    );
 
-      border-radius: 10px;
+  color:var(--navy);
 
-      padding: 11px 12px;
+  box-shadow:
+    0 7px 18px rgba(212,175,55,.2);
+}
 
-      font-size: 12px;
+.btn-secondary{
+  background:#f1f5f9;
+  color:#334155;
+}
 
-      transition: .2s;
-    }
+.btn-success{
+  background:var(--greenBg);
+  color:var(--green);
+}
 
-    input,
-    select {
-      height: 44px;
-    }
+.btn-danger{
+  background:var(--redBg);
+  color:var(--red);
+}
 
-    textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
+.btn-outline{
+  background:white;
+  color:#334155;
+  border:1px solid var(--border);
+}
 
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--gold);
+.btn:hover{
+  transform:translateY(-1px);
+}
 
-      box-shadow:
-        0 0 0 3px rgba(212,175,55,.11);
-    }
+.btn:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
 
-    .form-help {
-      margin-top: 5px;
 
-      color: #94a3b8;
+/* =========================================================
+   QUICK ACTIONS
+========================================================= */
 
-      font-size: 9px;
-    }
+.quick-grid{
+  display:grid;
 
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
 
-    /* =========================================================
-       PROFILE
-       ========================================================= */
+  gap:10px;
+}
 
-    .profile-header {
-      display: flex;
+.quick-btn{
+  border:1px solid var(--border);
 
-      align-items: center;
+  background:#f8fafc;
 
-      gap: 18px;
+  border-radius:12px;
 
-      padding-bottom: 20px;
+  padding:15px;
 
-      margin-bottom: 20px;
+  text-align:left;
 
-      border-bottom:
-        1px solid var(--border);
-    }
+  transition:.2s;
+}
 
-    .large-avatar {
-      width: 70px;
-      height: 70px;
+.quick-btn:hover{
+  border-color:var(--gold);
+  background:#fffbeb;
+}
 
-      border-radius: 20px;
+.quick-btn i{
+  font-size:20px;
+}
 
-      background:
-        linear-gradient(
-          135deg,
-          var(--navy),
-          var(--navy-3)
-        );
+.quick-btn strong{
+  display:block;
 
-      color: var(--gold-light);
+  margin-top:8px;
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+  font-size:12px;
+}
 
-      font-family: "Poppins", sans-serif;
+.quick-btn small{
+  display:block;
 
-      font-size: 24px;
-      font-weight: 800;
-    }
+  margin-top:3px;
 
-    .profile-header h2 {
-      font-family: "Poppins", sans-serif;
+  color:var(--muted);
 
-      font-size: 20px;
-    }
+  font-size:10px;
+}
 
-    .profile-header p {
-      margin-top: 4px;
 
-      color: var(--muted);
+/* =========================================================
+   TABLE
+========================================================= */
 
-      font-size: 11px;
-    }
+.table-wrap{
+  overflow-x:auto;
+}
 
+table{
+  width:100%;
+  border-collapse:collapse;
+}
 
-    /* =========================================================
-       REQUEST TABLE
-       ========================================================= */
+th{
+  text-align:left;
 
-    .table-wrap {
-      width: 100%;
-      overflow-x: auto;
-    }
+  color:#64748b;
 
-    table {
-      width: 100%;
+  font-size:10px;
+  text-transform:uppercase;
 
-      border-collapse: collapse;
+  letter-spacing:.05em;
 
-      min-width: 700px;
-    }
+  padding:12px;
 
-    th {
-      text-align: left;
+  border-bottom:1px solid var(--border);
+}
 
-      padding: 11px;
+td{
+  padding:13px 12px;
 
-      background: #f8fafc;
+  border-bottom:1px solid #eef2f7;
 
-      color: #64748b;
+  font-size:11px;
+}
 
-      font-size: 10px;
-      font-weight: 800;
 
-      border-bottom:
-        1px solid var(--border);
-    }
+/* =========================================================
+   FORMS
+========================================================= */
 
-    td {
-      padding: 13px 11px;
+.form-grid{
+  display:grid;
 
-      font-size: 11px;
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
 
-      border-bottom:
-        1px solid #f1f5f9;
+  gap:15px;
+}
 
-      vertical-align: middle;
-    }
+.form-group{
+  margin-bottom:15px;
+}
 
-    td strong {
-      font-size: 11px;
-    }
+.full{
+  grid-column:1/-1;
+}
 
+label{
+  display:block;
 
-    /* =========================================================
-       REVIEWS
-       ========================================================= */
+  margin-bottom:7px;
 
-    .review-list {
-      display: grid;
-      gap: 12px;
-    }
+  color:#334155;
 
-    .review-card {
-      padding: 15px;
+  font-size:11px;
+  font-weight:800;
+}
 
-      border:
-        1px solid var(--border);
+input,
+select,
+textarea{
+  width:100%;
 
-      border-radius: 13px;
-    }
+  border:1px solid var(--border);
 
-    .review-top {
-      display: flex;
+  background:white;
 
-      justify-content: space-between;
+  color:var(--text);
 
-      gap: 10px;
-    }
+  outline:none;
 
-    .review-user {
-      font-weight: 800;
-      font-size: 12px;
-    }
+  border-radius:10px;
 
-    .review-property {
-      margin-top: 3px;
+  padding:11px 12px;
 
-      color: var(--muted);
+  font-size:12px;
 
-      font-size: 10px;
-    }
+  transition:.2s;
+}
 
-    .stars {
-      color: #d4af37;
+input,
+select{
+  height:44px;
+}
 
-      font-size: 12px;
+textarea{
+  min-height:100px;
+  resize:vertical;
+}
 
-      letter-spacing: 1px;
-    }
+input:focus,
+select:focus,
+textarea:focus{
+  border-color:var(--gold);
 
-    .review-text {
-      margin-top: 10px;
+  box-shadow:
+    0 0 0 3px rgba(212,175,55,.11);
+}
 
-      color: #475569;
+.checkbox-row{
+  display:flex;
+  align-items:center;
+  gap:9px;
 
-      font-size: 11px;
+  padding:10px 0;
+}
 
-      line-height: 1.7;
-    }
+.checkbox-row input{
+  width:auto;
+  height:auto;
+}
 
-    .review-date {
-      margin-top: 8px;
 
-      color: #94a3b8;
+/* =========================================================
+   PROGRESS
+========================================================= */
 
-      font-size: 9px;
-    }
+.progress{
+  height:8px;
 
+  background:#e2e8f0;
 
-    /* =========================================================
-       EMPTY STATE
-       ========================================================= */
+  border-radius:20px;
 
-    .empty {
-      padding: 35px 20px;
+  overflow:hidden;
+}
 
-      text-align: center;
+.progress-bar{
+  height:100%;
 
-      border:
-        1px dashed #cbd5e1;
+  background:
+    linear-gradient(
+      90deg,
+      var(--gold),
+      var(--gold2)
+    );
 
-      border-radius: 14px;
+  border-radius:20px;
 
-      background: #f8fafc;
-    }
+  transition:.4s;
+}
 
-    .empty-icon {
-      font-size: 30px;
-    }
 
-    .empty h3 {
-      margin-top: 9px;
+/* =========================================================
+   EMPTY
+========================================================= */
 
-      font-size: 14px;
-    }
+.empty{
+  text-align:center;
 
-    .empty p {
-      margin-top: 5px;
+  padding:45px 20px;
 
-      color: var(--muted);
+  color:var(--muted);
+}
 
-      font-size: 10px;
+.empty i{
+  font-size:35px;
 
-      line-height: 1.6;
-    }
+  margin-bottom:12px;
 
+  color:#cbd5e1;
+}
 
-    /* =========================================================
-       ALERT
-       ========================================================= */
+.empty strong{
+  display:block;
 
-    .alert {
-      display: none;
+  color:#334155;
 
-      margin-bottom: 18px;
+  font-size:14px;
 
-      padding: 12px 14px;
+  margin-bottom:5px;
+}
 
-      border-radius: 11px;
 
-      font-size: 11px;
+/* =========================================================
+   MODAL
+========================================================= */
 
-      line-height: 1.6;
-    }
+.modal{
+  position:fixed;
 
-    .alert.show {
-      display: block;
-    }
+  inset:0;
 
-    .alert-error {
-      background: var(--red-bg);
-      color: #991b1b;
-      border: 1px solid #fecaca;
-    }
+  background:rgba(2,8,23,.65);
 
-    .alert-success {
-      background: var(--green-bg);
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
+  backdrop-filter:blur(5px);
 
+  z-index:2000;
 
-    /* =========================================================
-       LOADING
-       ========================================================= */
+  display:none;
 
-    .loading {
-      padding: 35px;
-      text-align: center;
+  align-items:center;
+  justify-content:center;
 
-      color: var(--muted);
+  padding:20px;
+}
 
-      font-size: 12px;
-    }
+.modal.show{
+  display:flex;
+}
 
-    .spinner {
-      width: 24px;
-      height: 24px;
+.modal-box{
+  width:100%;
+  max-width:900px;
 
-      margin: 0 auto 10px;
+  max-height:90vh;
 
-      border:
-        3px solid #e2e8f0;
+  overflow-y:auto;
 
-      border-top-color:
-        var(--gold);
+  background:white;
 
-      border-radius: 50%;
+  border-radius:20px;
 
-      animation:
-        spin .8s linear infinite;
-    }
+  box-shadow:
+    0 25px 80px rgba(0,0,0,.25);
+}
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+.modal-head{
+  padding:20px;
 
+  border-bottom:1px solid var(--border);
 
-    /* =========================================================
-       MOBILE SIDEBAR
-       ========================================================= */
+  display:flex;
 
-    .sidebar-overlay {
-      display: none;
+  align-items:center;
+  justify-content:space-between;
+}
 
-      position: fixed;
+.modal-title{
+  font-family:"Poppins",sans-serif;
 
-      inset: 0;
+  font-size:18px;
+  font-weight:800;
+}
 
-      background: rgba(0,0,0,.4);
+.modal-close{
+  width:36px;
+  height:36px;
 
-      z-index: 950;
-    }
+  border:0;
 
+  background:#f1f5f9;
 
-    /* =========================================================
-       FOOTER
-       ========================================================= */
+  border-radius:10px;
+}
 
-    .footer {
-      margin-top: 35px;
+.modal-body{
+  padding:22px;
+}
 
-      padding: 22px 5px 5px;
 
-      color: #94a3b8;
+/* =========================================================
+   TOAST
+========================================================= */
 
-      font-size: 10px;
+.toast{
+  position:fixed;
 
-      text-align: center;
-    }
+  right:22px;
+  bottom:22px;
 
-    .footer strong {
-      color: #475569;
-    }
+  z-index:5000;
 
+  min-width:280px;
 
-    /* =========================================================
-       RESPONSIVE
-       ========================================================= */
+  max-width:420px;
 
-    @media (max-width: 1100px) {
+  padding:14px 17px;
 
-      .stats-grid {
-        grid-template-columns:
-          repeat(2, minmax(0, 1fr));
-      }
+  border-radius:13px;
 
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
+  color:white;
 
-    }
+  background:var(--navy);
 
-    @media (max-width: 800px) {
+  box-shadow:
+    0 20px 50px rgba(0,0,0,.25);
 
-      .sidebar {
-        transform: translateX(-100%);
-        transition: .25s;
-      }
+  transform:translateY(120px);
 
-      .sidebar.open {
-        transform: translateX(0);
-      }
+  opacity:0;
 
-      .sidebar-overlay.show {
-        display: block;
-      }
+  pointer-events:none;
 
-      .main {
-        margin-left: 0;
-        width: 100%;
-      }
+  transition:.3s;
+}
 
-      .mobile-menu {
-        display: block;
-      }
+.toast.show{
+  transform:translateY(0);
+  opacity:1;
+}
 
-      .topbar {
-        padding: 0 15px;
-        gap: 10px;
-      }
+.toast.success{
+  border-left:4px solid #22c55e;
+}
 
-      .top-title h1 {
-        font-size: 17px;
-      }
+.toast.error{
+  border-left:4px solid #ef4444;
+}
 
-      .live-status {
-        display: none;
-      }
 
-      .profile-chip span {
-        display: none;
-      }
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
-      .content {
-        padding: 18px 14px;
-      }
+@media(max-width:1100px){
 
-      .welcome {
-        padding: 22px;
-      }
+  .stats-grid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
 
-      .welcome h2 {
-        font-size: 22px;
-      }
+  .dashboard-grid{
+    grid-template-columns:1fr;
+  }
 
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
+}
 
-      .full {
-        grid-column: auto;
-      }
+@media(max-width:850px){
 
-    }
+  .sidebar{
+    transform:translateX(-100%);
 
-    @media (max-width: 520px) {
+    transition:.25s;
+  }
 
-      .stats-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 9px;
-      }
+  .sidebar.open{
+    transform:translateX(0);
+  }
 
-      .stat-card {
-        padding: 14px;
-      }
+  .main{
+    margin-left:0;
+    width:100%;
+  }
 
-      .stat-value {
-        font-size: 21px;
-      }
+  .mobile-menu{
+    display:block;
+  }
 
-      .quick-grid {
-        grid-template-columns: 1fr;
-      }
+  .topbar{
+    padding:0 16px;
+  }
 
-      .card {
-        padding: 17px;
-      }
+  .content{
+    padding:18px;
+  }
 
-      .profile-header {
-        align-items: flex-start;
-      }
+  .property-grid{
+    grid-template-columns:1fr;
+  }
 
-      .property-item {
-        flex-direction: column;
-      }
+  .form-grid{
+    grid-template-columns:1fr;
+  }
 
-      .property-actions {
-        justify-content: flex-start;
-      }
+  .full{
+    grid-column:auto;
+  }
 
-    }
+}
 
-  </style>
+@media(max-width:600px){
+
+  .stats-grid{
+    grid-template-columns:1fr;
+  }
+
+  .live-status{
+    display:none;
+  }
+
+  .top-title h1{
+    font-size:17px;
+  }
+
+  .top-title p{
+    display:none;
+  }
+
+  .profile-chip span{
+    display:none;
+  }
+
+  .welcome h2{
+    font-size:22px;
+  }
+
+  .quick-grid{
+    grid-template-columns:1fr;
+  }
+
+}
+
+</style>
 </head>
+
 
 <body>
 
 <div class="app">
 
-  <!-- =======================================================
-       SIDEBAR
-       ======================================================= -->
+<!-- ======================================================
+     SIDEBAR
+====================================================== -->
 
-  <aside class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar">
 
-    <div class="sidebar-brand">
+  <div class="sidebar-brand">
 
-      <img
-        src="logo.png"
-        alt="StudentHubHelp"
+    <img
+      src="logo.png"
+      onerror="this.style.display='none'"
+    >
+
+    <div>
+      <div class="brand-title">
+        StudentHubHelp
+      </div>
+
+      <div class="brand-subtitle">
+        Owner Management Portal
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="owner-badge">
+
+    <div class="owner-badge-label">
+      Logged in as
+    </div>
+
+    <div
+      class="owner-badge-name"
+      id="sideOwnerName"
+    >
+      Loading...
+    </div>
+
+    <div class="owner-badge-role">
+      PROPERTY OWNER
+    </div>
+
+  </div>
+
+
+  <nav class="nav">
+
+    <div class="nav-section">
+      Main
+    </div>
+
+    <button
+      class="nav-item active"
+      data-section="dashboard"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-house"></i>
+      </span>
+
+      Dashboard
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-section="properties"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-building"></i>
+      </span>
+
+      My Properties
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-section="manage"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </span>
+
+      Manage Property
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-section="gallery"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-images"></i>
+      </span>
+
+      Photos & Gallery
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-section="bookings"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-calendar-check"></i>
+      </span>
+
+      Bookings
+
+      <span
+        class="nav-count"
+        id="bookingCount"
+        style="display:none"
       >
+        0
+      </span>
+    </button>
 
-      <div>
-        <div class="brand-title">
-          StudentHubHelp
-        </div>
 
-        <div class="brand-subtitle">
-          Student Discovery Platform
-        </div>
+    <button
+      class="nav-item"
+      data-section="availability"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-chart-simple"></i>
+      </span>
+
+      Availability
+    </button>
+
+
+    <div class="nav-section">
+      Trust
+    </div>
+
+
+    <button
+      class="nav-item"
+      data-section="reviews"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-star"></i>
+      </span>
+
+      Reviews
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-section="verification"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-shield-halved"></i>
+      </span>
+
+      Verification
+    </button>
+
+
+    <div class="nav-section">
+      Requests
+    </div>
+
+
+    <button
+      class="nav-item"
+      data-section="add"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-plus"></i>
+      </span>
+
+      Add Listing
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-section="claim"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-hand"></i>
+      </span>
+
+      Claim Property
+    </button>
+
+
+    <button
+      class="nav-item"
+      data-section="requests"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-inbox"></i>
+      </span>
+
+      My Requests
+    </button>
+
+
+    <div class="nav-section">
+      Account
+    </div>
+
+
+    <button
+      class="nav-item"
+      data-section="profile"
+    >
+      <span class="nav-icon">
+        <i class="fa-solid fa-user"></i>
+      </span>
+
+      My Profile
+    </button>
+
+  </nav>
+
+
+  <div class="sidebar-bottom">
+
+    <button
+      class="logout-btn"
+      id="logoutBtn"
+    >
+      <i class="fa-solid fa-right-from-bracket"></i>
+      &nbsp; Logout
+    </button>
+
+  </div>
+
+</aside>
+
+
+<!-- ======================================================
+     MAIN
+====================================================== -->
+
+<main class="main">
+
+  <header class="topbar">
+
+    <div style="display:flex;align-items:center;gap:12px">
+
+      <button
+        class="mobile-menu"
+        id="mobileMenu"
+      >
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <div class="top-title">
+
+        <h1 id="pageTitle">
+          Owner Dashboard
+        </h1>
+
+        <p id="pageSubtitle">
+          Manage your StudentHubHelp properties
+        </p>
+
       </div>
 
     </div>
 
 
-    <div class="owner-badge">
+    <div class="top-actions">
 
-      <div class="owner-badge-label">
-        Account
+      <div class="live-status">
+
+        <span class="live-dot"></span>
+
+        System Online
+
+      </div>
+
+
+      <div class="profile-chip">
+
+        <div
+          class="avatar"
+          id="topAvatar"
+        >
+          O
+        </div>
+
+        <span id="topOwnerName">
+          Owner
+        </span>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <div class="content">
+
+
+<!-- ======================================================
+     DASHBOARD
+====================================================== -->
+
+<section
+  class="section active"
+  id="section-dashboard"
+>
+
+  <div class="welcome">
+
+    <div class="welcome-kicker">
+      StudentHubHelp Owner Portal
+    </div>
+
+    <h2>
+      Welcome back,
+      <span id="welcomeName">
+        Owner
+      </span>
+    </h2>
+
+    <p>
+      Manage your properties, bookings, availability,
+      photos, reviews and verification from one professional
+      dashboard.
+    </p>
+
+  </div>
+
+
+  <div class="stats-grid">
+
+    <div class="stat-card">
+
+      <div class="stat-top">
+
+        <span class="stat-label">
+          Total Properties
+        </span>
+
+        <span class="stat-icon">
+          🏢
+        </span>
+
       </div>
 
       <div
-        class="owner-badge-name"
-        id="sidebarOwnerName"
+        class="stat-value"
+        id="statProperties"
       >
-        Loading...
+        0
       </div>
 
-      <div class="owner-badge-role">
-        ✓ Verified Owner
+      <div class="stat-note">
+        Properties linked to your account
       </div>
 
     </div>
 
 
-    <nav class="nav">
+    <div class="stat-card">
 
-      <div class="nav-section">
-        Dashboard
+      <div class="stat-top">
+
+        <span class="stat-label">
+          Live Properties
+        </span>
+
+        <span class="stat-icon">
+          🟢
+        </span>
+
+      </div>
+
+      <div
+        class="stat-value"
+        id="statLive"
+      >
+        0
+      </div>
+
+      <div class="stat-note">
+        Currently visible to students
+      </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+      <div class="stat-top">
+
+        <span class="stat-label">
+          Bookings
+        </span>
+
+        <span class="stat-icon">
+          📅
+        </span>
+
+      </div>
+
+      <div
+        class="stat-value"
+        id="statBookings"
+      >
+        0
+      </div>
+
+      <div class="stat-note">
+        Pending + active bookings
+      </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+      <div class="stat-top">
+
+        <span class="stat-label">
+          Average Rating
+        </span>
+
+        <span class="stat-icon">
+          ⭐
+        </span>
+
+      </div>
+
+      <div
+        class="stat-value"
+        id="statRating"
+      >
+        —
+      </div>
+
+      <div class="stat-note">
+        Based on student reviews
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="dashboard-grid">
+
+    <div class="card">
+
+      <div class="card-header">
+
+        <div>
+          <div class="card-title">
+            My Properties
+          </div>
+
+          <div class="card-subtitle">
+            Quick management
+          </div>
+        </div>
+
+        <button
+          class="btn btn-secondary"
+          onclick="showSection('properties')"
+        >
+          View All
+        </button>
+
+      </div>
+
+      <div
+        class="property-grid"
+        id="dashboardProperties"
+      ></div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="card-header">
+
+        <div>
+          <div class="card-title">
+            Quick Actions
+          </div>
+
+          <div class="card-subtitle">
+            Frequently used tools
+          </div>
+        </div>
+
+      </div>
+
+
+      <div class="quick-grid">
+
+        <button
+          class="quick-btn"
+          onclick="showSection('manage')"
+        >
+
+          <i class="fa-solid fa-pen-to-square"></i>
+
+          <strong>
+            Edit Property
+          </strong>
+
+          <small>
+            Update listing information
+          </small>
+
+        </button>
+
+
+        <button
+          class="quick-btn"
+          onclick="showSection('gallery')"
+        >
+
+          <i class="fa-solid fa-images"></i>
+
+          <strong>
+            Manage Photos
+          </strong>
+
+          <small>
+            Upload property images
+          </small>
+
+        </button>
+
+
+        <button
+          class="quick-btn"
+          onclick="showSection('bookings')"
+        >
+
+          <i class="fa-solid fa-calendar-check"></i>
+
+          <strong>
+            View Bookings
+          </strong>
+
+          <small>
+            Manage student requests
+          </small>
+
+        </button>
+
+
+        <button
+          class="quick-btn"
+          onclick="showSection('verification')"
+        >
+
+          <i class="fa-solid fa-shield-halved"></i>
+
+          <strong>
+            Verification
+          </strong>
+
+          <small>
+            Check your trust status
+          </small>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     MY PROPERTIES
+====================================================== -->
+
+<section
+  class="section"
+  id="section-properties"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          My Properties
+        </div>
+
+        <div class="card-subtitle">
+          All properties connected to your owner account
+        </div>
+
       </div>
 
       <button
-        class="nav-item active"
-        data-section="overview"
+        class="btn btn-primary"
+        onclick="showSection('add')"
       >
-        <span class="nav-icon">📊</span>
-        Overview
-      </button>
-
-
-      <button
-        class="nav-item"
-        data-section="properties"
-      >
-        <span class="nav-icon">🏢</span>
-        Live Properties
-      </button>
-
-
-      <div class="nav-section">
-        Manage
-      </div>
-
-      <button
-        class="nav-item"
-        data-section="add-listing"
-      >
-        <span class="nav-icon">➕</span>
+        <i class="fa-solid fa-plus"></i>
         Add Listing
       </button>
 
-
-      <button
-        class="nav-item"
-        data-section="claims"
-      >
-        <span class="nav-icon">🔗</span>
-        Claim Property
-      </button>
+    </div>
 
 
-      <button
-        class="nav-item"
-        data-section="requests"
-      >
-        <span class="nav-icon">📋</span>
-        My Requests
-      </button>
+    <div
+      class="property-grid"
+      id="allProperties"
+    ></div>
+
+  </div>
+
+</section>
 
 
-      <div class="nav-section">
-        Account
+<!-- ======================================================
+     MANAGE PROPERTY
+====================================================== -->
+
+<section
+  class="section"
+  id="section-manage"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          Manage Property
+        </div>
+
+        <div class="card-subtitle">
+          Update your live listing information
+        </div>
+
       </div>
-
-      <button
-        class="nav-item"
-        data-section="reviews"
-      >
-        <span class="nav-icon">⭐</span>
-        Reviews
-      </button>
-
-
-      <button
-        class="nav-item"
-        data-section="profile"
-      >
-        <span class="nav-icon">👤</span>
-        My Profile
-      </button>
-
-    </nav>
-
-
-    <div class="sidebar-bottom">
-
-      <button
-        class="logout-btn"
-        id="logoutButton"
-      >
-        ↪ Sign Out
-      </button>
 
     </div>
 
-  </aside>
+
+    <div
+      class="form-group"
+      id="managePropertySelectorWrap"
+    >
+
+      <label>
+        Select Property
+      </label>
+
+      <select
+        id="managePropertySelector"
+      ></select>
+
+    </div>
 
 
-  <div
-    class="sidebar-overlay"
-    id="sidebarOverlay"
-  ></div>
+    <div id="manageFormArea">
+
+      <div class="empty">
+
+        <i class="fa-solid fa-building"></i>
+
+        <strong>
+          Select a property
+        </strong>
+
+        Choose a property above to edit its details.
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
 
 
-  <!-- =======================================================
-       MAIN
-       ======================================================= -->
+<!-- ======================================================
+     GALLERY
+====================================================== -->
 
-  <main class="main">
+<section
+  class="section"
+  id="section-gallery"
+>
 
-    <!-- TOPBAR -->
+  <div class="card">
 
-    <header class="topbar">
+    <div class="card-header">
 
-      <div style="display:flex;align-items:center;gap:12px;">
+      <div>
+
+        <div class="card-title">
+          Photos & Gallery
+        </div>
+
+        <div class="card-subtitle">
+          Keep your property photos updated
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="form-group">
+
+      <label>
+        Select Property
+      </label>
+
+      <select
+        id="galleryPropertySelector"
+      ></select>
+
+    </div>
+
+
+    <div class="card" style="background:#f8fafc">
+
+      <form id="galleryForm">
+
+        <div class="form-group">
+
+          <label>
+            Upload Photos
+          </label>
+
+          <input
+            type="file"
+            id="galleryFiles"
+            accept="image/*"
+            multiple
+          >
+
+        </div>
+
+
+        <div class="form-grid">
+
+          <div class="form-group">
+
+            <label>
+              Image Type
+            </label>
+
+            <select id="galleryImageType">
+
+              <option value="gallery">
+                Gallery
+              </option>
+
+              <option value="main">
+                Main / Cover
+              </option>
+
+              <option value="room">
+                Room
+              </option>
+
+              <option value="bathroom">
+                Bathroom
+              </option>
+
+              <option value="mess">
+                Mess / Food
+              </option>
+
+              <option value="facility">
+                Facility
+              </option>
+
+              <option value="other">
+                Other
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
+
 
         <button
-          class="mobile-menu"
-          id="mobileMenu"
-          type="button"
+          class="btn btn-primary"
+          type="submit"
+          id="galleryUploadBtn"
         >
-          ☰
+
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+
+          Upload Photos
+
         </button>
 
-        <div class="top-title">
-
-          <h1 id="pageTitle">
-            Owner Dashboard
-          </h1>
-
-          <p id="pageSubtitle">
-            Manage your StudentHubHelp properties
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <div class="top-actions">
-
-        <div class="live-status">
-
-          <span class="live-dot"></span>
-
-          Live Sync
-
-        </div>
-
-
-        <div class="profile-chip">
-
-          <div
-            class="avatar"
-            id="topAvatar"
-          >
-            O
-          </div>
-
-          <span id="topName">
-            Owner
-          </span>
-
-        </div>
-
-      </div>
-
-    </header>
-
-
-    <div class="content">
-
-      <div
-        id="globalAlert"
-        class="alert"
-      ></div>
-
-
-      <!-- ===================================================
-           OVERVIEW
-           =================================================== -->
-
-      <section
-        class="section active"
-        id="section-overview"
-      >
-
-        <div class="welcome">
-
-          <div class="welcome-kicker">
-            Owner Control Center
-          </div>
-
-          <h2>
-            Welcome,
-            <span id="welcomeName">
-              Owner
-            </span>
-          </h2>
-
-          <p>
-            Manage your approved properties, submit new listings,
-            claim existing properties and monitor student reviews
-            from one secure dashboard.
-          </p>
-
-        </div>
-
-
-        <div class="stats-grid">
-
-          <div class="stat-card">
-
-            <div class="stat-top">
-
-              <div class="stat-label">
-                Live Properties
-              </div>
-
-              <div class="stat-icon">
-                🏢
-              </div>
-
-            </div>
-
-            <div
-              class="stat-value"
-              id="statProperties"
-            >
-              0
-            </div>
-
-            <div class="stat-note">
-              Currently linked to your account
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-top">
-
-              <div class="stat-label">
-                Pending Requests
-              </div>
-
-              <div class="stat-icon">
-                ⏳
-              </div>
-
-            </div>
-
-            <div
-              class="stat-value"
-              id="statRequests"
-            >
-              0
-            </div>
-
-            <div class="stat-note">
-              Listing and claim requests
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-top">
-
-              <div class="stat-label">
-                Active Listings
-              </div>
-
-              <div class="stat-icon">
-                ✓
-              </div>
-
-            </div>
-
-            <div
-              class="stat-value"
-              id="statActive"
-            >
-              0
-            </div>
-
-            <div class="stat-note">
-              Approved properties
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-top">
-
-              <div class="stat-label">
-                Reviews
-              </div>
-
-              <div class="stat-icon">
-                ⭐
-              </div>
-
-            </div>
-
-            <div
-              class="stat-value"
-              id="statReviews"
-            >
-              0
-            </div>
-
-            <div class="stat-note">
-              Student feedback
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="dashboard-grid">
-
-
-          <!-- QUICK ACTIONS -->
-
-          <div class="card">
-
-            <div class="card-header">
-
-              <div>
-
-                <div class="card-title">
-                  Quick Actions
-                </div>
-
-                <div class="card-subtitle">
-                  Common owner actions
-                </div>
-
-              </div>
-
-            </div>
-
-
-            <div class="quick-grid">
-
-              <button
-                class="quick-btn"
-                data-go="add-listing"
-              >
-
-                <div class="quick-btn-icon">
-                  ➕
-                </div>
-
-                <strong>
-                  Add New Listing
-                </strong>
-
-                <small>
-                  Submit a new property
-                </small>
-
-              </button>
-
-
-              <button
-                class="quick-btn"
-                data-go="claims"
-              >
-
-                <div class="quick-btn-icon">
-                  🔗
-                </div>
-
-                <strong>
-                  Claim Existing Property
-                </strong>
-
-                <small>
-                  Request ownership
-                </small>
-
-              </button>
-
-
-              <button
-                class="quick-btn"
-                data-go="properties"
-              >
-
-                <div class="quick-btn-icon">
-                  🏢
-                </div>
-
-                <strong>
-                  View Live Properties
-                </strong>
-
-                <small>
-                  Manage your listings
-                </small>
-
-              </button>
-
-
-              <button
-                class="quick-btn"
-                data-go="reviews"
-              >
-
-                <div class="quick-btn-icon">
-                  ⭐
-                </div>
-
-                <strong>
-                  Student Reviews
-                </strong>
-
-                <small>
-                  View customer feedback
-                </small>
-
-              </button>
-
-            </div>
-
-          </div>
-
-
-          <!-- RECENT PROPERTIES -->
-
-          <div class="card">
-
-            <div class="card-header">
-
-              <div>
-
-                <div class="card-title">
-                  Your Properties
-                </div>
-
-                <div class="card-subtitle">
-                  Latest linked properties
-                </div>
-
-              </div>
-
-              <button
-                class="btn btn-secondary"
-                data-go="properties"
-              >
-                View All
-              </button>
-
-            </div>
-
-
-            <div
-              id="overviewProperties"
-              class="property-list"
-            >
-
-              <div class="loading">
-                <div class="spinner"></div>
-                Loading...
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- ===================================================
-           LIVE PROPERTIES
-           =================================================== -->
-
-      <section
-        class="section"
-        id="section-properties"
-      >
-
-        <div class="card">
-
-          <div class="card-header">
-
-            <div>
-
-              <div class="card-title">
-                Live Properties
-              </div>
-
-              <div class="card-subtitle">
-                Properties currently linked to your owner account
-              </div>
-
-            </div>
-
-            <button
-              class="btn btn-primary"
-              data-go="add-listing"
-            >
-              + Add Listing
-            </button>
-
-          </div>
-
-
-          <div
-            id="propertiesContainer"
-            class="property-list"
-          >
-
-            <div class="loading">
-
-              <div class="spinner"></div>
-
-              Loading properties...
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- ===================================================
-           ADD LISTING
-           =================================================== -->
-
-      <section
-        class="section"
-        id="section-add-listing"
-      >
-
-        <div class="card">
-
-          <div class="card-header">
-
-            <div>
-
-              <div class="card-title">
-                Add New Listing
-              </div>
-
-              <div class="card-subtitle">
-                Submit your property for admin approval
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <form id="listingForm">
-
-            <div class="form-grid">
-
-
-              <div class="form-group">
-
-                <label for="listingCategory">
-                  Property Category *
-                </label>
-
-                <select
-                  id="listingCategory"
-                  required
-                >
-
-                  <option value="">
-                    Select category
-                  </option>
-
-                  <option value="hostel">
-                    🏠 Hostel / PG
-                  </option>
-
-                  <option value="tiffin">
-                    🍱 Tiffin / Mess
-                  </option>
-
-                  <option value="library">
-                    📚 Library
-                  </option>
-
-                  <option value="cafe">
-                    ☕ Cafe
-                  </option>
-
-                  <option value="bookstore">
-                    📖 Book Store
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label for="listingName">
-                  Property Name *
-                </label>
-
-                <input
-                  id="listingName"
-                  type="text"
-                  placeholder="Enter property name"
-                  required
-                >
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label for="listingArea">
-                  Area / City *
-                </label>
-
-                <input
-                  id="listingArea"
-                  type="text"
-                  placeholder="e.g. Sikar, Jaipur"
-                  required
-                >
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label for="listingPhone">
-                  Contact Phone *
-                </label>
-
-                <input
-                  id="listingPhone"
-                  type="tel"
-                  placeholder="Enter contact number"
-                  required
-                >
-
-              </div>
-
-
-              <div class="form-group full">
-
-                <label for="listingAddress">
-                  Full Address *
-                </label>
-
-                <textarea
-                  id="listingAddress"
-                  placeholder="Enter complete property address"
-                  required
-                ></textarea>
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label for="listingTiming">
-                  Timing
-                </label>
-
-                <input
-                  id="listingTiming"
-                  type="text"
-                  placeholder="e.g. 6 AM - 10 PM"
-                >
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label for="listingImage">
-                  Image URL
-                </label>
-
-                <input
-                  id="listingImage"
-                  type="url"
-                  placeholder="https://..."
-                >
-
-                <div class="form-help">
-                  Optional. Use a publicly accessible image URL.
-                </div>
-
-              </div>
-
-
-              <div class="form-group full">
-
-                <label for="listingFacilities">
-                  Facilities / Description
-                </label>
-
-                <textarea
-                  id="listingFacilities"
-                  placeholder="Describe facilities, services, pricing information, etc."
-                ></textarea>
-
-              </div>
-
-
-            </div>
-
-
-            <button
-              type="submit"
-              class="btn btn-primary"
-              id="listingSubmit"
-            >
-              Submit Listing for Approval
-            </button>
-
-          </form>
-
-        </div>
-
-      </section>
-
-
-      <!-- ===================================================
-           CLAIM PROPERTY
-           =================================================== -->
-
-      <section
-        class="section"
-        id="section-claims"
-      >
-
-        <div class="card">
-
-          <div class="card-header">
-
-            <div>
-
-              <div class="card-title">
-                Claim Existing Property
-              </div>
-
-              <div class="card-subtitle">
-                Request ownership of an already listed property
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div class="alert alert-success show">
-
-            🔐 Ownership is reviewed by StudentHubHelp administration.
-            Your account does not directly assign ownership.
-
-          </div>
-
-
-          <form id="claimForm">
-
-            <div class="form-grid">
-
-
-              <div class="form-group">
-
-                <label for="claimPropertyId">
-                  Property ID *
-                </label>
-
-                <input
-                  id="claimPropertyId"
-                  type="text"
-                  placeholder="Enter property ID"
-                  required
-                >
-
-                <div class="form-help">
-                  Use the property ID shown on the listing.
-                </div>
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label for="claimPropertyType">
-                  Property Type *
-                </label>
-
-                <select
-                  id="claimPropertyType"
-                  required
-                >
-
-                  <option value="">
-                    Select type
-                  </option>
-
-                  <option value="hostel">
-                    Hostel / PG
-                  </option>
-
-                  <option value="tiffin">
-                    Tiffin / Mess
-                  </option>
-
-                  <option value="library">
-                    Library
-                  </option>
-
-                  <option value="cafe">
-                    Cafe
-                  </option>
-
-                  <option value="bookstore">
-                    Book Store
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="form-group full">
-
-                <label for="claimMessage">
-                  Ownership Message *
-                </label>
-
-                <textarea
-                  id="claimMessage"
-                  placeholder="Explain why you are the owner/operator of this property..."
-                  required
-                ></textarea>
-
-              </div>
-
-
-            </div>
-
-
-            <button
-              type="submit"
-              class="btn btn-primary"
-              id="claimSubmit"
-            >
-              Submit Claim Request
-            </button>
-
-          </form>
-
-        </div>
-
-
-        <div
-          class="card"
-          style="margin-top:20px;"
-        >
-
-          <div class="card-header">
-
-            <div>
-
-              <div class="card-title">
-                Your Claim Requests
-              </div>
-
-              <div class="card-subtitle">
-                Track ownership verification
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div
-            id="claimsContainer"
-          >
-
-            <div class="loading">
-              <div class="spinner"></div>
-              Loading claims...
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- ===================================================
-           MY REQUESTS
-           =================================================== -->
-
-      <section
-        class="section"
-        id="section-requests"
-      >
-
-        <div class="card">
-
-          <div class="card-header">
-
-            <div>
-
-              <div class="card-title">
-                My Listing Requests
-              </div>
-
-              <div class="card-subtitle">
-                Requests submitted from your owner account
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div class="table-wrap">
-
-            <table>
-
-              <thead>
-
-                <tr>
-
-                  <th>
-                    Property
-                  </th>
-
-                  <th>
-                    Category
-                  </th>
-
-                  <th>
-                    Area
-                  </th>
-
-                  <th>
-                    Status
-                  </th>
-
-                  <th>
-                    Submitted
-                  </th>
-
-                  <th>
-                    Admin Note
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody id="requestsBody">
-
-                <tr>
-
-                  <td
-                    colspan="6"
-                    class="loading"
-                  >
-                    Loading requests...
-
-                  </td>
-
-                </tr>
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- ===================================================
-           REVIEWS
-           =================================================== -->
-
-      <section
-        class="section"
-        id="section-reviews"
-      >
-
-        <div class="card">
-
-          <div class="card-header">
-
-            <div>
-
-              <div class="card-title">
-                Student Reviews
-              </div>
-
-              <div class="card-subtitle">
-                Feedback associated with your properties
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div
-            id="reviewsContainer"
-            class="review-list"
-          >
-
-            <div class="loading">
-
-              <div class="spinner"></div>
-
-              Loading reviews...
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- ===================================================
-           PROFILE
-           =================================================== -->
-
-      <section
-        class="section"
-        id="section-profile"
-      >
-
-        <div class="card">
-
-          <div class="profile-header">
-
-            <div
-              class="large-avatar"
-              id="profileAvatar"
-            >
-              O
-            </div>
-
-            <div>
-
-              <h2 id="profileName">
-                Owner
-              </h2>
-
-              <p id="profileEmail">
-                Loading...
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <form id="profileForm">
-
-            <div class="form-grid">
-
-
-              <div class="form-group">
-
-                <label for="profileFullName">
-                  Full Name
-                </label>
-
-                <input
-                  id="profileFullName"
-                  type="text"
-                  required
-                >
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label for="profilePhone">
-                  Phone Number
-                </label>
-
-                <input
-                  id="profilePhone"
-                  type="tel"
-                >
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label>
-                  Email Address
-                </label>
-
-                <input
-                  id="profileEmailInput"
-                  type="email"
-                  disabled
-                >
-
-              </div>
-
-
-              <div class="form-group">
-
-                <label>
-                  Account Role
-                </label>
-
-                <input
-                  value="Owner"
-                  disabled
-                >
-
-              </div>
-
-
-              <div class="form-group full">
-
-                <label for="profileAddress">
-                  Address
-                </label>
-
-                <textarea
-                  id="profileAddress"
-                  placeholder="Enter your address"
-                ></textarea>
-
-              </div>
-
-            </div>
-
-
-            <button
-              type="submit"
-              class="btn btn-primary"
-              id="profileSave"
-            >
-              Save Profile
-            </button>
-
-          </form>
-
-        </div>
-
-      </section>
-
-
-      <footer class="footer">
-
-        © 2026
-        <strong>StudentHubHelp</strong>.
-        All rights reserved.
-
-        <div style="margin-top:6px;line-height:1.7;">
-
-          Director:
-          <strong>SATPAL SWAMI</strong>
-          <br>
-
-          📞
-          <a href="tel:+919929718264">
-            +91 9929718264
-          </a>
-
-          <br>
-
-          ✉️
-          <a href="mailto:satpalswami22742@gmail.com">
-            satpalswami22742@gmail.com
-          </a>
-
-        </div>
-
-      </footer>
+      </form>
 
     </div>
 
-  </main>
+
+    <div
+      id="galleryList"
+      style="margin-top:20px"
+    ></div>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     BOOKINGS
+====================================================== -->
+
+<section
+  class="section"
+  id="section-bookings"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          Bookings
+        </div>
+
+        <div class="card-subtitle">
+          Manage hostel, tiffin and library booking requests
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      class="table-wrap"
+      id="bookingsTable"
+    ></div>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     AVAILABILITY
+====================================================== -->
+
+<section
+  class="section"
+  id="section-availability"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          Availability
+        </div>
+
+        <div class="card-subtitle">
+          Keep your student-facing availability accurate
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      id="availabilityArea"
+    ></div>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     REVIEWS
+====================================================== -->
+
+<section
+  class="section"
+  id="section-reviews"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          Reviews
+        </div>
+
+        <div class="card-subtitle">
+          Student feedback on your properties
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      id="reviewsArea"
+    ></div>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     VERIFICATION
+====================================================== -->
+
+<section
+  class="section"
+  id="section-verification"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          Verification
+        </div>
+
+        <div class="card-subtitle">
+          Build trust with students
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      id="verificationArea"
+    ></div>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     ADD LISTING
+====================================================== -->
+
+<section
+  class="section"
+  id="section-add"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          Add New Listing
+        </div>
+
+        <div class="card-subtitle">
+          Submit a new property for StudentHubHelp
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <form id="addListingForm">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label>
+            Category *
+          </label>
+
+          <select id="addCategory" required>
+
+            <option value="">
+              Select Category
+            </option>
+
+            <option value="hostels">
+              Hostel / PG
+            </option>
+
+            <option value="tiffins">
+              Tiffin / Mess
+            </option>
+
+            <option value="libraries">
+              Library
+            </option>
+
+            <option value="cafes">
+              Cafe
+            </option>
+
+            <option value="bookstores">
+              Book Store
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Property Name *
+          </label>
+
+          <input
+            id="addName"
+            required
+            placeholder="Property name"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Area *
+          </label>
+
+          <input
+            id="addArea"
+            required
+            placeholder="Area / locality"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Phone *
+          </label>
+
+          <input
+            id="addPhone"
+            required
+            placeholder="+91..."
+          >
+
+        </div>
+
+
+        <div class="form-group full">
+
+          <label>
+            Address *
+          </label>
+
+          <textarea
+            id="addAddress"
+            required
+            placeholder="Complete address"
+          ></textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Timing
+          </label>
+
+          <input
+            id="addTiming"
+            placeholder="e.g. 6 AM - 10 PM"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Facilities
+          </label>
+
+          <input
+            id="addFacilities"
+            placeholder="WiFi, Parking, AC..."
+          >
+
+        </div>
+
+      </div>
+
+
+      <button
+        class="btn btn-primary"
+        type="submit"
+        id="addListingBtn"
+      >
+
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+
+        Submit Listing
+
+      </button>
+
+    </form>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     CLAIM
+====================================================== -->
+
+<section
+  class="section"
+  id="section-claim"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          Claim Property
+        </div>
+
+        <div class="card-subtitle">
+          Claim an existing StudentHubHelp listing
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <form id="claimForm">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label>
+            Property ID *
+          </label>
+
+          <input
+            id="claimPropertyId"
+            required
+            placeholder="Existing property ID"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Property Type *
+          </label>
+
+          <select id="claimPropertyType">
+
+            <option value="hostels">
+              Hostel
+            </option>
+
+            <option value="tiffins">
+              Tiffin
+            </option>
+
+            <option value="libraries">
+              Library
+            </option>
+
+            <option value="cafes">
+              Cafe
+            </option>
+
+            <option value="bookstores">
+              Bookstore
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="form-group full">
+
+          <label>
+            Message
+          </label>
+
+          <textarea
+            id="claimMessage"
+            placeholder="Tell us why you own/manage this property."
+          ></textarea>
+
+        </div>
+
+      </div>
+
+
+      <button
+        class="btn btn-primary"
+        type="submit"
+      >
+
+        Submit Claim Request
+
+      </button>
+
+    </form>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     REQUESTS
+====================================================== -->
+
+<section
+  class="section"
+  id="section-requests"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          My Requests
+        </div>
+
+        <div class="card-subtitle">
+          Track your listing, claim and verification requests
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      id="requestsArea"
+    ></div>
+
+  </div>
+
+</section>
+
+
+<!-- ======================================================
+     PROFILE
+====================================================== -->
+
+<section
+  class="section"
+  id="section-profile"
+>
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <div class="card-title">
+          My Profile
+        </div>
+
+        <div class="card-subtitle">
+          Keep your owner information updated
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <form id="profileForm">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label>
+            Full Name
+          </label>
+
+          <input
+            id="profileName"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Phone
+          </label>
+
+          <input
+            id="profilePhone"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Email
+          </label>
+
+          <input
+            id="profileEmail"
+            type="email"
+            disabled
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            Role
+          </label>
+
+          <input
+            value="Owner"
+            disabled
+          >
+
+        </div>
+
+
+        <div class="form-group full">
+
+          <label>
+            Address
+          </label>
+
+          <textarea
+            id="profileAddress"
+          ></textarea>
+
+        </div>
+
+      </div>
+
+
+      <button
+        class="btn btn-primary"
+        type="submit"
+      >
+
+        Save Profile
+
+      </button>
+
+    </form>
+
+  </div>
+
+</section>
+
+
+  </div>
+
+</main>
 
 </div>
 
 
+<!-- ======================================================
+     PROPERTY EDIT MODAL
+====================================================== -->
+
+<div
+  class="modal"
+  id="propertyModal"
+>
+
+  <div class="modal-box">
+
+    <div class="modal-head">
+
+      <div class="modal-title">
+        Edit Property
+      </div>
+
+      <button
+        class="modal-close"
+        onclick="closeModal('propertyModal')"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+
+    <div
+      class="modal-body"
+      id="propertyEditBody"
+    ></div>
+
+  </div>
+
+</div>
+
+
+<!-- ======================================================
+     TOAST
+====================================================== -->
+
+<div
+  class="toast"
+  id="toast"
+></div>
+
+
 <script>
 
-  /* =========================================================
-     SUPABASE CONFIG
-     ========================================================= */
+/* =========================================================
+   SUPABASE
+========================================================= */
 
-  const SUPABASE_URL =
-    "https://idurlccrarznnnqixxsd.supabase.co";
+const SUPABASE_URL =
+  "https://idurlccrarznnnqixxsd.supabase.co";
 
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+/*
+ IMPORTANT:
+ Put the SAME anon/public key that is already working
+ in your existing StudentHubHelp pages.
 
+ NEVER put service_role key here.
+*/
 
-  const supabaseClient =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
+const SUPABASE_ANON_KEY =
+  window.SUPABASE_ANON_KEY || "";
 
-
-  /* =========================================================
-     STATE
-     ========================================================= */
-
-  let currentUser = null;
-  let currentProfile = null;
-
-  let ownerProperties = [];
-  let ownerRequests = [];
-  let ownerClaims = [];
-  let ownerReviews = [];
+const db =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 
 
-  /* =========================================================
-     DOM
-     ========================================================= */
+/* =========================================================
+   STATE
+========================================================= */
 
-  const sidebar =
-    document.getElementById("sidebar");
+const state = {
 
-  const sidebarOverlay =
-    document.getElementById("sidebarOverlay");
+  user:null,
 
-  const mobileMenu =
-    document.getElementById("mobileMenu");
+  profile:null,
 
-  const globalAlert =
-    document.getElementById("globalAlert");
+  properties:[],
 
+  bookings:[],
 
-  /* =========================================================
-     ALERT
-     ========================================================= */
+  reviews:[],
 
-  function showAlert(
-    message,
-    type = "error"
-  ) {
+  claims:[],
 
-    globalAlert.textContent =
-      message;
+  requests:[],
 
-    globalAlert.className =
-      "alert show " +
-      (
-        type === "success"
-          ? "alert-success"
-          : "alert-error"
-      );
+  currentProperty:null
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-
-    setTimeout(() => {
-
-      globalAlert.className =
-        "alert";
-
-    }, 5000);
-
-  }
+};
 
 
-  /* =========================================================
-     HELPERS
-     ========================================================= */
+/* =========================================================
+   TABLE CONFIG
+========================================================= */
 
-  function normalizeRole(role) {
+const TABLES = [
 
-    return String(role || "")
-      .trim()
-      .toLowerCase();
+  "hostels",
+  "tiffins",
+  "cafes",
+  "libraries",
+  "bookstores"
 
-  }
+];
 
+const LABELS = {
 
-  function escapeHTML(value) {
+  hostels:"Hostel / PG",
+  tiffins:"Tiffin / Mess",
+  cafes:"Cafe",
+  libraries:"Library",
+  bookstores:"Bookstore"
 
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-
-  }
-
-
-  function initials(name) {
-
-    const parts =
-      String(name || "Owner")
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
-
-    if (!parts.length) {
-      return "O";
-    }
-
-    if (parts.length === 1) {
-      return parts[0]
-        .substring(0, 2)
-        .toUpperCase();
-    }
-
-    return (
-      parts[0][0] +
-      parts[parts.length - 1][0]
-    ).toUpperCase();
-
-  }
+};
 
 
-  function formatDate(value) {
+/* =========================================================
+   HELPERS
+========================================================= */
 
-    if (!value) {
-      return "—";
-    }
-
-    try {
-
-      return new Date(value)
-        .toLocaleDateString(
-          "en-IN",
-          {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-          }
-        );
-
-    } catch {
-
-      return "—";
-
-    }
-
-  }
+function $(id){
+  return document.getElementById(id);
+}
 
 
-  function normalizeStatus(status) {
+function esc(value){
 
-    return String(status || "")
-      .trim()
-      .toLowerCase();
+  return String(value ?? "")
+    .replace(/[&<>"']/g,c=>({
 
-  }
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+
+    }[c]));
+
+}
 
 
-  function statusBadge(status) {
+function toast(message,error=false){
 
-    const normalized =
-      normalizeStatus(status);
+  const el=$("toast");
 
-    let className =
-      "badge-pending";
+  el.textContent=message;
 
-    if (normalized === "active") {
-      className = "badge-active";
-    }
+  el.className=
+    "toast show " +
+    (error ? "error" : "success");
 
-    if (normalized === "rejected") {
-      className = "badge-rejected";
-    }
+  setTimeout(()=>{
 
-    if (normalized === "cancelled") {
-      className = "badge-cancelled";
-    }
+    el.classList.remove("show");
+
+  },3200);
+
+}
+
+
+function statusBadge(status){
+
+  const s=String(status||"pending").toLowerCase();
+
+  if(
+    s==="active" ||
+    s==="approved" ||
+    s==="confirmed" ||
+    s==="live"
+  ){
 
     return `
-      <span class="badge ${className}">
-        ${escapeHTML(status || "Pending")}
+      <span class="badge badge-active">
+        ${esc(status)}
       </span>
     `;
 
   }
 
+  if(
+    s==="rejected"
+  ){
 
-  /* =========================================================
-     NAVIGATION
-     ========================================================= */
+    return `
+      <span class="badge badge-rejected">
+        ${esc(status)}
+      </span>
+    `;
 
-  const sectionTitles = {
+  }
 
-    overview: [
-      "Owner Dashboard",
-      "Manage your StudentHubHelp properties"
-    ],
+  return `
+    <span class="badge badge-pending">
+      ${esc(status||"pending")}
+    </span>
+  `;
 
-    properties: [
-      "Live Properties",
-      "Properties linked to your owner account"
-    ],
+}
 
-    "add-listing": [
-      "Add Listing",
-      "Submit a new property for approval"
-    ],
 
-    claims: [
-      "Claim Property",
-      "Request ownership of an existing listing"
-    ],
+/* =========================================================
+   AUTH
+========================================================= */
 
-    requests: [
-      "My Requests",
-      "Track your submitted listing requests"
-    ],
+async function init(){
 
-    reviews: [
-      "Student Reviews",
-      "Monitor feedback from students"
-    ],
+  if(!SUPABASE_ANON_KEY){
 
-    profile: [
-      "My Profile",
-      "Manage your account information"
-    ]
+    toast(
+      "Supabase anon key is missing.",
+      true
+    );
+
+    return;
+
+  }
+
+
+  const {
+    data:{
+      session
+    }
+  } =
+    await db.auth.getSession();
+
+
+  if(!session){
+
+    location.href="auth.html";
+
+    return;
+
+  }
+
+
+  state.user=session.user;
+
+
+  await loadProfile();
+
+
+  if(
+    !state.profile ||
+    String(state.profile.role).toLowerCase()!=="owner"
+  ){
+
+    toast(
+      "Owner access required.",
+      true
+    );
+
+    await db.auth.signOut();
+
+    setTimeout(()=>{
+      location.href="auth.html";
+    },800);
+
+    return;
+
+  }
+
+
+  updateOwnerUI();
+
+  await loadEverything();
+
+  setupRealtime();
+
+}
+
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+async function loadProfile(){
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("profiles")
+      .select("*")
+      .eq("id",state.user.id)
+      .maybeSingle();
+
+
+  if(error){
+
+    console.error(error);
+
+    toast(
+      "Unable to load owner profile.",
+      true
+    );
+
+    return;
+
+  }
+
+
+  state.profile=data;
+
+}
+
+
+function updateOwnerUI(){
+
+  const name =
+    state.profile?.full_name ||
+    state.user?.email ||
+    "Owner";
+
+
+  $("sideOwnerName").textContent=name;
+
+  $("topOwnerName").textContent=name;
+
+  $("welcomeName").textContent=
+    name.split(" ")[0];
+
+  const initial =
+    name
+      .trim()
+      .charAt(0)
+      .toUpperCase() || "O";
+
+  $("topAvatar").textContent=initial;
+
+
+  $("profileName").value=
+    state.profile?.full_name || "";
+
+  $("profilePhone").value=
+    state.profile?.phone || "";
+
+  $("profileEmail").value=
+    state.profile?.email ||
+    state.user?.email ||
+    "";
+
+  $("profileAddress").value=
+    state.profile?.address || "";
+
+}
+
+
+/* =========================================================
+   LOAD ALL
+========================================================= */
+
+async function loadEverything(){
+
+  await Promise.all([
+
+    loadProperties(),
+    loadRequests(),
+    loadClaims()
+
+  ]);
+
+
+  await Promise.all([
+
+    loadBookings(),
+    loadReviews()
+
+  ]);
+
+
+  renderDashboard();
+
+  renderProperties();
+
+  populateSelectors();
+
+  renderBookings();
+
+  renderReviews();
+
+  renderRequests();
+
+  renderVerification();
+
+  renderAvailability();
+
+}
+
+
+/* =========================================================
+   PROPERTIES
+========================================================= */
+
+async function loadProperties(){
+
+  const all=[];
+
+
+  for(const table of TABLES){
+
+    const {
+      data,
+      error
+    } =
+      await db
+        .from(table)
+        .select("*")
+        .eq("owner_id",state.user.id)
+        .order("id",{ascending:false});
+
+
+    if(error){
+
+      console.warn(
+        "Property load:",
+        table,
+        error.message
+      );
+
+      continue;
+
+    }
+
+
+    (data||[]).forEach(row=>{
+
+      all.push({
+
+        ...row,
+
+        _table:table
+
+      });
+
+    });
+
+  }
+
+
+  state.properties=all;
+
+}
+
+
+/* =========================================================
+   PROPERTY IMAGE
+========================================================= */
+
+function propertyImage(property){
+
+  return (
+    property.image ||
+    property.image_url ||
+    "hostel-banner.png"
+  );
+
+}
+
+
+/* =========================================================
+   PROPERTY CARD
+========================================================= */
+
+function propertyCard(property){
+
+  const status =
+    property.status ||
+    "active";
+
+  const verified =
+    property.verified===true ||
+    property.verification_status==="verified";
+
+
+  return `
+
+    <div class="property-card">
+
+      <div class="property-image">
+
+        <img
+          src="${esc(propertyImage(property))}"
+          onerror="this.src='hostel-banner.png'"
+        >
+
+        <div class="property-status">
+
+          ${statusBadge(status)}
+
+          ${
+            verified
+              ? `
+                <span class="badge badge-info">
+                  <i class="fa-solid fa-shield-halved"></i>
+                  Verified
+                </span>
+              `
+              : ""
+          }
+
+        </div>
+
+      </div>
+
+
+      <div class="property-body">
+
+        <div class="property-name">
+          ${esc(property.name||"Unnamed Property")}
+        </div>
+
+
+        <div class="property-meta">
+
+          <div>
+            <i class="fa-solid fa-layer-group"></i>
+            ${esc(LABELS[property._table])}
+          </div>
+
+          <div>
+            <i class="fa-solid fa-location-dot"></i>
+            ${esc(property.area||property.address||"Location not added")}
+          </div>
+
+          ${
+            property.rating!==null &&
+            property.rating!==undefined &&
+            property.rating!==""
+              ? `
+                <div>
+                  ⭐ ${esc(property.rating)}
+                </div>
+              `
+              : ""
+          }
+
+        </div>
+
+
+        <div class="property-footer">
+
+          <button
+            class="btn btn-primary"
+            onclick="editProperty(
+              '${esc(property._table)}',
+              '${esc(property.id)}'
+            )"
+          >
+            <i class="fa-solid fa-pen"></i>
+            Edit
+          </button>
+
+
+          <button
+            class="btn btn-secondary"
+            onclick="openPropertyPage(
+              '${esc(property._table)}',
+              '${esc(property.id)}',
+              '${esc(property.slug||"")}'
+            )"
+          >
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            View
+          </button>
+
+
+          <button
+            class="btn btn-outline"
+            onclick="selectGalleryProperty(
+              '${esc(property._table)}',
+              '${esc(property.id)}'
+            )"
+          >
+            <i class="fa-solid fa-images"></i>
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+function renderProperties(){
+
+  const html =
+    state.properties.length
+
+      ? state.properties
+          .map(propertyCard)
+          .join("")
+
+      : `
+
+        <div class="empty" style="grid-column:1/-1">
+
+          <i class="fa-solid fa-building"></i>
+
+          <strong>
+            No properties found
+          </strong>
+
+          Add or claim your first property.
+
+        </div>
+
+      `;
+
+
+  $("allProperties").innerHTML=html;
+
+  $("dashboardProperties").innerHTML=
+    state.properties
+      .slice(0,4)
+      .map(propertyCard)
+      .join("");
+
+}
+
+
+/* =========================================================
+   OPEN PROPERTY
+========================================================= */
+
+function openPropertyPage(
+  table,
+  id,
+  slug
+){
+
+  const typeMap={
+
+    hostels:"hostel",
+    tiffins:"tiffin",
+    libraries:"library",
+    cafes:"cafe",
+    bookstores:"bookstore"
 
   };
 
 
-  function openSection(
-    sectionName
-  ) {
+  const type=typeMap[table];
 
-    if (!sectionTitles[sectionName]) {
-      sectionName = "overview";
+
+  if(!type){
+
+    return;
+
+  }
+
+
+  const value =
+    slug
+      ? `slug=${encodeURIComponent(slug)}`
+      : `id=${encodeURIComponent(id)}`;
+
+
+  location.href=
+    `property-details.html?type=${type}&${value}`;
+
+}
+
+
+/* =========================================================
+   EDIT PROPERTY
+========================================================= */
+
+function editProperty(table,id){
+
+  const property =
+    state.properties.find(
+      x =>
+        x._table===table &&
+        String(x.id)===String(id)
+    );
+
+
+  if(!property){
+
+    toast(
+      "Property not found.",
+      true
+    );
+
+    return;
+
+  }
+
+
+  state.currentProperty=property;
+
+
+  $("propertyEditBody").innerHTML=
+    buildEditForm(property);
+
+
+  $("propertyModal").classList.add("show");
+
+}
+
+
+function closeModal(id){
+
+  $(id).classList.remove("show");
+
+}
+
+
+/* =========================================================
+   EDIT FORM
+========================================================= */
+
+function field(
+  label,
+  key,
+  value,
+  type="text",
+  full=false
+){
+
+  return `
+
+    <div class="form-group ${full?"full":""}">
+
+      <label>
+        ${esc(label)}
+      </label>
+
+      ${
+        type==="textarea"
+
+          ? `
+            <textarea
+              data-key="${esc(key)}"
+            >${esc(value)}</textarea>
+          `
+
+          : `
+            <input
+              type="${type}"
+              data-key="${esc(key)}"
+              value="${esc(value)}"
+            >
+          `
+      }
+
+    </div>
+
+  `;
+
+}
+
+
+function buildEditForm(property){
+
+  const table=property._table;
+
+
+  let html=`
+
+    <form
+      id="propertyEditForm"
+    >
+
+      <div class="form-grid">
+
+        ${field(
+          "Property Name",
+          "name",
+          property.name
+        )}
+
+        ${field(
+          "Area",
+          "area",
+          property.area
+        )}
+
+        ${field(
+          "Phone",
+          "phone",
+          property.phone
+        )}
+
+        ${field(
+          "WhatsApp",
+          "whatsapp",
+          property.whatsapp
+        )}
+
+        ${field(
+          "Email",
+          "email",
+          property.email,
+          "email"
+        )}
+
+        ${field(
+          "Timing",
+          "timing",
+          property.timing
+        )}
+
+        ${field(
+          "Address",
+          "address",
+          property.address,
+          "text",
+          true
+        )}
+
+        ${field(
+          "Description",
+          "description",
+          property.description,
+          "textarea",
+          true
+        )}
+
+        ${field(
+          "Facilities",
+          "facilities",
+          property.facilities,
+          "textarea",
+          true
+        )}
+
+        ${field(
+          "Google Maps URL",
+          "google_maps_url",
+          property.google_maps_url,
+          "url",
+          true
+        )}
+
+        ${field(
+          "Image URL",
+          "image",
+          property.image,
+          "url",
+          true
+        )}
+
+  `;
+
+
+  /* HOSTEL */
+
+  if(table==="hostels"){
+
+    html+=`
+
+      ${field(
+        "Owner Name",
+        "owner_name",
+        property.owner_name
+      )}
+
+      ${field(
+        "City",
+        "city",
+        property.city
+      )}
+
+      ${field(
+        "Pincode",
+        "pincode",
+        property.pincode
+      )}
+
+      ${field(
+        "Monthly Rent",
+        "monthly_rent",
+        property.monthly_rent,
+        "number"
+      )}
+
+      ${field(
+        "Security Deposit",
+        "security_deposit",
+        property.security_deposit,
+        "number"
+      )}
+
+      ${field(
+        "Room Types",
+        "room_types",
+        property.room_types,
+        "textarea"
+      )}
+
+      ${field(
+        "Food Type",
+        "food_type",
+        property.food_type
+      )}
+
+      ${field(
+        "Total Beds",
+        "total_beds",
+        property.total_beds,
+        "number"
+      )}
+
+      ${field(
+        "Available Beds",
+        "available_beds",
+        property.available_beds,
+        "number"
+      )}
+
+    `;
+
+  }
+
+
+  /* TIFFIN */
+
+  if(table==="tiffins"){
+
+    html+=`
+
+      ${field(
+        "Owner Name",
+        "owner_name",
+        property.owner_name
+      )}
+
+      ${field(
+        "City",
+        "city",
+        property.city
+      )}
+
+      ${field(
+        "Service Area",
+        "service_area",
+        property.service_area
+      )}
+
+      ${field(
+        "Meal Type",
+        "meal_type",
+        property.meal_type
+      )}
+
+      ${field(
+        "Food Type",
+        "food_type",
+        property.food_type
+      )}
+
+      ${field(
+        "Plan Type",
+        "plan_type",
+        property.plan_type
+      )}
+
+      ${field(
+        "Price",
+        "price",
+        property.price,
+        "number"
+      )}
+
+      ${field(
+        "Menu",
+        "menu",
+        property.menu,
+        "textarea",
+        true
+      )}
+
+    `;
+
+  }
+
+
+  /* CAFE */
+
+  if(table==="cafes"){
+
+    html+=`
+
+      ${field(
+        "Owner Name",
+        "owner_name",
+        property.owner_name
+      )}
+
+      ${field(
+        "City",
+        "city",
+        property.city
+      )}
+
+      ${field(
+        "Cuisine",
+        "cuisine",
+        property.cuisine
+      )}
+
+      ${field(
+        "Price Range",
+        "price_range",
+        property.price_range
+      )}
+
+      ${field(
+        "Opening Time",
+        "opening_time",
+        property.opening_time
+      )}
+
+      ${field(
+        "Closing Time",
+        "closing_time",
+        property.closing_time
+      )}
+
+      ${field(
+        "Weekly Off",
+        "weekly_off",
+        property.weekly_off
+      )}
+
+      ${field(
+        "Menu",
+        "menu",
+        property.menu,
+        "textarea",
+        true
+      )}
+
+    `;
+
+  }
+
+
+  /* LIBRARY */
+
+  if(table==="libraries"){
+
+    html+=`
+
+      ${field(
+        "Owner Name",
+        "owner_name",
+        property.owner_name
+      )}
+
+      ${field(
+        "City",
+        "city",
+        property.city
+      )}
+
+      ${field(
+        "Library Type",
+        "library_type",
+        property.library_type
+      )}
+
+      ${field(
+        "Monthly Fee",
+        "monthly_fee",
+        property.monthly_fee,
+        "number"
+      )}
+
+      ${field(
+        "Daily Fee",
+        "daily_fee",
+        property.daily_fee,
+        "number"
+      )}
+
+      ${field(
+        "Seating Capacity",
+        "seating_capacity",
+        property.seating_capacity,
+        "number"
+      )}
+
+      ${field(
+        "Available Seats",
+        "available_seats",
+        property.available_seats,
+        "number"
+      )}
+
+    `;
+
+  }
+
+
+  /* BOOKSTORE */
+
+  if(table==="bookstores"){
+
+    html+=`
+
+      ${field(
+        "Owner Name",
+        "owner_name",
+        property.owner_name
+      )}
+
+      ${field(
+        "City",
+        "city",
+        property.city
+      )}
+
+      ${field(
+        "Categories",
+        "categories",
+        property.categories,
+        "textarea"
+      )}
+
+      ${field(
+        "Classes",
+        "classes",
+        property.classes
+      )}
+
+      ${field(
+        "Competitive Books",
+        "competitive_books",
+        property.competitive_books
+      )}
+
+      ${field(
+        "Opening Time",
+        "opening_time",
+        property.opening_time
+      )}
+
+      ${field(
+        "Closing Time",
+        "closing_time",
+        property.closing_time
+      )}
+
+      ${field(
+        "Weekly Off",
+        "weekly_off",
+        property.weekly_off
+      )}
+
+    `;
+
+  }
+
+
+  html+=`
+
+      </div>
+
+      <div
+        style="
+          margin-top:10px;
+          display:flex;
+          gap:10px;
+          justify-content:flex-end;
+        "
+      >
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeModal('propertyModal')"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="btn btn-primary"
+          type="submit"
+        >
+          <i class="fa-solid fa-floppy-disk"></i>
+          Save Changes
+        </button>
+
+      </div>
+
+    </form>
+
+  `;
+
+
+  return html;
+
+}
+
+
+/* =========================================================
+   SAVE PROPERTY
+========================================================= */
+
+document.addEventListener(
+  "submit",
+  async event=>{
+
+    if(event.target.id!=="propertyEditForm"){
+      return;
     }
 
 
-    document
-      .querySelectorAll(".section")
-      .forEach(section => {
+    event.preventDefault();
 
-        section.classList.remove(
-          "active"
-        );
+
+    const property=
+      state.currentProperty;
+
+
+    if(!property){
+      return;
+    }
+
+
+    const payload={};
+
+
+    event.target
+      .querySelectorAll("[data-key]")
+      .forEach(input=>{
+
+        const key=input.dataset.key;
+
+        let value=input.value.trim();
+
+
+        if(
+          input.type==="number"
+        ){
+
+          value =
+            value===""
+              ? null
+              : Number(value);
+
+        }
+
+        else if(
+          value===""
+        ){
+
+          value=null;
+
+        }
+
+
+        payload[key]=value;
 
       });
 
 
-    const target =
-      document.getElementById(
-        "section-" + sectionName
+    delete payload.id;
+
+
+    /*
+      Owner ID is NEVER editable from frontend.
+    */
+
+    delete payload.owner_id;
+
+
+    try{
+
+      const {
+        error
+      } =
+        await db
+          .from(property._table)
+          .update(payload)
+          .eq("id",property.id)
+          .eq("owner_id",state.user.id);
+
+
+      if(error){
+        throw error;
+      }
+
+
+      closeModal("propertyModal");
+
+      toast(
+        "Property updated successfully."
       );
 
-    if (target) {
-      target.classList.add("active");
+
+      await loadEverything();
+
+    }
+    catch(error){
+
+      console.error(error);
+
+      toast(
+        error.message ||
+        "Unable to update property.",
+        true
+      );
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   SELECTORS
+========================================================= */
+
+function populateSelectors(){
+
+  const options =
+    state.properties.length
+
+      ? state.properties
+          .map((p,i)=>`
+
+            <option
+              value="${i}"
+            >
+              ${esc(p.name||"Property")}
+              — ${esc(LABELS[p._table])}
+            </option>
+
+          `)
+          .join("")
+
+      : `
+        <option value="">
+          No properties
+        </option>
+      `;
+
+
+  $("managePropertySelector").innerHTML=options;
+
+  $("galleryPropertySelector").innerHTML=options;
+
+
+  $("managePropertySelector").onchange=
+    renderManageForm;
+
+
+  $("galleryPropertySelector").onchange=
+    loadGallery;
+
+
+  renderManageForm();
+
+  loadGallery();
+
+}
+
+
+/* =========================================================
+   MANAGE SECTION
+========================================================= */
+
+function renderManageForm(){
+
+  const index=
+    $("managePropertySelector").value;
+
+
+  const property=
+    state.properties[index];
+
+
+  if(!property){
+
+    $("manageFormArea").innerHTML=`
+
+      <div class="empty">
+
+        <i class="fa-solid fa-building"></i>
+
+        <strong>
+          No property selected
+        </strong>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  $("manageFormArea").innerHTML=`
+
+    <div class="property-item">
+
+      <div class="property-main">
+
+        <div class="property-name">
+          ${esc(property.name)}
+        </div>
+
+        <div class="property-meta">
+
+          ${esc(LABELS[property._table])}
+          ·
+          ${esc(property.area||"Location pending")}
+
+        </div>
+
+      </div>
+
+      <div class="property-actions">
+
+        <button
+          class="btn btn-primary"
+          onclick="editProperty(
+            '${esc(property._table)}',
+            '${esc(property.id)}'
+          )"
+        >
+          Edit Full Details
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   GALLERY
+========================================================= */
+
+function selectGalleryProperty(
+  table,
+  id
+){
+
+  showSection("gallery");
+
+
+  const index=
+    state.properties.findIndex(
+      x =>
+        x._table===table &&
+        String(x.id)===String(id)
+    );
+
+
+  if(index>=0){
+
+    $("galleryPropertySelector").value=index;
+
+    loadGallery();
+
+  }
+
+}
+
+
+async function loadGallery(){
+
+  const index=
+    $("galleryPropertySelector").value;
+
+
+  const property=
+    state.properties[index];
+
+
+  if(!property){
+
+    $("galleryList").innerHTML=`
+
+      <div class="empty">
+        <strong>No property selected</strong>
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("property_images")
+      .select("*")
+      .eq("property_id",String(property.id))
+      .eq("property_table",property._table)
+      .order("sort_order",{ascending:true});
+
+
+  if(error){
+
+    console.warn(error);
+
+    $("galleryList").innerHTML=`
+
+      <div class="empty">
+
+        <strong>
+          Gallery is not configured yet
+        </strong>
+
+        Run the Supabase migration below.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  const images=data||[];
+
+
+  $("galleryList").innerHTML=
+
+    images.length
+
+      ? `
+
+        <div
+          style="
+            display:grid;
+            grid-template-columns:
+              repeat(auto-fill,minmax(150px,1fr));
+            gap:12px;
+          "
+        >
+
+          ${
+            images.map(image=>`
+
+              <div
+                style="
+                  border:1px solid var(--border);
+                  border-radius:14px;
+                  overflow:hidden;
+                  background:white;
+                "
+              >
+
+                <img
+                  src="${esc(image.image_url)}"
+                  style="
+                    width:100%;
+                    height:130px;
+                    object-fit:cover;
+                  "
+                  onerror="
+                    this.style.display='none'
+                  "
+                >
+
+                <div style="padding:9px">
+
+                  <small>
+                    ${esc(image.image_type||"gallery")}
+                  </small>
+
+                </div>
+
+              </div>
+
+            `).join("")
+          }
+
+        </div>
+
+      `
+
+      : `
+
+        <div class="empty">
+
+          <i class="fa-solid fa-images"></i>
+
+          <strong>
+            No gallery photos yet
+          </strong>
+
+          Upload your first photos above.
+
+        </div>
+
+      `;
+
+}
+
+
+/* =========================================================
+   GALLERY UPLOAD
+========================================================= */
+
+$("galleryForm").addEventListener(
+  "submit",
+  async event=>{
+
+    event.preventDefault();
+
+
+    const index=
+      $("galleryPropertySelector").value;
+
+
+    const property=
+      state.properties[index];
+
+
+    const files=
+      [...$("galleryFiles").files];
+
+
+    if(!property){
+
+      toast(
+        "Please select a property.",
+        true
+      );
+
+      return;
+
     }
 
 
-    document
-      .querySelectorAll(".nav-item")
-      .forEach(item => {
+    if(!files.length){
 
-        item.classList.toggle(
-          "active",
-          item.dataset.section === sectionName
-        );
+      toast(
+        "Please select at least one image.",
+        true
+      );
+
+      return;
+
+    }
+
+
+    const button=
+      $("galleryUploadBtn");
+
+
+    button.disabled=true;
+
+    button.innerHTML=
+      "Uploading...";
+
+
+    try{
+
+      let sortOrder=0;
+
+
+      for(const file of files){
+
+        if(
+          !file.type.startsWith("image/")
+        ){
+
+          continue;
+
+        }
+
+
+        const extension=
+          file.name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
+
+        const filename=
+          `${crypto.randomUUID()}.${extension}`;
+
+
+        const path=
+          `${state.user.id}/${property._table}/${property.id}/${filename}`;
+
+
+        const {
+          error:uploadError
+        } =
+          await db.storage
+            .from("property-images")
+            .upload(
+              path,
+              file,
+              {
+                upsert:false
+              }
+            );
+
+
+        if(uploadError){
+
+          throw uploadError;
+
+        }
+
+
+        const {
+          data:urlData
+        } =
+          db.storage
+            .from("property-images")
+            .getPublicUrl(path);
+
+
+        const imageUrl=
+          urlData.publicUrl;
+
+
+        const {
+          error:insertError
+        } =
+          await db
+            .from("property_images")
+            .insert({
+
+              property_id:String(property.id),
+
+              property_table:property._table,
+
+              image_url:imageUrl,
+
+              image_type:
+                $("galleryImageType").value,
+
+              sort_order:sortOrder++
+
+            });
+
+
+        if(insertError){
+
+          throw insertError;
+
+        }
+
+      }
+
+
+      $("galleryFiles").value="";
+
+
+      toast(
+        "Photos uploaded successfully."
+      );
+
+
+      await loadGallery();
+
+
+    }
+    catch(error){
+
+      console.error(error);
+
+      toast(
+        error.message ||
+        "Photo upload failed.",
+        true
+      );
+
+    }
+    finally{
+
+      button.disabled=false;
+
+      button.innerHTML=
+        '<i class="fa-solid fa-cloud-arrow-up"></i> Upload Photos';
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   BOOKINGS
+========================================================= */
+
+async function loadBookings(){
+
+  const bookings=[];
+
+
+  /*
+    student_bookings.property_id is TEXT.
+
+    We fetch bookings belonging to our property IDs.
+  */
+
+  for(const property of state.properties){
+
+    const {
+      data,
+      error
+    } =
+      await db
+        .from("student_bookings")
+        .select("*")
+        .eq("property_id",String(property.id))
+        .eq("property_table",property._table)
+        .order("created_at",{ascending:false});
+
+
+    if(error){
+
+      console.warn(
+        "Booking:",
+        error.message
+      );
+
+      continue;
+
+    }
+
+
+    (data||[]).forEach(row=>{
+
+      bookings.push({
+
+        ...row,
+
+        _property:property
+
+      });
+
+    });
+
+  }
+
+
+  state.bookings=bookings;
+
+}
+
+
+function renderBookings(){
+
+  const data=state.bookings;
+
+
+  $("statBookings").textContent=
+    data.filter(
+      x =>
+        x.status==="pending" ||
+        x.status==="active"
+    ).length;
+
+
+  const pending=
+    data.filter(
+      x=>x.status==="pending"
+    ).length;
+
+
+  const countEl=$("bookingCount");
+
+
+  if(pending){
+
+    countEl.textContent=pending;
+
+    countEl.style.display="flex";
+
+  }else{
+
+    countEl.style.display="none";
+
+  }
+
+
+  if(!data.length){
+
+    $("bookingsTable").innerHTML=`
+
+      <div class="empty">
+
+        <i class="fa-solid fa-calendar-check"></i>
+
+        <strong>
+          No bookings yet
+        </strong>
+
+        Student booking requests will appear here.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  $("bookingsTable").innerHTML=`
+
+    <table>
+
+      <thead>
+
+        <tr>
+
+          <th>Property</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Joined</th>
+          <th>Duration</th>
+          <th>Action</th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        ${
+          data.map(booking=>`
+
+            <tr>
+
+              <td>
+                <strong>
+                  ${esc(
+                    booking.property_name ||
+                    booking._property?.name ||
+                    "Property"
+                  )}
+                </strong>
+              </td>
+
+              <td>
+                ${esc(
+                  LABELS[
+                    booking._property?._table
+                  ] || booking.category
+                )}
+              </td>
+
+              <td>
+                ${statusBadge(booking.status)}
+              </td>
+
+              <td>
+                ${esc(booking.joined_date||"—")}
+              </td>
+
+              <td>
+                ${
+                  booking.duration_months
+                    ? `${booking.duration_months} month(s)`
+                    : "—"
+                }
+              </td>
+
+              <td>
+
+                ${
+                  booking.status==="pending"
+
+                    ? `
+
+                      <button
+                        class="btn btn-success"
+                        onclick="updateBooking(
+                          '${esc(booking.id)}',
+                          'active'
+                        )"
+                      >
+                        Accept
+                      </button>
+
+                      <button
+                        class="btn btn-danger"
+                        onclick="updateBooking(
+                          '${esc(booking.id)}',
+                          'rejected'
+                        )"
+                      >
+                        Reject
+                      </button>
+
+                    `
+
+                    : "—"
+                }
+
+              </td>
+
+            </tr>
+
+          `).join("")
+        }
+
+      </tbody>
+
+    </table>
+
+  `;
+
+}
+
+
+async function updateBooking(
+  id,
+  status
+){
+
+  if(!confirm(
+    status==="active"
+      ? "Accept this booking?"
+      : "Reject this booking?"
+  )){
+    return;
+  }
+
+
+  const {
+    error
+  } =
+    await db
+      .from("student_bookings")
+      .update({
+        status
+      })
+      .eq("id",id);
+
+
+  if(error){
+
+    toast(
+      error.message,
+      true
+    );
+
+    return;
+
+  }
+
+
+  toast(
+    "Booking updated."
+  );
+
+
+  await loadBookings();
+
+  renderBookings();
+
+}
+
+
+/* =========================================================
+   REVIEWS
+========================================================= */
+
+async function loadReviews(){
+
+  const propertyIds=
+    state.properties
+
+      .map(p=>p.id)
+
+      .filter(id=>/^\d+$/.test(String(id)))
+
+      .map(Number);
+
+
+  if(!propertyIds.length){
+
+    state.reviews=[];
+
+    return;
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("reviews")
+      .select("*")
+      .in("property_id",propertyIds)
+      .order("created_at",{ascending:false});
+
+
+  if(error){
+
+    console.warn(error);
+
+    state.reviews=[];
+
+    return;
+
+  }
+
+
+  state.reviews=data||[];
+
+}
+
+
+function renderReviews(){
+
+  const data=state.reviews;
+
+
+  if(!data.length){
+
+    $("reviewsArea").innerHTML=`
+
+      <div class="empty">
+
+        <i class="fa-solid fa-star"></i>
+
+        <strong>
+          No reviews yet
+        </strong>
+
+        Student reviews will appear here.
+
+      </div>
+
+    `;
+
+    $("statRating").textContent="—";
+
+    return;
+
+  }
+
+
+  const average=
+    data.reduce(
+      (sum,x)=>sum+Number(x.rating||0),
+      0
+    ) / data.length;
+
+
+  $("statRating").textContent=
+    average.toFixed(1);
+
+
+  $("reviewsArea").innerHTML=
+
+    data.map(review=>`
+
+      <div
+        style="
+          border:1px solid var(--border);
+          border-radius:14px;
+          padding:16px;
+          margin-bottom:10px;
+        "
+      >
+
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            gap:10px;
+          "
+        >
+
+          <strong>
+            ${esc(review.user_name||"Student")}
+          </strong>
+
+          <span>
+            ⭐ ${esc(review.rating)}
+          </span>
+
+        </div>
+
+
+        <p
+          style="
+            margin-top:8px;
+            color:var(--muted);
+            font-size:12px;
+            line-height:1.6;
+          "
+        >
+          ${esc(review.review_text||"")}
+        </p>
+
+
+        <small
+          style="
+            display:block;
+            margin-top:8px;
+            color:#94a3b8;
+          "
+        >
+          ${esc(review.created_at||"")}
+        </small>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+/* =========================================================
+   AVAILABILITY
+========================================================= */
+
+function renderAvailability(){
+
+  if(!state.properties.length){
+
+    $("availabilityArea").innerHTML=`
+
+      <div class="empty">
+
+        <strong>
+          No properties
+        </strong>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  $("availabilityArea").innerHTML=
+
+    state.properties.map((p,index)=>{
+
+      let content="";
+
+
+      if(p._table==="hostels"){
+
+        const total=
+          Number(p.total_beds||0);
+
+        const available=
+          Number(p.available_beds||0);
+
+
+        const percent=
+          total
+            ? Math.min(
+                100,
+                Math.max(
+                  0,
+                  available/total*100
+                )
+              )
+            : 0;
+
+
+        content=`
+
+          <div class="form-grid">
+
+            <div class="form-group">
+
+              <label>
+                Total Beds
+              </label>
+
+              <input
+                type="number"
+                id="totalBeds${index}"
+                value="${esc(p.total_beds??"")}"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label>
+                Available Beds
+              </label>
+
+              <input
+                type="number"
+                id="availableBeds${index}"
+                value="${esc(p.available_beds??"")}"
+              >
+
+            </div>
+
+          </div>
+
+
+          <div class="progress">
+
+            <div
+              class="progress-bar"
+              style="width:${percent}%"
+            ></div>
+
+          </div>
+
+          <small>
+            ${available} available of ${total} beds
+          </small>
+
+        `;
+
+      }
+
+
+      else if(p._table==="libraries"){
+
+        const total=
+          Number(p.seating_capacity||0);
+
+        const available=
+          Number(p.available_seats||0);
+
+
+        const percent=
+          total
+            ? Math.min(
+                100,
+                Math.max(
+                  0,
+                  available/total*100
+                )
+              )
+            : 0;
+
+
+        content=`
+
+          <div class="form-grid">
+
+            <div class="form-group">
+
+              <label>
+                Seating Capacity
+              </label>
+
+              <input
+                type="number"
+                id="libraryTotal${index}"
+                value="${esc(p.seating_capacity??"")}"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label>
+                Available Seats
+              </label>
+
+              <input
+                type="number"
+                id="libraryAvailable${index}"
+                value="${esc(p.available_seats??"")}"
+              >
+
+            </div>
+
+          </div>
+
+
+          <div class="progress">
+
+            <div
+              class="progress-bar"
+              style="width:${percent}%"
+            ></div>
+
+          </div>
+
+        `;
+
+      }
+
+
+      else if(p._table==="tiffins"){
+
+        content=`
+
+          <div class="checkbox-row">
+
+            <input
+              type="checkbox"
+              id="tiffinAvailable${index}"
+              ${p.subscription_available===true?"checked":""}
+            >
+
+            <label
+              style="margin:0"
+              for="tiffinAvailable${index}"
+            >
+              Subscription currently available
+            </label>
+
+          </div>
+
+        `;
+
+      }
+
+
+      else{
+
+        content=`
+
+          <div
+            style="
+              color:var(--muted);
+              font-size:12px;
+            "
+          >
+            Availability management is not required
+            for this category.
+          </div>
+
+        `;
+
+      }
+
+
+      return `
+
+        <div
+          style="
+            border:1px solid var(--border);
+            border-radius:16px;
+            padding:18px;
+            margin-bottom:12px;
+          "
+        >
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              gap:10px;
+              margin-bottom:15px;
+            "
+          >
+
+            <div>
+
+              <strong>
+                ${esc(p.name)}
+              </strong>
+
+              <div
+                style="
+                  color:var(--muted);
+                  font-size:10px;
+                  margin-top:4px;
+                "
+              >
+                ${esc(LABELS[p._table])}
+              </div>
+
+            </div>
+
+          </div>
+
+
+          ${content}
+
+
+          ${
+            ["hostels","libraries","tiffins"]
+              .includes(p._table)
+
+              ? `
+
+                <button
+                  class="btn btn-primary"
+                  style="margin-top:14px"
+                  onclick="saveAvailability(${index})"
+                >
+                  Save Availability
+                </button>
+
+              `
+
+              : ""
+          }
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
+
+
+async function saveAvailability(index){
+
+  const p=state.properties[index];
+
+
+  if(!p){
+    return;
+  }
+
+
+  let payload={};
+
+
+  if(p._table==="hostels"){
+
+    payload={
+
+      total_beds:
+        Number(
+          $(`totalBeds${index}`).value
+        ) || 0,
+
+      available_beds:
+        Number(
+          $(`availableBeds${index}`).value
+        ) || 0
+
+    };
+
+  }
+
+
+  else if(p._table==="libraries"){
+
+    payload={
+
+      seating_capacity:
+        Number(
+          $(`libraryTotal${index}`).value
+        ) || 0,
+
+      available_seats:
+        Number(
+          $(`libraryAvailable${index}`).value
+        ) || 0
+
+    };
+
+  }
+
+
+  else if(p._table==="tiffins"){
+
+    payload={
+
+      subscription_available:
+        $(`tiffinAvailable${index}`).checked
+
+    };
+
+  }
+
+
+  const {
+    error
+  } =
+    await db
+      .from(p._table)
+      .update(payload)
+      .eq("id",p.id)
+      .eq("owner_id",state.user.id);
+
+
+  if(error){
+
+    toast(
+      error.message,
+      true
+    );
+
+    return;
+
+  }
+
+
+  toast(
+    "Availability updated."
+  );
+
+
+  await loadProperties();
+
+  renderAvailability();
+
+}
+
+
+/* =========================================================
+   VERIFICATION
+========================================================= */
+
+function renderVerification(){
+
+  if(!state.properties.length){
+
+    $("verificationArea").innerHTML=`
+
+      <div class="empty">
+
+        <strong>
+          No properties
+        </strong>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  $("verificationArea").innerHTML=
+
+    state.properties.map(p=>{
+
+      const verified=
+        p.verified===true ||
+        p.verification_status==="verified";
+
+
+      return `
+
+        <div
+          style="
+            border:1px solid var(--border);
+            border-radius:16px;
+            padding:18px;
+            margin-bottom:12px;
+          "
+        >
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              gap:15px;
+              align-items:center;
+            "
+          >
+
+            <div>
+
+              <strong>
+                ${esc(p.name)}
+              </strong>
+
+              <div
+                style="
+                  margin-top:5px;
+                  color:var(--muted);
+                  font-size:10px;
+                "
+              >
+                ${esc(LABELS[p._table])}
+              </div>
+
+            </div>
+
+
+            ${
+              verified
+
+                ? `
+                  <span class="badge badge-active">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    Verified
+                  </span>
+                `
+
+                : `
+                  <span class="badge badge-pending">
+                    Verification Pending
+                  </span>
+                `
+            }
+
+          </div>
+
+
+          <div
+            style="
+              margin-top:13px;
+              color:var(--muted);
+              font-size:11px;
+              line-height:1.6;
+            "
+          >
+
+            ${
+              verified
+
+                ? `
+                  This property is marked as verified
+                  by StudentHubHelp.
+                `
+
+                : `
+                  Your property is not currently verified.
+                  You can request verification from StudentHubHelp.
+                `
+            }
+
+          </div>
+
+
+          ${
+            !verified
+
+              ? `
+
+                <button
+                  class="btn btn-primary"
+                  style="margin-top:12px"
+                  onclick="requestVerification(
+                    '${esc(p._table)}',
+                    '${esc(p.id)}'
+                  )"
+                >
+                  Request Verification
+                </button>
+
+              `
+
+              : ""
+
+          }
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
+
+
+async function requestVerification(
+  table,
+  id
+){
+
+  const property=
+    state.properties.find(
+      p =>
+        p._table===table &&
+        String(p.id)===String(id)
+    );
+
+
+  if(!property){
+    return;
+  }
+
+
+  const {
+    error
+  } =
+    await db
+      .from("verification_requests")
+      .insert({
+
+        owner_id:state.user.id,
+
+        property_id:String(property.id),
+
+        property_table:property._table,
+
+        status:"pending"
 
       });
 
 
-    document.getElementById(
-      "pageTitle"
-    ).textContent =
-      sectionTitles[sectionName][0];
+  if(error){
+
+    toast(
+      error.message,
+      true
+    );
+
+    return;
+
+  }
 
 
-    document.getElementById(
-      "pageSubtitle"
-    ).textContent =
-      sectionTitles[sectionName][1];
+  toast(
+    "Verification request submitted."
+  );
 
 
-    sidebar.classList.remove("open");
-    sidebarOverlay.classList.remove("show");
+  await loadRequests();
+
+  renderRequests();
+
+}
 
 
-    if (sectionName === "properties") {
-      renderProperties();
+/* =========================================================
+   REQUESTS
+========================================================= */
+
+async function loadRequests(){
+
+  const [
+    listingResult,
+    claimResult,
+    verificationResult
+  ] =
+    await Promise.all([
+
+      db
+        .from("listing_requests")
+        .select("*")
+        .eq("owner_id",state.user.id)
+        .order("created_at",{ascending:false}),
+
+      db
+        .from("claim_requests")
+        .select("*")
+        .eq("owner_id",state.user.id)
+        .order("created_at",{ascending:false}),
+
+      db
+        .from("verification_requests")
+        .select("*")
+        .eq("owner_id",state.user.id)
+        .order("created_at",{ascending:false})
+
+    ]);
+
+
+  state.requests=[];
+
+
+  (listingResult.data||[])
+    .forEach(x=>{
+
+      state.requests.push({
+
+        ...x,
+
+        _type:"Listing Request"
+
+      });
+
+    });
+
+
+  (claimResult.data||[])
+    .forEach(x=>{
+
+      state.requests.push({
+
+        ...x,
+
+        _type:"Claim Request"
+
+      });
+
+    });
+
+
+  (verificationResult.data||[])
+    .forEach(x=>{
+
+      state.requests.push({
+
+        ...x,
+
+        _type:"Verification"
+
+      });
+
+    });
+
+
+  state.requests.sort(
+    (a,b)=>
+      new Date(b.created_at||0) -
+      new Date(a.created_at||0)
+  );
+
+}
+
+
+function renderRequests(){
+
+  if(!state.requests.length){
+
+    $("requestsArea").innerHTML=`
+
+      <div class="empty">
+
+        <i class="fa-solid fa-inbox"></i>
+
+        <strong>
+          No requests
+        </strong>
+
+        Your submitted requests will appear here.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  $("requestsArea").innerHTML=
+
+    state.requests.map(request=>`
+
+      <div
+        style="
+          border:1px solid var(--border);
+          border-radius:14px;
+          padding:16px;
+          margin-bottom:10px;
+        "
+      >
+
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            gap:10px;
+          "
+        >
+
+          <div>
+
+            <strong>
+              ${esc(request._type)}
+            </strong>
+
+            <div
+              style="
+                margin-top:4px;
+                color:var(--muted);
+                font-size:10px;
+              "
+            >
+              ${esc(request.property_name||request.owner_name||"Request")}
+            </div>
+
+          </div>
+
+
+          ${statusBadge(request.status)}
+
+        </div>
+
+
+        <div
+          style="
+            margin-top:8px;
+            color:var(--muted);
+            font-size:10px;
+          "
+        >
+          ${esc(request.created_at||"")}
+        </div>
+
+
+        ${
+          request.admin_note
+            ? `
+              <div
+                style="
+                  margin-top:10px;
+                  padding:10px;
+                  border-radius:10px;
+                  background:#f8fafc;
+                  font-size:11px;
+                "
+              >
+                <strong>Admin note:</strong>
+                ${esc(request.admin_note)}
+              </div>
+            `
+            : ""
+        }
+
+      </div>
+
+    `).join("");
+
+}
+
+
+/* =========================================================
+   CLAIM
+========================================================= */
+
+$("claimForm").addEventListener(
+  "submit",
+  async event=>{
+
+    event.preventDefault();
+
+
+    const {
+      error
+    } =
+      await db
+        .from("claim_requests")
+        .insert({
+
+          property_id:
+            $("claimPropertyId").value.trim(),
+
+          property_type:
+            $("claimPropertyType").value,
+
+          owner_id:
+            state.user.id,
+
+          owner_name:
+            state.profile?.full_name ||
+            state.user.email,
+
+          owner_phone:
+            state.profile?.phone || "",
+
+          message:
+            $("claimMessage").value.trim(),
+
+          status:"pending"
+
+        });
+
+
+    if(error){
+
+      toast(
+        error.message,
+        true
+      );
+
+      return;
+
     }
 
-    if (sectionName === "requests") {
-      renderRequests();
+
+    event.target.reset();
+
+    toast(
+      "Claim request submitted."
+    );
+
+
+    await loadClaims();
+
+    await loadRequests();
+
+    renderRequests();
+
+  }
+);
+
+
+/* =========================================================
+   CLAIMS
+========================================================= */
+
+async function loadClaims(){
+
+  const {
+    data
+  } =
+    await db
+      .from("claim_requests")
+      .select("*")
+      .eq("owner_id",state.user.id)
+      .order("created_at",{ascending:false});
+
+
+  state.claims=data||[];
+
+}
+
+
+/* =========================================================
+   ADD LISTING
+========================================================= */
+
+$("addListingForm").addEventListener(
+  "submit",
+  async event=>{
+
+    event.preventDefault();
+
+
+    const table=
+      $("addCategory").value;
+
+
+    if(!TABLES.includes(table)){
+
+      toast(
+        "Select a valid category.",
+        true
+      );
+
+      return;
+
     }
 
-    if (sectionName === "claims") {
-      renderClaims();
+
+    const payload={
+
+      name:
+        $("addName").value.trim(),
+
+      category:
+        LABELS[table],
+
+      area:
+        $("addArea").value.trim(),
+
+      address:
+        $("addAddress").value.trim(),
+
+      phone:
+        $("addPhone").value.trim(),
+
+      timing:
+        $("addTiming").value.trim() || null,
+
+      facilities:
+        $("addFacilities").value.trim() || null,
+
+      owner_id:
+        state.user.id,
+
+      status:"pending"
+
+    };
+
+
+    const {
+      error
+    } =
+      await db
+        .from(table)
+        .insert(payload);
+
+
+    if(error){
+
+      toast(
+        error.message,
+        true
+      );
+
+      return;
+
     }
 
-    if (sectionName === "reviews") {
-      renderReviews();
+
+    event.target.reset();
+
+
+    toast(
+      "Listing submitted successfully."
+    );
+
+
+    await loadProperties();
+
+    await loadRequests();
+
+    renderProperties();
+
+    populateSelectors();
+
+    renderRequests();
+
+  }
+);
+
+
+/* =========================================================
+   PROFILE SAVE
+========================================================= */
+
+$("profileForm").addEventListener(
+  "submit",
+  async event=>{
+
+    event.preventDefault();
+
+
+    const payload={
+
+      full_name:
+        $("profileName").value.trim(),
+
+      phone:
+        $("profilePhone").value.trim(),
+
+      address:
+        $("profileAddress").value.trim()
+
+    };
+
+
+    const {
+      error
+    } =
+      await db
+        .from("profiles")
+        .update(payload)
+        .eq("id",state.user.id);
+
+
+    if(error){
+
+      toast(
+        error.message,
+        true
+      );
+
+      return;
+
     }
 
+
+    state.profile={
+      ...state.profile,
+      ...payload
+    };
+
+
+    updateOwnerUI();
+
+
+    toast(
+      "Profile updated successfully."
+    );
+
+  }
+);
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+const sectionTitles={
+
+  dashboard:[
+    "Owner Dashboard",
+    "Manage your StudentHubHelp properties"
+  ],
+
+  properties:[
+    "My Properties",
+    "All properties connected to your account"
+  ],
+
+  manage:[
+    "Manage Property",
+    "Edit your property information"
+  ],
+
+  gallery:[
+    "Photos & Gallery",
+    "Manage property images"
+  ],
+
+  bookings:[
+    "Bookings",
+    "Manage student booking requests"
+  ],
+
+  availability:[
+    "Availability",
+    "Keep your availability updated"
+  ],
+
+  reviews:[
+    "Reviews",
+    "Student feedback"
+  ],
+
+  verification:[
+    "Verification",
+    "Build trust with students"
+  ],
+
+  add:[
+    "Add Listing",
+    "Submit a new property"
+  ],
+
+  claim:[
+    "Claim Property",
+    "Claim an existing listing"
+  ],
+
+  requests:[
+    "My Requests",
+    "Track submitted requests"
+  ],
+
+  profile:[
+    "My Profile",
+    "Manage your owner account"
+  ]
+
+};
+
+
+function showSection(name){
+
+  document
+    .querySelectorAll(".section")
+    .forEach(section=>{
+      section.classList.remove("active");
+    });
+
+
+  const target=
+    $("section-"+name);
+
+
+  if(target){
+    target.classList.add("active");
   }
 
 
   document
     .querySelectorAll(".nav-item")
-    .forEach(item => {
+    .forEach(item=>{
 
-      item.addEventListener(
-        "click",
-        () => {
-
-          openSection(
-            item.dataset.section
-          );
-
-        }
+      item.classList.toggle(
+        "active",
+        item.dataset.section===name
       );
 
     });
 
 
-  document
-    .querySelectorAll("[data-go]")
-    .forEach(button => {
+  const title=
+    sectionTitles[name] ||
+    sectionTitles.dashboard;
 
-      button.addEventListener(
-        "click",
-        () => {
 
-          openSection(
-            button.dataset.go
-          );
+  $("pageTitle").textContent=
+    title[0];
 
-        }
-      );
+  $("pageSubtitle").textContent=
+    title[1];
 
-    });
 
+  $("sidebar").classList.remove("open");
 
-  mobileMenu.addEventListener(
-    "click",
-    () => {
 
-      sidebar.classList.add("open");
-
-      sidebarOverlay.classList.add("show");
-
-    }
-  );
-
-
-  sidebarOverlay.addEventListener(
-    "click",
-    () => {
-
-      sidebar.classList.remove("open");
-
-      sidebarOverlay.classList.remove("show");
-
-    }
-  );
-
-
-  /* =========================================================
-     LOAD CURRENT USER
-     ========================================================= */
-
-  async function loadCurrentUser() {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient.auth
-        .getUser();
-
-
-    if (error) {
-
-      console.error(
-        "Auth user error:",
-        error
-      );
-
-      throw new Error(
-        "Unable to verify your login session."
-      );
-
-    }
-
-
-    const user =
-      data?.user;
-
-
-    if (!user) {
-
-      window.location.replace(
-        "auth.html"
-      );
-
-      return null;
-
-    }
-
-
-    currentUser = user;
-
-    return user;
-
-  }
-
-
-  /* =========================================================
-     LOAD OWNER PROFILE
-     ========================================================= */
-
-  async function loadProfile() {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("profiles")
-        .select(
-          "id, full_name, phone, role, email, address, property"
-        )
-        .eq(
-          "id",
-          currentUser.id
-        )
-        .maybeSingle();
-
-
-    if (error) {
-
-      console.error(
-        "Profile error:",
-        error
-      );
-
-      throw new Error(
-        "Unable to load your profile."
-      );
-
-    }
-
-
-    if (!data) {
-
-      throw new Error(
-        "Your account profile was not found."
-      );
-
-    }
-
-
-    currentProfile = data;
-
-
-    const role =
-      normalizeRole(
-        data.role
-      );
-
-
-    /* -------------------------------------------------------
-       FAIL CLOSED
-       ------------------------------------------------------- */
-
-    if (role !== "owner") {
-
-      if (role === "student") {
-
-        window.location.replace(
-          "student-dashboard.html"
-        );
-
-        return;
-
-      }
-
-
-      if (role === "admin") {
-
-        window.location.replace(
-          "admin-dashboard.html"
-        );
-
-        return;
-
-      }
-
-
-      await supabaseClient.auth.signOut();
-
-      throw new Error(
-        "Owner access is not available for this account."
-      );
-
-    }
-
-
-    renderProfile();
-
-  }
-
-
-  /* =========================================================
-     RENDER PROFILE
-     ========================================================= */
-
-  function renderProfile() {
-
-    const name =
-      currentProfile.full_name ||
-      currentUser.email ||
-      "Owner";
-
-
-    document.getElementById(
-      "sidebarOwnerName"
-    ).textContent = name;
-
-
-    document.getElementById(
-      "topName"
-    ).textContent = name;
-
-
-    document.getElementById(
-      "welcomeName"
-    ).textContent = name;
-
-
-    const avatar =
-      initials(name);
-
-
-    document.getElementById(
-      "topAvatar"
-    ).textContent = avatar;
-
-
-    document.getElementById(
-      "profileAvatar"
-    ).textContent = avatar;
-
-
-    document.getElementById(
-      "profileName"
-    ).textContent = name;
-
-
-    document.getElementById(
-      "profileEmail"
-    ).textContent =
-      currentUser.email || "—";
-
-
-    document.getElementById(
-      "profileFullName"
-    ).value =
-      currentProfile.full_name || "";
-
-
-    document.getElementById(
-      "profilePhone"
-    ).value =
-      currentProfile.phone || "";
-
-
-    document.getElementById(
-      "profileEmailInput"
-    ).value =
-      currentUser.email || currentProfile.email || "";
-
-
-    document.getElementById(
-      "profileAddress"
-    ).value =
-      currentProfile.address || "";
-
-  }
-
-
-  /* =========================================================
-     LOAD OWNER PROPERTIES
-     ========================================================= */
-
-  async function loadOwnerProperties() {
-
-    const tables = [
-
-      {
-        table: "hostels",
-        category: "Hostel / PG"
-      },
-
-      {
-        table: "tiffins",
-        category: "Tiffin / Mess"
-      },
-
-      {
-        table: "libraries",
-        category: "Library"
-      },
-
-      {
-        table: "cafes",
-        category: "Cafe"
-      },
-
-      {
-        table: "bookstores",
-        category: "Book Store"
-      }
-
-    ];
-
-
-    const results =
-      await Promise.all(
-
-        tables.map(
-          async item => {
-
-            const {
-              data,
-              error
-            } =
-              await supabaseClient
-                .from(item.table)
-                .select("*")
-                .eq(
-                  "owner_id",
-                  currentUser.id
-                );
-
-
-            if (error) {
-
-              console.error(
-                `${item.table} error:`,
-                error
-              );
-
-              return [];
-
-            }
-
-
-            return (data || [])
-              .map(row => ({
-
-                ...row,
-
-                _table: item.table,
-
-                _category: item.category
-
-              }));
-
-          }
-        )
-
-      );
-
-
-    ownerProperties =
-      results.flat();
-
-
+  if(name==="properties"){
     renderProperties();
-
-    renderOverviewProperties();
-
-    updateStats();
-
   }
 
-
-  /* =========================================================
-     PROPERTY DISPLAY
-     ========================================================= */
-
-  function propertyDisplayName(
-    property
-  ) {
-
-    return (
-      property.name ||
-      property.property_name ||
-      "Unnamed Property"
-    );
-
+  if(name==="bookings"){
+    renderBookings();
   }
 
-
-  function propertyArea(
-    property
-  ) {
-
-    return (
-      property.area ||
-      property.city ||
-      property.location ||
-      "Area not available"
-    );
-
-  }
-
-
-  function propertyAddress(
-    property
-  ) {
-
-    return (
-      property.address ||
-      "Address not available"
-    );
-
-  }
-
-
-  function propertyPhone(
-    property
-  ) {
-
-    return (
-      property.phone ||
-      "Phone not available"
-    );
-
-  }
-
-
-function renderPropertyItem(property) {
-    const name = propertyDisplayName(property);
-    const category = property._category || property.category || "Property";
-    const table = property._table || property.property_table || "hostels";
-    const categoryStr = String(category).toLowerCase();
-
-    let githubBanner = "hostel-banner.png";
-    if (categoryStr.includes("hostel") || categoryStr.includes("pg") || table === "hostels") {
-      githubBanner = "hostel-banner.png";
-    } else if (categoryStr.includes("tiffin") || categoryStr.includes("mess") || table === "tiffins") {
-      githubBanner = "tiffin-banner.png";
-    } else if (categoryStr.includes("library") || table === "libraries") {
-      githubBanner = "library-banner.png";
-    } else if (categoryStr.includes("cafe") || table === "cafes") {
-      githubBanner = "cafe-banner.png";
-    } else if (categoryStr.includes("book") || categoryStr.includes("store") || table === "bookstores") {
-      githubBanner = "bookstore-banner.png";
-    }
-
-    let bgImg = (property.image && property.image.trim() !== "") ? property.image : githubBanner;
-
-    return `
-      <div class="property-item cursor-pointer hover:shadow-md transition items-center" onclick="viewProperty('${encodeURIComponent(JSON.stringify(property))}')">
-        <!-- यहाँ अब गिटहब वाला या Supabase का बैनर शो होगा -->
-        <div class="w-20 h-16 rounded-xl bg-cover bg-center flex-shrink-0" style="background-image: url('${escapeHTML(bgImg)}')"></div>
-
-        <div class="property-main flex-1">
-          <div class="property-name">${escapeHTML(name)}</div>
-          <div class="property-meta">
-            ${escapeHTML(category)} · ${escapeHTML(propertyArea(property))}<br>
-            ${escapeHTML(propertyPhone(property))}
-          </div>
-        </div>
-
-        <div class="property-actions" onclick="event.stopPropagation()">
-          <span class="badge badge-active" style="margin-right: 8px;">LIVE</span>
-          <button onclick="openEditRequest('${encodeURIComponent(JSON.stringify(property))}')" class="btn btn-secondary" style="padding: 6px 10px; font-size: 10px;">
-            Request Edit
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-
-  function renderProperties() {
-
-    const container =
-      document.getElementById(
-        "propertiesContainer"
-      );
-
-
-    if (!ownerProperties.length) {
-
-      container.innerHTML = `
-
-        <div class="empty">
-
-          <div class="empty-icon">
-            🏢
-          </div>
-
-          <h3>
-            No live properties yet
-          </h3>
-
-          <p>
-            Once your property is approved or linked
-            to your account, it will appear here.
-          </p>
-
-          <button
-            class="btn btn-primary"
-            data-go="add-listing"
-            style="margin-top:12px;"
-          >
-            + Add Listing
-          </button>
-
-        </div>
-
-      `;
-
-
-      container
-        .querySelector("[data-go]")
-        ?.addEventListener(
-          "click",
-          () => openSection("add-listing")
-        );
-
-
-      return;
-
-    }
-
-
-    container.innerHTML =
-      ownerProperties
-        .map(renderPropertyItem)
-        .join("");
-
-  }
-
-
-  function renderOverviewProperties() {
-
-    const container =
-      document.getElementById(
-        "overviewProperties"
-      );
-
-
-    const latest =
-      ownerProperties.slice(0, 4);
-
-
-    if (!latest.length) {
-
-      container.innerHTML = `
-
-        <div class="empty">
-
-          <div class="empty-icon">
-            🏢
-          </div>
-
-          <h3>
-            No properties linked
-          </h3>
-
-          <p>
-            Add or claim a property to get started.
-          </p>
-
-        </div>
-
-      `;
-
-      return;
-
-    }
-
-
-    container.innerHTML =
-      latest
-        .map(renderPropertyItem)
-        .join("");
-
-  }
-
-  window.viewProperty = function(encodedProperty) {
-    const property = JSON.parse(decodeURIComponent(encodedProperty));
-    const table = property._table || property.property_table || "hostels";
-    const categoryStr = String(property._category || property.category || "").toLowerCase();
-
-    let githubBanner = "hostel-banner.png";
-    if (categoryStr.includes("hostel") || categoryStr.includes("pg") || table === "hostels") {
-      githubBanner = "hostel-banner.png";
-    } else if (categoryStr.includes("tiffin") || categoryStr.includes("mess") || table === "tiffins") {
-      githubBanner = "tiffin-banner.png";
-    } else if (categoryStr.includes("library") || table === "libraries") {
-      githubBanner = "library-banner.png";
-    } else if (categoryStr.includes("cafe") || table === "cafes") {
-      githubBanner = "cafe-banner.png";
-    } else if (categoryStr.includes("book") || categoryStr.includes("store") || table === "bookstores") {
-      githubBanner = "bookstore-banner.png";
-    }
-
-    let bgImg = (property.image && property.image.trim() !== "") ? property.image : githubBanner;
-
-    document.getElementById("propertyModalTitle").textContent = propertyDisplayName(property);
-
-    document.getElementById("propertyModalBody").innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:15px;">
-        <div style="background:url('${escapeHTML(bgImg)}') center/cover no-repeat; min-height:170px; border-radius:14px; position:relative; display:flex; align-items:center; justify-content:center; color:white; text-align:center; padding:20px;">
-          <div style="position:absolute; inset:0; background:rgba(7,20,38,0.5); border-radius:14px;"></div>
-          <div style="position:relative; z-index:2;">
-            <h2 style="font-size:22px; font-weight:800; font-family:'Poppins',sans-serif;">${escapeHTML(propertyDisplayName(property))}</h2>
-            <p style="font-size:12px; opacity:0.9; margin-top:4px;">${escapeHTML(property._category || property.category || "—")}</p>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
-            <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase;">Category</div>
-            <div style="font-weight:700; font-size:13px; margin-top:3px;">${escapeHTML(property._category || property.category || "—")}</div>
-          </div>
-          <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
-            <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase;">Rating</div>
-            <div style="font-weight:700; font-size:13px; margin-top:3px; color:#d4af37;">★ ${escapeHTML(property.rating ?? "4.0")} / 5</div>
-          </div>
-          <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
-            <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase;">Area</div>
-            <div style="font-weight:700; font-size:13px; margin-top:3px;">${escapeHTML(propertyArea(property))}</div>
-          </div>
-          <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
-            <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase;">Timing</div>
-            <div style="font-weight:700; font-size:13px; margin-top:3px;">${escapeHTML(property.timing || "—")}</div>
-          </div>
-        </div>
-
-        <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
-          <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase;">Full Address</div>
-          <div style="font-weight:700; font-size:13px; margin-top:3px;">${escapeHTML(propertyAddress(property))}</div>
-        </div>
-
-        <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
-          <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase;">Contact Phone</div>
-          <div style="font-weight:700; font-size:13px; margin-top:3px;">${escapeHTML(propertyPhone(property))}</div>
-        </div>
-
-        <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
-          <div style="font-size:10px; color:#64748b; font-weight:700; text-transform:uppercase;">Facilities / Description</div>
-          <div style="font-weight:600; font-size:12px; margin-top:3px; color:#475569; line-height:1.5;">${escapeHTML(property.facilities || "—")}</div>
-        </div>
-
-        <button onclick="closePropertyModal(); openEditRequest('${encodeURIComponent(JSON.stringify(property))}')" class="btn btn-primary" style="width:100%; padding:12px; text-align:center;">
-          Request Edit for this Property
-        </button>
-      </div>
-    `;
-
-    document.getElementById("propertyModal").style.display = "flex";
-  };
-
-  window.closePropertyModal = function() {
-    document.getElementById("propertyModal").style.display = "none";
-  };
-
-window.openEditRequest = function(encodedProperty) {
-    const property = JSON.parse(decodeURIComponent(encodedProperty));
-    
-    // अगर आपके पास एडिट रिक्वेस्ट का फॉर्म मोडल है, तो उसमें डेटा भरें
-    if (document.getElementById("editRequestId")) {
-      document.getElementById("editRequestId").value = property.id || "";
-      document.getElementById("editPropertyTable").value = property._table || property.property_table || "hostels";
-      document.getElementById("editName").value = property.name || property.property_name || "";
-      document.getElementById("editPhone").value = property.phone || "";
-      document.getElementById("editAddress").value = property.address || "";
-      document.getElementById("editTiming").value = property.timing || "";
-      document.getElementById("editFacilities").value = property.facilities || "";
-      
-      document.getElementById("editRequestModal").style.display = "flex";
-    } else {
-      // यदि अलग से फॉर्म मोडल नहीं है, तो तुरंत यूजर को अलर्ट या 'Add Listing' पर रीडायरेक्ट कर सकते हैं या नया फॉर्म खोल सकते हैं
-      alert("Edit Request feature for: " + propertyDisplayName(property) + ". Please submit changes via admin or request form.");
-    }
-  };
-
-  window.closeEditModal = function() {
-    if (document.getElementById("editRequestModal")) {
-      document.getElementById("editRequestModal").style.display = "none";
-    }
-  };
-  
-  /* =========================================================
-     LOAD LISTING REQUESTS
-     ========================================================= */
-
-  async function loadRequests() {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("listing_requests")
-        .select(
-          "id, owner_id, owner_name, owner_phone, name, category, area, address, phone, timing, facilities, image, rating, status, admin_note, created_at, updated_at"
-        )
-        .eq(
-          "owner_id",
-          currentUser.id
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-
-    if (error) {
-
-      console.error(
-        "Requests error:",
-        error
-      );
-
-      ownerRequests = [];
-
-    } else {
-
-      ownerRequests =
-        data || [];
-
-    }
-
-
-    renderRequests();
-
-    updateStats();
-
-  }
-
-
-  function renderRequests() {
-
-    const body =
-      document.getElementById(
-        "requestsBody"
-      );
-
-
-    if (!ownerRequests.length) {
-
-      body.innerHTML = `
-
-        <tr>
-
-          <td
-            colspan="6"
-            style="text-align:center;padding:35px;"
-          >
-
-            <div class="empty">
-
-              <div class="empty-icon">
-                📋
-              </div>
-
-              <h3>
-                No listing requests
-              </h3>
-
-              <p>
-                Submitted requests will appear here.
-              </p>
-
-            </div>
-
-          </td>
-
-        </tr>
-
-      `;
-
-      return;
-
-    }
-
-
-    body.innerHTML =
-      ownerRequests
-        .map(request => `
-
-          <tr>
-
-            <td>
-              <strong>
-                ${escapeHTML(request.name)}
-              </strong>
-            </td>
-
-            <td>
-              ${escapeHTML(request.category)}
-            </td>
-
-            <td>
-              ${escapeHTML(request.area)}
-            </td>
-
-            <td>
-              ${statusBadge(request.status)}
-            </td>
-
-            <td>
-              ${formatDate(request.created_at)}
-            </td>
-
-            <td>
-              ${escapeHTML(request.admin_note || "—")}
-            </td>
-
-          </tr>
-
-        `)
-        .join("");
-
-  }
-
-
-  /* =========================================================
-     LISTING FORM
-     ========================================================= */
-
-  document
-    .getElementById("listingForm")
-    .addEventListener(
-      "submit",
-      async event => {
-
-        event.preventDefault();
-
-
-        const button =
-          document.getElementById(
-            "listingSubmit"
-          );
-
-
-        button.disabled = true;
-
-        button.textContent =
-          "Submitting...";
-
-
-        try {
-
-          const payload = {
-
-            owner_id:
-              currentUser.id,
-
-            owner_name:
-              currentProfile.full_name ||
-              currentUser.email ||
-              "Owner",
-
-            owner_phone:
-              currentProfile.phone ||
-              "",
-
-            name:
-              document
-                .getElementById("listingName")
-                .value
-                .trim(),
-
-            category:
-              document
-                .getElementById("listingCategory")
-                .value,
-
-            area:
-              document
-                .getElementById("listingArea")
-                .value
-                .trim(),
-
-            address:
-              document
-                .getElementById("listingAddress")
-                .value
-                .trim(),
-
-            phone:
-              document
-                .getElementById("listingPhone")
-                .value
-                .trim(),
-
-            timing:
-              document
-                .getElementById("listingTiming")
-                .value
-                .trim() ||
-              null,
-
-            facilities:
-              document
-                .getElementById("listingFacilities")
-                .value
-                .trim() ||
-              null,
-
-            image:
-              document
-                .getElementById("listingImage")
-                .value
-                .trim() ||
-              null,
-
-            rating:
-              null,
-
-            status:
-              "pending"
-
-          };
-
-
-          const {
-            error
-          } =
-            await supabaseClient
-              .from("listing_requests")
-              .insert(payload);
-
-
-          if (error) {
-
-            console.error(
-              "Listing request error:",
-              error
-            );
-
-            throw new Error(
-              error.message ||
-              "Unable to submit listing request."
-            );
-
-          }
-
-
-          document
-            .getElementById("listingForm")
-            .reset();
-
-
-          showAlert(
-            "Listing request submitted successfully. It will appear in My Requests after submission.",
-            "success"
-          );
-
-
-          await loadRequests();
-
-          openSection("requests");
-
-
-        } catch (error) {
-
-          console.error(error);
-
-          showAlert(
-            error?.message ||
-            "Unable to submit listing request."
-          );
-
-        } finally {
-
-          button.disabled = false;
-
-          button.textContent =
-            "Submit Listing for Approval";
-
-        }
-
-      }
-    );
-
-
-  /* =========================================================
-     LOAD CLAIM REQUESTS
-     ========================================================= */
-
-  async function loadClaims() {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("claim_requests")
-        .select(
-          "id, property_id, property_type, owner_id, owner_name, owner_phone, message, status, admin_note, created_at, updated_at"
-        )
-        .eq(
-          "owner_id",
-          currentUser.id
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-
-    if (error) {
-
-      console.error(
-        "Claims error:",
-        error
-      );
-
-      ownerClaims = [];
-
-    } else {
-
-      ownerClaims =
-        data || [];
-
-    }
-
-
-    renderClaims();
-
-    updateStats();
-
-  }
-
-
-  function renderClaims() {
-
-    const container =
-      document.getElementById(
-        "claimsContainer"
-      );
-
-
-    if (!ownerClaims.length) {
-
-      container.innerHTML = `
-
-        <div class="empty">
-
-          <div class="empty-icon">
-            🔗
-          </div>
-
-          <h3>
-            No claim requests yet
-          </h3>
-
-          <p>
-            Your submitted property ownership claims will appear here.
-          </p>
-
-        </div>
-
-      `;
-
-      return;
-
-    }
-
-
-    container.innerHTML =
-      ownerClaims
-        .map(claim => `
-
-          <div
-            class="property-item"
-            style="margin-bottom:10px;"
-          >
-
-            <div class="property-main">
-
-              <div class="property-name">
-
-                Property ID:
-                ${escapeHTML(claim.property_id)}
-
-              </div>
-
-              <div class="property-meta">
-
-                Type:
-                ${escapeHTML(claim.property_type)}
-
-                <br>
-
-                Submitted:
-                ${formatDate(claim.created_at)}
-
-                <br>
-
-                ${escapeHTML(
-                  claim.admin_note ||
-                  claim.message ||
-                  ""
-                )}
-
-              </div>
-
-            </div>
-
-            <div>
-
-              ${statusBadge(claim.status)}
-
-            </div>
-
-          </div>
-
-        `)
-        .join("");
-
-  }
-
-
-  /* =========================================================
-     CLAIM FORM
-     ========================================================= */
-
-  document
-    .getElementById("claimForm")
-    .addEventListener(
-      "submit",
-      async event => {
-
-        event.preventDefault();
-
-
-        const button =
-          document.getElementById(
-            "claimSubmit"
-          );
-
-
-        button.disabled = true;
-
-        button.textContent =
-          "Submitting...";
-
-
-        try {
-
-          const payload = {
-
-            property_id:
-              document
-                .getElementById("claimPropertyId")
-                .value
-                .trim(),
-
-            property_type:
-              document
-                .getElementById("claimPropertyType")
-                .value,
-
-            owner_id:
-              currentUser.id,
-
-            owner_name:
-              currentProfile.full_name ||
-              currentUser.email ||
-              "Owner",
-
-            owner_phone:
-              currentProfile.phone ||
-              "",
-
-            message:
-              document
-                .getElementById("claimMessage")
-                .value
-                .trim(),
-
-            status:
-              "pending"
-
-          };
-
-
-          const {
-            error
-          } =
-            await supabaseClient
-              .from("claim_requests")
-              .insert(payload);
-
-
-          if (error) {
-
-            console.error(
-              "Claim request error:",
-              error
-            );
-
-            throw new Error(
-              error.message ||
-              "Unable to submit claim request."
-            );
-
-          }
-
-
-          document
-            .getElementById("claimForm")
-            .reset();
-
-
-          await loadClaims();
-
-
-          showAlert(
-            "Claim request submitted successfully.",
-            "success"
-          );
-
-        } catch (error) {
-
-          console.error(error);
-
-          showAlert(
-            error?.message ||
-            "Unable to submit claim request."
-          );
-
-        } finally {
-
-          button.disabled = false;
-
-          button.textContent =
-            "Submit Claim Request";
-
-        }
-
-      }
-    );
-
-
-  /* =========================================================
-     REVIEWS
-     ========================================================= */
-
-  async function loadReviews() {
-
-    /*
-      Current reviews schema:
-      id
-      property_id
-      user_id
-      user_name
-      rating
-      review_text
-      status
-      created_at
-      student_id
-
-      The schema currently stores property_id as bigint.
-      We therefore load reviews and match them against
-      confidently numeric owned property IDs.
-
-      This does NOT invent ownership.
-    */
-
-
-    const propertyIds =
-      ownerProperties
-        .map(property => property.id)
-        .filter(id => {
-
-          return (
-            id !== null &&
-            id !== undefined &&
-            /^\d+$/.test(
-              String(id)
-            )
-          );
-
-        })
-        .map(Number);
-
-
-    if (!propertyIds.length) {
-
-      ownerReviews = [];
-
-      renderReviews();
-
-      updateStats();
-
-      return;
-
-    }
-
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("reviews")
-        .select(
-          "id, property_id, user_id, user_name, rating, review_text, status, created_at, student_id"
-        )
-        .in(
-          "property_id",
-          propertyIds
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-
-    if (error) {
-
-      console.error(
-        "Reviews error:",
-        error
-      );
-
-      ownerReviews = [];
-
-    } else {
-
-      ownerReviews =
-        data || [];
-
-    }
-
-
+  if(name==="reviews"){
     renderReviews();
-
-    updateStats();
-
   }
 
+  if(name==="requests"){
+    renderRequests();
+  }
 
-  function stars(
-    rating
-  ) {
+  if(name==="verification"){
+    renderVerification();
+  }
 
-    const value =
-      Number(rating) || 0;
+  if(name==="availability"){
+    renderAvailability();
+  }
+
+}
 
 
-    return Array
-      .from(
-        {
-          length: 5
-        }
+document
+  .querySelectorAll(".nav-item")
+  .forEach(item=>{
+
+    item.addEventListener(
+      "click",
+      ()=>showSection(
+        item.dataset.section
       )
-      .map(
-        (_, index) =>
-          index < value
-            ? "★"
-            : "☆"
-      )
-      .join("");
+    );
 
-  }
+  });
 
 
-  function propertyNameById(
-    id
-  ) {
-
-    const property =
-      ownerProperties.find(
-        item =>
-          String(item.id) ===
-          String(id)
-      );
-
-
-    return property
-      ? propertyDisplayName(property)
-      : `Property #${id}`;
-
-  }
-
-
-  function renderReviews() {
-
-    const container =
-      document.getElementById(
-        "reviewsContainer"
-      );
-
-
-    if (!ownerReviews.length) {
-
-      container.innerHTML = `
-
-        <div class="empty">
-
-          <div class="empty-icon">
-            ⭐
-          </div>
-
-          <h3>
-            No reviews available
-          </h3>
-
-          <p>
-            Student reviews for your properties will appear here
-            when available in the current review schema.
-          </p>
-
-        </div>
-
-      `;
-
-      return;
-
+$("mobileMenu")
+  .addEventListener(
+    "click",
+    ()=>{
+      $("sidebar")
+        .classList.toggle("open");
     }
+  );
 
 
-    container.innerHTML =
-      ownerReviews
-        .map(review => `
+/* =========================================================
+   DASHBOARD
+========================================================= */
 
-          <div class="review-card">
+function renderDashboard(){
 
-            <div class="review-top">
-
-              <div>
-
-                <div class="review-user">
-
-                  ${escapeHTML(
-                    review.user_name ||
-                    "Student"
-                  )}
-
-                </div>
-
-                <div class="review-property">
-
-                  ${escapeHTML(
-                    propertyNameById(
-                      review.property_id
-                    )
-                  )}
-
-                </div>
-
-              </div>
-
-              <div class="stars">
-
-                ${stars(review.rating)}
-
-              </div>
-
-            </div>
+  $("statProperties").textContent=
+    state.properties.length;
 
 
-            <div class="review-text">
+  $("statLive").textContent=
+    state.properties.filter(
+      p =>
+        !p.status ||
+        String(p.status).toLowerCase()==="active" ||
+        String(p.status).toLowerCase()==="live"
+    ).length;
 
-              ${escapeHTML(
-                review.review_text
-              )}
-
-            </div>
-
-
-            <div class="review-date">
-
-              ${formatDate(
-                review.created_at
-              )}
-
-              ${
-                review.status
-                  ? " · " +
-                    escapeHTML(
-                      review.status
-                    )
-                  : ""
-              }
-
-            </div>
-
-          </div>
-
-        `)
-        .join("");
-
-  }
+}
 
 
-  /* =========================================================
-     PROFILE SAVE
-     ========================================================= */
+/* =========================================================
+   REALTIME
+========================================================= */
 
-  document
-    .getElementById("profileForm")
-    .addEventListener(
-      "submit",
-      async event => {
+function setupRealtime(){
 
-        event.preventDefault();
+  /*
+    Property changes
+  */
 
+  TABLES.forEach(table=>{
 
-        const button =
-          document.getElementById(
-            "profileSave"
-          );
+    db
+      .channel(
+        "owner-"+table+"-"+state.user.id
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table
+        },
+        async payload=>{
 
-
-        button.disabled = true;
-
-        button.textContent =
-          "Saving...";
-
-
-        try {
-
-          const updateData = {
-
-            full_name:
-              document
-                .getElementById("profileFullName")
-                .value
-                .trim(),
-
-            phone:
-              document
-                .getElementById("profilePhone")
-                .value
-                .trim(),
-
-            address:
-              document
-                .getElementById("profileAddress")
-                .value
-                .trim()
-
-          };
+          const ownerId=
+            payload.new?.owner_id ||
+            payload.old?.owner_id;
 
 
-          const {
-            data,
-            error
-          } =
-            await supabaseClient
-              .from("profiles")
-              .update(updateData)
-              .eq(
-                "id",
-                currentUser.id
-              )
-              .select(
-                "id, full_name, phone, role, email, address, property"
-              )
-              .single();
+          if(
+            String(ownerId) !==
+            String(state.user.id)
+          ){
 
-
-          if (error) {
-
-            console.error(
-              "Profile update error:",
-              error
-            );
-
-            throw new Error(
-              error.message ||
-              "Unable to update profile."
-            );
+            return;
 
           }
 
 
-          currentProfile =
-            data;
+          await loadProperties();
 
+          renderDashboard();
 
-          renderProfile();
+          renderProperties();
 
+          populateSelectors();
 
-          showAlert(
-            "Profile updated successfully.",
-            "success"
-          );
+          renderAvailability();
 
-
-        } catch (error) {
-
-          console.error(error);
-
-          showAlert(
-            error?.message ||
-            "Unable to save profile."
-          );
-
-        } finally {
-
-          button.disabled = false;
-
-          button.textContent =
-            "Save Profile";
+          renderVerification();
 
         }
+      )
+      .subscribe();
 
+  });
+
+
+  /*
+    Bookings
+  */
+
+  db
+    .channel(
+      "owner-bookings-"+state.user.id
+    )
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"student_bookings"
+      },
+      async ()=>{
+        await loadBookings();
+        renderBookings();
       }
-    );
+    )
+    .subscribe();
 
 
-  /* =========================================================
-     STATS
-     ========================================================= */
+  /*
+    Reviews
+  */
 
-  function updateStats() {
+  db
+    .channel(
+      "owner-reviews-"+state.user.id
+    )
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"reviews"
+      },
+      async ()=>{
+        await loadReviews();
+        renderReviews();
+      }
+    )
+    .subscribe();
 
-    document.getElementById(
-      "statProperties"
-    ).textContent =
-      ownerProperties.length;
-
-
-    const pendingRequests =
-      ownerRequests.filter(
-        item =>
-          normalizeStatus(item.status) ===
-          "pending"
-      ).length;
-
-
-    const pendingClaims =
-      ownerClaims.filter(
-        item =>
-          normalizeStatus(item.status) ===
-          "pending"
-      ).length;
+}
 
 
-    document.getElementById(
-      "statRequests"
-    ).textContent =
-      pendingRequests +
-      pendingClaims;
+/* =========================================================
+   LOGOUT
+========================================================= */
 
+$("logoutBtn").addEventListener(
+  "click",
+  async ()=>{
 
-    const active =
-      ownerProperties.length;
+    await db.auth.signOut();
 
-
-    document.getElementById(
-      "statActive"
-    ).textContent =
-      active;
-
-
-    document.getElementById(
-      "statReviews"
-    ).textContent =
-      ownerReviews.length;
+    location.href="auth.html";
 
   }
+);
 
 
-  /* =========================================================
-     LOGOUT
-     ========================================================= */
+/* =========================================================
+   START
+========================================================= */
 
-  document
-    .getElementById("logoutButton")
-    .addEventListener(
-      "click",
-      async () => {
-
-        const {
-          error
-        } =
-          await supabaseClient.auth
-            .signOut();
-
-
-        if (error) {
-
-          console.error(
-            "Logout error:",
-            error
-          );
-
-          showAlert(
-            "Unable to sign out. Please try again."
-          );
-
-          return;
-
-        }
-
-
-        window.location.replace(
-          "auth.html"
-        );
-
-      }
-    );
-
-
-  /* =========================================================
-     REALTIME
-     ========================================================= */
-
-  function setupRealtime() {
-
-    supabaseClient
-      .channel(
-        "owner-dashboard-listing-requests"
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "listing_requests"
-        },
-        async payload => {
-
-          console.log(
-            "Listing request realtime:",
-            payload
-          );
-
-          await loadRequests();
-
-        }
-      )
-      .subscribe();
-
-
-    supabaseClient
-      .channel(
-        "owner-dashboard-claim-requests"
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "claim_requests"
-        },
-        async payload => {
-
-          console.log(
-            "Claim realtime:",
-            payload
-          );
-
-          await loadClaims();
-
-        }
-      )
-      .subscribe();
-
-
-    supabaseClient
-      .channel(
-        "owner-dashboard-profiles"
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "profiles",
-          filter:
-            `id=eq.${currentUser.id}`
-        },
-        async payload => {
-
-          console.log(
-            "Profile realtime:",
-            payload
-          );
-
-          await loadProfile();
-
-        }
-      )
-      .subscribe();
-
-
-    const propertyTables = [
-      "hostels",
-      "tiffins",
-      "libraries",
-      "cafes",
-      "bookstores"
-    ];
-
-
-    propertyTables.forEach(
-      table => {
-
-        supabaseClient
-          .channel(
-            "owner-" + table
-          )
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: table
-            },
-            async payload => {
-
-              console.log(
-                `${table} realtime:`,
-                payload
-              );
-
-              await loadOwnerProperties();
-
-              await loadReviews();
-
-            }
-          )
-          .subscribe();
-
-      }
-    );
-
-
-    supabaseClient
-      .channel(
-        "owner-dashboard-reviews"
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "reviews"
-        },
-        async payload => {
-
-          console.log(
-            "Review realtime:",
-            payload
-          );
-
-          await loadReviews();
-
-        }
-      )
-      .subscribe();
-
-  }
-
-
-  /* =========================================================
-     AUTH STATE
-     ========================================================= */
-
-  supabaseClient.auth
-    .onAuthStateChange(
-      async (
-        event,
-        session
-      ) => {
-
-        console.log(
-          "Auth event:",
-          event
-        );
-
-
-        if (
-          event === "SIGNED_OUT"
-        ) {
-
-          window.location.replace(
-            "auth.html"
-          );
-
-        }
-
-      }
-    );
-
-
-  /* =========================================================
-     INITIALIZATION
-     ========================================================= */
-
-  async function initialize() {
-
-    try {
-
-      if (
-        SUPABASE_ANON_KEY.includes(
-          "PASTE_YOUR"
-        )
-      ) {
-
-        throw new Error(
-          "Please add your existing Supabase anon key in owner-dashboard.html."
-        );
-
-      }
-
-
-      const user =
-        await loadCurrentUser();
-
-
-      if (!user) {
-        return;
-      }
-
-
-      await loadProfile();
-
-
-      await Promise.all([
-
-        loadOwnerProperties(),
-
-        loadRequests(),
-
-        loadClaims()
-
-      ]);
-
-
-      await loadReviews();
-
-
-      setupRealtime();
-
-
-      console.log(
-        "Owner dashboard initialized successfully."
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        "Owner dashboard initialization error:",
-        error
-      );
-
-
-      showAlert(
-        error?.message ||
-        "Unable to load owner dashboard."
-      );
-
-
-      /*
-        If authentication/profile verification
-        fails, do not leave a potentially unauthorized
-        account inside the owner dashboard.
-      */
-
-      if (
-        !currentUser ||
-        !currentProfile
-      ) {
-
-        setTimeout(
-          () => {
-
-            window.location.replace(
-              "auth.html"
-            );
-
-          },
-          1800
-        );
-
-      }
-
-    }
-
-  }
-
-
-  initialize();
+init();
 
 </script>
-<!-- PROPERTY DETAILS MODAL -->
-<div id="propertyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:white; width:100%; max-width:650px; border-radius:20px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.2); position:relative;">
-    <div style="padding:20px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between;">
-      <h3 id="propertyModalTitle" style="font-family:'Poppins',sans-serif; font-size:18px; font-weight:800;">Property Details</h3>
-      <button onclick="closePropertyModal()" style="border:0; background:#f1f5f9; width:32px; height:32px; border-radius:50%; font-weight:bold; cursor:pointer;">✕</button>
-    </div>
-    <div id="propertyModalBody" style="padding:20px;">
-      <!-- Dynamic Content -->
-    </div>
-  </div>
-</div>
 
-  <!-- EDIT REQUEST MODAL -->
-<div id="editRequestModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:3000; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:white; width:100%; max-width:600px; border-radius:20px; max-height:90vh; overflow-y:auto; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.2); position:relative;">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px;">
-      <h3 style="font-family:'Poppins',sans-serif; font-size:18px; font-weight:800;">Request Property Edit</h3>
-      <button onclick="closeEditModal()" style="border:0; background:#f1f5f9; width:32px; height:32px; border-radius:50%; font-weight:bold; cursor:pointer;">✕</button>
-    </div>
-    <form id="editRequestForm" onsubmit="submitEditRequest(event)">
-      <input type="hidden" id="editRequestId">
-      <input type="hidden" id="editPropertyTable">
-      <div style="display:grid; gap:12px;">
-        <div>
-          <label style="font-size:11px; font-weight:800; color:#334155;">Property Name</label>
-          <input type="text" id="editName" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; margin-top:4px;" required>
-        </div>
-        <div>
-          <label style="font-size:11px; font-weight:800; color:#334155;">Phone Number</label>
-          <input type="text" id="editPhone" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; margin-top:4px;" required>
-        </div>
-        <div>
-          <label style="font-size:11px; font-weight:800; color:#334155;">Address</label>
-          <textarea id="editAddress" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; margin-top:4px; height:80px;" required></textarea>
-        </div>
-        <div>
-          <label style="font-size:11px; font-weight:800; color:#334155;">Timing</label>
-          <input type="text" id="editTiming" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; margin-top:4px;">
-        </div>
-        <div>
-          <label style="font-size:11px; font-weight:800; color:#334155;">Facilities</label>
-          <textarea id="editFacilities" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; margin-top:4px; height:80px;"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%; padding:12px; margin-top:10px; text-align:center;">Submit Edit Request to Admin</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<script>
-  // सबमिट करने पर यह listing_requests टेबल में चला जाएगा (सुरक्षित अप्रूवल फ्लो)
-  async function submitEditRequest(event) {
-    event.preventDefault();
-    const propertyId = document.getElementById("editRequestId").value;
-    const table = document.getElementById("editPropertyTable").value;
-    
-    const payload = {
-      owner_id: currentUser.id,
-      owner_name: currentProfile.full_name || "Owner",
-      owner_phone: currentProfile.phone || "",
-      name: document.getElementById("editName").value.trim(),
-      phone: document.getElementById("editPhone").value.trim(),
-      address: document.getElementById("editAddress").value.trim(),
-      timing: document.getElementById("editTiming").value.trim(),
-      facilities: document.getElementById("editFacilities").value.trim(),
-      category: "Edit Request for ID: " + propertyId + " (" + table + ")",
-      status: "pending"
-    };
-
-    const { error } = await supabaseClient.from("listing_requests").insert(payload);
-    if (error) {
-      alert("Error submitting request: " + error.message);
-    } else {
-      alert("Edit request submitted successfully! Admin will review and update it.");
-      closeEditModal();
-      openSection("requests");
-    }
-  }
-</script>
 </body>
 </html>
