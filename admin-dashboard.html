@@ -134,7 +134,12 @@ const pretty=v=>String(v??'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase
 const fmt=v=>v?new Date(v).toLocaleString():'—';
 const toast=msg=>{const t=$('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2300)};
 const tag=x=>{x=String(x??'pending');let c=['active','approved','published','resolved','verified','enabled','read'].includes(x)?'green':['rejected','hidden','suspended','disabled'].includes(x)?'red':['investigating','correction','pending','unread','flagged'].includes(x)?'orange':'blue';return `<span class="tag ${c}">${esc(x)}</span>`};
-const table=(headers,rows,min='980px')=>rows&&rows.length?`<div class="wrap"><table class="table" style="min-width:${min}"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`:`<div class="empty">No records found for this filter.</div>`;
+const table=(headers,rows,min='980px')=>{
+  const body = Array.isArray(rows) ? rows.join('') : (rows == null ? '' : String(rows));
+  return body
+    ? `<div class="wrap"><table class="table" style="min-width:${min}"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`
+    : `<div class="empty">No records found for this filter.</div>`;
+};
 function openM(title,body,foot=''){ $('mt').textContent=title;$('mb').innerHTML=body;$('mf').innerHTML=foot;$('overlay').classList.add('on') }
 function closeM(){ $('overlay').classList.remove('on') } window.closeM=closeM;
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()}); $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeM()});
@@ -159,7 +164,22 @@ async function requireAdmin(){
 async function all(t,columns='*'){const r=await db.from(t).select(columns);if(r.error)throw new Error(t+': '+r.error.message);return r.data||[]}
 async function one(t,id){const r=await db.from(t).select('*').eq('id',id).maybeSingle();if(r.error)throw new Error(t+': '+r.error.message);return r.data}
 async function log(action,entity,id,details={}){try{await db.from('admin_activity_logs').insert({admin_id:U?.id,action,entity_type:entity,entity_id:String(id??''),details})}catch(e){console.warn('audit log:',e.message)}}
-function showError(e){console.error(e);toast(e.message||String(e));const c=document.querySelector('.sec.on .body');if(c)c.insertAdjacentHTML('afterbegin',`<div class="dangerbox"><b>Unable to load this section:</b> ${esc(e.message||e)}<br><small>Check the Supabase table/policy shown above. Other dashboard sections remain available.</small></div>`)}
+function showError(e){
+  console.error(e);
+  const msg=e?.message||String(e);
+  toast(msg);
+  const c=document.querySelector('.sec.on .body');
+  if(c){
+    c.querySelectorAll('.runtime-error').forEach(x=>x.remove());
+    c.insertAdjacentHTML('afterbegin',`<div class="dangerbox runtime-error">
+      <b>Section load failed</b>
+      <div style="margin-top:6px">${esc(msg)}</div>
+      <small style="display:block;margin-top:8px">
+        This is a live Supabase error, not a fake/placeholder section. Refresh the section after fixing the indicated table/policy.
+      </small>
+    </div>`);
+  }
+}
 
 async function props(){S.props=[];for(const [t,label,icon] of TS){const a=await all(t);a.forEach(x=>S.props.push({...x,table:t,label,icon}))}return S.props}
 function prop(t,id){return S.props.find(x=>x.table===t&&String(x.id)===String(id))}
@@ -349,5 +369,5 @@ document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('results
  channel.subscribe()}})();
 function tableSection(t){return {'profiles':'students','listing_requests':'listing','claim_requests':'claims','verification_requests':'verification','student_bookings':'bookings','reviews':'reviews','property_reports':'reports','owner_property_images':'media','admin_notifications':'notifications','admin_activity_logs':'activity','featured_properties':'featured','areas':'areas','system_settings':'settings','property_views':'analytics'}[t]||null}
 </script>
-</body>
+<div id="dashboardBuildMarker" style="position:fixed;bottom:10px;right:10px;z-index:9999;font-size:11px;opacity:.55;padding:5px 8px;border:1px solid currentColor;border-radius:8px;background:rgba(0,0,0,.35)">Master Admin • V3 Full Advanced</div></body>
 </html>
