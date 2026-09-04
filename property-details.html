@@ -143,6 +143,31 @@ function updatePropertySEO(r){
   const canonical=document.getElementById('canonicalLink');
   if(canonical) canonical.href=canonicalUrl;
 
+  /* =========================
+   PHASE 4 - LOCAL SEO SIGNALS
+   ========================= */
+
+const localityParts=[
+  r.area,
+  r.city,
+  r.district,
+  r.state
+]
+.filter(Boolean)
+.map(v=>seoClean(v));
+
+const localityText=[
+  ...new Set(localityParts)
+].join(', ');
+
+const localSeoDescription=(
+  `${name} ${typeName} in ${localityText||'India'}. `+
+  `${description}`
+).slice(0,160);
+
+setMeta('ogDescription',localSeoDescription);
+setMeta('twitterDescription',localSeoDescription);
+  
   /* -------- JSON-LD -------- */
 
   const schema={
