@@ -20,6 +20,7 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
 
           files = [
               'library-finder.html',
@@ -29,12 +30,12 @@ jobs:
               'bookstore-finder.html',
           ]
 
-          replacements = [
-              ('ID #${escapeHTML(id)}', 'ID #${escapeHTML(clean(record.property_id))}'),
-              ('Property ID: #${escapeHTML(id)}', 'Property ID: #${escapeHTML(clean(record.property_id))}'),
-              ('document.getElementById("modalPropertyId").textContent = "Property ID: #" + id;', 'document.getElementById("modalPropertyId").textContent = "Property ID: #" + clean(record.property_id);'),
-              ('document.getElementById("modalId").textContent = "#" + id;', 'document.getElementById("modalId").textContent = "#" + clean(record.property_id);'),
-              ('bookingPropertyId.textContent = "Property ID: #" + id;', 'bookingPropertyId.textContent = "Property ID: #" + clean(currentRecord.property_id);'),
+          patterns = [
+              (r'ID #\$\{escapeHTML\(id\)\}', 'ID #${escapeHTML(clean(record.property_id))}'),
+              (r'Property ID: #\$\{escapeHTML\(id\)\}', 'Property ID: #${escapeHTML(clean(record.property_id))}'),
+              (r'(document\.getElementById\(\s*"modalPropertyId"\s*\)\.textContent\s*=\s*)"Property ID: #"\s*\+\s*id\s*;', r'\1"Property ID: #" + clean(record.property_id);'),
+              (r'(document\.getElementById\(\s*"modalId"\s*\)\.textContent\s*=\s*)"#"\s*\+\s*id\s*;', r'\1"#" + clean(record.property_id);'),
+              (r'(bookingPropertyId\.textContent\s*=\s*)"Property ID: #"\s*\+\s*id\s*;', r'\1"Property ID: #" + clean(currentRecord.property_id);'),
           ]
 
           for filename in files:
@@ -42,12 +43,11 @@ jobs:
               original = path.read_text(encoding='utf-8')
               text = original
               counts = []
-              for old, new in replacements:
-                  n = text.count(old)
+              for pattern, replacement in patterns:
+                  text, n = re.subn(pattern, replacement, text, count=1)
                   counts.append(n)
                   if n != 1:
-                      raise SystemExit(f'{filename}: expected exactly 1 occurrence of {old!r}, found {n}; no file written')
-                  text = text.replace(old, new, 1)
+                      raise SystemExit(f'{filename}: expected exactly 1 match for {pattern!r}, found {n}; no file written')
               path.write_text(text, encoding='utf-8', newline='')
               print(f'{filename}: replacements applied {counts}')
 
