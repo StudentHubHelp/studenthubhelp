@@ -2574,6 +2574,7 @@
             : [];
 
         renderRecords();
+        handleBookingQuery();
 
         hideStatus();
 
@@ -2900,7 +2901,15 @@
             .querySelector(".details-btn")
             .addEventListener(
               "click",
-              () => openDetails(record)
+              () => {
+                const propertyType = "hostel";
+                const propertySlug = clean(record.slug);
+                const propertyId = clean(record.id);
+                const target = propertySlug
+                  ? "property-details.html?type=" + encodeURIComponent(propertyType) + "&slug=" + encodeURIComponent(propertySlug)
+                  : "property-details.html?type=" + encodeURIComponent(propertyType) + "&id=" + encodeURIComponent(propertyId);
+                window.location.href = target;
+              }
             );
 
 
@@ -2908,6 +2917,33 @@
 
         }
       );
+    }
+
+
+    /* =====================================================
+       BOOKING FROM PROPERTY DETAILS PAGE
+    ===================================================== */
+
+    async function handleBookingQuery() {
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("book") !== "1") return;
+
+      const querySlug = clean(params.get("slug"));
+      const queryId = clean(params.get("id"));
+
+      const record = allRecords.find(item =>
+        (querySlug && clean(item.slug) === querySlug) ||
+        (queryId && clean(item.id) === queryId)
+      );
+
+      if (!record) return;
+
+      currentRecord = record;
+      await openBookingForm();
+
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
     }
 
 
