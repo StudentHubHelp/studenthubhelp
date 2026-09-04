@@ -4,7 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Property Details | StudentHubHelp</title>
-<meta name="description" content="Detailed student-friendly property information on StudentHubHelp.">
+<meta name="description" content="View detailed student-friendly property information on StudentHubHelp.">
+
+<!-- Phase 3 Dynamic Property SEO -->
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="author" content="StudentHubHelp">
+<meta name="theme-color" content="#071a33">
+
+<link id="canonicalLink" rel="canonical" href="https://studenthubhelp.github.io/studenthubhelp/property-details.html">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="StudentHubHelp">
+<meta id="ogTitle" property="og:title" content="Property Details | StudentHubHelp">
+<meta id="ogDescription" property="og:description" content="View detailed student-friendly property information on StudentHubHelp.">
+<meta id="ogUrl" property="og:url" content="https://studenthubhelp.github.io/studenthubhelp/property-details.html">
+<meta id="ogImage" property="og:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">
+<meta property="og:image:alt" content="StudentHubHelp Property">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta id="twitterTitle" name="twitter:title" content="Property Details | StudentHubHelp">
+<meta id="twitterDescription" name="twitter:description" content="View detailed student-friendly property information on StudentHubHelp.">
+<meta id="twitterImage" name="twitter:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">
+
+<script id="propertySchema" type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Property Details | StudentHubHelp",
+  "url": "https://studenthubhelp.github.io/studenthubhelp/property-details.html"
+}
+</script>
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,6 +68,206 @@ const cfg=config[type]||config.hostel;
 const app=document.getElementById('app');
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const val=v=>(v===null||v===undefined||v==='')?null:v;
+  /* =========================
+   PHASE 3 - DYNAMIC PROPERTY SEO
+   ========================= */
+
+function seoText(value, fallback=''){
+  const text=String(value??fallback)
+    .replace(/\s+/g,' ')
+    .trim();
+
+  return text;
+}
+
+function seoClean(value){
+  return seoText(value).replace(/[<>]/g,'');
+}
+
+function updatePropertySEO(r){
+  const name=seoClean(r.name||r.service_name||'Property');
+  const city=seoClean(r.city||'India');
+  const area=seoClean(r.area||'');
+  const description=seoClean(
+    r.description ||
+    `View detailed information about ${name} in ${area||city} on StudentHubHelp.`
+  );
+
+  const typeName={
+    hostel:'Hostel / PG',
+    tiffin:'Tiffin Service',
+    cafe:'Cafe',
+    library:'Library',
+    bookstore:'Bookstore'
+  }[type]||'Property';
+
+  const locationText=[area,city].filter(Boolean).join(', ');
+
+  const titleParts=[
+    name,
+    locationText,
+    typeName,
+    'StudentHubHelp'
+  ].filter(Boolean);
+
+  const seoTitle=titleParts.join(' | ');
+
+  const seoDescription=(
+    `${name} ${typeName} in ${locationText||'India'}. `+
+    `${description}`
+  ).slice(0,160);
+
+  const canonicalUrl=location.href;
+
+  document.title=seoTitle;
+
+  const setMeta=(id,content)=>{
+    const el=document.getElementById(id);
+    if(el) el.setAttribute('content',content);
+  };
+
+  setMeta('ogTitle',seoTitle);
+  setMeta('ogDescription',seoDescription);
+  setMeta('ogUrl',canonicalUrl);
+  setMeta('twitterTitle',seoTitle);
+  setMeta('twitterDescription',seoDescription);
+
+  const imageUrl=new URL(
+    r.image||cfg.banner,
+    location.href
+  ).href;
+
+  setMeta('ogImage',imageUrl);
+  setMeta('twitterImage',imageUrl);
+
+  const canonical=document.getElementById('canonicalLink');
+  if(canonical) canonical.href=canonicalUrl;
+
+  /* -------- JSON-LD -------- */
+
+  const schema={
+    "@context":"https://schema.org",
+    "@graph":[
+      {
+        "@type":"WebPage",
+        "@id":canonicalUrl+"#webpage",
+        "url":canonicalUrl,
+        "name":seoTitle,
+        "description":seoDescription,
+        "isPartOf":{
+          "@type":"WebSite",
+          "name":"StudentHubHelp",
+          "url":"https://studenthubhelp.github.io/studenthubhelp/"
+        },
+        "breadcrumb":{
+          "@id":canonicalUrl+"#breadcrumb"
+        }
+      },
+      {
+        "@type":"BreadcrumbList",
+        "@id":canonicalUrl+"#breadcrumb",
+        "itemListElement":[
+          {
+            "@type":"ListItem",
+            "position":1,
+            "name":"Home",
+            "item":"https://studenthubhelp.github.io/studenthubhelp/"
+          },
+          {
+            "@type":"ListItem",
+            "position":2,
+            "name":typeName,
+            "item":new URL(
+              type==='hostel'?'pg-finder.html':
+              type==='tiffin'?'tiffin-finder.html':
+              type==='library'?'library-finder.html':
+              type==='cafe'?'cafe-finder.html':
+              'bookstore-finder.html',
+              location.href
+            ).href
+          },
+          {
+            "@type":"ListItem",
+            "position":3,
+            "name":name,
+            "item":canonicalUrl
+          }
+        ]
+      }
+    ]
+  };
+
+  /*
+   * LocalBusiness schema only when actual business/property
+   * information exists.
+   */
+  const hasAddress=Boolean(
+    r.address||r.area||r.city||r.pincode
+  );
+
+  if(hasAddress){
+    const business={
+      "@type":"LocalBusiness",
+      "@id":canonicalUrl+"#business",
+      "name":name,
+      "url":canonicalUrl,
+      "description":description
+    };
+
+    if(imageUrl){
+      business.image=imageUrl;
+    }
+
+    if(r.phone||r.contact_phone){
+      business.telephone=String(
+        r.phone||r.contact_phone
+      );
+    }
+
+    if(hasAddress){
+      business.address={
+        "@type":"PostalAddress"
+      };
+
+      if(r.address){
+        business.address.streetAddress=String(r.address);
+      }
+
+      if(r.area){
+        business.address.addressLocality=String(r.area);
+      }
+
+      if(r.city){
+        business.address.addressRegion=String(r.city);
+      }
+
+      if(r.pincode){
+        business.address.postalCode=String(r.pincode);
+      }
+
+      business.address.addressCountry="IN";
+    }
+
+    const lat=parseFloat(r.latitude);
+    const lng=parseFloat(r.longitude);
+
+    if(Number.isFinite(lat)&&Number.isFinite(lng)){
+      business.geo={
+        "@type":"GeoCoordinates",
+        "latitude":lat,
+        "longitude":lng
+      };
+    }
+
+    schema["@graph"].push(business);
+  }
+
+  const schemaEl=document.getElementById('propertySchema');
+
+  if(schemaEl){
+    schemaEl.textContent=JSON.stringify(schema,null,2);
+  }
+}
 function niceKey(k){return k.replace(/_/g,' ').replace(/\b\w/g,m=>m.toUpperCase())}
 function show(v){if(v===null||v===undefined||v==='')return '<span class="muted">Coming Soon</span>';if(typeof v==='boolean')return v?'<span class="yes">Yes</span>':'<span class="no">No</span>';if(Array.isArray(v))return v.length?v.map(x=>esc(x)).join(', '):'<span class="muted">Coming Soon</span>';return esc(v)}
 function field(label,v){return `<div class="item"><div class="label">${esc(label)}</div><div class="value">${show(v)}</div></div>`}
@@ -80,9 +309,9 @@ function render(r){
  const waClean=String(wa).replace(/\D/g,''); const waHref=waClean?(waClean.length===10?'91'+waClean:waClean):'';
  let price=type==='hostel'?money(r.monthly_rent):type==='tiffin'?money(r.price):type==='library'?money(r.monthly_fee):null;
  if(type==='cafe'||type==='bookstore')price=r.price_range||null;
- const maps=r.google_maps_url||(r.address?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.address)}`:'');
- document.title=`${name} | StudentHubHelp`;
- app.innerHTML=`
+const maps=r.google_maps_url||(r.address?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.address)}`:'');
+document.title=`${name} | StudentHubHelp`;
+app.innerHTML=`
  <section class="hero">
   <div class="gallery"><img class="mainimg" src="${esc(image)}" onerror="this.src='${cfg.banner}'"><div class="side"><img src="${esc(image)}" onerror="this.src='${cfg.banner}'"><img src="${cfg.banner}"></div></div>
   <div class="info"><div class="title-row"><div><div class="eyebrow">${esc(r.category||cfg.label)}</div><h1 class="title">${esc(name)}</h1><div class="location"><i class="fa-solid fa-location-dot"></i> ${esc(location||r.address||'Location Coming Soon')}</div></div>${verified?'<span class="verified"><i class="fa-solid fa-circle-check"></i> Verified</span>':''}</div>
