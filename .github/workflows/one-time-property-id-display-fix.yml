@@ -1,0 +1,96 @@
+name: One-time Property ID display fix
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix-property-id-display:
+    if: ${{ !contains(github.event.head_commit.message, '[property-id-display-fix]') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Change display-only Property ID references
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          files = [
+              'library-finder.html',
+              'pg-finder.html',
+              'tiffin-finder.html',
+              'cafe-finder.html',
+              'bookstore-finder.html',
+          ]
+
+          for filename in files:
+              path = Path(filename)
+              original = path.read_text(encoding='utf-8')
+              text = original
+
+              # Card top-right badge: display only.
+              text, n1 = re.subn(
+                  r'ID #\\$\\{escapeHTML\\(id\\)\\}',
+                  'ID #${escapeHTML(clean(record.property_id))}',
+                  text,
+                  count=1,
+              )
+
+              # Card body Property ID: display only.
+              text, n2 = re.subn(
+                  r'Property ID: #\\$\\{escapeHTML\\(id\\)\\}',
+                  'Property ID: #${escapeHTML(clean(record.property_id))}',
+                  text,
+                  count=1,
+              )
+
+              # Details modal header Property ID: display only.
+              text, n3 = re.subn(
+                  r'(document\\.getElementById\\(\\s*"modalPropertyId"\\s*\\)\\.textContent\\s*=\\s*)"Property ID: #" \\+ id;',
+                  r'\\1"Property ID: #" + clean(record.property_id);',
+                  text,
+                  count=1,
+              )
+
+              # Details modal Property ID field: display only.
+              text, n4 = re.subn(
+                  r'(document\\.getElementById\\(\\s*"modalId"\\s*\\)\\.textContent\\s*=\\s*)"#" \\+ id;',
+                  r'\\1"#" + clean(record.property_id);',
+                  text,
+                  count=1,
+              )
+
+              # Booking modal selected-property ID: display only.
+              text, n5 = re.subn(
+                  r'(bookingPropertyId\\.textContent\\s*=\\s*)"Property ID: #" \\+ id;',
+                  r'\\1"Property ID: #" + clean(currentRecord.property_id);',
+                  text,
+                  count=1,
+              )
+
+              counts = (n1, n2, n3, n4, n5)
+              if counts != (1, 1, 1, 1, 1):
+                  raise SystemExit(f'{filename}: unexpected match counts {counts}; no file was changed')
+
+              path.write_text(text, encoding='utf-8', newline='')
+              print(f'{filename}: display-only replacements applied {counts}')
+
+      - name: Commit only the five finder files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/one-time-property-id-display-fix.yml
+          git add library-finder.html pg-finder.html tiffin-finder.html cafe-finder.html bookstore-finder.html
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m "[property-id-display-fix] Show 10-digit Property IDs in finder pages"
+          git push
