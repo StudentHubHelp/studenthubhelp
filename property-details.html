@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Property Details | StudentHubHelp</title>
+<meta name="description" content="Detailed student-friendly property information on StudentHubHelp.">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,Arial,sans-serif;background:#f5f7fb;color:#152238;line-height:1.55}.wrap{max-width:1180px;margin:auto;padding:22px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.back{border:0;background:#fff;padding:11px 15px;border-radius:12px;box-shadow:0 3px 15px #0000000b;cursor:pointer;color:#182842;font-weight:700}.share{border:0;background:#fff;padding:11px 15px;border-radius:12px;cursor:pointer;font-weight:700}.hero{background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 8px 30px #0000000c}.gallery{display:grid;grid-template-columns:2fr 1fr;gap:4px;height:420px;background:#e9edf4}.mainimg{width:100%;height:100%;object-fit:cover}.side{display:grid;grid-template-rows:1fr 1fr;gap:4px}.side img{width:100%;height:100%;object-fit:cover}.info{padding:28px}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#68758a}.title-row{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.title{font-family:'Playfair Display',serif;font-size:36px;line-height:1.15;margin:5px 0 8px}.verified{display:inline-flex;align-items:center;gap:6px;background:#edf8f0;color:#21753d;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:800}.location{color:#66748a;margin-bottom:18px}.price{font-size:27px;font-weight:900}.subprice{font-size:13px;color:#778399}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;border:0;border-radius:12px;padding:12px 18px;font-weight:800;cursor:pointer}.primary{background:#6b4eff;color:#fff}.green{background:#168c54;color:#fff}.light{background:#eef1f6;color:#182842}.content{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:20px;margin-top:20px}.card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 5px 22px #00000008;margin-bottom:20px}.card h2{font-size:19px;margin-bottom:16px}.desc{color:#5d6b80;white-space:pre-line}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.item{border:1px solid #e9edf3;border-radius:13px;padding:13px}.label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#7a8798;font-weight:800}.value{margin-top:3px;font-weight:700;overflow-wrap:anywhere}.yes{color:#197647}.no{color:#7b8798}.facilities{display:flex;flex-wrap:wrap;gap:9px}.pill{padding:9px 12px;border-radius:999px;background:#f1f4f8;font-weight:700;font-size:13px}.map{width:100%;height:280px;border:0;border-radius:14px}.notice{text-align:center;padding:50px 20px}.notice h1{margin-bottom:8px}.muted{color:#778399}.loading{padding:80px;text-align:center}.shareurl{font-size:12px;color:#7a8798;word-break:break-all;margin-top:10px}.sticky{position:sticky;top:15px}.small{font-size:13px;color:#748196}.rating{font-weight:900}.review{border-top:1px solid #edf0f4;padding-top:14px;margin-top:14px}.footer{text-align:center;color:#8590a1;font-size:12px;padding:20px}
+@media(max-width:800px){.wrap{padding:12px}.gallery{height:310px;grid-template-columns:1fr}.side{display:none}.title{font-size:29px}.title-row{display:block}.content{grid-template-columns:1fr}.sticky{position:static}.info{padding:20px}.grid{grid-template-columns:1fr}.actions .btn{flex:1;min-width:140px}.top{margin-bottom:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><button class="back" id="backBtn"><i class="fa-solid fa-arrow-left"></i> Back</button><button class="share" id="shareBtn"><i class="fa-solid fa-share-nodes"></i> Share</button></div>
+  <div id="app"><div class="loading"><i class="fa-solid fa-circle-notch fa-spin"></i><br><br>Loading property details...</div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://idurlccrarznnnqixxsd.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA';
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const qs=new URLSearchParams(location.search);
+const type=(qs.get('type')||'hostel').toLowerCase();
+const slug=qs.get('slug')||qs.get('id');
+const config={
+ hostel:{table:'hostels',label:'Hostel / PG',banner:'hostel-banner.png'},
+ tiffin:{table:'tiffins',label:'Tiffin Service',banner:'tiffin-banner.png'},
+ cafe:{table:'cafes',label:'Cafe',banner:'cafe-banner.png'},
+ library:{table:'libraries',label:'Library',banner:'library-banner.png'},
+ bookstore:{table:'bookstores',label:'Bookstore',banner:'bookstore-banner.png'}
+};
+const cfg=config[type]||config.hostel;
+const app=document.getElementById('app');
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const val=v=>(v===null||v===undefined||v==='')?null:v;
+function niceKey(k){return k.replace(/_/g,' ').replace(/\b\w/g,m=>m.toUpperCase())}
+function show(v){if(v===null||v===undefined||v==='')return '<span class="muted">Coming Soon</span>';if(typeof v==='boolean')return v?'<span class="yes">Yes</span>':'<span class="no">No</span>';if(Array.isArray(v))return v.length?v.map(x=>esc(x)).join(', '):'<span class="muted">Coming Soon</span>';return esc(v)}
+function field(label,v){return `<div class="item"><div class="label">${esc(label)}</div><div class="value">${show(v)}</div></div>`}
+function pills(v){if(!v)return '<span class="muted">Coming Soon</span>';let a=Array.isArray(v)?v:String(v).split(',').map(x=>x.trim()).filter(Boolean);return `<div class="facilities">${a.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div>`}
+function money(v){return val(v)===null?null:`₹${Number(v).toLocaleString('en-IN')}`}
+function common(r){return [field('Owner Name',r.owner_name),field('Phone',r.phone),field('WhatsApp',r.whatsapp),field('Email',r.email),field('Address',r.address),field('Area',r.area),field('City',r.city),field('Pincode',r.pincode),field('Status',r.status),field('Verified',r.verified),field('Rating',r.rating),field('Last Updated',r.updated_at||r.created_at)]}
+function categorySections(r){
+ let out='';
+ if(type==='hostel'){
+  out+=`<div class="card"><h2>🛏️ Room & Rent Details</h2><div class="grid">${field('Monthly Rent',money(r.monthly_rent))}${field('Security Deposit',money(r.security_deposit))}${field('Room Types',r.room_types)}${field('Food Available',r.food_available)}${field('Food Type',r.food_type)}${field('Timing',r.timing)}${field('Type',r.type||r.category)}</div></div>`;
+  out+=`<div class="card"><h2>✨ Facilities</h2>${pills(r.facilities)}</div>`;
+ } else if(type==='tiffin'){
+  out+=`<div class="card"><h2>🍛 Tiffin Plans & Food</h2><div class="grid">${field('Price',money(r.price))}${field('Monthly Plan',money(r.monthly_plan))}${field('Weekly Plan',money(r.weekly_plan))}${field('Daily Plan',money(r.daily_plan))}${field('Meal Type',r.meal_type)}${field('Food Type',r.food_type)}${field('Plan Type',r.plan_type)}${field('Breakfast',r.breakfast_available)}${field('Lunch',r.lunch_available)}${field('Dinner',r.dinner_available)}${field('Jain Food',r.jain_food)}${field('Custom Meal',r.custom_meal)}${field('Subscription',r.subscription_available)}${field('Delivery',r.delivery_available||r.home_delivery)}${field('Delivery Charge',money(r.delivery_charge))}${field('Service Area',r.service_area)}${field('Timings',r.timings||r.timing)}</div></div>`;
+  out+=`<div class="card"><h2>🍽️ Menu</h2><div class="desc">${show(r.menu)}</div></div>`;
+ } else if(type==='cafe'){
+  out+=`<div class="card"><h2>☕ Cafe Information</h2><div class="grid">${field('Category',r.category)}${field('Cuisine',r.cuisine)}${field('Price Range',r.price_range)}${field('Opening Time',r.opening_time)}${field('Closing Time',r.closing_time)}${field('Weekly Off',r.weekly_off)}${field('Seating Capacity',r.seating_capacity)}${field('Wi-Fi',r.wifi)}${field('AC',r.ac)}${field('Parking',r.parking)}${field('Delivery',r.delivery)}${field('Takeaway',r.takeaway)}${field('Online Order',r.online_order)}${field('UPI Payment',r.upi_payment)}</div></div>`;
+  out+=`<div class="card"><h2>🍽️ Menu</h2><div class="desc">${show(r.menu)}</div></div>`;
+ } else if(type==='library'){
+  out+=`<div class="card"><h2>📚 Library Details</h2><div class="grid">${field('Library Type',r.library_type||r.category)}${field('Monthly Fee',money(r.monthly_fee))}${field('Daily Fee',money(r.daily_fee))}${field('Timing',r.timing)}${field('24 Hours Open',r.open_24_hours)}${field('Seating Capacity',r.seating_capacity)}${field('Available Seats',r.available_seats)}${field('AC',r.ac_available)}${field('Wi-Fi',r.wifi)}${field('Charging Point',r.charging_point)}${field('Locker',r.locker)}${field('Parking',r.parking)}${field('Newspaper',r.newspaper)}${field('Separate Cabin',r.separate_cabin)}${field('Girls Section',r.girls_section)}${field('Boys Section',r.boys_section)}${field('Power Backup',r.power_backup)}${field('Water',r.water)}${field('CCTV',r.cctv)}</div></div>`;
+ } else {
+  out+=`<div class="card"><h2>📖 Bookstore Services</h2><div class="grid">${field('Categories',r.categories)}${field('Classes',r.classes)}${field('Competitive Books',r.competitive_books)}${field('Exam Books',r.exam_books)}${field('School Books',r.school_books)}${field('College Books',r.college_books)}${field('NCERT Books',r.ncert_books)}${field('Stationery',r.stationery)}${field('Second-hand Books',r.second_hand_books)}${field('Book Rental',r.book_rental)}${field('Online Order',r.online_order)}${field('Home Delivery',r.home_delivery)}${field('Photocopy',r.photocopy)}${field('Printing',r.printing)}${field('Lamination',r.lamination)}${field('Spiral Binding',r.spiral_binding)}${field('Notes Available',r.notes_available)}${field('Opening Time',r.opening_time)}${field('Closing Time',r.closing_time)}${field('Weekly Off',r.weekly_off)}</div></div>`;
+ }
+ return out;
+}
+async function load(){
+ if(!slug){return fail('Property not found','This property URL is missing its identifier.');}
+ const {data,error}=await db.from(cfg.table).select('*').eq('slug',slug).maybeSingle();
+ if(error) return fail('Unable to load property',error.message);
+ if(!data) return fail('Property not found','This listing may have been removed or its URL is incorrect.');
+ render(data);
+}
+function fail(title,msg){app.innerHTML=`<div class="card notice"><h1>${esc(title)}</h1><p class="muted">${esc(msg)}</p><br><button class="back" onclick="history.back()">← Go Back</button></div>`}
+function render(r){
+ const image=r.image||cfg.banner;
+ const verified=r.verified===true||String(r.status||'').toLowerCase()==='verified'||String(r.verification_status||'').toLowerCase()==='verified';
+ const name=r.name||r.service_name||'Property';
+ const location=[r.city,r.area].filter(Boolean).join(' • ');
+ let contact=r.phone||r.contact_phone||''; let wa=r.whatsapp||r.whatsapp_number||contact;
+ const waClean=String(wa).replace(/\D/g,''); const waHref=waClean?(waClean.length===10?'91'+waClean:waClean):'';
+ let price=type==='hostel'?money(r.monthly_rent):type==='tiffin'?money(r.price):type==='library'?money(r.monthly_fee):null;
+ if(type==='cafe'||type==='bookstore')price=r.price_range||null;
+ const maps=r.google_maps_url||(r.address?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.address)}`:'');
+ document.title=`${name} | StudentHubHelp`;
+ app.innerHTML=`
+ <section class="hero">
+  <div class="gallery"><img class="mainimg" src="${esc(image)}" onerror="this.src='${cfg.banner}'"><div class="side"><img src="${esc(image)}" onerror="this.src='${cfg.banner}'"><img src="${cfg.banner}"></div></div>
+  <div class="info"><div class="title-row"><div><div class="eyebrow">${esc(r.category||cfg.label)}</div><h1 class="title">${esc(name)}</h1><div class="location"><i class="fa-solid fa-location-dot"></i> ${esc(location||r.address||'Location Coming Soon')}</div></div>${verified?'<span class="verified"><i class="fa-solid fa-circle-check"></i> Verified</span>':''}</div>
+  ${price?`<div class="price">${esc(price)}</div>`:''}<div class="subprice">${r.security_deposit?'Security Deposit: '+esc(money(r.security_deposit)):''}</div>
+  <div class="actions">${contact?`<a class="btn primary" href="tel:${esc(contact)}"><i class="fa-solid fa-phone"></i> Call Now</a>`:'<span class="btn light">📞 Phone Coming Soon</span>'}${waHref?`<a class="btn green" target="_blank" rel="noopener" href="https://wa.me/${esc(waHref)}"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>`:''}${maps?`<a class="btn light" target="_blank" rel="noopener" href="${esc(maps)}"><i class="fa-solid fa-location-dot"></i> Maps</a>`:''}</div>
+  </div>
+ </section>
+ <div class="content"><main>
+  <div class="card"><h2>🏠 About</h2><div class="desc">${show(r.description)}</div></div>
+  ${categorySections(r)}
+  <div class="card"><h2>📍 Location</h2><div class="grid">${field('Address',r.address)}${field('Area',r.area)}${field('City',r.city)}${field('Pincode',r.pincode)}${field('Latitude',r.latitude)}${field('Longitude',r.longitude)}</div>${maps?`<div style="margin-top:15px"><a class="btn light" target="_blank" rel="noopener" href="${esc(maps)}">Open in Google Maps</a></div>`:''}</div>
+  <div class="card"><h2>⭐ Student Reviews</h2><p class="muted">Reviews will appear here as students submit and verify feedback.</p></div>
+ </main><aside>
+  <div class="card sticky"><h2>🛡️ Verification</h2><div class="grid">${field('Verified',verified)}${field('Status',r.status)}${field('Created',r.created_at)}</div><div class="shareurl">Share this property: ${esc(location.href)}</div><div style="margin-top:14px"><button class="btn primary" style="width:100%" id="shareCard"><i class="fa-solid fa-share-nodes"></i> Share Property</button></div></div>
+  <div class="card"><h2>👤 Contact</h2>${common(r).join('')}<div style="margin-top:12px">${contact?`<a class="btn primary" style="width:100%" href="tel:${esc(contact)}">Call Now</a>`:''}</div></div>
+ </aside></div><div class="footer">StudentHubHelp • Student-friendly property information</div>`;
+ document.getElementById('shareCard')?.addEventListener('click',share);
+}
+async function share(){try{await navigator.share({title:document.title,text:'Check this property on StudentHubHelp',url:location.href})}catch(e){try{await navigator.clipboard.writeText(location.href);alert('Property link copied!')}catch(_){alert(location.href)}}}
+document.getElementById('backBtn').addEventListener('click',()=>history.length>1?history.back():(location.href='index.html'));
+document.getElementById('shareBtn').addEventListener('click',share);
+load();
+</script>
+</body></html>
