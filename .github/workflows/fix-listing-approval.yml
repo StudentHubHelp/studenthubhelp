@@ -1,0 +1,63 @@
+name: Apply listing approval fix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch admin dashboard listing approval
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('admin-dashboard.html')
+          s = p.read_text(encoding='utf-8')
+          old = '''async function processListing(id,action){
+  const rows=state.advanced.requests.listing_requests||[],r=rows.find(x=>String(x.id)===String(id));if(!r)return;
+  if(action==="reject"&&!prompt("Reject reason (required):")){toast("Reject reason is required.",true);return}
+  if(action==="correction"&&!prompt("Correction message:")){toast("Correction message is required.",true);return}
+  const status=action==="approve"?"approved":action==="reject"?"rejected":"correction_requested";
+  if(!hasKey(r,"status")){toast("listing_requests.status column is required.",true);return}
+  const q=await supabaseClient.from("listing_requests").update({status}).eq("id",id);
+  if(q.error){toast(q.error.message,true);return}
+  await logAdminAction("listing_"+action,"listing_requests",id,r,{status});toast("Listing request updated.");await loadAll();
+}'''
+          new = '''async function processListing(id,action){
+  const rows=state.advanced.requests.listing_requests||[],r=rows.find(x=>String(x.id)===String(id));if(!r)return;
+  if(action==="reject"&&!prompt("Reject reason (required):")){toast("Reject reason is required.",true);return}
+  if(action==="correction"&&!prompt("Correction message:")){toast("Correction message is required.",true);return}
+
+  if(action==="approve"){
+    const {data,error}=await supabaseClient.rpc("approve_listing_request",{p_request_id:Number(id)});
+    if(error){toast("Listing approval failed: "+error.message,true);return}
+    await logAdminAction("listing_approve","listing_requests",id,r,data);
+    toast("Listing approved and added to the live property table.");
+    await loadAll();
+    return;
+  }
+
+  const status=action==="reject"?"rejected":"correction_requested";
+  if(!hasKey(r,"status")){toast("listing_requests.status column is required.",true);return}
+  const q=await supabaseClient.from("listing_requests").update({status}).eq("id",id);
+  if(q.error){toast(q.error.message,true);return}
+  await logAdminAction("listing_"+action,"listing_requests",id,r,{status});toast("Listing request updated.");await loadAll();
+}'''
+          if s.count(old) != 1:
+              raise SystemExit(f'Expected exactly one target function, found {s.count(old)}')
+          p.write_text(s.replace(old, new), encoding='utf-8', newline='\n')
+      - name: Commit dashboard change and remove one-off workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin-dashboard.html
+          git rm .github/workflows/fix-listing-approval.yml
+          git commit -m 'fix: route listing approval through Supabase RPC [skip ci]'
+          git push
