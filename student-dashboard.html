@@ -2438,11 +2438,177 @@ function closeReviewModal() {
 
 async function submitReview() {
 
-  showToast(
-    "Review submission will be connected in the next step."
-  );
+  const propertyId =
+    String($("reviewPropertyId").value || "").trim();
+
+  const propertyType =
+    String($("reviewPropertyType").value || "").trim();
+
+  const rating =
+    Number($("reviewRating").value);
+
+  const reviewText =
+    String($("reviewText").value || "").trim();
+
+
+  // Basic validation
+  if (!propertyId) {
+    showToast("Property information is missing.");
+    return;
+  }
+
+  if (!propertyType) {
+    showToast("Property type is missing.");
+    return;
+  }
+
+  if (!rating || rating < 1 || rating > 5) {
+    showToast("Please select a valid rating.");
+    return;
+  }
+
+  if (!reviewText) {
+    showToast("Please write your review.");
+    return;
+  }
+
+  if (reviewText.length < 5) {
+    showToast("Review must be at least 5 characters.");
+    return;
+  }
+
+
+  if (!currentUser) {
+    showToast("Please login again.");
+    return;
+  }
+
+
+  // Prevent double submission
+  const submitButton =
+    document.querySelector(
+      '#reviewModal button[onclick="submitReview()"]'
+    );
+
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+  }
+
+
+  try {
+
+    // Check whether student already reviewed this property
+    const { data: existingReview, error: existingError } =
+      await supabaseClient
+        .from("reviews")
+        .select("id")
+        .eq("student_id", currentUser.id)
+        .eq("property_id", propertyId)
+        .maybeSingle();
+
+
+    if (existingError) {
+      console.error(
+        "Review duplicate check error:",
+        existingError
+      );
+
+      throw existingError;
+    }
+
+
+    if (existingReview) {
+
+      showToast(
+        "You have already submitted a review for this property."
+      );
+
+      return;
+    }
+
+
+    // Insert new review
+    const { error: insertError } =
+      await supabaseClient
+        .from("reviews")
+        .insert({
+          property_id: propertyId,
+          property_type: propertyType,
+          user_id: currentUser.id,
+          student_id: currentUser.id,
+          user_name:
+            currentProfile?.full_name ||
+            currentProfile?.name ||
+            currentUser.email ||
+            "Student",
+          rating: rating,
+          review_text: reviewText,
+          status: "pending"
+        });
+
+
+    if (insertError) {
+
+      console.error(
+        "Review insert error:",
+        insertError
+      );
+
+      // Unique constraint / duplicate review
+      if (
+        insertError.code === "23505"
+      ) {
+        showToast(
+          "You have already submitted a review for this property."
+        );
+      } else {
+        showToast(
+          insertError.message ||
+          "Failed to submit review."
+        );
+      }
+
+      return;
+    }
+
+
+    // Success
+    closeReviewModal();
+
+    showToast(
+      "Review submitted successfully. It is pending admin approval."
+    );
+
+
+    // Refresh student's reviews
+    await loadReviews();
+
+
+  } catch (error) {
+
+    console.error(
+      "Submit review failed:",
+      error
+    );
+
+    showToast(
+      error?.message ||
+      "Something went wrong while submitting the review."
+    );
+
+  } finally {
+
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit Review";
+    }
+
+  }
 
 }
+
+
 
 /* ========================================================
    REVIEWS
