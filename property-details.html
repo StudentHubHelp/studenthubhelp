@@ -68,6 +68,14 @@ const cfg=config[type]||config.hostel;
 const app=document.getElementById('app');
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const val=v=>(v===null||v===undefined||v==='')?null:v;
+  
+  .review-text{
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  line-height:1.7;
+  font-size:16px;
+}
   /* =========================
    PHASE 3 - DYNAMIC PROPERTY SEO
    ========================= */
@@ -372,7 +380,12 @@ app.innerHTML=`
   <div class="card"><h2>🏠 About</h2><div class="desc">${show(r.description)}</div></div>
   ${categorySections(r)}
   <div class="card"><h2>📍 Location</h2><div class="grid">${field('Address',r.address)}${field('Area',r.area)}${field('City',r.city)}${field('Pincode',r.pincode)}${field('Latitude',r.latitude)}${field('Longitude',r.longitude)}</div>${maps?`<div style="margin-top:15px"><a class="btn light" target="_blank" rel="noopener" href="${esc(maps)}">Open in Google Maps</a></div>`:''}</div>
-  <div class="card"><h2>⭐ Student Reviews</h2><p class="muted">Reviews will appear here as students submit and verify feedback.</p></div>
+  <div class="card" id="reviewsCard">
+  <h2>⭐ Student Reviews</h2>
+  <div id="reviewsContent">
+    <p class="muted">No reviews available yet.</p>
+  </div>
+</div>
  </main><aside>
   <div class="card sticky"><h2>🛡️ Verification</h2><div class="grid">${field('Verified',verified)}${field('Status',r.status)}</div><div class="shareurl">Share this property: ${esc(location.href)}</div><div style="margin-top:14px"><button class="btn primary" style="width:100%" id="shareCard"><i class="fa-solid fa-share-nodes"></i> Share Property</button></div></div>
   <div class="card"><h2>👤 Contact</h2>${common(r).join('')}<div style="margin-top:12px">${contact?`<a class="btn primary" style="width:100%" href="tel:${esc(contact)}">Call Now</a>`:''}</div></div>
