@@ -347,6 +347,7 @@ body.premium-grid #authScreen .card{background:rgba(255,255,255,.96)!important}
 
 
       <section id="section-bookstores" class="section hidden space-y-5"></section>
+      <section id="section-properties" class="section hidden space-y-5"></section>
       <section id="section-listing-requests" class="section hidden space-y-5"></section>
       <section id="section-claim-requests" class="section hidden space-y-5"></section>
       <section id="section-verification" class="section hidden space-y-5"></section>
@@ -1490,21 +1491,27 @@ const originalRenderProperty=renderProperty;
 function renderProperty(type){
   if(!masterMeta[type])return originalRenderProperty(type);
   const cfg=masterMeta[type];
-  const arr = [...(state[type] || [])].sort((a, b) => {
-    return (a.name || "").localeCompare(b.name || "", 'en', { sensitivity: 'base' });
-  });
+  const arr = (state[type] || [])
+    .map((x, index) => ({ ...x, __index: index }))
+    .sort((a, b) => {
+      return (a.name || "").localeCompare(
+        b.name || "",
+        "en",
+        { sensitivity: "base" }
+      );
+    });
   $("section-"+type).innerHTML=`
     <div class="master-section-head">
-      <div><h2 class="text-xl font-bold">${cfg.title}</h2><p class="text-xs text-slate-400">Live Supabase records • status and verification are independent.</p></div>
+      <div><h2 class="text-xl font-bold">${cfg.title}</h2><p class="text-xs text-slate-400">Live Supabase records • verification updates target the exact property ID.</p></div>
       <div class="master-toolbar"><button class="master-action" onclick="showSection('properties');setPropertyFilter('${type}')">Open in All Properties</button><button class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold" onclick="openCreate('${type}')"><i class="fa-solid fa-plus mr-1"></i>Add ${cfg.singular}</button></div>
     </div>
     <div class="card rounded-2xl p-3"><div class="text-xs text-slate-400">${arr.length} loaded records • ${moduleStatus(type)}</div></div>
     <div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr><th class="p-3">Property</th><th class="p-3">Owner</th><th class="p-3">Area</th><th class="p-3">Phone</th><th class="p-3">Status</th><th class="p-3">Verification</th><th class="p-3">Rating</th>
 <th class="p-3">Last Updated</th> <!-- Naya column header -->
 <th class="p-3">Actions</th></tr></thead><tbody>
-      ${arr.length?arr.map((x,i)=>{const o=rowOwner(x);return `<tr><td class="p-3"><button class="text-left font-bold text-white hover:text-gold-300" onclick="openAdvancedProperty('${type}',${i})">${esc(x.name||cfg.singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td><td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td><td class="p-3">${esc(x.area||"—")}</td><td class="p-3 font-mono">${esc(x.phone||"—")}</td><td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td><td class="p-3">${propVerified(x)?masterBadge("Verified","green"):masterBadge("Not Verified")}</td><td class="p-3 text-gold-300">${propRating(x)||"—"}</td>
+      ${arr.length?arr.map((x,i)=>{const o=rowOwner(x);return `<tr><td class="p-3"><button class="text-left font-bold text-white hover:text-gold-300" onclick="openAdvancedProperty('${type}',${x.__index})">${esc(x.name||cfg.singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td><td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td><td class="p-3">${esc(x.area||"—")}</td><td class="p-3 font-mono">${esc(x.phone||"—")}</td><td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td><td class="p-3">${propVerified(x)?masterBadge("Verified","green"):masterBadge("Not Verified")}</td><td class="p-3 text-gold-300">${propRating(x)||"—"}</td>
 <td class="p-3 text-slate-300">${x.updated_at ? new Date(x.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
-<td class="p-3 whitespace-nowrap"><button class="master-action view-details" onclick="previewPublic('${type}',${i})"><i class="fa-solid fa-eye mr-1"></i>View Property</button><button class="master-action ml-1" onclick="openAdvancedProperty('${type}',${i})"><i class="fa-solid fa-pen"></i></button><button class="master-action ml-1 danger" onclick="deleteProperty('${type}','${esc(x.id)}')"><i class="fa-solid fa-trash"></i></button></td></tr>`}).join(""):emptyRow(8, state.advanced.errors[type]?state.advanced.errors[type]:"No records found.")}
+<td class="p-3 whitespace-nowrap"><button class="master-action view-details" onclick="previewPublic('${type}',${x.__index})"><i class="fa-solid fa-eye mr-1"></i>View Property</button><button class="master-action ml-1" onclick="openAdvancedProperty('${type}',${x.__index})"><i class="fa-solid fa-pen"></i></button><button class="master-action ml-1 danger" onclick="deleteProperty('${type}','${esc(x.id)}')"><i class="fa-solid fa-trash"></i></button></td></tr>`}).join(""):emptyRow(8, state.advanced.errors[type]?state.advanced.errors[type]:"No records found.")}
     </tbody></table></div>`;
 }
 
@@ -1533,17 +1540,20 @@ async function setPropertyVerification(type, id, verified){
   }
 
   try{
+    const propertyId = String(id);
+    const verifiedValue = Boolean(verified);
+
     const { error } = await supabaseClient
       .from(type)
       .update({
-        verified: Boolean(verified)
+        verified: verifiedValue
       })
-      .eq("id", id);
+      .eq("id", propertyId);
 
     if(error) throw error;
 
     // Update local state immediately
-    row.verified = Boolean(verified);
+    row.verified = verifiedValue;
 
     toast(
       verified
@@ -2059,7 +2069,7 @@ async function markAllNotificationsRead(){
   const rows=state.advanced.requests.admin_notifications||[];
   for(const x of rows){
     if(String(firstVal(x,["status"],"unread"))==="unread" && hasKey(x,"status")){
-      await supabaseClient.from("admin_notifications").update({status:"read"}).eq("id",id);
+      await supabaseClient.from("admin_notifications").update({status:"read"}).eq("id",x.id);
       x.status="read";
     }
   }
