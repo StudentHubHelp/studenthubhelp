@@ -1979,6 +1979,7 @@ async function loadBookings() {
    RENDER BOOKINGS
 ======================================================== */
 
+```javascript
 function renderBookings(
   bookings,
   targetId
@@ -2060,6 +2061,36 @@ function renderBookings(
                 </div>
 
               </div>
+            `
+            : "";
+
+
+        /*
+          Review button only for active bookings.
+        */
+
+        const reviewButton =
+          status === "active"
+            ? `
+              <button
+                type="button"
+                onclick="openReviewModal(
+                  '${escapeHtml(String(booking.property_id || ""))}',
+                  '${escapeHtml(String(booking.property_table || ""))}',
+                  '${escapeHtml(String(booking.property_name || ""))}'
+                )"
+                class="mt-4 w-full md:w-auto
+                       px-5 py-2.5
+                       rounded-xl
+                       bg-gray-900
+                       text-white
+                       text-sm font-bold
+                       hover:bg-gray-800
+                       transition">
+
+                ⭐ Write Review
+
+              </button>
             `
             : "";
 
@@ -2154,6 +2185,8 @@ function renderBookings(
 
             ${confirmationMessage}
 
+            ${reviewButton}
+
           </div>
 
         `;
@@ -2162,7 +2195,7 @@ function renderBookings(
     ).join("");
 
 }
-
+```
 
 /* ========================================================
    CATEGORY ICON
