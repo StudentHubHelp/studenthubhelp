@@ -1184,7 +1184,135 @@
 
 </div>
 
+<!-- =====================================================
+     REVIEW MODAL
+====================================================== -->
 
+<div
+  id="reviewModal"
+  class="fixed inset-0 z-[150] hidden items-center justify-center p-4 modal-backdrop">
+
+  <div
+    class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+
+    <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+
+      <div>
+
+        <h2 class="text-xl font-extrabold">
+          ⭐ Write a Review
+        </h2>
+
+        <p
+          id="reviewPropertyName"
+          class="text-sm text-gray-400 mt-1">
+        </p>
+
+      </div>
+
+      <button
+        type="button"
+        onclick="closeReviewModal()"
+        class="w-10 h-10 rounded-xl bg-gray-100
+               text-gray-500 hover:bg-gray-200
+               text-xl">
+
+        ×
+
+      </button>
+
+    </div>
+
+
+    <div class="p-6">
+
+      <input
+        type="hidden"
+        id="reviewPropertyId">
+
+      <input
+        type="hidden"
+        id="reviewPropertyType">
+
+
+      <div class="mb-5">
+
+        <label
+          class="block text-sm font-bold mb-2">
+
+          Rating
+
+        </label>
+
+        <select
+          id="reviewRating"
+          class="input">
+
+          <option value="5">★★★★★ — Excellent</option>
+          <option value="4">★★★★☆ — Very Good</option>
+          <option value="3">★★★☆☆ — Good</option>
+          <option value="2">★★☆☆☆ — Average</option>
+          <option value="1">★☆☆☆☆ — Poor</option>
+
+        </select>
+
+      </div>
+
+
+      <div class="mb-5">
+
+        <label
+          class="block text-sm font-bold mb-2">
+
+          Your Review
+
+        </label>
+
+        <textarea
+          id="reviewText"
+          class="input"
+          rows="5"
+          maxlength="1000"
+          placeholder="Share your experience..."></textarea>
+
+        <div
+          class="text-xs text-gray-400 mt-2">
+
+          Maximum 1000 characters.
+
+        </div>
+
+      </div>
+
+
+      <div class="flex flex-col sm:flex-row gap-3">
+
+        <button
+          type="button"
+          onclick="closeReviewModal()"
+          class="btn-secondary w-full">
+
+          Cancel
+
+        </button>
+
+        <button
+          type="button"
+          onclick="submitReview()"
+          class="btn-primary w-full">
+
+          Submit Review
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+  
 <!-- =====================================================
      TOAST
 ====================================================== -->
@@ -2256,6 +2384,65 @@ function getCategoryIcon(category) {
 
 }
 
+  /* ========================================================
+   REVIEW MODAL
+======================================================== */
+
+function openReviewModal(
+  propertyId,
+  propertyType,
+  propertyName
+) {
+
+  $("reviewPropertyId")
+    .value = String(propertyId || "");
+
+  $("reviewPropertyType")
+    .value = String(propertyType || "");
+
+  $("reviewPropertyName")
+    .textContent =
+      propertyName ||
+      "Write your experience";
+
+  $("reviewRating")
+    .value = "5";
+
+  $("reviewText")
+    .value = "";
+
+
+  $("reviewModal")
+    .classList
+    .remove("hidden");
+
+  $("reviewModal")
+    .classList
+    .add("flex");
+
+}
+
+
+function closeReviewModal() {
+
+  $("reviewModal")
+    .classList
+    .add("hidden");
+
+  $("reviewModal")
+    .classList
+    .remove("flex");
+
+}
+
+
+async function submitReview() {
+
+  showToast(
+    "Review submission will be connected in the next step."
+  );
+
+}
 
 /* ========================================================
    REVIEWS
