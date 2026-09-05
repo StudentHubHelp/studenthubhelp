@@ -718,14 +718,15 @@ async function loadAll(){
 
   try{
     const results=await Promise.all([
-      supabaseClient.from("hostels").select("*").order("id",{ascending:true}),
-      supabaseClient.from("tiffins").select("*").order("id",{ascending:true}),
-      supabaseClient.from("libraries").select("*").order("id",{ascending:true}),
-      supabaseClient.from("cafes").select("*").order("id",{ascending:true}),
-      supabaseClient.from("profiles").select("id,full_name,phone,email,role,created_at")
-    ]);
+  supabaseClient.from("hostels").select("*").order("name",{ascending:true}),
+  supabaseClient.from("tiffins").select("*").order("name",{ascending:true}),
+  supabaseClient.from("libraries").select("*").order("name",{ascending:true}),
+  supabaseClient.from("cafes").select("*").order("name",{ascending:true}),
+  supabaseClient.from("bookstores").select("*").order("name",{ascending:true}), // Agar bookstores bhi hai
+  supabaseClient.from("profiles").select("id,full_name,phone,email,role,created_at")
+]);
 
-    const [h,t,l,c,p]=results;
+    const [h, t, l, c, b, p] = results;
     const firstError=[h,t,l,c,p].find(x=>x.error);
     if(firstError)throw firstError.error;
 
@@ -733,7 +734,8 @@ async function loadAll(){
     state.tiffins=t.data||[];
     state.libraries=l.data||[];
     state.cafes=c.data||[];
-
+    state.bookstores = b.data || [];
+    
     const profiles=p.data||[];
 
     state.students=profiles.filter(x=>String(x.role||"").toLowerCase()==="student");
@@ -1459,6 +1461,9 @@ const originalRenderProperty=renderProperty;
 function renderProperty(type){
   if(!masterMeta[type])return originalRenderProperty(type);
   const cfg=masterMeta[type],arr=state[type]||[];
+  const arr = [...(state[type] || [])].sort((a, b) => {
+    return (a.name || "").localeCompare(b.name || "", 'en', { sensitivity: 'base' });
+  });
   $("section-"+type).innerHTML=`
     <div class="master-section-head">
       <div><h2 class="text-xl font-bold">${cfg.title}</h2><p class="text-xs text-slate-400">Live Supabase records • status and verification are independent.</p></div>
