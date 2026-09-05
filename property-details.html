@@ -295,11 +295,25 @@ setMeta('twitterDescription',localSeoDescription);
 }
 function niceKey(k){return k.replace(/_/g,' ').replace(/\b\w/g,m=>m.toUpperCase())}
 function show(v){if(v===null||v===undefined||v==='')return '<span class="muted">Coming Soon</span>';if(typeof v==='boolean')return v?'<span class="yes">Yes</span>':'<span class="no">No</span>';if(Array.isArray(v))return v.length?v.map(x=>esc(x)).join(', '):'<span class="muted">Coming Soon</span>';return esc(v)}
-function field(label,v){return `<div class="item"><div class="label">${esc(label)}</div><div class="value">${show(v)}</div></div>`}
-function pills(v){if(!v)return '<span class="muted">Coming Soon</span>';let a=Array.isArray(v)?v:String(v).split(',').map(x=>x.trim()).filter(Boolean);return `<div class="facilities">${a.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div>`}
-function money(v){return val(v)===null?null:`₹${Number(v).toLocaleString('en-IN')}`}
+function field(label,v){
+  if(v===null||v===undefined||v==='') return '';
+  if(Array.isArray(v)&&v.length===0) return '';
+  return `<div class="item"><div class="label">${esc(label)}</div><div class="value">${show(v)}</div></div>`;
+}
+function pills(v){
+  if(v===null||v===undefined||v==='') return '';
+  let a=Array.isArray(v)?v:String(v).split(',').map(x=>x.trim()).filter(Boolean);
+  if(!a.length) return '';
+  return `<div class="facilities">${a.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div>`;
+}
+  function money(v){return val(v)===null?null:`₹${Number(v).toLocaleString('en-IN')}`}
 function common(r){return [field('Owner Name',r.owner_name),field('Phone',r.phone),field('WhatsApp',r.whatsapp),field('Email',r.email),field('Address',r.address),field('Area',r.area),field('City',r.city),field('Pincode',r.pincode),field('Status',r.status),field('Verified',r.verified),field('Rating',r.rating)]}
-function categorySections(r){
+function hasValue(v){
+  if(v===null||v===undefined||v==='') return false;
+  if(Array.isArray(v)) return v.length>0;
+  return true;
+}
+  function categorySections(r){
  let out='';
  if(type==='hostel'){
   out+=`<div class="card"><h2>🛏️ Room & Rent Details</h2><div class="grid">${field('Monthly Rent',money(r.monthly_rent))}${field('Security Deposit',money(r.security_deposit))}${field('Room Types',r.room_types)}${field('Food Available',r.food_available)}${field('Food Type',r.food_type)}${field('Timing',r.timing)}${field('Type',r.type||r.category)}</div></div>`;
