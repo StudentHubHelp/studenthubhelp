@@ -1,4 +1,4 @@
-name: Align listing approval
+name: Fix owner listing submission
 
 on:
   push:
@@ -13,46 +13,73 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch only listing approval handler
+      - name: Patch add-listing submission flow
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('admin-dashboard.html')
+          p = Path('add-listing.html')
           s = p.read_text(encoding='utf-8')
-          start = s.find('async function processListing(id,action){')
-          end = s.find('async function processClaim(id,action){', start)
-          if start < 0 or end < 0:
-              raise SystemExit('processListing boundaries not found')
-          new = '''async function processListing(id,action){
-  const rows=state.advanced.requests.listing_requests||[],r=rows.find(x=>String(x.id)===String(id));if(!r)return;
-  if(action==="reject"&&!prompt("Reject reason (required):")){toast("Reject reason is required.",true);return}
-  if(action==="correction"&&!prompt("Correction message:")){toast("Correction message is required.",true);return}
 
-  if(action==="approve"){
-    const {data,error}=await supabaseClient.rpc("approve_listing_request",{p_request_id:Number(id)});
-    if(error){toast("Listing approval failed: "+error.message,true);return}
-    await logAdminAction("listing_approve","listing_requests",id,r,data);
-    toast("Listing approved and added to the live property table.");
-    await loadAll();
-    return;
-  }
-
-  const status=action==="reject"?"rejected":"correction_requested";
-  if(!hasKey(r,"status")){toast("listing_requests.status column is required.",true);return}
-  const q=await supabaseClient.from("listing_requests").update({status}).eq("id",id);
-  if(q.error){toast(q.error.message,true);return}
-  await logAdminAction("listing_"+action,"listing_requests",id,r,{status});
-  toast("Listing request updated.");
-  await loadAll();
-}
+          old_insert = '''      const { error } = await db
+        .from(table)
+        .insert(payload);
 '''
-          p.write_text(s[:start] + new + s[end:], encoding='utf-8')
+          new_insert = '''      const requestPayload = {
+        owner_id: user.id,
+        owner_name: clean(profile.full_name || user.user_metadata?.full_name || user.email || "Owner"),
+        owner_phone: phone,
+        name,
+        category: categoryLabels[category],
+        area,
+        address,
+        phone,
+        timing: timing || null,
+        facilities: facilities || null,
+        image: category === "cafe" ? (clean($("fImage").value) || null) : null,
+        rating: null,
+        status: "pending"
+      };
+
+      const { error } = await db
+        .from("listing_requests")
+        .insert(requestPayload);
+'''
+          if old_insert not in s:
+              raise SystemExit('listing direct-insert block not found')
+          s = s.replace(old_insert, new_insert, 1)
+
+          replacements = {
+            'Your listing is submitted directly to your Supabase database and becomes available according to your account permissions.': 'Your listing is submitted as a request for admin review. It becomes visible publicly only after approval.',
+            '<b>Submit securely</b><span>Your authenticated owner account is used for the request.</span>': '<b>Submit for review</b><span>Your authenticated owner account sends the listing to the admin approval queue.</span>',
+            '<b>Manage later</b><span>Use your User Dashboard to manage your listings.</span>': '<b>Wait for approval</b><span>The listing is published only after an admin approves it.</span>',
+            'Sending your ': 'Sending your '
+          }
+          for a, b in replacements.items():
+              if a in s:
+                  s = s.replace(a, b, 1)
+
+          p.write_text(s, encoding='utf-8')
           PY
-      - name: Commit patched dashboard and remove temporary workflow
+
+      - name: Remove direct-live-table variable and verify patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('add-listing.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('    const table = categoryMap[category];\n\n    if (!table) {\n      setStatus("error", \'<i class="fa-solid fa-triangle-exclamation"></i> Invalid listing category.\');\n      return;\n    }\n\n', '')
+          if '.from(table)' in s:
+              raise SystemExit('Direct category-table insert still present')
+          if '.from("listing_requests")' not in s:
+              raise SystemExit('listing_requests insert not found')
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit patched add-listing and remove temporary workflow
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add admin-dashboard.html
+          git add add-listing.html
           git rm .github/workflows/align-listing-approval.yml
-          git commit -m "fix: route listing approval through Supabase RPC [skip ci]"
+          git commit -m "fix: send owner listings for admin approval [skip ci]"
           git push
