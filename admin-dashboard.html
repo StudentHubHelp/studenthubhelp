@@ -1977,6 +1977,76 @@ async function processStatus(table,id,status){
   await logAdminAction("status_change",table,id,x,{status});toast("Status updated.");await loadAll();
 }
 
+async function processListing(id,action){
+  const rows=state.advanced.requests.listing_requests||[];
+  const r=rows.find(x=>String(x.id)===String(id));
+  if(!r)return;
+
+  if(action==="reject"&&!prompt("Reject reason (required):")){
+    toast("Reject reason is required.",true);
+    return;
+  }
+
+  if(action==="correction"&&!prompt("Correction message:")){
+    toast("Correction message is required.",true);
+    return;
+  }
+
+  if(action==="approve"){
+    const {data,error}=await supabaseClient.rpc(
+      "approve_listing_request",
+      {p_request_id:Number(id)}
+    );
+
+    if(error){
+      toast("Listing approval failed: "+error.message,true);
+      return;
+    }
+
+    await logAdminAction(
+      "listing_approve",
+      "listing_requests",
+      id,
+      r,
+      data
+    );
+
+    toast("Listing approved and added to the live property table.");
+    await loadAll();
+    return;
+  }
+
+  const status=action==="reject"
+    ?"rejected"
+    :"correction_requested";
+
+  if(!hasKey(r,"status")){
+    toast("listing_requests.status column is required.",true);
+    return;
+  }
+
+  const q=await supabaseClient
+    .from("listing_requests")
+    .update({status})
+    .eq("id",id);
+
+  if(q.error){
+    toast(q.error.message,true);
+    return;
+  }
+
+  await logAdminAction(
+    "listing_"+action,
+    "listing_requests",
+    id,
+    r,
+    {status}
+  );
+
+  toast("Listing request updated.");
+  await loadAll();
+}
+  
 async function processClaim(id,action){
   const rows=state.advanced.requests.claim_requests||[],r=rows.find(x=>String(x.id)===String(id));if(!r)return;
   if(action==="reject"&&!prompt("Reject reason (required):"))return;
