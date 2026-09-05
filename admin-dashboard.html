@@ -1707,9 +1707,53 @@ function renderStudents(filter=""){
 }
 function openStudentDrawer(id){
  const s=state.students.find(x=>String(x.id)===String(id));if(!s)return;
+ 
  const bookings=(state.advanced.requests.student_bookings||[]).filter(b=>String(firstVal(b,["student_id","user_id"],""))===String(id));
  const reviews=(state.advanced.requests.reviews||[]).filter(b=>String(firstVal(b,["student_id","user_id"],""))===String(id));
- openMasterDrawer("STUDENT",s.full_name||"Student",`<div class="master-detail-grid">${[["Email",s.email],["Phone",s.phone],["User ID",s.id],["Joined",fmtDate(s.created_at)]].map(x=>`<div class="master-mini-card p-3"><div class="text-[10px] text-slate-500">${x[0]}</div><div class="text-sm mt-1 break-all">${esc(x[1]||"—")}</div></div>`).join("")}</div><div class="master-mini-card p-4"><b>Bookings</b><div class="text-sm text-slate-400 mt-2">${bookings.length} related booking records.</div></div><div class="master-mini-card p-4"><b>Reviews</b><div class="text-sm text-slate-400 mt-2">${reviews.length} related review records.</div></div>`);
+
+ // Bookings details list map karna
+ const bookingsHTML = bookings.length ? bookings.map(b => {
+   const p = resolveProperty(b);
+   const propName = p?.x?.name || firstVal(b, ["property_name", "title"], "Property");
+   const joinDate = fmtDate(firstVal(b, ["booking_date", "date", "start_date", "created_at"], null));
+   const status = firstVal(b, ["status"], "active");
+   return `<div class="bg-navy-850 p-3 rounded-xl mb-2 border border-navy-700">
+     <div class="font-bold text-white">${esc(propName)}</div>
+     <div class="text-xs text-slate-400 mt-1">Joined / Booked on: <span class="text-gold-300">${esc(joinDate)}</span></div>
+     <div class="text-[10px] text-emerald-400 mt-1">Status: ${esc(status)}</div>
+   </div>`;
+ }).join("") : `<div class="text-xs text-slate-400 mt-2">No related booking records.</div>`;
+
+ // Reviews details list map karna
+ const reviewsHTML = reviews.length ? reviews.map(r => {
+   const p = resolveProperty(r);
+   const propName = p?.x?.name || firstVal(r, ["property_name", "title"], "Property");
+   const rating = firstVal(r, ["rating"], "5");
+   const comment = firstVal(r, ["review", "comment", "text"], "No comment");
+   const reviewDate = fmtDate(firstVal(r, ["created_at", "date"], null));
+   return `<div class="bg-navy-850 p-3 rounded-xl mb-2 border border-navy-700">
+     <div class="flex justify-between items-center">
+       <span class="font-bold text-white">${esc(propName)}</span>
+       <span class="text-gold-300 text-xs font-bold">${esc(rating)} ★</span>
+     </div>
+     <div class="text-xs text-slate-300 mt-1 italic">"${esc(comment)}"</div>
+     <div class="text-[10px] text-slate-500 mt-2">Reviewed on: ${esc(reviewDate)}</div>
+   </div>`;
+ }).join("") : `<div class="text-xs text-slate-400 mt-2">No related review records.</div>`;
+
+ openMasterDrawer("STUDENT", s.full_name || "Student", `
+   <div class="master-detail-grid">
+     ${[["Email", s.email], ["Phone", s.phone], ["User ID", s.id], ["Joined", fmtDate(s.created_at)]].map(x => `<div class="master-mini-card p-3"><div class="text-[10px] text-slate-500">${x[0]}</div><div class="text-sm mt-1 break-all">${esc(x[1] || "—")}</div></div>`).join("")}
+   </div>
+   <div class="master-mini-card p-4">
+     <b class="text-gold-300">Property Bookings & Join History</b>
+     <div class="mt-2">${bookingsHTML}</div>
+   </div>
+   <div class="master-mini-card p-4">
+     <b class="text-gold-300">Property Reviews Given</b>
+     <div class="mt-2">${reviewsHTML}</div>
+   </div>
+ `);
 }
 async function toggleUserStatus(id,currentlyDisabled){
  const s=[...state.students,...state.owners].find(x=>String(x.id)===String(id));if(!s)return;
