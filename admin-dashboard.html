@@ -203,7 +203,6 @@ body.premium-grid #authScreen .card{background:rgba(255,255,255,.96)!important}
 
       <div class="master-nav-group">
         <div class="master-nav-label">Platform Control</div>
-        <button data-section="properties" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-building w-5 text-gold-400"></i> All Properties</button>
         <button data-section="listing-requests" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-inbox w-5 text-gold-400"></i> Listing Requests <span id="navListingBadge" class="float-right badge">0</span></button>
         <button data-section="claim-requests" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-handshake w-5 text-gold-400"></i> Claim Requests <span id="navClaimBadge" class="float-right badge">0</span></button>
         <button data-section="verification" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-circle-check w-5 text-gold-400"></i> Verification <span id="navVerificationBadge" class="float-right badge">0</span></button>
@@ -336,7 +335,6 @@ body.premium-grid #authScreen .card{background:rgba(255,255,255,.96)!important}
 
 
       <section id="section-bookstores" class="section hidden space-y-5"></section>
-      <section id="section-properties" class="section hidden space-y-5"></section>
       <section id="section-listing-requests" class="section hidden space-y-5"></section>
       <section id="section-claim-requests" class="section hidden space-y-5"></section>
       <section id="section-verification" class="section hidden space-y-5"></section>
@@ -1860,7 +1858,55 @@ function propsCountArea(a){return allProps().filter(x=>String(x.area||"").toLowe
 async function openAreaPrompt(){const name=prompt("Area name");if(!name)return;const payload={name:name.trim(),area_name:name.trim(),city:prompt("City")||null,state:prompt("State")||"Rajasthan",status:"active"};const rows=state.advanced.requests.areas||[];const sample=rows[0]||{};const clean={};for(const [k,v] of Object.entries(payload))if(hasKey(sample,k)||!rows.length)clean[k]=v;if(!Object.keys(clean).length){toast("Could not determine areas schema.",true);return}const r=await supabaseClient.from("areas").insert(clean);if(r.error)toast(r.error.message,true);else{toast("Area added.");await loadAll()}}
 async function editArea(id){const x=(state.advanced.requests.areas||[]).find(a=>String(a.id)===String(id));if(!x)return;const name=prompt("Area name",firstVal(x,["name","area_name"],""));if(!name)return;const key=hasKey(x,"name")?"name":"area_name";const r=await supabaseClient.from("areas").update({[key]:name}).eq("id",id);if(r.error)toast(r.error.message,true);else{toast("Area updated.");await loadAll()}}
 
-function renderNotifications(){const el=$("section-notifications");if(!el)return;const rows=state.advanced.requests.admin_notifications||[];el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">Notifications</h2><p class="text-xs text-slate-400">Operational alerts and pending actions.</p></div></div><div class="space-y-2">${rows.length?rows.slice(0,100).map(x=>`<button class="master-mini-card p-4 w-full text-left" onclick="openRecordDrawer('admin_notifications','${esc(x.id)}')"><div class="flex justify-between"><b>${esc(firstVal(x,["title","type"],"Notification"))}</b>${masterBadge(firstVal(x,["status"],"unread"),"blue")}</div><div class="text-xs text-slate-400 mt-1">${esc(firstVal(x,["message","body","description"],""))}</div><div class="text-[10px] text-slate-500 mt-2">${fmtDate(dateCreated(x))}</div></button>`).join(""):'<div class="master-mini-card p-6 text-center text-slate-400">No notifications.</div>'}</div>`}
+function renderNotifications(){
+  const el=$("section-notifications");
+  if(!el)return;
+  const rows=state.advanced.requests.admin_notifications||[];
+  
+  el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">Notifications</h2><p class="text-xs text-slate-400">Operational alerts and pending actions.</p></div><button class="master-action" onclick="markAllNotificationsRead()">Mark all as read</button></div><div class="space-y-2">${rows.length?rows.slice(0,100).map(x=>`<button class="master-mini-card p-4 w-full text-left" onclick="markNotificationRead('${esc(x.id)}')"><div class="flex justify-between"><b>${esc(firstVal(x,["title","type"],"Notification"))}</b>${String(firstVal(x,["status"],"unread"))==="unread"?'<span class="badge badge-red">Unread</span>':'<span class="badge badge-green">Read</span>'}</div><div class="text-xs text-slate-400 mt-1">${esc(firstVal(x,["message","body","description"],""))}</div><div class="text-[10px] text-slate-500 mt-2">${fmtDate(dateCreated(x))}</div></button>`).join(""):''<div class="master-mini-card p-6 text-center text-slate-400">No notifications.</div>'}</div>`;
+  
+  // Jaise hi notification section khulega, red badge/bell count 0 ho jayega
+  updateNotificationBadgeCount();
+}
+
+async function markNotificationRead(id){
+  const rows=state.advanced.requests.admin_notifications||[];
+  const x=rows.find(r=>String(r.id)===String(id));
+  if(x && hasKey(x,"status")){
+    await supabaseClient.from("admin_notifications").update({status:"read"}).eq("id",id);
+    x.status="read";
+    renderNotifications();
+    updateNotificationBadgeCount();
+  }
+  openRecordDrawer('admin_notifications', id);
+}
+
+async function markAllNotificationsRead(){
+  const rows=state.advanced.requests.admin_notifications||[];
+  for(const x of rows){
+    if(String(firstVal(x,["status"],"unread"))==="unread" && hasKey(x,"status")){
+      await supabaseClient.from("admin_notifications").update({status:"read"}).eq("id",id);
+      x.status="read";
+    }
+  }
+  renderNotifications();
+  updateNotificationBadgeCount();
+  toast("All notifications marked as read.");
+}
+
+function updateNotificationBadgeCount(){
+  const rows=state.advanced.requests.admin_notifications||[];
+  const unreadCount=rows.filter(x=>String(firstVal(x,["status"],"unread"))==="unread").length;
+  const bellCountEl=$("masterBellCount");
+  if(bellCountEl){
+    bellCountEl.textContent=unreadCount;
+    if(unreadCount===0){
+      bellCountEl.classList.add("hidden");
+    }else{
+      bellCountEl.classList.remove("hidden");
+    }
+  }
+}
 function renderActivity(){const el=$("section-activity");if(!el)return;const rows=state.advanced.requests.admin_activity_logs||[];el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">Activity & Change History</h2><p class="text-xs text-slate-400">Admin actions, entity changes and timestamps.</p></div><button class="master-action" onclick="exportCurrentCSV('admin_activity_logs')">Export CSV</button></div><div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr><th class="p-3">Action</th><th class="p-3">Entity</th><th class="p-3">Entity ID</th><th class="p-3">Admin</th><th class="p-3">Timestamp</th><th class="p-3">Old</th><th class="p-3">New</th></tr></thead><tbody>${rows.length?rows.slice(0,200).map(x=>`<tr><td class="p-3 font-bold">${esc(firstVal(x,["action"],"—"))}</td><td class="p-3">${esc(firstVal(x,["entity_type","entity"],"—"))}</td><td class="p-3">${esc(firstVal(x,["entity_id"],"—"))}</td><td class="p-3">${esc(firstVal(x,["admin_email","admin_id"],"—"))}</td><td class="p-3">${fmtDate(firstVal(x,["created_at","timestamp"],null))}</td><td class="p-3 max-w-xs truncate">${esc(JSON.stringify(firstVal(x,["old_value"],"")))}</td><td class="p-3 max-w-xs truncate">${esc(JSON.stringify(firstVal(x,["new_value"],"")))}</td></tr>`).join(""):emptyRow(7,"No activity logs found.")}</tbody></table></div>`}
 function renderSettings(){const el=$("section-settings");if(!el)return;const rows=state.advanced.requests.system_settings||[];const keys=["website_name","website_contact","website_whatsapp","website_email","student_registration","owner_registration","booking_enabled","booking_approval_mode","review_auto_publish","maintenance_mode","maintenance_message"];el.innerHTML=`<div><h2 class="text-xl font-bold">System Settings</h2><p class="text-xs text-slate-400">Only settings present in your Supabase table are shown as live values.</p></div><div class="grid lg:grid-cols-2 gap-3">${keys.map(k=>{const x=rows.find(r=>String(firstVal(r,["key","setting_key","name"],""))===k);return `<div class="master-mini-card p-4"><div class="text-xs font-bold text-gold-300">${esc(k)}</div><div class="text-sm mt-2">${x?esc(firstVal(x,["value","setting_value"],"—")):'<span class="text-slate-500">Not configured</span>'}</div>${x?`<button class="master-action mt-3" onclick="editSetting('${esc(x.id)}','${esc(k)}')">Edit</button>`:""}</div>`}).join("")}</div>`}
 async function editSetting(id,key){const rows=state.advanced.requests.system_settings||[],x=rows.find(r=>String(r.id)===String(id));if(!x)return;const v=prompt(`New value for ${key}`,firstVal(x,["value","setting_value"],""));if(v===null)return;const field=hasKey(x,"value")?"value":"setting_value";const r=await supabaseClient.from("system_settings").update({[field]:v}).eq("id",id);if(r.error)toast(r.error.message,true);else{await logAdminAction("setting_update","system_settings",id,x,{[field]:v});toast("Setting updated.");await loadAll()}}
