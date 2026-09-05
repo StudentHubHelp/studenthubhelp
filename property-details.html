@@ -357,7 +357,129 @@ async function load(){
  render(data);
 }
 function fail(title,msg){app.innerHTML=`<div class="card notice"><h1>${esc(title)}</h1><p class="muted">${esc(msg)}</p><br><button class="back" onclick="history.back()">← Go Back</button></div>`}
-function render(r){
+async function loadPropertyReviews(propertyId, propertyType){
+  const reviewsContent = document.getElementById('reviewsContent');
+
+  if(!reviewsContent) return;
+
+  reviewsContent.innerHTML = `
+    <p class="muted">
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+      Loading reviews...
+    </p>
+  `;
+
+  const { data, error } = await db
+    .from('reviews')
+    .select(`
+      id,
+      property_id,
+      property_type,
+      user_id,
+      student_id,
+      user_name,
+      rating,
+      review_text,
+      published_review_text,
+      status,
+      created_at
+    `)
+    .eq('property_id', Number(propertyId))
+    .eq('property_type', propertyType)
+    .eq('status', 'published')
+    .order('created_at', { ascending:false });
+
+  if(error){
+    console.error('Reviews load error:', error);
+
+    reviewsContent.innerHTML = `
+      <p class="muted">
+        Reviews could not be loaded right now.
+      </p>
+    `;
+
+    return;
+  }
+
+  if(!data || !data.length){
+    reviewsContent.innerHTML = `
+      <p class="muted">
+        No reviews available yet.
+      </p>
+    `;
+
+    return;
+  }
+
+  reviewsContent.innerHTML = data.map(review => {
+
+    const rating = Number(review.rating || 0);
+
+    const stars = Array.from({length:5}, (_,i) =>
+      i < Math.round(rating)
+        ? '<i class="fa-solid fa-star"></i>'
+        : '<i class="fa-regular fa-star"></i>'
+    ).join('');
+
+    const reviewText =
+      review.published_review_text ||
+      review.review_text ||
+      '';
+
+    const reviewerName =
+      review.user_name ||
+      'Student';
+
+    const date = review.created_at
+      ? new Date(review.created_at).toLocaleDateString('en-IN', {
+          day:'2-digit',
+          month:'short',
+          year:'numeric'
+        })
+      : '';
+
+    return `
+      <div class="review">
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          gap:12px;
+          align-items:flex-start;
+          flex-wrap:wrap;
+        ">
+
+          <div>
+            <strong>${esc(reviewerName)}</strong>
+
+            <div style="
+              color:#f5a623;
+              margin-top:4px;
+              letter-spacing:2px;
+            ">
+              ${stars}
+            </div>
+          </div>
+
+          <span class="small">
+            ${esc(date)}
+          </span>
+
+        </div>
+
+        <div
+          class="review-text"
+          style="margin-top:10px;"
+        >
+          ${esc(reviewText)}
+        </div>
+
+      </div>
+    `;
+
+  }).join('');
+}
+  function render(r){
  const image=r.image||cfg.banner;
  const verified=r.verified===true||String(r.status||'').toLowerCase()==='verified'||String(r.verification_status||'').toLowerCase()==='verified';
  const name=r.name||r.service_name||'Property';
@@ -391,6 +513,7 @@ app.innerHTML=`
   <div class="card"><h2>👤 Contact</h2>${common(r).join('')}<div style="margin-top:12px">${contact?`<a class="btn primary" style="width:100%" href="tel:${esc(contact)}">Call Now</a>`:''}</div></div>
  </aside></div><div class="footer">StudentHubHelp • Student-friendly property information</div>`;
  document.getElementById('shareCard')?.addEventListener('click',share);
+    loadPropertyReviews(r.id, cfg.table);
 }
 async function share(){try{await navigator.share({title:document.title,text:'Check this property on StudentHubHelp',url:location.href})}catch(e){try{await navigator.clipboard.writeText(location.href);alert('Property link copied!')}catch(_){alert(location.href)}}}
 document.getElementById('backBtn').addEventListener('click',()=>history.length>1?history.back():(location.href='index.html'));
