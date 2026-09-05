@@ -1362,7 +1362,8 @@ const supabaseClient =
 
 let currentUser = null;
 let currentProfile = null;
-
+let properties = [];
+  
 const sectionTitles = {
   overview: "Overview",
   profile: "My Profile",
@@ -2054,8 +2055,19 @@ async function loadBookings() {
   }
 
 
-  const bookings =
-    data || [];
+  const bookings = data || [];
+
+properties = bookings
+  .filter(booking => booking.property_id)
+  .map(booking => ({
+    id: booking.property_id,
+    property_name: booking.property_name,
+    property_table: booking.property_table,
+    category: booking.category
+  }));
+
+$("bookingCount")
+  .textContent = bookings.length;
 
 
   $("bookingCount")
@@ -2609,47 +2621,30 @@ async function submitReview() {
 }
 
 
-
 /* ========================================================
    REVIEWS
 ======================================================== */
 
 async function loadReviews() {
 
-  /*
-    Current DB schema:
-
-    id
-    property_id
-    user_id
-    user_name
-    rating
-    review_text
-    status
-    created_at
-    student_id
-  */
-
   const {
     data,
     error
-  } =
-    await supabaseClient
-      .from("reviews")
-      .select(
-        "id, property_id, user_id, user_name, rating, review_text, status, created_at, student_id"
-      )
-      .eq(
-        "student_id",
-        currentUser.id
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false
-        }
-      );
-
+  } = await supabaseClient
+    .from("reviews")
+    .select(
+      "id, property_id, user_id, user_name, rating, review_text, status, created_at, student_id"
+    )
+    .eq(
+      "student_id",
+      currentUser.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending: false
+      }
+    );
 
   if (error) {
 
@@ -2658,186 +2653,195 @@ async function loadReviews() {
       error
     );
 
-    $("reviewsList")
-      .innerHTML = `
-
-        <div class="card p-8 text-center">
-
-          <div class="text-3xl mb-3">
-            ⚠️
-          </div>
-
-          <div class="font-bold">
-            Unable to load reviews
-          </div>
-
+    $("reviewsList").innerHTML = `
+      <div class="card p-8 text-center">
+        <div class="text-3xl mb-3">
+          ⚠️
         </div>
 
-      `;
+        <div class="font-bold">
+          Unable to load reviews
+        </div>
+
+        <div class="text-sm text-gray-400 mt-2">
+          ${escapeHtml(error.message || "Unknown error")}
+        </div>
+      </div>
+    `;
 
     return;
-
   }
 
 
-  const reviews = (data || []).filter(r =>
-  properties.some(p =>
-    String(p.id) === String(r.property_id)
-  )
-);
+  /*
+     Keep property matching.
+     Only reviews belonging to student's
+     available properties will be shown.
+  */
+
+  const reviews = (data || []).filter(review => {
+
+    return properties.some(property =>
+      String(property.id) ===
+      String(review.property_id)
+    );
+
+  });
+
+
+  console.log(
+    "Reviews from Supabase:",
+    data
+  );
+
+  console.log(
+    "Properties:",
+    properties
+  );
+
+  console.log(
+    "Reviews after property filter:",
+    reviews
+  );
+
+
+  renderReviews(reviews);
+
 }
-  
+
+
 /* ========================================================
    RENDER REVIEWS
 ======================================================== */
 
 function renderReviews(reviews) {
 
+  const list =
+    $("reviewsList");
+
+
   if (!reviews.length) {
 
-    $("reviewsList")
-      .innerHTML = `
+    list.innerHTML = `
+      <div class="card">
+        <div class="empty-state">
 
-        <div class="card">
-
-          <div class="empty-state">
-
-            <div class="text-4xl mb-4">
-              ★
-            </div>
-
-            <div class="font-bold text-gray-700">
-              No reviews yet
-            </div>
-
-            <p class="text-sm mt-2">
-              Reviews you submit will appear here.
-            </p>
-
+          <div class="text-4xl mb-4">
+            ★
           </div>
 
-        </div>
+          <div class="font-bold text-gray-700">
+            No reviews yet
+          </div>
 
-      `;
+          <p class="text-sm mt-2">
+            Reviews you submit will appear here.
+          </p>
+
+        </div>
+      </div>
+    `;
 
     return;
-
   }
 
 
-  $("reviewsList")
-    .innerHTML =
-      reviews.map(
-        review => {
+  list.innerHTML =
+    reviews.map(review => {
 
-          const rating =
-            Number(
-              review.rating || 0
-            );
+      const rating =
+        Number(review.rating || 0);
 
 
-          const stars =
-            "★".repeat(
-              Math.max(
-                0,
-                Math.min(
-                  5,
-                  rating
-                )
-              )
-            ) +
-            "☆".repeat(
-              Math.max(
-                0,
-                5 - rating
-              )
-            );
+      const stars =
+        "★".repeat(
+          Math.max(
+            0,
+            Math.min(5, rating)
+          )
+        ) +
+        "☆".repeat(
+          Math.max(
+            0,
+            5 - rating
+          )
+        );
 
 
-          return `
+      return `
+        <div class="card p-5">
 
-            <div class="card p-5">
+          <div
+            class="flex flex-col md:flex-row
+                   md:items-start
+                   md:justify-between
+                   gap-4">
+
+            <div>
 
               <div
-                class="flex flex-col md:flex-row
-                       md:items-start
-                       md:justify-between gap-4">
-
-                <div>
-
-                  <div
-                    class="rating-stars
-                           text-[#d89b00]
-                           text-lg">
-
-                    ${stars}
-
-                  </div>
-
-                  <div
-                    class="text-xs text-gray-400 mt-2">
-
-                    Property ID:
-                    ${escapeHtml(
-                      review.property_id
-                    )}
-
-                  </div>
-
-                </div>
-
-
-                <div class="text-right">
-
-                  <div class="text-xs text-gray-400">
-
-                    ${formatDate(
-                      review.created_at
-                    )}
-
-                  </div>
-
-
-                  ${
-                    review.status
-                      ? `
-
-                        <div class="mt-2">
-
-                          ${statusBadge(
-                            review.status
-                          )}
-
-                        </div>
-
-                      `
-                      : ""
-                  }
-
-                </div>
-
+                class="rating-stars
+                       text-[#d89b00]
+                       text-lg">
+                ${stars}
               </div>
 
 
               <div
-                class="mt-4
-                       text-gray-700
-                       leading-7">
+                class="text-xs
+                       text-gray-400
+                       mt-2">
 
+                Property ID:
                 ${escapeHtml(
-                  review.review_text
+                  String(review.property_id || "")
                 )}
 
               </div>
 
             </div>
 
-          `;
 
-        }
-      ).join("");
+            <div class="text-right">
+
+              <div class="text-xs text-gray-400">
+                ${formatDate(review.created_at)}
+              </div>
+
+
+              ${
+                review.status
+                  ? `
+                    <div class="mt-2">
+                      ${statusBadge(review.status)}
+                    </div>
+                  `
+                  : ""
+              }
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="mt-4
+                   text-gray-700
+                   leading-7">
+
+            ${escapeHtml(
+              review.review_text || ""
+            )}
+
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
 
 }
+
 
 
 /* ========================================================
@@ -3070,13 +3074,23 @@ async function init() {
   }
 
 
-  await Promise.all([
+  async function init() {
 
-    loadBookings(),
+  const accountLoaded =
+    await loadAccount();
 
-    loadReviews()
+  if (!accountLoaded) {
+    return;
+  }
 
-  ]);
+  await loadBookings();
+
+  await loadReviews();
+
+  subscribeRealtime();
+}
+
+init();
 
 
   subscribeRealtime();
