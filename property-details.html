@@ -357,127 +357,123 @@ async function load(){
  render(data);
 }
 function fail(title,msg){app.innerHTML=`<div class="card notice"><h1>${esc(title)}</h1><p class="muted">${esc(msg)}</p><br><button class="back" onclick="history.back()">← Go Back</button></div>`}
-async function loadPropertyReviews(propertyId, propertyType){
-  const reviewsContent = document.getElementById('reviewsContent');
+async function loadPropertyReviews(propertyId, propertyType) {
+  const reviewsContent = document.getElementById("reviewsContent");
+  if (!reviewsContent) return;
 
-  if(!reviewsContent) return;
-
-  reviewsContent.innerHTML = `
-    <p class="muted">
-      <i class="fa-solid fa-circle-notch fa-spin"></i>
-      Loading reviews...
-    </p>
-  `;
-
-  const { data, error } = await db
-    .from('reviews')
-    .select(`
-      id,
-      property_id,
-      property_type,
-      user_id,
-      student_id,
-      user_name,
-      rating,
-      review_text,
-      published_review_text,
-      status,
-      created_at
-    `)
-    .eq('property_id', Number(propertyId))
-    .eq('property_type', propertyType)
-    .eq('status', 'published')
-    .order('created_at', { ascending:false });
-
-  if(error){
-    console.error('Reviews load error:', error);
-
-    reviewsContent.innerHTML = `
-      <p class="muted">
-        Reviews could not be loaded right now.
-      </p>
-    `;
-
+  // Invalid / missing property ID ke case me query mat bhejo
+  if (
+    propertyId === null ||
+    propertyId === undefined ||
+    propertyId === "" ||
+    Number.isNaN(Number(propertyId))
+  ) {
+    reviewsContent.innerHTML =
+      '<p class="muted">No reviews available yet.</p>';
+    console.warn("Reviews skipped: invalid property ID:", propertyId);
     return;
   }
 
-  if(!data || !data.length){
-    reviewsContent.innerHTML = `
-      <p class="muted">
-        No reviews available yet.
-      </p>
-    `;
+  const numericPropertyId = Number(propertyId);
 
-    return;
-  }
+  try {
+    const { data, error } = await supabaseClient
+      .from("reviews")
+      .select(`
+        id,
+        property_id,
+        property_type,
+        user_id,
+        student_id,
+        user_name,
+        rating,
+        review_text,
+        published_review_text,
+        status,
+        created_at
+      `)
+      .eq("property_id", numericPropertyId)
+      .eq("property_type", propertyType)
+      .eq("status", "published")
+      .order("created_at", { ascending: false });
 
-  reviewsContent.innerHTML = data.map(review => {
+    if (error) {
+      console.error("Reviews load error:", error);
+      reviewsContent.innerHTML =
+        '<p class="muted">Reviews could not be loaded right now.</p>';
+      return;
+    }
 
-    const rating = Number(review.rating || 0);
+    if (!data || data.length === 0) {
+      reviewsContent.innerHTML =
+        '<p class="muted">No reviews available yet.</p>';
+      return;
+    }
 
-    const stars = Array.from({length:5}, (_,i) =>
-      i < Math.round(rating)
-        ? '<i class="fa-solid fa-star"></i>'
-        : '<i class="fa-regular fa-star"></i>'
-    ).join('');
+    reviewsContent.innerHTML = data.map(review => {
+      const rating = Number(review.rating) || 0;
 
-    const reviewText =
-      review.published_review_text ||
-      review.review_text ||
-      '';
+      const stars = "★".repeat(Math.round(rating)) +
+                    "☆".repeat(5 - Math.round(rating));
 
-    const reviewerName =
-      review.user_name ||
-      'Student';
+      const reviewer =
+        review.user_name ||
+        "Student";
 
-    const date = review.created_at
-      ? new Date(review.created_at).toLocaleDateString('en-IN', {
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        })
-      : '';
+      const reviewDate = review.created_at
+        ? new Date(review.created_at).toLocaleDateString("en-IN")
+        : "";
 
-    return `
-      <div class="review">
+      const reviewText =
+        review.published_review_text ||
+        review.review_text ||
+        "";
 
-        <div style="
-          display:flex;
-          justify-content:space-between;
-          gap:12px;
-          align-items:flex-start;
-          flex-wrap:wrap;
+      return `
+        <div class="review-item" style="
+          padding:16px 0;
+          border-bottom:1px solid #eee;
         ">
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            gap:10px;
+            flex-wrap:wrap;
+          ">
+            <strong>${reviewer}</strong>
 
-          <div>
-            <strong>${esc(reviewerName)}</strong>
-
-            <div style="
-              color:#f5a623;
-              margin-top:4px;
-              letter-spacing:2px;
-            ">
+            <span style="color:#f5a623;">
               ${stars}
-            </div>
+            </span>
           </div>
 
-          <span class="small">
-            ${esc(date)}
-          </span>
+          ${
+            reviewDate
+              ? `<div class="muted" style="font-size:13px;margin-top:4px;">
+                   ${reviewDate}
+                 </div>`
+              : ""
+          }
 
+          <div class="review-text" style="
+            margin-top:10px;
+            white-space:pre-wrap;
+            overflow-wrap:anywhere;
+            word-break:break-word;
+            line-height:1.7;
+            font-size:16px;
+          ">
+            ${reviewText}
+          </div>
         </div>
+      `;
+    }).join("");
 
-        <div
-          class="review-text"
-          style="margin-top:10px;"
-        >
-          ${esc(reviewText)}
-        </div>
-
-      </div>
-    `;
-
-  }).join('');
+  } catch (err) {
+    console.error("Reviews load exception:", err);
+    reviewsContent.innerHTML =
+      '<p class="muted">Reviews could not be loaded right now.</p>';
+  }
 }
   function render(r){
  const image=r.image||cfg.banner;
