@@ -361,12 +361,11 @@ async function loadPropertyReviews(propertyId, propertyType) {
   const reviewsContent = document.getElementById("reviewsContent");
   if (!reviewsContent) return;
 
-  // Invalid / missing property ID ke case me query mat bhejo
+  // Property ID UUID/text hai — Number() nahi karna
   if (
     propertyId === null ||
     propertyId === undefined ||
-    propertyId === "" ||
-    Number.isNaN(Number(propertyId))
+    String(propertyId).trim() === ""
   ) {
     reviewsContent.innerHTML =
       '<p class="muted">No reviews available yet.</p>';
@@ -374,10 +373,10 @@ async function loadPropertyReviews(propertyId, propertyType) {
     return;
   }
 
-  const numericPropertyId = Number(propertyId);
+  const propertyIdText = String(propertyId);
 
   try {
-    const { data, error } = await supabaseClient
+    const { data, error } = await db
       .from("reviews")
       .select(`
         id,
@@ -392,7 +391,7 @@ async function loadPropertyReviews(propertyId, propertyType) {
         status,
         created_at
       `)
-      .eq("property_id", numericPropertyId)
+      .eq("property_id", propertyIdText)
       .eq("property_type", propertyType)
       .eq("status", "published")
       .order("created_at", { ascending: false });
@@ -411,38 +410,46 @@ async function loadPropertyReviews(propertyId, propertyType) {
     }
 
     reviewsContent.innerHTML = data.map(review => {
-      const rating = Number(review.rating) || 0;
+      const rating = Math.max(
+        0,
+        Math.min(5, Math.round(Number(review.rating) || 0))
+      );
 
-      const stars = "★".repeat(Math.round(rating)) +
-                    "☆".repeat(5 - Math.round(rating));
+      const stars =
+        "★".repeat(rating) +
+        "☆".repeat(5 - rating);
 
-      const reviewer =
-        review.user_name ||
-        "Student";
+      const reviewer = esc(review.user_name || "Student");
 
       const reviewDate = review.created_at
         ? new Date(review.created_at).toLocaleDateString("en-IN")
         : "";
 
-      const reviewText =
+      const reviewText = esc(
         review.published_review_text ||
         review.review_text ||
-        "";
+        ""
+      );
 
       return `
-        <div class="review-item" style="
+        <div class="review" style="
           padding:16px 0;
-          border-bottom:1px solid #eee;
+          border-bottom:1px solid #edf0f4;
         ">
           <div style="
             display:flex;
             justify-content:space-between;
+            align-items:center;
             gap:10px;
             flex-wrap:wrap;
           ">
             <strong>${reviewer}</strong>
 
-            <span style="color:#f5a623;">
+            <span style="
+              color:#f5a623;
+              font-size:18px;
+              letter-spacing:2px;
+            ">
               ${stars}
             </span>
           </div>
@@ -450,7 +457,7 @@ async function loadPropertyReviews(propertyId, propertyType) {
           ${
             reviewDate
               ? `<div class="muted" style="font-size:13px;margin-top:4px;">
-                   ${reviewDate}
+                   ${esc(reviewDate)}
                  </div>`
               : ""
           }
@@ -462,9 +469,7 @@ async function loadPropertyReviews(propertyId, propertyType) {
             word-break:break-word;
             line-height:1.7;
             font-size:16px;
-          ">
-            ${reviewText}
-          </div>
+          ">${reviewText}</div>
         </div>
       `;
     }).join("");
