@@ -1327,26 +1327,22 @@ function propStatus(x){return String(firstVal(x,["status","listing_status","stat
 function propVerified(x){
   if(!x) return false;
 
-  // Boolean verification columns
-  if(hasKey(x,"verified")){
-    return x.verified === true ||
-           String(x.verified).toLowerCase() === "true" ||
-           String(x.verified) === "1";
-  }
+  const values = [
+    x.verified,
+    x.is_verified,
+    x.verification_status
+  ];
 
-  if(hasKey(x,"is_verified")){
-    return x.is_verified === true ||
-           String(x.is_verified).toLowerCase() === "true" ||
-           String(x.is_verified) === "1";
-  }
-
-  // Text-based verification status
-  if(hasKey(x,"verification_status")){
-    return ["verified","approved","accepted","true"]
-      .includes(String(x.verification_status).toLowerCase());
-  }
-
-  return false;
+  return values.some(v => {
+    const s = String(v ?? "").trim().toLowerCase();
+    return v === true ||
+           v === 1 ||
+           s === "true" ||
+           s === "1" ||
+           s === "verified" ||
+           s === "approved" ||
+           s === "accepted";
+  });
 }
 function propFeatured(x){return mbool(firstVal(x,["featured","is_featured"],false))}
 function propViews(x){return mnum(firstVal(x,["views","view_count","total_views","visits"],0))}
@@ -1512,6 +1508,62 @@ function renderProperty(type){
     </tbody></table></div>`;
 }
 
+async function setPropertyVerification(type, id, verified){
+  const row = (state[type] || []).find(
+    x => String(x.id) === String(id)
+  );
+
+  if(!row){
+    toast("Property record not found.", true);
+    return;
+  }
+
+  if(!hasKey(row, "verified")){
+    toast(`The ${type} table does not have a 'verified' column.`, true);
+    return;
+  }
+
+  const button = document.querySelector(
+    `[data-verify-type="${CSS.escape(String(type))}"][data-verify-id="${CSS.escape(String(id))}"]`
+  );
+
+  if(button){
+    button.disabled = true;
+    button.textContent = verified ? "Saving..." : "Saving...";
+  }
+
+  try{
+    const { error } = await supabaseClient
+      .from(type)
+      .update({
+        verified: Boolean(verified)
+      })
+      .eq("id", id);
+
+    if(error) throw error;
+
+    // Update local state immediately
+    row.verified = Boolean(verified);
+
+    toast(
+      verified
+        ? "Property verified successfully."
+        : "Property verification removed."
+    );
+
+    // Fresh data from Supabase
+    await loadAll();
+
+  }catch(error){
+    console.error("Verification update failed:", error);
+    toast("Verification failed: " + error.message, true);
+  }finally{
+    if(button){
+      button.disabled = false;
+    }
+  }
+}
+  
 function renderPropertiesMaster(){
   const el=$("section-properties");if(!el)return;
   const props=allProps();
@@ -1542,7 +1594,37 @@ function renderPropertiesMaster(){
   });
   const sort=$("propFilterSort")?.value||"newest";
   f.sort((a,b)=>sort==="rating-high"?propRating(b)-propRating(a):sort==="rating-low"?propRating(a)-propRating(b):sort==="views"?propViews(b)-propViews(a):sort==="bookings"?propBookings(b)-propBookings(a):sort==="az"?String(a.name||"").localeCompare(String(b.name||"")):(sort==="oldest"?new Date(dateCreated(a)||0)-new Date(dateCreated(b)||0):new Date(dateCreated(b)||0)-new Date(dateCreated(a)||0)));
-  $("masterPropertyBody").innerHTML=f.length?f.map(x=>{const o=rowOwner(x);return `<tr><td class="p-3"><input type="checkbox" class="prop-select" data-type="${x.__type}" data-id="${esc(x.id)}"></td><td class="p-3"><button class="text-left font-bold hover:text-gold-300" onclick="openAdvancedProperty('${x.__type}',${x.__index})">${esc(x.name||masterMeta[x.__type].singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td><td class="p-3">${masterBadge(masterMeta[x.__type].category)}</td><td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td><td class="p-3">${esc(x.phone||"—")}</td><td class="p-3">${esc(x.area||"—")}</td><td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td><td class="p-3">${propVerified(x)?masterBadge("Verified","green"):masterBadge("Not Verified")}</td><td class="p-3 text-gold-300">${propRating(x)||"—"}</td><td class="p-3 text-slate-300">${x.updated_at ? new Date(x.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td><td class="p-3">${propViews(x)}</td><td class="p-3">${propBookings(x)}</td><td class="p-3 whitespace-nowrap"><button class="master-action view-details" onclick="previewPublic('${x.__type}',${x.__index})"><i class="fa-solid fa-eye mr-1"></i>View Details</button><button class="master-action ml-1" onclick="openAdvancedProperty('${x.__type}',${x.__index})"><i class="fa-solid fa-pen"></i></button></td></tr>`}).join(""):emptyRow(12,"No properties match these filters.");
+  $("masterPropertyBody").innerHTML=f.length?f.map(x=>{const o=rowOwner(x);return `<tr><td class="p-3"><input type="checkbox" class="prop-select" data-type="${x.__type}" data-id="${esc(x.id)}"></td><td class="p-3"><button class="text-left font-bold hover:text-gold-300" onclick="openAdvancedProperty('${x.__type}',${x.__index})">${esc(x.name||masterMeta[x.__type].singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td><td class="p-3">${masterBadge(masterMeta[x.__type].category)}</td><td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td><td class="p-3">${esc(x.phone||"—")}</td><td class="p-3">${esc(x.area||"—")}</td><td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td><td class="p-3">
+  ${
+    propVerified(x)
+      ? `
+        <button
+          type="button"
+          class="master-action success"
+          data-verify-type="${esc(type)}"
+          data-verify-id="${esc(x.id)}"
+          onclick="setPropertyVerification('${esc(type)}','${esc(x.id)}',false)"
+          title="Click to remove verification"
+        >
+          <i class="fa-solid fa-circle-check mr-1"></i>
+          Verified
+        </button>
+      `
+      : `
+        <button
+          type="button"
+          class="master-action"
+          data-verify-type="${esc(type)}"
+          data-verify-id="${esc(x.id)}"
+          onclick="setPropertyVerification('${esc(type)}','${esc(x.id)}',true)"
+          title="Verify this property"
+        >
+          <i class="fa-solid fa-shield-halved mr-1"></i>
+          Verify
+        </button>
+      `
+  }
+</td><td class="p-3 text-gold-300">${propRating(x)||"—"}</td><td class="p-3 text-slate-300">${x.updated_at ? new Date(x.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td><td class="p-3">${propViews(x)}</td><td class="p-3">${propBookings(x)}</td><td class="p-3 whitespace-nowrap"><button class="master-action view-details" onclick="previewPublic('${x.__type}',${x.__index})"><i class="fa-solid fa-eye mr-1"></i>View Details</button><button class="master-action ml-1" onclick="openAdvancedProperty('${x.__type}',${x.__index})"><i class="fa-solid fa-pen"></i></button></td></tr>`}).join(""):emptyRow(12,"No properties match these filters.");
   $("selectAllProps")?.addEventListener("change",e=>document.querySelectorAll(".prop-select").forEach(c=>c.checked=e.target.checked));
 }
 function setPropertyFilter(type){showSection("properties");setTimeout(()=>{if($("propFilterCategory")){$("propFilterCategory").value=type;renderPropertiesMaster();}},10)}
