@@ -1249,6 +1249,264 @@ td{
     height:110px;
   }
 }
+
+/* =========================
+   PERFORMANCE + RESPONSIVE UPGRADE
+   Existing flows preserved.
+========================= */
+
+img{
+  max-width:100%;
+}
+
+.property-image,
+.gallery-item img{
+  content-visibility:auto;
+}
+
+.table-wrap{
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+
+.table-wrap table{
+  min-width:760px;
+}
+
+.table-wrap thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+}
+
+.card-head > select{
+  max-width:100%;
+}
+
+button,
+select,
+input,
+textarea{
+  touch-action:manipulation;
+}
+
+@media(max-width:1000px){
+  .content{
+    width:100%;
+  }
+
+  .card-head{
+    align-items:flex-start;
+  }
+
+  .card-head > select{
+    width:min(260px,100%) !important;
+  }
+
+  .property-actions .btn{
+    min-height:40px;
+  }
+}
+
+@media(max-width:700px){
+  .table-wrap{
+    overflow:visible;
+  }
+
+  .table-wrap table,
+  .table-wrap tbody,
+  .table-wrap tr,
+  .table-wrap td{
+    display:block;
+    width:100%;
+  }
+
+  .table-wrap table{
+    min-width:0;
+  }
+
+  .table-wrap thead{
+    display:none;
+  }
+
+  .table-wrap tr{
+    margin-bottom:12px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:#fff;
+    overflow:hidden;
+  }
+
+  .table-wrap td{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    padding:11px 13px;
+    border-top:1px solid var(--border);
+    font-size:10px;
+    min-width:0;
+  }
+
+  .table-wrap td:first-child{
+    border-top:0;
+  }
+
+  .table-wrap td::before{
+    content:attr(data-label);
+    flex:0 0 82px;
+    color:#64748b;
+    font-size:9px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+
+  .table-wrap td > *{
+    min-width:0;
+  }
+
+  .table-wrap td[colspan]{
+    display:block;
+  }
+
+  .table-wrap td[colspan]::before{
+    display:none;
+  }
+
+  .table-wrap td:last-child{
+    align-items:center;
+  }
+
+  .table-wrap td:last-child > div{
+    justify-content:flex-end;
+  }
+
+  .topbar{
+    height:68px;
+  }
+
+  .content{
+    padding:12px;
+  }
+
+  .card{
+    padding:15px;
+    border-radius:15px;
+  }
+
+  .card-head{
+    flex-direction:column;
+    gap:11px;
+  }
+
+  .card-head > *{
+    width:100%;
+  }
+
+  .card-head > .btn{
+    width:auto;
+    align-self:flex-start;
+  }
+
+  .welcome{
+    border-radius:16px;
+  }
+
+  .property-image{
+    height:160px;
+  }
+
+  .property-actions{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .property-actions .btn{
+    width:100%;
+  }
+
+  .property-actions .btn:first-child{
+    grid-column:1/-1;
+  }
+
+  .modal{
+    padding:10px;
+  }
+
+  .modal-box{
+    max-height:94vh;
+    border-radius:15px;
+  }
+
+  .modal-body{
+    padding:15px;
+  }
+
+  .modal-footer{
+    padding:12px 15px;
+    flex-wrap:wrap;
+  }
+
+  .modal-footer .btn{
+    flex:1 1 120px;
+  }
+
+  .toast{
+    left:12px;
+    right:12px;
+    bottom:12px;
+    min-width:0;
+  }
+}
+
+@media(max-width:420px){
+  .top-title h1{
+    font-size:15px;
+  }
+
+  .top-title p{
+    font-size:9px;
+  }
+
+  .mobile-menu{
+    width:38px;
+    height:38px;
+  }
+
+  .stats{
+    gap:8px;
+  }
+
+  .stat{
+    min-width:0;
+  }
+
+  .stat-label{
+    font-size:9px;
+  }
+
+  .stat-value{
+    font-size:19px;
+  }
+
+  .property-actions{
+    grid-template-columns:1fr;
+  }
+
+  .property-actions .btn:first-child{
+    grid-column:auto;
+  }
+
+  .form-grid{
+    gap:10px;
+  }
+
+  .btn{
+    min-height:40px;
+  }
+}
+
 </style>
   <link rel="stylesheet" href="mobile.css">
 </head>
@@ -2850,41 +3108,50 @@ async function loadProfile(){
    LOAD OWNER PROPERTIES
 ========================================================= */
 
-async function loadProperties(){
+async function loadProperties(refreshRelated=true){
 
-  properties=[];
+  const results = await Promise.all(
+    propertyTables.map(async table => {
+      try{
+        const {data,error} = await db
+          .from(table)
+          .select("*")
+          .eq("owner_id",currentUser.id)
+          .order("id",{ascending:false});
 
-  for(const table of propertyTables){
-    try{
-      const {data,error} = await db
-        .from(table)
-        .select("*")
-        .eq("owner_id",currentUser.id)
-        .order("id",{ascending:false});
+        if(error){
+          console.warn(table,error.message);
+          return [];
+        }
 
-      if(error){
-        console.warn(table,error.message);
-        continue;
+        return (data || []).map(row => ({
+          ...row,
+          id:String(row.id),
+          table
+        }));
+
+      }catch(error){
+        console.error("Property load error",table,error);
+        return [];
       }
+    })
+  );
 
-      for(const row of (data || [])){
-        properties.push({...row,id:String(row.id),table});
-      }
-    }catch(error){
-      console.error("Property load error",table,error);
-    }
-  }
+  properties = results.flat();
 
   updatePropertySelectors();
   renderProperties();
   renderOverviewProperties();
   updateStats();
-  await Promise.all([
-    loadBookings(),
-    loadReviews(),
-    loadViews(),
-    loadVerification()
-  ]);
+
+  if(refreshRelated){
+    await Promise.all([
+      loadBookings(),
+      loadReviews(),
+      loadViews(),
+      loadVerification()
+    ]);
+  }
 }
 
 
@@ -3020,7 +3287,7 @@ function renderProperties(){
             src="${esc(propertyImage(p))}"
             onerror="this.src='logo.png'"
             alt="${esc(p.name || "Property")}"
-           loading="lazy decoding="async"
+           loading="lazy" decoding="async">
 
           <div class="property-body">
 
@@ -3283,7 +3550,7 @@ function propertyCompletion(p){
    STATS
 ========================================================= */
 
-async function updateStats(){
+function updateStats(){
 
   const live =
     properties.filter(
@@ -3343,11 +3610,6 @@ async function updateStats(){
     "statCompletion"
   ).textContent =
     completion + "%";
-
-
-  await loadBookings();
-  await loadReviews();
-  await loadViews();
 
 }
 
@@ -3777,7 +4039,7 @@ async function saveProperty(key){
   }
 
   showToast("Property details saved successfully.");
-  await loadProperties();
+  await loadProperties(false);
   loadEditorProperty(key);
 }
 
@@ -3898,7 +4160,7 @@ async function loadGallery(key){
           <div class="gallery-item">
             <img src="${esc(img.image_url)}"
               onerror="this.style.display='none'"
-              alt="Property photo" loading="lazy decoding="async"
+              alt="Property photo" loading="lazy" decoding="async">
             <div class="gallery-actions">
               ${
                 Number(img.sort_order) === 0
@@ -4037,7 +4299,7 @@ async function uploadGalleryFiles(){
   }
 
   if(uploaded) showToast(`${uploaded} photo(s) uploaded successfully.`);
-  await loadProperties();
+  await loadProperties(false);
   selectedProperty = findProperty(propertyKey(selectedProperty));
   await loadGallery(propertyKey(selectedProperty));
 }
@@ -4106,7 +4368,7 @@ async function setMainPhoto(id){
     .eq("owner_id",currentUser.id);
 
   showToast("Main photo updated.");
-  await loadProperties();
+  await loadProperties(false);
   selectedProperty = findProperty(propertyKey(selectedProperty));
   await loadGallery(propertyKey(selectedProperty));
 }
@@ -4171,7 +4433,7 @@ async function deleteGalleryImage(id){
     .eq("owner_id",currentUser.id);
 
   showToast("Photo deleted.");
-  await loadProperties();
+  await loadProperties(false);
   selectedProperty = findProperty(propertyKey(selectedProperty));
   await loadGallery(propertyKey(selectedProperty));
 }
@@ -4187,9 +4449,22 @@ window.deleteGalleryImage =
 
 async function loadBookings(){
 
+  if(!properties.length){
+    bookings=[];
+    updateBookingStats();
+    if(document.getElementById("section-bookings")?.classList.contains("active")){
+      renderBookings();
+    }
+    return;
+  }
+
   const {data,error} = await db
     .from("student_bookings")
     .select("*")
+    .in(
+      "property_id",
+      properties.map(p => p.id)
+    )
     .order("created_at",{ascending:false});
 
   if(error){
@@ -4288,7 +4563,7 @@ function renderBookings(){
       return `
         <tr>
 
-          <td>
+          <td data-label="Property">
 
             <strong>
               ${esc(
@@ -4311,7 +4586,7 @@ function renderBookings(){
 
           </td>
 
-          <td>
+          <td data-label="Student">
 
             <strong>
               ${esc(
@@ -4324,13 +4599,13 @@ function renderBookings(){
 
           </td>
 
-          <td>
+          <td data-label="Joining">
             ${esc(
               formatDate(b.joined_date)
             )}
           </td>
 
-          <td>
+          <td data-label="Duration">
             ${esc(
               b.duration_months
               ? `${b.duration_months} month(s)`
@@ -4338,11 +4613,11 @@ function renderBookings(){
             )}
           </td>
 
-          <td>
+          <td data-label="Status">
             ${formatStatus(b.status)}
           </td>
 
-          <td>
+          <td data-label="Action">
 
             ${
               b.status === "pending"
@@ -4427,6 +4702,14 @@ async function loadReviews(){
 
   reviews = [];
 
+  if(!properties.length){
+    updateReviewStats();
+    if(document.getElementById("section-reviews")?.classList.contains("active")){
+      renderReviews();
+    }
+    return;
+  }
+
   const { data, error } = await db
     .from("reviews")
     .select(`
@@ -4444,6 +4727,10 @@ async function loadReviews(){
       status,
       created_at
     `)
+    .in(
+      "property_id",
+      properties.map(p => p.id)
+    )
     .order("created_at", {
       ascending:false
     });
@@ -5859,7 +6146,11 @@ async function loadViews(){
 
   const {data,error} = await db
     .from("property_views")
-    .select("id,property_id,property_table");
+    .select("id,property_id,property_table")
+    .in(
+      "property_id",
+      properties.map(p => p.id)
+    );
 
   if(error){
     console.warn("Views:",error.message);
@@ -6439,7 +6730,7 @@ function startRealtime(){
           ownerId === currentUser.id
         ){
 
-          loadProperties();
+          loadProperties(false);
 
         }
 
@@ -6462,19 +6753,17 @@ function startRealtime(){
 
     payload => {
 
-      loadBookings();
-
-      if(
-        document
-          .getElementById(
-            "section-bookings"
-          )
-          .classList.contains("active")
-      ){
-
-        renderBookings();
-
-      }
+      loadBookings().then(() => {
+        if(
+          document
+            .getElementById(
+              "section-bookings"
+            )
+            .classList.contains("active")
+        ){
+          renderBookings();
+        }
+      });
 
     }
 
@@ -6493,19 +6782,17 @@ function startRealtime(){
 
     payload => {
 
-      loadReviews();
-
-      if(
-        document
-          .getElementById(
-            "section-reviews"
-          )
-          .classList.contains("active")
-      ){
-
-        renderReviews();
-
-      }
+      loadReviews().then(() => {
+        if(
+          document
+            .getElementById(
+              "section-reviews"
+            )
+            .classList.contains("active")
+        ){
+          renderReviews();
+        }
+      });
 
     }
 
@@ -6576,7 +6863,7 @@ function startRealtime(){
       const ownerId = payload.new?.owner_id || payload.old?.owner_id;
       if(ownerId === currentUser.id){
         if(selectedProperty) loadGallery(propertyKey(selectedProperty));
-        loadProperties();
+        loadProperties(false);
       }
     }
   );
@@ -6641,9 +6928,10 @@ async function init(){
     return;
 
 
-  await loadProfile();
-
-  await loadProperties();
+  await Promise.all([
+    loadProfile(),
+    loadProperties()
+  ]);
 
   renderAvailability();
 
