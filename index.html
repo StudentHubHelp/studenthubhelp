@@ -4877,71 +4877,70 @@
       updateFilterUI();
     }
 
-    function renderListingCard(item) {
-      const selected = compareSelection.some(x => x.id === item.id && x.sourceTable === item.sourceTable);
-      const verify = item.verification;
-  
+function renderListingCard(item) {
+    const selected = compareSelection.some(x => x.id === item.id && x.sourceTable === item.sourceTable);
+    const verify = item.verification;
 
-      const badge = verify.verified
-        ? `<span class="verification-badge">✓ VERIFIED</span>`
-        : `<span class="verification-badge partial">○ NOT VERIFIED</span>`;
+    const badge = verify.verified
+      ? `<span class="verification-badge">✓ VERIFIED</span>`
+      : `<span class="verification-badge partial">○ NOT VERIFIED</span>`;
 
-      const facts = getFacts(item);
-      const image = firstValue(item,["image","image_url","photo","photo_url","cover_image"]);
+    const facts = getFacts(item);
+    const image = firstValue(item,["image","image_url","photo","photo_url","cover_image"]);
 
-      return `
-        <article class="listing-card">
-          <div class="listing-card-top">
-            <span class="listing-category">${escapeHTML(item.listingLabel)}</span>
-            ${badge}
+    return `
+      <article class="listing-card">
+        <div class="listing-card-top">
+          <span class="listing-category">${escapeHTML(item.listingLabel)}</span>
+          ${badge}
+        </div>
+
+        ${image ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(item.displayName)}" loading="lazy" style="width:100%;height:125px;object-fit:cover;border-radius:12px;margin-top:11px;border:1px solid rgba(255,255,255,.08)" decoding="async">` : ""}
+
+        <h3>${escapeHTML(item.displayName)}</h3>
+
+        <div class="listing-area">📍 ${escapeHTML(item.displayArea || item.displayCity || "Location available")}</div>
+
+        <div class="listing-address">
+          ${escapeHTML(item.displayAddress || "Address information available on details page.")}
+        </div>
+
+        <div class="listing-facts">
+          ${facts.map(f => `<span class="fact-pill">${escapeHTML(f)}</span>`).join("")}
+        </div>
+
+        <div class="listing-quality">
+          <div class="quality-line">
+            <span>Data completeness</span>
+            <strong>${item.completeness}%</strong>
           </div>
+          <div class="mini-meter"><span style="width:${item.completeness}%"></span></div>
+        </div>
 
-          ${image ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(item.displayName)}" loading="lazy" style="width:100%;height:125px;object-fit:cover;border-radius:12px;margin-top:11px;border:1px solid rgba(255,255,255,.08)" decoding="async"` : ""}
+        <div class="listing-verification-note">
+          <span>${verify.verified ? "StudentHubHelp" : "Review pending"}</span>
+          <button type="button" class="verification-link" data-verify="${encodeURIComponent(JSON.stringify({
+            name:item.displayName,
+            category:item.listingLabel,
+            verification:verify,
+            completeness:item.completeness,
+            area:item.displayArea
+          }))}">How verified?</button>
+        </div>
 
-          <h3>${escapeHTML(item.displayName)}</h3>
+        <div class="listing-card-bottom">
+          <label class="compare-check">
+            <input type="checkbox" data-compare="${item.sourceTable}::${item.id}" ${selected ? "checked" : ""}>
+            Compare
+          </label>
 
-          <div class="listing-area">📍 ${escapeHTML(item.displayArea || item.displayCity || "Location available")}</div>
-
-          <div class="listing-address">
-            ${escapeHTML(item.displayAddress || "Address information available on details page.")}
-          </div>
-
-          <div class="listing-facts">
-            ${facts.map(f => `<span class="fact-pill">${escapeHTML(f)}</span>`).join("")}
-          </div>
-
-          <div class="listing-quality">
-            <div class="quality-line">
-              <span>Data completeness</span>
-              <strong>${item.completeness}%</strong>
-            </div>
-            <div class="mini-meter"><span style="width:${item.completeness}%"></span></div>
-          </div>
-
-          <div class="listing-verification-note">
-            <span>${escapeHTML(freshness)} · ${verify.verified ? "StudentHubHelp" : "Review pending"}</span>
-            <button type="button" class="verification-link" data-verify="${encodeURIComponent(JSON.stringify({
-              name:item.displayName,
-              category:item.listingLabel,
-              verification:verify,
-              completeness:item.completeness,
-              area:item.displayArea
-            }))}">How verified?</button>
-          </div>
-
-          <div class="listing-card-bottom">
-            <label class="compare-check">
-              <input type="checkbox" data-compare="${item.sourceTable}::${item.id}" ${selected ? "checked" : ""}>
-              Compare
-            </label>
-
-            <a class="listing-details-link"
-              href="property-details.html?type=${encodeURIComponent(item.listingCategory)}&id=${encodeURIComponent(item.id)}">
-              View full details →
-            </a>
-          </div>
-        </article>`;
-    }
+          <a class="listing-details-link"
+            href="property-details.html?type=${encodeURIComponent(item.listingCategory)}&id=${encodeURIComponent(item.id)}">
+            View full details →
+          </a>
+        </div>
+      </article>`;
+  }
 
     function applyFilters() {
       filteredListings = sortListings(allListings.filter(listingMatches));
