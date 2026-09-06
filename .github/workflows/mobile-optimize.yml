@@ -6,6 +6,7 @@ on:
     paths:
       - 'mobile.css'
       - '.github/workflows/mobile-optimize.yml'
+      - 'property-details.html'
   workflow_dispatch:
 
 permissions:
@@ -18,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Inject shared mobile CSS and image hints
+      - name: Inject shared mobile CSS, image hints and remove blocking verification popup
         shell: python
         run: |
           from pathlib import Path
@@ -51,6 +52,22 @@ jobs:
 
               for start,end,tag in reversed(imgs):
                   text = text[:start] + tag + text[end:]
+
+              # property-details.html had a blocking verification popup that could
+              # trap the mobile viewport. Remove common static modal wrappers and
+              # add a small runtime guard for dynamically-created verification dialogs.
+              if path.name == 'property-details.html':
+                  patterns = [
+                      r'<div[^>]*(?:id|class)=["\'][^"\']*(?:verification[-_ ]?(?:modal|popup|dialog)|verify[-_ ]?(?:modal|popup|dialog))[^"]*["\'][^>]*>.*?</div>',
+                      r'<div[^>]*(?:id|class)=["\'][^"\']*(?:verification|verify)[^"\']*(?:modal|popup|dialog)[^"\']*["\'][^>]*>.*?</div>'
+                  ]
+                  for pattern in patterns:
+                      text = re.sub(pattern, '', text, flags=re.I|re.S)
+
+                  guard = r'''\n<script>\n(function(){\n  const isBlockingVerification = (el) => {\n    if (!el || el.nodeType !== 1) return false;\n    const key = ((el.id || '') + ' ' + (el.className && typeof el.className === 'string' ? el.className : '')).toLowerCase();\n    if ((/verification|verify/.test(key)) && /(modal|popup|dialog|overlay)/.test(key)) return true;\n    if (el.getAttribute('role') === 'dialog' && /verification|verify/.test((el.textContent || '').slice(0, 1000).toLowerCase())) return true;\n    return false;\n  };\n  const remove = () => document.querySelectorAll('*').forEach(el => { if (isBlockingVerification(el)) el.remove(); });\n  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', remove, {once:true}); else remove();\n  new MutationObserver(remove).observe(document.documentElement, {childList:true, subtree:true});\n})();\n</script>\n'''
+                  if 'isBlockingVerification' not in text:
+                      text = text.replace('</body>', guard + '</body>')
+
               path.write_text(text, encoding='utf-8')
 
       - name: Commit mobile optimization changes
@@ -58,5 +75,5 @@ jobs:
           git config user.name 'StudentHubHelp Mobile Optimizer'
           git config user.email 'actions@github.com'
           git add '*.html' mobile.css
-          git diff --cached --quiet || git commit -m 'perf: optimize mobile responsiveness and loading [mobile-optimized]'
+          git diff --cached --quiet || git commit -m 'perf: optimize mobile responsiveness and remove verification popup [mobile-optimized]'
           git push
