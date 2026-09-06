@@ -1,0 +1,62 @@
+name: Apply mobile performance layer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile.css'
+      - '.github/workflows/mobile-optimize.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mobile-optimize:
+    if: "!contains(github.event.head_commit.message, '[mobile-optimized]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inject shared mobile CSS and image hints
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          skip = {'google7168366cd2bfb7eb.html'}
+          for path in Path('.').glob('*.html'):
+              if path.name in skip:
+                  continue
+              text = path.read_text(encoding='utf-8')
+
+              if 'href="mobile.css"' not in text and '</head>' in text.lower():
+                  text = re.sub(r'</head>', '  <link rel="stylesheet" href="mobile.css">\n</head>', text, count=1, flags=re.I)
+
+              # Images below the first viewport should not block mobile rendering.
+              # Keep existing loading/decoding attributes intact.
+              imgs = []
+              first = True
+              for m in re.finditer(r'<img\b[^>]*>', text, flags=re.I):
+                  tag = m.group(0)
+                  if first:
+                      first = False
+                      imgs.append((m.start(), m.end(), tag))
+                      continue
+                  if ' loading=' not in tag.lower():
+                      tag = tag[:-1] + ' loading="lazy"'
+                  if ' decoding=' not in tag.lower():
+                      tag = tag[:-1] + ' decoding="async"'
+                  imgs.append((m.start(), m.end(), tag))
+
+              for start,end,tag in reversed(imgs):
+                  text = text[:start] + tag + text[end:]
+              path.write_text(text, encoding='utf-8')
+
+      - name: Commit mobile optimization changes
+        run: |
+          git config user.name 'StudentHubHelp Mobile Optimizer'
+          git config user.email 'actions@github.com'
+          git add '*.html' mobile.css
+          git diff --cached --quiet || git commit -m 'perf: optimize mobile responsiveness and loading [mobile-optimized]'
+          git push
