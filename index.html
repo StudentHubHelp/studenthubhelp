@@ -80,7 +80,7 @@
     "description": "India-wide student discovery platform for hostels, PGs, tiffin, libraries, cafes and book stores.",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://studenthubhelp.github.io/studenthubhelp/pg-finder.html?q={search_term_string}",
+      "target": "https://studenthubhelp.github.io/studenthubhelp/global-search.html?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   }
@@ -4337,115 +4337,22 @@
       );
 
 
-    function getSearchTarget(value) {
-
-      const q =
-        value.trim().toLowerCase();
 
 
-      if (!q) {
-        return "pg-finder.html";
-      }
 
+  function performSearch(value) {
 
-      const tiffinWords = [
-        "tiffin",
-        "mess",
-        "food",
-        "meal"
-      ];
+  const cleanValue =
+    value.trim();
 
+  const url =
+    cleanValue
+      ? `global-search.html?q=${encodeURIComponent(cleanValue)}`
+      : "global-search.html";
 
-      const libraryWords = [
-        "library",
-        "study",
-        "reading"
-      ];
+  window.location.href = url;
 
-
-      const cafeWords = [
-        "cafe",
-        "coffee"
-      ];
-
-
-      const bookWords = [
-        "book",
-        "books",
-        "bookstore",
-        "book store"
-      ];
-
-
-      if (
-        tiffinWords.some(
-          word => q.includes(word)
-        )
-      ) {
-
-        return "tiffin-finder.html";
-
-      }
-
-
-      if (
-        libraryWords.some(
-          word => q.includes(word)
-        )
-      ) {
-
-        return "library-finder.html";
-
-      }
-
-
-      if (
-        cafeWords.some(
-          word => q.includes(word)
-        )
-      ) {
-
-        return "cafe-finder.html";
-
-      }
-
-
-      if (
-        bookWords.some(
-          word => q.includes(word)
-        )
-      ) {
-
-        return "bookstore-finder.html";
-
-      }
-
-
-      return "pg-finder.html";
-
-    }
-
-
-    function performSearch(value) {
-
-      const target =
-        getSearchTarget(value);
-
-
-      const cleanValue =
-        value.trim();
-
-
-      const url =
-        cleanValue
-          ? `${target}?q=${encodeURIComponent(cleanValue)}`
-          : target;
-
-
-      window.location.href = url;
-
-    }
-
+}
 
     searchForm.addEventListener(
       "submit",
