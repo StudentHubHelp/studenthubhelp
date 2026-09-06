@@ -1535,15 +1535,17 @@
         : "⭐ " + rating.toFixed(1);
     }
 
-    function imageFromRecord(record) {
-      return clean(
-        record.image ||
-        record.image_url ||
-        record.photo ||
-        record.photo_url ||
-        record.cover_image
-      );
-    }
+ function imageFromCategory(categoryKey) {
+  const banners = {
+    hostel: "hostel-banner.png",
+    tiffin: "tiffin-banner.png",
+    library: "library-banner.png",
+    cafe: "cafe-banner.png",
+    bookstore: "bookstore-banner.png"
+  };
+
+  return banners[categoryKey] || "hostel-banner.png";
+}
 
     function areaFromRecord(record) {
       return clean(
@@ -1874,8 +1876,7 @@
       const address =
         addressFromRecord(record);
 
-      const image =
-        imageFromRecord(record);
+      const image = imageFromCategory(category.key);
 
       const rating =
         ratingText(record.rating);
@@ -2006,8 +2007,7 @@
       const facilities =
         facilitiesFromRecord(record);
 
-      const image =
-        imageFromRecord(record);
+      const image = imageFromCategory(category.key);
 
       modalCategory.textContent =
         `${category.icon} ${category.label}`;
