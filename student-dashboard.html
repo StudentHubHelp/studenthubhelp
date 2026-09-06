@@ -3,11 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1730">
+  <meta name="color-scheme" content="light">
 
   <link rel="icon" type="image/png" href="logo.png">
 
   <title>Student Dashboard | StudentHubHelp</title>
 
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -217,15 +221,264 @@
         z-index: 100;
       }
     }
+
+    /* ========================================================
+       CONSOLIDATED RESPONSIVE / UX HARDENING
+       ======================================================== */
+
+    :root {
+      --dashboard-max: 1500px;
+      --touch-size: 44px;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    button,
+    a,
+    input,
+    textarea,
+    select {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    .nav-item,
+    .btn-primary,
+    .btn-secondary,
+    .service-card {
+      touch-action: manipulation;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      outline: 3px solid rgba(11,23,48,.24);
+      outline-offset: 2px;
+    }
+
+    .sidebar {
+      flex: 0 0 270px;
+    }
+
+    .mobile-sidebar {
+      will-change: transform;
+      overscroll-behavior: contain;
+    }
+
+    .sidebar nav {
+      scrollbar-width: thin;
+    }
+
+    .hero-student {
+      overflow: hidden;
+    }
+
+    .service-card,
+    .stat-card,
+    .card {
+      min-width: 0;
+    }
+
+    .service-card {
+      text-decoration: none;
+    }
+
+    .input {
+      min-height: 46px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      min-height: 44px;
+    }
+
+    .empty-state {
+      min-height: 170px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Tablet: avoid oversized desktop spacing and cramped layouts. */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .sidebar {
+        width: min(290px, 86vw);
+        flex-basis: min(290px, 86vw);
+      }
+
+      .dashboard-content {
+        padding: 24px;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 767px) {
+      body.sidebar-open {
+        overflow: hidden;
+      }
+
+      .sidebar {
+        width: min(290px, 86vw);
+        max-width: 86vw;
+        box-shadow: 20px 0 50px rgba(2,8,23,.22);
+      }
+
+      .mobile-sidebar {
+        transition:
+          transform .24s cubic-bezier(.22,.61,.36,1);
+      }
+
+      .mobile-sidebar.open {
+        transform: translateX(0);
+      }
+
+      #sidebarOverlay {
+        transition: opacity .2s ease;
+      }
+
+      header {
+        min-height: 68px;
+        height: 68px !important;
+      }
+
+      main > .max-w-\[1500px\] {
+        padding: 16px !important;
+      }
+
+      .hero-student {
+        border-radius: 20px;
+        padding: 22px !important;
+        margin-bottom: 18px !important;
+      }
+
+      .hero-student h2 {
+        font-size: clamp(1.55rem, 7vw, 2rem);
+        line-height: 1.12;
+        overflow-wrap: anywhere;
+      }
+
+      .hero-student p {
+        line-height: 1.6;
+      }
+
+      /* 2x2 stats on phones */
+      section#section-overview > div:nth-of-type(2) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .stat-card {
+        padding: 14px !important;
+        border-radius: 16px;
+      }
+
+      .stat-card .text-3xl {
+        font-size: 1.55rem;
+        line-height: 1.1;
+      }
+
+      .stat-card .text-xs {
+        line-height: 1.35;
+      }
+
+      .card {
+        border-radius: 17px;
+      }
+
+      .service-card:hover,
+      .stat-card:hover,
+      .nav-item:hover {
+        transform: none;
+      }
+
+      .service-card:active,
+      .btn-primary:active,
+      .btn-secondary:active {
+        transform: scale(.985);
+      }
+
+      .service-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        font-size: 22px;
+      }
+
+      .empty-state {
+        padding: 35px 16px;
+      }
+
+      .toast-mobile-safe {
+        bottom: calc(16px + env(safe-area-inset-bottom));
+      }
+
+      #toast {
+        left: 16px;
+        right: 16px;
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        max-width: none;
+      }
+
+      #reviewModal {
+        padding:
+          max(12px, env(safe-area-inset-top))
+          12px
+          max(12px, env(safe-area-inset-bottom));
+      }
+
+      #reviewModal > div {
+        max-height: calc(100dvh - 24px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      #profileEmailHelp {
+        line-height: 1.45;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto !important;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
   </style>
   <link rel="stylesheet" href="mobile.css">
 </head>
 
 <body>
+  <div id="dashboardBoot" class="sr-only" aria-live="polite">Loading dashboard...</div>
 
 <div
   id="sidebarOverlay"
-  class="fixed inset-0 z-[90] hidden modal-backdrop lg:hidden">
+  class="fixed inset-0 z-[90] hidden modal-backdrop lg:hidden"
+  aria-hidden="true">
 </div>
 
 <div class="min-h-screen flex">
@@ -237,7 +490,8 @@
   <aside
     id="sidebar"
     class="sidebar fixed lg:static inset-y-0 left-0 z-[100]
-           flex flex-col mobile-sidebar lg:translate-x-0">
+           flex flex-col mobile-sidebar lg:translate-x-0"
+    aria-label="Student dashboard navigation">
 
     <div class="px-5 py-6 border-b border-white/10">
 
@@ -375,8 +629,12 @@
 
         <button
           id="mobileMenuBtn"
+          type="button"
           class="lg:hidden w-10 h-10 rounded-xl
-                 border border-gray-200 bg-white">
+                 border border-gray-200 bg-white"
+          aria-label="Open dashboard menu"
+          aria-controls="sidebar"
+          aria-expanded="false">
 
           ☰
 
@@ -713,6 +971,24 @@
 
             </a>
 
+            <a
+              href="global-search.html"
+              class="service-card p-5">
+
+              <div class="service-icon mb-4">
+                🔎
+              </div>
+
+              <div class="font-bold">
+                Global Search
+              </div>
+
+              <div class="text-xs text-gray-400 mt-1">
+                Search all services
+              </div>
+
+            </a>
+
           </div>
 
         </div>
@@ -879,7 +1155,14 @@
                 <input
                   id="profileEmail"
                   class="input"
-                  type="email">
+                  type="email"
+                  readonly
+                  aria-describedby="profileEmailHelp">
+                <div
+                  id="profileEmailHelp"
+                  class="text-xs text-gray-400 mt-2">
+                  Account email is managed by your login account.
+                </div>
 
               </div>
 
@@ -1313,7 +1596,7 @@
   </div>
 
 </div>
-  
+
 <!-- =====================================================
      TOAST
 ====================================================== -->
@@ -1364,7 +1647,7 @@ const supabaseClient =
 let currentUser = null;
 let currentProfile = null;
 let properties = [];
-  
+
 const sectionTitles = {
   overview: "Overview",
   profile: "My Profile",
@@ -1571,137 +1854,164 @@ function showToast(message) {
 
 function showSection(section) {
 
-  Object.keys(
-    sectionTitles
-  ).forEach(
-    key => {
+  if (!sectionTitles[section]) {
+    section = "overview";
+  }
 
-      const element =
-        $("section-" + key);
+  Object.keys(sectionTitles).forEach(key => {
 
-      if (element) {
+    const element = $("section-" + key);
 
-        element.classList.toggle(
-          "hidden",
-          key !== section
-        );
-
-      }
-
+    if (element) {
+      element.classList.toggle("hidden", key !== section);
     }
-  );
 
+  });
 
-  document
-    .querySelectorAll(
-      "[data-section]"
-    )
-    .forEach(
-      button => {
+  document.querySelectorAll("[data-section]").forEach(button => {
 
-        button.classList.toggle(
-          "active",
-          button.dataset.section === section
-        );
-
-      }
+    button.classList.toggle(
+      "active",
+      button.dataset.section === section
     );
 
+  });
 
-  $("pageTitle")
-    .textContent =
-      sectionTitles[section] ||
-      "Dashboard";
-
+  $("pageTitle").textContent =
+    sectionTitles[section] || "Dashboard";
 
   closeMobileSidebar();
 
-
   window.scrollTo({
     top: 0,
-    behavior: "smooth"
+    behavior:
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth"
   });
 
 }
 
 
-document
-  .querySelectorAll(
-    "[data-section]"
-  )
-  .forEach(
-    button => {
+document.querySelectorAll("[data-section]").forEach(button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+  button.addEventListener("click", () => {
 
-          const section =
-            button.dataset.section;
+    const section = button.dataset.section;
 
-          if (
-            section &&
-            sectionTitles[section]
-          ) {
-
-            showSection(section);
-
-          }
-
-        }
-      );
-
+    if (section && sectionTitles[section]) {
+      showSection(section);
     }
-  );
+
+  });
+
+});
 
 
 /* ========================================================
    MOBILE SIDEBAR
 ======================================================== */
 
+function setMobileSidebar(open) {
+
+  const sidebar = $("sidebar");
+  const overlay = $("sidebarOverlay");
+  const menuButton = $("mobileMenuBtn");
+
+  if (!sidebar || !overlay) {
+    return;
+  }
+
+  sidebar.classList.toggle("open", open);
+  overlay.classList.toggle("hidden", !open);
+
+  document.body.classList.toggle("sidebar-open", open);
+
+  if (menuButton) {
+    menuButton.setAttribute(
+      "aria-expanded",
+      open ? "true" : "false"
+    );
+
+    menuButton.setAttribute(
+      "aria-label",
+      open ? "Close dashboard menu" : "Open dashboard menu"
+    );
+  }
+
+  overlay.setAttribute(
+    "aria-hidden",
+    open ? "false" : "true"
+  );
+
+}
+
+
 function openMobileSidebar() {
-
-  $("sidebar")
-    .classList
-    .add("open");
-
-  $("sidebarOverlay")
-    .classList
-    .remove("hidden");
-
+  setMobileSidebar(true);
 }
 
 
 function closeMobileSidebar() {
-
-  $("sidebar")
-    .classList
-    .remove("open");
-
-  $("sidebarOverlay")
-    .classList
-    .add("hidden");
-
+  setMobileSidebar(false);
 }
 
 
-$("mobileMenuBtn")
-  .addEventListener(
+const mobileMenuButton = $("mobileMenuBtn");
+
+if (mobileMenuButton) {
+  mobileMenuButton.addEventListener(
     "click",
-    openMobileSidebar
+    () => {
+      const isOpen =
+        $("sidebar")?.classList.contains("open");
+
+      setMobileSidebar(!isOpen);
+    }
   );
+}
 
 
-$("sidebarOverlay")
-  .addEventListener(
+const sidebarOverlay = $("sidebarOverlay");
+
+if (sidebarOverlay) {
+  sidebarOverlay.addEventListener(
     "click",
     closeMobileSidebar
   );
+}
+
+
+document.addEventListener("keydown", event => {
+
+  if (event.key === "Escape") {
+
+    if ($("reviewModal") &&
+        !$("reviewModal").classList.contains("hidden")) {
+      closeReviewModal();
+      return;
+    }
+
+    closeMobileSidebar();
+
+  }
+
+});
+
+
+window.addEventListener("resize", () => {
+
+  if (window.innerWidth >= 1024) {
+    closeMobileSidebar();
+  }
+
+});
 
 
 /* ========================================================
    LOAD AUTH + PROFILE
 ======================================================== */
+
 
 async function loadAccount() {
 
@@ -2674,37 +2984,9 @@ async function loadReviews() {
   }
 
 
-  /*
-     Keep property matching.
-     Only reviews belonging to student's
-     available properties will be shown.
-  */
+  const reviews = data || [];
 
-  const reviews = (data || []).filter(review => {
-
-    return properties.some(property =>
-      String(property.id) ===
-      String(review.property_id)
-    );
-
-  });
-
-
-  console.log(
-    "Reviews from Supabase:",
-    data
-  );
-
-  console.log(
-    "Properties:",
-    properties
-  );
-
-  console.log(
-    "Reviews after property filter:",
-    reviews
-  );
-
+  $("reviewCount").textContent = reviews.length;
 
   renderReviews(reviews);
 
@@ -2855,68 +3137,61 @@ $("saveProfileBtn")
     async () => {
 
       if (!currentUser) {
+        showToast("Please login again.");
         return;
       }
 
-
-      const fullName =
-        $("profileFullName")
-          .value
-          .trim();
-
-
-      const phone =
-        $("profilePhone")
-          .value
-          .trim();
-
-
-      const address =
-        $("profileAddress")
-          .value
-          .trim();
-
+      const button = $("saveProfileBtn");
+      const fullName = $("profileFullName").value.trim();
+      const phone = $("profilePhone").value.trim();
+      const address = $("profileAddress").value.trim();
 
       if (!fullName) {
-
-        showToast(
-          "Please enter your name."
-        );
-
+        showToast("Please enter your name.");
+        $("profileFullName").focus();
         return;
-
       }
 
+      const previousText = button.textContent;
 
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .from("profiles")
-          .update({
+      button.disabled = true;
+      button.textContent = "Saving...";
 
-            full_name:
-              fullName,
+      try {
 
-            phone:
-              phone || null,
+        const {
+          data,
+          error
+        } =
+          await supabaseClient
+            .from("profiles")
+            .update({
+              full_name: fullName,
+              phone: phone || null,
+              address: address || null
+            })
+            .eq(
+              "id",
+              currentUser.id
+            )
+            .select(
+              "id, full_name, phone, email, address, role"
+            )
+            .single();
 
-            address:
-              address || null
+        if (error) {
+          throw error;
+        }
 
-          })
-          .eq(
-            "id",
-            currentUser.id
-          )
-          .select(
-            "id, full_name, phone, email, address, role"
-          )
-          .single();
+        currentProfile = data;
 
+        renderProfile();
 
-      if (error) {
+        showToast(
+          "Profile updated successfully."
+        );
+
+      } catch (error) {
 
         console.error(
           "Profile update error:",
@@ -2924,24 +3199,16 @@ $("saveProfileBtn")
         );
 
         showToast(
+          error?.message ||
           "Profile could not be updated."
         );
 
-        return;
+      } finally {
+
+        button.disabled = false;
+        button.textContent = previousText;
 
       }
-
-
-      currentProfile =
-        data;
-
-
-      renderProfile();
-
-
-      showToast(
-        "Profile updated successfully."
-      );
 
     }
   );
@@ -2951,14 +3218,58 @@ $("saveProfileBtn")
    LOGOUT
 ======================================================== */
 
+let logoutInProgress = false;
+
 async function logout() {
 
-  await supabaseClient
-    .auth
-    .signOut();
+  if (logoutInProgress) {
+    return;
+  }
 
-  window.location.href =
-    "auth.html";
+  logoutInProgress = true;
+
+  const button = $("logoutBtn");
+
+  if (button) {
+    button.disabled = true;
+    button.setAttribute("aria-disabled", "true");
+  }
+
+  try {
+
+    const { error } =
+      await supabaseClient
+        .auth
+        .signOut();
+
+    if (error) {
+      throw error;
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Logout error:",
+      error
+    );
+
+    logoutInProgress = false;
+
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute("aria-disabled");
+    }
+
+    showToast(
+      error?.message ||
+      "Unable to logout. Please try again."
+    );
+
+    return;
+
+  }
+
+  window.location.replace("auth.html");
 
 }
 
@@ -2974,90 +3285,124 @@ $("logoutBtn")
    REALTIME
 ======================================================== */
 
+let realtimeChannel = null;
+let realtimeRefreshTimer = null;
+
+
+function scheduleDashboardRefresh() {
+
+  clearTimeout(realtimeRefreshTimer);
+
+  realtimeRefreshTimer =
+    setTimeout(
+      async () => {
+
+        try {
+          await loadBookings();
+          await loadReviews();
+        } catch (error) {
+          console.error(
+            "Realtime refresh failed:",
+            error
+          );
+        }
+
+      },
+      250
+    );
+
+}
+
+
 function subscribeRealtime() {
 
-  if (!currentUser) {
+  if (!currentUser || realtimeChannel) {
     return;
   }
 
+  realtimeChannel =
+    supabaseClient
+      .channel(
+        "student-dashboard-" +
+        currentUser.id
+      )
 
-  supabaseClient
-    .channel(
-      "student-dashboard-" +
-      currentUser.id
-    )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "student_bookings",
+          filter:
+            "student_id=eq." +
+            currentUser.id
+        },
+        scheduleDashboardRefresh
+      )
 
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "reviews",
+          filter:
+            "student_id=eq." +
+            currentUser.id
+        },
+        scheduleDashboardRefresh
+      )
 
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "student_bookings",
-        filter:
-          "student_id=eq." +
-          currentUser.id
-      },
-      () => {
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter:
+            "id=eq." +
+            currentUser.id
+        },
+        async () => {
 
-        loadBookings();
+          const ok = await loadAccount();
 
-      }
-    )
+          if (ok) {
+            scheduleDashboardRefresh();
+          }
 
+        }
+      )
 
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "reviews",
-        filter:
-          "student_id=eq." +
-          currentUser.id
-      },
-      () => {
+      .subscribe(status => {
 
-        loadReviews();
-
-      }
-    )
-
-
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "profiles",
-        filter:
-          "id=eq." +
-          currentUser.id
-      },
-      () => {
-
-        loadAccount()
-          .then(
-            ok => {
-
-              if (ok) {
-
-                loadBookings();
-
-                loadReviews();
-
-              }
-
-            }
+        if (status === "CHANNEL_ERROR") {
+          console.error(
+            "Student dashboard realtime channel error."
           );
+        }
 
-      }
-    )
-
-
-    .subscribe();
+      });
 
 }
+
+
+/* ========================================================
+   AUTH STATE WATCHER
+======================================================== */
+
+supabaseClient.auth.onAuthStateChange(
+  (event, session) => {
+
+    if (
+      event === "SIGNED_OUT" ||
+      !session?.user
+    ) {
+      window.location.replace("auth.html");
+    }
+
+  }
+);
 
 
 /* ========================================================
@@ -3069,30 +3414,14 @@ async function init() {
   const accountLoaded =
     await loadAccount();
 
-
   if (!accountLoaded) {
     return;
   }
 
-
-  async function init() {
-
-  const accountLoaded =
-    await loadAccount();
-
-  if (!accountLoaded) {
-    return;
-  }
-
-  await loadBookings();
-
-  await loadReviews();
-
-  subscribeRealtime();
-}
-
-init();
-
+  await Promise.all([
+    loadBookings(),
+    loadReviews()
+  ]);
 
   subscribeRealtime();
 
@@ -3100,6 +3429,7 @@ init();
 
 
 init();
+
 
 </script>
 
