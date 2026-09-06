@@ -2944,7 +2944,7 @@ async function loadReviews() {
   } = await supabaseClient
     .from("reviews")
     .select(
-      "id, property_id, user_id, user_name, rating, review_text, status, created_at, student_id"
+      "id, property_id, property_type, user_id, user_name, rating, review_text, status, created_at, student_id, published_review_text, pending_review_text, pending_rating"
     )
     .eq(
       "student_id",
@@ -2983,12 +2983,110 @@ async function loadReviews() {
     return;
   }
 
-
-  const reviews = data || [];
+  const reviews = await attachReviewPropertyNames(data || []);
 
   $("reviewCount").textContent = reviews.length;
 
   renderReviews(reviews);
+
+}
+
+
+/* ========================================================
+   REVIEW PROPERTY LOOKUP
+   Maps reviews.property_type + reviews.property_id
+   to the correct live property table.
+======================================================== */
+
+async function attachReviewPropertyNames(reviews) {
+
+  if (!reviews.length) {
+    return [];
+  }
+
+  const tableMap = {
+    hostel: "hostels",
+    hostels: "hostels",
+    pg: "hostels",
+    tiffin: "tiffins",
+    tiffins: "tiffins",
+    library: "libraries",
+    libraries: "libraries",
+    cafe: "cafes",
+    cafes: "cafes",
+    bookstore: "bookstores",
+    bookstores: "bookstores"
+  };
+
+  const groups = {};
+
+  reviews.forEach(review => {
+    const table = tableMap[
+      String(review.property_type || "")
+        .trim()
+        .toLowerCase()
+    ];
+
+    if (!table || !review.property_id) {
+      return;
+    }
+
+    if (!groups[table]) {
+      groups[table] = new Set();
+    }
+
+    groups[table].add(String(review.property_id));
+  });
+
+  const propertyMaps = {};
+
+  await Promise.all(
+    Object.entries(groups).map(async ([table, ids]) => {
+      const { data, error } = await supabaseClient
+        .from(table)
+        .select("*")
+        .in("id", Array.from(ids));
+
+      if (error) {
+        console.warn(
+          `Review property lookup failed for ${table}:`,
+          error
+        );
+        propertyMaps[table] = {};
+        return;
+      }
+
+      propertyMaps[table] = {};
+
+      (data || []).forEach(property => {
+        propertyMaps[table][String(property.id)] = property;
+      });
+    })
+  );
+
+  return reviews.map(review => {
+    const type = String(review.property_type || "")
+      .trim()
+      .toLowerCase();
+    const table = tableMap[type];
+    const property = table
+      ? propertyMaps[table]?.[String(review.property_id)]
+      : null;
+
+    const propertyName =
+      property?.property_name ||
+      property?.name ||
+      property?.title ||
+      property?.business_name ||
+      property?.service_name ||
+      "Property";
+
+    return {
+      ...review,
+      property_name: propertyName,
+      property_record: property || null
+    };
+  });
 
 }
 
@@ -3032,8 +3130,25 @@ function renderReviews(reviews) {
   list.innerHTML =
     reviews.map(review => {
 
+      const status = String(review.status || "")
+        .trim()
+        .toLowerCase();
+
       const rating =
-        Number(review.rating || 0);
+        Number(
+          (status === "pending" && review.pending_rating != null)
+            ? review.pending_rating
+            : review.rating || 0
+        );
+
+      const reviewText =
+        (status === "published" && review.published_review_text)
+          ? review.published_review_text
+          : (status === "pending" && review.pending_review_text)
+            ? review.pending_review_text
+            : (review.published_review_text ||
+               review.pending_review_text ||
+               review.review_text || "");
 
 
       const stars =
@@ -3071,11 +3186,27 @@ function renderReviews(reviews) {
 
 
               <div
-                class="text-xs
-                       text-gray-400
+                class="font-extrabold
+                       text-gray-800
                        mt-2">
 
-                Property ID:
+                ${escapeHtml(
+                  String(review.property_name || "Property")
+                )}
+
+              </div>
+
+              <div
+                class="text-xs
+                       text-gray-400
+                       mt-1">
+
+                ${escapeHtml(
+                  String(review.property_type || "Property")
+                    .replace(/[-_]/g, " ")
+                )}
+
+                · Property ID:
                 ${escapeHtml(
                   String(review.property_id || "")
                 )}
@@ -3113,7 +3244,7 @@ function renderReviews(reviews) {
                    leading-7">
 
             ${escapeHtml(
-              review.review_text || ""
+              reviewText
             )}
 
           </div>
