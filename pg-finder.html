@@ -2168,7 +2168,59 @@
         transform: none;
       }
     }
+/* =========================
+   OWNER CLAIM
+========================= */
 
+.claim-card-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+
+  width:100%;
+  margin-top:10px;
+
+  padding:11px 13px;
+
+  border:1px solid #dfe5ed;
+  border-radius:11px;
+
+  background:#f8fafc;
+  color:#5a45d8;
+
+  font-size:11px;
+  font-weight:900;
+
+  text-decoration:none;
+
+  transition:.2s ease;
+}
+
+.claim-card-btn:hover{
+  background:#eeeaff;
+  border-color:#6b4eff;
+}
+
+.owner-claimed-badge{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+
+  width:100%;
+  margin-top:10px;
+
+  padding:9px 11px;
+
+  border-radius:11px;
+
+  background:#edf8f0;
+  color:#197647;
+
+  font-size:11px;
+  font-weight:900;
+}
 </style>
   <!-- =========================
      PHASE 2 SEO STRUCTURED DATA
@@ -3747,7 +3799,34 @@
     /* =====================================================
        RENDER CARDS
     ===================================================== */
+function ownerClaimButton(record){
 
+  const ownerId = record.owner_id;
+
+  // Already claimed
+  if(ownerId){
+
+    return `
+      <div class="owner-claimed-badge">
+        <i class="fa-solid fa-circle-check"></i>
+        Owner Claimed ✓
+      </div>
+    `;
+  }
+
+  // Not claimed
+  const propertyId = record.id ?? '';
+
+  return `
+    <a
+      class="claim-card-btn"
+      href="property-details.html?type=pg&id=${encodeURIComponent(propertyId)}"
+    >
+      <i class="fa-solid fa-hand"></i>
+      Are you the owner? Claim
+    </a>
+  `;
+}
     function renderRecords() {
 
       const records =
@@ -3959,7 +4038,14 @@
                   <i class="fa-solid fa-eye"></i>
                   View Details
                 </button>
+ </a>
 
+      ${ownerClaimButton(record)}
+
+    </div>
+
+  </article>
+`;
 
                 ${
                   phone
