@@ -2003,7 +2003,49 @@ async function processListing(id,action){
   toast("Listing request updated.");
   await loadAll();
 }
-  
+ async function processClaim(claimId, action){
+
+  const note =
+    action === 'reject'
+      ? (prompt('Reason for rejection (optional):') || '').trim()
+      : '';
+
+  try{
+
+    const {
+      data,
+      error
+    } = await db.rpc(
+      'process_owner_claim',
+      {
+        p_claim_id:Number(claimId),
+        p_action:action,
+        p_admin_note:note || null
+      }
+    );
+
+    if(error){
+      throw error;
+    }
+
+    alert(
+      action === 'approve'
+        ? 'Claim approved successfully.'
+        : 'Claim rejected successfully.'
+    );
+
+    await loadClaimRequests();
+
+  }catch(error){
+
+    console.error('Claim processing error:',error);
+
+    alert(
+      error.message ||
+      'Unable to process claim request.'
+    );
+  }
+} 
 async function processClaim(id,action){
   const rows=state.advanced.requests.claim_requests||[],r=rows.find(x=>String(x.id)===String(id));if(!r)return;
   if(action==="reject"&&!prompt("Reject reason (required):"))return;
