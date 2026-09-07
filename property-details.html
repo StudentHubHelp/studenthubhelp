@@ -90,6 +90,189 @@
 @media(max-width:520px){.trust-strip>div{padding:10px}.progress-head{display:block}.progress-head span{display:block;text-align:left;margin-top:3px}.report-options{gap:6px}.wrap{padding:8px}.hero{border-radius:16px}.gallery{height:250px}.info{padding:16px}.title{font-size:25px}.actions{grid-template-columns:1fr}.card{border-radius:14px;padding:15px}.item{padding:11px}.pill{font-size:12px;padding:8px 10px}.top{gap:8px}.top .back,.top .share{font-size:12px}.review-text{font-size:15px}}
 @media(min-width:801px){.gallery{min-height:420px}.card{content-visibility:auto;contain-intrinsic-size:300px}}
 button,.btn{touch-action:manipulation}img{display:block;max-width:100%}.mainimg,.side img{background:#e9edf4}.shareurl{overflow-wrap:anywhere}
+/* =========================
+   OWNER CLAIM
+========================= */
+
+.owner-claim-card{
+  border:1px solid #e5e7eb;
+  background:linear-gradient(135deg,#ffffff,#f8fafc);
+}
+
+.owner-claim-box{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px;
+  border-radius:16px;
+  background:#f8fafc;
+  border:1px solid #e7ebf0;
+}
+
+.owner-claim-info{
+  flex:1;
+}
+
+.owner-claim-title{
+  font-weight:900;
+  font-size:16px;
+  color:#172033;
+  margin-bottom:4px;
+}
+
+.owner-claim-text{
+  color:#68758a;
+  font-size:12px;
+  line-height:1.6;
+}
+
+.owner-claim-btn{
+  border:0;
+  background:#6b4eff;
+  color:#fff;
+  border-radius:12px;
+  padding:12px 16px;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.owner-claim-btn:hover{
+  background:#573de5;
+}
+
+.owner-claimed{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#edf8f0;
+  color:#197647;
+  font-size:12px;
+  font-weight:900;
+}
+
+.claim-modal{
+  position:fixed;
+  inset:0;
+  z-index:5000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(4,8,20,.72);
+  backdrop-filter:blur(8px);
+}
+
+.claim-modal.show{
+  display:flex;
+}
+
+.claim-modal-box{
+  width:min(520px,100%);
+  max-height:90vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:20px;
+  padding:24px;
+  box-shadow:0 25px 80px rgba(0,0,0,.30);
+}
+
+.claim-modal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-bottom:18px;
+}
+
+.claim-modal-head h3{
+  font-size:21px;
+}
+
+.claim-close{
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:10px;
+  background:#f1f4f8;
+  cursor:pointer;
+  font-size:18px;
+}
+
+.claim-form{
+  display:grid;
+  gap:13px;
+}
+
+.claim-form label{
+  font-size:12px;
+  font-weight:800;
+  color:#35445a;
+}
+
+.claim-form input,
+.claim-form textarea{
+  width:100%;
+  margin-top:5px;
+  padding:12px;
+  border:1px solid #dfe5ed;
+  border-radius:11px;
+  outline:none;
+  font:inherit;
+}
+
+.claim-form textarea{
+  min-height:100px;
+  resize:vertical;
+}
+
+.claim-form input:focus,
+.claim-form textarea:focus{
+  border-color:#6b4eff;
+}
+
+.claim-submit{
+  border:0;
+  border-radius:12px;
+  padding:13px;
+  background:#6b4eff;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.claim-submit:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.claim-message{
+  min-height:20px;
+  font-size:12px;
+  font-weight:700;
+}
+
+.claim-message.error{
+  color:#c62828;
+}
+
+.claim-message.success{
+  color:#197647;
+}
+
+@media(max-width:600px){
+  .owner-claim-box{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .owner-claim-btn{
+    width:100%;
+  }
+}
 </style>
   <link rel="stylesheet" href="mobile.css">
 </head>
@@ -107,11 +290,41 @@ const qs=new URLSearchParams(location.search);
 const type=(qs.get('type')||'hostel').toLowerCase();
 const slug=qs.get('slug')||qs.get('id');
 const config={
- hostel:{table:'hostels',label:'Hostel / PG',banner:'hostel-banner.png'},
- tiffin:{table:'tiffins',label:'Tiffin Service',banner:'tiffin-banner.png'},
- cafe:{table:'cafes',label:'Cafe',banner:'cafe-banner.png'},
- library:{table:'libraries',label:'Library',banner:'library-banner.png'},
- bookstore:{table:'bookstores',label:'Bookstore',banner:'bookstore-banner.png'}
+  hostel:{
+    table:'hostels',
+    label:'Hostel / PG',
+    banner:'hostel-banner.png'
+  },
+
+  pg:{
+    table:'pg_listings',
+    label:'PG',
+    banner:'hostel-banner.png'
+  },
+
+  tiffin:{
+    table:'tiffins',
+    label:'Tiffin Service',
+    banner:'tiffin-banner.png'
+  },
+
+  cafe:{
+    table:'cafes',
+    label:'Cafe',
+    banner:'cafe-banner.png'
+  },
+
+  library:{
+    table:'libraries',
+    label:'Library',
+    banner:'library-banner.png'
+  },
+
+  bookstore:{
+    table:'bookstores',
+    label:'Bookstore',
+    banner:'bookstore-banner.png'
+  }
 };
 const cfg=config[type]||config.hostel;
 const app=document.getElementById('app');
@@ -590,7 +803,339 @@ async function loadPropertyReviews(propertyId, propertyType) {
       '<p class="muted">Reviews could not be loaded right now.</p>';
   }
 }
+  /* =========================================================
+   OWNER CLAIM SYSTEM
+========================================================= */
+
+let currentProperty = null;
+
+function getClaimPropertyType(){
+  return type;
+}
+
+function getClaimPropertyId(r){
+  return String(r.id ?? r.slug ?? '');
+}
+
+function claimPropertyHTML(r){
+
+  const ownerId = r.owner_id;
+
+  if(ownerId){
+    return `
+      <div class="card owner-claim-card">
+        <div class="section-kicker">OWNERSHIP</div>
+
+        <div class="owner-claim-box">
+          <div class="owner-claim-info">
+            <div class="owner-claim-title">
+              <i class="fa-solid fa-shield-check"></i>
+              Owner Claimed
+            </div>
+
+            <div class="owner-claim-text">
+              This listing has been claimed by its owner and approved by
+              StudentHubHelp administration.
+            </div>
+          </div>
+
+          <span class="owner-claimed">
+            <i class="fa-solid fa-circle-check"></i>
+            Owner Claimed ✓
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card owner-claim-card">
+      <div class="section-kicker">OWNERSHIP</div>
+
+      <div class="owner-claim-box">
+        <div class="owner-claim-info">
+          <div class="owner-claim-title">
+            Are you the owner?
+          </div>
+
+          <div class="owner-claim-text">
+            If you own or manage this listing, you can request ownership.
+            Your request will be manually reviewed by StudentHubHelp.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="owner-claim-btn"
+          onclick="openClaimModal()"
+        >
+          <i class="fa-solid fa-hand"></i>
+          Claim this listing
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+
+function claimModalHTML(){
+
+  return `
+    <div id="claimModal" class="claim-modal">
+
+      <div class="claim-modal-box">
+
+        <div class="claim-modal-head">
+          <h3>
+            <i class="fa-solid fa-shield-halved"></i>
+            Claim Listing
+          </h3>
+
+          <button
+            type="button"
+            class="claim-close"
+            onclick="closeClaimModal()"
+          >
+            ×
+          </button>
+        </div>
+
+        <p class="small" style="margin-bottom:18px">
+          Ownership is not granted automatically.
+          StudentHubHelp admin will review your request before approving it.
+        </p>
+
+        <form id="claimForm" class="claim-form">
+
+          <label>
+            Your Name
+            <input
+              id="claimOwnerName"
+              type="text"
+              maxlength="100"
+              required
+              placeholder="Enter your full name"
+            >
+          </label>
+
+          <label>
+            Phone Number
+            <input
+              id="claimOwnerPhone"
+              type="tel"
+              maxlength="20"
+              required
+              placeholder="Enter your phone number"
+            >
+          </label>
+
+          <label>
+            Message
+            <textarea
+              id="claimMessage"
+              maxlength="1000"
+              placeholder="Tell us why you are the owner/manager of this listing"
+            ></textarea>
+          </label>
+
+          <div id="claimMessageBox" class="claim-message"></div>
+
+          <button
+            id="claimSubmitBtn"
+            type="submit"
+            class="claim-submit"
+          >
+            <i class="fa-solid fa-paper-plane"></i>
+            Submit Ownership Request
+          </button>
+
+        </form>
+
+      </div>
+
+    </div>
+  `;
+}
+
+
+function openClaimModal(){
+
+  if(!currentProperty){
+    alert('Property information is not available.');
+    return;
+  }
+
+  db.auth.getUser().then(({data,error})=>{
+
+    if(error || !data?.user){
+
+      localStorage.setItem(
+        'studenthub_claim_return',
+        location.href
+      );
+
+      alert(
+        'Please login first. After login, return to this listing and submit your ownership claim.'
+      );
+
+      location.href='auth.html';
+
+      return;
+    }
+
+    const existingModal=document.getElementById('claimModal');
+
+    if(existingModal){
+      existingModal.classList.add('show');
+      return;
+    }
+
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      claimModalHTML()
+    );
+
+    document
+      .getElementById('claimModal')
+      .classList.add('show');
+
+    document
+      .getElementById('claimForm')
+      .addEventListener('submit',submitClaim);
+
+  });
+}
+
+
+function closeClaimModal(){
+
+  const modal=document.getElementById('claimModal');
+
+  if(modal){
+    modal.classList.remove('show');
+
+    setTimeout(()=>{
+      modal.remove();
+    },180);
+  }
+}
+
+
+async function submitClaim(event){
+
+  event.preventDefault();
+
+  if(!currentProperty){
+    return;
+  }
+
+  const btn=document.getElementById('claimSubmitBtn');
+  const message=document.getElementById('claimMessageBox');
+
+  const ownerName=
+    document.getElementById('claimOwnerName').value.trim();
+
+  const ownerPhone=
+    document.getElementById('claimOwnerPhone').value.trim();
+
+  const claimMessage=
+    document.getElementById('claimMessage').value.trim();
+
+  message.className='claim-message';
+  message.textContent='';
+
+  if(!ownerName || !ownerPhone){
+
+    message.className='claim-message error';
+    message.textContent='Name and phone number are required.';
+    return;
+  }
+
+  btn.disabled=true;
+  btn.innerHTML=
+    '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+
+  try{
+
+    const {
+      data:{
+        user
+      }
+    }=await db.auth.getUser();
+
+    if(!user){
+
+      throw new Error('Please login before submitting a claim.');
+    }
+
+    const propertyType=getClaimPropertyType();
+
+    const propertyId=getClaimPropertyId(currentProperty);
+
+    const {
+      error
+    }=await db
+      .from('claim_requests')
+      .insert({
+        property_id:propertyId,
+        property_type:propertyType,
+        owner_id:user.id,
+        owner_name:ownerName,
+        owner_phone:ownerPhone,
+        message:claimMessage || null,
+        status:'pending'
+      });
+
+    if(error){
+
+      if(
+        error.code==='23505' ||
+        String(error.message||'')
+          .toLowerCase()
+          .includes('duplicate')
+      ){
+
+        throw new Error(
+          'A pending ownership request already exists for this listing.'
+        );
+      }
+
+      throw error;
+    }
+
+    message.className='claim-message success';
+
+    message.textContent=
+      'Ownership request submitted successfully. Admin approval is required.';
+
+    btn.innerHTML=
+      '<i class="fa-solid fa-check"></i> Request Submitted';
+
+    setTimeout(()=>{
+
+      closeClaimModal();
+
+    },1800);
+
+  }catch(error){
+
+    console.error('Claim submission error:',error);
+
+    message.className='claim-message error';
+    message.textContent=
+      error.message ||
+      'Unable to submit ownership request. Please try again.';
+
+    btn.disabled=false;
+
+    btn.innerHTML=
+      '<i class="fa-solid fa-paper-plane"></i> Submit Ownership Request';
+  }
+}
   function render(r){
+
+  currentProperty=r;
+
   const image=r.image||cfg.banner;
   const verified=getVerification(r);
   const name=r.name||r.service_name||'Property';
@@ -679,7 +1224,7 @@ async function loadPropertyReviews(propertyId, propertyType) {
         <h2>🏠 About</h2>
         <div class="desc">${show(r.description)}</div>
       </div>
-
+      ${claimPropertyHTML(r)}
       ${categorySections(r)}
 
       <div class="card">
