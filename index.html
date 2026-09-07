@@ -385,6 +385,26 @@
       color: var(--gold-light);
     }
 
+    /* Hero Trust Highlights Bar */
+    .hero-highlights {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+    .hero-highlight-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
 
     /* =========================================
         HERO CAROUSEL
@@ -2192,6 +2212,15 @@
 
         </p>
 
+        <!-- Hero Trust Highlights Bar Added Here -->
+        <div class="hero-highlights">
+          <span class="hero-highlight-tag">✓ Verified Listings</span>
+          <span class="hero-highlight-tag">🎓 Student Focused</span>
+          <span class="hero-highlight-tag">📍 Near Study Hubs</span>
+          <span class="hero-highlight-tag">⭐ Real Reviews</span>
+          <span class="hero-highlight-tag">🛡️ Transparent Info</span>
+        </div>
+
 
         <form
           class="hero-search"
@@ -2380,6 +2409,14 @@
 
         </div>
 
+
+        <div
+          class="carousel-dots"
+          id="carouselDots"
+        ></div>
+
+
+      </div>
 
     </div>
 
@@ -4486,814 +4523,814 @@
         Same public anon configuration as current index.
         Never place a service_role key in browser code.
     ========================================= */
-    const SUPABASE_URL = 'https://idurlccrarznnnqixxsd.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA';
-
-    const supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
-
-    /* =========================================
-        STUDENTHUBHELP TRUST CONFIG
-        Current workflow: published directory records
-        are treated as manually verified by StudentHubHelp.
-        If your database later adds explicit verification
-        columns, those values take priority automatically.
-    ========================================= */
-    const VERIFICATION_DEFAULT_FOR_PUBLISHED = true;
-    const RECENT_DAYS = 30;
-    const PAGE_SIZE = 12;
-
-    const sourceConfig = [
-      {table:"hostels", category:"hostel", label:"Hostel / PG"},
-      {table:"tiffins", category:"tiffin", label:"Tiffin / Mess"},
-      {table:"libraries", category:"library", label:"Library"},
-      {table:"cafes", category:"cafe", label:"Cafe"},
-      {table:"bookstores", category:"bookstore", label:"Book Store"}
-    ];
-
-    const $ = id => document.getElementById(id);
-
-    function escapeHTML(value) {
-      return String(value ?? "")
-        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
-    }
-
-    function showToast(message) {
-      const toast = $("toast");
-      if (!toast) return;
-      toast.textContent = message;
-      toast.classList.add("show");
-      clearTimeout(window.__toastTimer);
-      window.__toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
-    }
-
-    function firstValue(row, keys) {
-      for (const key of keys) {
-        if (row && row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") return row[key];
-      }
-      return null;
-    }
-
-    function boolValue(row, keys) {
-      const value = firstValue(row, keys);
-      if (typeof value === "boolean") return value;
-      if (value === null) return null;
-      return ["true","1","yes","verified","approved","active","published"].includes(String(value).toLowerCase());
-    }
-
-    function formatDate(value) {
-      if (!value) return "";
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return "";
-      return date.toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"});
-    }
-
-    function daysSince(value) {
-      if (!value) return Infinity;
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return Infinity;
-      return Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000));
-    }
-
-    function getVerification(row) {
-      const explicitStatus = String(firstValue(row, [
-        "verification_status","verification_state","verified_status","listing_status"
-      ]) || "").toLowerCase();
-
-      const explicit = boolValue(row, [
-        "is_verified","verified","studenthub_verified","verification_complete"
-      ]);
-
-      const verifiedAt = firstValue(row, [
-        "verified_at","verification_date","last_verified_at","last_verified","checked_at"
-      ]);
-
-      const verifiedBy = firstValue(row, [
-        "verified_by","verification_by","verified_source"
-      ]);
-
-      let verified;
-      if (explicit !== null) verified = explicit;
-      else if (["verified","approved","active_verified"].includes(explicitStatus)) verified = true;
-      else if (["unverified","rejected","suspended"].includes(explicitStatus)) verified = false;
-      else verified = VERIFICATION_DEFAULT_FOR_PUBLISHED;
-
-      const updateAt = firstValue(row, ["updated_at","modified_at","created_at"]);
-      const freshnessDate = verifiedAt || updateAt || null;
-      const days = daysSince(freshnessDate);
-
-      return {
-        verified,
-        verifiedAt,
-        updateAt,
-        freshnessDate,
-        verifiedBy: verifiedBy || "StudentHubHelp",
-        recent: days <= RECENT_DAYS,
-        status: verified ? (days <= RECENT_DAYS ? "fresh" : "verified") : "unverified"
-      };
-    }
-
-    function normalizeListing(row, source) {
-      const name = firstValue(row, ["name","title","business_name","property_name"]) || "Student Listing";
-      const area = firstValue(row, ["area","locality","location","neighborhood","address_area","city"]) || "";
-      const address = firstValue(row, ["address","full_address","location_address"]) || "";
-      const city = firstValue(row, ["city","district","town"]) || "";
-      const timing = firstValue(row, ["timing","timings","opening_hours","hours"]) || "";
-      const ratingRaw = firstValue(row, ["rating","avg_rating","average_rating"]);
-      const rating = ratingRaw === null ? null : Number(ratingRaw);
-
-      const verification = getVerification(row);
-
-      const facilities = {
-        wifi: boolValue(row, ["wifi","has_wifi","internet","wi_fi"]),
-        food: boolValue(row, ["food","mess","meals","food_available","meal_available"]),
-        ac: boolValue(row, ["ac","air_conditioned","air_conditioning"]),
-        cctv: boolValue(row, ["cctv","security_cctv"]),
-        laundry: boolValue(row, ["laundry","washing_machine"]),
-        powerBackup: boolValue(row, ["power_backup","backup","electricity_backup"])
-      };
-
-      // 10 specific fields for Data Completeness calculation:
-      // 1. Property Name, 2. Area, 3. Full Address, 4. Timing, 5. Rating, 
-      // 6. Phone Number, 7. Description / About, 8. Photo / Image, 9. Review, 10. Google Map URL
-      const completenessFields = [
-        firstValue(row, ["name", "title", "business_name", "property_name"]),
-        firstValue(row, ["area", "locality", "location", "neighborhood", "address_area"]),
-        firstValue(row, ["address", "full_address", "location_address"]),
-        firstValue(row, ["timing", "timings", "opening_hours", "hours"]),
-        firstValue(row, ["rating", "avg_rating", "average_rating"]),
-        firstValue(row, ["phone", "contact", "contact_number", "mobile", "phone_number"]),
-        firstValue(row, ["description", "about", "details"]),
-        firstValue(row, ["image", "image_url", "photo", "photo_url", "cover_image"]),
-        firstValue(row, ["review", "reviews", "user_reviews"]),
-        firstValue(row, ["map_url", "google_map_url", "map", "location_url"])
-      ];
-
-      const availableCount = completenessFields.filter(val => val !== null && val !== undefined && String(val).trim() !== "").length;
-      const completeness = Math.round((availableCount / 10) * 100);
-
-      const searchText = [
-        name, source.label, area, address, city, timing,
-        firstValue(row,["description","about","details"])
-      ].filter(Boolean).join(" ").toLowerCase();
-
-      return {
-        ...row,
-        sourceTable: source.table,
-        listingCategory: source.category,
-        listingLabel: source.label,
-        displayName: name,
-        displayArea: area,
-        displayAddress: address,
-        displayCity: city,
-        displayTiming: timing,
-        displayRating: Number.isFinite(rating) ? rating : null,
-        facilities,
-        verification,
-        completeness,
-        searchText
-      };
-    }
-
-    /* =========================================
-        MOBILE NAV
-    ========================================= */
-    const mobileMenu = $("mobileMenu");
-    const navLinks = $("navLinks");
-    mobileMenu?.addEventListener("click", () => navLinks?.classList.toggle("open"));
-    document.querySelectorAll("#navLinks a").forEach(link =>
-      link.addEventListener("click", () => navLinks?.classList.remove("open"))
-    );
-
-    /* =========================================
-        HERO CAROUSEL
-    ========================================= */
-    const carouselCards = document.querySelectorAll(".carousel-card");
-    const carouselDots = $("carouselDots");
-    let carouselIndex = 0;
-
-    carouselCards.forEach((_,index) => {
-      const dot = document.createElement("button");
-      dot.type = "button";
-      dot.className = "carousel-dot" + (index === 0 ? " active" : "");
-      dot.setAttribute("aria-label", `Show slide ${index+1}`);
-      dot.addEventListener("click", () => {
-        carouselIndex = index;
-        showCarousel(carouselIndex);
-      });
-      carouselDots?.appendChild(dot);
-    });
-
-    const dots = document.querySelectorAll(".carousel-dot");
-    function showCarousel(index) {
-      carouselCards.forEach((card,i) => card.classList.toggle("active",i === index));
-      dots.forEach((dot,i) => dot.classList.toggle("active",i === index));
-    }
-    if (carouselCards.length > 1) {
-      setInterval(() => {
-        carouselIndex = (carouselIndex + 1) % carouselCards.length;
-        showCarousel(carouselIndex);
-      },4300);
-    }
-
-    /* =========================================
-        MAIN SEARCH
-    ========================================= */
-    function performSearch(value) {
-      const cleanValue = String(value || "").trim();
-      window.location.href = cleanValue
-        ? `global-search.html?q=${encodeURIComponent(cleanValue)}`
-        : "global-search.html";
-    }
-
-    $("mainSearchForm")?.addEventListener("submit", event => {
-      event.preventDefault();
-      performSearch($("mainSearch")?.value || "");
-    });
-
-    document.querySelectorAll("[data-search]").forEach(button => {
-      button.addEventListener("click", () => {
-        const value = button.dataset.search || "";
-        if ($("mainSearch")) $("mainSearch").value = value;
-        performSearch(value);
-      });
-    });
-
-    /* =========================================
-        LIVE STATS
-    ========================================= */
-    const statsConfig = [
-      ["hostels","hostelCount"],
-      ["tiffins","tiffinCount"],
-      ["libraries","libraryCount"],
-      ["cafes","cafeCount"],
-      ["bookstores","bookstoreCount"]
-    ];
-
-    async function loadSingleCount(table,elementId) {
-      const element = $(elementId);
-      if (!element) return 0;
-      try {
-        const {count,error} = await supabaseClient.from(table).select("*",{count:"exact",head:true});
-        if (error) throw error;
-        element.textContent = Number.isFinite(count) ? count.toLocaleString("en-IN") : "0";
-        return Number.isFinite(count) ? count : 0;
-      } catch(error) {
-        console.error(`Count error: ${table}`,error);
-        element.textContent = "0";
-        return 0;
-      }
-    }
-
-    async function loadStats() {
-      const counts = await Promise.all(statsConfig.map(([table,id]) => loadSingleCount(table,id)));
-      const total = counts.reduce((a,b)=>a+b,0);
-      const verifiedCount = $("verifiedCount");
-      if (verifiedCount) verifiedCount.textContent = total.toLocaleString("en-IN");
-    }
-    loadStats();
-
-    /* =========================================
-        LISTINGS + FILTER ENGINE
-    ========================================= */
-    let allListings = [];
-    let filteredListings = [];
-    let activeCategory = "all";
-    let visibleCount = PAGE_SIZE;
-    let compareSelection = [];
-
-    const state = {
-      search:"",
-      location:"",
-      sort:"relevance",
-      verification:"all",
-      facilities:[],
-      completeOnly:false,
-      hasRating:false
-    };
-
-    async function fetchListings(source) {
-      try {
-        const {data,error} = await supabaseClient
-          .from(source.table)
-          .select("*")
-          .limit(100);
-        if (error) throw error;
-        return (data || []).map(row => normalizeListing(row,source));
-      } catch(error) {
-        console.error(`Listing error: ${source.table}`,error);
-        return [];
-      }
-    }
-
-    async function loadListings() {
-      const grid = $("listingGrid");
-      if (grid) grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
-
-      const results = await Promise.all(sourceConfig.map(fetchListings));
-      allListings = results.flat();
-
-      // Newest verification/update first as the default relevance ordering,
-      // while keeping categories mixed so the homepage represents the whole platform.
-      applyFilters();
-    }
-
-    function listingMatches(item) {
-      if (activeCategory !== "all" && item.listingCategory !== activeCategory) return false;
-
-      const query = state.search.trim().toLowerCase();
-      const location = state.location.trim().toLowerCase();
-
-      if (query && !item.searchText.includes(query)) return false;
-
-      const locationText = [item.displayCity,item.displayArea,item.displayAddress].filter(Boolean).join(" ").toLowerCase();
-      if (location && !locationText.includes(location)) return false;
-
-      if (state.verification === "verified" && !item.verification.verified) return false;
-      if (state.verification === "fresh" && !item.verification.recent) return false;
-
-      for (const facility of state.facilities) {
-        if (item.facilities[facility] !== true) return false;
-      }
-
-      if (state.completeOnly && item.completeness < 75) return false;
-      if (state.hasRating && !Number.isFinite(item.displayRating)) return false;
-
-      return true;
-    }
-
-    function sortListings(items) {
-      const copy = [...items];
-      switch(state.sort) {
-        case "recent":
-          return copy.sort((a,b) => (new Date(b.verification.freshnessDate || 0)) - (new Date(a.verification.freshnessDate || 0)));
-        case "rating":
-          return copy.sort((a,b) => (b.displayRating ?? -1) - (a.displayRating ?? -1));
-        case "complete":
-          return copy.sort((a,b) => b.completeness - a.completeness);
-        default:
-          return copy.sort((a,b) => {
-            const score = item => (item.verification.verified ? 100 : 0) + (item.verification.recent ? 30 : 0) + item.completeness/10 + (item.displayRating || 0);
-            return score(b)-score(a);
-          });
-      }
-    }
-
-    function getFacts(item) {
-      const facts = [];
-      if (item.displayRating) facts.push(`⭐ ${item.displayRating}`);
-      if (item.displayTiming) facts.push(`🕐 ${item.displayTiming}`);
-      if (item.facilities.wifi === true) facts.push("WiFi");
-      if (item.facilities.food === true) facts.push("Food");
-      if (item.facilities.ac === true) facts.push("AC");
-      if (item.facilities.cctv === true) facts.push("CCTV");
-      return facts.slice(0,5);
-    }
-
-    function renderListings() {
-      const grid = $("listingGrid");
-      if (!grid) return;
-
-      const visible = filteredListings.slice(0,visibleCount);
-
-      $("resultSummary").textContent =
-        `${filteredListings.length} result${filteredListings.length===1?"":"s"} · ${filteredListings.filter(x=>x.verification.verified).length} verified`;
-
-      if (!visible.length) {
-        grid.innerHTML = `
-          <div class="listing-empty">
-            <div style="font-size:30px;margin-bottom:8px;">🔎</div>
-            <strong>No matching student places found.</strong>
-            <div style="margin-top:5px;font-size:11px;">Try clearing a filter, changing the area or clearing one of the selected requirements.</div>
-          </div>`;
-      } else {
-        grid.innerHTML = visible.map(renderListingCard).join("");
-      }
-
-      const loadMore = $("loadMoreBtn");
-      if (loadMore) {
-        loadMore.hidden = visibleCount >= filteredListings.length;
-      }
-
-      updateCompareUI();
-      updateFilterUI();
-    }
-
-function renderListingCard(item) {
-    const selected = compareSelection.some(x => x.id === item.id && x.sourceTable === item.sourceTable);
-    const verify = item.verification;
-
-    const badge = verify.verified
-      ? `<span class="verification-badge">✓ VERIFIED</span>`
-      : `<span class="verification-badge partial">○ NOT VERIFIED</span>`;
-
-    const facts = getFacts(item);
-    const image = firstValue(item,["image","image_url","photo","photo_url","cover_image"]);
-
-    return `
-      <article class="listing-card">
-        <div class="listing-card-top">
-          <span class="listing-category">${escapeHTML(item.listingLabel)}</span>
-          ${badge}
-        </div>
-
-        ${image ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(item.displayName)}" loading="lazy" style="width:100%;height:125px;object-fit:cover;border-radius:12px;margin-top:11px;border:1px solid rgba(255,255,255,.08)" decoding="async">` : ""}
-
-        <h3>${escapeHTML(item.displayName)}</h3>
-
-        <div class="listing-area">📍 ${escapeHTML(item.displayArea || item.displayCity || "Location available")}</div>
-
-        <div class="listing-address">
-          ${escapeHTML(item.displayAddress || "Address information available on details page.")}
-        </div>
-
-        <div class="listing-facts">
-          ${facts.map(f => `<span class="fact-pill">${escapeHTML(f)}</span>`).join("")}
-        </div>
-
-        <div class="listing-quality">
-          <div class="quality-line">
-            <span>Data completeness</span>
-            <strong>${item.completeness}%</strong>
-          </div>
-          <div class="mini-meter"><span style="width:${item.completeness}%"></span></div>
-        </div>
-
-        <div class="listing-verification-note">
-          <span>${verify.verified ? "StudentHubHelp" : "Review pending"}</span>
-          <button type="button" class="verification-link" data-verify="${encodeURIComponent(JSON.stringify({
-            name:item.displayName,
-            category:item.listingLabel,
-            verification:verify,
-            completeness:item.completeness,
-            area:item.displayArea
-          }))}">How verified?</button>
-        </div>
-
-        <div class="listing-card-bottom">
-          <label class="compare-check">
-            <input type="checkbox" data-compare="${item.sourceTable}::${item.id}" ${selected ? "checked" : ""}>
-            Compare
-          </label>
-
-          <a class="listing-details-link"
-            href="property-details.html?type=${encodeURIComponent(item.listingCategory)}&id=${encodeURIComponent(item.id)}">
-            View full details →
-          </a>
-        </div>
-      </article>`;
-  }
-
-    function applyFilters() {
-      filteredListings = sortListings(allListings.filter(listingMatches));
-      visibleCount = PAGE_SIZE;
-      renderListings();
-    }
-
-    function readFilterState() {
-      state.search = $("listingSearch")?.value || "";
-      state.location = $("locationFilter")?.value || "";
-      state.sort = $("sortFilter")?.value || "relevance";
-      state.verification = $("verificationFilter")?.value || "all";
-      state.facilities = [...document.querySelectorAll(".facility-filter:checked")].map(x=>x.value);
-      state.completeOnly = !!$("completeOnly")?.checked;
-      state.hasRating = !!$("hasRating")?.checked;
-    }
-
-    function updateFilterUI() {
-      const count = [
-        state.search,state.location,
-        state.verification !== "all" ? state.verification : "",
-        state.facilities.length ? state.facilities.join(",") : "",
-        state.completeOnly ? "complete" : "",
-        state.hasRating ? "rating" : ""
-      ].filter(Boolean).length;
-      if ($("filterCount")) $("filterCount").textContent = count;
-
-      const chips = [];
-      if (state.search) chips.push(`Search: ${state.search}`);
-      if (state.location) chips.push(`Area: ${state.location}`);
-if (state.verification !== "all") chips.push(state.verification === "fresh" ? "Recently checked" : "Verified only");
-      state.facilities.forEach(x => chips.push(x.toUpperCase()));
-      if (state.completeOnly) chips.push("Complete data");
-      if (state.hasRating) chips.push("Rated");
-
-      $("activeFilterChips").innerHTML = chips.map(x => `<span class="filter-chip">${escapeHTML(x)}</span>`).join("");
-    }
-
-    // Debounced input filtering keeps the UI responsive.
-    let filterTimer;
-    document.querySelectorAll("#filterGrid input,#filterGrid select").forEach(control => {
-      control.addEventListener("input", () => {
-        clearTimeout(filterTimer);
-        filterTimer = setTimeout(() => { readFilterState(); applyFilters(); }, 120);
-      });
-      control.addEventListener("change", () => {
-        readFilterState();
-        applyFilters();
-      });
-    });
-
-    document.querySelectorAll(".listing-tab").forEach(button => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll(".listing-tab").forEach(btn => btn.classList.remove("active"));
-        button.classList.add("active");
-        activeCategory = button.dataset.category || "all";
-        applyFilters();
-      });
-    });
-
-    $("clearFilters")?.addEventListener("click", () => {
-      ["listingSearch","locationFilter"].forEach(id => { if ($(id)) $(id).value=""; });
-      if ($("sortFilter")) $("sortFilter").value="relevance";
-      if ($("verificationFilter")) $("verificationFilter").value="all";
-      document.querySelectorAll(".facility-filter,#completeOnly,#hasRating").forEach(x=>x.checked=false);
-      readFilterState();
-      applyFilters();
-    });
-
-    $("toggleFilters")?.addEventListener("click", () => {
-      $("filterGrid")?.classList.toggle("filters-collapsed");
-      const grid = $("filterGrid");
-      if (grid) grid.style.display = grid.style.display === "none" ? "grid" : "";
-    });
-
-    $("loadMoreBtn")?.addEventListener("click", () => {
-      visibleCount += PAGE_SIZE;
-      renderListings();
-    });
-
-    /* =========================================
-        VERIFICATION MODAL
-    ========================================= */
-    function openVerificationModal(payload) {
-      let data;
-      try { data = JSON.parse(decodeURIComponent(payload)); }
-      catch { return; }
-
-      const existing = $("verificationModal");
-      if (existing) existing.remove();
-
-      const checks = [
-        ["Location checked","Area / address information reviewed"],
-        ["Contact checked","Available contact information reviewed"],
-        ["Facilities checked","Important listed facilities reviewed"],
-        ["Photos checked","Available visual information reviewed"],
-        ["Freshness tracked","Verification / update timing shown"]
-      ];
-
-      const modal = document.createElement("div");
-      modal.className = "verification-modal";
-      modal.id = "verificationModal";
-      modal.innerHTML = `
-        <div class="verification-modal-card" role="dialog" aria-modal="true" aria-labelledby="verificationModalTitle">
-          <div class="modal-head">
-            <div>
-              <span class="eyebrow">Verification transparency</span>
-              <h3 id="verificationModalTitle">Why this listing is marked Verified</h3>
-            </div>
-            <button class="modal-close" type="button" aria-label="Close verification details">×</button>
-          </div>
-
-          <p class="modal-sub">
-            <span class="modal-listing-name">${escapeHTML(data.name)}</span>
-            · ${escapeHTML(data.category)}
-          </p>
-
-          <div class="modal-check-grid">
-            ${checks.map(([title,desc]) => `<div class="modal-check"><b>✓</b><span><strong>${title}</strong><br>${desc}</span></div>`).join("")}
-          </div>
-
-          <div class="modal-facts">
-            <div class="modal-fact"><small>Status</small><strong>${data.verification.verified ? "StudentHubHelp Verified" : "Verification pending"}</strong></div>
-            <div class="modal-fact"><small>Data completeness</small><strong>${data.completeness}%</strong></div>
-            <div class="modal-fact"><small>Verification date</small><strong>${formatDate(data.verification.verifiedAt) || "Not separately stored"}</strong></div>
-            <div class="modal-fact"><small>Last update</small><strong>${formatDate(data.verification.updateAt) || "Not available"}</strong></div>
-            <div class="modal-fact"><small>Location</small><strong>${escapeHTML(data.area || "Available on listing")}</strong></div>
-          </div>
-
-          <div class="modal-footer-note">
-            Verification means the listing is covered by StudentHubHelp's verification workflow. Availability and real-world conditions can change. Review the displayed freshness information and confirm the latest details before making a decision.
-          </div>
-        </div>`;
-
-      document.body.appendChild(modal);
-      modal.querySelector(".modal-close")?.addEventListener("click",()=>modal.remove());
-      modal.addEventListener("click",e=>{ if(e.target===modal) modal.remove(); });
-      document.addEventListener("keydown", function esc(e) {
-        if(e.key==="Escape") { modal.remove(); document.removeEventListener("keydown",esc); }
-      });
-    }
-
-    $("listingGrid")?.addEventListener("click", event => {
-      const button = event.target.closest("[data-verify]");
-      if (button) openVerificationModal(button.dataset.verify);
-    });
-
-    /* =========================================
-        COMPARE
-    ========================================= */
-    function updateCompareUI() {
-      const count = compareSelection.length;
-      $("compareStatus").textContent = `${count} selected for comparison`;
-      const panel = $("comparePanel");
-      if (panel) panel.hidden = count === 0;
-
-      if (count >= 2) {
-        $("compareStatus").innerHTML = `<button type="button" class="verification-link" id="openCompareNow">Compare ${count} selected →</button>`;
-        $("openCompareNow")?.addEventListener("click", () => panel?.scrollIntoView({behavior:"smooth"}));
-      }
-
-      renderCompareTable();
-    }
-
-    $("listingGrid")?.addEventListener("change", event => {
-      const input = event.target.closest("[data-compare]");
-      if (!input) return;
-
-      const [sourceTable,id] = input.dataset.compare.split("::");
-      const item = allListings.find(x => String(x.id)===String(id) && x.sourceTable===sourceTable);
-      if (!item) return;
-
-      if (input.checked) {
-        if (compareSelection.length >= 4) {
-          input.checked=false;
-          showToast("You can compare up to 4 places at once.");
-          return;
-        }
-        if (!compareSelection.some(x=>x.id===item.id && x.sourceTable===item.sourceTable)) compareSelection.push(item);
-      } else {
-        compareSelection = compareSelection.filter(x=>!(x.id===item.id && x.sourceTable===item.sourceTable));
-      }
-      updateCompareUI();
-    });
-
-    function yesNo(value) {
-      return value === true ? '<span class="compare-yes">✓ Yes</span>' :
-             value === false ? '<span class="compare-no">—</span>' : '<span class="compare-no">Not listed</span>';
-    }
-
-    function renderCompareTable() {
-      const wrap = $("compareTableWrap");
-      if (!wrap) return;
-      if (compareSelection.length < 1) {
-        wrap.innerHTML = '<div class="listing-empty">Select listings using the Compare checkbox to build a side-by-side view.</div>';
-        return;
-      }
-
-      const rows = [
-        ["Category", x=>x.listingLabel],
-        ["Verified", x=>x.verification.verified ? "✓ StudentHubHelp Verified" : "Not verified"],
-        ["Data completeness", x=>x.completeness+"%"],
-        ["City", x=>x.displayCity || "Not listed"],
-        ["Area", x=>x.displayArea || "Not listed"],
-        ["Timing", x=>x.displayTiming || "Not listed"],
-        ["Rating", x=>x.displayRating ? "⭐ "+x.displayRating : "Not rated"],
-        ["WiFi", x=>yesNo(x.facilities.wifi)],
-        ["Food", x=>yesNo(x.facilities.food)],
-        ["AC", x=>yesNo(x.facilities.ac)],
-        ["CCTV", x=>yesNo(x.facilities.cctv)],
-        ["Laundry", x=>yesNo(x.facilities.laundry)],
-        ["Power backup", x=>yesNo(x.facilities.powerBackup)],
-        ["Last verified / update", x=>formatDate(x.verification.freshnessDate) || "Not available"]
-      ];
-
-      wrap.innerHTML = `
-        <table class="compare-table">
-          <thead><tr><th>Compare</th>${compareSelection.map(x=>`<th>${escapeHTML(x.displayName)}</th>`).join("")}</tr></thead>
-          <tbody>
-            ${rows.map(([label,getter])=>`<tr><td>${label}</td>${compareSelection.map(x=>`<td>${escapeHTML(String(getter(x)))}</td>`).join("")}</tr>`).join("")}
-          </tbody>
-        </table>`;
-    }
-
-    $("clearCompare")?.addEventListener("click", () => {
-      compareSelection=[];
-      renderListings();
-    });
-
-    $("closeCompare")?.addEventListener("click", () => {
-      $("comparePanel").hidden=true;
-    });
-
-    /* =========================================
-        REVIEWS
-    ========================================= */
-    let reviews = [];
-    let reviewIndex = 0;
-
-    function starsHTML(rating) {
-      const value = Math.max(0,Math.min(5,Math.round(Number(rating)||0)));
-      return "★".repeat(value)+"☆".repeat(5-value);
-    }
-
-    async function loadReviews() {
-      try {
-        const {data,error} = await supabaseClient
-          .from("reviews")
-          .select("id,user_name,rating,review_text,status,created_at")
-          .order("created_at",{ascending:false})
-          .limit(8);
-        if(error) throw error;
-
-        reviews=(data||[]).filter(review=>{
-          const status=String(review.status||"").toLowerCase();
-          return !status || ["approved","active","published"].includes(status);
-        });
-        renderReviews();
-      } catch(error) {
-        console.error("Reviews error:",error);
-      }
-    }
-
-    function renderReviews() {
-      const wrap=$("testimonialWrap");
-      if(!wrap) return;
-
-      if(!reviews.length) {
-        wrap.innerHTML=`<div class="testimonial active">
-          <div class="stars">☆☆☆☆☆</div>
-          <div class="testimonial-text">Student feedback will appear here as real reviews are submitted.</div>
-          <div class="testimonial-user">Student Feedback</div>
-          <div class="testimonial-note">Real reviews only · No artificial testimonials</div>
-        </div>`;
-        return;
-      }
-
-      wrap.innerHTML=reviews.map((review,index)=>`
-        <div class="testimonial ${index===0?"active":""}">
-          <div class="stars">${starsHTML(review.rating)}</div>
-          <div class="testimonial-text">“${escapeHTML(review.review_text)}”</div>
-          <div class="testimonial-user">${escapeHTML(review.user_name)}</div>
-          <div class="testimonial-note">Student Review</div>
-        </div>`).join("");
-
-      reviewIndex=0;
-      clearInterval(window.__reviewTimer);
-      if(reviews.length>1) {
-        window.__reviewTimer=setInterval(()=>{
-          const items=wrap.querySelectorAll(".testimonial");
-          items.forEach(x=>x.classList.remove("active"));
-          reviewIndex=(reviewIndex+1)%items.length;
-          items[reviewIndex].classList.add("active");
-        },5000);
-      }
-    }
-    loadReviews();
-
-    /* =========================================
-        FAQ
-    ========================================= */
-    document.querySelectorAll(".faq-question").forEach(button=>{
-      button.addEventListener("click",()=>{
-        const item=button.closest(".faq-item");
-        const wasOpen=item.classList.contains("open");
-        document.querySelectorAll(".faq-item").forEach(other=>{
-          other.classList.remove("open");
-          const plus=other.querySelector(".faq-plus");
-          if(plus) plus.textContent="+";
-        });
-        if(!wasOpen){
-          item.classList.add("open");
-          const plus=item.querySelector(".faq-plus");
-          if(plus) plus.textContent="−";
-        }
-      });
-    });
-
-    /* =========================================
-        REALTIME REFRESH
-    ========================================= */
-    sourceConfig.forEach(source=>{
-      supabaseClient
-        .channel(`homepage-${source.table}`)
-        .on("postgres_changes",{event:"*",schema:"public",table:source.table},async()=>{
-          await loadStats();
-          await loadListings();
-        })
-        .subscribe();
-    });
-
-    supabaseClient
-      .channel("homepage-reviews")
-      .on("postgres_changes",{event:"*",schema:"public",table:"reviews"},loadReviews)
-      .subscribe();
-
-    /* =========================================
-        HASH SCROLL + INITIAL LOAD
-    ========================================= */
-    loadListings();
-
-    if(window.location.hash === "#live-listings") {
-      setTimeout(()=>$("live-listings")?.scrollIntoView({behavior:"smooth"}),300);
-    }
-
-    console.log("StudentHubHelp upgraded Trust + Data + Verification + Filtering engine initialized.");
-  </script>
-
-</body>
+    const SUPABASE_URL = 'https://idurlccrarznnnqixxsd.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA'; 
+ 
+    const supabaseClient = window.supabase.createClient( 
+      SUPABASE_URL, 
+      SUPABASE_ANON_KEY 
+    ); 
+ 
+    /* ========================================= 
+        STUDENTHUBHELP TRUST CONFIG 
+        Current workflow: published directory records 
+        are treated as manually verified by StudentHubHelp. 
+        If your database later adds explicit verification 
+        columns, those values take priority automatically. 
+    ========================================= */ 
+    const VERIFICATION_DEFAULT_FOR_PUBLISHED = true; 
+    const RECENT_DAYS = 30; 
+    const PAGE_SIZE = 12; 
+ 
+    const sourceConfig = [ 
+      {table:"hostels", category:"hostel", label:"Hostel / PG"}, 
+      {table:"tiffins", category:"tiffin", label:"Tiffin / Mess"}, 
+      {table:"libraries", category:"library", label:"Library"}, 
+      {table:"cafes", category:"cafe", label:"Cafe"}, 
+      {table:"bookstores", category:"bookstore", label:"Book Store"} 
+    ]; 
+ 
+    const $ = id => document.getElementById(id); 
+ 
+    function escapeHTML(value) { 
+      return String(value ?? "") 
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;") 
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;") 
+        .replace(/'/g,"&#039;"); 
+    } 
+ 
+    function showToast(message) { 
+      const toast = $("toast"); 
+      if (!toast) return; 
+      toast.textContent = message; 
+      toast.classList.add("show"); 
+      clearTimeout(window.__toastTimer); 
+      window.__toastTimer = setTimeout(() => toast.classList.remove("show"), 3000); 
+    } 
+ 
+    function firstValue(row, keys) { 
+      for (const key of keys) { 
+        if (row && row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") return row[key]; 
+      } 
+      return null; 
+    } 
+ 
+    function boolValue(row, keys) { 
+      const value = firstValue(row, keys); 
+      if (typeof value === "boolean") return value; 
+      if (value === null) return null; 
+      return ["true","1","yes","verified","approved","active","published"].includes(String(value).toLowerCase()); 
+    } 
+ 
+    function formatDate(value) { 
+      if (!value) return ""; 
+      const date = new Date(value); 
+      if (Number.isNaN(date.getTime())) return ""; 
+      return date.toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"}); 
+    } 
+ 
+    function daysSince(value) { 
+      if (!value) return Infinity; 
+      const date = new Date(value); 
+      if (Number.isNaN(date.getTime())) return Infinity; 
+      return Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000)); 
+    } 
+ 
+    function getVerification(row) { 
+      const explicitStatus = String(firstValue(row, [ 
+        "verification_status","verification_state","verified_status","listing_status" 
+      ]) || "").toLowerCase(); 
+ 
+      const explicit = boolValue(row, [ 
+        "is_verified","verified","studenthub_verified","verification_complete" 
+      ]); 
+ 
+      const verifiedAt = firstValue(row, [ 
+        "verified_at","verification_date","last_verified_at","last_verified","checked_at" 
+      ]); 
+ 
+      const verifiedBy = firstValue(row, [ 
+        "verified_by","verification_by","verified_source" 
+      ]); 
+ 
+      let verified; 
+      if (explicit !== null) verified = explicit; 
+      else if (["verified","approved","active_verified"].includes(explicitStatus)) verified = true; 
+      else if (["unverified","rejected","suspended"].includes(explicitStatus)) verified = false; 
+      else verified = VERIFICATION_DEFAULT_FOR_PUBLISHED; 
+ 
+      const updateAt = firstValue(row, ["updated_at","modified_at","created_at"]); 
+      const freshnessDate = verifiedAt || updateAt || null; 
+      const days = daysSince(freshnessDate); 
+ 
+      return { 
+        verified, 
+        verifiedAt, 
+        updateAt, 
+        freshnessDate, 
+        verifiedBy: verifiedBy || "StudentHubHelp", 
+        recent: days <= RECENT_DAYS, 
+        status: verified ? (days <= RECENT_DAYS ? "fresh" : "verified") : "unverified" 
+      }; 
+    } 
+ 
+    function normalizeListing(row, source) { 
+      const name = firstValue(row, ["name","title","business_name","property_name"]) || "Student Listing"; 
+      const area = firstValue(row, ["area","locality","location","neighborhood","address_area","city"]) || ""; 
+      const address = firstValue(row, ["address","full_address","location_address"]) || ""; 
+      const city = firstValue(row, ["city","district","town"]) || ""; 
+      const timing = firstValue(row, ["timing","timings","opening_hours","hours"]) || ""; 
+      const ratingRaw = firstValue(row, ["rating","avg_rating","average_rating"]); 
+      const rating = ratingRaw === null ? null : Number(ratingRaw); 
+ 
+      const verification = getVerification(row); 
+ 
+      const facilities = { 
+        wifi: boolValue(row, ["wifi","has_wifi","internet","wi_fi"]), 
+        food: boolValue(row, ["food","mess","meals","food_available","meal_available"]), 
+        ac: boolValue(row, ["ac","air_conditioned","air_conditioning"]), 
+        cctv: boolValue(row, ["cctv","security_cctv"]), 
+        laundry: boolValue(row, ["laundry","washing_machine"]), 
+        powerBackup: boolValue(row, ["power_backup","backup","electricity_backup"]) 
+      }; 
+ 
+      // 10 specific fields for Data Completeness calculation: 
+      // 1. Property Name, 2. Area, 3. Full Address, 4. Timing, 5. Rating,  
+      // 6. Phone Number, 7. Description / About, 8. Photo / Image, 9. Review, 10. Google Map URL 
+      const completenessFields = [ 
+        firstValue(row, ["name", "title", "business_name", "property_name"]), 
+        firstValue(row, ["area", "locality", "location", "neighborhood", "address_area"]), 
+        firstValue(row, ["address", "full_address", "location_address"]), 
+        firstValue(row, ["timing", "timings", "opening_hours", "hours"]), 
+        firstValue(row, ["rating", "avg_rating", "average_rating"]), 
+        firstValue(row, ["phone", "contact", "contact_number", "mobile", "phone_number"]), 
+        firstValue(row, ["description", "about", "details"]), 
+        firstValue(row, ["image", "image_url", "photo", "photo_url", "cover_image"]), 
+        firstValue(row, ["review", "reviews", "user_reviews"]), 
+        firstValue(row, ["map_url", "google_map_url", "map", "location_url"]) 
+      ]; 
+ 
+      const availableCount = completenessFields.filter(val => val !== null && val !== undefined && String(val).trim() !== "").length; 
+      const completeness = Math.round((availableCount / 10) * 100); 
+ 
+      const searchText = [ 
+        name, source.label, area, address, city, timing, 
+        firstValue(row,["description","about","details"]) 
+      ].filter(Boolean).join(" ").toLowerCase(); 
+ 
+      return { 
+        ...row, 
+        sourceTable: source.table, 
+        listingCategory: source.category, 
+        listingLabel: source.label, 
+        displayName: name, 
+        displayArea: area, 
+        displayAddress: address, 
+        displayCity: city, 
+        displayTiming: timing, 
+        displayRating: Number.isFinite(rating) ? rating : null, 
+        facilities, 
+        verification, 
+        completeness, 
+        searchText 
+      }; 
+    } 
+ 
+    /* ========================================= 
+        MOBILE NAV 
+    ========================================= */ 
+    const mobileMenu = $("mobileMenu"); 
+    const navLinks = $("navLinks"); 
+    mobileMenu?.addEventListener("click", () => navLinks?.classList.toggle("open")); 
+    document.querySelectorAll("#navLinks a").forEach(link => 
+      link.addEventListener("click", () => navLinks?.classList.remove("open")) 
+    ); 
+ 
+    /* ========================================= 
+        HERO CAROUSEL 
+    ========================================= */ 
+    const carouselCards = document.querySelectorAll(".carousel-card"); 
+    const carouselDots = $("carouselDots"); 
+    let carouselIndex = 0; 
+ 
+    carouselCards.forEach((_,index) => { 
+      const dot = document.createElement("button"); 
+      dot.type = "button"; 
+      dot.className = "carousel-dot" + (index === 0 ? " active" : ""); 
+      dot.setAttribute("aria-label", `Show slide ${index+1}`); 
+      dot.addEventListener("click", () => { 
+        carouselIndex = index; 
+        showCarousel(carouselIndex); 
+      }); 
+      carouselDots?.appendChild(dot); 
+    }); 
+ 
+    const dots = document.querySelectorAll(".carousel-dot"); 
+    function showCarousel(index) { 
+      carouselCards.forEach((card,i) => card.classList.toggle("active",i === index)); 
+      dots.forEach((dot,i) => dot.classList.toggle("active",i === index)); 
+    } 
+    if (carouselCards.length > 1) { 
+      setInterval(() => { 
+        carouselIndex = (carouselIndex + 1) % carouselCards.length; 
+        showCarousel(carouselIndex); 
+      },4300); 
+    } 
+ 
+    /* ========================================= 
+        MAIN SEARCH 
+    ========================================= */ 
+    function performSearch(value) { 
+      const cleanValue = String(value || "").trim(); 
+      window.location.href = cleanValue  
+        ? `global-search.html?q=${encodeURIComponent(cleanValue)}` 
+        : "global-search.html"; 
+    } 
+ 
+    $("mainSearchForm")?.addEventListener("submit", event => { 
+      event.preventDefault(); 
+      performSearch($("mainSearch")?.value || ""); 
+    }); 
+ 
+    document.querySelectorAll("[data-search]").forEach(button => { 
+      button.addEventListener("click", () => { 
+        const value = button.dataset.search || ""; 
+        if ($("mainSearch")) $("mainSearch").value = value; 
+        performSearch(value); 
+      }); 
+    }); 
+ 
+    /* ========================================= 
+        LIVE STATS 
+    ========================================= */ 
+    const statsConfig = [ 
+      ["hostels","hostelCount"], 
+      ["tiffins","tiffinCount"], 
+      ["libraries","libraryCount"], 
+      ["cafes","cafeCount"], 
+      ["bookstores","bookstoreCount"] 
+    ]; 
+ 
+    async function loadSingleCount(table,elementId) { 
+      const element = $(elementId); 
+      if (!element) return 0; 
+      try { 
+        const {count,error} = await supabaseClient.from(table).select("*",{count:"exact",head:true}); 
+        if (error) throw error; 
+        element.textContent = Number.isFinite(count) ? count.toLocaleString("en-IN") : "0"; 
+        return Number.isFinite(count) ? count : 0; 
+      } catch(error) { 
+        console.error(`Count error: ${table}`,error); 
+        element.textContent = "0"; 
+        return 0; 
+      } 
+    } 
+ 
+    async function loadStats() { 
+      const counts = await Promise.all(statsConfig.map(([table,id]) => loadSingleCount(table,id))); 
+      const total = counts.reduce((a,b)=>a+b,0); 
+      const verifiedCount = $("verifiedCount"); 
+      if (verifiedCount) verifiedCount.textContent = total.toLocaleString("en-IN"); 
+    } 
+    loadStats(); 
+ 
+    /* ========================================= 
+        LISTINGS + FILTER ENGINE 
+    ========================================= */ 
+    let allListings = []; 
+    let filteredListings = []; 
+    let activeCategory = "all"; 
+    let visibleCount = PAGE_SIZE; 
+    let compareSelection = []; 
+ 
+    const state = { 
+      search:"", 
+      location:"", 
+      sort:"relevance", 
+      verification:"all", 
+      facilities:[], 
+      completeOnly:false, 
+      hasRating:false 
+    }; 
+ 
+    async function fetchListings(source) { 
+      try { 
+        const {data,error} = await supabaseClient 
+          .from(source.table) 
+          .select("*") 
+          .limit(100); 
+        if (error) throw error; 
+        return (data || []).map(row => normalizeListing(row,source)); 
+      } catch(error) { 
+        console.error(`Listing error: ${source.table}`,error); 
+        return []; 
+      } 
+    } 
+ 
+    async function loadListings() { 
+      const grid = $("listingGrid"); 
+      if (grid) grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>'; 
+ 
+      const results = await Promise.all(sourceConfig.map(fetchListings)); 
+      allListings = results.flat(); 
+ 
+      // Newest verification/update first as the default relevance ordering, 
+      // while keeping categories mixed so the homepage represents the whole platform. 
+      applyFilters(); 
+    } 
+ 
+    function listingMatches(item) { 
+      if (activeCategory !== "all" && item.listingCategory !== activeCategory) return false; 
+ 
+      const query = state.search.trim().toLowerCase(); 
+      const location = state.location.trim().toLowerCase(); 
+ 
+      if (query && !item.searchText.includes(query)) return false; 
+ 
+      const locationText = [item.displayCity,item.displayArea,item.displayAddress].filter(Boolean).join(" ").toLowerCase(); 
+      if (location && !locationText.includes(location)) return false; 
+ 
+      if (state.verification === "verified" && !item.verification.verified) return false; 
+      if (state.verification === "fresh" && !item.verification.recent) return false; 
+ 
+      for (const facility of state.facilities) { 
+        if (item.facilities[facility] !== true) return false; 
+      } 
+ 
+      if (state.completeOnly && item.completeness < 75) return false; 
+      if (state.hasRating && !Number.isFinite(item.displayRating)) return false; 
+ 
+      return true; 
+    } 
+ 
+    function sortListings(items) { 
+      const copy = [...items]; 
+      switch(state.sort) { 
+        case "recent": 
+          return copy.sort((a,b) => (new Date(b.verification.freshnessDate || 0)) - (new Date(a.verification.freshnessDate || 0))); 
+        case "rating": 
+          return copy.sort((a,b) => (b.displayRating ?? -1) - (a.displayRating ?? -1)); 
+        case "complete": 
+          return copy.sort((a,b) => b.completeness - a.completeness); 
+        default: 
+          return copy.sort((a,b) => { 
+            const score = item => (item.verification.verified ? 100 : 0) + (item.verification.recent ? 30 : 0) + item.completeness/10 + (item.displayRating || 0); 
+            return score(b)-score(a); 
+          }); 
+      } 
+    } 
+ 
+    function getFacts(item) { 
+      const facts = []; 
+      if (item.displayRating) facts.push(`⭐ ${item.displayRating}`); 
+      if (item.displayTiming) facts.push(`🕐 ${item.displayTiming}`); 
+      if (item.facilities.wifi === true) facts.push("WiFi"); 
+      if (item.facilities.food === true) facts.push("Food"); 
+      if (item.facilities.ac === true) facts.push("AC"); 
+      if (item.facilities.cctv === true) facts.push("CCTV"); 
+      return facts.slice(0,5); 
+    } 
+ 
+    function renderListings() { 
+      const grid = $("listingGrid"); 
+      if (!grid) return; 
+ 
+      const visible = filteredListings.slice(0,visibleCount); 
+ 
+      $("resultSummary").textContent =  
+        `${filteredListings.length} result${filteredListings.length===1?"":"s"} · ${filteredListings.filter(x=>x.verification.verified).length} verified`; 
+ 
+      if (!visible.length) { 
+        grid.innerHTML = `  
+          <div class="listing-empty">  
+            <div style="font-size:30px;margin-bottom:8px;">🔎</div>  
+            <strong>No matching student places found.</strong>  
+            <div style="margin-top:5px;font-size:11px;">Try clearing a filter, changing the area or clearing one of the selected requirements.</div>  
+          </div>`; 
+      } else { 
+        grid.innerHTML = visible.map(renderListingCard).join(""); 
+      } 
+ 
+      const loadMore = $("loadMoreBtn"); 
+      if (loadMore) { 
+        loadMore.hidden = visibleCount >= filteredListings.length; 
+      } 
+ 
+      updateCompareUI(); 
+      updateFilterUI(); 
+    } 
+ 
+function renderListingCard(item) { 
+    const selected = compareSelection.some(x => x.id === item.id && x.sourceTable === item.sourceTable); 
+    const verify = item.verification; 
+ 
+    const badge = verify.verified  
+      ? `<span class="verification-badge">✓ VERIFIED</span>`  
+      : `<span class="verification-badge partial">○ NOT VERIFIED</span>`; 
+ 
+    const facts = getFacts(item); 
+    const image = firstValue(item,["image","image_url","photo","photo_url","cover_image"]); 
+ 
+    return `  
+      <article class="listing-card">  
+        <div class="listing-card-top">  
+          <span class="listing-category">${escapeHTML(item.listingLabel)}</span>  
+          ${badge}  
+        </div>  
+ 
+        ${image ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(item.displayName)}" loading="lazy" style="width:100%;height:125px;object-fit:cover;border-radius:12px;margin-top:11px;border:1px solid rgba(255,255,255,.08)" decoding="async">` : ""}  
+ 
+        <h3>${escapeHTML(item.displayName)}</h3>  
+ 
+        <div class="listing-area">📍 ${escapeHTML(item.displayArea || item.displayCity || "Location available")}</div>  
+ 
+        <div class="listing-address">  
+          ${escapeHTML(item.displayAddress || "Address information available on details page.")}  
+        </div>  
+ 
+        <div class="listing-facts">  
+          ${facts.map(f => `<span class="fact-pill">${escapeHTML(f)}</span>`).join("")}  
+        </div>  
+ 
+        <div class="listing-quality">  
+          <div class="quality-line">  
+            <span>Data completeness</span>  
+            <strong>${item.completeness}%</strong>  
+          </div>  
+          <div class="mini-meter"><span style="width:${item.completeness}%"></span></div>  
+        </div>  
+ 
+        <div class="listing-verification-note">  
+          <span>${verify.verified ? "StudentHubHelp" : "Review pending"}</span>  
+          <button type="button" class="verification-link" data-verify="${encodeURIComponent(JSON.stringify({  
+            name:item.displayName,  
+            category:item.listingLabel,  
+            verification:verify,  
+            completeness:item.completeness,  
+            area:item.displayArea  
+          }))}">How verified?</button>  
+        </div>  
+ 
+        <div class="listing-card-bottom">  
+          <label class="compare-check">  
+            <input type="checkbox" data-compare="${item.sourceTable}::${item.id}" ${selected ? "checked" : ""}>  
+            Compare  
+          </label>  
+ 
+          <a class="listing-details-link"  
+            href="property-details.html?type=${encodeURIComponent(item.listingCategory)}&id=${encodeURIComponent(item.id)}">  
+            View full details →  
+          </a>  
+        </div>  
+      </article>`; 
+  } 
+ 
+    function applyFilters() { 
+      filteredListings = sortListings(allListings.filter(listingMatches)); 
+      visibleCount = PAGE_SIZE; 
+      renderListings(); 
+    } 
+ 
+    function readFilterState() { 
+      state.search = $("listingSearch")?.value || ""; 
+      state.location = $("locationFilter")?.value || ""; 
+      state.sort = $("sortFilter")?.value || "relevance"; 
+      state.verification = $("verificationFilter")?.value || "all"; 
+      state.facilities = [...document.querySelectorAll(".facility-filter:checked")].map(x=>x.value); 
+      state.completeOnly = !!$("completeOnly")?.checked; 
+      state.hasRating = !!$("hasRating")?.checked; 
+    } 
+ 
+    function updateFilterUI() { 
+      const count = [ 
+        state.search,state.location, 
+        state.verification !== "all" ? state.verification : "", 
+        state.facilities.length ? state.facilities.join(",") : "", 
+        state.completeOnly ? "complete" : "", 
+        state.hasRating ? "rating" : "" 
+      ].filter(Boolean).length; 
+      if ($("filterCount")) $("filterCount").textContent = count; 
+ 
+      const chips = []; 
+      if (state.search) chips.push(`Search: ${state.search}`); 
+      if (state.location) chips.push(`Area: ${state.location}`); 
+if (state.verification !== "all") chips.push(state.verification === "fresh" ? "Recently checked" : "Verified only"); 
+      state.facilities.forEach(x => chips.push(x.toUpperCase())); 
+      if (state.completeOnly) chips.push("Complete data"); 
+      if (state.hasRating) chips.push("Rated"); 
+ 
+      $("activeFilterChips").innerHTML = chips.map(x => `<span class="filter-chip">${escapeHTML(x)}</span>`).join(""); 
+    } 
+ 
+    // Debounced input filtering keeps the UI responsive. 
+    let filterTimer; 
+    document.querySelectorAll("#filterGrid input,#filterGrid select").forEach(control => { 
+      control.addEventListener("input", () => { 
+        clearTimeout(filterTimer); 
+        filterTimer = setTimeout(() => { readFilterState(); applyFilters(); }, 120); 
+      }); 
+      control.addEventListener("change", () => { 
+        readFilterState(); 
+        applyFilters(); 
+      }); 
+    }); 
+ 
+    document.querySelectorAll(".listing-tab").forEach(button => { 
+      button.addEventListener("click", () => { 
+        document.querySelectorAll(".listing-tab").forEach(btn => btn.classList.remove("active")); 
+        button.classList.add("active"); 
+        activeCategory = button.dataset.category || "all"; 
+        applyFilters(); 
+      }); 
+    }); 
+ 
+    $("clearFilters")?.addEventListener("click", () => { 
+      ["listingSearch","locationFilter"].forEach(id => { if ($(id)) $(id).value=""; }); 
+      if ($("sortFilter")) $("sortFilter").value="relevance"; 
+      if ($("verificationFilter")) $("verificationFilter").value="all"; 
+      document.querySelectorAll(".facility-filter,#completeOnly,#hasRating").forEach(x=>x.checked=false); 
+      readFilterState(); 
+      applyFilters(); 
+    }); 
+ 
+    $("toggleFilters")?.addEventListener("click", () => { 
+      $("filterGrid")?.classList.toggle("filters-collapsed"); 
+      const grid = $("filterGrid"); 
+      if (grid) grid.style.display = grid.style.display === "none" ? "grid" : ""; 
+    }); 
+ 
+    $("loadMoreBtn")?.addEventListener("click", () => { 
+      visibleCount += PAGE_SIZE; 
+      renderListings(); 
+    }); 
+ 
+    /* ========================================= 
+        VERIFICATION MODAL 
+    ========================================= */ 
+    function openVerificationModal(payload) { 
+      let data; 
+      try { data = JSON.parse(decodeURIComponent(payload)); } 
+      catch { return; } 
+ 
+      const existing = $("verificationModal"); 
+      if (existing) existing.remove(); 
+ 
+      const checks = [ 
+        ["Location checked","Area / address information reviewed"], 
+        ["Contact checked","Available contact information reviewed"], 
+        ["Facilities checked","Important listed facilities reviewed"], 
+        ["Photos checked","Available visual information reviewed"], 
+        ["Freshness tracked","Verification / update timing shown"] 
+      ]; 
+ 
+      const modal = document.createElement("div"); 
+      modal.className = "verification-modal"; 
+      modal.id = "verificationModal"; 
+      modal.innerHTML = ` 
+        <div class="verification-modal-card" role="dialog" aria-modal="true" aria-labelledby="verificationModalTitle"> 
+          <div class="modal-head"> 
+            <div> 
+              <span class="eyebrow">Verification transparency</span> 
+              <h3 id="verificationModalTitle">Why this listing is marked Verified</h3> 
+            </div> 
+            <button class="modal-close" type="button" aria-label="Close verification details">×</button> 
+          </div> 
+ 
+          <p class="modal-sub"> 
+            <span class="modal-listing-name">${escapeHTML(data.name)}</span> 
+            · ${escapeHTML(data.category)} 
+          </p> 
+ 
+          <div class="modal-check-grid"> 
+            ${checks.map(([title,desc]) => `<div class="modal-check"><b>✓</b><span><strong>${title}</strong><br>${desc}</span></div>`).join("")} 
+          </div> 
+ 
+          <div class="modal-facts"> 
+            <div class="modal-fact"><small>Status</small><strong>${data.verification.verified ? "StudentHubHelp Verified" : "Verification pending"}</strong></div> 
+            <div class="modal-fact"><small>Data completeness</small><strong>${data.completeness}%</strong></div> 
+            <div class="modal-fact"><small>Verification date</small><strong>${formatDate(data.verification.verifiedAt) || "Not separately stored"}</strong></div> 
+            <div class="modal-fact"><small>Last update</small><strong>${formatDate(data.verification.updateAt) || "Not available"}</strong></div> 
+            <div class="modal-fact"><small>Location</small><strong>${escapeHTML(data.area || "Available on listing")}</strong></div> 
+          </div> 
+ 
+          <div class="modal-footer-note"> 
+            Verification means the listing is covered by StudentHubHelp's verification workflow. Availability and real-world conditions can change. Review the displayed freshness information and confirm the latest details before making a decision. 
+          </div> 
+        </div>`; 
+ 
+      document.body.appendChild(modal); 
+      modal.querySelector(".modal-close")?.addEventListener("click",()=>modal.remove()); 
+      modal.addEventListener("click",e=>{ if(e.target===modal) modal.remove(); }); 
+      document.addEventListener("keydown", function esc(e) { 
+        if(e.key==="Escape") { modal.remove(); document.removeEventListener("keydown",esc); } 
+      }); 
+    } 
+ 
+    $("listingGrid")?.addEventListener("click", event => { 
+      const button = event.target.closest("[data-verify]"); 
+      if (button) openVerificationModal(button.dataset.verify); 
+    }); 
+ 
+    /* ========================================= 
+        COMPARE 
+    ========================================= */ 
+    function updateCompareUI() { 
+      const count = compareSelection.length; 
+      $("compareStatus").textContent = `${count} selected for comparison`; 
+      const panel = $("comparePanel"); 
+      if (panel) panel.hidden = count === 0; 
+ 
+      if (count >= 2) { 
+        $("compareStatus").innerHTML = `<button type="button" class="verification-link" id="openCompareNow">Compare ${count} selected →</button>`; 
+        $("openCompareNow")?.addEventListener("click", () => panel?.scrollIntoView({behavior:"smooth"})); 
+      } 
+ 
+      renderCompareTable(); 
+    } 
+ 
+    $("listingGrid")?.addEventListener("change", event => { 
+      const input = event.target.closest("[data-compare]"); 
+      if (!input) return; 
+ 
+      const [sourceTable,id] = input.dataset.compare.split("::"); 
+      const item = allListings.find(x => String(x.id)===String(id) && x.sourceTable===sourceTable); 
+      if (!item) return; 
+ 
+      if (input.checked) { 
+        if (compareSelection.length >= 4) { 
+          input.checked=false; 
+          showToast("You can compare up to 4 places at once."); 
+          return; 
+        } 
+        if (!compareSelection.some(x=>x.id===item.id && x.sourceTable===item.sourceTable)) compareSelection.push(item); 
+      } else { 
+        compareSelection = compareSelection.filter(x=>!(x.id===item.id && x.sourceTable===item.sourceTable)); 
+      } 
+      updateCompareUI(); 
+    }); 
+ 
+    function yesNo(value) { 
+      return value === true ? '<span class="compare-yes">✓ Yes</span>' : 
+             value === false ? '<span class="compare-no">—</span>' : '<span class="compare-no">Not listed</span>'; 
+    } 
+ 
+    function renderCompareTable() { 
+      const wrap = $("compareTableWrap"); 
+      if (!wrap) return; 
+      if (compareSelection.length < 1) { 
+        wrap.innerHTML = '<div class="listing-empty">Select listings using the Compare checkbox to build a side-by-side view.</div>'; 
+        return; 
+      } 
+ 
+      const rows = [ 
+        ["Category", x=>x.listingLabel], 
+        ["Verified", x=>x.verification.verified ? "✓ StudentHubHelp Verified" : "Not verified"], 
+        ["Data completeness", x=>x.completeness+"%"], 
+        ["City", x=>x.displayCity || "Not listed"], 
+        ["Area", x=>x.displayArea || "Not listed"], 
+        ["Timing", x=>x.displayTiming || "Not listed"], 
+        ["Rating", x=>x.displayRating ? "⭐ "+x.displayRating : "Not rated"], 
+        ["WiFi", x=>yesNo(x.facilities.wifi)], 
+        ["Food", x=>yesNo(x.facilities.food)], 
+        ["AC", x=>yesNo(x.facilities.ac)], 
+        ["CCTV", x=>yesNo(x.facilities.cctv)], 
+        ["Laundry", x=>yesNo(x.facilities.laundry)], 
+        ["Power backup", x=>yesNo(x.facilities.powerBackup)], 
+        ["Last verified / update", x=>formatDate(x.verification.freshnessDate) || "Not available"] 
+      ]; 
+ 
+      wrap.innerHTML = ` 
+        <table class="compare-table"> 
+          <thead><tr><th>Compare</th>${compareSelection.map(x=>`<th>${escapeHTML(x.displayName)}</th>`).join("")}</tr></thead> 
+          <tbody> 
+            ${rows.map(([label,getter])=>`<tr><td>${label}</td>${compareSelection.map(x=>`<td>${escapeHTML(String(getter(x)))}</td>`).join("")}</tr>`).join("")} 
+          </tbody> 
+        </table>`; 
+    } 
+ 
+    $("clearCompare")?.addEventListener("click", () => { 
+      compareSelection=[]; 
+      renderListings(); 
+    }); 
+
+    $("closeCompare")?.addEventListener("click", () => { 
+      $("comparePanel").hidden=true; 
+    }); 
+ 
+    /* ========================================= 
+        REVIEWS 
+    ========================================= */ 
+    let reviews = []; 
+    let reviewIndex = 0; 
+ 
+    function starsHTML(rating) { 
+      const value = Math.max(0,Math.min(5,Math.round(Number(rating)||0))); 
+      return "★".repeat(value)+"☆".repeat(5-value); 
+    } 
+ 
+    async function loadReviews() { 
+      try { 
+        const {data,error} = await supabaseClient 
+          .from("reviews") 
+          .select("id,user_name,rating,review_text,status,created_at") 
+          .order("created_at",{ascending:false}) 
+          .limit(8); 
+        if(error) throw error; 
+ 
+        reviews=(data||[]).filter(review=>{ 
+          const status=String(review.status||"").toLowerCase(); 
+          return !status || ["approved","active","published"].includes(status); 
+        }); 
+        renderReviews(); 
+      } catch(error) { 
+        console.error("Reviews error:",error); 
+      } 
+    } 
+ 
+    function renderReviews() { 
+      const wrap=$("testimonialWrap"); 
+      if(!wrap) return; 
+ 
+      if(!reviews.length) { 
+        wrap.innerHTML=`<div class="testimonial active"> 
+          <div class="stars">☆☆☆☆☆</div> 
+          <div class="testimonial-text">Student feedback will appear here as real reviews are submitted.</div> 
+          <div class="testimonial-user">Student Feedback</div> 
+          <div class="testimonial-note">Real reviews only · No artificial testimonials</div> 
+        </div>`; 
+        return; 
+      } 
+ 
+      wrap.innerHTML=reviews.map((review,index)=>` 
+        <div class="testimonial ${index===0?"active":""}"> 
+          <div class="stars">${starsHTML(review.rating)}</div> 
+          <div class="testimonial-text">“${escapeHTML(review.review_text)}”</div> 
+          <div class="testimonial-user">${escapeHTML(review.user_name)}</div> 
+          <div class="testimonial-note">Student Review</div> 
+        </div>`).join(""); 
+ 
+      reviewIndex=0; 
+      clearInterval(window.__reviewTimer); 
+      if(reviews.length>1) { 
+        window.__reviewTimer=setInterval(()=>{ 
+          const items=wrap.querySelectorAll(".testimonial"); 
+          items.forEach(x=>x.classList.remove("active")); 
+          reviewIndex=(reviewIndex+1)%items.length; 
+          items[reviewIndex].classList.add("active"); 
+        },5000); 
+      } 
+    } 
+    loadReviews(); 
+ 
+    /* ========================================= 
+        FAQ 
+    ========================================= */ 
+    document.querySelectorAll(".faq-question").forEach(button=>{ 
+      button.addEventListener("click",()=>{ 
+        const item=button.closest(".faq-item"); 
+        const wasOpen=item.classList.contains("open"); 
+        document.querySelectorAll(".faq-item").forEach(other=>{ 
+          other.classList.remove("open"); 
+          const plus=other.querySelector(".faq-plus"); 
+          if(plus) plus.textContent="+"; 
+        }); 
+        if(!wasOpen){ 
+          item.classList.add("open"); 
+          const plus=item.querySelector(".faq-plus"); 
+          if(plus) plus.textContent="−"; 
+        } 
+      }); 
+    }); 
+ 
+    /* ========================================= 
+        REALTIME REFRESH 
+    ========================================= */ 
+    sourceConfig.forEach(source=>{ 
+      supabaseClient 
+        .channel(`homepage-${source.table}`) 
+        .on("postgres_changes",{event:"*",schema:"public",table:source.table},async()=>{ 
+          await loadStats(); 
+          await loadListings(); 
+        }) 
+        .subscribe(); 
+    }); 
+ 
+    supabaseClient 
+      .channel("homepage-reviews") 
+      .on("postgres_changes",{event:"*",schema:"public",table:"reviews"},loadReviews) 
+      .subscribe(); 
+ 
+    /* ========================================= ِ
+        HASH SCROLL + INITIAL LOAD 
+    ========================================= */ 
+    loadListings(); 
+ 
+    if(window.location.hash === "#live-listings") { 
+      setTimeout(()=>$("live-listings")?.scrollIntoView({behavior:"smooth"}),300); 
+    } 
+
+    console.log("StudentHubHelp upgraded Trust + Data + Verification + Filtering engine initialized."); 
+  </script> 
+ 
+</body> 
 </html>
