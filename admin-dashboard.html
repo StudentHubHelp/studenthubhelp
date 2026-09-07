@@ -174,6 +174,12 @@ body{background-color:var(--bg);color:var(--text);font-family:Inter,"Noto Sans D
         <div class="master-nav-label">Platform Control</div>
         <button data-section="listing-requests" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-inbox w-5 text-gold-400"></i> Listing Requests <span id="navListingBadge" class="float-right badge">0</span></button>
         <button data-section="claim-requests" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-handshake w-5 text-gold-400"></i> Claim Requests <span id="navClaimBadge" class="float-right badge">0</span></button>
+       <button data-section="unverified-properties"
+  class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850">
+  <i class="fa-solid fa-circle-exclamation w-5 text-gold-400"></i>
+  Unverified Properties
+  <span id="navUnverifiedBadge" class="float-right badge">0</span>
+</button>
         <button data-section="verification" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-circle-check w-5 text-gold-400"></i> Verification <span id="navVerificationBadge" class="float-right badge">0</span></button>
         <button data-section="bookings" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-calendar-check w-5 text-gold-400"></i> Bookings <span id="navBookingBadge" class="float-right badge">0</span></button>
         <button data-section="reviews" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-star w-5 text-gold-400"></i> Reviews <span id="navReviewBadge" class="float-right badge">0</span></button>
@@ -307,6 +313,46 @@ body{background-color:var(--bg);color:var(--text);font-family:Inter,"Noto Sans D
       <section id="section-properties" class="section hidden space-y-5"></section>
       <section id="section-listing-requests" class="section hidden space-y-5"></section>
       <section id="section-claim-requests" class="section hidden space-y-5"></section>
+     <!-- ================= UNVERIFIED PROPERTIES ================= -->
+<section id="section-unverified-properties" class="section hidden space-y-5">
+
+  <div class="flex flex-wrap justify-between gap-3 items-center">
+    <div>
+      <h2 class="text-xl font-bold">Unverified Properties</h2>
+      <p class="text-xs text-slate-400">
+        Hostel, Tiffin, Library, Cafe और Bookstore की unverified listings.
+      </p>
+    </div>
+
+    <button id="refreshUnverifiedBtn"
+      class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold">
+      <i class="fa-solid fa-rotate mr-1"></i>
+      Refresh
+    </button>
+  </div>
+
+  <div class="card rounded-2xl table-wrap">
+    <table class="master-table w-full text-left text-xs">
+      <thead class="bg-navy-950 text-gold-300">
+        <tr>
+          <th class="p-4">Property</th>
+          <th class="p-4">Type</th>
+          <th class="p-4">Owner</th>
+          <th class="p-4">Area</th>
+          <th class="p-4">Phone</th>
+          <th class="p-4">Status</th>
+          <th class="p-4">Verification</th>
+          <th class="p-4">Rating</th>
+          <th class="p-4">Last Updated</th>
+          <th class="p-4 text-right">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody id="unverifiedPropertiesBody"></tbody>
+    </table>
+  </div>
+
+</section>
       <section id="section-verification" class="section hidden space-y-5"></section>
       <section id="section-bookings" class="section hidden space-y-5"></section>
       <section id="section-reviews" class="section hidden space-y-5"></section>
@@ -647,6 +693,9 @@ function showSection(name){
   });
 
   const target=$("section-"+name);
+  if(name === "unverified-properties"){
+  loadUnverifiedProperties();
+}
   if(target){
     target.classList.remove("hidden");
     target.setAttribute("aria-hidden","false");
@@ -847,7 +896,246 @@ function renderAll(){
   renderOwners();
   Object.keys(propertyConfig).forEach(renderProperty);
 }
+/* ================= UNVERIFIED PROPERTIES ================= */
 
+const unverifiedSources = [
+  {
+    table: "hostels",
+    type: "Hostel / PG"
+  },
+  {
+    table: "tiffins",
+    type: "Tiffin / Mess"
+  },
+  {
+    table: "libraries",
+    type: "Library"
+  },
+  {
+    table: "cafes",
+    type: "Cafe"
+  },
+  {
+    table: "bookstores",
+    type: "Bookstore"
+  }
+];
+
+async function loadUnverifiedProperties(){
+
+  const body = $("unverifiedPropertiesBody");
+
+  if(!body) return;
+
+  body.innerHTML = `
+    <tr>
+      <td colspan="10" class="p-8 text-center text-slate-400">
+        <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+        Loading unverified properties...
+      </td>
+    </tr>
+  `;
+
+  try {
+
+    const results = await Promise.all(
+      unverifiedSources.map(async source => {
+
+        const { data, error } = await supabaseClient
+          .from(source.table)
+          .select(`
+            id,
+            name,
+            owner_name,
+            area,
+            phone,
+            status,
+            verified,
+            rating,
+            updated_at
+          `)
+          .eq("verified", false)
+          .order("updated_at", { ascending: false });
+
+        if(error){
+          console.error(
+            "Unverified load error:",
+            source.table,
+            error
+          );
+
+          return [];
+        }
+
+        return (data || []).map(item => ({
+          ...item,
+          sourceTable: source.table,
+          type: source.type
+        }));
+
+      })
+    );
+
+    const all = results.flat();
+
+    all.sort((a,b) => {
+      const da = new Date(a.updated_at || 0).getTime();
+      const db = new Date(b.updated_at || 0).getTime();
+      return db - da;
+    });
+
+    const badge = $("navUnverifiedBadge");
+
+    if(badge){
+      badge.textContent = all.length;
+    }
+
+    if(!all.length){
+      body.innerHTML = emptyRow(
+        10,
+        "No unverified properties found."
+      );
+      return;
+    }
+
+    body.innerHTML = all.map(item => {
+
+      const updated = item.updated_at
+        ? new Date(item.updated_at).toLocaleString()
+        : "—";
+
+      return `
+        <tr class="border-t border-navy-800 hover:bg-navy-850">
+
+          <td class="p-4 font-bold">
+            ${esc(item.name || "Unnamed")}
+            <div class="text-[10px] text-slate-500 mt-1">
+              ${esc(item.id || "")}
+            </div>
+          </td>
+
+          <td class="p-4">
+            <span class="badge badge-blue">
+              ${esc(item.type)}
+            </span>
+          </td>
+
+          <td class="p-4">
+            ${esc(item.owner_name || "—")}
+          </td>
+
+          <td class="p-4">
+            ${esc(item.area || "—")}
+          </td>
+
+          <td class="p-4 font-mono">
+            ${esc(item.phone || "—")}
+          </td>
+
+          <td class="p-4">
+            ${esc(item.status || "—")}
+          </td>
+
+          <td class="p-4">
+            <span class="badge badge-red">
+              <i class="fa-solid fa-circle-xmark"></i>
+              Unverified
+            </span>
+          </td>
+
+          <td class="p-4 text-gold-300">
+            ${esc(item.rating ?? "—")}
+          </td>
+
+          <td class="p-4 text-slate-400">
+            ${esc(updated)}
+          </td>
+
+          <td class="p-4 text-right">
+            <div class="property-actions">
+
+              <button
+                type="button"
+                class="master-action view-details"
+                data-unverified-view="${esc(item.sourceTable)}"
+                data-unverified-id="${esc(item.id)}">
+                <i class="fa-solid fa-eye mr-1"></i>
+                View
+              </button>
+
+              <button
+                type="button"
+                class="master-action success"
+                data-verify-property="${esc(item.sourceTable)}"
+                data-verify-id="${esc(item.id)}">
+                <i class="fa-solid fa-circle-check mr-1"></i>
+                Verify
+              </button>
+
+            </div>
+          </td>
+
+        </tr>
+      `;
+
+    }).join("");
+
+  } catch(error) {
+
+    console.error(error);
+
+    body.innerHTML = emptyRow(
+      10,
+      "Failed to load unverified properties."
+    );
+
+    toast(
+      "Unverified properties load failed: " + error.message,
+      true
+    );
+  }
+}
+
+  async function verifyProperty(table, id){
+
+  if(!table || !id) return;
+
+  const confirmed = confirm(
+    "Are you sure you want to verify this property?"
+  );
+
+  if(!confirmed) return;
+
+  const { error } = await supabaseClient
+    .from(table)
+    .update({
+      verified: true
+    })
+    .eq("id", id);
+
+  if(error){
+
+    console.error(error);
+
+    toast(
+      "Verification failed: " + error.message,
+      true
+    );
+
+    return;
+  }
+
+  toast("Property verified successfully.");
+
+  await loadAll();
+
+  await loadUnverifiedProperties();
+}
+  $("refreshUnverifiedBtn")?.addEventListener(
+  "click",
+  loadUnverifiedProperties
+);
+  
 /* ================= CLICK HANDLERS ================= */
 
 document.addEventListener("click",async e=>{
@@ -875,6 +1163,37 @@ document.addEventListener("click",async e=>{
   const ownerProp=e.target.closest("[data-owner-property]");
   if(ownerProp){const type=ownerProp.dataset.ownerProperty;const idx=(state[type]||[]).findIndex(x=>String(x.id)===String(ownerProp.dataset.ownerPropertyId));if(idx>=0){closeOwnerDetails();openView(type,idx);}return;}
 
+  const unverifiedView =
+    e.target.closest("[data-unverified-view]");
+
+  if(unverifiedView){
+
+    const table = unverifiedView.dataset.unverifiedView;
+    const id = unverifiedView.dataset.unverifiedId;
+
+    const index = (state[table] || [])
+      .findIndex(x => String(x.id) === String(id));
+
+    if(index >= 0){
+      openView(table, index);
+    }
+
+    return;
+  }
+    
+  const verifyPropertyBtn =
+    e.target.closest("[data-verify-property]");
+
+  if(verifyPropertyBtn){
+
+    await verifyProperty(
+      verifyPropertyBtn.dataset.verifyProperty,
+      verifyPropertyBtn.dataset.verifyId
+    );
+
+    return;
+  }
+  
   const row=e.target.closest("[data-view]");
   if(row&&!e.target.closest("button")){
     openView(row.dataset.view,Number(row.dataset.index));
