@@ -2204,7 +2204,13 @@ function renderRequestsModule(table){
   const rows=state.advanced.requests[table];
   if(rows===null){el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">${cfg.title}</h2><p class="text-xs text-slate-400">${moduleStatus(table)}</p></div></div>${tableErrorHTML(table)}`;return}
   const q=($("moduleSearch_"+table)?.value||"").toLowerCase();
-  const filtered=(rows||[])   .filter(x=>statusNorm(x)==="pending")   .filter(x=>JSON.stringify(x).toLowerCase().includes(q));
+  const filtered=(rows||[])
+  .filter(x=>{
+    if(table==="listing_requests") return statusNorm(x)==="pending";
+    if(table==="claim_requests") return statusNorm(x)==="pending";
+    return true;
+  })
+  .filter(x=>JSON.stringify(x).toLowerCase().includes(q));
   const headers=cfg.cols.map(c=>`<th class="p-3">${c}</th>`).join("");
   el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">${cfg.title}</h2><p class="text-xs text-slate-400">${rows.length} records • ${moduleStatus(table)}</p></div><div class="master-toolbar"><input id="moduleSearch_${table}" class="input" placeholder="Search ${cfg.title}..." value="${esc(q)}"><button class="master-action" onclick="exportCurrentCSV('${table}')"><i class="fa-solid fa-file-csv mr-1"></i>CSV</button></div></div>
   <div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr>${headers}<th class="p-3">Actions</th></tr></thead><tbody>${filtered.length?filtered.map((x,i)=>requestRow(table,x,i)).join(""):emptyRow(cfg.cols.length+1,"No records found.")}</tbody></table></div>`;
