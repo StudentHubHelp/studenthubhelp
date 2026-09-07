@@ -533,6 +533,28 @@ body{background-color:var(--bg);color:var(--text);font-family:Inter,"Noto Sans D
         <div><label class="text-xs font-bold">Description</label><textarea id="advDescription" class="input mt-1" rows="5"></textarea></div>
       </div>
       <div id="categorySpecificFields" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      <div class="border-t border-navy-800 pt-5 mt-5">
+
+  <div class="mb-4">
+    <div class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">
+      Complete Supabase Data
+    </div>
+
+    <h3 class="text-lg font-bold mt-1">
+      All Property Columns
+    </h3>
+
+    <p class="text-xs text-slate-400 mt-1">
+      यहाँ इस property की Supabase table में मौजूद सभी editable columns दिखाई देंगे।
+    </p>
+  </div>
+
+  <div
+    id="allSupabaseFields"
+    class="grid sm:grid-cols-2 gap-3"
+  ></div>
+
+</div>
       <div class="flex flex-wrap gap-2 justify-end border-t border-navy-800 pt-4">
         <button type="button" class="px-4 py-2.5 rounded-xl bg-navy-800" data-adv-close>Cancel</button>
         <button class="px-5 py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-extrabold"><i class="fa-solid fa-floppy-disk mr-1"></i>Save Property</button>
@@ -1925,6 +1947,166 @@ function buildCategoryFields(type,x={}){
   };
   return (common[type]||[]).map(([key,label,val])=>`<div><label class="text-xs font-bold">${esc(label)}</label><input data-cat-field="${esc(key)}" class="input mt-1" value="${esc(val)}"></div>`).join("");
 }
+
+  function buildAllSupabaseFields(x={}){
+
+  const commonHandled=new Set([
+    "id",
+    "created_at",
+    "updated_at",
+
+    "name",
+    "category",
+    "type",
+    "property_type",
+    "business_type",
+
+    "owner_id",
+    "owner_name",
+
+    "phone",
+    "whatsapp",
+    "whatsapp_number",
+    "email",
+
+    "area",
+    "city",
+    "pincode",
+    "postal_code",
+    "address",
+
+    "lat",
+    "latitude",
+    "lng",
+    "longitude",
+
+    "google_maps_url",
+    "maps_url",
+    "map_link",
+
+    "status",
+    "verified",
+    "is_verified",
+    "verification_status",
+
+    "featured",
+    "is_featured",
+
+    "rating",
+    "price",
+    "rent",
+    "monthly_rent",
+
+    "timing",
+    "facilities",
+    "description",
+    "details"
+  ]);
+
+  return Object.keys(x)
+    .filter(key=>!commonHandled.has(key))
+    .filter(key=>!key.startsWith("__"))
+    .map(key=>{
+
+      const value=x[key];
+
+      if(value===null || value===undefined){
+        return `
+          <div>
+            <label class="text-xs font-bold">
+              ${esc(key.replaceAll("_"," "))}
+            </label>
+
+            <input
+              data-cat-field="${esc(key)}"
+              class="input mt-1"
+              value=""
+            >
+          </div>
+        `;
+      }
+
+      if(typeof value==="boolean"){
+
+        return `
+          <div>
+            <label class="text-xs font-bold">
+              ${esc(key.replaceAll("_"," "))}
+            </label>
+
+            <select
+              data-cat-field="${esc(key)}"
+              class="input mt-1"
+            >
+              <option value="true" ${value?"selected":""}>True</option>
+              <option value="false" ${!value?"selected":""}>False</option>
+            </select>
+          </div>
+        `;
+      }
+
+      if(typeof value==="object"){
+
+        return `
+          <div class="sm:col-span-2">
+
+            <label class="text-xs font-bold">
+              ${esc(key.replaceAll("_"," "))}
+            </label>
+
+            <textarea
+              data-cat-field="${esc(key)}"
+              class="input mt-1 min-h-[110px]"
+            >${esc(JSON.stringify(value,null,2))}</textarea>
+
+          </div>
+        `;
+      }
+
+      const stringValue=String(value);
+
+      if(
+        stringValue.length>120 ||
+        key.toLowerCase().includes("description") ||
+        key.toLowerCase().includes("details") ||
+        key.toLowerCase().includes("rules")
+      ){
+
+        return `
+          <div class="sm:col-span-2">
+
+            <label class="text-xs font-bold">
+              ${esc(key.replaceAll("_"," "))}
+            </label>
+
+            <textarea
+              data-cat-field="${esc(key)}"
+              class="input mt-1 min-h-[100px]"
+            >${esc(stringValue)}</textarea>
+
+          </div>
+        `;
+      }
+
+      return `
+        <div>
+
+          <label class="text-xs font-bold">
+            ${esc(key.replaceAll("_"," "))}
+          </label>
+
+          <input
+            data-cat-field="${esc(key)}"
+            class="input mt-1"
+            value="${esc(stringValue)}"
+          >
+
+        </div>
+      `;
+
+    }).join("");
+}
+  
 function openAdvancedProperty(type,index){
   const x=state[type]?.[index];if(!x)return;
   $("advPropId").value=x.id||"";$("advPropType").value=type;
@@ -1938,6 +2120,7 @@ function openAdvancedProperty(type,index){
   $("advStatus").value=propStatus(x);$("advVerified").value=String(propVerified(x));$("advFeatured").value=String(propFeatured(x));$("advRating").value=propRating(x)||"";$("advPrice").value=firstVal(x,["price","rent","monthly_rent"],"");$("advTiming").value=x.timing||"";
   $("advFacilities").value=x.facilities||"";$("advDescription").value=firstVal(x,["description","details"],"");
   $("categorySpecificFields").innerHTML=buildCategoryFields(type,x);
+  $("allSupabaseFields").innerHTML=buildAllSupabaseFields(x);
   openModal("advancedPropertyModal");
 }
 function closeAdvancedProperty(){closeModal("advancedPropertyModal")}
@@ -2020,9 +2203,30 @@ if(x){
   }
 }
   
-  document.querySelectorAll("[data-cat-field]").forEach(i=>{
-    payload[i.dataset.catField]=mtext(i.value)||null;
-  });
+ document.querySelectorAll("[data-cat-field]").forEach(el=>{
+
+  const key=el.dataset.catField;
+
+  if(el.tagName==="SELECT" && (el.value==="true" || el.value==="false")){
+    payload[key]=el.value==="true";
+    return;
+  }
+
+  if(el.tagName==="TEXTAREA"){
+    const currentValue=x?.[key];
+
+    if(typeof currentValue==="object" && currentValue!==null){
+      try{
+        payload[key]=JSON.parse(el.value);
+      }catch{
+        payload[key]=el.value;
+      }
+      return;
+    }
+  }
+
+  payload[key]=el.value;
+});
 
   const btn=e.submitter;
   setBusy(btn,true);
@@ -2081,11 +2285,152 @@ if(x){
 });
 
 function previewPublic(type,index){
-  const x=state[type]?.[index];if(!x)return;
-  const slug=firstVal(x,["slug"],"");
-  if(!slug){toast("This property has no slug, so property-details.html cannot locate it.",true);return}
-  const url=`property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`;
-  window.open(url,"_blank","noopener,noreferrer");
+  const x=state[type]?.[index];
+  if(!x)return;
+
+  const title=x.name||"Property";
+  const owner=rowOwner(x)?.full_name||firstVal(x,["owner_name"],"Not available");
+  const verified=propVerified(x);
+
+  const fields=Object.entries(x)
+    .filter(([key])=>!["__index","__type"].includes(key))
+    .slice(0,12)
+    .map(([key,value])=>{
+      if(value===null || value==="") return "";
+      return `
+        <div class="bg-navy-950/60 border border-navy-800 rounded-xl p-3">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500">
+            ${esc(key.replaceAll("_"," "))}
+          </div>
+          <div class="text-sm text-slate-200 mt-1 break-words">
+            ${esc(String(value))}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  const modal=document.createElement("div");
+
+  modal.id="unverifiedPreviewModal";
+  modal.className="modal fixed inset-0 z-[400] flex items-center justify-center p-3";
+
+  modal.innerHTML=`
+    <div class="card rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden">
+
+      <div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4">
+        <div>
+          <div class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">
+            PROPERTY VERIFICATION
+          </div>
+
+          <h2 class="text-2xl font-display font-bold mt-1">
+            ${esc(title)}
+          </h2>
+
+          <p class="text-xs text-slate-400 mt-1">
+            ${esc(type)} • ID ${esc(x.id||"—")}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onclick="closeUnverifiedPreview()"
+          class="w-10 h-10 rounded-xl bg-navy-850 hover:bg-navy-800 flex items-center justify-center"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto max-h-[65vh]">
+
+        <div class="grid sm:grid-cols-3 gap-3 mb-5">
+
+          <div class="master-mini-card p-4">
+            <div class="text-[10px] text-slate-500 uppercase">Owner</div>
+            <div class="font-bold mt-1">
+              ${esc(owner)}
+            </div>
+          </div>
+
+          <div class="master-mini-card p-4">
+            <div class="text-[10px] text-slate-500 uppercase">Status</div>
+            <div class="font-bold text-gold-300 mt-1">
+              ${esc(propStatus(x))}
+            </div>
+          </div>
+
+          <div class="master-mini-card p-4">
+            <div class="text-[10px] text-slate-500 uppercase">Verification</div>
+            <div class="font-bold mt-1 ${verified?"text-emerald-400":"text-red-300"}">
+              ${verified?"Verified":"Not Verified"}
+            </div>
+          </div>
+
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          ${fields}
+        </div>
+
+      </div>
+
+      <div class="p-5 border-t border-navy-800 flex flex-wrap justify-end gap-2">
+
+        <button
+          type="button"
+          class="master-action"
+          onclick="closeUnverifiedPreview()"
+        >
+          Close
+        </button>
+
+        <button
+          type="button"
+          class="master-action view-details"
+          onclick="openPropertyEditorFromPreview('${esc(type)}','${esc(x.id)}')"
+        >
+          <i class="fa-solid fa-pen-to-square mr-1"></i>
+          View / Edit All Details
+        </button>
+
+        <button
+          type="button"
+          class="master-action success"
+          onclick="setPropertyVerification('${esc(type)}','${esc(x.id)}',true)"
+        >
+          <i class="fa-solid fa-shield-check mr-1"></i>
+          Verify Property
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+
+function closeUnverifiedPreview(){
+  const modal=document.getElementById("unverifiedPreviewModal");
+  if(modal) modal.remove();
+}
+
+
+function openPropertyEditorFromPreview(type,id){
+
+  closeUnverifiedPreview();
+
+  const index=(state[type]||[]).findIndex(
+    x=>String(x.id)===String(id)
+  );
+
+  if(index===-1){
+    toast("Property record not found.",true);
+    return;
+  }
+
+  openAdvancedProperty(type,index);
 }
 async function togglePropertyField(type,id,field,value,label){
   const x=state[type]?.find(y=>String(y.id)===String(id));if(!x)return;
