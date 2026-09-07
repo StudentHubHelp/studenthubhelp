@@ -1885,7 +1885,7 @@ function renderRequestsModule(table){
   const rows=state.advanced.requests[table];
   if(rows===null){el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">${cfg.title}</h2><p class="text-xs text-slate-400">${moduleStatus(table)}</p></div></div>${tableErrorHTML(table)}`;return}
   const q=($("moduleSearch_"+table)?.value||"").toLowerCase();
-  const filtered=(rows||[]).filter(x=>JSON.stringify(x).toLowerCase().includes(q));
+  const filtered=(rows||[])   .filter(x=>statusNorm(x)==="pending")   .filter(x=>JSON.stringify(x).toLowerCase().includes(q));
   const headers=cfg.cols.map(c=>`<th class="p-3">${c}</th>`).join("");
   el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">${cfg.title}</h2><p class="text-xs text-slate-400">${rows.length} records • ${moduleStatus(table)}</p></div><div class="master-toolbar"><input id="moduleSearch_${table}" class="input" placeholder="Search ${cfg.title}..." value="${esc(q)}"><button class="master-action" onclick="exportCurrentCSV('${table}')"><i class="fa-solid fa-file-csv mr-1"></i>CSV</button></div></div>
   <div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr>${headers}<th class="p-3">Actions</th></tr></thead><tbody>${filtered.length?filtered.map((x,i)=>requestRow(table,x,i)).join(""):emptyRow(cfg.cols.length+1,"No records found.")}</tbody></table></div>`;
@@ -2046,20 +2046,7 @@ async function processListing(id,action){
     );
   }
 } 
-async function processClaim(id,action){
-  const rows=state.advanced.requests.claim_requests||[],r=rows.find(x=>String(x.id)===String(id));if(!r)return;
-  if(action==="reject"&&!prompt("Reject reason (required):"))return;
-  if(action==="approve"){
-    const p=resolveProperty(r),claimant=firstVal(r,["claimant_id","user_id","owner_id"],"");
-    if(!p||!claimant){toast("Claim approval needs property_id/property_table and claimant_id.",true);return}
-    if(!hasKey(p.x,"owner_id")){toast(`Column owner_id is missing in ${p.type}.`,true);return}
-    const up=await supabaseClient.from(p.type).update({owner_id:claimant}).eq("id",p.x.id);if(up.error){toast(up.error.message,true);return}
-  }
-  const status=action==="approve"?"approved":"rejected";
-  if(!hasKey(r,"status")){toast("claim_requests.status column is required.",true);return}
-  const q=await supabaseClient.from("claim_requests").update({status}).eq("id",id);if(q.error){toast(q.error.message,true);return}
-  await logAdminAction("claim_"+action,"claim_requests",id,r,{status});toast("Claim request updated.");await loadAll();
-}
+
 async function processVerification(id,action){
   const rows=state.advanced.requests.verification_requests||[],r=rows.find(x=>String(x.id)===String(id));if(!r)return;
   const p=resolveProperty(r);
