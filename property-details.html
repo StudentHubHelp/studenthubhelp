@@ -1328,5 +1328,16 @@ document.getElementById('shareBtn').addEventListener('click',share);
 load();
 </script>
 <script>
-(function(){\n  const isBlockingVerification = (el) => {\n    if (!el || el.nodeType !== 1) return false;\n    const key = ((el.id || '') + ' ' + (el.className && typeof el.className === 'string' ? el.className : '')).toLowerCase();\n    if ((/verification|verify/.test(key)) && /(modal|popup|dialog|overlay)/.test(key)) return true;\n    if (el.getAttribute('role') === 'dialog' && /verification|verify/.test((el.textContent || '').slice(0, 1000).toLowerCase())) return true;\n    return false;\n  };\n  const remove = () => document.querySelectorAll('*').forEach(el => { if (isBlockingVerification(el)) el.remove(); });\n  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', remove, {once:true}); else remove();\n  new MutationObserver(remove).observe(document.documentElement, {childList:true, subtree:true});\n})();\n</script>
-</body></html>
+(function() {
+    const isBlockingVerification = (el) => {
+        if (!el || el.nodeType !== 1) return false;
+        const key = ((el.id || '') + ' ' + (el.className && typeof el.className === 'string' ? el.className : '')).toLowerCase();
+        if ((/verification|verify/.test(key)) && /(modal|popup|dialog|overlay)/.test(key)) return true;
+        if (el.getAttribute('role') === 'dialog' && /verification|verify/.test((el.textContent || '').slice(0, 1000).toLowerCase())) return true;
+        return false;
+    };
+    const remove = () => document.querySelectorAll('*').forEach(el => { if (isBlockingVerification(el)) el.remove(); });
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', remove, {once: true}); else remove();
+    new MutationObserver(remove).observe(document.documentElement, {childList: true, subtree: true});
+})();
+</script>
