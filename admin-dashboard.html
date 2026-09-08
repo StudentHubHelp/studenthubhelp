@@ -1631,8 +1631,26 @@ function previewPublic(type, index) {
   // Category Tag
   const categoryTag = x.room_types || x.gender || x.category || masterMeta[type]?.singular || "Student PG";
 
-  // Category wise dynamic banner
-  const bannerImg = getPropertyBanner(type, x);
+  // ================= PROPERTY-WISE GITHUB BANNER =================
+  let bannerImg = "hostel-banner.png";
+  const cat = String(type || x.category || "").toLowerCase();
+
+  if (cat.includes("tiffin") || cat.includes("mess")) {
+    bannerImg = "tiffin-banner.png";
+  } else if (cat.includes("cafe")) {
+    bannerImg = "cafe-banner.png";
+  } else if (cat.includes("book")) {
+    bannerImg = "bookstore-banner.png";
+  } else if (cat.includes("lib")) {
+    bannerImg = "library-banner.png";
+  } else {
+    bannerImg = "hostel-banner.png";
+  }
+
+  // Agar Supabase me property ki apni photo uploaded ho
+  if (x.image && String(x.image).trim() !== "" && !x.image.includes("unsplash.com")) {
+    bannerImg = x.image;
+  }
 
   const phone = x.phone || "";
   const area = x.area || "Area Not Specified";
@@ -1648,13 +1666,13 @@ function previewPublic(type, index) {
   modal.innerHTML = `
     <div class="sh-card relative w-full max-w-[385px] rounded-[28px] overflow-hidden shadow-2xl transition-all font-sans border border-slate-200 animate-pop" style="background:#ffffff !important; color:#0f172a !important;">
       
-      <!-- TOP BANNER (PROPERTY-WISE DYNAMIC) -->
+      <!-- TOP BANNER (PROPERTY WISE) -->
       <div class="relative w-full h-52 bg-slate-950 overflow-hidden">
         <img 
           src="${esc(bannerImg)}" 
           alt="${esc(title)}" 
           class="w-full h-full object-cover"
-          onerror="this.onerror=null; if(this.src.includes('library-banner.png')){this.src='libray-banner.png';}else{this.src='hostel-banner.png';}"
+          onerror="this.onerror=null; if(this.src.includes('library-banner.png')){this.src='libray-banner.png';}else if(this.src.includes('hostel-banner.png')){this.src='hpstel-banner.png';}else{this.src='hostel-banner.png';}"
         />
         
         <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60 pointer-events-none"></div>
@@ -1718,13 +1736,13 @@ function previewPublic(type, index) {
           <span>${esc(area)}</span>
         </div>
 
-        <!-- Full Address Line (House icon fixed) -->
+        <!-- Full Address Line -->
         <div class="sh-address flex items-start gap-2.5 text-xs leading-relaxed" style="color:#64748b !important; -webkit-text-fill-color:#64748b !important;">
           <i class="fa-solid fa-house sh-icon-home mt-0.5 text-xs flex-shrink-0" style="color:#94a3b8 !important; -webkit-text-fill-color:#94a3b8 !important;"></i>
           <span class="line-clamp-2">${esc(address)}</span>
         </div>
 
-        <!-- Timing Line (Clock icon fixed) -->
+        <!-- Timing Line -->
         <div class="sh-timing flex items-center gap-2.5 text-xs" style="color:#64748b !important; -webkit-text-fill-color:#64748b !important;">
           <i class="fa-regular fa-clock sh-icon-clock text-xs flex-shrink-0" style="color:#94a3b8 !important; -webkit-text-fill-color:#94a3b8 !important;"></i>
           <span>${esc(timing)}</span>
