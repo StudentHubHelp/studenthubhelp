@@ -4605,6 +4605,12 @@ function renderBookings(){
             )}
           </td>
 
+<td data-label="Left">
+  ${esc(
+    formatDate(b.left_date)
+  )}
+</td>
+
           <td data-label="Duration">
             ${esc(
               b.duration_months
@@ -4643,6 +4649,15 @@ function renderBookings(){
                     Reject
                   </button>
 
+${b.status === "active" ? `
+  <button
+    class="btn danger"
+    onclick="updateBooking('${esc(b.id)}','completed')"
+  >
+    Student Left
+  </button>
+` : ""}
+
                 </div>
 
               `
@@ -4673,12 +4688,34 @@ window.renderBookings =
 async function updateBooking(id,status){
 
   const patch = {status};
-  if(status === "active") patch.joined_date = new Date().toISOString();
+
+  if(status === "active"){
+    patch.joined_date = new Date().toISOString();
+  }
+
+  if(status === "completed"){
+    patch.left_date = new Date().toISOString();
+  }
 
   const {error} = await db
     .from("student_bookings")
     .update(patch)
     .eq("id",id);
+
+  if(error){
+    showToast(error.message,"error");
+    return;
+  }
+
+  showToast(
+    status === "completed"
+      ? "Student left date saved successfully."
+      : "Booking updated successfully.",
+    "success"
+  );
+
+  loadBookings();
+}
 
   if(error){
     showToast(error.message,"error");
