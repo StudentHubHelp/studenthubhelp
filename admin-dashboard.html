@@ -2293,15 +2293,65 @@ function renderPropertiesMaster(){
 }
 function setPropertyFilter(type){showSection("properties");setTimeout(()=>{if($("propFilterCategory")){$("propFilterCategory").value=type;renderPropertiesMaster();}},10)}
 
-function buildCategoryFields(type,x={}){
-  const common={
-    hostels:[["rent","Rent / monthly price",firstVal(x,["rent","monthly_rent","price"],"")],["security_deposit","Security deposit",firstVal(x,["security_deposit","deposit"],"")],["room_types","Room types",firstVal(x,["room_types","rooms"],"")],["sharing","Sharing",firstVal(x,["sharing"],"")],["beds","Total beds",firstVal(x,["beds","total_beds"],"")],["available_beds","Available beds",firstVal(x,["available_beds"],"")],["food","Food available",firstVal(x,["food","food_available"],"")],["food_type","Food type",firstVal(x,["food_type"],"")],["rules","Rules",firstVal(x,["rules"],"")]],
-    tiffins:[["meal","Meal type",firstVal(x,["meal","meal_type"],"")],["plan","Plan",firstVal(x,["plan","plan_name"],"")],["price","Price",firstVal(x,["price","monthly_price"],"")],["delivery","Delivery",firstVal(x,["delivery","delivery_available"],"")],["delivery_area","Delivery area",firstVal(x,["delivery_area"],"")]],
-    cafes:[["cuisine","Cuisine",firstVal(x,["cuisine"],"")],["seating","Seating capacity",firstVal(x,["seating","seating_capacity"],"")],["opening_time","Opening time",firstVal(x,["opening_time"],"")],["closing_time","Closing time",firstVal(x,["closing_time"],"")]],
-    libraries:[["fees","Fees",firstVal(x,["fees","fee"],"")],["seats","Seats",firstVal(x,["seats","seat_count"],"")],["membership","Membership",firstVal(x,["membership"],"")],["open_24x7","24/7",firstVal(x,["open_24x7","is_24_7"],"")]],
-    bookstores:[["books","Books",firstVal(x,["books","book_categories"],"")],["stationery","Stationery",firstVal(x,["stationery"],"")],["printing","Printing",firstVal(x,["printing","printing_available"],"")],["timing","Business timing",firstVal(x,["timing","opening_hours"],"")]]
+function buildCategoryFields(type, x = {}){
+
+  const common = {
+
+    hostels: [
+      ["rent", "Rent / monthly price", "monthly_rent", firstVal(x, ["monthly_rent"], "")],
+      ["security_deposit", "Security deposit", "security_deposit", firstVal(x, ["security_deposit"], "")],
+      ["room_types", "Room types", "room_types", firstVal(x, ["room_types"], "")],
+      ["sharing", "Sharing", "room_sharing", firstVal(x, ["room_sharing"], "")],
+      ["beds", "Total beds", "total_beds", firstVal(x, ["total_beds"], "")],
+      ["available_beds", "Available beds", "available_beds", firstVal(x, ["available_beds"], "")],
+      ["food", "Food available", "food_available", firstVal(x, ["food_available"], "")],
+      ["food_type", "Food type", "food_type", firstVal(x, ["food_type"], "")],
+      ["rules", "Rules", "rules", firstVal(x, ["rules"], "")]
+    ],
+
+    tiffins: [
+      ["meal", "Meal type", "meal_type", firstVal(x, ["meal_type"], "")],
+      ["plan", "Plan", "plan_type", firstVal(x, ["plan_type"], "")],
+      ["price", "Price", "price", firstVal(x, ["price"], "")],
+      ["delivery", "Delivery", "delivery_available", firstVal(x, ["delivery_available"], "")],
+      ["delivery_area", "Delivery area", "service_area", firstVal(x, ["service_area"], "")]
+    ],
+
+    cafes: [
+      ["cuisine", "Cuisine", "cuisine", firstVal(x, ["cuisine"], "")],
+      ["seating", "Seating capacity", "seating_capacity", firstVal(x, ["seating_capacity"], "")],
+      ["opening_time", "Opening time", "opening_time", firstVal(x, ["opening_time"], "")],
+      ["closing_time", "Closing time", "closing_time", firstVal(x, ["closing_time"], "")]
+    ],
+
+    libraries: [
+      ["fees", "Monthly fee", "monthly_fee", firstVal(x, ["monthly_fee"], "")],
+      ["seats", "Seats", "seating_capacity", firstVal(x, ["seating_capacity"], "")],
+      ["membership", "Membership", "membership", firstVal(x, ["membership"], "")],
+      ["open_24x7", "24/7", "open_24_hours", firstVal(x, ["open_24_hours"], "")]
+    ],
+
+    bookstores: [
+      ["books", "Books", "categories", firstVal(x, ["categories"], "")],
+      ["stationery", "Stationery", "stationery", firstVal(x, ["stationery"], "")],
+      ["printing", "Printing", "printing", firstVal(x, ["printing"], "")],
+      ["timing", "Business timing", "timing", firstVal(x, ["timing"], "")]
+    ]
   };
-  return (common[type]||[]).map(([key,label,val])=>`<div><label class="text-xs font-bold">${esc(label)}</label><input data-cat-field="${esc(key)}" class="input mt-1" value="${esc(val)}"></div>`).join("");
+
+  const fields = common[type] || [];
+
+  return fields.map(([uiKey, label, dbKey, value]) => `
+    <div>
+      <label class="text-xs font-bold">${esc(label)}</label>
+      <input
+        class="input mt-1 category-field"
+        data-ui-key="${esc(uiKey)}"
+        data-db-key="${esc(dbKey)}"
+        value="${esc(value ?? "")}"
+      >
+    </div>
+  `).join("");
 }
 
   function buildAllSupabaseFields(x={}){
@@ -2482,26 +2532,65 @@ function openAdvancedProperty(type,index){
 function closeAdvancedProperty(){closeModal("advancedPropertyModal")}
 document.addEventListener("click",e=>{if(e.target.closest("[data-adv-close]"))closeAdvancedProperty();if(e.target.closest("[data-master-close]"))closeMasterDrawer()});
 
-async function updateCompatibleRow(table,id,payload){
-  const current=(state[table]||[]).find(x=>String(x.id)===String(id))||{};
-  const clean={};
-  for(const [k,v] of Object.entries(payload)){if(hasKey(current,k))clean[k]=v;}
-  // common columns can be written on rows that were created without them only when known to exist.
-  if(!Object.keys(clean).length){throw new Error("No compatible columns found for this property. Keep the existing schema or run the Master Admin SQL migration.");}
-  const r=await supabaseClient.from(table).update(clean).eq("id",id);
-  if(r.error)throw r.error;
-}
-$("advancedPropertyForm")?.addEventListener("submit",async e=>{
-  e.preventDefault();
-
-  const type=$("advPropType").value;
-  const id=mtext($("advPropId").value);
-  const x=id ? state[type]?.find(y=>String(y.id)===String(id)) : null;
-
-  if(!masterMeta[type]){
-    toast("Invalid property type.",true);
-    return;
+async function updateCompatibleRow(table, id, payload){
+  if(!table || !id){
+    throw new Error("Invalid property table or ID.");
   }
+
+  const current = (state[table] || []).find(
+    x => String(x.id) === String(id)
+  );
+
+  if(!current){
+    throw new Error("Property record not found.");
+  }
+
+  const clean = {};
+
+  for(const [key, value] of Object.entries(payload)){
+    if(hasKey(current, key)){
+      clean[key] = value;
+    }
+  }
+
+  if(!Object.keys(clean).length){
+    throw new Error(
+      "No compatible database fields found for this property."
+    );
+  }
+
+  // Always update modified timestamp when the table supports it.
+  if(hasKey(current, "updated_at")){
+    clean.updated_at = new Date().toISOString();
+  }
+
+  const { data, error } = await supabaseClient
+    .from(table)
+    .update(clean)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if(error){
+    console.error("Property update failed:", {
+      table,
+      id,
+      payload,
+      clean,
+      error
+    });
+
+    throw error;
+  }
+
+  if(!data){
+    throw new Error(
+      "Update completed but no property row was returned."
+    );
+  }
+
+  return data;
+}
 
   const name=mtext($("advName").value);
   const phone=mtext($("advPhone").value);
@@ -3212,8 +3301,58 @@ function updateNotificationBadgeCount(){
   }
 }
 function renderActivity(){const el=$("section-activity");if(!el)return;const rows=state.advanced.requests.admin_activity_logs||[];el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">Activity & Change History</h2><p class="text-xs text-slate-400">Admin actions, entity changes and timestamps.</p></div><button class="master-action" onclick="exportCurrentCSV('admin_activity_logs')">Export CSV</button></div><div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr><th class="p-3">Action</th><th class="p-3">Entity</th><th class="p-3">Entity ID</th><th class="p-3">Admin</th><th class="p-3">Timestamp</th><th class="p-3">Old</th><th class="p-3">New</th></tr></thead><tbody>${rows.length?rows.slice(0,200).map(x=>`<tr><td class="p-3 font-bold">${esc(firstVal(x,["action"],"—"))}</td><td class="p-3">${esc(firstVal(x,["entity_type","entity"],"—"))}</td><td class="p-3">${esc(firstVal(x,["entity_id"],"—"))}</td><td class="p-3">${esc(firstVal(x,["admin_email","admin_id"],"—"))}</td><td class="p-3">${fmtDate(firstVal(x,["created_at","timestamp"],null))}</td><td class="p-3 max-w-xs truncate">${esc(JSON.stringify(firstVal(x,["old_value"],"")))}</td><td class="p-3 max-w-xs truncate">${esc(JSON.stringify(firstVal(x,["new_value"],"")))}</td></tr>`).join(""):emptyRow(7,"No activity logs found.")}</tbody></table></div>`}
-function renderSettings(){const el=$("section-settings");if(!el)return;const rows=state.advanced.requests.system_settings||[];const keys=["website_name","website_contact","website_whatsapp","website_email","student_registration","owner_registration","booking_enabled","booking_approval_mode","review_auto_publish","maintenance_mode","maintenance_message"];el.innerHTML=`<div><h2 class="text-xl font-bold">System Settings</h2><p class="text-xs text-slate-400">Only settings present in your Supabase table are shown as live values.</p></div><div class="grid lg:grid-cols-2 gap-3">${keys.map(k=>{const x=rows.find(r=>String(firstVal(r,["key","setting_key","name"],""))===k);return `<div class="master-mini-card p-4"><div class="text-xs font-bold text-gold-300">${esc(k)}</div><div class="text-sm mt-2">${x?esc(firstVal(x,["value","setting_value"],"—")):'<span class="text-slate-500">Not configured</span>'}</div>${x?`<button class="master-action mt-3" onclick="editSetting('${esc(x.id)}','${esc(k)}')">Edit</button>`:""}</div>`}).join("")}</div>`}
-async function editSetting(id,key){const rows=state.advanced.requests.system_settings||[],x=rows.find(r=>String(r.id)===String(id));if(!x)return;const v=prompt(`New value for ${key}`,firstVal(x,["value","setting_value"],""));if(v===null)return;const field=hasKey(x,"value")?"value":"setting_value";const r=await supabaseClient.from("system_settings").update({[field]:v}).eq("id",id);if(r.error)toast(r.error.message,true);else{await logAdminAction("setting_update","system_settings",id,x,{[field]:v});toast("Setting updated.");await loadAll()}}
+function renderSettings(){const el=$("section-settings");if(!el)return;const rows=state.advanced.requests.system_settings||[];const keys=["website_name","website_contact","website_whatsapp","website_email","student_registration","owner_registration","booking_enabled","booking_approval_mode","review_auto_publish","maintenance_mode","maintenance_message"];el.innerHTML=`<div><h2 class="text-xl font-bold">System Settings</h2><p class="text-xs text-slate-400">Only settings present in your Supabase table are shown as live values.</p></div><div class="grid lg:grid-cols-2 gap-3">${keys.map(k=>{const x=rows.find(r=>String(firstVal(r,["key","setting_key","name"],""))===k);return `<div class="master-mini-card p-4"><div class="text-xs font-bold text-gold-300">${esc(k)}</div><div class="text-sm mt-2">${x?esc(firstVal(x,["value","setting_value"],"—")):'<span class="text-slate-500">Not configured</span>'}</div>${x?`<button class="master-action mt-3" onclick="editSetting('${esc(k)}')">Edit</button>`:""}</div>`}).join("")}</div>`}
+async function editSetting(key){
+  const rows = state.advanced.requests.system_settings || [];
+
+  const x = rows.find(r =>
+    String(firstVal(r, ["key", "setting_key", "name"], "")) === String(key)
+  );
+
+  if(!x){
+    toast("Setting record not found.", true);
+    return;
+  }
+
+  const v = prompt(
+    `New value for ${key}`,
+    firstVal(x, ["value", "setting_value"], "")
+  );
+
+  if(v === null) return;
+
+  const field = hasKey(x, "value") ? "value" : "setting_value";
+
+  const oldValue = x[field];
+
+  const { data, error } = await supabaseClient
+    .from("system_settings")
+    .update({
+      [field]: v,
+      updated_at: new Date().toISOString()
+    })
+    .eq("key", key)
+    .select()
+    .single();
+
+  if(error){
+    console.error("System setting update failed:", error);
+    toast(error.message, true);
+    return;
+  }
+
+  await logAdminAction(
+    "setting_update",
+    "system_settings",
+    key,
+    x,
+    {[field]: v}
+  );
+
+  toast("Setting updated successfully.");
+
+  await loadAll();
+}
 function renderCategories(){const el=$("section-categories");if(!el)return;el.innerHTML=`<div><h2 class="text-xl font-bold">Category Settings</h2><p class="text-xs text-slate-400">Five platform categories with category-specific admin fields.</p></div><div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3">${MASTER_TYPES.map(t=>`<div class="master-mini-card p-5"><div class="flex justify-between"><i class="fa-solid ${masterMeta[t].icon} text-gold-400 text-xl"></i>${masterBadge((state[t]||[]).length,"green")}</div><h3 class="font-bold mt-3">${esc(masterMeta[t].title)}</h3><div class="text-xs text-slate-400 mt-1">${esc(categoryFieldSummary(t))}</div><button class="master-action mt-4" onclick="showSection('${t}')">Manage Category</button></div>`).join("")}</div>`}
 function categoryFieldSummary(t){return t==="hostels"?"Rent, rooms, sharing, beds, food, facilities, rules":t==="tiffins"?"Meal, plan, price, delivery, delivery area":t==="cafes"?"Cuisine, seating, timing":t==="libraries"?"Fees, seats, membership, 24/7": "Books, stationery, printing, timing"}
 
