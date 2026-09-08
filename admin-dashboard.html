@@ -29,6 +29,15 @@ body{overflow-x:hidden;background:linear-gradient(rgba(4,8,20,.80),rgba(4,8,20,.
 button:disabled{opacity:.55;cursor:not-allowed}
 .table-wrap{overflow-x:auto}
 .toast{animation:toast .2s ease-out}@keyframes toast{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+
+/* Smooth Modal Animation */
+@keyframes popModal {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-pop {
+  animation: popModal 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 </style>
 <style id="studenthubhelp-theme-system">
 /* ===== STUDENTHUBHELP NAVY + GOLD THEME SYSTEM ===== */
@@ -389,12 +398,6 @@ table td,table th{
 #advancedPropertyModal .sticky{
   background:#245eaa!important;
 }
-#propertyModal .bg-gradient-to-t{
-  background:linear-gradient(to top,#245eaa,transparent)!important;
-}
-#propertyModal .bg-navy-950\/80{
-  background:#1d4ed8!important;
-}
 
 /* Popup inner boxes */
 .glass,
@@ -530,12 +533,7 @@ button:disabled{
         <div class="master-nav-label">Platform Control</div>
         <button data-section="listing-requests" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-inbox w-5 text-gold-400"></i> Listing Requests <span id="navListingBadge" class="float-right badge">0</span></button>
         <button data-section="claim-requests" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-handshake w-5 text-gold-400"></i> Claim Requests <span id="navClaimBadge" class="float-right badge">0</span></button>
-       <button data-section="unverified-properties"
-  class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850">
-  <i class="fa-solid fa-circle-exclamation w-5 text-gold-400"></i>
-  Unverified Properties
-  <span id="navUnverifiedBadge" class="float-right badge">0</span>
-</button>
+        <button data-section="unverified-properties" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-circle-exclamation w-5 text-gold-400"></i> Unverified Properties <span id="navUnverifiedBadge" class="float-right badge">0</span></button>
         <button data-section="verification" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-circle-check w-5 text-gold-400"></i> Verification <span id="navVerificationBadge" class="float-right badge">0</span></button>
         <button data-section="bookings" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-calendar-check w-5 text-gold-400"></i> Bookings <span id="navBookingBadge" class="float-right badge">0</span></button>
         <button data-section="reviews" class="nav w-full p-3 rounded-xl text-left text-slate-300 hover:bg-navy-850"><i class="fa-solid fa-star w-5 text-gold-400"></i> Reviews <span id="navReviewBadge" class="float-right badge">0</span></button>
@@ -663,52 +661,46 @@ button:disabled{
       <section id="section-tiffins" class="section hidden space-y-5"></section>
       <section id="section-libraries" class="section hidden space-y-5"></section>
       <section id="section-cafes" class="section hidden space-y-5"></section>
-
-
       <section id="section-bookstores" class="section hidden space-y-5"></section>
       <section id="section-properties" class="section hidden space-y-5"></section>
       <section id="section-listing-requests" class="section hidden space-y-5"></section>
       <section id="section-claim-requests" class="section hidden space-y-5"></section>
-     <!-- ================= UNVERIFIED PROPERTIES ================= -->
-<section id="section-unverified-properties" class="section hidden space-y-5">
+      
+      <!-- ================= UNVERIFIED PROPERTIES ================= -->
+      <section id="section-unverified-properties" class="section hidden space-y-5">
+        <div class="flex flex-wrap justify-between gap-3 items-center">
+          <div>
+            <h2 class="text-xl font-bold">Unverified Properties</h2>
+            <p class="text-xs text-slate-400">
+              Hostel, Tiffin, Library, Cafe और Bookstore की unverified listings.
+            </p>
+          </div>
+          <button id="refreshUnverifiedBtn" class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold">
+            <i class="fa-solid fa-rotate mr-1"></i> Refresh
+          </button>
+        </div>
 
-  <div class="flex flex-wrap justify-between gap-3 items-center">
-    <div>
-      <h2 class="text-xl font-bold">Unverified Properties</h2>
-      <p class="text-xs text-slate-400">
-        Hostel, Tiffin, Library, Cafe और Bookstore की unverified listings.
-      </p>
-    </div>
+        <div class="card rounded-2xl table-wrap">
+          <table class="master-table w-full text-left text-xs">
+            <thead class="bg-navy-950 text-gold-300">
+              <tr>
+                <th class="p-4">Property</th>
+                <th class="p-4">Type</th>
+                <th class="p-4">Owner</th>
+                <th class="p-4">Area</th>
+                <th class="p-4">Phone</th>
+                <th class="p-4">Status</th>
+                <th class="p-4">Verification</th>
+                <th class="p-4">Rating</th>
+                <th class="p-4">Last Updated</th>
+                <th class="p-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="unverifiedPropertiesBody"></tbody>
+          </table>
+        </div>
+      </section>
 
-    <button id="refreshUnverifiedBtn"
-      class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold">
-      <i class="fa-solid fa-rotate mr-1"></i>
-      Refresh
-    </button>
-  </div>
-
-  <div class="card rounded-2xl table-wrap">
-    <table class="master-table w-full text-left text-xs">
-      <thead class="bg-navy-950 text-gold-300">
-        <tr>
-          <th class="p-4">Property</th>
-          <th class="p-4">Type</th>
-          <th class="p-4">Owner</th>
-          <th class="p-4">Area</th>
-          <th class="p-4">Phone</th>
-          <th class="p-4">Status</th>
-          <th class="p-4">Verification</th>
-          <th class="p-4">Rating</th>
-          <th class="p-4">Last Updated</th>
-          <th class="p-4 text-right">Actions</th>
-        </tr>
-      </thead>
-
-      <tbody id="unverifiedPropertiesBody"></tbody>
-    </table>
-  </div>
-
-</section>
       <section id="section-verification" class="section hidden space-y-5"></section>
       <section id="section-bookings" class="section hidden space-y-5"></section>
       <section id="section-reviews" class="section hidden space-y-5"></section>
@@ -755,36 +747,6 @@ button:disabled{
   </div>
 </div>
 
-<!-- ================= VIEW MODAL ================= -->
-<div id="propertyModal" class="modal fixed inset-0 z-[80] hidden items-center justify-center p-3">
-  <div class="card rounded-3xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
-    <div class="relative h-48 bg-navy-950">
-      <img id="viewImage" class="w-full h-full object-cover" src="hostel-banner.png" loading="lazy decoding="async"
-      <div class="absolute inset-0 bg-gradient-to-t from-navy-900 to-transparent"></div>
-      <button class="absolute top-3 right-3 w-10 h-10 rounded-full bg-navy-950/80" data-close="propertyModal"><i class="fa-solid fa-xmark"></i></button>
-      <div class="absolute bottom-4 left-5">
-        <span id="viewCategory" class="text-[10px] bg-gold-500/20 text-gold-300 px-2 py-1 rounded"></span>
-        <h2 id="viewName" class="text-2xl font-bold"></h2>
-        <p id="viewAddress" class="text-xs text-slate-300"></p>
-      </div>
-    </div>
-    <div class="p-5 overflow-auto space-y-3 text-sm">
-      <div class="grid sm:grid-cols-2 gap-3">
-        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Phone</b><div id="viewPhone"></div></div>
-        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Area</b><div id="viewArea"></div></div>
-        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Timing</b><div id="viewTiming"></div></div>
-        <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Rating</b><div id="viewRating"></div></div>
-      </div>
-      <div class="bg-navy-850 p-3 rounded-xl"><b class="text-gold-300">Facilities / Menu / Description</b><div id="viewFacilities" class="mt-1 whitespace-pre-wrap"></div></div>
-    </div>
-    <div class="p-4 border-t border-navy-800 flex gap-2">
-      <a id="viewCall" class="flex-1 text-center py-3 rounded-xl border border-gold-500/40 text-gold-300">Call</a>
-      <a id="viewWhatsapp" target="_blank" rel="noopener" class="flex-1 text-center py-3 rounded-xl bg-emerald-600 text-white">WhatsApp</a>
-      <button id="viewEdit" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Edit</button>
-    </div>
-  </div>
-</div>
-
 <!-- ================= FORM MODAL ================= -->
 <div id="formModal" class="modal fixed inset-0 z-[90] hidden items-center justify-center p-3">
   <div class="card rounded-3xl w-full max-w-2xl max-h-[94vh] overflow-auto p-6 relative">
@@ -809,6 +771,7 @@ button:disabled{
   </div>
 </div>
 
+<!-- ================= OWNER EDIT MODAL ================= -->
 <div id="ownerEditModal" class="fixed inset-0 z-[195] hidden items-center justify-center bg-navy-950/90 backdrop-blur-md p-4">
   <div class="bg-navy-900 border border-gold-500/35 rounded-3xl max-w-4xl w-full max-h-[94vh] overflow-auto shadow-2xl">
     <div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4">
@@ -841,9 +804,10 @@ button:disabled{
   </div>
 </div>
 
+<!-- ================= OWNER DETAILS MODAL ================= -->
 <div id="ownerDetailsModal" class="fixed inset-0 z-[190] hidden items-center justify-center bg-navy-950/90 backdrop-blur-md p-4"><div class="bg-navy-900 border border-gold-500/35 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"><div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4"><div><p class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">Owner Profile</p><h3 id="ownerDetailsName" class="text-xl font-bold text-white mt-1">Owner</h3><p id="ownerDetailsContact" class="text-xs text-slate-400 mt-1">—</p></div><button type="button" onclick="closeOwnerDetails()" class="w-9 h-9 rounded-full bg-navy-850 border border-navy-700 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 overflow-y-auto max-h-[calc(90vh-100px)] space-y-5"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Email</div><div id="ownerDetailsEmail" class="text-sm text-white mt-1 break-all">—</div></div><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Phone</div><div id="ownerDetailsPhone" class="text-sm text-white mt-1">—</div></div><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Address</div><div id="ownerDetailsAddress" class="text-sm text-white mt-1">—</div></div><div class="glass rounded-2xl p-4"><div class="text-[10px] uppercase text-slate-500 font-bold">Matched Listings</div><div id="ownerDetailsCount" class="text-sm text-gold-300 font-bold mt-1">0</div></div></div><div><div class="flex items-center justify-between gap-3 mb-3"><h4 class="font-bold text-white">Owner Properties</h4><span class="text-[10px] text-slate-500">Phone match • last 10 digits</span></div><div id="ownerDetailsProperties" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div></div></div></div>
 
-
+<!-- ================= MASTER DRAWER ================= -->
 <div id="masterDrawer" class="master-drawer items-stretch">
   <div class="master-drawer-panel">
     <div class="p-5 border-b border-navy-800 flex justify-between items-start gap-4 sticky top-0 bg-navy-900/95 backdrop-blur z-10">
@@ -853,6 +817,8 @@ button:disabled{
     <div id="drawerBody" class="p-5 space-y-5"></div>
   </div>
 </div>
+
+<!-- ================= ADVANCED PROPERTY EDITOR MODAL ================= -->
 <div id="advancedPropertyModal" class="modal fixed inset-0 z-[290] hidden items-center justify-center p-3">
   <div class="card rounded-3xl w-full max-w-5xl max-h-[95vh] overflow-auto">
     <div class="p-5 border-b border-navy-800 flex justify-between gap-4 sticky top-0 bg-navy-900/95 backdrop-blur z-10">
@@ -891,26 +857,14 @@ button:disabled{
       <div id="categorySpecificFields" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
       <div class="border-t border-navy-800 pt-5 mt-5">
 
-  <div class="mb-4">
-    <div class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">
-      Complete Supabase Data
-    </div>
+        <div class="mb-4">
+          <div class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">Complete Supabase Data</div>
+          <h3 class="text-lg font-bold mt-1">All Property Columns</h3>
+          <p class="text-xs text-slate-400 mt-1">यहाँ इस property की Supabase table में मौजूद सभी editable columns दिखाई देंगे।</p>
+        </div>
 
-    <h3 class="text-lg font-bold mt-1">
-      All Property Columns
-    </h3>
-
-    <p class="text-xs text-slate-400 mt-1">
-      यहाँ इस property की Supabase table में मौजूद सभी editable columns दिखाई देंगे।
-    </p>
-  </div>
-
-  <div
-    id="allSupabaseFields"
-    class="grid sm:grid-cols-2 gap-3"
-  ></div>
-
-</div>
+        <div id="allSupabaseFields" class="grid sm:grid-cols-2 gap-3"></div>
+      </div>
       <div class="flex flex-wrap gap-2 justify-end border-t border-navy-800 pt-4">
         <button type="button" class="px-4 py-2.5 rounded-xl bg-navy-800" data-adv-close>Cancel</button>
         <button class="px-5 py-2.5 rounded-xl gold-gradient-bg text-navy-950 font-extrabold"><i class="fa-solid fa-floppy-disk mr-1"></i>Save Property</button>
@@ -919,14 +873,13 @@ button:disabled{
   </div>
 </div>
 
-<div id="toast" class="fixed bottom-5 right-5 z-[200] hidden max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl"></div>
+<div id="toast" class="fixed bottom-5 right-5 z-[550] hidden max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl"></div>
 
 <script>
 "use strict";
 
 /* =========================================================
    SUPABASE CONFIG
-   This is the public ANON key. Never put service_role here.
    ========================================================= */
 const SUPABASE_URL="https://idurlccrarznnnqixxsd.supabase.co";
 const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
@@ -955,7 +908,7 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 function toast(msg,error=false){
   const el=$("toast");
   el.textContent=msg;
-  el.className=`fixed bottom-5 right-5 z-[200] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl ${error?"bg-red-600 text-white":"bg-emerald-600 text-white"}`;
+  el.className=`fixed bottom-5 right-5 z-[550] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl ${error?"bg-red-600 text-white":"bg-emerald-600 text-white"}`;
   setTimeout(()=>el.classList.add("hidden"),3500);
 }
 
@@ -1006,19 +959,12 @@ async function handleSession(session){
 
   state.user=session.user;
 
-  /* Exact Director email check */
   if((state.user.email||"").toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
     await supabaseClient.auth.signOut();
     $("authMessage").textContent="This account is not authorized as Director Admin.";
     return;
   }
 
-  /*
-    Your real profiles table is:
-    id, full_name, phone, role, created_at
-    and allowed roles are:
-    student, owner, admin
-  */
   const {data:profile,error}=await supabaseClient
     .from("profiles")
     .select("id,full_name,phone,role,created_at")
@@ -1064,7 +1010,6 @@ $("logoutBtn").addEventListener("click",async()=>{
 /* ================= NAVIGATION ================= */
 
 function showSection(name){
-  // HARD ISOLATION: only the requested section is visible.
   document.querySelectorAll(".section").forEach(s=>{
     s.classList.add("hidden");
     s.setAttribute("aria-hidden","true");
@@ -1072,8 +1017,8 @@ function showSection(name){
 
   const target=$("section-"+name);
   if(name === "unverified-properties"){
-  loadUnverifiedProperties();
-}
+    loadUnverifiedProperties();
+  }
   if(target){
     target.classList.remove("hidden");
     target.setAttribute("aria-hidden","false");
@@ -1088,7 +1033,6 @@ function showSection(name){
 
   $("searchResults").classList.add("hidden");
 
-  // Every section opens from its own top, never from the previous dashboard scroll.
   window.scrollTo({top:0,left:0,behavior:"instant"});
   const main=document.querySelector("#app main");
   if(main){main.scrollTop=0;main.querySelectorAll(":scope > .section").forEach(s=>{if(!s.classList.contains("hidden"))s.scrollTop=0})}
@@ -1105,64 +1049,6 @@ document.querySelectorAll("[data-go]").forEach(x=>{
   x.addEventListener("click",()=>showSection(x.dataset.go));
 });
 
-/* ================= DATA LOADING ================= */
-
-async function loadAll(){
-  $("dbStatus").textContent="Syncing...";
-  $("dbStatus").className="text-amber-300 mt-1";
-
-  try{
-    const results=await Promise.all([
-  supabaseClient.from("hostels").select("*").order("name",{ascending:true}),
-  supabaseClient.from("tiffins").select("*").order("name",{ascending:true}),
-  supabaseClient.from("libraries").select("*").order("name",{ascending:true}),
-  supabaseClient.from("cafes").select("*").order("name",{ascending:true}),
-  supabaseClient.from("bookstores").select("*").order("name",{ascending:true}), // Agar bookstores bhi hai
-  supabaseClient.from("profiles").select("id,full_name,phone,email,role,created_at")
-]);
-
-    const [h, t, l, c, b, p] = results;
-    const firstError=[h,t,l,c,p].find(x=>x.error);
-    if(firstError)throw firstError.error;
-
-    state.hostels=h.data||[];
-    state.tiffins=t.data||[];
-    state.libraries=l.data||[];
-    state.cafes=c.data||[];
-    state.bookstores = b.data || [];
-    
-    const profiles=p.data||[];
-
-    state.students=profiles.filter(x=>String(x.role||"").toLowerCase()==="student");
-
-    /* Important: only owner role. Admin can never appear here. */
-    state.owners=profiles.filter(x=>String(x.role||"").toLowerCase()==="owner");
-
-    renderAll();
-
-    $("dbStatus").textContent="Connected";
-    $("dbStatus").className="text-emerald-400 mt-1";
-    $("lastSync").textContent=new Date().toLocaleString();
-
-  }catch(e){
-    console.error(e);
-    $("dbStatus").textContent="Error";
-    $("dbStatus").className="text-red-400 mt-1";
-    toast("Database sync failed: "+e.message,true);
-  }
-}
-
-$("refreshBtn").addEventListener("click",loadAll);
-
-function updateStats(){
-  $("statStudents").textContent=state.students.length;
-  $("statOwners").textContent=state.owners.length;
-  $("statHostels").textContent=state.hostels.length;
-  $("statTiffins").textContent=state.tiffins.length;
-  $("statLibraries").textContent=state.libraries.length;
-  $("statCafes").textContent=state.cafes.length;
-}
-
 function emptyRow(cols,msg="No records found."){
   return `<tr><td colspan="${cols}" class="p-6 text-center text-slate-400">${esc(msg)}</td></tr>`;
 }
@@ -1171,7 +1057,6 @@ function emptyRow(cols,msg="No records found."){
 
 function renderStudents(filter=""){
   const q=filter.toLowerCase();
-
   const arr=state.students.filter(s=>
     `${s.full_name||""} ${s.phone||""} ${s.id||""}`.toLowerCase().includes(q)
   );
@@ -1202,107 +1087,18 @@ function renderOwners(){
   $("ownerBody").innerHTML=state.owners.length?state.owners.map(o=>`<tr class="border-t border-navy-800 hover:bg-navy-850 transition cursor-pointer" data-owner-details="${esc(o.id)}"><td class="p-4 font-bold">${esc(o.full_name||"Owner")}</td><td class="p-4 font-mono">${esc(o.phone||"—")}</td><td class="p-4 text-slate-300 break-all">${esc(o.email||"—")}</td><td class="p-4 text-emerald-400">Registered</td><td class="p-4 text-right whitespace-nowrap"><button class="px-3 py-2 rounded bg-gold-500/10 text-gold-300 font-bold text-[11px]" data-owner-details="${esc(o.id)}"><i class="fa-solid fa-eye mr-1"></i>Details</button><button class="p-2 rounded bg-navy-800 text-gold-300 ml-1" data-edit-owner="${esc(o.id)}" title="Edit owner"><i class="fa-solid fa-pen"></i></button><button class="p-2 rounded bg-red-500/10 text-red-300 ml-1" data-delete-profile="${esc(o.id)}" title="Delete owner"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(""):emptyRow(5,"No registered owners found.");
 }
 
-/* ================= PROPERTIES ================= */
-
-function renderProperty(type){
-  const cfg=propertyConfig[type]||masterMeta[type];
-  const arr=state[type]||[];
-
-  $("section-"+type).innerHTML=`
-    <div class="flex flex-wrap justify-between gap-3 items-center">
-      <div>
-        <h2 class="text-xl font-bold">${cfg.title}</h2>
-        <p class="text-xs text-slate-400">Standardized live Supabase records.</p>
-      </div>
-      <button class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold" data-add="${type}">
-        <i class="fa-solid fa-plus mr-1"></i>Add ${cfg.singular}
-      </button>
-    </div>
-
-    <div class="card rounded-2xl table-wrap">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-navy-950 text-gold-300">
-          <tr>
-            <th class="p-4">SN</th>
-            <th class="p-4">Name</th>
-            <th class="p-4">Category</th>
-            <th class="p-4">Area</th>
-            <th class="p-4">Phone</th>
-            <th class="p-4">Address</th>
-            <th class="p-4">Timing</th>
-            <th class="p-4">Rating</th>
-            <th class="p-4 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${arr.length?arr.map((x,i)=>`
-            <tr class="border-t border-navy-800 hover:bg-navy-850 cursor-pointer" data-view="${type}" data-index="${i}">
-              <td class="p-4 font-mono">#${i+1}</td>
-              <td class="p-4 font-bold">
-                ${esc(x.name||cfg.singular)}
-                <div class="text-[10px] text-slate-500 mt-1">${esc(x.slug||x.id||"")}</div>
-              </td>
-              <td class="p-4">${esc(x.category||cfg.category)}</td>
-              <td class="p-4">${esc(x.area||"—")}</td>
-              <td class="p-4 font-mono">${esc(x.phone||"—")}</td>
-              <td class="p-4 max-w-xs">${esc(x.address||"—")}</td>
-              <td class="p-4">${esc(x.timing||x.opening_time||"—")}</td>
-              <td class="p-4 text-gold-300">${esc(x.rating??"—")}</td>
-              <td class="p-4 text-right">
-                <div class="property-actions">
-                  <button type="button" class="master-action view-details" data-public-view="${type}" data-index="${i}" title="View public property details">
-                    <i class="fa-solid fa-eye mr-1"></i>View Details
-                  </button>
-                  <button type="button" class="master-action" data-edit="${type}" data-index="${i}" title="Edit">
-                    <i class="fa-solid fa-pen"></i>
-                  </button>
-                  <button type="button" class="master-action danger" data-delete="${type}" data-id="${esc(x.id)}" title="Delete">
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          `).join(""):emptyRow(9)}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-function renderAll(){
-  updateStats();
-  renderStudents($("studentFilter").value);
-  renderOwners();
-  Object.keys(propertyConfig).forEach(renderProperty);
-}
 /* ================= UNVERIFIED PROPERTIES ================= */
 
 const unverifiedSources = [
-  {
-    table: "hostels",
-    type: "Hostel / PG"
-  },
-  {
-    table: "tiffins",
-    type: "Tiffin / Mess"
-  },
-  {
-    table: "libraries",
-    type: "Library"
-  },
-  {
-    table: "cafes",
-    type: "Cafe"
-  },
-  {
-    table: "bookstores",
-    type: "Bookstore"
-  }
+  { table: "hostels", type: "Hostel / PG" },
+  { table: "tiffins", type: "Tiffin / Mess" },
+  { table: "libraries", type: "Library" },
+  { table: "cafes", type: "Cafe" },
+  { table: "bookstores", type: "Bookstore" }
 ];
 
 async function loadUnverifiedProperties(){
-
   const body = $("unverifiedPropertiesBody");
-
   if(!body) return;
 
   body.innerHTML = `
@@ -1315,33 +1111,16 @@ async function loadUnverifiedProperties(){
   `;
 
   try {
-
     const results = await Promise.all(
       unverifiedSources.map(async source => {
-
         const { data, error } = await supabaseClient
           .from(source.table)
-          .select(`
-            id,
-            name,
-            owner_name,
-            area,
-            phone,
-            status,
-            verified,
-            rating,
-            updated_at
-          `)
+          .select(`id, name, owner_name, area, phone, status, verified, rating, updated_at`)
           .eq("verified", false)
           .order("updated_at", { ascending: false });
 
         if(error){
-          console.error(
-            "Unverified load error:",
-            source.table,
-            error
-          );
-
+          console.error("Unverified load error:", source.table, error);
           return [];
         }
 
@@ -1350,12 +1129,10 @@ async function loadUnverifiedProperties(){
           sourceTable: source.table,
           type: source.type
         }));
-
       })
     );
 
     const all = results.flat();
-
     all.sort((a,b) => {
       const da = new Date(a.updated_at || 0).getTime();
       const db = new Date(b.updated_at || 0).getTime();
@@ -1363,157 +1140,68 @@ async function loadUnverifiedProperties(){
     });
 
     const badge = $("navUnverifiedBadge");
-
-    if(badge){
-      badge.textContent = all.length;
-    }
+    if(badge){ badge.textContent = all.length; }
 
     if(!all.length){
-      body.innerHTML = emptyRow(
-        10,
-        "No unverified properties found."
-      );
+      body.innerHTML = emptyRow(10, "No unverified properties found.");
       return;
     }
 
     body.innerHTML = all.map(item => {
-
-      const updated = item.updated_at
-        ? new Date(item.updated_at).toLocaleString()
-        : "—";
-
+      const updated = item.updated_at ? new Date(item.updated_at).toLocaleString() : "—";
       return `
         <tr class="border-t border-navy-800 hover:bg-navy-850">
-
           <td class="p-4 font-bold">
             ${esc(item.name || "Unnamed")}
-            <div class="text-[10px] text-slate-500 mt-1">
-              ${esc(item.id || "")}
-            </div>
+            <div class="text-[10px] text-slate-500 mt-1">${esc(item.id || "")}</div>
           </td>
-
-          <td class="p-4">
-            <span class="badge badge-blue">
-              ${esc(item.type)}
-            </span>
-          </td>
-
-          <td class="p-4">
-            ${esc(item.owner_name || "—")}
-          </td>
-
-          <td class="p-4">
-            ${esc(item.area || "—")}
-          </td>
-
-          <td class="p-4 font-mono">
-            ${esc(item.phone || "—")}
-          </td>
-
-          <td class="p-4">
-            ${esc(item.status || "—")}
-          </td>
-
-          <td class="p-4">
-            <span class="badge badge-red">
-              <i class="fa-solid fa-circle-xmark"></i>
-              Unverified
-            </span>
-          </td>
-
-          <td class="p-4 text-gold-300">
-            ${esc(item.rating ?? "—")}
-          </td>
-
-          <td class="p-4 text-slate-400">
-            ${esc(updated)}
-          </td>
-
+          <td class="p-4"><span class="badge badge-blue">${esc(item.type)}</span></td>
+          <td class="p-4">${esc(item.owner_name || "—")}</td>
+          <td class="p-4">${esc(item.area || "—")}</td>
+          <td class="p-4 font-mono">${esc(item.phone || "—")}</td>
+          <td class="p-4">${esc(item.status || "—")}</td>
+          <td class="p-4"><span class="badge badge-red"><i class="fa-solid fa-circle-xmark"></i> Unverified</span></td>
+          <td class="p-4 text-gold-300">${esc(item.rating ?? "—")}</td>
+          <td class="p-4 text-slate-400">${esc(updated)}</td>
           <td class="p-4 text-right">
             <div class="property-actions">
-
-              <button
-                type="button"
-                class="master-action view-details"
-                data-unverified-view="${esc(item.sourceTable)}"
-                data-unverified-id="${esc(item.id)}">
-                <i class="fa-solid fa-eye mr-1"></i>
-                View
+              <button type="button" class="master-action view-details" data-unverified-view="${esc(item.sourceTable)}" data-unverified-id="${esc(item.id)}">
+                <i class="fa-solid fa-eye mr-1"></i> View
               </button>
-
-              <button
-                type="button"
-                class="master-action success"
-                data-verify-property="${esc(item.sourceTable)}"
-                data-verify-id="${esc(item.id)}">
-                <i class="fa-solid fa-circle-check mr-1"></i>
-                Verify
+              <button type="button" class="master-action success" data-verify-property="${esc(item.sourceTable)}" data-verify-id="${esc(item.id)}">
+                <i class="fa-solid fa-circle-check mr-1"></i> Verify
               </button>
-
             </div>
           </td>
-
         </tr>
       `;
-
     }).join("");
 
   } catch(error) {
-
     console.error(error);
-
-    body.innerHTML = emptyRow(
-      10,
-      "Failed to load unverified properties."
-    );
-
-    toast(
-      "Unverified properties load failed: " + error.message,
-      true
-    );
+    body.innerHTML = emptyRow(10, "Failed to load unverified properties.");
+    toast("Unverified properties load failed: " + error.message, true);
   }
 }
 
-  async function verifyProperty(table, id){
-
+async function verifyProperty(table, id){
   if(!table || !id) return;
-
-  const confirmed = confirm(
-    "Are you sure you want to verify this property?"
-  );
-
+  const confirmed = confirm("Are you sure you want to verify this property?");
   if(!confirmed) return;
 
-  const { error } = await supabaseClient
-    .from(table)
-    .update({
-      verified: true
-    })
-    .eq("id", id);
-
+  const { error } = await supabaseClient.from(table).update({ verified: true }).eq("id", id);
   if(error){
-
     console.error(error);
-
-    toast(
-      "Verification failed: " + error.message,
-      true
-    );
-
+    toast("Verification failed: " + error.message, true);
     return;
   }
-
   toast("Property verified successfully.");
-
   await loadAll();
-
   await loadUnverifiedProperties();
 }
-  $("refreshUnverifiedBtn")?.addEventListener(
-  "click",
-  loadUnverifiedProperties
-);
-  
+
+$("refreshUnverifiedBtn")?.addEventListener("click", loadUnverifiedProperties);
+
 /* ================= CLICK HANDLERS ================= */
 
 document.addEventListener("click",async e=>{
@@ -1539,42 +1227,31 @@ document.addEventListener("click",async e=>{
   if(eo){editOwner(eo.dataset.editOwner);return}
 
   const ownerProp=e.target.closest("[data-owner-property]");
-  if(ownerProp){const type=ownerProp.dataset.ownerProperty;const idx=(state[type]||[]).findIndex(x=>String(x.id)===String(ownerProp.dataset.ownerPropertyId));if(idx>=0){closeOwnerDetails();openView(type,idx);}return;}
-
-  const unverifiedView =
-    e.target.closest("[data-unverified-view]");
-
-if(unverifiedView){
-
-  const table = unverifiedView.dataset.unverifiedView;
-  const id = unverifiedView.dataset.unverifiedId;
-
-  const index = (state[table] || [])
-    .findIndex(x => String(x.id) === String(id));
-
-  if(index >= 0){
-    previewPublic(table, index);
+  if(ownerProp){
+    const type=ownerProp.dataset.ownerProperty;
+    const idx=(state[type]||[]).findIndex(x=>String(x.id)===String(ownerProp.dataset.ownerPropertyId));
+    if(idx>=0){closeOwnerDetails();previewPublic(type,idx);}
+    return;
   }
 
-  return;
-}
+  const unverifiedView = e.target.closest("[data-unverified-view]");
+  if(unverifiedView){
+    const table = unverifiedView.dataset.unverifiedView;
+    const id = unverifiedView.dataset.unverifiedId;
+    const index = (state[table] || []).findIndex(x => String(x.id) === String(id));
+    if(index >= 0){ previewPublic(table, index); }
+    return;
+  }
     
-  const verifyPropertyBtn =
-    e.target.closest("[data-verify-property]");
-
+  const verifyPropertyBtn = e.target.closest("[data-verify-property]");
   if(verifyPropertyBtn){
-
-    await verifyProperty(
-      verifyPropertyBtn.dataset.verifyProperty,
-      verifyPropertyBtn.dataset.verifyId
-    );
-
+    await verifyProperty(verifyPropertyBtn.dataset.verifyProperty, verifyPropertyBtn.dataset.verifyId);
     return;
   }
   
   const row=e.target.closest("[data-view]");
   if(row&&!e.target.closest("button")){
-    openView(row.dataset.view,Number(row.dataset.index));
+    previewPublic(row.dataset.view,Number(row.dataset.index));
   }
 });
 
@@ -1586,8 +1263,6 @@ function openCreate(type){
     return;
   }
 
-  // New records now use the same complete Master Property Editor
-  // as Edit, so every category gets all common + category-specific fields.
   $("advPropId").value="";
   $("advPropType").value=type;
   $("advPropTitle").textContent=`Add ${masterMeta[type].singular}`;
@@ -1643,7 +1318,6 @@ function openEdit(type,index){
 
 $("propertyForm").addEventListener("submit",async e=>{
   e.preventDefault();
-
   const type=$("formType").value;
   const id=text($("formId").value);
   const ratingRaw=text($("fRating").value);
@@ -1697,9 +1371,7 @@ $("propertyForm").addEventListener("submit",async e=>{
 
 async function deleteProperty(type,id){
   if(!confirm("Delete this property permanently from Supabase?"))return;
-
   const {error}=await supabaseClient.from(type).delete().eq("id",id);
-
   if(error)toast(error.message,true);
   else{
     toast("Property deleted.");
@@ -1718,11 +1390,8 @@ async function deleteProfile(id){
     toast("You cannot delete the currently logged-in Admin profile.",true);
     return;
   }
-
   if(!confirm("Delete this profile record? This does not delete the Supabase Auth account."))return;
-
   const {error}=await supabaseClient.from("profiles").delete().eq("id",id);
-
   if(error)toast(error.message,true);
   else{
     toast("Profile deleted.");
@@ -1774,43 +1443,11 @@ $("ownerAddPropertyBtn").addEventListener("click",()=>{
   $("fName").value=text($("ownerProperty").value);
 });
 
-/* ================= VIEW ================= */
+/* ================= VIEW (BRIDGED TO PREVIEW PUBLIC) ================= */
 
 function openView(type,index){
-  const x=state[type][index];
-  if(!x)return;
-
-  state.currentView={type,index};
-
-  $("viewImage").src=x.image||"hostel-banner.png";
-  $("viewImage").onerror=()=>{$("viewImage").src="hostel-banner.png"};
-
-  $("viewCategory").textContent=(x.category||propertyConfig[type].category).toUpperCase();
-  $("viewName").textContent=x.name||propertyConfig[type].singular;
-  $("viewAddress").textContent=x.address||x.area||"India";
-  $("viewPhone").textContent=x.phone||"—";
-  $("viewArea").textContent=x.area||"—";
-  $("viewTiming").textContent=x.timing||"—";
-  $("viewRating").textContent=x.rating??"—";
-  $("viewFacilities").textContent=x.facilities||"—";
-
-  $("viewCall").href=x.phone?"tel:"+x.phone:"#";
-
-  const digits=(x.phone||"").replace(/\D/g,"");
-  $("viewWhatsapp").href=digits
-    ?`https://wa.me/${digits}?text=${encodeURIComponent("Hello "+(x.name||""))}`
-    :"#";
-
-  openModal("propertyModal");
+  previewPublic(type,index);
 }
-
-$("viewEdit").addEventListener("click",()=>{
-  if(state.currentView){
-    const {type,index}=state.currentView;
-    closeModal("propertyModal");
-    openEdit(type,index);
-  }
-});
 
 /* ================= MODALS ================= */
 
@@ -1826,117 +1463,27 @@ function closeModal(id){
 
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){
-    closeModal("propertyModal");
     closeModal("formModal");
     closeOwnerDetails();
     closeOwnerEdit();
+    closeAdvancedProperty();
+    closeMasterDrawer();
+    closeUnverifiedPreview();
     $("searchResults").classList.add("hidden");
   }
-});
-
-/* ================= GLOBAL SEARCH ================= */
-
-function buildSearch(){
-  const q=text($("globalSearch").value).toLowerCase();
-  const box=$("searchResults");
-
-  if(!q){
-    box.classList.add("hidden");
-    box.innerHTML="";
-    return;
-  }
-
-  const out=[];
-
-  state.students.forEach(s=>{
-    if(`${s.full_name||""} ${s.phone||""} ${s.id||""}`.toLowerCase().includes(q)){
-      out.push({
-        title:s.full_name||"Student",
-        sub:`Student • ${s.phone||"No phone"}`,
-        section:"students"
-      });
-    }
-  });
-
-  state.owners.forEach(o=>{
-    if(`${o.full_name||""} ${o.phone||""} ${o.id||""}`.toLowerCase().includes(q)){
-      out.push({
-        title:o.full_name||"Owner",
-        sub:`Owner • ${o.phone||"No phone"}`,
-        section:"owners"
-      });
-    }
-  });
-
-  Object.keys(propertyConfig).forEach(type=>{
-    state[type].forEach((x,i)=>{
-      if(`${x.name||""} ${x.category||""} ${x.area||""} ${x.address||""} ${x.phone||""} ${x.facilities||""}`.toLowerCase().includes(q)){
-        out.push({
-          title:x.name||propertyConfig[type].singular,
-          sub:`${propertyConfig[type].singular} • ${x.area||""} • ${x.phone||""}`,
-          section:type,
-          index:i
-        });
-      }
-    });
-  });
-
-  box.innerHTML=out.length
-    ?out.slice(0,30).map(r=>`
-      <button class="w-full text-left p-3 rounded-xl hover:bg-navy-850"
-        data-search-section="${esc(r.section)}"
-        data-search-index="${r.index??""}">
-        <div class="font-bold">${esc(r.title)}</div>
-        <div class="text-[10px] text-slate-400">${esc(r.sub)}</div>
-      </button>
-    `).join("")
-    :`<div class="p-3 text-slate-400">No results found.</div>`;
-
-  box.classList.remove("hidden");
-}
-
-$("globalSearch").addEventListener("input",buildSearch);
-
-document.addEventListener("click",e=>{
-  const r=e.target.closest("[data-search-section]");
-  if(!r)return;
-
-  const section=r.dataset.searchSection;
-  const index=r.dataset.searchIndex;
-
-  $("searchResults").classList.add("hidden");
-  $("globalSearch").value="";
-  showSection(section);
-
-  if(index!=="")openView(section,Number(index));
 });
 
 /* ================= PASSWORD ================= */
 
 $("passwordForm").addEventListener("submit",async e=>{
   e.preventDefault();
-
   const p1=$("newPassword").value;
   const p2=$("confirmPassword").value;
-
-  if(p1!==p2){
-    toast("Passwords do not match.",true);
-    return;
-  }
-
-  if(p1.length<8){
-    toast("Password must be at least 8 characters.",true);
-    return;
-  }
-
+  if(p1!==p2){toast("Passwords do not match.",true);return;}
+  if(p1.length<8){toast("Password must be at least 8 characters.",true);return;}
   const {error}=await supabaseClient.auth.updateUser({password:p1});
-
-  if(error){
-    toast(error.message,true);
-  }else{
-    $("passwordForm").reset();
-    toast("Supabase password updated successfully.");
-  }
+  if(error){toast(error.message,true);}
+  else{$("passwordForm").reset();toast("Supabase password updated successfully.");}
 });
 
 /* ================= REALTIME ================= */
@@ -1950,12 +1497,8 @@ const adminRealtimeChannels=[];
   adminRealtimeChannels.push(channel);
 });
 
-
-
 /* =========================================================
    ULTIMATE MASTER ADMIN UPGRADE
-   Additive layer: preserves the original dashboard functions.
-   Optional modules fail visibly instead of becoming fake zeros.
    ========================================================= */
 const MASTER_TYPES=["hostels","tiffins","cafes","libraries","bookstores"];
 const MASTER_MODULES=["listing_requests","claim_requests","verification_requests","student_bookings","reviews","property_reports","admin_notifications","admin_activity_logs","featured_properties","areas","system_settings","owner_property_images","property_views"];
@@ -1981,22 +1524,10 @@ function propOwnerId(x){return firstVal(x,["owner_id","ownerId","user_id"],"")}
 function propStatus(x){return String(firstVal(x,["status","listing_status","state"],"active")||"active").toLowerCase()}
 function propVerified(x){
   if(!x) return false;
-
-  const values = [
-    x.verified,
-    x.is_verified,
-    x.verification_status
-  ];
-
+  const values = [x.verified, x.is_verified, x.verification_status];
   return values.some(v => {
     const s = String(v ?? "").trim().toLowerCase();
-    return v === true ||
-           v === 1 ||
-           s === "true" ||
-           s === "1" ||
-           s === "verified" ||
-           s === "approved" ||
-           s === "accepted";
+    return v === true || v === 1 || s === "true" || s === "1" || s === "verified" || s === "approved" || s === "accepted";
   });
 }
 function propFeatured(x){return mbool(firstVal(x,["featured","is_featured"],false))}
@@ -2009,7 +1540,6 @@ function dateCreated(x){return firstVal(x,["created_at","createdAt","submitted_a
 async function masterQuery(table, select="*", orderField=null){
   try{
     let q=supabaseClient.from(table).select(select);
-    /* Do not require optional columns merely to sort a module. */
     if(orderField) { try { q=q.order(orderField,{ascending:false}); } catch(_){} }
     const r=await q;
     if(r.error) throw r.error;
@@ -2026,11 +1556,6 @@ function moduleStatus(table){
   const m=state.advanced.modules[table];
   if(!m)return '<span class="badge">Not loaded</span>';
   return m.ok?'<span class="badge badge-green">Live</span>':'<span class="badge badge-red">Unavailable</span>';
-}
-function countModule(table,rows){
-  const m=state.advanced.modules[table];
-  if(rows!==null&&rows!==undefined)return rows.length;
-  return m&&m.ok?0:null;
 }
 function safeCount(id,value,label){
   const el=$(id); if(!el)return;
@@ -2118,6 +1643,7 @@ function updateStats(){
   safeCount("statCafes",state.cafes.length,"cafes");
   renderAdvancedOverview();
 }
+
 function renderAll(){
   updateStats();
   renderStudents($("studentFilter")?.value||"");
@@ -2140,91 +1666,59 @@ function renderAll(){
   renderMedia();
 }
 
-/* Keep original student/owner actions while upgrading property type support. */
-const originalRenderProperty=renderProperty;
 function renderProperty(type){
-  if(!masterMeta[type])return originalRenderProperty(type);
-  const cfg=masterMeta[type];
+  const cfg=masterMeta[type]||propertyConfig[type];
   const arr = (state[type] || [])
     .map((x, index) => ({ ...x, __index: index }))
-    .sort((a, b) => {
-      return (a.name || "").localeCompare(
-        b.name || "",
-        "en",
-        { sensitivity: "base" }
-      );
-    });
+    .sort((a, b) => (a.name || "").localeCompare(b.name || "", "en", { sensitivity: "base" }));
+
   $("section-"+type).innerHTML=`
     <div class="master-section-head">
-      <div><h2 class="text-xl font-bold">${cfg.title}</h2><p class="text-xs text-slate-400">Live Supabase records • verification updates target the exact property ID.</p></div>
+      <div><h2 class="text-xl font-bold">${cfg.title}</h2><p class="text-xs text-slate-400">Live Supabase records • tap row or View Property to inspect.</p></div>
       <div class="master-toolbar"><button class="master-action" onclick="showSection('properties');setPropertyFilter('${type}')">Open in All Properties</button><button class="px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold" onclick="openCreate('${type}')"><i class="fa-solid fa-plus mr-1"></i>Add ${cfg.singular}</button></div>
     </div>
     <div class="card rounded-2xl p-3"><div class="text-xs text-slate-400">${arr.length} loaded records • ${moduleStatus(type)}</div></div>
-    <div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr><th class="p-3">Property</th><th class="p-3">Owner</th><th class="p-3">Area</th><th class="p-3">Phone</th><th class="p-3">Status</th><th class="p-3">Verification</th><th class="p-3">Rating</th>
-<th class="p-3">Last Updated</th> <!-- Naya column header -->
-<th class="p-3">Actions</th></tr></thead><tbody>
-      ${arr.length?arr.map((x,i)=>{const o=rowOwner(x);return `<tr><td class="p-3"><button class="text-left font-bold text-white hover:text-gold-300" onclick="openAdvancedProperty('${type}',${x.__index})">${esc(x.name||cfg.singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td><td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td><td class="p-3">${esc(x.area||"—")}</td><td class="p-3 font-mono">${esc(x.phone||"—")}</td><td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td><td class="p-3">${propVerified(x)?masterBadge("Verified","green"):masterBadge("Not Verified")}</td><td class="p-3 text-gold-300">${propRating(x)||"—"}</td>
-<td class="p-3 text-slate-300">${x.updated_at ? new Date(x.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
-<td class="p-3 whitespace-nowrap"><button class="master-action view-details" onclick="previewPublic('${type}',${x.__index})"><i class="fa-solid fa-eye mr-1"></i>View Property</button><button class="master-action ml-1" onclick="openAdvancedProperty('${type}',${x.__index})"><i class="fa-solid fa-pen"></i></button><button class="master-action ml-1 danger" onclick="deleteProperty('${type}','${esc(x.id)}')"><i class="fa-solid fa-trash"></i></button></td></tr>`}).join(""):emptyRow(8, state.advanced.errors[type]?state.advanced.errors[type]:"No records found.")}
+    <div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr><th class="p-3">Property</th><th class="p-3">Owner</th><th class="p-3">Area</th><th class="p-3">Phone</th><th class="p-3">Status</th><th class="p-3">Verification</th><th class="p-3">Rating</th><th class="p-3">Last Updated</th><th class="p-3">Actions</th></tr></thead><tbody>
+      ${arr.length?arr.map((x,i)=>{const o=rowOwner(x);return `
+        <tr class="hover:bg-navy-850 cursor-pointer" data-view="${type}" data-index="${x.__index}">
+          <td class="p-3"><button class="text-left font-bold text-white hover:text-gold-300" onclick="previewPublic('${type}',${x.__index})">${esc(x.name||cfg.singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td>
+          <td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td>
+          <td class="p-3">${esc(x.area||"—")}</td>
+          <td class="p-3 font-mono">${esc(x.phone||"—")}</td>
+          <td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td>
+          <td class="p-3">${propVerified(x)?masterBadge("Verified","green"):masterBadge("Not Verified")}</td>
+          <td class="p-3 text-gold-300">${propRating(x)||"—"}</td>
+          <td class="p-3 text-slate-300">${x.updated_at ? new Date(x.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
+          <td class="p-3 whitespace-nowrap">
+            <button class="master-action view-details" onclick="previewPublic('${type}',${x.__index})"><i class="fa-solid fa-eye mr-1"></i>View Property</button>
+            <button class="master-action ml-1" onclick="openAdvancedProperty('${type}',${x.__index})"><i class="fa-solid fa-pen"></i></button>
+            <button class="master-action ml-1 danger" onclick="deleteProperty('${type}','${esc(x.id)}')"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        </tr>`}).join(""):emptyRow(9, state.advanced.errors[type]?state.advanced.errors[type]:"No records found.")}
     </tbody></table></div>`;
 }
 
 async function setPropertyVerification(type, id, verified){
-  const row = (state[type] || []).find(
-    x => String(x.id) === String(id)
-  );
+  const row = (state[type] || []).find(x => String(x.id) === String(id));
+  if(!row){ toast("Property record not found.", true); return; }
+  if(!hasKey(row, "verified")){ toast(`The ${type} table does not have a 'verified' column.`, true); return; }
 
-  if(!row){
-    toast("Property record not found.", true);
-    return;
-  }
-
-  if(!hasKey(row, "verified")){
-    toast(`The ${type} table does not have a 'verified' column.`, true);
-    return;
-  }
-
-  const button = document.querySelector(
-    `[data-verify-type="${CSS.escape(String(type))}"][data-verify-id="${CSS.escape(String(id))}"]`
-  );
-
-  if(button){
-    button.disabled = true;
-    button.textContent = verified ? "Saving..." : "Saving...";
-  }
+  const button = document.querySelector(`[data-verify-type="${CSS.escape(String(type))}"][data-verify-id="${CSS.escape(String(id))}"]`);
+  if(button){ button.disabled = true; button.textContent = "Saving..."; }
 
   try{
     const propertyId = String(id);
     const verifiedValue = Boolean(verified);
-
-    const { error } = await supabaseClient
-      .from(type)
-      .update({
-        verified: verifiedValue
-      })
-      .eq("id", propertyId);
-
+    const { error } = await supabaseClient.from(type).update({ verified: verifiedValue }).eq("id", propertyId);
     if(error) throw error;
-
-    // Update local state immediately
     row.verified = verifiedValue;
-
-    toast(
-      verified
-        ? "Property verified successfully."
-        : "Property verification removed."
-    );
-
-    // Fresh data from Supabase
+    toast(verified ? "Property verified successfully." : "Property verification removed.");
     await loadAll();
-
   }catch(error){
     console.error("Verification update failed:", error);
     toast("Verification failed: " + error.message, true);
   }finally{
-    if(button){
-      button.disabled = false;
-    }
+    if(button){ button.disabled = false; }
   }
 }
   
@@ -2258,45 +1752,20 @@ function renderPropertiesMaster(){
   });
   const sort=$("propFilterSort")?.value||"newest";
   f.sort((a,b)=>sort==="rating-high"?propRating(b)-propRating(a):sort==="rating-low"?propRating(a)-propRating(b):sort==="views"?propViews(b)-propViews(a):sort==="bookings"?propBookings(b)-propBookings(a):sort==="az"?String(a.name||"").localeCompare(String(b.name||"")):(sort==="oldest"?new Date(dateCreated(a)||0)-new Date(dateCreated(b)||0):new Date(dateCreated(b)||0)-new Date(dateCreated(a)||0)));
-  $("masterPropertyBody").innerHTML=f.length?f.map(x=>{const o=rowOwner(x);return `<tr><td class="p-3"><input type="checkbox" class="prop-select" data-type="${x.__type}" data-id="${esc(x.id)}"></td><td class="p-3"><button class="text-left font-bold hover:text-gold-300" onclick="openAdvancedProperty('${x.__type}',${x.__index})">${esc(x.name||masterMeta[x.__type].singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td><td class="p-3">${masterBadge(masterMeta[x.__type].category)}</td><td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td><td class="p-3">${esc(x.phone||"—")}</td><td class="p-3">${esc(x.area||"—")}</td><td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td><td class="p-3">
+  $("masterPropertyBody").innerHTML=f.length?f.map(x=>{const o=rowOwner(x);return `<tr><td class="p-3"><input type="checkbox" class="prop-select" data-type="${x.__type}" data-id="${esc(x.id)}"></td><td class="p-3"><button class="text-left font-bold hover:text-gold-300" onclick="previewPublic('${x.__type}',${x.__index})">${esc(x.name||masterMeta[x.__type].singular)}</button><div class="text-[10px] text-slate-500">${esc(x.slug||x.id||"")}</div></td><td class="p-3">${masterBadge(masterMeta[x.__type].category)}</td><td class="p-3">${esc(o?.full_name||firstVal(x,["owner_name"],"—"))}</td><td class="p-3">${esc(x.phone||"—")}</td><td class="p-3">${esc(x.area||"—")}</td><td class="p-3">${masterBadge(propStatus(x),propStatus(x)==="active"?"green":propStatus(x)==="rejected"||propStatus(x)==="suspended"?"red":"")}</td><td class="p-3">
   ${
     propVerified(x)
-      ? `
-        <button
-          type="button"
-          class="master-action success"
-          data-verify-type="${esc(x.__type)}"
-          data-verify-id="${esc(x.id)}"
-          onclick="setPropertyVerification('${esc(x.__type)}','${esc(x.id)}',false)"
-          title="Click to remove verification"
-        >
-          <i class="fa-solid fa-circle-check mr-1"></i>
-          Verified
-        </button>
-      `
-      : `
-        <button
-          type="button"
-          class="master-action"
-          data-verify-type="${esc(x.__type)}"
-          data-verify-id="${esc(x.id)}"
-          onclick="setPropertyVerification('${esc(x.__type)}','${esc(x.id)}',true)"
-          title="Verify this property"
-        >
-          <i class="fa-solid fa-shield-halved mr-1"></i>
-          Verify
-        </button>
-      `
+      ? `<button type="button" class="master-action success" data-verify-type="${esc(x.__type)}" data-verify-id="${esc(x.id)}" onclick="setPropertyVerification('${esc(x.__type)}','${esc(x.id)}',false)" title="Click to remove verification"><i class="fa-solid fa-circle-check mr-1"></i>Verified</button>`
+      : `<button type="button" class="master-action" data-verify-type="${esc(x.__type)}" data-verify-id="${esc(x.id)}" onclick="setPropertyVerification('${esc(x.__type)}','${esc(x.id)}',true)" title="Verify this property"><i class="fa-solid fa-shield-halved mr-1"></i>Verify</button>`
   }
-</td><td class="p-3 text-gold-300">${propRating(x)||"—"}</td><td class="p-3 text-slate-300">${x.updated_at ? new Date(x.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td><td class="p-3">${propViews(x)}</td><td class="p-3">${propBookings(x)}</td><td class="p-3 whitespace-nowrap"><button class="master-action view-details" onclick="previewPublic('${x.__type}',${x.__index})"><i class="fa-solid fa-eye mr-1"></i>View Details</button><button class="master-action ml-1" onclick="openAdvancedProperty('${x.__type}',${x.__index})"><i class="fa-solid fa-pen"></i></button></td></tr>`}).join(""):emptyRow(12,"No properties match these filters.");
+</td><td class="p-3 text-gold-300">${propRating(x)||"—"}</td><td class="p-3 text-slate-300">${x.updated_at ? new Date(x.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td><td class="p-3">${propViews(x)}</td><td class="p-3">${propBookings(x)}</td><td class="p-3 whitespace-nowrap"><button class="master-action view-details" onclick="previewPublic('${x.__type}',${x.__index})"><i class="fa-solid fa-eye mr-1"></i>View Details</button><button class="master-action ml-1" onclick="openAdvancedProperty('${x.__type}',${x.__index})"><i class="fa-solid fa-pen"></i></button></td></tr>`}).join(""):emptyRow(13,"No properties match these filters.");
   $("selectAllProps")?.addEventListener("change",e=>document.querySelectorAll(".prop-select").forEach(c=>c.checked=e.target.checked));
 }
+
 function setPropertyFilter(type){showSection("properties");setTimeout(()=>{if($("propFilterCategory")){$("propFilterCategory").value=type;renderPropertiesMaster();}},10)}
 
 function buildCategoryFields(type, x = {}){
-
   const common = {
-
     hostels: [
       ["rent", "Rent / monthly price", "monthly_rent", firstVal(x, ["monthly_rent"], "")],
       ["security_deposit", "Security deposit", "security_deposit", firstVal(x, ["security_deposit"], "")],
@@ -2308,7 +1777,6 @@ function buildCategoryFields(type, x = {}){
       ["food_type", "Food type", "food_type", firstVal(x, ["food_type"], "")],
       ["rules", "Rules", "rules", firstVal(x, ["rules"], "")]
     ],
-
     tiffins: [
       ["meal", "Meal type", "meal_type", firstVal(x, ["meal_type"], "")],
       ["plan", "Plan", "plan_type", firstVal(x, ["plan_type"], "")],
@@ -2316,21 +1784,18 @@ function buildCategoryFields(type, x = {}){
       ["delivery", "Delivery", "delivery_available", firstVal(x, ["delivery_available"], "")],
       ["delivery_area", "Delivery area", "service_area", firstVal(x, ["service_area"], "")]
     ],
-
     cafes: [
       ["cuisine", "Cuisine", "cuisine", firstVal(x, ["cuisine"], "")],
       ["seating", "Seating capacity", "seating_capacity", firstVal(x, ["seating_capacity"], "")],
       ["opening_time", "Opening time", "opening_time", firstVal(x, ["opening_time"], "")],
       ["closing_time", "Closing time", "closing_time", firstVal(x, ["closing_time"], "")]
     ],
-
     libraries: [
       ["fees", "Monthly fee", "monthly_fee", firstVal(x, ["monthly_fee"], "")],
       ["seats", "Seats", "seating_capacity", firstVal(x, ["seating_capacity"], "")],
       ["membership", "Membership", "membership", firstVal(x, ["membership"], "")],
       ["open_24x7", "24/7", "open_24_hours", firstVal(x, ["open_24_hours"], "")]
     ],
-
     bookstores: [
       ["books", "Books", "categories", firstVal(x, ["categories"], "")],
       ["stationery", "Stationery", "stationery", firstVal(x, ["stationery"], "")],
@@ -2340,176 +1805,38 @@ function buildCategoryFields(type, x = {}){
   };
 
   const fields = common[type] || [];
-
   return fields.map(([uiKey, label, dbKey, value]) => `
     <div>
       <label class="text-xs font-bold">${esc(label)}</label>
-      <input
-        class="input mt-1 category-field"
-        data-ui-key="${esc(uiKey)}"
-        data-db-key="${esc(dbKey)}"
-        value="${esc(value ?? "")}"
-      >
+      <input class="input mt-1 category-field" data-ui-key="${esc(uiKey)}" data-db-key="${esc(dbKey)}" value="${esc(value ?? "")}">
     </div>
   `).join("");
 }
 
-  function buildAllSupabaseFields(x={}){
-
+function buildAllSupabaseFields(x={}){
   const commonHandled=new Set([
-    "id",
-    "created_at",
-    "updated_at",
-
-    "name",
-    "category",
-    "type",
-    "property_type",
-    "business_type",
-
-    "owner_id",
-    "owner_name",
-
-    "phone",
-    "whatsapp",
-    "whatsapp_number",
-    "email",
-
-    "area",
-    "city",
-    "pincode",
-    "postal_code",
-    "address",
-
-    "lat",
-    "latitude",
-    "lng",
-    "longitude",
-
-    "google_maps_url",
-    "maps_url",
-    "map_link",
-
-    "status",
-    "verified",
-    "is_verified",
-    "verification_status",
-
-    "featured",
-    "is_featured",
-
-    "rating",
-    "price",
-    "rent",
-    "monthly_rent",
-
-    "timing",
-    "facilities",
-    "description",
-    "details"
+    "id","created_at","updated_at","name","category","type","property_type","business_type","owner_id","owner_name","phone","whatsapp","whatsapp_number","email","area","city","pincode","postal_code","address","lat","latitude","lng","longitude","google_maps_url","maps_url","map_link","status","verified","is_verified","verification_status","featured","is_featured","rating","price","rent","monthly_rent","timing","facilities","description","details"
   ]);
 
   return Object.keys(x)
     .filter(key=>!commonHandled.has(key))
     .filter(key=>!key.startsWith("__"))
     .map(key=>{
-
       const value=x[key];
-
       if(value===null || value===undefined){
-        return `
-          <div>
-            <label class="text-xs font-bold">
-              ${esc(key.replaceAll("_"," "))}
-            </label>
-
-            <input
-              data-cat-field="${esc(key)}"
-              class="input mt-1"
-              value=""
-            >
-          </div>
-        `;
+        return `<div><label class="text-xs font-bold">${esc(key.replaceAll("_"," "))}</label><input data-cat-field="${esc(key)}" class="input mt-1" value=""></div>`;
       }
-
       if(typeof value==="boolean"){
-
-        return `
-          <div>
-            <label class="text-xs font-bold">
-              ${esc(key.replaceAll("_"," "))}
-            </label>
-
-            <select
-              data-cat-field="${esc(key)}"
-              class="input mt-1"
-            >
-              <option value="true" ${value?"selected":""}>True</option>
-              <option value="false" ${!value?"selected":""}>False</option>
-            </select>
-          </div>
-        `;
+        return `<div><label class="text-xs font-bold">${esc(key.replaceAll("_"," "))}</label><select data-cat-field="${esc(key)}" class="input mt-1"><option value="true" ${value?"selected":""}>True</option><option value="false" ${!value?"selected":""}>False</option></select></div>`;
       }
-
       if(typeof value==="object"){
-
-        return `
-          <div class="sm:col-span-2">
-
-            <label class="text-xs font-bold">
-              ${esc(key.replaceAll("_"," "))}
-            </label>
-
-            <textarea
-              data-cat-field="${esc(key)}"
-              class="input mt-1 min-h-[110px]"
-            >${esc(JSON.stringify(value,null,2))}</textarea>
-
-          </div>
-        `;
+        return `<div class="sm:col-span-2"><label class="text-xs font-bold">${esc(key.replaceAll("_"," "))}</label><textarea data-cat-field="${esc(key)}" class="input mt-1 min-h-[110px]">${esc(JSON.stringify(value,null,2))}</textarea></div>`;
       }
-
       const stringValue=String(value);
-
-      if(
-        stringValue.length>120 ||
-        key.toLowerCase().includes("description") ||
-        key.toLowerCase().includes("details") ||
-        key.toLowerCase().includes("rules")
-      ){
-
-        return `
-          <div class="sm:col-span-2">
-
-            <label class="text-xs font-bold">
-              ${esc(key.replaceAll("_"," "))}
-            </label>
-
-            <textarea
-              data-cat-field="${esc(key)}"
-              class="input mt-1 min-h-[100px]"
-            >${esc(stringValue)}</textarea>
-
-          </div>
-        `;
+      if(stringValue.length>120 || key.toLowerCase().includes("description") || key.toLowerCase().includes("details") || key.toLowerCase().includes("rules")){
+        return `<div class="sm:col-span-2"><label class="text-xs font-bold">${esc(key.replaceAll("_"," "))}</label><textarea data-cat-field="${esc(key)}" class="input mt-1 min-h-[100px]">${esc(stringValue)}</textarea></div>`;
       }
-
-      return `
-        <div>
-
-          <label class="text-xs font-bold">
-            ${esc(key.replaceAll("_"," "))}
-          </label>
-
-          <input
-            data-cat-field="${esc(key)}"
-            class="input mt-1"
-            value="${esc(stringValue)}"
-          >
-
-        </div>
-      `;
-
+      return `<div><label class="text-xs font-bold">${esc(key.replaceAll("_"," "))}</label><input data-cat-field="${esc(key)}" class="input mt-1" value="${esc(stringValue)}"></div>`;
     }).join("");
 }
   
@@ -2544,223 +1871,98 @@ function putCompatibleField(target,row,aliases,value){
 
 function mapCategoryField(type,key){
   const maps={
-    hostels:{
-      rent:["monthly_rent","rent","price"],
-      security_deposit:["security_deposit"],
-      room_types:["room_types"],
-      sharing:["room_sharing","sharing"],
-      beds:["total_beds","beds"],
-      available_beds:["available_beds"],
-      food:["food_available","food"],
-      food_type:["food_type"],
-      rules:["rules"]
-    },
-    tiffins:{
-      meal:["meal_type","meal"],
-      plan:["plan_type","plan"],
-      price:["price"],
-      delivery:["delivery_available","delivery"],
-      delivery_area:["service_area","delivery_area"]
-    },
-    cafes:{
-      cuisine:["cuisine"],
-      seating:["seating_capacity","seating"],
-      opening_time:["opening_time"],
-      closing_time:["closing_time"]
-    },
-    libraries:{
-      fees:["monthly_fee","fees","price"],
-      seats:["seating_capacity","seats"],
-      membership:["membership"],
-      open_24x7:["open_24_hours","open_24x7"]
-    },
-    bookstores:{
-      books:["categories","books"],
-      stationery:["stationery"],
-      printing:["printing"],
-      timing:["timing"]
-    }
+    hostels:{ rent:["monthly_rent","rent","price"], security_deposit:["security_deposit"], room_types:["room_types"], sharing:["room_sharing","sharing"], beds:["total_beds","beds"], available_beds:["available_beds"], food:["food_available","food"], food_type:["food_type"], rules:["rules"] },
+    tiffins:{ meal:["meal_type","meal"], plan:["plan_type","plan"], price:["price"], delivery:["delivery_available","delivery"], delivery_area:["service_area","delivery_area"] },
+    cafes:{ cuisine:["cuisine"], seating:["seating_capacity","seating"], opening_time:["opening_time"], closing_time:["closing_time"] },
+    libraries:{ fees:["monthly_fee","fees","price"], seats:["seating_capacity","seats"], membership:["membership"], open_24x7:["open_24_hours","open_24x7"] },
+    bookstores:{ books:["categories","books"], stationery:["stationery"], printing:["printing"], timing:["timing"] }
   };
   return maps[type]?.[key]||[key];
 }
 
 async function updateCompatibleRow(table,id,payload){
   if(!table||!id) throw new Error("Invalid property table or ID.");
-
-  const current=(state[table]||[]).find(
-    x=>String(x.id)===String(id)
-  );
-
+  const current=(state[table]||[]).find(x=>String(x.id)===String(id));
   if(!current) throw new Error("Property record not found.");
 
   const clean={};
-
   for(const [key,value] of Object.entries(payload)){
     if(hasKey(current,key)) clean[key]=value;
   }
+  if(!Object.keys(clean).length) throw new Error("No compatible database fields found for this property.");
+  if(hasKey(current,"updated_at")) clean.updated_at=new Date().toISOString();
 
-  if(!Object.keys(clean).length){
-    throw new Error("No compatible database fields found for this property.");
-  }
-
-  if(hasKey(current,"updated_at")){
-    clean.updated_at=new Date().toISOString();
-  }
-
-  const {data,error}=await supabaseClient
-    .from(table)
-    .update(clean)
-    .eq("id",id)
-    .select()
-    .single();
-
-  if(error){
-    console.error("Property update failed:",{table,id,payload,clean,error});
-    throw error;
-  }
-
-  if(!data) throw new Error("Update completed but no property row was returned.");
-
+  const {data,error}=await supabaseClient.from(table).update(clean).eq("id",id).select().single();
+  if(error) throw error;
   return data;
 }
 
 $("advancedPropertyForm").addEventListener("submit",async e=>{
   e.preventDefault();
-
   const type=$("advPropType").value;
   const id=text($("advPropId").value);
   const x=(state[type]||[]).find(row=>String(row.id)===String(id))||null;
 
-  if(!type||!masterMeta[type]){
-    toast("Invalid property type.",true);
-    return;
-  }
+  if(!type||!masterMeta[type]){ toast("Invalid property type.",true); return; }
 
   const name=mtext($("advName").value);
   const phone=mtext($("advPhone").value);
   const area=mtext($("advArea").value);
   const address=mtext($("advAddress").value);
 
-  if(!name||!phone||!area||!address){
-    toast("Property Name, Phone, Area and Full Address are required.",true);
-    return;
-  }
+  if(!name||!phone||!area||!address){ toast("Property Name, Phone, Area and Full Address are required.",true); return; }
 
   const ratingRaw=mtext($("advRating").value);
   const rating=ratingRaw===""?null:Number(ratingRaw);
-
-  if(rating!==null&&(Number.isNaN(rating)||rating<0||rating>5)){
-    toast("Rating must be between 0 and 5.",true);
-    return;
-  }
+  if(rating!==null&&(Number.isNaN(rating)||rating<0||rating>5)){ toast("Rating must be between 0 and 5.",true); return; }
 
   const latRaw=mtext($("advLat").value);
   const lngRaw=mtext($("advLng").value);
 
   const payload={
-    name,
-    category:mtext($("advCategory").value)||masterMeta[type].category,
-    type:mtext($("advBusinessType").value)||null,
-    owner_id:mtext($("advOwnerId").value)||null,
-    owner_name:mtext($("advOwnerName").value)||null,
-    phone,
-    whatsapp:mtext($("advWhatsapp").value)||null,
-    email:mtext($("advEmail").value)||null,
-    area,
-    city:mtext($("advCity").value)||null,
-    pincode:mtext($("advPincode").value)||null,
-    address,
-    latitude:latRaw===""?null:Number(latRaw),
-    longitude:lngRaw===""?null:Number(lngRaw),
-    google_maps_url:mtext($("advMaps").value)||null,
-    status:$("advStatus").value,
-    featured:$("advFeatured").value==="true",
-    verified:$("advVerified").value==="true",
-    rating,
-    price:mtext($("advPrice").value)||null,
-    timing:mtext($("advTiming").value)||null,
-    facilities:mtext($("advFacilities").value)||null,
-    description:mtext($("advDescription").value)||null
+    name, category:mtext($("advCategory").value)||masterMeta[type].category, type:mtext($("advBusinessType").value)||null,
+    owner_id:mtext($("advOwnerId").value)||null, owner_name:mtext($("advOwnerName").value)||null,
+    phone, whatsapp:mtext($("advWhatsapp").value)||null, email:mtext($("advEmail").value)||null,
+    area, city:mtext($("advCity").value)||null, pincode:mtext($("advPincode").value)||null, address,
+    latitude:latRaw===""?null:Number(latRaw), longitude:lngRaw===""?null:Number(lngRaw),
+    google_maps_url:mtext($("advMaps").value)||null, status:$("advStatus").value,
+    featured:$("advFeatured").value==="true", verified:$("advVerified").value==="true", rating,
+    price:mtext($("advPrice").value)||null, timing:mtext($("advTiming").value)||null,
+    facilities:mtext($("advFacilities").value)||null, description:mtext($("advDescription").value)||null
   };
 
-  /* Map generic fields to the actual column names used by each table. */
   const categoryValues={};
-
   document.querySelectorAll("#categorySpecificFields [data-cat-field]").forEach(el=>{
     const key=el.dataset.catField;
     let value=el.value;
-
-    if(el.tagName==="SELECT"&&(value==="true"||value==="false")){
-      value=value==="true";
-    }else if(el.tagName==="TEXTAREA"&&x&&typeof x[key]==="object"&&x[key]!==null){
-      try{ value=JSON.parse(value); }catch{}
-    }
-
+    if(el.tagName==="SELECT"&&(value==="true"||value==="false")){ value=value==="true"; }
+    else if(el.tagName==="TEXTAREA"&&x&&typeof x[key]==="object"&&x[key]!==null){ try{ value=JSON.parse(value); }catch{} }
     categoryValues[key]=value;
   });
 
-  /* Existing-row schema is used for safe updates. */
-  const savePayload={...payload};
-
   if(x){
     const directAliases={
-      name:["name","title"],
-      category:["category"],
-      type:["type","property_type","business_type"],
-      owner_id:["owner_id","ownerId","user_id"],
-      owner_name:["owner_name"],
-      phone:["phone","mobile","contact_phone"],
-      whatsapp:["whatsapp","whatsapp_number"],
-      email:["email"],
-      area:["area","locality"],
-      city:["city"],
-      pincode:["pincode","postal_code","zip_code"],
-      address:["address","full_address"],
-      latitude:["latitude","lat"],
-      longitude:["longitude","lng"],
-      google_maps_url:["google_maps_url","maps_url","map_link"],
-      status:["status"],
-      featured:["featured","is_featured"],
-      verified:["verified","is_verified","verification_status"],
-      rating:["rating"],
-      price:["price","rent","monthly_rent"],
-      timing:["timing","business_hours","opening_hours"],
-      facilities:["facilities"],
-      description:["description","details"]
+      name:["name","title"], category:["category"], type:["type","property_type","business_type"],
+      owner_id:["owner_id","ownerId","user_id"], owner_name:["owner_name"], phone:["phone","mobile","contact_phone"],
+      whatsapp:["whatsapp","whatsapp_number"], email:["email"], area:["area","locality"], city:["city"],
+      pincode:["pincode","postal_code","zip_code"], address:["address","full_address"], latitude:["latitude","lat"],
+      longitude:["longitude","lng"], google_maps_url:["google_maps_url","maps_url","map_link"], status:["status"],
+      featured:["featured","is_featured"], verified:["verified","is_verified","verification_status"], rating:["rating"],
+      price:["price","rent","monthly_rent"], timing:["timing","business_hours","opening_hours"],
+      facilities:["facilities"], description:["description","details"]
     };
 
     const clean={};
-
     for(const [uiKey,aliases] of Object.entries(directAliases)){
       if(uiKey==="verified"){
         const actual=getCompatibleKey(x,aliases);
-        if(actual){
-          clean[actual]=actual==="verification_status"
-            ?($("advVerified").value==="true"?"verified":"pending")
-            :$("advVerified").value==="true";
-        }
+        if(actual){ clean[actual]=actual==="verification_status"?($("advVerified").value==="true"?"verified":"pending"):$("advVerified").value==="true"; }
         continue;
       }
-
       putCompatibleField(clean,x,aliases,payload[uiKey]);
     }
-
-    for(const [key,value] of Object.entries(categoryValues)){
-      putCompatibleField(
-        clean,
-        x,
-        mapCategoryField(type,key),
-        value
-      );
-    }
-
-    if(hasKey(x,"updated_at")){
-      clean.updated_at=new Date().toISOString();
-    }
-
-    if(!Object.keys(clean).length){
-      throw new Error("No compatible database fields found for this property.");
-    }
+    for(const [key,value] of Object.entries(categoryValues)){ putCompatibleField(clean,x,mapCategoryField(type,key),value); }
+    if(hasKey(x,"updated_at")) clean.updated_at=new Date().toISOString();
 
     const btn=e.submitter||$("advancedPropertyForm").querySelector('button[type="submit"]');
     setBusy(btn,true);
@@ -2777,79 +1979,41 @@ $("advancedPropertyForm").addEventListener("submit",async e=>{
     }finally{
       setBusy(btn,false,"Save Property");
     }
-
     return;
   }
 
-  /* Create flow: use the first existing row as the table schema map. */
+  // Create flow
   const sample=(state[type]||[])[0]||{};
   const clean={};
-
   const directAliases={
-    name:["name","title"],
-    category:["category"],
-    type:["type","property_type","business_type"],
-    owner_id:["owner_id","ownerId","user_id"],
-    owner_name:["owner_name"],
-    phone:["phone","mobile","contact_phone"],
-    whatsapp:["whatsapp","whatsapp_number"],
-    email:["email"],
-    area:["area","locality"],
-    city:["city"],
-    pincode:["pincode","postal_code","zip_code"],
-    address:["address","full_address"],
-    latitude:["latitude","lat"],
-    longitude:["longitude","lng"],
-    google_maps_url:["google_maps_url","maps_url","map_link"],
-    status:["status"],
-    featured:["featured","is_featured"],
-    verified:["verified","is_verified"],
-    rating:["rating"],
-    price:["price","rent","monthly_rent"],
-    timing:["timing","business_hours","opening_hours"],
-    facilities:["facilities"],
-    description:["description","details"]
+    name:["name","title"], category:["category"], type:["type","property_type","business_type"],
+    owner_id:["owner_id","ownerId","user_id"], owner_name:["owner_name"], phone:["phone","mobile","contact_phone"],
+    whatsapp:["whatsapp","whatsapp_number"], email:["email"], area:["area","locality"], city:["city"],
+    pincode:["pincode","postal_code","zip_code"], address:["address","full_address"], latitude:["latitude","lat"],
+    longitude:["longitude","lng"], google_maps_url:["google_maps_url","maps_url","map_link"], status:["status"],
+    featured:["featured","is_featured"], verified:["verified","is_verified"], rating:["rating"],
+    price:["price","rent","monthly_rent"], timing:["timing","business_hours","opening_hours"],
+    facilities:["facilities"], description:["description","details"]
   };
 
   for(const [uiKey,aliases] of Object.entries(directAliases)){
-    if(Object.keys(sample).length){
-      const actual=getCompatibleKey(sample,aliases);
-      if(actual) clean[actual]=payload[uiKey];
-    }else{
-      clean[aliases[0]]=payload[uiKey];
-    }
+    if(Object.keys(sample).length){ const actual=getCompatibleKey(sample,aliases); if(actual) clean[actual]=payload[uiKey]; }
+    else{ clean[aliases[0]]=payload[uiKey]; }
   }
-
   for(const [key,value] of Object.entries(categoryValues)){
-    if(Object.keys(sample).length){
-      putCompatibleField(clean,sample,mapCategoryField(type,key),value);
-    }else{
-      clean[mapCategoryField(type,key)[0]]=value;
-    }
+    if(Object.keys(sample).length){ putCompatibleField(clean,sample,mapCategoryField(type,key),value); }
+    else{ clean[mapCategoryField(type,key)[0]]=value; }
   }
 
-  const newId=(globalThis.crypto&&crypto.randomUUID)
-    ?crypto.randomUUID()
-    :"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0").slice(0,12);
-
+  const newId=(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID():"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0").slice(0,12);
   if(hasKey(sample,"id")||!Object.keys(sample).length) clean.id=newId;
-
-  if(!Object.keys(clean).length){
-    throw new Error("No compatible columns found for this category.");
-  }
 
   const btn=e.submitter||$("advancedPropertyForm").querySelector('button[type="submit"]');
   setBusy(btn,true);
 
   try{
-    const result=await supabaseClient
-      .from(type)
-      .insert(clean)
-      .select()
-      .single();
-
+    const result=await supabaseClient.from(type).insert(clean).select().single();
     if(result.error) throw result.error;
-
     await logAdminAction("create",type,clean.id||newId,null,clean);
     closeAdvancedProperty();
     toast(`${masterMeta[type].singular} added successfully.`);
@@ -2862,161 +2026,191 @@ $("advancedPropertyForm").addEventListener("submit",async e=>{
   }
 });
 
-function previewPublic(type,index){
-  const x=state[type]?.[index];
-  if(!x)return;
+/* =========================================================
+   PREVIEW PUBLIC: EXACT IMAGE 2 CARD POPUP MODAL
+   ========================================================= */
 
-  const title=x.name||"Property";
-  const owner=rowOwner(x)?.full_name||firstVal(x,["owner_name"],"Not available");
-  const verified=propVerified(x);
+function previewPublic(type, index) {
+  const x = state[type]?.[index];
+  if (!x) return;
 
-  const fields=Object.entries(x)
-    .filter(([key])=>!["__index","__type"].includes(key))
-    .slice(0,12)
-    .map(([key,value])=>{
-      if(value===null || value==="") return "";
-      return `
-        <div class="bg-navy-950/60 border border-navy-800 rounded-xl p-3">
-          <div class="text-[10px] uppercase tracking-wider text-slate-500">
-            ${esc(key.replaceAll("_"," "))}
-          </div>
-          <div class="text-sm text-slate-200 mt-1 break-words">
-            ${esc(String(value))}
-          </div>
+  closeUnverifiedPreview();
+
+  const title = x.name || "Property Name";
+  const verified = propVerified(x);
+
+  // Format dynamic Property ID (e.g. 1000000361)
+  let propId = x.property_id || x.slug || x.id || "1000000361";
+  if (typeof propId === "string" && propId.length > 12) {
+    const numericPart = propId.replace(/[^0-9]/g, "");
+    propId = numericPart.length >= 6 ? numericPart.slice(0, 10) : propId.slice(0, 10);
+  }
+
+  // Category Tag (e.g. Boy PG, Girls Hostel, Tiffin Mess, etc.)
+  const categoryTag = x.room_types || x.gender || x.category || masterMeta[type]?.singular || "Student PG";
+
+  // High quality banner photo fallback
+  const bannerImg = x.image || x.photo || "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80";
+
+  const phone = x.phone || "";
+  const area = x.area || "Area Not Specified";
+  const address = x.address || x.full_address || `${area}, India`;
+  const timing = x.timing || x.opening_time || "Open 24 hours";
+  const rating = (x.rating && Number(x.rating) > 0) ? Number(x.rating).toFixed(1) : "4.0";
+  const callHref = phone ? `tel:${phone}` : "javascript:void(0);";
+
+  const modal = document.createElement("div");
+  modal.id = "unverifiedPreviewModal";
+  modal.className = "fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn";
+
+  modal.innerHTML = `
+    <div class="relative w-full max-w-[385px] bg-white text-slate-900 rounded-[28px] overflow-hidden shadow-2xl transition-all font-sans border border-slate-200/80 animate-pop">
+      
+      <!-- TOP BANNER CONTAINER -->
+      <div class="relative w-full h-52 bg-slate-950 overflow-hidden">
+        <img 
+          src="${esc(bannerImg)}" 
+          alt="${esc(title)}" 
+          class="w-full h-full object-cover brightness-95"
+          onerror="this.src='https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80'"
+        />
+        
+        <!-- Subtle dark gradient for badge readability -->
+        <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60 pointer-events-none"></div>
+
+        <!-- Top-Left Badge (Category / Gender) -->
+        <div class="absolute top-3.5 left-3.5">
+          <span class="bg-white/95 backdrop-blur text-slate-900 text-[11px] font-extrabold px-3.5 py-1.5 rounded-full shadow-md tracking-wide">
+            ${esc(categoryTag)}
+          </span>
         </div>
-      `;
-    }).join("");
 
-  const modal=document.createElement("div");
+        <!-- Top-Right Badge (Property ID) -->
+        <div class="absolute top-3.5 right-3.5">
+          <span class="bg-slate-900/90 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md border border-white/10">
+            ID #${esc(propId)}
+          </span>
+        </div>
 
-  modal.id="unverifiedPreviewModal";
-  modal.className="modal fixed inset-0 z-[400] flex items-center justify-center p-3";
+        <!-- Bottom-Left Badge (Verified Listing) -->
+        <div class="absolute bottom-3.5 left-3.5">
+          ${
+            verified
+              ? `<span class="bg-[#16834b] text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md inline-flex items-center gap-1.5">
+                   <i class="fa-solid fa-circle-check text-white text-xs"></i> Verified Listing
+                 </span>`
+              : `<span class="bg-[#d97706] text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md inline-flex items-center gap-1.5">
+                   <i class="fa-solid fa-clock text-white text-xs"></i> Under Review
+                 </span>`
+          }
+        </div>
+      </div>
 
-  modal.innerHTML=`
-    <div class="card rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden">
-
-      <div class="p-5 border-b border-navy-800 flex items-start justify-between gap-4">
-        <div>
-          <div class="text-[10px] uppercase tracking-widest text-gold-400 font-bold">
-            PROPERTY VERIFICATION
-          </div>
-
-          <h2 class="text-2xl font-display font-bold mt-1">
+      <!-- CARD BODY DETAILS -->
+      <div class="p-6 bg-white space-y-3.5 text-left">
+        
+        <!-- Property Name & Close X -->
+        <div class="flex items-start justify-between gap-2">
+          <h2 class="text-[22px] font-extrabold text-[#0f172a] leading-snug tracking-tight">
             ${esc(title)}
           </h2>
-
-          <p class="text-xs text-slate-400 mt-1">
-            ${esc(type)} • ID ${esc(x.id||"—")}
-          </p>
+          <button 
+            type="button" 
+            onclick="closeUnverifiedPreview()" 
+            class="w-8 h-8 -mt-1 -mr-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-xs transition"
+            title="Close"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
 
-        <button
-          type="button"
-          onclick="closeUnverifiedPreview()"
-          class="w-10 h-10 rounded-xl bg-navy-850 hover:bg-navy-800 flex items-center justify-center"
-        >
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="p-5 overflow-y-auto max-h-[65vh]">
-
-        <div class="grid sm:grid-cols-3 gap-3 mb-5">
-
-          <div class="master-mini-card p-4">
-            <div class="text-[10px] text-slate-500 uppercase">Owner</div>
-            <div class="font-bold mt-1">
-              ${esc(owner)}
-            </div>
-          </div>
-
-          <div class="master-mini-card p-4">
-            <div class="text-[10px] text-slate-500 uppercase">Status</div>
-            <div class="font-bold text-gold-300 mt-1">
-              ${esc(propStatus(x))}
-            </div>
-          </div>
-
-          <div class="master-mini-card p-4">
-            <div class="text-[10px] text-slate-500 uppercase">Verification</div>
-            <div class="font-bold mt-1 ${verified?"text-emerald-400":"text-red-300"}">
-              ${verified?"Verified":"Not Verified"}
-            </div>
-          </div>
-
+        <!-- Property ID Line -->
+        <div class="flex items-center gap-2 text-[#2563eb] font-bold text-xs">
+          <i class="fa-solid fa-fingerprint text-sm"></i>
+          <span>Property ID: #${esc(propId)}</span>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          ${fields}
+        <!-- Area Line -->
+        <div class="flex items-center gap-2 text-[#b45309] font-bold text-xs">
+          <i class="fa-solid fa-location-dot text-sm text-[#d97706]"></i>
+          <span>${esc(area)}</span>
         </div>
 
-      </div>
+        <!-- Full Address Line -->
+        <div class="flex items-start gap-2.5 text-slate-500 text-xs leading-relaxed">
+          <i class="fa-solid fa-house text-slate-400 mt-0.5 text-xs flex-shrink-0"></i>
+          <span class="line-clamp-2">${esc(address)}</span>
+        </div>
 
-      <div class="p-5 border-t border-navy-800 flex flex-wrap justify-end gap-2">
+        <!-- Timing Line -->
+        <div class="flex items-center gap-2.5 text-slate-500 text-xs">
+          <i class="fa-regular fa-clock text-slate-400 text-xs flex-shrink-0"></i>
+          <span>${esc(timing)}</span>
+        </div>
 
-        <button
-          type="button"
-          class="master-action"
-          onclick="closeUnverifiedPreview()"
-        >
-          Close
-        </button>
+        <!-- Rating Badge -->
+        <div class="pt-1">
+          <span class="inline-flex items-center gap-1.5 bg-[#fef9c3] text-[#854d0e] text-xs font-extrabold px-3 py-1.5 rounded-xl border border-[#fef08a]">
+            <i class="fa-solid fa-star text-[#eab308] text-xs"></i>
+            <span>${rating} / 5</span>
+          </span>
+        </div>
 
-        <button
-          type="button"
-          class="master-action view-details"
-          onclick="openPropertyEditorFromPreview('${esc(type)}','${esc(x.id)}')"
-        >
-          <i class="fa-solid fa-pen-to-square mr-1"></i>
-          View / Edit All Details
-        </button>
+        <!-- ACTION BUTTONS -->
+        <div class="grid grid-cols-2 gap-3 pt-3">
+          <button 
+            type="button" 
+            onclick="openPropertyEditorFromPreview('${esc(type)}','${esc(x.id)}')" 
+            class="w-full py-3.5 px-3 bg-[#0a192f] hover:bg-[#132845] text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md transition"
+          >
+            <i class="fa-solid fa-eye text-xs"></i> View Details
+          </button>
 
-        <button
-          type="button"
-          class="master-action success"
-          onclick="setPropertyVerification('${esc(type)}','${esc(x.id)}',true)"
-        >
-          <i class="fa-solid fa-shield-check mr-1"></i>
-          Verify Property
-        </button>
+          <a 
+            href="${callHref}" 
+            ${phone ? "" : "onclick=\"toast('Phone number not available', true)\""}
+            class="w-full py-3.5 px-3 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-slate-800 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition"
+          >
+            <i class="fa-solid fa-phone text-xs"></i> Call
+          </a>
+        </div>
 
       </div>
 
     </div>
   `;
 
+  // Close when clicking on backdrop
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeUnverifiedPreview();
+  });
+
   document.body.appendChild(modal);
 }
-
 
 function closeUnverifiedPreview(){
   const modal=document.getElementById("unverifiedPreviewModal");
   if(modal) modal.remove();
 }
 
-
-function openPropertyEditorFromPreview(type,id){
-
+function openPropertyEditorFromPreview(type, id){
   closeUnverifiedPreview();
-
-  const index=(state[type]||[]).findIndex(
-    x=>String(x.id)===String(id)
-  );
-
-  if(index===-1){
-    toast("Property record not found.",true);
+  const index = (state[type] || []).findIndex(x => String(x.id) === String(id));
+  if(index === -1){
+    toast("Property record not found.", true);
     return;
   }
-
-  openAdvancedProperty(type,index);
+  openAdvancedProperty(type, index);
 }
+
 async function togglePropertyField(type,id,field,value,label){
   const x=state[type]?.find(y=>String(y.id)===String(id));if(!x)return;
-  if(!hasKey(x,field)){toast(`Column '${field}' is not present in ${type}. Run the migration first.`,true);return}
+  if(!hasKey(x,field)){toast(`Column '${field}' is not present in ${type}.`,true);return}
   const old=x[field];const r=await supabaseClient.from(type).update({[field]:value}).eq("id",id);
   if(r.error){toast(r.error.message,true);return}
   await logAdminAction(label||"update",type,id,old,value);toast(`${label||"Property"} updated.`);await loadAll();
 }
+
 async function bulkPropertyAction(action){
   const selected=[...document.querySelectorAll(".prop-select:checked")].map(c=>({type:c.dataset.type,id:c.dataset.id}));
   if(!selected.length){toast("Select at least one property.",true);return}
@@ -3032,7 +2226,6 @@ async function bulkPropertyAction(action){
   toast("Bulk action completed.");await loadAll();
 }
 
-
 /* Student / Owner master controls */
 function renderStudents(filter=""){
  const q=String(filter||"").toLowerCase();
@@ -3044,13 +2237,12 @@ function renderStudents(filter=""){
    return `<tr class="border-t border-navy-800"><td class="p-3"><b>${esc(s.full_name||"Student")}</b><div class="text-[10px] text-slate-500">${esc(s.id)}</div></td><td class="p-3">${esc(s.phone||"—")}</td><td class="p-3">${esc(s.email||"—")}</td><td class="p-3">${masterBadge(disabled?"Disabled":"Active",disabled?"red":"green")}</td><td class="p-3">${bookings}</td><td class="p-3">${reviews}</td><td class="p-3 whitespace-nowrap"><button class="master-action" onclick="openStudentDrawer('${esc(s.id)}')">View</button><button class="master-action ml-1" onclick="toggleUserStatus('${esc(s.id)}',${disabled})">${disabled?"Enable":"Disable"}</button><button class="master-action danger ml-1" onclick="deleteProfile('${esc(s.id)}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;
  }).join(""):emptyRow(7,"No students found.");
 }
+
 function openStudentDrawer(id){
  const s=state.students.find(x=>String(x.id)===String(id));if(!s)return;
- 
  const bookings=(state.advanced.requests.student_bookings||[]).filter(b=>String(firstVal(b,["student_id","user_id"],""))===String(id));
  const reviews=(state.advanced.requests.reviews||[]).filter(b=>String(firstVal(b,["student_id","user_id"],""))===String(id));
 
- // Bookings details list map karna
  const bookingsHTML = bookings.length ? bookings.map(b => {
    const p = resolveProperty(b);
    const propName = p?.x?.name || firstVal(b, ["property_name", "title"], "Property");
@@ -3063,7 +2255,6 @@ function openStudentDrawer(id){
    </div>`;
  }).join("") : `<div class="text-xs text-slate-400 mt-2">No related booking records.</div>`;
 
- // Reviews details list map karna
  const reviewsHTML = reviews.length ? reviews.map(r => {
    const p = resolveProperty(r);
    const propName = p?.x?.name || firstVal(r, ["property_name", "title"], "Property");
@@ -3094,6 +2285,7 @@ function openStudentDrawer(id){
    </div>
  `);
 }
+
 async function toggleUserStatus(id,currentlyDisabled){
  const s=[...state.students,...state.owners].find(x=>String(x.id)===String(id));if(!s)return;
  const field=hasKey(s,"status")?"status":hasKey(s,"account_status")?"account_status":null;
@@ -3102,6 +2294,7 @@ async function toggleUserStatus(id,currentlyDisabled){
  const r=await supabaseClient.from("profiles").update({[field]:value}).eq("id",id);if(r.error){toast(r.error.message,true);return}
  await logAdminAction(currentlyDisabled?"enable_user":"disable_user","profiles",id,s,{[field]:value});toast(`User ${currentlyDisabled?"enabled":"disabled"}.`);await loadAll();
 }
+
 function renderOwners(){
  const arr=state.owners;
  $("ownerBody").innerHTML=arr.length?arr.map(o=>{
@@ -3120,20 +2313,9 @@ function renderRequestsModule(table){
     claim_requests:{section:"claim-requests",title:"Claim Requests",icon:"fa-handshake",cols:["Request ID","Property","Claimant","Phone","Email","Date","Status"]},
     verification_requests:{section:"verification",title:"Verification Center",icon:"fa-circle-check",cols:["Request ID","Property","Owner","Type","Date","Status"]},
     student_bookings:{
-  section:"bookings",
-  title:"Bookings",
-  icon:"fa-calendar-check",
-  cols:[
-    "Booking ID",
-    "Student",
-    "Property",
-    "Owner",
-    "Join Date",
-    "Left Date",
-    "Duration",
-    "Status"
-  ]
-},
+      section:"bookings", title:"Bookings", icon:"fa-calendar-check",
+      cols:["Booking ID","Student","Property","Owner","Join Date","Left Date","Duration","Status"]
+    },
     reviews:{section:"reviews",title:"Reviews & Moderation",icon:"fa-star",cols:["Review ID","Student","Property","Rating","Review","Date","Status"]},
     property_reports:{section:"reports",title:"Reports & Complaints",icon:"fa-triangle-exclamation",cols:["Report ID","Reporter","Property","Reason","Date","Status"]}
   };
@@ -3153,6 +2335,7 @@ function renderRequestsModule(table){
   <div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr>${headers}<th class="p-3">Actions</th></tr></thead><tbody>${filtered.length?filtered.map((x,i)=>requestRow(table,x,i)).join(""):emptyRow(cfg.cols.length+1,"No records found.")}</tbody></table></div>`;
   $("moduleSearch_"+table)?.addEventListener("input",()=>renderRequestsModule(table));
 }
+
 function requestRow(table,x,i){
   const id=firstVal(x,["id","request_id","booking_id"],"—"),status=statusNorm(x);
   const prop=resolveProperty(x),owner=resolveOwner(x),student=resolveStudent(x);
@@ -3160,44 +2343,12 @@ function requestRow(table,x,i){
   if(table==="listing_requests")cells=[id,owner?.full_name||firstVal(x,["owner_name"],"—"),firstVal(x,["name","property_name","title"],"—"),firstVal(x,["category","property_type"],"—"),firstVal(x,["area"],"—"),firstVal(x,["phone"],"—"),shortDate(dateCreated(x)),masterBadge(status,status==="approved"||status==="published"?"green":status==="rejected"?"red":"")];
   if(table==="claim_requests")cells=[id,firstVal(x,["property_name","name"],prop?.x?.name||"—"),firstVal(x,["claimant_name","name","full_name"],"—"),firstVal(x,["phone","claimant_phone"],"—"),firstVal(x,["email","claimant_email"],"—"),shortDate(dateCreated(x)),masterBadge(status,status==="approved"?"green":status==="rejected"?"red":"")];
   if(table==="verification_requests")cells=[id,prop?.x?.name||firstVal(x,["property_name"],"—"),owner?.full_name||firstVal(x,["owner_name"],"—"),firstVal(x,["property_table","property_type"],"—"),shortDate(dateCreated(x)),masterBadge(status,status==="approved"?"green":status==="rejected"?"red":"")];
-  if(table==="student_bookings")
-cells=[
-  id,
-  student?.full_name||firstVal(x,["student_name"],"—"),
-  prop?.x?.name||firstVal(x,["property_name"],"—"),
-  owner?.full_name||firstVal(x,["owner_name"],"—"),
-
-  shortDate(
-    firstVal(
-      x,
-      ["joined_date","booking_date","date","start_date","created_at"],
-      null
-    )
-  ),
-
-  shortDate(
-    firstVal(
-      x,
-      ["left_date"],
-      null
-    )
-  ),
-
-  firstVal(x,["duration","months","days"],"—"),
-
-  masterBadge(
-    status,
-    status==="active"||status==="confirmed"
-      ?"green"
-      :status==="rejected"||status==="cancelled"
-      ?"red"
-      :""
-  )
-];
+  if(table==="student_bookings") cells=[id,student?.full_name||firstVal(x,["student_name"],"—"),prop?.x?.name||firstVal(x,["property_name"],"—"),owner?.full_name||firstVal(x,["owner_name"],"—"),shortDate(firstVal(x,["joined_date","booking_date","date","start_date","created_at"],null)),shortDate(firstVal(x,["left_date"],null)),firstVal(x,["duration","months","days"],"—"),masterBadge(status,status==="active"||status==="confirmed"?"green":status==="rejected"||status==="cancelled"?"red":"")];
   if(table==="reviews")cells=[id,student?.full_name||firstVal(x,["student_name"],"—"),prop?.x?.name||firstVal(x,["property_name"],"—"),`<span class="text-gold-300">${esc(firstVal(x,["rating"],"—"))} ★</span>`,`<span class="max-w-xs block truncate">${esc(firstVal(x,["review","comment","text"],"—"))}</span>`,shortDate(dateCreated(x)),masterBadge(status,status==="published"?"green":status==="hidden"?"red":"")];
   if(table==="property_reports")cells=[id,student?.full_name||firstVal(x,["reporter_name","name"],"—"),prop?.x?.name||firstVal(x,["property_name"],"—"),firstVal(x,["reason","report_reason"],"—"),shortDate(dateCreated(x)),masterBadge(status,status==="resolved"?"green":status==="rejected"?"red":"")];
   return `<tr>${cells.map(c=>`<td class="p-3">${typeof c==="string"?c:esc(c)}</td>`).join("")}<td class="p-3 whitespace-nowrap">${requestActions(table,x)}</td></tr>`;
 }
+
 function resolveProperty(r){
   const id=firstVal(r,["property_id","listing_id"],"");const table=firstVal(r,["property_table","property_type"],"");
   if(table&&state[table]){const x=state[table].find(p=>String(p.id)===String(id));if(x)return{x,type:table,index:state[table].indexOf(x)}}
@@ -3206,6 +2357,7 @@ function resolveProperty(r){
 }
 function resolveOwner(r){const id=firstVal(r,["owner_id","claimant_id","user_id"],"");return state.owners.find(o=>String(o.id)===String(id))||null}
 function resolveStudent(r){const id=firstVal(r,["student_id","user_id","reporter_id"],"");return state.students.find(o=>String(o.id)===String(id))||null}
+
 function requestActions(table,x){
   const id=firstVal(x,["id","request_id","booking_id"],"");let a=`<button class="master-action" onclick="openRecordDrawer('${table}','${esc(id)}')"><i class="fa-solid fa-eye"></i></button>`;
   if(table==="listing_requests")a+=`<button class="master-action success ml-1" onclick="processListing('${esc(id)}','approve')">Approve</button><button class="master-action ml-1" onclick="processListing('${esc(id)}','correction')">Correction</button><button class="master-action danger ml-1" onclick="processListing('${esc(id)}','reject')">Reject</button>`;
@@ -3216,10 +2368,12 @@ function requestActions(table,x){
   if(table==="property_reports")a+=`<button class="master-action ml-1" onclick="processStatus('${table}','${esc(id)}','investigating')">Investigate</button><button class="master-action success ml-1" onclick="processStatus('${table}','${esc(id)}','resolved')">Resolve</button><button class="master-action danger ml-1" onclick="processStatus('${table}','${esc(id)}','rejected')">Reject</button>`;
   return a;
 }
+
 function openRecordDrawer(table,id){
   const rows=state.advanced.requests[table]||[],x=rows.find(r=>String(firstVal(r,["id","request_id","booking_id"],""))===String(id));if(!x)return;
   openMasterDrawer(table.replaceAll("_"," ").toUpperCase(),`${table} • ${id}`,`<div class="grid sm:grid-cols-2 gap-3">${Object.entries(x).map(([k,v])=>`<div class="master-mini-card p-3"><div class="text-[10px] uppercase text-slate-500 font-bold">${esc(k)}</div><div class="text-sm text-white mt-1 break-words">${esc(typeof v==="object"?JSON.stringify(v):v??"—")}</div></div>`).join("")}</div>`);
 }
+
 async function processStatus(table,id,status){
   if(!confirm(`Set ${table} #${id} to '${status}'?`))return;
   const x=(state.advanced.requests[table]||[]).find(r=>String(r.id)===String(id));if(!x)return;
@@ -3238,107 +2392,41 @@ async function processListing(id,action){
     toast("Reject reason is required.",true);
     return;
   }
-
   if(action==="correction"&&!prompt("Correction message:")){
     toast("Correction message is required.",true);
     return;
   }
 
   if(action==="approve"){
-    const {data,error}=await supabaseClient.rpc(
-      "approve_listing_request",
-      {p_request_id:Number(id)}
-    );
-
-    if(error){
-      toast("Listing approval failed: "+error.message,true);
-      return;
-    }
-
-    await logAdminAction(
-      "listing_approve",
-      "listing_requests",
-      id,
-      r,
-      data
-    );
-
-    toast("Listing approved and added to the live property table.");
+    const {data,error}=await supabaseClient.rpc("approve_listing_request",{p_request_id:Number(id)});
+    if(error){ toast("Listing approval failed: "+error.message,true); return; }
+    await logAdminAction("listing_approve","listing_requests",id,r,data);
+    toast("Listing approved and added to live property table.");
     await loadAll();
     return;
   }
 
-  const status=action==="reject"
-    ?"rejected"
-    :"correction_requested";
+  const status=action==="reject"?"rejected":"correction_requested";
+  if(!hasKey(r,"status")){ toast("listing_requests.status column is required.",true); return; }
 
-  if(!hasKey(r,"status")){
-    toast("listing_requests.status column is required.",true);
-    return;
-  }
+  const q=await supabaseClient.from("listing_requests").update({status}).eq("id",id);
+  if(q.error){ toast(q.error.message,true); return; }
 
-  const q=await supabaseClient
-    .from("listing_requests")
-    .update({status})
-    .eq("id",id);
-
-  if(q.error){
-    toast(q.error.message,true);
-    return;
-  }
-
-  await logAdminAction(
-    "listing_"+action,
-    "listing_requests",
-    id,
-    r,
-    {status}
-  );
-
+  await logAdminAction("listing_"+action,"listing_requests",id,r,{status});
   toast("Listing request updated.");
   await loadAll();
 }
- async function processClaim(claimId, action){
 
-  const note =
-    action === 'reject'
-      ? (prompt('Reason for rejection (optional):') || '').trim()
-      : '';
-
+async function processClaim(claimId, action){
+  const note = action === 'reject' ? (prompt('Reason for rejection (optional):') || '').trim() : '';
   try{
-
-    const {
-      data,
-      error
-    } = await db.rpc(
-      'process_owner_claim',
-      {
-        p_claim_id:Number(claimId),
-        p_action:action,
-        p_admin_note:note || null
-      }
-    );
-
-    if(error){
-      throw error;
-    }
-
-    alert(
-      action === 'approve'
-        ? 'Claim approved successfully.'
-        : 'Claim rejected successfully.'
-    );
-
-    await loadClaimRequests();
-
+    const { data, error } = await supabaseClient.rpc('process_owner_claim',{ p_claim_id:Number(claimId), p_action:action, p_admin_note:note || null });
+    if(error) throw error;
+    alert(action === 'approve' ? 'Claim approved successfully.' : 'Claim rejected successfully.');
+    await loadAll();
   }catch(error){
-
     console.error('Claim processing error:',error);
-
-    alert(
-      error.message ||
-      'Unable to process claim request.'
-    );
+    alert(error.message || 'Unable to process claim request.');
   }
 } 
 
@@ -3368,7 +2456,7 @@ function renderAnalytics(){
   const cats=MASTER_TYPES.map(t=>{const a=state[t]||[];return{name:masterMeta[t].category,properties:a.length,views:a.reduce((s,x)=>s+propViews(x),0),bookings:a.reduce((s,x)=>s+propBookings(x),0),reviews:a.reduce((s,x)=>s+propReviews(x),0),rating:a.filter(x=>propRating(x)>0).reduce((s,x)=>s+propRating(x),0)/(a.filter(x=>propRating(x)>0).length||1)}})
   const areas={};props.forEach(x=>{const a=x.area||"Unknown";areas[a]??={properties:0,views:0};areas[a].properties++;areas[a].views+=propViews(x)});
   const topAreas=Object.entries(areas).sort((a,b)=>b[1].properties-a[1].properties).slice(0,12);
-  el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">Advanced Analytics</h2><p class="text-xs text-slate-400">Calculated from currently available live records. Missing analytics tables are never treated as zero.</p></div></div>
+  el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">Advanced Analytics</h2><p class="text-xs text-slate-400">Calculated from currently available live records.</p></div></div>
   <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">${[["Properties",props.length],["Views",props.reduce((s,x)=>s+propViews(x),0)],["Bookings",props.reduce((s,x)=>s+propBookings(x),0)],["Reviews",props.reduce((s,x)=>s+propReviews(x),0)],["Avg Rating",(props.filter(x=>propRating(x)>0).reduce((s,x)=>s+propRating(x),0)/(props.filter(x=>propRating(x)>0).length||1)).toFixed(2)]].map(x=>`<div class="master-mini-card p-4"><div class="text-2xl font-bold">${esc(x[1])}</div><div class="text-xs text-slate-400 mt-1">${x[0]}</div></div>`).join("")}</div>
   <div class="grid lg:grid-cols-2 gap-5"><div class="card rounded-2xl p-5"><h3 class="font-bold">Category Performance</h3><div class="mt-4 space-y-2">${cats.map(c=>`<div class="master-mini-card p-3"><div class="flex justify-between"><b>${esc(c.name)}</b><span class="text-gold-300">${c.rating.toFixed(1)} ★</span></div><div class="text-[10px] text-slate-400 mt-1">${c.properties} properties • ${c.views} views • ${c.bookings} bookings • ${c.reviews} reviews</div></div>`).join("")}</div></div>
   <div class="card rounded-2xl p-5"><h3 class="font-bold">Area Performance</h3><div class="mt-4 space-y-2">${topAreas.length?topAreas.map(([a,v])=>`<div class="flex justify-between master-mini-card p-3"><span>${esc(a)}</span><span class="text-gold-300">${v.properties} properties • ${v.views} views</span></div>`).join(""):'<div class="text-sm text-slate-500">No area data.</div>'}</div></div></div>`;
@@ -3388,10 +2476,7 @@ function renderNotifications(){
   const el=$("section-notifications");
   if(!el)return;
   const rows=state.advanced.requests.admin_notifications||[];
-  
   el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">Notifications</h2><p class="text-xs text-slate-400">Operational alerts and pending actions.</p></div><button class="master-action" onclick="markAllNotificationsRead()">Mark all as read</button></div><div class="space-y-2">${rows.length?rows.slice(0,100).map(x=>`<button class="master-mini-card p-4 w-full text-left" onclick="markNotificationRead('${esc(x.id)}')"><div class="flex justify-between"><b>${esc(firstVal(x,["title","type"],"Notification"))}</b>${String(firstVal(x,["status"],"unread"))==="unread"?'<span class="badge badge-red">Unread</span>':'<span class="badge badge-green">Read</span>'}</div><div class="text-xs text-slate-400 mt-1">${esc(firstVal(x,["message","body","description"],""))}</div><div class="text-[10px] text-slate-500 mt-2">${fmtDate(dateCreated(x))}</div></button>`).join(""):'<div class="master-mini-card p-6 text-center text-slate-400">No notifications.</div>'}</div>`;
-  
-  // Jaise hi notification section khulega, red badge/bell count 0 ho jayega
   updateNotificationBadgeCount();
 }
 
@@ -3426,67 +2511,42 @@ function updateNotificationBadgeCount(){
   const bellCountEl=$("masterBellCount");
   if(bellCountEl){
     bellCountEl.textContent=unreadCount;
-    if(unreadCount===0){
-      bellCountEl.classList.add("hidden");
-    }else{
-      bellCountEl.classList.remove("hidden");
-    }
+    if(unreadCount===0){ bellCountEl.classList.add("hidden"); }
+    else{ bellCountEl.classList.remove("hidden"); }
   }
 }
-function renderActivity(){const el=$("section-activity");if(!el)return;const rows=state.advanced.requests.admin_activity_logs||[];el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">Activity & Change History</h2><p class="text-xs text-slate-400">Admin actions, entity changes and timestamps.</p></div><button class="master-action" onclick="exportCurrentCSV('admin_activity_logs')">Export CSV</button></div><div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr><th class="p-3">Action</th><th class="p-3">Entity</th><th class="p-3">Entity ID</th><th class="p-3">Admin</th><th class="p-3">Timestamp</th><th class="p-3">Old</th><th class="p-3">New</th></tr></thead><tbody>${rows.length?rows.slice(0,200).map(x=>`<tr><td class="p-3 font-bold">${esc(firstVal(x,["action"],"—"))}</td><td class="p-3">${esc(firstVal(x,["entity_type","entity"],"—"))}</td><td class="p-3">${esc(firstVal(x,["entity_id"],"—"))}</td><td class="p-3">${esc(firstVal(x,["admin_email","admin_id"],"—"))}</td><td class="p-3">${fmtDate(firstVal(x,["created_at","timestamp"],null))}</td><td class="p-3 max-w-xs truncate">${esc(JSON.stringify(firstVal(x,["old_value"],"")))}</td><td class="p-3 max-w-xs truncate">${esc(JSON.stringify(firstVal(x,["new_value"],"")))}</td></tr>`).join(""):emptyRow(7,"No activity logs found.")}</tbody></table></div>`}
-function renderSettings(){const el=$("section-settings");if(!el)return;const rows=state.advanced.requests.system_settings||[];const keys=["website_name","website_contact","website_whatsapp","website_email","student_registration","owner_registration","booking_enabled","booking_approval_mode","review_auto_publish","maintenance_mode","maintenance_message"];el.innerHTML=`<div><h2 class="text-xl font-bold">System Settings</h2><p class="text-xs text-slate-400">Only settings present in your Supabase table are shown as live values.</p></div><div class="grid lg:grid-cols-2 gap-3">${keys.map(k=>{const x=rows.find(r=>String(firstVal(r,["key","setting_key","name"],""))===k);return `<div class="master-mini-card p-4"><div class="text-xs font-bold text-gold-300">${esc(k)}</div><div class="text-sm mt-2">${x?esc(firstVal(x,["value","setting_value"],"—")):'<span class="text-slate-500">Not configured</span>'}</div>${x?`<button class="master-action mt-3" onclick="editSetting('${esc(k)}')">Edit</button>`:""}</div>`}).join("")}</div>`}
+
+function renderActivity(){
+  const el=$("section-activity");if(!el)return;const rows=state.advanced.requests.admin_activity_logs||[];
+  el.innerHTML=`<div class="master-section-head"><div><h2 class="text-xl font-bold">Activity & Change History</h2><p class="text-xs text-slate-400">Admin actions, entity changes and timestamps.</p></div><button class="master-action" onclick="exportCurrentCSV('admin_activity_logs')">Export CSV</button></div><div class="card rounded-2xl master-scroll"><table class="w-full text-left text-xs master-table"><thead class="bg-navy-950 text-gold-300"><tr><th class="p-3">Action</th><th class="p-3">Entity</th><th class="p-3">Entity ID</th><th class="p-3">Admin</th><th class="p-3">Timestamp</th><th class="p-3">Old</th><th class="p-3">New</th></tr></thead><tbody>${rows.length?rows.slice(0,200).map(x=>`<tr><td class="p-3 font-bold">${esc(firstVal(x,["action"],"—"))}</td><td class="p-3">${esc(firstVal(x,["entity_type","entity"],"—"))}</td><td class="p-3">${esc(firstVal(x,["entity_id"],"—"))}</td><td class="p-3">${esc(firstVal(x,["admin_email","admin_id"],"—"))}</td><td class="p-3">${fmtDate(firstVal(x,["created_at","timestamp"],null))}</td><td class="p-3 max-w-xs truncate">${esc(JSON.stringify(firstVal(x,["old_value"],"")))}</td><td class="p-3 max-w-xs truncate">${esc(JSON.stringify(firstVal(x,["new_value"],"")))}</td></tr>`).join(""):emptyRow(7,"No activity logs found.")}</tbody></table></div>`;
+}
+
+function renderSettings(){
+  const el=$("section-settings");if(!el)return;const rows=state.advanced.requests.system_settings||[];
+  const keys=["website_name","website_contact","website_whatsapp","website_email","student_registration","owner_registration","booking_enabled","booking_approval_mode","review_auto_publish","maintenance_mode","maintenance_message"];
+  el.innerHTML=`<div><h2 class="text-xl font-bold">System Settings</h2><p class="text-xs text-slate-400">Only settings present in your Supabase table are shown as live values.</p></div><div class="grid lg:grid-cols-2 gap-3">${keys.map(k=>{const x=rows.find(r=>String(firstVal(r,["key","setting_key","name"],""))===k);return `<div class="master-mini-card p-4"><div class="text-xs font-bold text-gold-300">${esc(k)}</div><div class="text-sm mt-2">${x?esc(firstVal(x,["value","setting_value"],"—")):'<span class="text-slate-500">Not configured</span>'}</div>${x?`<button class="master-action mt-3" onclick="editSetting('${esc(k)}')">Edit</button>`:""}</div>`}).join("")}</div>`;
+}
+
 async function editSetting(key){
   const rows = state.advanced.requests.system_settings || [];
-
-  const x = rows.find(r =>
-    String(firstVal(r, ["key", "setting_key", "name"], "")) === String(key)
-  );
-
-  if(!x){
-    toast("Setting record not found.", true);
-    return;
-  }
-
-  const v = prompt(
-    `New value for ${key}`,
-    firstVal(x, ["value", "setting_value"], "")
-  );
-
+  const x = rows.find(r => String(firstVal(r, ["key", "setting_key", "name"], "")) === String(key));
+  if(!x){ toast("Setting record not found.", true); return; }
+  const v = prompt(`New value for ${key}`, firstVal(x, ["value", "setting_value"], ""));
   if(v === null) return;
 
   const field = hasKey(x, "value") ? "value" : "setting_value";
+  const { data, error } = await supabaseClient.from("system_settings").update({ [field]: v, updated_at: new Date().toISOString() }).eq("key", key).select().single();
+  if(error){ console.error("System setting update failed:", error); toast(error.message, true); return; }
 
-  const oldValue = x[field];
-
-  const { data, error } = await supabaseClient
-    .from("system_settings")
-    .update({
-      [field]: v,
-      updated_at: new Date().toISOString()
-    })
-    .eq("key", key)
-    .select()
-    .single();
-
-  if(error){
-    console.error("System setting update failed:", error);
-    toast(error.message, true);
-    return;
-  }
-
-  await logAdminAction(
-    "setting_update",
-    "system_settings",
-    key,
-    x,
-    {[field]: v}
-  );
-
+  await logAdminAction("setting_update","system_settings",key,x,{[field]: v});
   toast("Setting updated successfully.");
-
   await loadAll();
 }
-function renderCategories(){const el=$("section-categories");if(!el)return;el.innerHTML=`<div><h2 class="text-xl font-bold">Category Settings</h2><p class="text-xs text-slate-400">Five platform categories with category-specific admin fields.</p></div><div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3">${MASTER_TYPES.map(t=>`<div class="master-mini-card p-5"><div class="flex justify-between"><i class="fa-solid ${masterMeta[t].icon} text-gold-400 text-xl"></i>${masterBadge((state[t]||[]).length,"green")}</div><h3 class="font-bold mt-3">${esc(masterMeta[t].title)}</h3><div class="text-xs text-slate-400 mt-1">${esc(categoryFieldSummary(t))}</div><button class="master-action mt-4" onclick="showSection('${t}')">Manage Category</button></div>`).join("")}</div>`}
+
+function renderCategories(){
+  const el=$("section-categories");if(!el)return;
+  el.innerHTML=`<div><h2 class="text-xl font-bold">Category Settings</h2><p class="text-xs text-slate-400">Five platform categories with category-specific admin fields.</p></div><div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3">${MASTER_TYPES.map(t=>`<div class="master-mini-card p-5"><div class="flex justify-between"><i class="fa-solid ${masterMeta[t].icon} text-gold-400 text-xl"></i>${masterBadge((state[t]||[]).length,"green")}</div><h3 class="font-bold mt-3">${esc(masterMeta[t].title)}</h3><div class="text-xs text-slate-400 mt-1">${esc(categoryFieldSummary(t))}</div><button class="master-action mt-4" onclick="showSection('${t}')">Manage Category</button></div>`).join("")}</div>`;
+}
 function categoryFieldSummary(t){return t==="hostels"?"Rent, rooms, sharing, beds, food, facilities, rules":t==="tiffins"?"Meal, plan, price, delivery, delivery area":t==="cafes"?"Cuisine, seating, timing":t==="libraries"?"Fees, seats, membership, 24/7": "Books, stationery, printing, timing"}
 
 function renderMedia(){
@@ -3503,11 +2563,13 @@ function renderMedia(){
    <div class="text-xs text-slate-500 mt-3">${rows.length} media metadata records loaded.</div>
  </div>`;
 } 
+
 async function inspectMedia(){
  const id=mtext($("mediaPropertyId")?.value)||prompt("Property ID");if(!id)return;
  const rows=(state.advanced.requests.owner_property_images||[]).filter(x=>String(firstVal(x,["property_id"],""))===String(id));
  openMasterDrawer("MEDIA / GALLERY",`Property ${id}`,rows.length?rows.map(x=>`<div class="master-mini-card p-3 mb-2"><div class="flex justify-between gap-2"><div class="font-bold">${esc(firstVal(x,["file_name","name"],"Image"))}</div><span>${masterBadge(firstVal(x,["category","image_type"],"Other"))}</span></div><div class="text-xs mt-2 break-all">${esc(firstVal(x,["public_url","url","path"],"—"))}</div><div class="mt-3 flex gap-2">${firstVal(x,["public_url","url"],"")?`<a class="master-action" target="_blank" rel="noopener" href="${esc(firstVal(x,["public_url","url"],""))}">Open</a>`:""}<button class="master-action danger" onclick="deleteMedia('${esc(x.id)}')">Delete metadata</button></div></div>`).join(""):'<div class="master-mini-card p-5 text-center text-slate-400">No media metadata for this property.</div>');
 }
+
 async function uploadPropertyMedia(){
  const propertyId=mtext($("mediaPropertyId")?.value),file=$("mediaFile")?.files?.[0],category=mtext($("mediaCategory")?.value)||"Other";
  if(!propertyId||!file){toast("Property ID and image file are required.",true);return}
@@ -3522,36 +2584,46 @@ async function uploadPropertyMedia(){
    const rows=state.advanced.requests.owner_property_images||[],sample=rows[0]||{};
    const raw={property_id:propertyId,file_name:file.name,name:file.name,category,image_type:category,storage_path:path,path,public_url:url,url,created_at:new Date().toISOString()};
    const payload={};for(const [k,v] of Object.entries(raw))if(hasKey(sample,k))payload[k]=v;
-   if(!Object.keys(payload).length)throw new Error("Storage upload succeeded, but owner_property_images schema could not be matched. Add the metadata columns from the Master Admin migration.");
+   if(!Object.keys(payload).length)throw new Error("Storage upload succeeded, but owner_property_images schema could not be matched.");
    const ins=await supabaseClient.from("owner_property_images").insert(payload);
    if(ins.error)throw ins.error;
    await logAdminAction("media_upload","owner_property_images",propertyId,null,{path,category,file_name:file.name});
    toast("Image uploaded to property-images.");$("mediaFile").value="";await loadAll();
  }catch(e){console.error(e);toast(e.message,true)}
 }
+
 async function deleteMedia(id){
- if(!confirm("Delete this gallery metadata record? Storage file must be removed separately if the path is not available."))return;
+ if(!confirm("Delete this gallery metadata record?"))return;
  const x=(state.advanced.requests.owner_property_images||[]).find(r=>String(r.id)===String(id));if(!x)return;
  const r=await supabaseClient.from("owner_property_images").delete().eq("id",id);if(r.error){toast(r.error.message,true);return}
  await logAdminAction("media_delete","owner_property_images",id,x,null);toast("Media metadata deleted.");await loadAll();
 }
 
-/* Search upgrade: keep old search and add every module */
-const oldBuildSearch=buildSearch;
+/* Global Search */
 function buildSearch(){
  const q=mtext($("globalSearch").value).toLowerCase(),box=$("searchResults");if(!q){box.classList.add("hidden");box.innerHTML="";return}
  const out=[];const push=(title,sub,fn)=>out.push({title,sub,fn});
- state.students.forEach((s,i)=>{if(JSON.stringify(s).toLowerCase().includes(q))push(s.full_name||"Student",`Student • ${s.phone||""}`,()=>{showSection("students")})});
+ state.students.forEach(s=>{if(JSON.stringify(s).toLowerCase().includes(q))push(s.full_name||"Student",`Student • ${s.phone||""}`,()=>{showSection("students")})});
  state.owners.forEach(o=>{if(JSON.stringify(o).toLowerCase().includes(q))push(o.full_name||"Owner",`Owner • ${o.phone||""}`,()=>openOwnerDetails(o.id))});
- allProps().forEach(x=>{if(JSON.stringify(x).toLowerCase().includes(q))push(x.name||masterMeta[x.__type].singular,`${masterMeta[x.__type].category} • ${x.area||""} • ${x.phone||""}`,()=>openAdvancedProperty(x.__type,x.__index))});
+ allProps().forEach(x=>{if(JSON.stringify(x).toLowerCase().includes(q))push(x.name||masterMeta[x.__type].singular,`${masterMeta[x.__type].category} • ${x.area||""} • ${x.phone||""}`,()=>previewPublic(x.__type,x.__index))});
  Object.entries(state.advanced.requests).forEach(([table,rows])=>{(rows||[]).slice(0,100).forEach(r=>{if(JSON.stringify(r).toLowerCase().includes(q))push(`${table.replaceAll("_"," ")} #${firstVal(r,["id","request_id","booking_id"],"")}`,String(firstVal(r,["status","property_name","name"],"")),()=>openRecordDrawer(table,firstVal(r,["id","request_id","booking_id"],"")))})});
  box.innerHTML=out.slice(0,40).map((r,i)=>`<button class="w-full text-left p-3 rounded-xl hover:bg-navy-850" data-master-search-index="${i}"><div class="font-bold">${esc(r.title)}</div><div class="text-[10px] text-slate-400">${esc(r.sub)}</div></button>`).join("")||`<div class="p-3 text-slate-400">No results found.</div>`;
  box.classList.remove("hidden");box._masterResults=out;
 }
-$("globalSearch").removeEventListener("input",buildSearch);$("globalSearch").addEventListener("input",buildSearch);
-document.addEventListener("click",e=>{const b=e.target.closest("[data-master-search-index]");if(b){const r=$("searchResults")._masterResults?.[Number(b.dataset.masterSearchIndex)];if(r){$("searchResults").classList.add("hidden");$("globalSearch").value="";r.fn()}}});
+$("globalSearch").addEventListener("input",buildSearch);
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-master-search-index]");
+  if(b){
+    const r=$("searchResults")._masterResults?.[Number(b.dataset.masterSearchIndex)];
+    if(r){
+      $("searchResults").classList.add("hidden");
+      $("globalSearch").value="";
+      r.fn();
+    }
+  }
+});
 
-/* Export */
+/* Export CSV */
 function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`}
 function exportRowsCSV(rows,name){
  if(!rows||!rows.length){toast("No records available for export.",true);return}
@@ -3575,7 +2647,7 @@ async function logAdminAction(action,entity,entityId,oldValue,newValue){
  }catch(e){console.warn("Activity log exception",e)}
 }
 
-/* Load everything independently: one missing optional table cannot zero the whole dashboard. */
+/* Load everything */
 async function loadAll(){
  $("dbStatus").textContent="Syncing...";$("dbStatus").className="text-amber-300 mt-1";
  state.advanced.errors={};state.advanced.modules={};
@@ -3593,18 +2665,12 @@ async function loadAll(){
  $("dbStatus").textContent=coreOk?"Connected":"Partial / Schema Attention";
  $("dbStatus").className=coreOk?"text-emerald-400 mt-1":"text-amber-300 mt-1";
  $("lastSync").textContent=new Date().toLocaleString();
- if(Object.keys(state.advanced.errors).length)console.warn("[Master Admin] Modules with errors:",state.advanced.errors);
 }
 
-/* Student filters and detail upgrade */
-document.addEventListener("click",e=>{
- const s=e.target.closest("[data-delete-profile]");if(s&&String(s.dataset.deleteProfile)!==String(state.user?.id)){}
-});
-
-
+$("refreshBtn").addEventListener("click",loadAll);
 $("masterBell")?.addEventListener("click",()=>showSection("notifications"));
 
-/* Mobile sidebar: original layout is preserved; add a small menu opener */
+/* Mobile sidebar opener */
 (function addMobileMenu(){
  const header=document.querySelector("header");const aside=document.querySelector("aside");if(!header||!aside)return;
  const b=document.createElement("button");b.className="md:hidden w-11 h-11 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300";b.innerHTML='<i class="fa-solid fa-bars"></i>';b.title="Menu";
@@ -3612,7 +2678,7 @@ $("masterBell")?.addEventListener("click",()=>showSection("notifications"));
  header.querySelector(".flex")?.prepend(b);
 })();
 
-/* Extend realtime to all master modules. Existing channels remain active. */
+/* Realtime listeners */
 const masterRealtimeTables=[...MASTER_TYPES,...MASTER_MODULES];
 masterRealtimeTables.forEach(table=>{
  try{
