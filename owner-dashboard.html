@@ -4470,14 +4470,57 @@ async function loadBookings(){
   if(error){
     console.warn("Bookings:",error.message);
     bookings=[];
-  }else{
-    bookings = (data || []).filter(b =>
-      properties.some(p =>
-        String(p.id) === String(b.property_id) &&
-        String(p.table) === String(b.property_table)
-      )
-    );
+ }else{
+
+  const filteredBookings = (data || []).filter(b =>
+    properties.some(p =>
+      String(p.id) === String(b.property_id) &&
+      String(p.table) === String(b.property_table)
+    )
+  );
+
+  const studentIds = [
+    ...new Set(
+      filteredBookings
+        .map(b => b.student_id)
+        .filter(Boolean)
+    )
+  ];
+
+  let profiles = [];
+
+  if(studentIds.length){
+
+    const {data:profileData, error:profileError} = await db
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", studentIds);
+
+    if(profileError){
+      console.warn(
+        "Student profiles:",
+        profileError.message
+      );
+    }else{
+      profiles = profileData || [];
+    }
   }
+
+  bookings = filteredBookings.map(b => {
+
+    const student = profiles.find(
+      p => String(p.id) === String(b.student_id)
+    );
+
+    return {
+      ...b,
+      student_name:
+        student?.full_name ||
+        "Student"
+    };
+
+  });
+}
 
   updateBookingStats();
   if(document.getElementById("section-bookings")?.classList.contains("active")){
@@ -4589,12 +4632,11 @@ function renderBookings(){
           <td data-label="Student">
 
             <strong>
-              ${esc(
-                b.student_name ||
-                b.user_name ||
-                b.student_id ||
-                "Student"
-              )}
+             ${esc(
+  b.student_name ||
+  b.user_name ||
+  "Student"
+)}
             </strong>
 
           </td>
@@ -4623,55 +4665,62 @@ function renderBookings(){
             ${formatStatus(b.status)}
           </td>
 
-          <td data-label="Action">
+<td data-label="Action">
 
-            ${
-              b.status === "pending"
-              ? `
+  ${
+    b.status === "pending"
+    ? `
 
-                <div style="
-                  display:flex;
-                  gap:5px;
-                  flex-wrap:wrap;
-                ">
+      <div style="
+        display:flex;
+        gap:5px;
+        flex-wrap:wrap;
+      ">
 
-                  <button
-                    class="btn success"
-                    onclick="updateBooking('${esc(b.id)}','active')"
-                  >
-                    Accept
-                  </button>
+        <button
+          class="btn success"
+          onclick="updateBooking('${esc(b.id)}','active')"
+        >
+          Accept
+        </button>
 
-                  <button
-                    class="btn danger"
-                    onclick="updateBooking('${esc(b.id)}','rejected')"
-                  >
-                    Reject
-                  </button>
+        <button
+          class="btn danger"
+          onclick="updateBooking('${esc(b.id)}','rejected')"
+        >
+          Reject
+        </button>
 
-${b.status === "active" ? `
-  <button
-    class="btn danger"
-    onclick="updateBooking('${esc(b.id)}','completed')"
-  >
-    Student Left
-  </button>
-` : ""}
+      </div>
 
-                </div>
+    `
 
-              `
-              : `
-                <span style="
-                  color:#94a3b8;
-                  font-size:9px;
-                ">
-                  No action
-                </span>
-              `
-            }
+    : b.status === "active"
 
-          </td>
+    ? `
+
+      <button
+        class="btn danger"
+        onclick="updateBooking('${esc(b.id)}','completed')"
+      >
+        Student Left
+      </button>
+
+    `
+
+    : `
+
+      <span style="
+        color:#94a3b8;
+        font-size:9px;
+      ">
+        No action
+      </span>
+
+    `
+  }
+
+</td>
 
         </tr>
       `;
