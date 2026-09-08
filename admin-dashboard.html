@@ -2532,65 +2532,109 @@ function openAdvancedProperty(type,index){
 function closeAdvancedProperty(){closeModal("advancedPropertyModal")}
 document.addEventListener("click",e=>{if(e.target.closest("[data-adv-close]"))closeAdvancedProperty();if(e.target.closest("[data-master-close]"))closeMasterDrawer()});
 
-async function updateCompatibleRow(table, id, payload){
-  if(!table || !id){
-    throw new Error("Invalid property table or ID.");
-  }
+function getCompatibleKey(row, aliases){
+  if(!row) return null;
+  return aliases.find(key=>hasKey(row,key))||null;
+}
 
-  const current = (state[table] || []).find(
-    x => String(x.id) === String(id)
+function putCompatibleField(target,row,aliases,value){
+  const key=getCompatibleKey(row,aliases);
+  if(key) target[key]=value;
+}
+
+function mapCategoryField(type,key){
+  const maps={
+    hostels:{
+      rent:["monthly_rent","rent","price"],
+      security_deposit:["security_deposit"],
+      room_types:["room_types"],
+      sharing:["room_sharing","sharing"],
+      beds:["total_beds","beds"],
+      available_beds:["available_beds"],
+      food:["food_available","food"],
+      food_type:["food_type"],
+      rules:["rules"]
+    },
+    tiffins:{
+      meal:["meal_type","meal"],
+      plan:["plan_type","plan"],
+      price:["price"],
+      delivery:["delivery_available","delivery"],
+      delivery_area:["service_area","delivery_area"]
+    },
+    cafes:{
+      cuisine:["cuisine"],
+      seating:["seating_capacity","seating"],
+      opening_time:["opening_time"],
+      closing_time:["closing_time"]
+    },
+    libraries:{
+      fees:["monthly_fee","fees","price"],
+      seats:["seating_capacity","seats"],
+      membership:["membership"],
+      open_24x7:["open_24_hours","open_24x7"]
+    },
+    bookstores:{
+      books:["categories","books"],
+      stationery:["stationery"],
+      printing:["printing"],
+      timing:["timing"]
+    }
+  };
+  return maps[type]?.[key]||[key];
+}
+
+async function updateCompatibleRow(table,id,payload){
+  if(!table||!id) throw new Error("Invalid property table or ID.");
+
+  const current=(state[table]||[]).find(
+    x=>String(x.id)===String(id)
   );
 
-  if(!current){
-    throw new Error("Property record not found.");
-  }
+  if(!current) throw new Error("Property record not found.");
 
-  const clean = {};
+  const clean={};
 
-  for(const [key, value] of Object.entries(payload)){
-    if(hasKey(current, key)){
-      clean[key] = value;
-    }
+  for(const [key,value] of Object.entries(payload)){
+    if(hasKey(current,key)) clean[key]=value;
   }
 
   if(!Object.keys(clean).length){
-    throw new Error(
-      "No compatible database fields found for this property."
-    );
+    throw new Error("No compatible database fields found for this property.");
   }
 
-  // Always update modified timestamp when the table supports it.
-  if(hasKey(current, "updated_at")){
-    clean.updated_at = new Date().toISOString();
+  if(hasKey(current,"updated_at")){
+    clean.updated_at=new Date().toISOString();
   }
 
-  const { data, error } = await supabaseClient
+  const {data,error}=await supabaseClient
     .from(table)
     .update(clean)
-    .eq("id", id)
+    .eq("id",id)
     .select()
     .single();
 
   if(error){
-    console.error("Property update failed:", {
-      table,
-      id,
-      payload,
-      clean,
-      error
-    });
-
+    console.error("Property update failed:",{table,id,payload,clean,error});
     throw error;
   }
 
-  if(!data){
-    throw new Error(
-      "Update completed but no property row was returned."
-    );
-  }
+  if(!data) throw new Error("Update completed but no property row was returned.");
 
   return data;
 }
+
+$("advancedPropertyForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+
+  const type=$("advPropType").value;
+  const id=text($("advPropId").value);
+  const x=(state[type]||[]).find(row=>String(row.id)===String(id))||null;
+
+  if(!type||!masterMeta[type]){
+    toast("Invalid property type.",true);
+    return;
+  }
 
   const name=mtext($("advName").value);
   const phone=mtext($("advPhone").value);
@@ -2604,10 +2648,14 @@ async function updateCompatibleRow(table, id, payload){
 
   const ratingRaw=mtext($("advRating").value);
   const rating=ratingRaw===""?null:Number(ratingRaw);
+
   if(rating!==null&&(Number.isNaN(rating)||rating<0||rating>5)){
     toast("Rating must be between 0 and 5.",true);
     return;
   }
+
+  const latRaw=mtext($("advLat").value);
+  const lngRaw=mtext($("advLng").value);
 
   const payload={
     name,
@@ -2622,11 +2670,12 @@ async function updateCompatibleRow(table, id, payload){
     city:mtext($("advCity").value)||null,
     pincode:mtext($("advPincode").value)||null,
     address,
-    latitude:mtext($("advLat").value)===""?null:Number($("advLat").value),
-    longitude:mtext($("advLng").value)===""?null:Number($("advLng").value),
+    latitude:latRaw===""?null:Number(latRaw),
+    longitude:lngRaw===""?null:Number(lngRaw),
     google_maps_url:mtext($("advMaps").value)||null,
     status:$("advStatus").value,
     featured:$("advFeatured").value==="true",
+    verified:$("advVerified").value==="true",
     rating,
     price:mtext($("advPrice").value)||null,
     timing:mtext($("advTiming").value)||null,
@@ -2634,96 +2683,180 @@ async function updateCompatibleRow(table, id, payload){
     description:mtext($("advDescription").value)||null
   };
 
-// ===== UNIVERSAL VERIFICATION FIELD =====
-const verificationValue = $("advVerified").value === "true";
+  /* Map generic fields to the actual column names used by each table. */
+  const categoryValues={};
 
-if(x){
-  if(hasKey(x,"verified")){
-    payload.verified = verificationValue;
-  }else if(hasKey(x,"is_verified")){
-    payload.is_verified = verificationValue;
-  }else if(hasKey(x,"verification_status")){
-    payload.verification_status =
-      verificationValue ? "verified" : "pending";
-  }
-}
-  
- document.querySelectorAll("[data-cat-field]").forEach(el=>{
+  document.querySelectorAll("#categorySpecificFields [data-cat-field]").forEach(el=>{
+    const key=el.dataset.catField;
+    let value=el.value;
 
-  const key=el.dataset.catField;
+    if(el.tagName==="SELECT"&&(value==="true"||value==="false")){
+      value=value==="true";
+    }else if(el.tagName==="TEXTAREA"&&x&&typeof x[key]==="object"&&x[key]!==null){
+      try{ value=JSON.parse(value); }catch{}
+    }
 
-  if(el.tagName==="SELECT" && (el.value==="true" || el.value==="false")){
-    payload[key]=el.value==="true";
+    categoryValues[key]=value;
+  });
+
+  /* Existing-row schema is used for safe updates. */
+  const savePayload={...payload};
+
+  if(x){
+    const directAliases={
+      name:["name","title"],
+      category:["category"],
+      type:["type","property_type","business_type"],
+      owner_id:["owner_id","ownerId","user_id"],
+      owner_name:["owner_name"],
+      phone:["phone","mobile","contact_phone"],
+      whatsapp:["whatsapp","whatsapp_number"],
+      email:["email"],
+      area:["area","locality"],
+      city:["city"],
+      pincode:["pincode","postal_code","zip_code"],
+      address:["address","full_address"],
+      latitude:["latitude","lat"],
+      longitude:["longitude","lng"],
+      google_maps_url:["google_maps_url","maps_url","map_link"],
+      status:["status"],
+      featured:["featured","is_featured"],
+      verified:["verified","is_verified","verification_status"],
+      rating:["rating"],
+      price:["price","rent","monthly_rent"],
+      timing:["timing","business_hours","opening_hours"],
+      facilities:["facilities"],
+      description:["description","details"]
+    };
+
+    const clean={};
+
+    for(const [uiKey,aliases] of Object.entries(directAliases)){
+      if(uiKey==="verified"){
+        const actual=getCompatibleKey(x,aliases);
+        if(actual){
+          clean[actual]=actual==="verification_status"
+            ?($("advVerified").value==="true"?"verified":"pending")
+            :$("advVerified").value==="true";
+        }
+        continue;
+      }
+
+      putCompatibleField(clean,x,aliases,payload[uiKey]);
+    }
+
+    for(const [key,value] of Object.entries(categoryValues)){
+      putCompatibleField(
+        clean,
+        x,
+        mapCategoryField(type,key),
+        value
+      );
+    }
+
+    if(hasKey(x,"updated_at")){
+      clean.updated_at=new Date().toISOString();
+    }
+
+    if(!Object.keys(clean).length){
+      throw new Error("No compatible database fields found for this property.");
+    }
+
+    const btn=e.submitter||$("advancedPropertyForm").querySelector('button[type="submit"]');
+    setBusy(btn,true);
+
+    try{
+      await updateCompatibleRow(type,id,clean);
+      await logAdminAction("update",type,id,x,clean);
+      closeAdvancedProperty();
+      toast("Property updated successfully.");
+      await loadAll();
+    }catch(err){
+      console.error("Master Editor save failed:",err);
+      toast(err?.message||"Property update failed.",true);
+    }finally{
+      setBusy(btn,false,"Save Property");
+    }
+
     return;
   }
 
-  if(el.tagName==="TEXTAREA"){
-    const currentValue=x?.[key];
+  /* Create flow: use the first existing row as the table schema map. */
+  const sample=(state[type]||[])[0]||{};
+  const clean={};
 
-    if(typeof currentValue==="object" && currentValue!==null){
-      try{
-        payload[key]=JSON.parse(el.value);
-      }catch{
-        payload[key]=el.value;
-      }
-      return;
+  const directAliases={
+    name:["name","title"],
+    category:["category"],
+    type:["type","property_type","business_type"],
+    owner_id:["owner_id","ownerId","user_id"],
+    owner_name:["owner_name"],
+    phone:["phone","mobile","contact_phone"],
+    whatsapp:["whatsapp","whatsapp_number"],
+    email:["email"],
+    area:["area","locality"],
+    city:["city"],
+    pincode:["pincode","postal_code","zip_code"],
+    address:["address","full_address"],
+    latitude:["latitude","lat"],
+    longitude:["longitude","lng"],
+    google_maps_url:["google_maps_url","maps_url","map_link"],
+    status:["status"],
+    featured:["featured","is_featured"],
+    verified:["verified","is_verified"],
+    rating:["rating"],
+    price:["price","rent","monthly_rent"],
+    timing:["timing","business_hours","opening_hours"],
+    facilities:["facilities"],
+    description:["description","details"]
+  };
+
+  for(const [uiKey,aliases] of Object.entries(directAliases)){
+    if(Object.keys(sample).length){
+      const actual=getCompatibleKey(sample,aliases);
+      if(actual) clean[actual]=payload[uiKey];
+    }else{
+      clean[aliases[0]]=payload[uiKey];
     }
   }
 
-  payload[key]=el.value;
-});
+  for(const [key,value] of Object.entries(categoryValues)){
+    if(Object.keys(sample).length){
+      putCompatibleField(clean,sample,mapCategoryField(type,key),value);
+    }else{
+      clean[mapCategoryField(type,key)[0]]=value;
+    }
+  }
 
-  const btn=e.submitter;
+  const newId=(globalThis.crypto&&crypto.randomUUID)
+    ?crypto.randomUUID()
+    :"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0").slice(0,12);
+
+  if(hasKey(sample,"id")||!Object.keys(sample).length) clean.id=newId;
+
+  if(!Object.keys(clean).length){
+    throw new Error("No compatible columns found for this category.");
+  }
+
+  const btn=e.submitter||$("advancedPropertyForm").querySelector('button[type="submit"]');
   setBusy(btn,true);
 
   try{
-    if(id){
-      if(!x){
-        throw new Error("Property record not found.");
-      }
-      await updateCompatibleRow(type,id,payload);
-      await logAdminAction("update",type,id,x,payload);
-      closeAdvancedProperty();
-      toast("Property updated successfully.");
-    }else{
-      // Use an existing row as a schema map when available, preventing
-      // unknown-column errors while preserving all fields supported by
-      // the selected Supabase table.
-      const sample=(state[type]||[])[0]||{};
-      const clean={};
+    const result=await supabaseClient
+      .from(type)
+      .insert(clean)
+      .select()
+      .single();
 
-      if(Object.keys(sample).length){
-        for(const [k,v] of Object.entries(payload)){
-          if(hasKey(sample,k)) clean[k]=v;
-        }
-      }else{
-        // Empty table: send the complete requested payload. Supabase will
-        // accept it when the table has the matching migration/schema.
-        Object.assign(clean,payload);
-      }
+    if(result.error) throw result.error;
 
-      const newId=(globalThis.crypto&&crypto.randomUUID)
-        ?crypto.randomUUID()
-        :"00000000-0000-4000-8000-"+Math.random().toString(16).slice(2).padEnd(12,"0").slice(0,12);
-
-      if(hasKey(sample,"id") || !Object.keys(sample).length) clean.id=newId;
-
-      if(!Object.keys(clean).length){
-        throw new Error("No compatible columns found. Run the Master Admin SQL migration for this category.");
-      }
-
-      const result=await supabaseClient.from(type).insert(clean);
-      if(result.error)throw result.error;
-
-      await logAdminAction("create",type,clean.id||newId,null,clean);
-      closeAdvancedProperty();
-      toast(`${masterMeta[type].singular} added successfully.`);
-    }
-
+    await logAdminAction("create",type,clean.id||newId,null,clean);
+    closeAdvancedProperty();
+    toast(`${masterMeta[type].singular} added successfully.`);
     await loadAll();
   }catch(err){
-    console.error(err);
-    toast(err.message,true);
+    console.error("Master Editor create failed:",err);
+    toast(err?.message||"Property creation failed.",true);
   }finally{
     setBusy(btn,false,"Save Property");
   }
