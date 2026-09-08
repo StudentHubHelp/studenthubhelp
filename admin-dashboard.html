@@ -2897,7 +2897,21 @@ function renderRequestsModule(table){
     listing_requests:{section:"listing-requests",title:"Listing Requests",icon:"fa-inbox",cols:["Request ID","Owner","Property","Category","Area","Phone","Submitted","Status"]},
     claim_requests:{section:"claim-requests",title:"Claim Requests",icon:"fa-handshake",cols:["Request ID","Property","Claimant","Phone","Email","Date","Status"]},
     verification_requests:{section:"verification",title:"Verification Center",icon:"fa-circle-check",cols:["Request ID","Property","Owner","Type","Date","Status"]},
-    student_bookings:{section:"bookings",title:"Bookings",icon:"fa-calendar-check",cols:["Booking ID","Student","Property","Owner","Date","Duration","Status"]},
+    student_bookings:{
+  section:"bookings",
+  title:"Bookings",
+  icon:"fa-calendar-check",
+  cols:[
+    "Booking ID",
+    "Student",
+    "Property",
+    "Owner",
+    "Join Date",
+    "Left Date",
+    "Duration",
+    "Status"
+  ]
+}
     reviews:{section:"reviews",title:"Reviews & Moderation",icon:"fa-star",cols:["Review ID","Student","Property","Rating","Review","Date","Status"]},
     property_reports:{section:"reports",title:"Reports & Complaints",icon:"fa-triangle-exclamation",cols:["Report ID","Reporter","Property","Reason","Date","Status"]}
   };
@@ -2924,7 +2938,40 @@ function requestRow(table,x,i){
   if(table==="listing_requests")cells=[id,owner?.full_name||firstVal(x,["owner_name"],"—"),firstVal(x,["name","property_name","title"],"—"),firstVal(x,["category","property_type"],"—"),firstVal(x,["area"],"—"),firstVal(x,["phone"],"—"),shortDate(dateCreated(x)),masterBadge(status,status==="approved"||status==="published"?"green":status==="rejected"?"red":"")];
   if(table==="claim_requests")cells=[id,firstVal(x,["property_name","name"],prop?.x?.name||"—"),firstVal(x,["claimant_name","name","full_name"],"—"),firstVal(x,["phone","claimant_phone"],"—"),firstVal(x,["email","claimant_email"],"—"),shortDate(dateCreated(x)),masterBadge(status,status==="approved"?"green":status==="rejected"?"red":"")];
   if(table==="verification_requests")cells=[id,prop?.x?.name||firstVal(x,["property_name"],"—"),owner?.full_name||firstVal(x,["owner_name"],"—"),firstVal(x,["property_table","property_type"],"—"),shortDate(dateCreated(x)),masterBadge(status,status==="approved"?"green":status==="rejected"?"red":"")];
-  if(table==="student_bookings")cells=[id,student?.full_name||firstVal(x,["student_name"],"—"),prop?.x?.name||firstVal(x,["property_name"],"—"),owner?.full_name||firstVal(x,["owner_name"],"—"),shortDate(firstVal(x,["booking_date","date","start_date","created_at"],null)),firstVal(x,["duration","months","days"],"—"),masterBadge(status,status==="active"||status==="confirmed"?"green":status==="rejected"||status==="cancelled"?"red":"")];
+  if(table==="student_bookings")
+cells=[
+  id,
+  student?.full_name||firstVal(x,["student_name"],"—"),
+  prop?.x?.name||firstVal(x,["property_name"],"—"),
+  owner?.full_name||firstVal(x,["owner_name"],"—"),
+
+  shortDate(
+    firstVal(
+      x,
+      ["joined_date","booking_date","date","start_date","created_at"],
+      null
+    )
+  ),
+
+  shortDate(
+    firstVal(
+      x,
+      ["left_date"],
+      null
+    )
+  ),
+
+  firstVal(x,["duration","months","days"],"—"),
+
+  masterBadge(
+    status,
+    status==="active"||status==="confirmed"
+      ?"green"
+      :status==="rejected"||status==="cancelled"
+      ?"red"
+      :""
+  )
+];
   if(table==="reviews")cells=[id,student?.full_name||firstVal(x,["student_name"],"—"),prop?.x?.name||firstVal(x,["property_name"],"—"),`<span class="text-gold-300">${esc(firstVal(x,["rating"],"—"))} ★</span>`,`<span class="max-w-xs block truncate">${esc(firstVal(x,["review","comment","text"],"—"))}</span>`,shortDate(dateCreated(x)),masterBadge(status,status==="published"?"green":status==="hidden"?"red":"")];
   if(table==="property_reports")cells=[id,student?.full_name||firstVal(x,["reporter_name","name"],"—"),prop?.x?.name||firstVal(x,["property_name"],"—"),firstVal(x,["reason","report_reason"],"—"),shortDate(dateCreated(x)),masterBadge(status,status==="resolved"?"green":status==="rejected"?"red":"")];
   return `<tr>${cells.map(c=>`<td class="p-3">${typeof c==="string"?c:esc(c)}</td>`).join("")}<td class="p-3 whitespace-nowrap">${requestActions(table,x)}</td></tr>`;
