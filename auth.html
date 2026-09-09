@@ -12,16 +12,16 @@
   <link rel="apple-touch-icon" href="logo.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.jsdelivr.net/npm/@Supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     :root{
       --navy:#071426;--navy2:#0d2038;--gold:#d4af37;--gold2:#f0d477;
-      --white:#fff;--text:#172033;--muted:#64748b;--border:#e5e7eb;
+      --white:#fff;--text:#172033;--muted:#64748b;--border:#e2e8f0;
       --danger:#dc2626;--success:#15803d;
     }
     body{
@@ -39,71 +39,74 @@
     .brand-text span{display:block;margin-top:4px;font-size:11px;color:#cbd5e1}
     .home-btn{padding:10px 16px;border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:14px;font-weight:600}
     .home-btn:hover{background:rgba(255,255,255,.08)}
-    .page{flex:1;width:100%;display:flex;align-items:center;justify-content:center;padding:45px 18px}
-    .auth-wrapper{width:100%;max-width:470px}
-    .auth-card{background:rgba(255,255,255,.96);border:1px solid rgba(15,23,42,.08);border-radius:24px;box-shadow:0 25px 70px rgba(15,23,42,.12),0 5px 20px rgba(15,23,42,.05);overflow:hidden}
-    .auth-top{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:30px 28px;text-align:center}
+    .page{flex:1;width:100%;display:flex;align-items:center;justify-content:center;padding:40px 16px}
+    .auth-wrapper{width:100%;max-width:480px}
+    .auth-card{background:rgba(255,255,255,.98);border:1px solid rgba(15,23,42,.08);border-radius:24px;box-shadow:0 25px 70px rgba(15,23,42,.12),0 5px 20px rgba(15,23,42,.05);overflow:hidden}
+    .auth-top{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:30px 24px;text-align:center}
     .auth-icon{width:64px;height:64px;margin:0 auto 15px;border-radius:18px;background:rgba(212,175,55,.14);border:1px solid rgba(240,212,119,.3);display:flex;align-items:center;justify-content:center;font-size:28px}
-    .auth-top h2{font-family:"Poppins",sans-serif;font-size:27px;margin-bottom:8px}
-    .auth-top p{color:#cbd5e1;font-size:14px;line-height:1.6}
-    .auth-body{padding:28px}
-    .tabs{display:grid;grid-template-columns:1fr 1fr;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:25px}
-    .tab{border:0;background:transparent;padding:12px;border-radius:9px;font-weight:700;color:#64748b;cursor:pointer;transition:.2s}
+    .auth-top h2{font-family:"Poppins",sans-serif;font-size:26px;margin-bottom:8px}
+    .auth-top p{color:#cbd5e1;font-size:13.5px;line-height:1.6}
+    .auth-body{padding:26px}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:22px}
+    .tab{border:0;background:transparent;padding:12px;border-radius:9px;font-weight:700;color:#64748b;cursor:pointer;transition:.2s;font-size:14px}
     .tab.active{background:#fff;color:var(--navy);box-shadow:0 2px 8px rgba(15,23,42,.08)}
-    .form-group{margin-bottom:17px}
-    label{display:block;margin-bottom:7px;font-size:13px;font-weight:700;color:#334155}
+    
+    /* Google OAuth Button */
+    .oauth-btn{width:100%;height:48px;border:1px solid var(--border);border-radius:11px;background:#fff;color:var(--text);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;transition:.2s}
+    .oauth-btn:hover{background:#f8fafc;border-color:#cbd5e1;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.05)}
+    .oauth-btn svg{flex-shrink:0}
+    
+    .divider{display:flex;align-items:center;text-align:center;margin:18px 0;color:var(--muted);font-size:12px;font-weight:600}
+    .divider::before,.divider::after{content:'';flex:1;border-bottom:1px solid var(--border)}
+    .divider span{padding:0 12px;text-transform:uppercase;letter-spacing:.5px}
+
+    .form-group{margin-bottom:16px}
+    label{display:block;margin-bottom:6px;font-size:13px;font-weight:700;color:#334155}
     .input-wrap{position:relative}
     .input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;opacity:.6;pointer-events:none}
     input,select{width:100%;height:48px;border:1px solid var(--border);border-radius:11px;background:#fff;color:var(--text);padding:0 14px 0 42px;outline:none;font-size:14px;transition:.2s}
-    input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,175,55,.12)}
+    input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,175,55,.14)}
     .password-input{padding-right:45px}
-    .password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:17px;opacity:.65}
+    .password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:17px;opacity:.65;padding:4px}
     .password-toggle:hover{opacity:1}
-    .forgot-row{display:flex;justify-content:flex-end;margin-top:-7px;margin-bottom:20px}
-    .forgot-btn{border:0;background:transparent;color:#8b6d13;font-size:13px;font-weight:700;cursor:pointer}
-    .forgot-btn:hover{text-decoration:underline}
-    .primary-btn{width:100%;height:50px;border:0;border-radius:11px;background:linear-gradient(135deg,#b99225,var(--gold),#e5c55e);color:#071426;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 8px 20px rgba(212,175,55,.22);transition:.2s}
+    .forgot-row{display:flex;justify-content:space-between;align-items:center;margin-top:4px;margin-bottom:18px;font-size:12.5px}
+    .link-btn{border:0;background:transparent;color:#8b6d13;font-size:12.5px;font-weight:700;cursor:pointer}
+    .link-btn:hover{text-decoration:underline}
+    .primary-btn{width:100%;height:48px;border:0;border-radius:11px;background:linear-gradient(135deg,#b99225,var(--gold),#e5c55e);color:#071426;font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 8px 20px rgba(212,175,55,.22);transition:.2s}
     .primary-btn:hover{transform:translateY(-1px);box-shadow:0 12px 25px rgba(212,175,55,.28)}
     .primary-btn:disabled{cursor:not-allowed;opacity:.65;transform:none}
-    .secondary-btn{width:100%;height:48px;border:1px solid var(--border);border-radius:11px;background:#fff;color:var(--navy);font-weight:800;font-size:14px;cursor:pointer;transition:.2s}
-    .secondary-btn:hover{border-color:#cbd5e1;background:#f8fafc}
-    .role-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:17px}
+    .role-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
     .role-option{position:relative}
     .role-option input{position:absolute;opacity:0;pointer-events:none}
-    .role-label{height:70px;border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:13px;transition:.2s;background:#fff}
+    .role-label{height:66px;border:1px solid var(--border);border-radius:12px;padding:8px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:13px;transition:.2s;background:#fff}
     .role-label strong{display:block;margin-bottom:3px}
     .role-label small{color:var(--muted);font-size:11px}
-    .role-option input:checked + .role-label{border-color:var(--gold);background:rgba(212,175,55,.08);box-shadow:0 0 0 2px rgba(212,175,55,.12)}
-    .message{display:none;margin-bottom:17px;padding:12px 13px;border-radius:10px;font-size:13px;line-height:1.5}
+    .role-option input:checked + .role-label{border-color:var(--gold);background:rgba(212,175,55,.08);box-shadow:0 0 0 2px rgba(212,175,55,.14)}
+    .message{display:none;margin-bottom:16px;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.5}
     .message.show{display:block}
     .message.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
     .message.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
-    .security-note{margin-top:20px;padding:13px;border-radius:11px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;line-height:1.6;color:#64748b;text-align:center}
-    .recovery-panel,.reset-panel{display:none}
-    .recovery-panel.show,.reset-panel.show{display:block}
-    .login-panel.hidden,.signup-panel.hidden{display:none}
+    .security-note{margin-top:18px;padding:12px;border-radius:11px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11.5px;line-height:1.6;color:#64748b;text-align:center}
+    
+    /* Panels */
+    .recovery-panel, .resend-panel, .update-password-panel{display:none}
+    .recovery-panel.show, .resend-panel.show, .update-password-panel.show{display:block}
+    .login-panel.hidden, .signup-panel.hidden{display:none}
     .signup-panel{display:none}
     .signup-panel.show{display:block}
-    .oauth-divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase}
-    .oauth-divider::before,.oauth-divider::after{content:"";height:1px;flex:1;background:#e2e8f0}
-    .google-btn{width:100%;height:48px;border:1px solid var(--border);border-radius:11px;background:#fff;color:#172033;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:.2s}
-    .google-btn:hover{background:#f8fafc;border-color:#cbd5e1}
-    .google-icon{font-size:18px;font-weight:900}
-    .resend-box{margin-top:18px;padding:14px;border-radius:11px;background:#f8fafc;border:1px solid #e2e8f0;text-align:center}
-    .resend-box p{font-size:12px;color:#64748b;line-height:1.5;margin-bottom:10px}
-    .resend-btn{border:0;background:transparent;color:#8b6d13;font-size:13px;font-weight:800;cursor:pointer}
-    .resend-btn:disabled{opacity:.55;cursor:not-allowed}
+    
     .footer{text-align:center;padding:20px;color:#64748b;font-size:12px}
     .footer strong{color:#334155}
-    .director{margin-top:7px;line-height:1.7}
+    .director{margin-top:6px;line-height:1.6}
     .loading-screen{position:fixed;inset:0;background:rgba(7,20,38,.82);display:none;align-items:center;justify-content:center;z-index:9999;color:#fff}
     .loading-screen.show{display:flex}
     .loading-box{text-align:center;background:rgba(13,32,56,.96);padding:28px 34px;border-radius:18px;border:1px solid rgba(255,255,255,.12)}
     .spinner{width:32px;height:32px;margin:0 auto 12px;border:3px solid rgba(255,255,255,.25);border-top-color:var(--gold2);border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
+    
     @media(max-width:520px){
-      .page{padding:25px 12px}.auth-top{padding:25px 20px}.auth-body{padding:22px 18px}
-      .auth-top h2{font-size:23px}.brand-text h1{font-size:17px}.home-btn{padding:8px 11px;font-size:12px}
+      .page{padding:20px 12px}.auth-top{padding:24px 18px}.auth-body{padding:20px 16px}
+      .auth-top h2{font-size:22px}.brand-text h1{font-size:17px}.home-btn{padding:8px 11px;font-size:12px}
     }
   </style>
   <link rel="stylesheet" href="mobile.css">
@@ -127,20 +130,38 @@
     <div class="auth-wrapper">
       <div class="auth-card">
         <div class="auth-top">
-          <div class="auth-icon" id="authIcon">🔐</div>
+          <div class="auth-icon" id="headerIcon">🔐</div>
           <h2 id="authTitle">Welcome Back</h2>
           <p id="authSubtitle">Login securely to access your StudentHubHelp account.</p>
         </div>
 
         <div class="auth-body">
+          <!-- TABS -->
           <div class="tabs" id="tabs">
             <button type="button" class="tab active" id="loginTab">Sign In</button>
             <button type="button" class="tab" id="signupTab">Create Account</button>
           </div>
 
+          <!-- NOTIFICATION MESSAGE -->
           <div id="message" class="message"></div>
 
+          <!-- ==============================================
+               1. LOGIN PANEL
+               ============================================== -->
           <section id="loginPanel" class="login-panel">
+            <!-- Google Sign-In -->
+            <button type="button" class="oauth-btn" id="googleLoginBtn">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.615z" fill="#4285F4"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9087-2.2581c-.8059.54-1.8368.8591-3.0477.8591-2.3441 0-4.3282-1.5831-5.0359-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z" fill="#34A853"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M3.9641 10.71c-.18-.54-.2823-1.1168-.2823-1.71s.1023-1.17.2823-1.71V4.9582H.9574A8.9965 8.9965 0 0 0 0 9c0 1.4523.3477 2.8268.9574 4.0418l3.0067-2.3318z" fill="#FBBC05"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4632.9245 11.4259 0 9 0 5.4818 0 2.4382 2.0168.9574 4.9582L3.9641 7.29C4.6718 5.1627 6.6559 3.5795 9 3.5795z" fill="#EA4335"/>
+              </svg>
+              Continue with Google
+            </button>
+
+            <div class="divider"><span>OR</span></div>
+
             <form id="loginForm">
               <div class="form-group">
                 <label for="loginEmail">Email Address</label>
@@ -160,20 +181,31 @@
               </div>
 
               <div class="forgot-row">
-                <button type="button" id="forgotButton" class="forgot-btn">Forgot password?</button>
+                <button type="button" id="resendPromptButton" class="link-btn">Resend confirmation email?</button>
+                <button type="button" id="forgotButton" class="link-btn">Forgot password?</button>
               </div>
 
               <button id="loginButton" type="submit" class="primary-btn">Sign In</button>
             </form>
-
-            <div class="oauth-divider"><span>or</span></div>
-            <button id="googleLoginButton" type="button" class="google-btn">
-              <span class="google-icon">G</span>
-              Continue with Google
-            </button>
           </section>
 
+          <!-- ==============================================
+               2. SIGNUP PANEL
+               ============================================== -->
           <section id="signupPanel" class="signup-panel">
+            <!-- Google Sign-Up -->
+            <button type="button" class="oauth-btn" id="googleSignupBtn">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.615z" fill="#4285F4"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9087-2.2581c-.8059.54-1.8368.8591-3.0477.8591-2.3441 0-4.3282-1.5831-5.0359-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z" fill="#34A853"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M3.9641 10.71c-.18-.54-.2823-1.1168-.2823-1.71s.1023-1.17.2823-1.71V4.9582H.9574A8.9965 8.9965 0 0 0 0 9c0 1.4523.3477 2.8268.9574 4.0418l3.0067-2.3318z" fill="#FBBC05"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4632.9245 11.4259 0 9 0 5.4818 0 2.4382 2.0168.9574 4.9582L3.9641 7.29C4.6718 5.1627 6.6559 3.5795 9 3.5795z" fill="#EA4335"/>
+              </svg>
+              Sign up with Google
+            </button>
+
+            <div class="divider"><span>OR</span></div>
+
             <form id="signupForm">
               <div class="form-group">
                 <label for="signupName">Full Name</label>
@@ -184,12 +216,10 @@
               </div>
 
               <div class="form-group">
-                <label for="signupPhone">Phone</label>
+                <label for="signupPhone">Phone (10-Digit Mobile)</label>
                 <div class="input-wrap">
                   <span class="input-icon">📱</span>
-                  <input id="signupPhone" type="tel" inputmode="numeric" autocomplete="tel"
-                         placeholder="10-digit mobile number" maxlength="10"
-                         pattern="[6-9][0-9]{9}" required>
+                  <input id="signupPhone" type="tel" autocomplete="tel" placeholder="e.g. 9876543210" maxlength="10" required>
                 </div>
               </div>
 
@@ -220,10 +250,10 @@
               </div>
 
               <div class="form-group">
-                <label for="signupPassword">Create Password</label>
+                <label for="signupPassword">Password</label>
                 <div class="input-wrap">
                   <span class="input-icon">🔒</span>
-                  <input id="signupPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Create a password" minlength="6" required>
+                  <input id="signupPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Create a password (min 6 chars)" minlength="6" required>
                   <button type="button" class="password-toggle" data-target="signupPassword" aria-label="Show password">👁️</button>
                 </div>
               </div>
@@ -240,62 +270,80 @@
               <button id="signupButton" type="submit" class="primary-btn">Create Account</button>
             </form>
 
-            <div class="oauth-divider"><span>or</span></div>
-            <button id="googleSignupButton" type="button" class="google-btn">
-              <span class="google-icon">G</span>
-              Continue with Google
-            </button>
-
-            <div id="resendBox" class="resend-box" style="display:none">
-              <p>Confirmation email nahi mila? Spam/Junk folder check karke dobara email bhej sakte ho.</p>
-              <button type="button" id="resendButton" class="resend-btn">Resend Confirmation Email</button>
-            </div>
-
             <div class="security-note">
               Admin accounts cannot be created from the public signup form.
               Authorized admin accounts must already exist in Supabase.
             </div>
           </section>
 
+          <!-- ==============================================
+               3. RECOVERY PANEL (Forgot Password Email)
+               ============================================== -->
           <section id="recoveryPanel" class="recovery-panel">
             <form id="recoveryForm">
               <div class="form-group">
                 <label for="recoveryEmail">Account Email</label>
                 <div class="input-wrap">
                   <span class="input-icon">✉️</span>
-                  <input id="recoveryEmail" type="email" autocomplete="email" placeholder="Enter your account email" required>
+                  <input id="recoveryEmail" type="email" autocomplete="email" placeholder="Enter your registered email" required>
                 </div>
               </div>
               <button id="recoveryButton" type="submit" class="primary-btn">Send Reset Link</button>
             </form>
-            <div class="forgot-row" style="margin-top:16px;margin-bottom:0">
-              <button type="button" id="backToLoginButton" class="forgot-btn">← Back to sign in</button>
+            <div class="forgot-row" style="margin-top:16px;margin-bottom:0;justify-content:center">
+              <button type="button" id="backToLoginButton" class="link-btn">← Back to Sign In</button>
             </div>
           </section>
 
-          <section id="resetPanel" class="reset-panel">
-            <form id="resetForm">
+          <!-- ==============================================
+               4. RESEND CONFIRMATION EMAIL PANEL
+               ============================================== -->
+          <section id="resendPanel" class="resend-panel">
+            <form id="resendForm">
               <div class="form-group">
-                <label for="resetPassword">New Password</label>
+                <label for="resendEmail">Account Email</label>
                 <div class="input-wrap">
-                  <span class="input-icon">🔒</span>
-                  <input id="resetPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Enter new password" minlength="6" required>
-                  <button type="button" class="password-toggle" data-target="resetPassword" aria-label="Show password">👁️</button>
+                  <span class="input-icon">✉️</span>
+                  <input id="resendEmail" type="email" autocomplete="email" placeholder="Enter your email to verify" required>
                 </div>
               </div>
-
-              <div class="form-group">
-                <label for="resetConfirmPassword">Confirm New Password</label>
-                <div class="input-wrap">
-                  <span class="input-icon">🔒</span>
-                  <input id="resetConfirmPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Re-enter new password" minlength="6" required>
-                  <button type="button" class="password-toggle" data-target="resetConfirmPassword" aria-label="Show password">👁️</button>
-                </div>
-              </div>
-
-              <button id="resetButton" type="submit" class="primary-btn">Update Password & Continue</button>
+              <button id="resendButton" type="submit" class="primary-btn">Resend Verification Email</button>
             </form>
+            <div class="forgot-row" style="margin-top:16px;margin-bottom:0;justify-content:center">
+              <button type="button" id="backToLoginFromResend" class="link-btn">← Back to Sign In</button>
+            </div>
           </section>
+
+          <!-- ==============================================
+               5. UPDATE PASSWORD PANEL (Triggered on Reset Link)
+               ============================================== -->
+          <section id="updatePasswordPanel" class="update-password-panel">
+            <form id="updatePasswordForm">
+              <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <div class="input-wrap">
+                  <span class="input-icon">🔑</span>
+                  <input id="newPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Enter new password (min 6 chars)" minlength="6" required>
+                  <button type="button" class="password-toggle" data-target="newPassword" aria-label="Show password">👁️</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="confirmNewPassword">Confirm New Password</label>
+                <div class="input-wrap">
+                  <span class="input-icon">🔑</span>
+                  <input id="confirmNewPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Confirm new password" minlength="6" required>
+                  <button type="button" class="password-toggle" data-target="confirmNewPassword" aria-label="Show password">👁️</button>
+                </div>
+              </div>
+
+              <button id="updatePasswordButton" type="submit" class="primary-btn">Save New Password</button>
+            </form>
+            <div class="forgot-row" style="margin-top:16px;margin-bottom:0;justify-content:center">
+              <button type="button" id="cancelUpdatePasswordButton" class="link-btn">← Cancel & Back to Sign In</button>
+            </div>
+          </section>
+
         </div>
       </div>
 
@@ -309,7 +357,7 @@
   <div id="loadingScreen" class="loading-screen" aria-hidden="true">
     <div class="loading-box">
       <div class="spinner"></div>
-      <div id="loadingText">Please wait...</div>
+      <div id="loadingText">Signing you in...</div>
     </div>
   </div>
 
@@ -317,7 +365,7 @@
 "use strict";
 
 /* =========================================================
-   SUPABASE
+   SUPABASE CLIENT CONFIG
 ========================================================= */
 const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
@@ -335,14 +383,13 @@ const db = window.supabase.createClient(
 );
 
 /* =========================================================
-   DOM
+   DOM HELPERS
 ========================================================= */
 const $ = id => document.getElementById(id);
 const messageEl = $("message");
 const loadingScreen = $("loadingScreen");
 const loadingText = $("loadingText");
-let recoveryMode = false;
-let lastSignupEmail = "";
+const tabsContainer = $("tabs");
 
 /* =========================================================
    UI HELPERS
@@ -372,23 +419,105 @@ function friendlyAuthError(error) {
   const msg = String(error?.message || "").toLowerCase();
 
   if (msg.includes("invalid login credentials")) {
-    return "Email ya password incorrect hai.";
+    return "Email ya password galat hai.";
   }
   if (msg.includes("email not confirmed")) {
-    return "Email confirm nahi hua hai. Pehle apna email verify karo.";
+    return "Email verify nahi hua hai. 'Resend confirmation email' par click karke verification link dobara mangwayein.";
   }
   if (msg.includes("too many requests") || msg.includes("rate limit")) {
-    return "Bahut attempts ho gaye. Thodi der baad dobara try karo.";
+    return "Bahut zyada attempts ho gaye hain. Kripya thodi der baad koshish karein.";
   }
   if (msg.includes("user already registered")) {
-    return "Is email se account already registered hai. Sign In karo.";
+    return "Is email se account pehle se bana hua hai. Kripya Sign In karein.";
   }
-  if (msg.includes("same password")) {
-    return "Naya password purane password se alag hona chahiye.";
+  if (msg.includes("password should be at least")) {
+    return "Password kam se kam 6 characters ka hona chahiye.";
   }
 
-  return error?.message || "Authentication failed. Please try again.";
+  return error?.message || "Authentication me samasya aayi. Kripya dobara koshish karein.";
 }
+
+/* =========================================================
+   PANEL SWITCHING
+========================================================= */
+function hideAllPanels() {
+  $("loginPanel").classList.add("hidden");
+  $("signupPanel").classList.remove("show");
+  $("recoveryPanel").classList.remove("show");
+  $("resendPanel").classList.remove("show");
+  $("updatePasswordPanel").classList.remove("show");
+  tabsContainer.style.display = "grid";
+}
+
+function showLogin() {
+  clearMessage();
+  hideAllPanels();
+  $("loginTab").classList.add("active");
+  $("signupTab").classList.remove("active");
+  $("loginPanel").classList.remove("hidden");
+  $("headerIcon").textContent = "🔐";
+  $("authTitle").textContent = "Welcome Back";
+  $("authSubtitle").textContent = "Login securely to access your StudentHubHelp account.";
+}
+
+function showSignup() {
+  clearMessage();
+  hideAllPanels();
+  $("loginTab").classList.remove("active");
+  $("signupTab").classList.add("active");
+  $("signupPanel").classList.add("show");
+  $("headerIcon").textContent = "✨";
+  $("authTitle").textContent = "Create Account";
+  $("authSubtitle").textContent = "Create your StudentHubHelp student or owner account.";
+}
+
+function showRecovery() {
+  clearMessage();
+  hideAllPanels();
+  tabsContainer.style.display = "none";
+  $("recoveryPanel").classList.add("show");
+  $("headerIcon").textContent = "📩";
+  $("authTitle").textContent = "Reset Password";
+  $("authSubtitle").textContent = "Enter your registered email to receive a password reset link.";
+  $("recoveryEmail").value = $("loginEmail").value.trim();
+}
+
+function showResend() {
+  clearMessage();
+  hideAllPanels();
+  tabsContainer.style.display = "none";
+  $("resendPanel").classList.add("show");
+  $("headerIcon").textContent = "✉️";
+  $("authTitle").textContent = "Resend Verification";
+  $("authSubtitle").textContent = "Enter your email to receive a new account verification link.";
+  $("resendEmail").value = $("loginEmail").value.trim() || $("signupEmail").value.trim();
+}
+
+function showUpdatePassword() {
+  clearMessage();
+  hideAllPanels();
+  tabsContainer.style.display = "none";
+  $("updatePasswordPanel").classList.add("show");
+  $("headerIcon").textContent = "🔑";
+  $("authTitle").textContent = "Set New Password";
+  $("authSubtitle").textContent = "Enter your new password below to update your account.";
+}
+
+$("loginTab").addEventListener("click", showLogin);
+$("signupTab").addEventListener("click", showSignup);
+$("forgotButton").addEventListener("click", showRecovery);
+$("resendPromptButton").addEventListener("click", showResend);
+$("backToLoginButton").addEventListener("click", showLogin);
+$("backToLoginFromResend").addEventListener("click", showLogin);
+$("cancelUpdatePasswordButton").addEventListener("click", showLogin);
+
+/* =========================================================
+   INDIAN PHONE NUMBER RESTRICTION
+========================================================= */
+$("signupPhone").addEventListener("input", function() {
+  // Sirf numbers allow karo aur 10 digits par cap karo
+  this.value = this.value.replace(/\D/g, "").slice(0, 10);
+});
 
 /* =========================================================
    ROLE ROUTING
@@ -401,17 +530,15 @@ const DASHBOARDS = {
 
 function normalizeRole(role) {
   const value = String(role || "").trim().toLowerCase();
-
   if (value === "student") return "student";
   if (value === "owner") return "owner";
   if (value === "admin") return "admin";
-
   return null;
 }
 
 async function getUserRole(user) {
   if (!user?.id) {
-    throw new Error("Authenticated user was not found.");
+    throw new Error("User details nahi mil saki.");
   }
 
   const { data: profile, error } = await db
@@ -421,16 +548,27 @@ async function getUserRole(user) {
     .maybeSingle();
 
   if (error) {
-    console.error("Profile role lookup error:", error);
-    throw new Error("Account role load nahi ho saka. Please try again.");
+    console.error("Profile lookup error:", error);
+    throw new Error("Aapka profile role load nahi ho saka.");
   }
 
-  const role = normalizeRole(profile?.role);
+  // Agar user Google login se aaya hai aur profile me abhi record nahi hai
+  if (!profile || !profile.role) {
+    const defaultRole = "student";
+    const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Student User";
+    await db.from("profiles").upsert({
+      id: user.id,
+      full_name: fullName,
+      phone: "",
+      role: defaultRole
+    }, { onConflict: "id" });
+    return defaultRole;
+  }
 
+  const role = normalizeRole(profile.role);
   if (!role) {
     throw new Error("Aapke account ka valid role set nahi hai. Admin se contact karein.");
   }
-
   return role;
 }
 
@@ -439,7 +577,7 @@ async function routeByRole(user) {
   const dashboard = DASHBOARDS[role];
 
   if (!dashboard) {
-    throw new Error("Invalid account role.");
+    throw new Error("Dashboard redirect path invalid hai.");
   }
 
   loadingText.textContent =
@@ -451,72 +589,56 @@ async function routeByRole(user) {
 }
 
 /* =========================================================
-   PANEL HELPERS
+   REDIRECT EXISTING SESSION
 ========================================================= */
-function hideAllPanels() {
-  $("loginPanel").classList.add("hidden");
-  $("signupPanel").classList.remove("show");
-  $("recoveryPanel").classList.remove("show");
-  $("resetPanel").classList.remove("show");
-}
+async function redirectExistingSession() {
+  // Agar recovery mode me hai toh dashboard redirect nahi karna
+  const hash = window.location.hash || "";
+  if (hash.includes("type=recovery")) {
+    showUpdatePassword();
+    return;
+  }
 
-function showLogin() {
-  recoveryMode = false;
-  clearMessage();
-  hideAllPanels();
+  try {
+    const { data, error } = await db.auth.getSession();
+    if (error || !data?.session?.user) return;
 
-  $("loginTab").classList.add("active");
-  $("signupTab").classList.remove("active");
-  $("loginPanel").classList.remove("hidden");
-
-  $("authIcon").textContent = "🔐";
-  $("authTitle").textContent = "Welcome Back";
-  $("authSubtitle").textContent = "Login securely to access your StudentHubHelp account.";
-  $("tabs").style.display = "grid";
-}
-
-function showSignup() {
-  recoveryMode = false;
-  clearMessage();
-  hideAllPanels();
-
-  $("loginTab").classList.remove("active");
-  $("signupTab").classList.add("active");
-  $("signupPanel").classList.add("show");
-
-  $("authIcon").textContent = "✨";
-  $("authTitle").textContent = "Create Account";
-  $("authSubtitle").textContent = "Create your StudentHubHelp student or owner account.";
-  $("tabs").style.display = "grid";
-}
-
-function showRecovery() {
-  recoveryMode = false;
-  clearMessage();
-  hideAllPanels();
-
-  $("authIcon").textContent = "📧";
-  $("authTitle").textContent = "Reset Password";
-  $("authSubtitle").textContent = "Enter your email and we'll send a password reset link.";
-  $("tabs").style.display = "none";
-  $("recoveryPanel").classList.add("show");
-}
-
-function showResetPassword() {
-  recoveryMode = true;
-  clearMessage();
-  hideAllPanels();
-
-  $("authIcon").textContent = "🔑";
-  $("authTitle").textContent = "Set New Password";
-  $("authSubtitle").textContent = "Create a new secure password for your account.";
-  $("tabs").style.display = "none";
-  $("resetPanel").classList.add("show");
-  setLoading(false);
+    setLoading(true, "Checking your account...");
+    await routeByRole(data.session.user);
+  } catch (error) {
+    console.error("Session redirect error:", error);
+    await db.auth.signOut({ scope: "local" }).catch(() => {});
+    setLoading(false);
+  }
 }
 
 /* =========================================================
-   LOGIN
+   GOOGLE OAUTH SIGN IN / SIGN UP
+========================================================= */
+async function handleGoogleAuth() {
+  clearMessage();
+  setLoading(true, "Connecting to Google...");
+  try {
+    const redirectTo = new URL("auth.html", window.location.href).href;
+    const { error } = await db.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectTo
+      }
+    });
+    if (error) throw error;
+  } catch (error) {
+    console.error("Google login error:", error);
+    setLoading(false);
+    showMessage(friendlyAuthError(error), "error");
+  }
+}
+
+$("googleLoginBtn").addEventListener("click", handleGoogleAuth);
+$("googleSignupBtn").addEventListener("click", handleGoogleAuth);
+
+/* =========================================================
+   LOGIN FORM HANDLER
 ========================================================= */
 $("loginForm").addEventListener("submit", async event => {
   event.preventDefault();
@@ -526,7 +648,7 @@ $("loginForm").addEventListener("submit", async event => {
   const password = $("loginPassword").value;
 
   if (!email || !password) {
-    showMessage("Email aur password dono required hain.");
+    showMessage("Email aur password dono zaroori hain.");
     return;
   }
 
@@ -541,16 +663,14 @@ $("loginForm").addEventListener("submit", async event => {
     });
 
     if (error) throw error;
-
     if (!data?.user || !data?.session) {
-      throw new Error("Login session create nahi hui. Please try again.");
+      throw new Error("Session create nahi ho saka. Dobara koshish karein.");
     }
 
     await routeByRole(data.user);
 
   } catch (error) {
     console.error("Login error:", error);
-
     setLoading(false);
     setButtonLoading(button, false, "Sign In");
     showMessage(friendlyAuthError(error), "error");
@@ -558,37 +678,7 @@ $("loginForm").addEventListener("submit", async event => {
 });
 
 /* =========================================================
-   GOOGLE LOGIN / SIGNUP
-   Same OAuth entry point. Role for Google users must be
-   handled by the existing profiles.role system.
-========================================================= */
-async function signInWithGoogle() {
-  clearMessage();
-  setLoading(true, "Opening Google Sign In...");
-
-  try {
-    const redirectTo = new URL("auth.html", window.location.href).href;
-
-    const { error } = await db.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo
-      }
-    });
-
-    if (error) throw error;
-  } catch (error) {
-    console.error("Google OAuth error:", error);
-    setLoading(false);
-    showMessage(friendlyAuthError(error), "error");
-  }
-}
-
-$("googleLoginButton").addEventListener("click", signInWithGoogle);
-$("googleSignupButton").addEventListener("click", signInWithGoogle);
-
-/* =========================================================
-   SIGNUP
+   SIGNUP FORM HANDLER
 ========================================================= */
 $("signupForm").addEventListener("submit", async event => {
   event.preventDefault();
@@ -603,31 +693,29 @@ $("signupForm").addEventListener("submit", async event => {
     document.querySelector('input[name="signupRole"]:checked')?.value
   );
 
-  if (!name || !email || !password || !confirmPassword || !phone || !role) {
-    showMessage("Required fields complete karo.");
+  if (!name || !phone || !email || !password || !confirmPassword || !role) {
+    showMessage("Kripya sabhi fields dhyan se bharein.");
     return;
   }
 
-  if (!["student", "owner"].includes(role)) {
-    showMessage("Invalid signup role.");
-    return;
-  }
-
+  // 10-digit Indian Mobile Validation
   const phoneRegex = /^[6-9]\d{9}$/;
-
   if (!phoneRegex.test(phone)) {
-    showMessage("Valid Indian 10-digit mobile number enter karo (6-9 se start hona chahiye).");
+    showMessage("Kripya valid 10-digit Indian mobile number daalein (6, 7, 8 ya 9 se shuru hone wala).");
     $("signupPhone").focus();
     return;
   }
 
+  // Password Length Validation
   if (password.length < 6) {
     showMessage("Password kam se kam 6 characters ka hona chahiye.");
+    $("signupPassword").focus();
     return;
   }
 
+  // Confirm Password Match Check
   if (password !== confirmPassword) {
-    showMessage("Create Password aur Confirm Password same hone chahiye.");
+    showMessage("Passwords match nahi ho rahe hain. Dono box me same password enter karein.");
     $("signupConfirmPassword").focus();
     return;
   }
@@ -635,70 +723,49 @@ $("signupForm").addEventListener("submit", async event => {
   const button = $("signupButton");
   setButtonLoading(button, true, "Create Account");
   setLoading(true, "Creating your account...");
-  lastSignupEmail = email;
 
   try {
+    const redirectTo = new URL("auth.html", window.location.href).href;
     const { data, error } = await db.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectTo,
         data: {
           full_name: name,
-          phone,
-          role
+          phone: phone,
+          role: role
         }
       }
     });
 
     if (error) throw error;
 
-    if (!data?.user) {
-      throw new Error("Account create nahi hua. Please try again.");
-    }
-
-    /*
-      Important:
-      Email confirmation ON hone par Supabase session null de sakta hai.
-      Profile row ka existing project trigger/function agar available hai
-      to wahi normal profile creation handle karega.
-    */
-    if (!data?.session) {
-      setLoading(false);
-      setButtonLoading(button, false, "Create Account");
-
-      $("loginEmail").value = email;
-      $("resendBox").style.display = "block";
-
-      showMessage(
-        "Account create ho gaya. Email verify karke phir Sign In karo.",
-        "success"
-      );
-      return;
-    }
-
-    const { error: profileError } = await db
-      .from("profiles")
-      .upsert({
+    // Profile table upsert
+    if (data?.user) {
+      await db.from("profiles").upsert({
         id: data.user.id,
         full_name: name,
         phone: phone,
         role: role
-      }, {
-        onConflict: "id"
-      });
-
-    if (profileError) {
-      console.error("Profile creation error:", profileError);
-      throw new Error(
-        "Account create hua, lekin profile setup complete nahi hua. Please Sign In ke baad retry karo."
-      );
+      }, { onConflict: "id" });
     }
 
+    // Agar Email confirmation required hai
+    if (!data?.session) {
+      setLoading(false);
+      setButtonLoading(button, false, "Create Account");
+      showMessage("Account ban gaya hai! Aapke email par verification link bheja gaya hai. Verify karne ke baad Sign In karein.", "success");
+      $("loginEmail").value = email;
+      showLogin();
+      return;
+    }
+
+    // Direct login session available hone par redirect karein
     await routeByRole(data.user);
 
   } catch (error) {
     console.error("Signup error:", error);
-
     setLoading(false);
     setButtonLoading(button, false, "Create Account");
     showMessage(friendlyAuthError(error), "error");
@@ -706,118 +773,35 @@ $("signupForm").addEventListener("submit", async event => {
 });
 
 /* =========================================================
-   RESEND CONFIRMATION EMAIL
+   FORGOT PASSWORD FORM HANDLER (SEND RESET LINK)
 ========================================================= */
-let resendLocked = false;
-
-$("resendButton").addEventListener("click", async () => {
-  clearMessage();
-
-  const email = lastSignupEmail || $("signupEmail").value.trim().toLowerCase();
-
-  if (!email) {
-    showMessage("Pehle signup email enter karo.");
-    return;
-  }
-
-  if (resendLocked) return;
-
-  const button = $("resendButton");
-  resendLocked = true;
-  button.disabled = true;
-  button.textContent = "Sending...";
-
-  try {
-    const { error } = await db.auth.resend({
-      type: "signup",
-      email
-    });
-
-    if (error) throw error;
-
-    showMessage(
-      "Confirmation email dobara bhej diya gaya hai. Inbox aur Spam/Junk folder check karo.",
-      "success"
-    );
-
-    let seconds = 30;
-    button.textContent = `Resend again in ${seconds}s`;
-
-    const timer = setInterval(() => {
-      seconds--;
-
-      if (seconds <= 0) {
-        clearInterval(timer);
-        resendLocked = false;
-        button.disabled = false;
-        button.textContent = "Resend Confirmation Email";
-      } else {
-        button.textContent = `Resend again in ${seconds}s`;
-      }
-    }, 1000);
-
-  } catch (error) {
-    console.error("Resend confirmation error:", error);
-
-    resendLocked = false;
-    button.disabled = false;
-    button.textContent = "Resend Confirmation Email";
-    showMessage(friendlyAuthError(error), "error");
-  }
-});
-
-/* =========================================================
-   PASSWORD RECOVERY REQUEST
-========================================================= */
-$("forgotButton").addEventListener("click", () => {
-  $("recoveryEmail").value = $("loginEmail").value.trim();
-  showRecovery();
-});
-
-$("backToLoginButton").addEventListener("click", showLogin);
-
 $("recoveryForm").addEventListener("submit", async event => {
   event.preventDefault();
   clearMessage();
 
   const email = $("recoveryEmail").value.trim().toLowerCase();
-
   if (!email) {
-    showMessage("Email address required hai.");
+    showMessage("Email address zaroori hai.");
     return;
   }
 
   const button = $("recoveryButton");
-  setButtonLoading(button, true, "Send Reset Link");
+  setButtonLoading(button, true, "Sending Link...");
   setLoading(true, "Sending reset link...");
 
   try {
-    /*
-      mode=reset is intentional:
-      it lets initialization know that this auth.html visit
-      is a password-recovery visit and must NOT redirect
-      the user to a dashboard.
-    */
-    const redirectTo = new URL(
-      "auth.html?mode=reset",
-      window.location.href
-    ).href;
-
+    const redirectTo = new URL("auth.html", window.location.href).href;
     const { error } = await db.auth.resetPasswordForEmail(email, {
-      redirectTo
+      redirectTo: redirectTo
     });
 
     if (error) throw error;
 
     setLoading(false);
     setButtonLoading(button, false, "Send Reset Link");
-    showMessage(
-      "Password reset link email par bhej diya gaya hai. Email link open karke naya password set karo.",
-      "success"
-    );
-
+    showMessage("Password reset link aapke email par bhej diya gaya hai. Kripya apna Inbox aur Spam folder check karein.", "success");
   } catch (error) {
-    console.error("Recovery error:", error);
+    console.error("Password recovery error:", error);
     setLoading(false);
     setButtonLoading(button, false, "Send Reset Link");
     showMessage(friendlyAuthError(error), "error");
@@ -825,215 +809,140 @@ $("recoveryForm").addEventListener("submit", async event => {
 });
 
 /* =========================================================
-   SET NEW PASSWORD
+   RESEND EMAIL CONFIRMATION HANDLER
 ========================================================= */
-$("resetForm").addEventListener("submit", async event => {
+$("resendForm").addEventListener("submit", async event => {
   event.preventDefault();
   clearMessage();
 
-  const password = $("resetPassword").value;
-  const confirmPassword = $("resetConfirmPassword").value;
-
-  if (!password || !confirmPassword) {
-    showMessage("New password aur confirm password dono required hain.");
+  const email = $("resendEmail").value.trim().toLowerCase();
+  if (!email) {
+    showMessage("Email address zaroori hai.");
     return;
   }
 
-  if (password.length < 6) {
-    showMessage("Password kam se kam 6 characters ka hona chahiye.");
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    showMessage("New Password aur Confirm New Password same hone chahiye.");
-    $("resetConfirmPassword").focus();
-    return;
-  }
-
-  const button = $("resetButton");
-  setButtonLoading(button, true, "Update Password & Continue");
-  setLoading(true, "Updating your password...");
+  const button = $("resendButton");
+  setButtonLoading(button, true, "Sending Link...");
+  setLoading(true, "Sending verification email...");
 
   try {
-    const { data, error } = await db.auth.updateUser({
-      password
+    const redirectTo = new URL("auth.html", window.location.href).href;
+    const { error } = await db.auth.resend({
+      type: "signup",
+      email: email,
+      options: {
+        emailRedirectTo: redirectTo
+      }
     });
 
     if (error) throw error;
 
-    if (!data?.user) {
-      throw new Error("Password update session complete nahi hui.");
-    }
-
-    $("resetPassword").value = "";
-    $("resetConfirmPassword").value = "";
-
-    showMessage(
-      "Password successfully update ho gaya. Aapko dashboard par bheja ja raha hai...",
-      "success"
-    );
-
-    await new Promise(resolve => setTimeout(resolve, 900));
-    await routeByRole(data.user);
-
-  } catch (error) {
-    console.error("Password update error:", error);
-
     setLoading(false);
-    setButtonLoading(button, false, "Update Password & Continue");
+    setButtonLoading(button, false, "Resend Verification Email");
+    showMessage("Verification email dobara bhej diya gaya hai! Kripya apna Inbox aur Spam check karein.", "success");
+  } catch (error) {
+    console.error("Resend error:", error);
+    setLoading(false);
+    setButtonLoading(button, false, "Resend Verification Email");
     showMessage(friendlyAuthError(error), "error");
   }
 });
 
 /* =========================================================
-   TABS
+   SAVE NEW PASSWORD HANDLER (AFTER CLICKING RESET LINK)
 ========================================================= */
-$("loginTab").addEventListener("click", showLogin);
-$("signupTab").addEventListener("click", showSignup);
+$("updatePasswordForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  clearMessage();
+
+  const newPassword = $("newPassword").value;
+  const confirmNewPassword = $("confirmNewPassword").value;
+
+  if (newPassword.length < 6) {
+    showMessage("Naya password kam se kam 6 characters ka hona chahiye.");
+    $("newPassword").focus();
+    return;
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    showMessage("Dono naye password match nahi ho rahe hain.");
+    $("confirmNewPassword").focus();
+    return;
+  }
+
+  const button = $("updatePasswordButton");
+  setButtonLoading(button, true, "Updating...");
+  setLoading(true, "Saving your new password...");
+
+  try {
+    const { error } = await db.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) throw error;
+
+    // URL se recovery hash clean karein
+    if (window.history.replaceState) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+
+    // Temporary recovery session sign out karke clean login enable karein
+    await db.auth.signOut({ scope: "local" }).catch(() => {});
+
+    setLoading(false);
+    setButtonLoading(button, false, "Save New Password");
+    showLogin();
+    showMessage("Aapka password kamyabi se badal diya gaya hai! Ab naye password se Sign In karein.", "success");
+
+  } catch (error) {
+    console.error("Update password error:", error);
+    setLoading(false);
+    setButtonLoading(button, false, "Save New Password");
+    showMessage(friendlyAuthError(error), "error");
+  }
+});
 
 /* =========================================================
-   PASSWORD VISIBILITY
+   PASSWORD VISIBILITY TOGGLE (Eye Icon)
 ========================================================= */
 document.querySelectorAll(".password-toggle").forEach(button => {
   button.addEventListener("click", () => {
-    const input = $(button.dataset.target);
+    const targetId = button.dataset.target;
+    const input = $(targetId);
     if (!input) return;
 
-    const visible = input.type === "text";
-    input.type = visible ? "password" : "text";
-    button.textContent = visible ? "👁️" : "🙈";
-    button.setAttribute(
-      "aria-label",
-      visible ? "Show password" : "Hide password"
-    );
+    const isVisible = input.type === "text";
+    input.type = isVisible ? "password" : "text";
+    button.textContent = isVisible ? "👁️" : "🙈";
+    button.setAttribute("aria-label", isVisible ? "Show password" : "Hide password");
   });
 });
 
 /* =========================================================
-   AUTH STATE
+   AUTH STATE CHANGE LISTENER
 ========================================================= */
-db.auth.onAuthStateChange(async (event, session) => {
-  console.log("Auth state:", event);
-
+db.auth.onAuthStateChange((event, session) => {
+  // Password Recovery link click hone par Set New Password form open karo
   if (event === "PASSWORD_RECOVERY") {
-    recoveryMode = true;
-    showResetPassword();
+    setLoading(false);
+    showUpdatePassword();
     return;
   }
 
   if (event === "SIGNED_OUT") {
     setLoading(false);
-
-    if (!recoveryMode) {
-      showLogin();
-    }
-    return;
-  }
-
-  /*
-    Google OAuth returns through auth.html.
-    If it is a normal OAuth session, route by profile role.
-    During password recovery, never route away from reset panel.
-  */
-  if (
-    event === "SIGNED_IN" &&
-    session?.user &&
-    !recoveryMode &&
-    !isResetMode()
-  ) {
-    try {
-      setLoading(true, "Checking your account...");
-      await routeByRole(session.user);
-    } catch (error) {
-      console.error("OAuth/session routing error:", error);
-      setLoading(false);
-      await db.auth.signOut({ scope: "local" }).catch(() => {});
-      showMessage(error.message || "Account routing failed.", "error");
-    }
   }
 });
-
-/* =========================================================
-   URL HELPERS
-========================================================= */
-function isResetMode() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("mode") === "reset";
-}
-
-/* =========================================================
-   IF ALREADY LOGGED IN
-========================================================= */
-async function redirectExistingSession() {
-  try {
-    /*
-      Never auto-route a password recovery visit.
-      Supabase needs this session to remain on auth.html
-      so PASSWORD_RECOVERY can open the reset form.
-    */
-    if (isResetMode()) {
-      return;
-    }
-
-    const { data, error } = await db.auth.getSession();
-
-    if (error) {
-      console.error("Existing session check:", error);
-      return;
-    }
-
-    if (!data?.session?.user) return;
-
-    setLoading(true, "Checking your account...");
-    await routeByRole(data.session.user);
-
-  } catch (error) {
-    console.error("Existing session routing error:", error);
-
-    await db.auth.signOut({ scope: "local" }).catch(() => {});
-    setLoading(false);
-    showMessage(error.message || "Session check failed.", "error");
-  }
-}
 
 /* =========================================================
    INITIALIZATION
 ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
-  if (isResetMode()) {
-    /*
-      Do not show login/signup while the recovery session is
-      being established. PASSWORD_RECOVERY will open the form.
-    */
-    setLoading(true, "Preparing password reset...");
-
-    /*
-      Small delay gives Supabase's detectSessionInUrl flow
-      time to process the recovery URL before normal session
-      routing starts.
-    */
-    setTimeout(() => {
-      if (!recoveryMode) {
-        const currentHash = window.location.hash || "";
-        const isRecoveryHash =
-          currentHash.includes("type=recovery") ||
-          currentHash.includes("access_token=");
-
-        if (isRecoveryHash) {
-          showResetPassword();
-        } else {
-          setLoading(false);
-          showMessage(
-            "Password reset link invalid ya expire ho gaya hai. Dobara reset link request karo.",
-            "error"
-          );
-        }
-      }
-    }, 1200);
-
+  // Hash check for password recovery
+  if (window.location.hash && window.location.hash.includes("type=recovery")) {
+    showUpdatePassword();
     return;
   }
-
   await redirectExistingSession();
 });
 </script>
