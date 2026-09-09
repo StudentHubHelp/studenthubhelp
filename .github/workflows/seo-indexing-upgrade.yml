@@ -15,6 +15,8 @@ on:
       - 'scripts/generate-sitemap.mjs'
       - 'sitemap.xml'
       - '.github/workflows/seo-indexing-upgrade.yml'
+  schedule:
+    - cron: '17 2 * * *'
   workflow_dispatch:
 
 permissions:
@@ -22,7 +24,7 @@ permissions:
 
 jobs:
   seo-upgrade:
-    if: "!contains(github.event.head_commit.message, '[seo-optimized]')"
+    if: "github.event_name != 'push' || !contains(github.event.head_commit.message, '[seo-optimized]')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -69,6 +71,7 @@ jobs:
         run: |
           from pathlib import Path
           import xml.etree.ElementTree as ET
+          from urllib.parse import urlparse, parse_qs
           prop=Path('property-details.html').read_text(encoding='utf-8')
           assert 'js/property-seo-upgrade.js' in prop and 'propertySchema' in prop
           assert prop.lower().count('<html')==1 and prop.lower().count('</html>')==1
@@ -79,6 +82,12 @@ jobs:
           root=ET.parse('sitemap.xml').getroot()
           urls=root.findall('{http://www.sitemaps.org/schemas/sitemap/0.9}url')
           assert urls and all(u.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc') is not None for u in urls)
+          for item in urls:
+              loc=item.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')
+              parsed=urlparse(loc.text)
+              if parsed.path.endswith('/property-details.html'):
+                  params=parse_qs(parsed.query)
+                  assert params.get('type') and (params.get('id') or params.get('slug')), f'Invalid property URL: {loc.text}'
           print(f'SEO validation passed: {len(urls)} sitemap URLs.')
 
       - name: Commit SEO upgrade
