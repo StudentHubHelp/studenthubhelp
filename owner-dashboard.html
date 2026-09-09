@@ -565,6 +565,104 @@ a{
 }
 
 /* =========================
+   EXPLORE PROPERTIES TOOLBAR & PILLS
+========================= */
+.explore-toolbar{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  margin-bottom:20px;
+}
+
+.explore-search-wrap{
+  position:relative;
+  width:100%;
+}
+
+.explore-search-wrap i{
+  position:absolute;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--muted);
+  font-size:13px;
+}
+
+.explore-search-wrap input{
+  width:100%;
+  height:44px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:0 14px 0 40px;
+  font-size:12px;
+  outline:none;
+  background:#fff;
+  transition:.2s;
+}
+
+.explore-search-wrap input:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(212,175,55,.12);
+}
+
+.explore-filter-pills{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:6px;
+  scrollbar-width:thin;
+}
+
+.explore-filter-pills::-webkit-scrollbar{
+  height:4px;
+}
+
+.explore-filter-pills::-webkit-scrollbar-thumb{
+  background:#cbd5e1;
+  border-radius:4px;
+}
+
+.pill-btn{
+  border:1px solid var(--border);
+  background:#fff;
+  color:#475569;
+  padding:8px 15px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.pill-btn:hover{
+  background:#f8fafc;
+  border-color:#cbd5e1;
+}
+
+.pill-btn.active{
+  background:var(--navy);
+  color:#fff;
+  border-color:var(--navy);
+  box-shadow:0 4px 12px rgba(7,20,38,.18);
+}
+
+.pill-count{
+  background:rgba(0,0,0,.08);
+  padding:2px 7px;
+  border-radius:10px;
+  font-size:10px;
+}
+
+.pill-btn.active .pill-count{
+  background:rgba(255,255,255,.2);
+  color:#fff;
+}
+
+/* =========================
    PROPERTY
 ========================= */
 
@@ -1252,7 +1350,6 @@ td{
 
 /* =========================
    PERFORMANCE + RESPONSIVE UPGRADE
-   Existing flows preserved.
 ========================= */
 
 img{
@@ -1540,6 +1637,11 @@ textarea{
     <button class="nav-btn active" data-section="overview">
       <i class="fa-solid fa-chart-pie"></i>
       Overview
+    </button>
+
+    <button class="nav-btn" data-section="explore">
+      <i class="fa-solid fa-compass"></i>
+      Explore Properties
     </button>
 
     <button class="nav-btn" data-section="properties">
@@ -1850,6 +1952,16 @@ textarea{
 
       <div class="activity">
 
+        <button class="activity-item" onclick="showSection('explore')">
+          <div class="activity-icon">
+            <i class="fa-solid fa-compass"></i>
+          </div>
+          <div>
+            <strong>Explore All Properties</strong>
+            <small>Browse all student services across categories.</small>
+          </div>
+        </button>
+
         <button class="activity-item"
         onclick="showSection('gallery')">
 
@@ -1902,6 +2014,72 @@ textarea{
 
       </div>
 
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ================= EXPLORE PROPERTIES ================= -->
+
+<section class="section" id="section-explore">
+
+  <div class="card">
+
+    <div class="card-head">
+      <div>
+        <div class="card-title">
+          Explore Properties
+        </div>
+        <div class="card-sub">
+          Discover all listings category-wise across StudentHubHelp
+        </div>
+      </div>
+
+      <button class="btn secondary" onclick="refreshExploreProperties()">
+        <i class="fa-solid fa-rotate"></i> Refresh
+      </button>
+    </div>
+
+    <!-- TOOLBAR: SEARCH & CATEGORY PILLS -->
+    <div class="explore-toolbar">
+
+      <div class="explore-search-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="exploreSearchInput" placeholder="Search properties by name, area, or city..." oninput="handleExploreSearch(this.value)">
+      </div>
+
+      <div class="explore-filter-pills" id="explorePills">
+        <button type="button" class="pill-btn active" data-cat="all" onclick="filterExploreCategory('all')">
+          All <span class="pill-count" id="count-all">0</span>
+        </button>
+        <button type="button" class="pill-btn" data-cat="hostels" onclick="filterExploreCategory('hostels')">
+          🎓 Hostel / PG <span class="pill-count" id="count-hostels">0</span>
+        </button>
+        <button type="button" class="pill-btn" data-cat="tiffins" onclick="filterExploreCategory('tiffins')">
+          🍱 Tiffin / Mess <span class="pill-count" id="count-tiffins">0</span>
+        </button>
+        <button type="button" class="pill-btn" data-cat="cafes" onclick="filterExploreCategory('cafes')">
+          ☕ Cafe <span class="pill-count" id="count-cafes">0</span>
+        </button>
+        <button type="button" class="pill-btn" data-cat="libraries" onclick="filterExploreCategory('libraries')">
+          📚 Library <span class="pill-count" id="count-libraries">0</span>
+        </button>
+        <button type="button" class="pill-btn" data-cat="bookstores" onclick="filterExploreCategory('bookstores')">
+          📖 Bookstore <span class="pill-count" id="count-bookstores">0</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- PROPERTIES GRID -->
+    <div class="property-grid" id="exploreGrid">
+      <div class="empty" style="grid-column:1/-1">
+        <i class="fa-solid fa-compass"></i>
+        <h3>Loading properties...</h3>
+        <p>Fetching listings from all categories</p>
+      </div>
     </div>
 
   </div>
@@ -2616,6 +2794,11 @@ let reviews = [];
 let verificationRequests = [];
 let galleryImages = [];
 
+let allExploreProperties = [];
+let exploreLoaded = false;
+let currentExploreCategory = "all";
+let currentExploreSearch = "";
+
 let selectedProperty = null;
 
 const propertyTables = [
@@ -2785,10 +2968,23 @@ function publicPropertyUrl(p){
 }
 
 
+function getCategoryBanner(table){
+  const map = {
+    hostels:"hostel-banner.png",
+    tiffins:"tiffin-banner.png",
+    cafes:"cafe-banner.png",
+    libraries:"library-banner.png",
+    bookstores:"bookstore-banner.png"
+  };
+  return map[table] || "logo.png";
+}
+
+
 function propertyImage(p){
 
   return (
     clean(p.image) ||
+    getCategoryBanner(p.table) ||
     "logo.png"
   );
 
@@ -2804,6 +3000,11 @@ const sectionTitles = {
   overview:[
     "Owner Dashboard",
     "Manage your StudentHubHelp account"
+  ],
+
+  explore:[
+    "Explore Properties",
+    "Discover all student services category-wise"
   ],
 
   properties:[
@@ -2909,6 +3110,9 @@ function showSection(section){
   }
 
 
+  if(section === "explore")
+    loadExploreProperties();
+
   if(section === "bookings")
     renderBookings();
 
@@ -2962,6 +3166,246 @@ document
 
     }
   );
+
+
+/* =========================================================
+   EXPLORE PROPERTIES (CATEGORY-WISE)
+========================================================= */
+
+async function loadExploreProperties(forceRefresh=false){
+  const container = document.getElementById("exploreGrid");
+  if(!container) return;
+
+  if(allExploreProperties.length && exploreLoaded && !forceRefresh){
+    renderExploreProperties();
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="empty" style="grid-column:1/-1">
+      <i class="fa-solid fa-spinner fa-spin" style="font-size:28px;color:var(--gold);margin-bottom:10px"></i>
+      <h3>Loading all properties...</h3>
+      <p>Fetching properties from all categories</p>
+    </div>
+  `;
+
+  try{
+    const results = await Promise.all(
+      propertyTables.map(async table => {
+        try{
+          const {data,error} = await db
+            .from(table)
+            .select("*")
+            .order("id",{ascending:false});
+
+          if(error){
+            console.warn("Explore error for " + table, error.message);
+            return [];
+          }
+
+          return (data || []).map(row => ({
+            ...row,
+            id:String(row.id),
+            table
+          }));
+        }catch(err){
+          console.error("Explore table error",table,err);
+          return [];
+        }
+      })
+    );
+
+    allExploreProperties = results.flat();
+    exploreLoaded = true;
+    updateExploreCounts();
+    renderExploreProperties();
+
+  }catch(err){
+    console.error("Load explore properties failed", err);
+    container.innerHTML = `
+      <div class="empty" style="grid-column:1/-1">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3>Failed to load properties</h3>
+        <p>${esc(err.message)}</p>
+      </div>
+    `;
+  }
+}
+
+function refreshExploreProperties(){
+  loadExploreProperties(true);
+}
+window.refreshExploreProperties = refreshExploreProperties;
+
+function updateExploreCounts(){
+  const total = allExploreProperties.length;
+  const countAll = document.getElementById("count-all");
+  if(countAll) countAll.textContent = total;
+
+  propertyTables.forEach(table => {
+    const c = allExploreProperties.filter(p => p.table === table).length;
+    const el = document.getElementById("count-" + table);
+    if(el) el.textContent = c;
+  });
+}
+
+function filterExploreCategory(category){
+  currentExploreCategory = category;
+
+  document.querySelectorAll("#explorePills .pill-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.cat === category);
+  });
+
+  renderExploreProperties();
+}
+window.filterExploreCategory = filterExploreCategory;
+
+function handleExploreSearch(val){
+  currentExploreSearch = clean(val).toLowerCase();
+  renderExploreProperties();
+}
+window.handleExploreSearch = handleExploreSearch;
+
+function renderExploreProperties(){
+  const container = document.getElementById("exploreGrid");
+  if(!container) return;
+
+  let filtered = allExploreProperties;
+
+  // Category Filter
+  if(currentExploreCategory !== "all"){
+    filtered = filtered.filter(p => p.table === currentExploreCategory);
+  }
+
+  // Search Filter
+  if(currentExploreSearch){
+    filtered = filtered.filter(p => {
+      const name = String(p.name || "").toLowerCase();
+      const area = String(p.area || "").toLowerCase();
+      const city = String(p.city || "").toLowerCase();
+      const address = String(p.address || "").toLowerCase();
+      return name.includes(currentExploreSearch) ||
+             area.includes(currentExploreSearch) ||
+             city.includes(currentExploreSearch) ||
+             address.includes(currentExploreSearch);
+    });
+  }
+
+  if(!filtered.length){
+    container.innerHTML = `
+      <div class="empty" style="grid-column:1/-1">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <h3>No properties found</h3>
+        <p>No listings match your selected category or search filter.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => {
+    const isMyProperty = properties.some(my =>
+      String(my.id) === String(p.id) && my.table === p.table
+    );
+    const verified = p.verified === true;
+    const fallbackBanner = getCategoryBanner(p.table);
+
+    let pricingText = "";
+    if(p.monthly_rent) pricingText = `₹${p.monthly_rent}/month`;
+    else if(p.price) pricingText = `₹${p.price}`;
+    else if(p.monthly_plan) pricingText = `₹${p.monthly_plan}/mo`;
+    else if(p.monthly_fee) pricingText = `₹${p.monthly_fee}/mo`;
+
+    return `
+      <div class="property">
+        <div style="position:relative">
+          <img
+            class="property-image"
+            src="${esc(propertyImage(p))}"
+            onerror="this.src='${fallbackBanner}'"
+            alt="${esc(p.name || "Property")}"
+            loading="lazy" decoding="async">
+
+          <div style="position:absolute;top:10px;left:10px;display:flex;gap:5px;flex-wrap:wrap">
+            <span class="badge" style="background:rgba(7,20,38,.88);color:#fff;backdrop-filter:blur(4px)">
+              ${esc(formatCategory(p.table))}
+            </span>
+            ${verified ? `
+              <span class="badge verified-badge">
+                <i class="fa-solid fa-circle-check"></i> Verified
+              </span>
+            ` : ""}
+          </div>
+
+          <div style="position:absolute;top:10px;right:10px">
+            <span class="badge" style="background:rgba(255,255,255,.94);color:#172033;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.15)">
+              ⭐ ${p.rating ? esc(p.rating) : "New"}
+            </span>
+          </div>
+        </div>
+
+        <div class="property-body">
+          <div class="property-top">
+            <div>
+              <h3>${esc(p.name || "Unnamed Property")}</h3>
+              <div style="margin-top:5px;font-size:10px;color:#64748b">
+                <i class="fa-solid fa-location-dot"></i>
+                ${esc(p.area || p.city || "Location not specified")}
+              </div>
+            </div>
+          </div>
+
+          <div class="property-meta" style="margin-top:9px">
+            ${p.phone ? `<div><i class="fa-solid fa-phone"></i> ${esc(p.phone)}</div>` : ""}
+            ${p.timing ? `<div><i class="fa-solid fa-clock"></i> ${esc(p.timing)}</div>` : ""}
+            ${pricingText ? `
+              <div style="color:var(--navy);font-weight:800">
+                <i class="fa-solid fa-indian-rupee-sign"></i> ${esc(pricingText)}
+              </div>
+            ` : ""}
+          </div>
+
+          <div class="property-actions" style="margin-top:14px">
+            <button
+              class="btn primary"
+              onclick="openPublicPage('${esc(propertyKey(p))}')"
+            >
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              View Page
+            </button>
+
+            ${isMyProperty ? `
+              <button
+                class="btn secondary"
+                onclick="openEditor('${esc(propertyKey(p))}')"
+              >
+                <i class="fa-solid fa-pen"></i>
+                Manage Mine
+              </button>
+            ` : `
+              <button
+                class="btn blue"
+                onclick="claimThisProperty('${esc(p.table)}','${esc(p.id)}')"
+              >
+                <i class="fa-solid fa-link"></i>
+                Claim Property
+              </button>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function claimThisProperty(table, id){
+  showSection("claim");
+  const typeSelect = document.getElementById("claimPropertyType");
+  const idInput = document.getElementById("claimPropertyId");
+  if(typeSelect) typeSelect.value = table;
+  if(idInput) idInput.value = id;
+  showToast("Property ID and Category pre-filled for claim request.");
+}
+window.claimThisProperty = claimThisProperty;
 
 
 /* =========================================================
@@ -3285,7 +3729,7 @@ function renderProperties(){
           <img
             class="property-image"
             src="${esc(propertyImage(p))}"
-            onerror="this.src='logo.png'"
+            onerror="this.src='${getCategoryBanner(p.table)}'"
             alt="${esc(p.name || "Property")}"
            loading="lazy" decoding="async">
 
@@ -4055,7 +4499,8 @@ window.saveProperty =
 function openPublicPage(key){
 
   const p =
-    findProperty(key);
+    findProperty(key) ||
+    allExploreProperties.find(x => propertyKey(x) === key);
 
   if(!p)
     return;
@@ -4825,16 +5270,6 @@ async function loadReviews(){
     return;
   }
 
-
-  /*
-    Frontend safety filter:
-    Owner ko sirf apni properties ke
-    reviews dikhaye jayenge.
-
-    Database RLS bhi owner access ko
-    restrict karega.
-  */
-
   reviews = (data || []).filter(r =>
 
     properties.some(p =>
@@ -5025,14 +5460,6 @@ function renderReviews(){
           r.review_text
         );
 
-
-      /*
-        LIVE REVIEW
-
-        Published review is what is
-        currently visible on website.
-      */
-
       const liveText =
         publishedText ||
         (
@@ -5041,24 +5468,8 @@ function renderReviews(){
             : ""
         );
 
-
-      /*
-        CURRENT / PUBLISHED RATING
-      */
-
       const liveRating =
         Number(r.rating) || 0;
-
-
-      /*
-        PENDING UPDATE
-
-        Student may have submitted a
-        newer review/rating.
-
-        Old published content remains
-        live until admin approves it.
-      */
 
       const hasPendingUpdate =
         !!pendingText ||
@@ -5067,22 +5478,18 @@ function renderReviews(){
           r.pending_rating !== undefined
         );
 
-
       const pendingRating =
         Number(r.pending_rating);
-
 
       const reviewDate =
         r.created_at
           ? formatDate(r.created_at)
           : "—";
 
-
       const updatedDate =
         r.updated_at
           ? formatDate(r.updated_at)
           : "";
-
 
       const liveStars =
         "★".repeat(
@@ -5102,7 +5509,6 @@ function renderReviews(){
             Math.round(liveRating)
           )
         );
-
 
       const pendingStars =
         "★".repeat(
@@ -5135,9 +5541,7 @@ function renderReviews(){
           )
         );
 
-
       let statusBadge = "";
-
 
       if(status === "published"){
 
@@ -5218,7 +5622,6 @@ function renderReviews(){
         `;
 
       }
-
 
       return `
 
@@ -6809,6 +7212,11 @@ function startRealtime(){
 
           loadProperties(false);
 
+        }
+
+        // Agar explore section active ho toh use bhi refresh karo
+        if(exploreLoaded){
+          loadExploreProperties(true);
         }
 
       }
