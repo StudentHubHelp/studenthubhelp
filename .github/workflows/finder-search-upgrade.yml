@@ -1,0 +1,64 @@
+name: Upgrade Finder smart search
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'js/finder-power-search.js'
+      - '.github/workflows/finder-search-upgrade.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade-finder-search:
+    if: "!contains(github.event.head_commit.message, '[finder-search-optimized]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Attach shared smart search to Finder pages
+        shell: python
+        run: |
+          from pathlib import Path
+          pages = [
+              'pg-finder.html',
+              'tiffin-finder.html',
+              'library-finder.html',
+              'cafe-finder.html',
+              'bookstore-finder.html',
+          ]
+          marker = 'js/finder-power-search.js'
+          tag = '  <script src="js/finder-power-search.js" defer></script>\n'
+          for name in pages:
+              path = Path(name)
+              if not path.exists():
+                  continue
+              text = path.read_text(encoding='utf-8')
+              if marker in text:
+                  continue
+              text = text.replace('</body>', tag + '</body>', 1)
+              path.write_text(text, encoding='utf-8')
+
+      - name: Validate Finder search files
+        shell: python
+        run: |
+          from pathlib import Path
+          js = Path('js/finder-power-search.js').read_text(encoding='utf-8')
+          assert 'finderPowerSearch' in js
+          for name in ['pg-finder.html','tiffin-finder.html','library-finder.html','cafe-finder.html','bookstore-finder.html']:
+              text = Path(name).read_text(encoding='utf-8')
+              assert 'js/finder-power-search.js' in text, name
+              assert text.lower().count('<html') == 1, name
+              assert text.lower().count('</html>') == 1, name
+              assert text.lower().count('</body>') == 1, name
+          print('Finder smart search injection validation passed.')
+
+      - name: Commit Finder search upgrade
+        run: |
+          git config user.name 'StudentHubHelp Finder Optimizer'
+          git config user.email 'actions@github.com'
+          git add pg-finder.html tiffin-finder.html library-finder.html cafe-finder.html bookstore-finder.html js/finder-power-search.js .github/workflows/finder-search-upgrade.yml
+          git diff --cached --quiet || git commit -m 'feat: upgrade all Finder pages with smart search [finder-search-optimized]'
+          git push
