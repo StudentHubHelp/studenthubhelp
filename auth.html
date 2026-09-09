@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@Supabase/supabase-js@2"></script>
 
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -434,46 +434,70 @@ async function getUserRole(user) {
   return role;
 }
 
-async function routeByRole(user) {
-  const role = await getUserRole(user);
-  const dashboard = DASHBOARDS[role];
-async function routeByRole(user) {
-  const role = await getUserRole(user);
-  const dashboard = DASHBOARDS[role];
+let routingInProgress = false;
 
-  if (!dashboard) {
-    throw new Error("Invalid account role.");
+async function routeByRole(user) {
+  if (!user?.id) {
+    throw new Error("Authenticated user was not found.");
   }
 
-  // Existing dashboards also use sh_current_user
-  const metadata = user.user_metadata || {};
+  // Prevent duplicate routing when login and SIGNED_IN fire together.
+  if (routingInProgress) return;
+  routingInProgress = true;
 
-  const currentUser = {
-    id: user.id,
-    email: user.email || "",
-    name:
-      metadata.full_name ||
-      metadata.name ||
-      user.email?.split("@")[0] ||
-      "User",
-    phone: metadata.phone || "",
-    role: role
-  };
+  try {
+    const { data: profile, error } = await db
+      .from("profiles")
+      .select("id, role, full_name, phone")
+      .eq("id", user.id)
+      .maybeSingle();
 
-  // Keep existing dashboard authentication compatible
-  localStorage.setItem(
-    "sh_current_user",
-    JSON.stringify(currentUser)
-  );
+    if (error) {
+      console.error("Profile lookup error:", error);
+      throw new Error("Profile load nahi ho saka. Please try again.");
+    }
 
-  loadingText.textContent =
-    role === "admin"
-      ? "Opening Admin Dashboard..."
-      : role === "owner"
-      ? "Opening Owner Dashboard..."
-      : "Opening Student Dashboard...";
+    const role = normalizeRole(profile?.role);
 
-  window.location.replace(dashboard);
+    if (!role) {
+      throw new Error("Aapke account ka valid role set nahi hai. Admin se contact karein.");
+    }
+
+    const dashboard = DASHBOARDS[role];
+
+    if (!dashboard) {
+      throw new Error("Invalid account role.");
+    }
+
+    // Existing dashboards use sh_current_user for their auth/UI checks.
+    const metadata = user.user_metadata || {};
+    const currentUser = {
+      id: user.id,
+      email: user.email || "",
+      name:
+        profile?.full_name ||
+        metadata.full_name ||
+        metadata.name ||
+        user.email?.split("@")[0] ||
+        "User",
+      phone: profile?.phone || metadata.phone || "",
+      role
+    };
+
+    localStorage.setItem("sh_current_user", JSON.stringify(currentUser));
+
+    loadingText.textContent =
+      role === "admin" ? "Opening Admin Dashboard..." :
+      role === "owner" ? "Opening Owner Dashboard..." :
+      "Opening Student Dashboard...";
+
+    // Relative URL works correctly on GitHub Pages project paths.
+    const dashboardUrl = new URL(dashboard, window.location.href).href;
+    window.location.replace(dashboardUrl);
+  } catch (error) {
+    routingInProgress = false;
+    throw error;
+  }
 }
 
 /* =========================================================
