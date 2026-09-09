@@ -1586,188 +1586,6 @@ $("ownerAddPropertyBtn").addEventListener("click",()=>{
 function openView(type,index){
   previewPublic(type,index);
 }
-/* ================= PREVIEW POPUP WITH PROPERTY-WISE BANNERS ================= */
-
-function getPropertyBanner(type, x) {
-  // 1. Agar property ki apni real photo database me uploaded ho
-  const customImg = x?.image || x?.photo || x?.banner || x?.banner_image;
-  if (customImg && String(customImg).trim() !== "" && !String(customImg).includes("-banner.png")) {
-    return customImg;
-  }
-
-  // 2. Category-wise GitHub banners
-  const t = String(type || x?.category || x?.type || "").toLowerCase();
-  if (t.includes("tiffin") || t.includes("mess")) {
-    return "tiffin-banner.png";
-  }
-  if (t.includes("cafe")) {
-    return "cafe-banner.png";
-  }
-  if (t.includes("bookstore") || t.includes("book")) {
-    return "bookstore-banner.png";
-  }
-  if (t.includes("lib")) {
-    return "library-banner.png";
-  }
-  return "hostel-banner.png";
-}
-
-function previewPublic(type, index) {
-  const x = state[type]?.[index];
-  if (!x) return;
-
-  closeUnverifiedPreview();
-
-  const title = x.name || "Property Name";
-  const verified = propVerified(x);
-
-  // Dynamic Property ID
-  let propId = x.property_id || x.slug || x.id || "1000000361";
-  if (typeof propId === "string" && propId.length > 12) {
-    const numericPart = propId.replace(/[^0-9]/g, "");
-    propId = numericPart.length >= 6 ? numericPart.slice(0, 10) : propId.slice(0, 10);
-  }
-
-  // Category Tag
-  const categoryTag = x.room_types || x.gender || x.category || masterMeta[type]?.singular || "Student PG";
-
-
-// ================= PROPERTY-WISE GITHUB BANNER =================
-const bannerMap = {
-  hostels: "hostel-banner.png",
-  tiffins: "tiffin-banner.png",
-  libraries: "library-banner.png",
-  cafes: "cafe-banner.png",
-  bookstores: "bookstore-banner.png"
-};
-
-// Table/type ke according exact banner
-const bannerFile = bannerMap[String(type || "").toLowerCase()] || "hostel-banner.png";
-
-// GitHub Pages absolute path
-const bannerImg =
-  "https://studenthubhelp.github.io/studenthubhelp/" + bannerFile; >
-     
-
-        <!-- Top-Left Badge (Category) -->
-        <div class="absolute top-3.5 left-3.5">
-          <span class="sh-category-badge text-[11px] font-extrabold px-3.5 py-1.5 rounded-full shadow-md tracking-wide" style="background:#ffffff !important; color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; font-weight:800 !important;">
-            ${esc(categoryTag)}
-          </span>
-        </div>
-
-        <!-- Top-Right Badge (ID) -->
-        <div class="absolute top-3.5 right-3.5">
-          <span class="sh-id-badge text-[11px] font-bold px-3.5 py-1.5 rounded-full shadow-md border border-white/20" style="background:rgba(15,23,42,0.85) !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;">
-            ID #${esc(propId)}
-          </span>
-        </div>
-
-        <!-- Bottom-Left Badge (Verified) -->
-        <div class="absolute bottom-3.5 left-3.5">
-          ${
-            verified
-              ? `<span class="text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md inline-flex items-center gap-1.5" style="background:#16834b !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;">
-                   <i class="fa-solid fa-circle-check" style="color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;"></i> Verified Listing
-                 </span>`
-              : `<span class="text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md inline-flex items-center gap-1.5" style="background:#d97706 !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;">
-                   <i class="fa-solid fa-clock" style="color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;"></i> Under Review
-                 </span>`
-          }
-        </div>
-      </div>
-
-      <!-- CARD BODY DETAILS -->
-      <div class="p-6 space-y-3.5 text-left" style="background:#ffffff !important; color:#0f172a !important;">
-        
-        <!-- Property Name & Close X -->
-        <div class="flex items-start justify-between gap-2">
-          <h2 class="sh-title text-[22px] font-extrabold leading-snug tracking-tight" style="color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; font-size:22px !important; font-weight:800 !important; font-family:'Inter',sans-serif !important; margin:0 !important;">
-            ${esc(title)}
-          </h2>
-          <button 
-            type="button" 
-            onclick="closeUnverifiedPreview()" 
-            class="sh-btn-close w-8 h-8 -mt-1 -mr-1 rounded-full flex items-center justify-center text-xs transition"
-            style="background:#f1f5f9 !important; color:#64748b !important; -webkit-text-fill-color:#64748b !important; border:none !important;"
-            title="Close"
-          >
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-
-              
-        <!-- Property ID Line -->
-        <div class="sh-prop-id flex items-center gap-2 font-bold text-xs" style="color:#2563eb !important; -webkit-text-fill-color:#2563eb !important;">
-          <i class="fa-solid fa-fingerprint text-sm"></i>
-          <span>Property ID: #${esc(propId)}</span>
-        </div>
-
-        <!-- Area Line -->
-        <div class="sh-area flex items-center gap-2 font-bold text-xs" style="color:#b45309 !important; -webkit-text-fill-color:#b45309 !important;">
-          <i class="fa-solid fa-location-dot text-sm text-[#d97706]"></i>
-          <span>${esc(area)}</span>
-        </div>
-
-        <!-- Full Address Line -->
-        <div class="sh-address flex items-start gap-2.5 text-xs leading-relaxed" style="color:#64748b !important; -webkit-text-fill-color:#64748b !important;">
-          <i class="fa-solid fa-house sh-icon-home mt-0.5 text-xs flex-shrink-0" style="color:#94a3b8 !important; -webkit-text-fill-color:#94a3b8 !important;"></i>
-          <span class="line-clamp-2">${esc(address)}</span>
-        </div>
-
-        <!-- Timing Line -->
-        <div class="sh-timing flex items-center gap-2.5 text-xs" style="color:#64748b !important; -webkit-text-fill-color:#64748b !important;">
-          <i class="fa-regular fa-clock sh-icon-clock text-xs flex-shrink-0" style="color:#94a3b8 !important; -webkit-text-fill-color:#94a3b8 !important;"></i>
-          <span>${esc(timing)}</span>
-        </div>
-
-        <!-- Rating Badge -->
-        <div class="pt-1">
-          <span class="sh-rating-badge inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1.5 rounded-xl" style="background:#fef9c3 !important; border:1px solid #fef08a !important; color:#854d0e !important; -webkit-text-fill-color:#854d0e !important;">
-            <i class="fa-solid fa-star text-xs text-[#eab308]"></i>
-            <span>${rating} / 5</span>
-          </span>
-        </div>
-
-        <!-- ACTION BUTTONS -->
-        <div class="grid grid-cols-2 gap-3 pt-3">
-          <button 
-            type="button" 
-            onclick="openPropertyEditorFromPreview('${esc(type)}','${esc(x.id)}')" 
-            class="sh-btn-details w-full py-3.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md transition"
-            style="background:#0a192f !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; border:none !important;"
-          >
-            <i class="fa-solid fa-eye text-xs"></i> 
-            <span>View Details</span>
-          </button>
-
-          <a 
-            href="${callHref}" 
-            ${phone ? "" : "onclick=\"toast('Phone number not available', true)\""}
-            class="sh-btn-call w-full py-3.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition"
-            style="background:#f1f5f9 !important; color:#1e293b !important; -webkit-text-fill-color:#1e293b !important; text-decoration:none !important;"
-          >
-            <i class="fa-solid fa-phone text-xs"></i> 
-            <span>Call</span>
-          </a>
-        </div>
-
-      </div>
-
-    </div>
-  `;
-
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeUnverifiedPreview();
-  });
-
-  document.body.appendChild(modal);
-}
-
-function closeUnverifiedPreview() {
-  const modal = document.getElementById("shPropertyPopup");
-  if (modal) modal.remove();
-}
 /* ================= MODALS ================= */
 
 function openModal(id){
@@ -1807,7 +1625,7 @@ $("passwordForm").addEventListener("submit",async e=>{
 
 /* ================= REALTIME ================= */
 const adminRealtimeChannels=[];
-['hostels','tiffins','libraries','cafes','profiles'].forEach(table=>{
+['hostels','tiffins','libraries','cafes','bookstores','profiles'].forEach(table=>{
   const channel=supabaseClient.channel('admin-live-'+table)
     .on('postgres_changes',{event:'*',schema:'public',table},async()=>{
       if(state.user) await loadAll();
@@ -2372,19 +2190,21 @@ function previewPublic(type, index) {
   const categoryTag = x.room_types || x.gender || x.category || masterMeta[type]?.singular || "Student PG";
 
   // Banner image
+  // Property type -> exact GitHub Pages banner
   const bannerMap = {
-  hostels: "hostel-banner.png",
-  tiffins: "tiffin-banner.png",
-  libraries: "library-banner.png",
-  cafes: "cafe-banner.png",
-  bookstores: "bookstore-banner.png"
-};
+    hostels: "hostel-banner.png",
+    tiffins: "tiffin-banner.png",
+    libraries: "library-banner.png",
+    cafes: "cafe-banner.png",
+    bookstores: "bookstore-banner.png"
+  };
 
-const bannerFile =
-  bannerMap[String(type || "").toLowerCase()] || "hostel-banner.png";
+  const normalizedType = String(type || "").trim().toLowerCase();
+  const bannerFile = bannerMap[normalizedType] || "hostel-banner.png";
 
-const bannerImg =
-  "https://studenthubhelp.github.io/studenthubhelp/" + bannerFile;
+  // Always use the category banner here. Do NOT use x.image/x.photo.
+  // This keeps the admin preview property-wise.
+  const bannerImg = new URL(bannerFile, document.baseURI).href;
 
   const phone = x.phone || "";
   const area = x.area || "Area Not Specified";
@@ -2402,12 +2222,13 @@ const bannerImg =
       
       <!-- TOP BANNER -->
       <div class="relative w-full h-52 bg-slate-950 overflow-hidden">
-        <img 
-    src="${esc(bannerImg)}" 
-    alt="${esc(title)}"
-    class="w-full h-full object-cover"
-    loading="eager"
-  />
+        <img
+          src="${esc(bannerImg)}"
+          alt="${esc(title)}"
+          class="w-full h-full object-cover"
+          loading="eager"
+          decoding="async"
+        />
 
         
         <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60 pointer-events-none"></div>
