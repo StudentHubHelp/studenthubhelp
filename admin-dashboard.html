@@ -176,6 +176,14 @@ body.premium-grid #shPropertyPopup .sh-btn-close * {
 .animate-pop {
   animation: popModal 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+/* ===== ULTIMATE ADMIN GLOBAL SEARCH ===== */
+#adminSearchWrap{position:relative}
+#searchResults{box-shadow:0 22px 70px rgba(30,64,120,.28);backdrop-filter:blur(14px)}
+#searchResults::-webkit-scrollbar{width:7px}
+#searchResults::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:99px}
+#adminSearchFilters{box-shadow:0 12px 35px rgba(30,64,120,.18)}
+#globalSearchStatus{pointer-events:none}
+@media(max-width:640px){#adminSearchFilters{padding:.65rem}.adminSearchWrap{width:100%}}
 </style>
 <style id="studenthubhelp-theme-system">
 /* ===== STUDENTHUBHELP NAVY + GOLD THEME SYSTEM ===== */
@@ -704,10 +712,31 @@ button:disabled{
   <div class="flex-1 min-w-0">
     <header class="sticky top-0 z-40 bg-navy-900/95 backdrop-blur border-b border-gold-500/20 p-3 sm:p-4">
       <div class="flex gap-2 items-center">
-        <div class="relative flex-1">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gold-500"></i>
-          <input id="globalSearch" class="input pl-9" placeholder="Search students, owners, properties, phone, area...">
-          <div id="searchResults" class="absolute left-0 right-0 top-12 hidden card rounded-2xl p-2 max-h-96 overflow-auto z-50"></div>
+        <div class="relative flex-1" id="adminSearchWrap">
+          <div class="flex gap-2 items-center">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gold-500"></i>
+              <input id="globalSearch" class="input pl-9 pr-24" placeholder="Search anything: students, owners, properties, phone, email, area..." autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-controls="searchResults" aria-expanded="false">
+              <span id="globalSearchStatus" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/70 hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            </div>
+            <button id="adminSearchFilterBtn" type="button" class="h-11 px-3 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300 text-xs font-bold" title="Search filters"><i class="fa-solid fa-sliders mr-1"></i><span class="hidden sm:inline">Filters</span></button>
+          </div>
+          <div id="adminSearchFilters" class="hidden mt-2 card rounded-2xl p-3 border border-gold-500/20">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+              <select id="adminSearchEntity" class="input text-xs"><option value="">All types</option><option value="hostel">Hostels / PG</option><option value="tiffin">Tiffins</option><option value="library">Libraries</option><option value="cafe">Cafes</option><option value="bookstore">Bookstores</option><option value="listing_request">Listing Requests</option><option value="profile">Users / Owners</option><option value="review">Reviews</option></select>
+              <input id="adminSearchCity" class="input text-xs" placeholder="City">
+              <input id="adminSearchArea" class="input text-xs" placeholder="Area / locality">
+              <input id="adminSearchMinPrice" class="input text-xs" type="number" min="0" placeholder="Min price">
+              <input id="adminSearchMaxPrice" class="input text-xs" type="number" min="0" placeholder="Max price">
+              <select id="adminSearchRating" class="input text-xs"><option value="">Any rating</option><option value="4.5">4.5+ ★</option><option value="4">4.0+ ★</option><option value="3">3.0+ ★</option></select>
+              <select id="adminSearchStatus" class="input text-xs"><option value="">Any status</option><option value="active">Active</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="published">Published</option><option value="hidden">Hidden</option><option value="disabled">Disabled</option></select>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mt-2">
+              <label class="flex items-center gap-2 text-xs font-bold"><input id="adminSearchVerified" type="checkbox" class="accent-blue-500"> Verified only</label>
+              <div class="flex gap-2"><button id="adminSearchClear" type="button" class="master-action">Clear</button><span id="adminSearchMeta" class="text-[10px] text-white/70 self-center"></span></div>
+            </div>
+          </div>
+          <div id="searchResults" class="absolute left-0 right-0 top-[4.4rem] hidden card rounded-2xl p-2 max-h-[70vh] overflow-auto z-50 border border-gold-500/25"></div>
         </div>
         <button id="refreshBtn" class="w-11 h-11 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300"><i class="fa-solid fa-rotate"></i></button><button id="masterBell" class="relative w-11 h-11 rounded-xl bg-navy-850 border border-gold-500/30 text-gold-300" title="Notifications"><i class="fa-solid fa-bell"></i><span id="masterBellCount" class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-[9px] flex items-center justify-center">0</span></button>
         <a href="./" target="_blank" class="hidden sm:flex px-4 py-2.5 rounded-xl gold-gradient-bg text-navy-950 text-xs font-bold"><i class="fa-solid fa-globe mr-1"></i> Live Site</a>
@@ -2877,29 +2906,131 @@ async function deleteMedia(id){
  await logAdminAction("media_delete","owner_property_images",id,x,null);toast("Media metadata deleted.");await loadAll();
 }
 
-/* Global Search */
-function buildSearch(){
- const q=mtext($("globalSearch").value).toLowerCase(),box=$("searchResults");if(!q){box.classList.add("hidden");box.innerHTML="";return}
- const out=[];const push=(title,sub,fn)=>out.push({title,sub,fn});
- state.students.forEach(s=>{if(JSON.stringify(s).toLowerCase().includes(q))push(s.full_name||"Student",`Student • ${s.phone||""}`,()=>{showSection("students")})});
- state.owners.forEach(o=>{if(JSON.stringify(o).toLowerCase().includes(q))push(o.full_name||"Owner",`Owner • ${o.phone||""}`,()=>openOwnerDetails(o.id))});
- allProps().forEach(x=>{if(JSON.stringify(x).toLowerCase().includes(q))push(x.name||masterMeta[x.__type].singular,`${masterMeta[x.__type].category} • ${x.area||""} • ${x.phone||""}`,()=>previewPublic(x.__type,x.__index))});
- Object.entries(state.advanced.requests).forEach(([table,rows])=>{(rows||[]).slice(0,100).forEach(r=>{if(JSON.stringify(r).toLowerCase().includes(q))push(`${table.replaceAll("_"," ")} #${firstVal(r,["id","request_id","booking_id"],"")}`,String(firstVal(r,["status","property_name","name"],"")),()=>openRecordDrawer(table,firstVal(r,["id","request_id","booking_id"],"")))})});
- box.innerHTML=out.slice(0,40).map((r,i)=>`<button class="w-full text-left p-3 rounded-xl hover:bg-navy-850" data-master-search-index="${i}"><div class="font-bold">${esc(r.title)}</div><div class="text-[10px] text-slate-400">${esc(r.sub)}</div></button>`).join("")||`<div class="p-3 text-slate-400">No results found.</div>`;
- box.classList.remove("hidden");box._masterResults=out;
+/* ================= ULTIMATE ADMIN GLOBAL SEARCH ================= */
+const ADMIN_SEARCH_PAGE_SIZE=30;
+let adminSearchTimer=null,adminSearchRequest=0,adminSearchPage=1,adminSearchLastTotal=0;
+const adminSearchState={query:"",entity:"",city:"",area:"",minPrice:null,maxPrice:null,minRating:null,verified:false,status:""};
+
+function adminSearchEl(id){return $(id)}
+function adminSearchValue(id){return mtext(adminSearchEl(id)?.value||"")}
+function adminSearchReadFilters(){
+  adminSearchState.query=adminSearchValue("globalSearch");
+  adminSearchState.entity=adminSearchValue("adminSearchEntity");
+  adminSearchState.city=adminSearchValue("adminSearchCity");
+  adminSearchState.area=adminSearchValue("adminSearchArea");
+  adminSearchState.minPrice=adminSearchValue("adminSearchMinPrice")||null;
+  adminSearchState.maxPrice=adminSearchValue("adminSearchMaxPrice")||null;
+  adminSearchState.minRating=adminSearchValue("adminSearchRating")||null;
+  adminSearchState.verified=!!adminSearchEl("adminSearchVerified")?.checked;
+  adminSearchState.status=adminSearchValue("adminSearchStatus");
 }
-$("globalSearch").addEventListener("input",buildSearch);
-document.addEventListener("click",e=>{
-  const b=e.target.closest("[data-master-search-index]");
-  if(b){
-    const r=$("searchResults")._masterResults?.[Number(b.dataset.masterSearchIndex)];
-    if(r){
-      $("searchResults").classList.add("hidden");
-      $("globalSearch").value="";
-      r.fn();
-    }
+function adminSearchSetLoading(on){
+  const x=adminSearchEl("globalSearchStatus");if(!x)return;
+  x.classList.toggle("hidden",!on);
+}
+function adminSearchTypeLabel(t){return ({hostel:"Hostel / PG",tiffin:"Tiffin / Mess",library:"Library",cafe:"Cafe",bookstore:"Bookstore",listing_request:"Listing Request",profile:"Profile / User",review:"Review"}[t]||t||"Record")}
+function adminSearchIcon(t){return ({hostel:"fa-hotel",tiffin:"fa-bowl-food",library:"fa-book-open",cafe:"fa-mug-hot",bookstore:"fa-store",listing_request:"fa-inbox",profile:"fa-user",review:"fa-star"}[t]||"fa-magnifying-glass")}
+function adminSearchOpenResult(r){
+  const table=r.source_table,id=String(r.source_id||"");
+  if(["hostels","tiffins","libraries","cafes","bookstores"].includes(table)){
+    const idx=(state[table]||[]).findIndex(x=>String(x.id)===id);
+    if(idx>=0){previewPublic(table,idx);return;}
+    showSection(table);return;
   }
+  if(table==="profiles"){
+    const p=(state.owners||[]).find(x=>String(x.id)===id);
+    if(p){openOwnerDetails(p.id);return;}
+    const student=(state.students||[]).find(x=>String(x.id)===id);
+    if(student){showSection("students");return;}
+    showSection("admin");return;
+  }
+  const rows=state.advanced?.requests?.[table]||[];
+  if(rows.some(x=>String(firstVal(x,["id","request_id","booking_id"],""))===id)){openRecordDrawer(table,id);return;}
+  if(table==="listing_requests"){showSection("listing-requests");return;}
+  if(table==="reviews"){showSection("reviews");return;}
+  if(table==="property_reports"){showSection("reports");return;}
+}
+function adminSearchRender(rows,total,page){
+  const box=adminSearchEl("searchResults");if(!box)return;
+  adminSearchLastTotal=Number(total||0);adminSearchPage=page;
+  const q=adminSearchState.query;
+  if(!rows?.length){
+    box.innerHTML=`<div class="p-5 text-center"><i class="fa-solid fa-magnifying-glass text-2xl text-white/40"></i><div class="font-bold mt-2">No matching admin records</div><div class="text-[10px] text-white/60 mt-1">Try a name, phone, email, property, city, area or spelling variation.</div></div>`;
+    box.classList.remove("hidden");return;
+  }
+  const body=rows.map((r,i)=>{
+    const verified=r.verified===true?`<span class="badge badge-green">Verified</span>`:"";
+    const status=r.status?`<span class="badge">${esc(r.status)}</span>`:"";
+    const rating=r.rating!=null&&Number(r.rating)>0?`<span class="text-gold-200">★ ${Number(r.rating).toFixed(1)}</span>`:"";
+    const meta=[adminSearchTypeLabel(r.entity_type),r.city,r.area,r.owner_name,r.owner_phone,r.email].filter(Boolean).join(" • ");
+    return `<button type="button" class="w-full text-left p-3 rounded-xl hover:bg-white/10 border-b border-white/10 last:border-0" data-admin-search-index="${i}">
+      <div class="flex items-start gap-3"><div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0"><i class="fa-solid ${adminSearchIcon(r.entity_type)}"></i></div><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><div class="font-bold truncate">${esc(r.title||"Untitled")}</div>${verified}${status}${rating}</div><div class="text-[10px] text-white/70 mt-0.5 truncate">${esc(meta||r.subtitle||"")}</div><div class="text-[10px] text-white/45 mt-1">Relevance ${Number(r.score||0).toFixed(1)}</div></div><i class="fa-solid fa-chevron-right text-white/40 mt-2"></i></div></button>`;
+  }).join("");
+  const totalPages=Math.max(1,Math.ceil(adminSearchLastTotal/ADMIN_SEARCH_PAGE_SIZE));
+  const nav=totalPages>1?`<div class="flex items-center justify-between gap-2 p-2 border-t border-white/10"><button type="button" class="master-action" data-admin-search-page="${Math.max(1,page-1)}" ${page<=1?"disabled":""}><i class="fa-solid fa-chevron-left"></i></button><span class="text-[10px] text-white/70">Page ${page} / ${totalPages} • ${adminSearchLastTotal} results</span><button type="button" class="master-action" data-admin-search-page="${Math.min(totalPages,page+1)}" ${page>=totalPages?"disabled":""}><i class="fa-solid fa-chevron-right"></i></button></div>`:`<div class="p-2 text-[10px] text-white/60 border-t border-white/10">${adminSearchLastTotal} result${adminSearchLastTotal===1?"":"s"}</div>`;
+  box.innerHTML=body+nav;box._adminSearchRows=rows;box.classList.remove("hidden");
+  const input=adminSearchEl("globalSearch");input?.setAttribute("aria-expanded","true");
+  const meta=adminSearchEl("adminSearchMeta");if(meta)meta.textContent=`${adminSearchLastTotal} matches`;
+}
+async function runAdminGlobalSearch(page=1){
+  adminSearchReadFilters();
+  if(!state.user)return;
+  const requestId=++adminSearchRequest;adminSearchSetLoading(true);
+  try{
+    const {data,error}=await supabaseClient.rpc("admin_global_search_v2",{
+      search_query:adminSearchState.query,
+      entity_filter:adminSearchState.entity||null,
+      city_filter:adminSearchState.city||null,
+      area_filter:adminSearchState.area||null,
+      min_price:adminSearchState.minPrice,
+      max_price:adminSearchState.maxPrice,
+      min_rating:adminSearchState.minRating,
+      verified_only:adminSearchState.verified,
+      status_filter:adminSearchState.status||null,
+      page_number:page,
+      page_size:ADMIN_SEARCH_PAGE_SIZE
+    });
+    if(requestId!==adminSearchRequest)return;
+    if(error)throw error;
+    const rows=data||[],total=rows.length?Number(rows[0].total_count||rows.length):0;
+    adminSearchRender(rows,total,page);
+  }catch(e){
+    if(requestId!==adminSearchRequest)return;
+    console.error("Admin global search failed",e);
+    const box=adminSearchEl("searchResults");box.innerHTML=`<div class="p-4 text-sm"><div class="font-bold text-red-200">Search unavailable</div><div class="text-[10px] text-white/60 mt-1">${esc(e?.message||"Could not search admin records.")}</div></div>`;box.classList.remove("hidden");
+  }finally{if(requestId===adminSearchRequest)adminSearchSetLoading(false)}
+}
+function scheduleAdminGlobalSearch(){
+  clearTimeout(adminSearchTimer);adminSearchReadFilters();adminSearchPage=1;
+  if(!adminSearchState.query && !adminSearchState.entity && !adminSearchState.city && !adminSearchState.area && !adminSearchState.minPrice && !adminSearchState.maxPrice && !adminSearchState.minRating && !adminSearchState.verified && !adminSearchState.status){adminSearchEl("searchResults")?.classList.add("hidden");adminSearchEl("globalSearch")?.setAttribute("aria-expanded","false");return;}
+  adminSearchTimer=setTimeout(()=>runAdminGlobalSearch(1),220);
+}
+function clearAdminSearch(){
+  ["globalSearch","adminSearchCity","adminSearchArea","adminSearchMinPrice","adminSearchMaxPrice"].forEach(id=>{if(adminSearchEl(id))adminSearchEl(id).value=""});
+  if(adminSearchEl("adminSearchEntity"))adminSearchEl("adminSearchEntity").value="";
+  if(adminSearchEl("adminSearchRating"))adminSearchEl("adminSearchRating").value="";
+  if(adminSearchEl("adminSearchStatus"))adminSearchEl("adminSearchStatus").value="";
+  if(adminSearchEl("adminSearchVerified"))adminSearchEl("adminSearchVerified").checked=false;
+  adminSearchEl("searchResults")?.classList.add("hidden");adminSearchEl("globalSearch")?.setAttribute("aria-expanded","false");
+  const meta=adminSearchEl("adminSearchMeta");if(meta)meta.textContent="";
+}
+adminSearchEl("globalSearch")?.addEventListener("input",scheduleAdminGlobalSearch);
+["adminSearchEntity","adminSearchCity","adminSearchArea","adminSearchMinPrice","adminSearchMaxPrice","adminSearchRating","adminSearchStatus","adminSearchVerified"].forEach(id=>adminSearchEl(id)?.addEventListener("change",scheduleAdminGlobalSearch));
+adminSearchEl("adminSearchFilterBtn")?.addEventListener("click",()=>adminSearchEl("adminSearchFilters")?.classList.toggle("hidden"));
+adminSearchEl("adminSearchClear")?.addEventListener("click",clearAdminSearch);
+adminSearchEl("globalSearch")?.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){e.preventDefault();clearTimeout(adminSearchTimer);runAdminGlobalSearch(1)}
+  if(e.key==="Escape"){adminSearchEl("searchResults")?.classList.add("hidden");adminSearchEl("globalSearch")?.setAttribute("aria-expanded","false")}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();adminSearchEl("globalSearch")?.focus()}
 });
+document.addEventListener("click",e=>{
+  const item=e.target.closest("[data-admin-search-index]");
+  if(item){const r=adminSearchEl("searchResults")._adminSearchRows?.[Number(item.dataset.adminSearchIndex)];if(r){adminSearchEl("searchResults").classList.add("hidden");adminSearchEl("globalSearch").setAttribute("aria-expanded","false");adminSearchOpenResult(r)}return;}
+  const pg=e.target.closest("[data-admin-search-page]");
+  if(pg){runAdminGlobalSearch(Number(pg.dataset.adminSearchPage));return;}
+  if(!e.target.closest("#adminSearchWrap")){adminSearchEl("searchResults")?.classList.add("hidden");adminSearchEl("globalSearch")?.setAttribute("aria-expanded","false")}
+});
+window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();adminSearchEl("globalSearch")?.focus();adminSearchEl("globalSearch")?.select()}});
 
 /* Export CSV */
 function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`}
