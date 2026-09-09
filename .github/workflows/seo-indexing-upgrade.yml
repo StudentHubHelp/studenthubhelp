@@ -70,25 +70,33 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
           import xml.etree.ElementTree as ET
           from urllib.parse import urlparse, parse_qs
+          def html_document_is_well_formed(text, name):
+              assert re.search(r'^<!doctype html>', text, re.I | re.M), name
+              assert len(re.findall(r'^<html(?:\s|>)', text, re.I | re.M)) == 1, name
+              assert len(re.findall(r'^</html>\s*$', text, re.I | re.M)) == 1, name
           prop=Path('property-details.html').read_text(encoding='utf-8')
           assert 'js/property-seo-upgrade.js' in prop and 'propertySchema' in prop
-          assert prop.lower().count('<html')==1 and prop.lower().count('</html>')==1
+          html_document_is_well_formed(prop, 'property-details.html')
           for name in ['pg-finder.html','tiffin-finder.html','library-finder.html','cafe-finder.html','bookstore-finder.html']:
               text=Path(name).read_text(encoding='utf-8')
               assert 'js/seo-location-entities.js' in text and 'js/finder-power-search.js' in text, name
-              assert text.lower().count('<html')==1 and text.lower().count('</html>')==1, name
+              html_document_is_well_formed(text, name)
           root=ET.parse('sitemap.xml').getroot()
           urls=root.findall('{http://www.sitemaps.org/schemas/sitemap/0.9}url')
           assert urls and all(u.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc') is not None for u in urls)
+          seen=set()
           for item in urls:
-              loc=item.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')
-              parsed=urlparse(loc.text)
+              loc=item.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc').text
+              assert loc not in seen, f'Duplicate sitemap URL: {loc}'
+              seen.add(loc)
+              parsed=urlparse(loc)
               if parsed.path.endswith('/property-details.html'):
                   params=parse_qs(parsed.query)
-                  assert params.get('type') and (params.get('id') or params.get('slug')), f'Invalid property URL: {loc.text}'
-          print(f'SEO validation passed: {len(urls)} sitemap URLs.')
+                  assert params.get('type') and (params.get('id') or params.get('slug')), f'Invalid property URL: {loc}'
+          print(f'SEO validation passed: {len(urls)} unique sitemap URLs.')
 
       - name: Commit SEO upgrade
         run: |
