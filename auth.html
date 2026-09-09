@@ -1,1349 +1,203 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Login | StudentHubHelp</title>
-  <meta name="description" content="Secure StudentHubHelp login for students, property owners and authorized administrators.">
-  <meta name="robots" content="noindex, nofollow, noarchive">
-
-  <link rel="icon" type="image/png" href="logo.png">
-  <link rel="apple-touch-icon" href="logo.png">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- IMPORTANT: lowercase @supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --navy:#071426;--navy2:#0d2038;--gold:#d4af37;--gold2:#f0d477;
-      --white:#fff;--text:#172033;--muted:#64748b;--border:#e5e7eb;
-      --danger:#dc2626;--success:#15803d;
-    }
-    body{
-      min-height:100vh;font-family:"Inter",sans-serif;color:var(--text);
-      background:radial-gradient(circle at top left,rgba(212,175,55,.12),transparent 32%),
-                 linear-gradient(135deg,#f8fafc 0%,#eef2f7 100%);
-      display:flex;flex-direction:column;
-    }
-    a{color:inherit;text-decoration:none}
-    .navbar{width:100%;background:rgba(7,20,38,.97);border-bottom:1px solid rgba(255,255,255,.08);color:#fff}
-    .nav-inner{max-width:1200px;margin:auto;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand img{width:48px;height:48px;object-fit:contain;border-radius:12px;background:#fff;padding:4px}
-    .brand-text h1{font-family:"Poppins",sans-serif;font-size:20px;line-height:1.1}
-    .brand-text span{display:block;margin-top:4px;font-size:11px;color:#cbd5e1}
-    .home-btn{padding:10px 16px;border:1px solid rgba(255,255,255,.2);border-radius:10px;font-size:14px;font-weight:600}
-    .home-btn:hover{background:rgba(255,255,255,.08)}
-    .page{flex:1;width:100%;display:flex;align-items:center;justify-content:center;padding:45px 18px}
-    .auth-wrapper{width:100%;max-width:470px}
-    .auth-card{background:rgba(255,255,255,.96);border:1px solid rgba(15,23,42,.08);border-radius:24px;box-shadow:0 25px 70px rgba(15,23,42,.12),0 5px 20px rgba(15,23,42,.05);overflow:hidden}
-    .auth-top{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:30px 28px;text-align:center}
-    .auth-icon{width:64px;height:64px;margin:0 auto 15px;border-radius:18px;background:rgba(212,175,55,.14);border:1px solid rgba(240,212,119,.3);display:flex;align-items:center;justify-content:center;font-size:28px}
-    .auth-top h2{font-family:"Poppins",sans-serif;font-size:27px;margin-bottom:8px}
-    .auth-top p{color:#cbd5e1;font-size:14px;line-height:1.6}
-    .auth-body{padding:28px}
-    .tabs{display:grid;grid-template-columns:1fr 1fr;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:25px}
-    .tab{border:0;background:transparent;padding:12px;border-radius:9px;font-weight:700;color:#64748b;cursor:pointer;transition:.2s}
-    .tab.active{background:#fff;color:var(--navy);box-shadow:0 2px 8px rgba(15,23,42,.08)}
-    .form-group{margin-bottom:17px}
-    label{display:block;margin-bottom:7px;font-size:13px;font-weight:700;color:#334155}
-    .input-wrap{position:relative}
-    .input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;opacity:.6;pointer-events:none}
-    input,select{width:100%;height:48px;border:1px solid var(--border);border-radius:11px;background:#fff;color:var(--text);padding:0 14px 0 42px;outline:none;font-size:14px;transition:.2s}
-    input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,175,55,.12)}
-    .password-input{padding-right:45px}
-    .password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:17px;opacity:.65}
-    .password-toggle:hover{opacity:1}
-    .forgot-row{display:flex;justify-content:flex-end;margin-top:-7px;margin-bottom:20px}
-    .forgot-btn{border:0;background:transparent;color:#8b6d13;font-size:13px;font-weight:700;cursor:pointer}
-    .forgot-btn:hover{text-decoration:underline}
-    .primary-btn{width:100%;height:50px;border:0;border-radius:11px;background:linear-gradient(135deg,#b99225,var(--gold),#e5c55e);color:#071426;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 8px 20px rgba(212,175,55,.22);transition:.2s}
-    .primary-btn:hover{transform:translateY(-1px);box-shadow:0 12px 25px rgba(212,175,55,.28)}
-    .primary-btn:disabled{cursor:not-allowed;opacity:.65;transform:none}
-    .secondary-btn{width:100%;height:48px;border:1px solid var(--border);border-radius:11px;background:#fff;color:var(--navy);font-weight:800;font-size:14px;cursor:pointer;transition:.2s}
-    .secondary-btn:hover{border-color:#cbd5e1;background:#f8fafc}
-    .role-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:17px}
-    .role-option{position:relative}
-    .role-option input{position:absolute;opacity:0;pointer-events:none}
-    .role-label{height:70px;border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:13px;transition:.2s;background:#fff}
-    .role-label strong{display:block;margin-bottom:3px}
-    .role-label small{color:var(--muted);font-size:11px}
-    .role-option input:checked + .role-label{border-color:var(--gold);background:rgba(212,175,55,.08);box-shadow:0 0 0 2px rgba(212,175,55,.12)}
-    .message{display:none;margin-bottom:17px;padding:12px 13px;border-radius:10px;font-size:13px;line-height:1.5}
-    .message.show{display:block}
-    .message.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
-    .message.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
-    .security-note{margin-top:20px;padding:13px;border-radius:11px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;line-height:1.6;color:#64748b;text-align:center}
-    .recovery-panel,.reset-panel{display:none}
-    .recovery-panel.show,.reset-panel.show{display:block}
-    .login-panel.hidden,.signup-panel.hidden{display:none}
-    .signup-panel{display:none}
-    .signup-panel.show{display:block}
-    .oauth-divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase}
-    .oauth-divider::before,.oauth-divider::after{content:"";height:1px;flex:1;background:#e2e8f0}
-    .google-btn{width:100%;height:48px;border:1px solid var(--border);border-radius:11px;background:#fff;color:#172033;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:.2s}
-    .google-btn:hover{background:#f8fafc;border-color:#cbd5e1}
-    .google-icon{font-size:18px;font-weight:900}
-    .resend-box{margin-top:18px;padding:14px;border-radius:11px;background:#f8fafc;border:1px solid #e2e8f0;text-align:center}
-    .resend-box p{font-size:12px;color:#64748b;line-height:1.5;margin-bottom:10px}
-    .resend-btn{border:0;background:transparent;color:#8b6d13;font-size:13px;font-weight:800;cursor:pointer}
-    .resend-btn:disabled{opacity:.55;cursor:not-allowed}
-    .footer{text-align:center;padding:20px;color:#64748b;font-size:12px}
-    .footer strong{color:#334155}
-    .director{margin-top:7px;line-height:1.7}
-    .loading-screen{position:fixed;inset:0;background:rgba(7,20,38,.82);display:none;align-items:center;justify-content:center;z-index:9999;color:#fff}
-    .loading-screen.show{display:flex}
-    .loading-box{text-align:center;background:rgba(13,32,56,.96);padding:28px 34px;border-radius:18px;border:1px solid rgba(255,255,255,.12)}
-    .spinner{width:32px;height:32px;margin:0 auto 12px;border:3px solid rgba(255,255,255,.25);border-top-color:var(--gold2);border-radius:50%;animation:spin .8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @media(max-width:520px){
-      .page{padding:25px 12px}.auth-top{padding:25px 20px}.auth-body{padding:22px 18px}
-      .auth-top h2{font-size:23px}.brand-text h1{font-size:17px}.home-btn{padding:8px 11px;font-size:12px}
-    }
-  </style>
-  <link rel="stylesheet" href="mobile.css">
-</head>
-
-<body>
-  <header class="navbar">
-    <div class="nav-inner">
-      <a href="index.html" class="brand">
-        <img src="logo.png" alt="StudentHubHelp Logo">
-        <div class="brand-text">
-          <h1>StudentHubHelp</h1>
-          <span>Student Discovery Platform</span>
-        </div>
-      </a>
-      <a href="index.html" class="home-btn">← Home</a>
-    </div>
-  </header>
-
-  <main class="page">
-    <div class="auth-wrapper">
-      <div class="auth-card">
-        <div class="auth-top">
-          <div class="auth-icon" id="authIcon">🔐</div>
-          <h2 id="authTitle">Welcome Back</h2>
-          <p id="authSubtitle">Login securely to access your StudentHubHelp account.</p>
-        </div>
-
-        <div class="auth-body">
-          <div class="tabs" id="tabs">
-            <button type="button" class="tab active" id="loginTab">Sign In</button>
-            <button type="button" class="tab" id="signupTab">Create Account</button>
-          </div>
-
-          <div id="message" class="message"></div>
-
-          <section id="loginPanel" class="login-panel">
-            <form id="loginForm">
-              <div class="form-group">
-                <label for="loginEmail">Email Address</label>
-                <div class="input-wrap">
-                  <span class="input-icon">✉️</span>
-                  <input id="loginEmail" type="email" autocomplete="username" placeholder="Enter your email" required>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="loginPassword">Password</label>
-                <div class="input-wrap">
-                  <span class="input-icon">🔒</span>
-                  <input id="loginPassword" class="password-input" type="password" autocomplete="current-password" placeholder="Enter your password" required>
-                  <button type="button" class="password-toggle" data-target="loginPassword" aria-label="Show password">👁️</button>
-                </div>
-              </div>
-
-              <div class="forgot-row">
-                <button type="button" id="forgotButton" class="forgot-btn">Forgot password?</button>
-              </div>
-
-              <button id="loginButton" type="submit" class="primary-btn">Sign In</button>
-            </form>
-
-            <div class="oauth-divider"><span>or</span></div>
-            <button id="googleLoginButton" type="button" class="google-btn">
-              <span class="google-icon">G</span>
-              Continue with Google
-            </button>
-          </section>
-
-          <section id="signupPanel" class="signup-panel">
-            <form id="signupForm">
-              <div class="form-group">
-                <label for="signupName">Full Name</label>
-                <div class="input-wrap">
-                  <span class="input-icon">👤</span>
-                  <input id="signupName" type="text" autocomplete="name" placeholder="Enter your full name" required>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="signupPhone">Phone</label>
-                <div class="input-wrap">
-                  <span class="input-icon">📱</span>
-                  <input id="signupPhone" type="tel" inputmode="numeric" autocomplete="tel"
-                         placeholder="10-digit mobile number" maxlength="10"
-                         pattern="[6-9][0-9]{9}" required>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>Account Type</label>
-                <div class="role-box">
-                  <div class="role-option">
-                    <input id="roleStudent" type="radio" name="signupRole" value="student" checked>
-                    <label class="role-label" for="roleStudent">
-                      <span><strong>🎓 Student</strong><small>Find student services</small></span>
-                    </label>
-                  </div>
-                  <div class="role-option">
-                    <input id="roleOwner" type="radio" name="signupRole" value="owner">
-                    <label class="role-label" for="roleOwner">
-                      <span><strong>🏢 Owner</strong><small>Manage your listing</small></span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="signupEmail">Email Address</label>
-                <div class="input-wrap">
-                  <span class="input-icon">✉️</span>
-                  <input id="signupEmail" type="email" autocomplete="email" placeholder="Enter your email" required>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="signupPassword">Create Password</label>
-                <div class="input-wrap">
-                  <span class="input-icon">🔒</span>
-                  <input id="signupPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Create a password" minlength="6" required>
-                  <button type="button" class="password-toggle" data-target="signupPassword" aria-label="Show password">👁️</button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="signupConfirmPassword">Confirm Password</label>
-                <div class="input-wrap">
-                  <span class="input-icon">🔒</span>
-                  <input id="signupConfirmPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Re-enter your password" minlength="6" required>
-                  <button type="button" class="password-toggle" data-target="signupConfirmPassword" aria-label="Show password">👁️</button>
-                </div>
-              </div>
-
-              <button id="signupButton" type="submit" class="primary-btn">Create Account</button>
-            </form>
-
-            <div class="oauth-divider"><span>or</span></div>
-            <button id="googleSignupButton" type="button" class="google-btn">
-              <span class="google-icon">G</span>
-              Continue with Google
-            </button>
-
-            <div id="resendBox" class="resend-box" style="display:none">
-              <p>Confirmation email nahi mila? Spam/Junk folder check karke dobara email bhej sakte ho.</p>
-              <button type="button" id="resendButton" class="resend-btn">Resend Confirmation Email</button>
-            </div>
-
-            <div class="security-note">
-              Admin accounts cannot be created from the public signup form.
-              Authorized admin accounts must already exist in Supabase.
-            </div>
-          </section>
-
-          <section id="recoveryPanel" class="recovery-panel">
-            <form id="recoveryForm">
-              <div class="form-group">
-                <label for="recoveryEmail">Account Email</label>
-                <div class="input-wrap">
-                  <span class="input-icon">✉️</span>
-                  <input id="recoveryEmail" type="email" autocomplete="email" placeholder="Enter your account email" required>
-                </div>
-              </div>
-              <button id="recoveryButton" type="submit" class="primary-btn">Send Reset Link</button>
-            </form>
-            <div class="forgot-row" style="margin-top:16px;margin-bottom:0">
-              <button type="button" id="backToLoginButton" class="forgot-btn">← Back to sign in</button>
-            </div>
-          </section>
-
-          <section id="resetPanel" class="reset-panel">
-            <form id="resetForm">
-              <div class="form-group">
-                <label for="resetPassword">New Password</label>
-                <div class="input-wrap">
-                  <span class="input-icon">🔒</span>
-                  <input id="resetPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Enter new password" minlength="6" required>
-                  <button type="button" class="password-toggle" data-target="resetPassword" aria-label="Show password">👁️</button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="resetConfirmPassword">Confirm New Password</label>
-                <div class="input-wrap">
-                  <span class="input-icon">🔒</span>
-                  <input id="resetConfirmPassword" class="password-input" type="password" autocomplete="new-password" placeholder="Re-enter your password" minlength="6" required>
-                  <button type="button" class="password-toggle" data-target="resetConfirmPassword" aria-label="Show password">👁️</button>
-                </div>
-              </div>
-
-              <button id="resetButton" type="submit" class="primary-btn">Update Password & Continue</button>
-            </form>
-          </section>
-        </div>
-      </div>
-
-      <footer class="footer">
-        <strong>StudentHubHelp</strong>
-        <div class="director">Student Discovery Platform</div>
-      </footer>
-    </div>
-  </main>
-
-  <div id="loadingScreen" class="loading-screen" aria-hidden="true">
-    <div class="loading-box">
-      <div class="spinner"></div>
-      <div id="loadingText">Please wait...</div>
-    </div>
-  </div>
-
-<script>
-"use strict";
-
 /* =========================================================
-   SUPABASE
-   - Correct lowercase CDN is loaded above.
-   - Fail clearly if CDN is blocked/not loaded.
+   GOOGLE ROLE SETUP
+   New Google users should NOT automatically become student.
+   Email/password users keep their existing student/owner flow.
 ========================================================= */
-const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
-if (!window.supabase || typeof window.supabase.createClient !== "function") {
-  document.body.innerHTML = `
-    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;
-                padding:25px;font-family:Arial,sans-serif;background:#f8fafc">
-      <div style="max-width:560px;background:#fff;border:1px solid #fecaca;border-radius:16px;
-                  padding:25px;box-shadow:0 10px 30px rgba(0,0,0,.08)">
-        <h2 style="color:#991b1b;margin-bottom:10px">Supabase library load nahi hui</h2>
-        <p style="color:#334155;line-height:1.6">
-          Browser Supabase JavaScript library ko load nahi kar pa raha.
-          Internet/CDN loading check karo aur page ko hard refresh karo.
-        </p>
-      </div>
-    </div>`;
-  throw new Error("Supabase JS library unavailable. Check the @supabase/supabase-js CDN script.");
-}
 
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
-    }
-  }
-);
+/* ---------------------------------------------------------
+   1. handle_new_user()
+--------------------------------------------------------- */
 
-/* =========================================================
-   DOM
-========================================================= */
-const $ = id => document.getElementById(id);
-const messageEl = $("message");
-const loadingScreen = $("loadingScreen");
-const loadingText = $("loadingText");
-let recoveryMode = false;
-let lastSignupEmail = "";
-let routingInProgress = false;
-let authListenerReady = false;
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  requested_role text;
+  auth_provider text;
+BEGIN
 
-/* =========================================================
-   UI HELPERS
-========================================================= */
-function showMessage(text, type = "error") {
-  messageEl.textContent = text || "";
-  messageEl.className = "message show " + type;
-}
+  auth_provider := lower(
+    coalesce(
+      new.raw_app_meta_data->>'provider',
+      new.raw_user_meta_data->>'provider',
+      ''
+    )
+  );
 
-function clearMessage() {
-  messageEl.textContent = "";
-  messageEl.className = "message";
-}
+  requested_role := lower(
+    trim(
+      coalesce(
+        new.raw_user_meta_data->>'role',
+        ''
+      )
+    )
+  );
 
-function setLoading(show, text = "Please wait...") {
-  loadingText.textContent = text;
-  loadingScreen.classList.toggle("show", !!show);
-  loadingScreen.setAttribute("aria-hidden", show ? "false" : "true");
-}
+  /*
+    Normal email/password signup:
+    role comes from signup form.
 
-function setButtonLoading(button, loading, normalText) {
-  button.disabled = loading;
-  button.textContent = loading ? "Please wait..." : normalText;
-}
+    Google signup:
+    role stays NULL until auth.html saves
+    the Student/Owner selection.
+  */
 
-function friendlyAuthError(error) {
-  const msg = String(error?.message || "").toLowerCase();
+  IF requested_role NOT IN ('student', 'owner') THEN
 
-  if (msg.includes("invalid login credentials")) {
-    return "Email ya password incorrect hai.";
-  }
-  if (msg.includes("email not confirmed")) {
-    return "Email confirm nahi hua hai. Pehle apna email verify karo.";
-  }
-  if (msg.includes("too many requests") || msg.includes("rate limit")) {
-    return "Bahut attempts ho gaye. Thodi der baad dobara try karo.";
-  }
-  if (msg.includes("user already registered")) {
-    return "Is email se account already registered hai. Sign In karo.";
-  }
-  if (msg.includes("same password")) {
-    return "Naya password purane password se alag hona chahiye.";
-  }
-  if (msg.includes("unsupported provider")) {
-    return "Google Sign In Supabase me enabled/configured nahi hai.";
-  }
-  if (msg.includes("redirect") && msg.includes("not allowed")) {
-    return "Auth redirect URL Supabase me allowlist nahi hai.";
-  }
+    IF auth_provider = 'google' THEN
+      requested_role := NULL;
+    ELSE
+      requested_role := 'student';
+    END IF;
 
-  return error?.message || "Authentication failed. Please try again.";
-}
+  END IF;
 
-/* =========================================================
-   ROLE ROUTING
-   Student -> student-dashboard.html
-   Owner   -> owner-dashboard.html
-   Admin   -> admin-dashboard.html
 
-   IMPORTANT:
-   Existing dashboards check localStorage key:
-   sh_current_user
-========================================================= */
-const DASHBOARDS = {
-  student: "student-dashboard.html",
-  owner: "owner-dashboard.html",
-  admin: "admin-dashboard.html"
-};
-
-function normalizeRole(role) {
-  const value = String(role || "").trim().toLowerCase();
-
-  if (value === "student") return "student";
-  if (value === "owner") return "owner";
-  if (value === "admin") return "admin";
-
-  return null;
-}
-
-async function routeByRole(user) {
-  if (!user?.id) {
-    throw new Error("Authenticated user was not found.");
-  }
-
-  /* Prevent login + SIGNED_IN double routing */
-  if (routingInProgress) return;
-  routingInProgress = true;
-
-  try {
-    const { data: profile, error } = await db
-      .from("profiles")
-      .select("id, role, full_name, phone")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Profile lookup error:", error);
-      throw new Error("Profile load nahi ho saka. Please try again.");
-    }
-
-    const role = normalizeRole(profile?.role);
-
-    if (!role) {
-      throw new Error(
-        "Aapke account ka valid role set nahi hai. Admin se contact karein."
-      );
-    }
-
-    const dashboard = DASHBOARDS[role];
-
-    if (!dashboard) {
-      throw new Error("Invalid account role.");
-    }
-
-    const metadata = user.user_metadata || {};
-
-    /* Compatibility object for existing dashboards */
-    const currentUser = {
-      id: user.id,
-      email: user.email || "",
-      name:
-        profile?.full_name ||
-        metadata.full_name ||
-        metadata.name ||
-        user.email?.split("@")[0] ||
-        "User",
-      phone: profile?.phone || metadata.phone || "",
+  INSERT INTO public.profiles
+    (
+      id,
+      full_name,
+      phone,
+      email,
       role
-    };
+    )
+  VALUES
+    (
+      new.id,
+      nullif(
+        trim(
+          coalesce(
+            new.raw_user_meta_data->>'full_name',
+            ''
+          )
+        ),
+        ''
+      ),
+      nullif(
+        trim(
+          coalesce(
+            new.raw_user_meta_data->>'phone',
+            ''
+          )
+        ),
+        ''
+      ),
+      new.email,
+      requested_role
+    )
 
-    localStorage.setItem(
-      "sh_current_user",
-      JSON.stringify(currentUser)
-    );
-
-    loadingText.textContent =
-      role === "admin"
-        ? "Opening Admin Dashboard..."
-        : role === "owner"
-        ? "Opening Owner Dashboard..."
-        : "Opening Student Dashboard...";
-
-    const dashboardUrl = new URL(
-      dashboard,
-      window.location.href
-    ).href;
-
-    window.location.replace(dashboardUrl);
-
-  } catch (error) {
-    routingInProgress = false;
-    throw error;
-  }
-}
-
-/* =========================================================
-   PANEL HELPERS
-========================================================= */
-function hideAllPanels() {
-  $("loginPanel").classList.add("hidden");
-  $("signupPanel").classList.remove("show");
-  $("recoveryPanel").classList.remove("show");
-  $("resetPanel").classList.remove("show");
-}
-
-function showLogin() {
-  recoveryMode = false;
-  clearMessage();
-  hideAllPanels();
-
-  $("loginTab").classList.add("active");
-  $("signupTab").classList.remove("active");
-  $("loginPanel").classList.remove("hidden");
-
-  $("authIcon").textContent = "🔐";
-  $("authTitle").textContent = "Welcome Back";
-  $("authSubtitle").textContent =
-    "Login securely to access your StudentHubHelp account.";
-  $("tabs").style.display = "grid";
-}
-
-function showSignup() {
-  recoveryMode = false;
-  clearMessage();
-  hideAllPanels();
-
-  $("loginTab").classList.remove("active");
-  $("signupTab").classList.add("active");
-  $("signupPanel").classList.add("show");
-
-  $("authIcon").textContent = "✨";
-  $("authTitle").textContent = "Create Account";
-  $("authSubtitle").textContent =
-    "Create your StudentHubHelp student or owner account.";
-  $("tabs").style.display = "grid";
-}
-
-function showRecovery() {
-  recoveryMode = false;
-  clearMessage();
-  hideAllPanels();
-
-  $("authIcon").textContent = "📧";
-  $("authTitle").textContent = "Reset Password";
-  $("authSubtitle").textContent =
-    "Enter your email and we'll send a password reset link.";
-  $("tabs").style.display = "none";
-  $("recoveryPanel").classList.add("show");
-}
-
-function showResetPassword() {
-  recoveryMode = true;
-  clearMessage();
-  hideAllPanels();
-
-  $("authIcon").textContent = "🔑";
-  $("authTitle").textContent = "Set New Password";
-  $("authSubtitle").textContent =
-    "Create a new secure password for your account.";
-  $("tabs").style.display = "none";
-  $("resetPanel").classList.add("show");
-  setLoading(false);
-}
-
-/* =========================================================
-   LOGIN
-========================================================= */
-$("loginForm").addEventListener("submit", async event => {
-  event.preventDefault();
-  clearMessage();
-
-  const email = $("loginEmail").value.trim().toLowerCase();
-  const password = $("loginPassword").value;
-
-  if (!email || !password) {
-    showMessage("Email aur password dono required hain.");
-    return;
-  }
-
-  const button = $("loginButton");
-  setButtonLoading(button, true, "Sign In");
-  setLoading(true, "Signing you in...");
-
-  try {
-    const { data, error } = await db.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) throw error;
-
-    if (!data?.user || !data?.session) {
-      throw new Error(
-        "Login session create nahi hui. Please try again."
+  ON CONFLICT (id) DO UPDATE
+  SET
+    email = excluded.email,
+    full_name =
+      coalesce(
+        nullif(trim(public.profiles.full_name), ''),
+        excluded.full_name
+      ),
+    phone =
+      coalesce(
+        nullif(trim(public.profiles.phone), ''),
+        excluded.phone
       );
-    }
 
-    await routeByRole(data.user);
+  RETURN new;
 
-  } catch (error) {
-    console.error("Login error:", error);
+END;
+$function$;
 
-    setLoading(false);
-    setButtonLoading(button, false, "Sign In");
-    showMessage(friendlyAuthError(error), "error");
-  }
-});
 
-/* =========================================================
-   GOOGLE LOGIN / SIGNUP
-   Same OAuth entry point.
-   Google provider must be enabled in Supabase.
-========================================================= */
-async function signInWithGoogle() {
-  clearMessage();
-  setLoading(true, "Opening Google Sign In...");
+/* ---------------------------------------------------------
+   2. sync_profile_from_auth()
+--------------------------------------------------------- */
 
-  try {
-    const redirectTo = new URL(
-      "auth.html",
-      window.location.href
-    ).href;
+CREATE OR REPLACE FUNCTION public.sync_profile_from_auth()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
 
-    const { error } = await db.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo
-      }
-    });
+DECLARE
+  requested_role text;
+  auth_provider text;
 
-    if (error) throw error;
+BEGIN
 
-  } catch (error) {
-    console.error("Google OAuth error:", error);
-    setLoading(false);
-    showMessage(friendlyAuthError(error), "error");
-  }
-}
-
-$("googleLoginButton").addEventListener(
-  "click",
-  signInWithGoogle
-);
-
-$("googleSignupButton").addEventListener(
-  "click",
-  signInWithGoogle
-);
-
-/* =========================================================
-   SIGNUP
-========================================================= */
-$("signupForm").addEventListener("submit", async event => {
-  event.preventDefault();
-  clearMessage();
-
-  const name = $("signupName").value.trim();
-  const phone = $("signupPhone").value.trim();
-  const email = $("signupEmail").value.trim().toLowerCase();
-  const password = $("signupPassword").value;
-  const confirmPassword = $("signupConfirmPassword").value;
-
-  const role = normalizeRole(
-    document.querySelector(
-      'input[name="signupRole"]:checked'
-    )?.value
+  auth_provider := lower(
+    coalesce(
+      NEW.raw_app_meta_data->>'provider',
+      NEW.raw_user_meta_data->>'provider',
+      ''
+    )
   );
 
-  if (
-    !name ||
-    !email ||
-    !password ||
-    !confirmPassword ||
-    !phone ||
-    !role
-  ) {
-    showMessage("Required fields complete karo.");
-    return;
-  }
+  requested_role := lower(
+    trim(
+      coalesce(
+        NEW.raw_user_meta_data->>'role',
+        ''
+      )
+    )
+  );
 
-  if (!["student", "owner"].includes(role)) {
-    showMessage("Invalid signup role.");
-    return;
-  }
 
-  const phoneRegex = /^[6-9]\d{9}$/;
+  /*
+    Email/password:
+    use selected role.
 
-  if (!phoneRegex.test(phone)) {
-    showMessage(
-      "Valid Indian 10-digit mobile number enter karo (6-9 se start hona chahiye)."
-    );
-    $("signupPhone").focus();
-    return;
-  }
+    Google:
+    leave role NULL until auth.html
+    saves Student/Owner choice.
+  */
 
-  if (password.length < 6) {
-    showMessage(
-      "Password kam se kam 6 characters ka hona chahiye."
-    );
-    return;
-  }
+  IF requested_role NOT IN ('student', 'owner') THEN
 
-  if (password !== confirmPassword) {
-    showMessage(
-      "Create Password aur Confirm Password same hone chahiye."
-    );
-    $("signupConfirmPassword").focus();
-    return;
-  }
+    IF auth_provider = 'google' THEN
+      requested_role := NULL;
+    ELSE
+      requested_role := 'student';
+    END IF;
 
-  const button = $("signupButton");
-  setButtonLoading(button, true, "Create Account");
-  setLoading(true, "Creating your account...");
-  lastSignupEmail = email;
+  END IF;
 
-  try {
-    const { data, error } = await db.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-          phone,
-          role
-        }
-      }
-    });
 
-    if (error) throw error;
-
-    if (!data?.user) {
-      throw new Error(
-        "Account create nahi hua. Please try again."
-      );
-    }
-
-    /*
-      Email confirmation ON hone par session null ho sakta hai.
-      Existing DB trigger/profile flow ko respect kiya gaya hai.
-    */
-    if (!data?.session) {
-      setLoading(false);
-      setButtonLoading(
-        button,
-        false,
-        "Create Account"
-      );
-
-      $("loginEmail").value = email;
-      $("resendBox").style.display = "block";
-
-      showMessage(
-        "Account create ho gaya. Email verify karke phir Sign In karo.",
-        "success"
-      );
-      return;
-    }
-
-    /*
-      Agar session immediately available hai,
-      profile row ko create/update karo.
-    */
-    const { error: profileError } = await db
-      .from("profiles")
-      .upsert(
-        {
-          id: data.user.id,
-          full_name: name,
-          phone: phone,
-          role: role
-        },
-        {
-          onConflict: "id"
-        }
-      );
-
-    if (profileError) {
-      console.error(
-        "Profile creation error:",
-        profileError
-      );
-
-      throw new Error(
-        "Account create hua, lekin profile setup complete nahi hua. Please Sign In ke baad retry karo."
-      );
-    }
-
-    await routeByRole(data.user);
-
-  } catch (error) {
-    console.error("Signup error:", error);
-
-    setLoading(false);
-    setButtonLoading(
-      button,
-      false,
-      "Create Account"
-    );
-    showMessage(
-      friendlyAuthError(error),
-      "error"
-    );
-  }
-});
-
-/* =========================================================
-   RESEND CONFIRMATION EMAIL
-========================================================= */
-let resendLocked = false;
-
-$("resendButton").addEventListener("click", async () => {
-  clearMessage();
-
-  const email =
-    lastSignupEmail ||
-    $("signupEmail").value.trim().toLowerCase();
-
-  if (!email) {
-    showMessage("Pehle signup email enter karo.");
-    return;
-  }
-
-  if (resendLocked) return;
-
-  const button = $("resendButton");
-  resendLocked = true;
-  button.disabled = true;
-  button.textContent = "Sending...";
-
-  try {
-    const { error } = await db.auth.resend({
-      type: "signup",
+  INSERT INTO public.profiles
+    (
+      id,
+      full_name,
+      phone,
+      role,
       email
-    });
-
-    if (error) throw error;
-
-    showMessage(
-      "Confirmation email dobara bhej diya gaya hai. Inbox aur Spam/Junk folder check karo.",
-      "success"
-    );
-
-    let seconds = 30;
-    button.textContent =
-      `Resend again in ${seconds}s`;
-
-    const timer = setInterval(() => {
-      seconds--;
-
-      if (seconds <= 0) {
-        clearInterval(timer);
-        resendLocked = false;
-        button.disabled = false;
-        button.textContent =
-          "Resend Confirmation Email";
-      } else {
-        button.textContent =
-          `Resend again in ${seconds}s`;
-      }
-    }, 1000);
-
-  } catch (error) {
-    console.error(
-      "Resend confirmation error:",
-      error
-    );
-
-    resendLocked = false;
-    button.disabled = false;
-    button.textContent =
-      "Resend Confirmation Email";
-
-    showMessage(
-      friendlyAuthError(error),
-      "error"
-    );
-  }
-});
-
-/* =========================================================
-   PASSWORD RECOVERY REQUEST
-========================================================= */
-$("forgotButton").addEventListener("click", () => {
-  $("recoveryEmail").value =
-    $("loginEmail").value.trim();
-
-  showRecovery();
-});
-
-$("backToLoginButton").addEventListener(
-  "click",
-  showLogin
-);
-
-$("recoveryForm").addEventListener(
-  "submit",
-  async event => {
-    event.preventDefault();
-    clearMessage();
-
-    const email =
-      $("recoveryEmail").value.trim().toLowerCase();
-
-    if (!email) {
-      showMessage("Email address required hai.");
-      return;
-    }
-
-    const button = $("recoveryButton");
-    setButtonLoading(
-      button,
-      true,
-      "Send Reset Link"
-    );
-    setLoading(
-      true,
-      "Sending reset link..."
-    );
-
-    try {
-      const redirectTo = new URL(
-        "auth.html?mode=reset",
-        window.location.href
-      ).href;
-
-      const { error } =
-        await db.auth.resetPasswordForEmail(
-          email,
-          { redirectTo }
-        );
-
-      if (error) throw error;
-
-      setLoading(false);
-      setButtonLoading(
-        button,
-        false,
-        "Send Reset Link"
-      );
-
-      showMessage(
-        "Password reset link email par bhej diya gaya hai. Email link open karke naya password set karo.",
-        "success"
-      );
-
-    } catch (error) {
-      console.error(
-        "Recovery error:",
-        error
-      );
-
-      setLoading(false);
-      setButtonLoading(
-        button,
-        false,
-        "Send Reset Link"
-      );
-
-      showMessage(
-        friendlyAuthError(error),
-        "error"
-      );
-    }
-  }
-);
-
-/* =========================================================
-   SET NEW PASSWORD
-========================================================= */
-$("resetForm").addEventListener(
-  "submit",
-  async event => {
-    event.preventDefault();
-    clearMessage();
-
-    const password =
-      $("resetPassword").value;
-
-    const confirmPassword =
-      $("resetConfirmPassword").value;
-
-    if (!password || !confirmPassword) {
-      showMessage(
-        "New password aur confirm password dono required hain."
-      );
-      return;
-    }
-
-    if (password.length < 6) {
-      showMessage(
-        "Password kam se kam 6 characters ka hona chahiye."
-      );
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      showMessage(
-        "New Password aur Confirm New Password same hone chahiye."
-      );
-      $("resetConfirmPassword").focus();
-      return;
-    }
-
-    const button = $("resetButton");
-
-    setButtonLoading(
-      button,
-      true,
-      "Update Password & Continue"
-    );
-
-    setLoading(
-      true,
-      "Updating your password..."
-    );
-
-    try {
-      const { data, error } =
-        await db.auth.updateUser({
-          password
-        });
-
-      if (error) throw error;
-
-      if (!data?.user) {
-        throw new Error(
-          "Password update session complete nahi hui."
-        );
-      }
-
-      $("resetPassword").value = "";
-      $("resetConfirmPassword").value = "";
-
-      showMessage(
-        "Password successfully update ho gaya. Aapko dashboard par bheja ja raha hai...",
-        "success"
-      );
-
-      await new Promise(
-        resolve => setTimeout(resolve, 900)
-      );
-
-      await routeByRole(data.user);
-
-    } catch (error) {
-      console.error(
-        "Password update error:",
-        error
-      );
-
-      setLoading(false);
-      setButtonLoading(
-        button,
-        false,
-        "Update Password & Continue"
-      );
-
-      showMessage(
-        friendlyAuthError(error),
-        "error"
-      );
-    }
-  }
-);
-
-/* =========================================================
-   TABS
-========================================================= */
-$("loginTab").addEventListener(
-  "click",
-  showLogin
-);
-
-$("signupTab").addEventListener(
-  "click",
-  showSignup
-);
-
-/* =========================================================
-   PASSWORD VISIBILITY
-========================================================= */
-document
-  .querySelectorAll(".password-toggle")
-  .forEach(button => {
-    button.addEventListener("click", () => {
-      const input =
-        $(button.dataset.target);
-
-      if (!input) return;
-
-      const visible =
-        input.type === "text";
-
-      input.type =
-        visible
-          ? "password"
-          : "text";
-
-      button.textContent =
-        visible
-          ? "👁️"
-          : "🙈";
-
-      button.setAttribute(
-        "aria-label",
-        visible
-          ? "Show password"
-          : "Hide password"
-      );
-    });
-  });
-
-/* =========================================================
-   URL HELPERS
-========================================================= */
-function isResetMode() {
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
-
-  return params.get("mode") === "reset";
-}
-
-/* =========================================================
-   AUTH STATE
-   IMPORTANT:
-   Do not independently redirect before Supabase has
-   processed the OAuth/recovery URL.
-========================================================= */
-function setupAuthListener() {
-  if (authListenerReady) return;
-  authListenerReady = true;
-
-  db.auth.onAuthStateChange(
-    async (event, session) => {
-      console.log(
-        "Auth state:",
-        event
-      );
-
-      if (event === "PASSWORD_RECOVERY") {
-        recoveryMode = true;
-        showResetPassword();
-        return;
-      }
-
-      if (event === "SIGNED_OUT") {
-        setLoading(false);
-
-        if (!recoveryMode) {
-          showLogin();
-        }
-
-        return;
-      }
-
-      /*
-        OAuth returns to auth.html with SIGNED_IN.
-        Normal email login also produces SIGNED_IN, but
-        routeByRole has a duplicate-routing guard.
-      */
-      if (
-        event === "SIGNED_IN" &&
-        session?.user &&
-        !recoveryMode &&
-        !isResetMode()
-      ) {
-        try {
-          setLoading(
-            true,
-            "Checking your account..."
-          );
-
-          await routeByRole(
-            session.user
-          );
-
-        } catch (error) {
-          console.error(
-            "Auth state routing error:",
-            error
-          );
-
-          setLoading(false);
-
-          await db.auth
-            .signOut({
-              scope: "local"
-            })
-            .catch(() => {});
-
-          showMessage(
-            error.message ||
-              "Account routing failed.",
-            "error"
-          );
-        }
-      }
-    }
-  );
-}
-
-/* =========================================================
-   EXISTING SESSION
-========================================================= */
-async function redirectExistingSession() {
-  try {
-    /*
-      Password recovery URL ko dashboard par mat bhejo.
-    */
-    if (isResetMode()) {
-      return;
-    }
-
-    const { data, error } =
-      await db.auth.getSession();
-
-    if (error) {
-      console.error(
-        "Existing session check:",
-        error
-      );
-      return;
-    }
-
-    if (!data?.session?.user) {
-      return;
-    }
-
-    setLoading(
-      true,
-      "Checking your account..."
-    );
-
-    await routeByRole(
-      data.session.user
-    );
-
-  } catch (error) {
-    console.error(
-      "Existing session routing error:",
-      error
-    );
-
-    await db.auth
-      .signOut({
-        scope: "local"
-      })
-      .catch(() => {});
-
-    setLoading(false);
-
-    showMessage(
-      error.message ||
-        "Session check failed.",
-      "error"
-    );
-  }
-}
-
-/* =========================================================
-   INITIALIZATION
-========================================================= */
-document.addEventListener(
-  "DOMContentLoaded",
-  async () => {
-
-    /*
-      Register auth listener BEFORE session handling.
-      This is important for OAuth/recovery callbacks.
-    */
-    setupAuthListener();
-
-    if (isResetMode()) {
-      /*
-        Do not show login/signup while recovery session
-        is being established.
-      */
-      setLoading(
-        true,
-        "Preparing password reset..."
-      );
-
-      /*
-        Give Supabase detectSessionInUrl time to process
-        the recovery URL.
-      */
-      setTimeout(() => {
-        if (!recoveryMode) {
-          const currentHash =
-            window.location.hash || "";
-
-          const isRecoveryHash =
-            currentHash.includes(
-              "type=recovery"
-            ) ||
-            currentHash.includes(
-              "access_token="
-            );
-
-          if (isRecoveryHash) {
-            showResetPassword();
-          } else {
-            setLoading(false);
-
-            showMessage(
-              "Password reset link invalid ya expire ho gaya hai. Dobara reset link request karo.",
-              "error"
-            );
-          }
-        }
-      }, 1200);
-
-      return;
-    }
-
-    await redirectExistingSession();
-  }
-);
-</script>
-</body>
-</html>
+    )
+  VALUES
+    (
+      NEW.id,
+      COALESCE(
+        NEW.raw_user_meta_data->>'full_name',
+        split_part(
+          COALESCE(NEW.email, ''),
+          '@',
+          1
+        ),
+        'User'
+      ),
+      COALESCE(
+        NEW.raw_user_meta_data->>'phone',
+        ''
+      ),
+      requested_role,
+      NEW.email
+    )
+
+  ON CONFLICT (id) DO UPDATE
+  SET
+    email = EXCLUDED.email;
+
+  RETURN NEW;
+
+END;
+$function$;
