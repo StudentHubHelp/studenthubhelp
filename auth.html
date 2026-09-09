@@ -437,15 +437,41 @@ async function getUserRole(user) {
 async function routeByRole(user) {
   const role = await getUserRole(user);
   const dashboard = DASHBOARDS[role];
+async function routeByRole(user) {
+  const role = await getUserRole(user);
+  const dashboard = DASHBOARDS[role];
 
   if (!dashboard) {
     throw new Error("Invalid account role.");
   }
 
+  // Existing dashboards also use sh_current_user
+  const metadata = user.user_metadata || {};
+
+  const currentUser = {
+    id: user.id,
+    email: user.email || "",
+    name:
+      metadata.full_name ||
+      metadata.name ||
+      user.email?.split("@")[0] ||
+      "User",
+    phone: metadata.phone || "",
+    role: role
+  };
+
+  // Keep existing dashboard authentication compatible
+  localStorage.setItem(
+    "sh_current_user",
+    JSON.stringify(currentUser)
+  );
+
   loadingText.textContent =
-    role === "admin" ? "Opening Admin Dashboard..." :
-    role === "owner" ? "Opening Owner Dashboard..." :
-    "Opening Student Dashboard...";
+    role === "admin"
+      ? "Opening Admin Dashboard..."
+      : role === "owner"
+      ? "Opening Owner Dashboard..."
+      : "Opening Student Dashboard...";
 
   window.location.replace(dashboard);
 }
