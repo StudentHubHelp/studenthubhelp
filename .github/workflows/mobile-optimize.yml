@@ -19,13 +19,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Inject shared mobile CSS, image hints and remove blocking verification popup
+      - name: Inject shared mobile CSS, image hints and Finder smart search
         shell: python
         run: |
           from pathlib import Path
           import re
 
           skip = {'google7168366cd2bfb7eb.html'}
+          finder_pages = {'pg-finder.html','tiffin-finder.html','library-finder.html','cafe-finder.html','bookstore-finder.html'}
           for path in Path('.').glob('*.html'):
               if path.name in skip:
                   continue
@@ -34,8 +35,9 @@ jobs:
               if 'href="mobile.css"' not in text and '</head>' in text.lower():
                   text = re.sub(r'</head>', '  <link rel="stylesheet" href="mobile.css">\n</head>', text, count=1, flags=re.I)
 
-              # Images below the first viewport should not block mobile rendering.
-              # Keep existing loading/decoding attributes intact.
+              if path.name in finder_pages and 'js/finder-power-search.js' not in text and '</body>' in text.lower():
+                  text = re.sub(r'</body>', '  <script src="js/finder-power-search.js" defer></script>\n</body>', text, count=1, flags=re.I)
+
               imgs = []
               first = True
               for m in re.finditer(r'<img\b[^>]*>', text, flags=re.I):
@@ -53,9 +55,6 @@ jobs:
               for start,end,tag in reversed(imgs):
                   text = text[:start] + tag + text[end:]
 
-              # property-details.html had a blocking verification popup that could
-              # trap the mobile viewport. Remove common static modal wrappers and
-              # add a small runtime guard for dynamically-created verification dialogs.
               if path.name == 'property-details.html':
                   patterns = [
                       r'<div[^>]*(?:id|class)=["\'][^"\']*(?:verification[-_ ]?(?:modal|popup|dialog)|verify[-_ ]?(?:modal|popup|dialog))[^"]*["\'][^>]*>.*?</div>',
@@ -74,6 +73,6 @@ jobs:
         run: |
           git config user.name 'StudentHubHelp Mobile Optimizer'
           git config user.email 'actions@github.com'
-          git add '*.html' mobile.css
-          git diff --cached --quiet || git commit -m 'perf: optimize mobile responsiveness and remove verification popup [mobile-optimized]'
+          git add '*.html' mobile.css js/finder-power-search.js
+          git diff --cached --quiet || git commit -m 'perf: optimize mobile responsiveness and Finder search [mobile-optimized]'
           git push
