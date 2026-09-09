@@ -117,10 +117,64 @@
       } else if(e.key==='Escape'){suggest.classList.remove('show')}
     },true);
     btn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();suggest.classList.remove('show');render()},true);
-    suggest.addEventListener('click',e=>{const b=e.target.closest('.finder-power-result');if(!b)return;const row=suggest._rows?.[Number(b.dataset.index)];if(row){input.value=String(row.r.name||row.r.property_id||'');suggest.classList.remove('show');render();input.focus()}});
+    suggest.addEventListener('click',e=>{const b=e.target.closest('.finder-power-result');if(!b)return;const row=suggest._rows?.[Number(b.dataset.index)];if(row){input.value=String(row.r.name||row.property_id||'');suggest.classList.remove('show');render();input.focus()}});
     document.addEventListener('click',e=>{if(!panel.contains(e.target)&&!box.contains(e.target))suggest.classList.remove('show')});
 
-    window.__finderPowerSearch={render,config,state};
+    /* =====================================================
+       SEO / GOOGLE DISCOVERY LAYER
+       - No visual/layout changes.
+       - Converts existing details controls into real crawlable
+         anchors when a stable property id is present.
+       - Publishes ItemList structured data from the live records.
+    ===================================================== */
+    const seoEscape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    const stableId=r=>String(r?.id ?? r?.property_id ?? '').trim();
+    const propertyUrl=r=>{
+      const type=page.replace('-finder.html','').replace('pg','hostel').replace('tiffin','tiffin').replace('library','library').replace('cafe','cafe').replace('bookstore','bookstore');
+      const slug=String(r?.slug||'').trim();
+      const id=stableId(r);
+      if(slug) return `property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`;
+      if(id) return `property-details.html?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`;
+      return '';
+    };
+    const upsertJSONLD=(id,data)=>{
+      let el=document.getElementById(id);
+      if(!el){el=document.createElement('script');el.id=id;el.type='application/ld+json';document.head.appendChild(el)}
+      el.textContent=JSON.stringify(data);
+    };
+    const publishSEO=()=>{
+      const records=originalRecords();
+      if(!records.length) return;
+      const items=records.slice(0,100).map((r,i)=>({
+        '@type':'ListItem','position':i+1,'name':String(r.name||r.title||config.label).trim(),
+        'url':propertyUrl(r)||location.href.split('#')[0]
+      }));
+      upsertJSONLD('finderItemListSEO',{
+        '@context':'https://schema.org','@type':'ItemList','name':document.title,
+        'numberOfItems':items.length,'itemListElement':items
+      });
+      document.querySelectorAll('.details-btn').forEach((node)=>{
+        if(node.tagName==='A') return;
+        const card=node.closest('.card'); if(!card) return;
+        const idText=card.querySelector('.property-id-badge')?.textContent||card.querySelector('.property-id')?.textContent||'';
+        const idMatch=idText.match(/(?:ID\s*#|Property\s*ID:\s*#)\s*([A-Za-z0-9_-]+)/i);
+        if(!idMatch) return;
+        const id=idMatch[1];
+        const a=document.createElement('a');
+        a.className=node.className;
+        a.href=`property-details.html?type=${encodeURIComponent(page==='pg-finder.html'?'hostel':page.replace('-finder.html',''))}&id=${encodeURIComponent(id)}`;
+        a.innerHTML=node.innerHTML;
+        a.setAttribute('aria-label','View details for '+String(card.querySelector('h3')?.textContent||config.label).trim());
+        node.replaceWith(a);
+      });
+    };
+    const seoObserver=new MutationObserver(()=>publishSEO());
+    seoObserver.observe(document.body,{childList:true,subtree:true});
+    setTimeout(publishSEO,0);
+    setTimeout(publishSEO,800);
+    setTimeout(publishSEO,2000);
+
+    window.__finderPowerSearch={render,config,state,publishSEO};
   };
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready,{once:true}); else ready();
 })();
