@@ -32,45 +32,27 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-
-          finder_pages = [
-              'pg-finder.html',
-              'tiffin-finder.html',
-              'library-finder.html',
-              'cafe-finder.html',
-              'bookstore-finder.html',
-          ]
-
+          finder_pages = ['pg-finder.html','tiffin-finder.html','library-finder.html','cafe-finder.html','bookstore-finder.html']
           def add_before(text, marker, tag):
-              if tag in text:
-                  return text
-              if marker not in text:
-                  raise SystemExit(f'Marker not found: {marker}')
+              if tag in text: return text
+              if marker not in text: raise SystemExit(f'Marker not found: {marker}')
               return text.replace(marker, tag + marker, 1)
-
-          property_path = Path('property-details.html')
-          text = property_path.read_text(encoding='utf-8')
-          text = add_before(text, '</head>', '  <script src="js/property-seo-upgrade.js" defer></script>\n')
-          property_path.write_text(text, encoding='utf-8')
-
+          p=Path('property-details.html')
+          p.write_text(add_before(p.read_text(encoding='utf-8'),'</head>','  <script src="js/property-seo-upgrade.js" defer></script>\n'),encoding='utf-8')
           for name in finder_pages:
-              path = Path(name)
-              text = path.read_text(encoding='utf-8')
-              text = add_before(text, '</head>', '  <script src="js/seo-location-entities.js" defer></script>\n')
-              path.write_text(text, encoding='utf-8')
+              p=Path(name)
+              p.write_text(add_before(p.read_text(encoding='utf-8'),'</head>','  <script src="js/seo-location-entities.js" defer></script>\n'),encoding='utf-8')
 
       - name: Extract public Supabase API configuration
         shell: python
         run: |
           import re
           from pathlib import Path
-          text = Path('property-details.html').read_text(encoding='utf-8')
-          url = re.search(r"const SUPABASE_URL='([^']+)'", text)
-          key = re.search(r"const SUPABASE_ANON_KEY='([^']+)'", text)
-          if not url or not key:
-              raise SystemExit('Supabase public API configuration not found.')
-          with open('seo-env.txt','w',encoding='utf-8') as f:
-              f.write(f'SUPABASE_URL={url.group(1)}\nSUPABASE_ANON_KEY={key.group(1)}\n')
+          text=Path('property-details.html').read_text(encoding='utf-8')
+          url=re.search(r"const SUPABASE_URL='([^']+)'",text)
+          key=re.search(r"const SUPABASE_ANON_KEY='([^']+)'",text)
+          if not url or not key: raise SystemExit('Supabase public API configuration not found.')
+          Path('seo-env.txt').write_text(f'SUPABASE_URL={url.group(1)}\nSUPABASE_ANON_KEY={key.group(1)}\n',encoding='utf-8')
 
       - name: Generate dynamic listing sitemap
         shell: bash
@@ -87,24 +69,16 @@ jobs:
         run: |
           from pathlib import Path
           import xml.etree.ElementTree as ET
-
-          prop = Path('property-details.html').read_text(encoding='utf-8')
-          assert 'js/property-seo-upgrade.js' in prop
-          assert 'propertySchema' in prop
-          assert prop.lower().count('<html') == 1
-          assert prop.lower().count('</html>') == 1
-
+          prop=Path('property-details.html').read_text(encoding='utf-8')
+          assert 'js/property-seo-upgrade.js' in prop and 'propertySchema' in prop
+          assert prop.lower().count('<html')==1 and prop.lower().count('</html>')==1
           for name in ['pg-finder.html','tiffin-finder.html','library-finder.html','cafe-finder.html','bookstore-finder.html']:
-              text = Path(name).read_text(encoding='utf-8')
-              assert 'js/seo-location-entities.js' in text, name
-              assert 'js/finder-power-search.js' in text, name
-              assert text.lower().count('<html') == 1, name
-              assert text.lower().count('</html>') == 1, name
-
-          root = ET.parse('sitemap.xml').getroot()
-          urls = root.findall('{http://www.sitemaps.org/schemas/sitemap/0.9}url')
-          assert urls, 'sitemap is empty'
-          assert all(u.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc') is not None for u in urls)
+              text=Path(name).read_text(encoding='utf-8')
+              assert 'js/seo-location-entities.js' in text and 'js/finder-power-search.js' in text, name
+              assert text.lower().count('<html')==1 and text.lower().count('</html>')==1, name
+          root=ET.parse('sitemap.xml').getroot()
+          urls=root.findall('{http://www.sitemaps.org/schemas/sitemap/0.9}url')
+          assert urls and all(u.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc') is not None for u in urls)
           print(f'SEO validation passed: {len(urls)} sitemap URLs.')
 
       - name: Commit SEO upgrade
@@ -114,3 +88,5 @@ jobs:
           git add property-details.html pg-finder.html tiffin-finder.html library-finder.html cafe-finder.html bookstore-finder.html js/property-seo-upgrade.js js/seo-location-entities.js scripts/generate-sitemap.mjs sitemap.xml .github/workflows/seo-indexing-upgrade.yml
           git diff --cached --quiet || git commit -m 'feat: complete listing SEO indexing upgrade [seo-optimized]'
           git push
+
+# SEO automation is intentionally UI-neutral: no layout, theme, search controls or DB schema changes.
