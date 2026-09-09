@@ -1633,66 +1633,20 @@ function previewPublic(type, index) {
 
 
 // ================= PROPERTY-WISE GITHUB BANNER =================
-let bannerImg = "hostel-banner.png";
+const bannerMap = {
+  hostels: "hostel-banner.png",
+  tiffins: "tiffin-banner.png",
+  libraries: "library-banner.png",
+  cafes: "cafe-banner.png",
+  bookstores: "bookstore-banner.png"
+};
 
-const cat = String(
-  x.category ||
-  type ||
-  x.property_type ||
-  ""
-).toLowerCase().trim();
+// Table/type ke according exact banner
+const bannerFile = bannerMap[String(type || "").toLowerCase()] || "hostel-banner.png";
 
-// Property category ke according banner
-if (cat.includes("tiffin") || cat.includes("mess")) {
-  bannerImg = "tiffin-banner.png";
-} 
-else if (cat.includes("cafe")) {
-  bannerImg = "cafe-banner.png";
-} 
-else if (cat.includes("book")) {
-  bannerImg = "bookstore-banner.png";
-} 
-else if (cat.includes("lib")) {
-  bannerImg = "library-banner.png";
-} 
-else if (
-  cat.includes("hostel") ||
-  cat.includes("pg") ||
-  cat.includes("student")
-) {
-  bannerImg = "hostel-banner.png";
-}
-
-// Agar property ki apni valid image hai to use karo
-if (
-  x.image &&
-  String(x.image).trim() !== "" &&
-  !String(x.image).includes("unsplash.com")
-) {
-  bannerImg = String(x.image).trim();
-}
-
-  const phone = x.phone || "";
-  const area = x.area || "Area Not Specified";
-  const address = x.address || x.full_address || `${area}, India`;
-  const timing = x.timing || x.opening_time || "Open 24 hours";
-  const rating = (x.rating && Number(x.rating) > 0) ? Number(x.rating).toFixed(1) : "4.0";
-  const callHref = phone ? `tel:${phone}` : "javascript:void(0);";
-
-  const modal = document.createElement("div");
-  modal.id = "shPropertyPopup";
-  modal.className = "fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn";
-
-  modal.innerHTML = `
-    <div class="sh-card relative w-full max-w-[385px] rounded-[28px] overflow-hidden shadow-2xl transition-all font-sans border border-slate-200 animate-pop" style="background:#ffffff !important; color:#0f172a !important;">
-      
-      <!-- TOP BANNER (PROPERTY WISE) -->
-      <div class="relative w-full h-52 bg-slate-950 overflow-hidden">
-        <img 
-          src="${esc(bannerImg)}" 
-          alt="${esc(title)}" 
-          class="w-full h-full object-cover"
-          onerror="this.onerror=null; this.src='hostel-banner.png';"
+// GitHub Pages absolute path
+const bannerImg =
+  "https://studenthubhelp.github.io/studenthubhelp/" + bannerFile;
         />
         
         <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60 pointer-events-none"></div>
@@ -1744,6 +1698,13 @@ if (
           </button>
         </div>
 
+              <img 
+  src="${esc(bannerImg)}" 
+  alt="${esc(title)}" 
+  class="w-full h-full object-cover"
+  loading="eager"
+/>
+              
         <!-- Property ID Line -->
         <div class="sh-prop-id flex items-center gap-2 font-bold text-xs" style="color:#2563eb !important; -webkit-text-fill-color:#2563eb !important;">
           <i class="fa-solid fa-fingerprint text-sm"></i>
@@ -2437,12 +2398,7 @@ function previewPublic(type, index) {
       
       <!-- TOP BANNER -->
       <div class="relative w-full h-52 bg-slate-950 overflow-hidden">
-        <img 
-          src="${esc(bannerImg)}" 
-          alt="${esc(title)}" 
-          class="w-full h-full object-cover"
-          onerror="this.src='https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80'"
-        />
+       
         
         <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60 pointer-events-none"></div>
 
