@@ -156,64 +156,85 @@ body.premium-grid .section h1,body.premium-grid .section h2,body.premium-grid .s
 body.premium-grid #authScreen{background:linear-gradient(135deg,rgba(245,247,251,.97),rgba(235,241,248,.97))!important}
 body.premium-grid #authScreen .card{background:rgba(255,255,255,.96)!important}
 @media(max-width:767px){body.premium-grid main{background:transparent!important}}
-
-
-/* =========================================================
-   CONTEXT-AWARE ADMIN SEARCH POPUP
-   Search results open a purpose-built detail modal instead
-   of navigating away or showing a generic drawer.
-   ========================================================= */
-#searchContextModal{background:rgba(3,8,20,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:16px}
-#searchContextModal.search-context-open{display:flex!important}
-.search-context-shell{width:min(980px,100%);max-height:min(92vh,900px);overflow:hidden;border-radius:30px;background:#fff;color:#162033;border:1px solid rgba(7,26,51,.12);box-shadow:0 30px 100px rgba(0,0,0,.45);display:flex;flex-direction:column;animation:searchContextIn .22s ease-out}
-@keyframes searchContextIn{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
-.search-context-hero{position:relative;height:300px;flex:none;background:#071a33;overflow:hidden}
-.search-context-hero img{width:100%;height:100%;object-fit:cover;display:block}
-.search-context-hero:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,8,20,.06) 18%,rgba(4,8,20,.25) 48%,rgba(4,8,20,.94) 100%);pointer-events:none}
-.search-context-close{position:absolute;right:16px;top:16px;z-index:4;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.24);background:rgba(4,8,20,.62);color:#fff;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);cursor:pointer}
-.search-context-close:hover{background:rgba(4,8,20,.84);transform:scale(1.03)}
-.search-context-hero-content{position:absolute;z-index:3;left:26px;right:26px;bottom:22px;color:#fff}
-.search-context-kicker{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}
-.search-context-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 12px;font-size:11px;font-weight:900;background:#fff;color:#162033;box-shadow:0 5px 18px rgba(0,0,0,.16)}
-.search-context-badge.verified{background:#16a765;color:#fff}
-.search-context-badge.pending{background:#fff7d6;color:#8b650b}
-.search-context-badge.rejected{background:#fee2e2;color:#991b1b}
-.search-context-badge.blue{background:#e8f1ff;color:#1d4ed8}
-.search-context-title{font-size:clamp(26px,4vw,42px);line-height:1.04;font-weight:900;letter-spacing:-.03em;margin:0;text-shadow:0 4px 20px rgba(0,0,0,.25)}
-.search-context-subtitle{font-size:13px;color:rgba(255,255,255,.84);margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.search-context-body{overflow:auto;padding:22px 26px 24px;background:#fff}
-.search-context-id{display:flex;align-items:center;gap:9px;color:#2563eb;font-weight:900;font-size:14px;margin-bottom:17px}
-.search-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.search-context-info{background:#f6f8fb;border:1px solid #e6eaf0;border-radius:17px;padding:14px 15px;min-width:0}
-.search-context-info.wide{grid-column:1/-1}
-.search-context-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#7a8495;font-weight:900}
-.search-context-value{margin-top:5px;font-size:14px;font-weight:700;color:#172033;word-break:break-word;line-height:1.45}
-.search-context-value.muted{color:#667085;font-weight:600}
-.search-context-rating{display:inline-flex;align-items:center;gap:7px;background:#fff7d6;border:1px solid #f5de88;color:#8b5e0b;border-radius:999px;padding:7px 11px;font-weight:900}
-.search-context-actions{padding:16px 26px;border-top:1px solid #e8ebf0;background:#fff;display:flex;gap:10px;flex-wrap:wrap}
-.search-context-action{min-height:48px;border-radius:14px;padding:0 18px;border:1px solid #e1e6ee;background:#f3f6fa;color:#162033;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;cursor:pointer;flex:1;min-width:150px}
-.search-context-action:hover{border-color:#c7d0dc;transform:translateY(-1px)}
-.search-context-action.primary{background:#071a33;color:#fff;border-color:#071a33;box-shadow:0 7px 18px rgba(7,26,51,.16)}
-.search-context-action.gold{background:linear-gradient(135deg,#d7a63d,#f2c866);color:#071a33;border-color:#d7a63d}
-.search-context-action.green{background:#16834b;color:#fff;border-color:#16834b}
-.search-context-action.red{background:#fff1f1;color:#b42318;border-color:#f4c7c7}
-.search-context-empty{padding:30px;text-align:center;color:#667085}
-.search-context-list{display:grid;gap:10px}
-.search-context-mini{background:#f6f8fb;border:1px solid #e6eaf0;border-radius:15px;padding:12px 14px}
-.search-context-mini b{color:#162033}
-.search-context-mini span{color:#667085;font-size:12px}
+</style>
+<style id="search-context-premium-fix">
+/* Scoped fix: premium.css globally forces div/span text white.
+   This keeps the search popup on the existing blue StudentHubHelp theme. */
+#searchContextModal{z-index:500!important;padding:16px!important;background:rgba(3,12,28,.76)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important}
+#searchContextModal .search-context-shell{width:min(1040px,100%)!important;max-height:min(92vh,900px)!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;border-radius:28px!important;background:linear-gradient(145deg,#3375bd,#2b67aa 55%,#2563a8)!important;color:#fff!important;border:1px solid rgba(255,255,255,.30)!important;box-shadow:0 30px 100px rgba(0,0,0,.48)!important}
+#searchContextModal .search-context-shell div,
+#searchContextModal .search-context-shell span,
+#searchContextModal .search-context-shell p,
+#searchContextModal .search-context-shell h1,
+#searchContextModal .search-context-shell h2,
+#searchContextModal .search-context-shell h3,
+#searchContextModal .search-context-shell label{color:#fff!important;-webkit-text-fill-color:#fff!important}
+#searchContextModal .search-context-hero{height:310px!important;flex:none!important;background:#1f5f9e!important;overflow:hidden!important}
+#searchContextModal .search-context-hero img{width:100%!important;height:100%!important;object-fit:cover!important;display:block!important;opacity:1!important;filter:none!important}
+#searchContextModal .search-context-hero:after{background:linear-gradient(180deg,rgba(3,12,28,.04),rgba(3,12,28,.18) 42%,rgba(3,12,28,.88))!important}
+#searchContextModal .search-context-close{width:46px!important;height:46px!important;right:16px!important;top:16px!important;z-index:10!important;border:1px solid rgba(255,255,255,.30)!important;background:rgba(4,18,40,.72)!important;color:#fff!important}
+#searchContextModal .search-context-close i{color:#fff!important;-webkit-text-fill-color:#fff!important}
+#searchContextModal .search-context-hero-content{left:28px!important;right:28px!important;bottom:24px!important;z-index:5!important}
+#searchContextModal .search-context-title{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 3px 18px rgba(0,0,0,.35)!important}
+#searchContextModal .search-context-subtitle{color:rgba(255,255,255,.90)!important;-webkit-text-fill-color:rgba(255,255,255,.90)!important}
+#searchContextModal .search-context-subtitle *{color:inherit!important;-webkit-text-fill-color:inherit!important}
+#searchContextModal .search-context-badge{color:#17304d!important;-webkit-text-fill-color:#17304d!important;background:#fff!important;border:1px solid rgba(255,255,255,.55)!important}
+#searchContextModal .search-context-badge.verified{background:#16a765!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+#searchContextModal .search-context-badge.pending{background:#fff3c4!important;color:#72500a!important;-webkit-text-fill-color:#72500a!important}
+#searchContextModal .search-context-badge.rejected{background:#ffe3e3!important;color:#a61b1b!important;-webkit-text-fill-color:#a61b1b!important}
+#searchContextModal .search-context-badge.blue{background:#e5f0ff!important;color:#1758b5!important;-webkit-text-fill-color:#1758b5!important}
+#searchContextModal .search-context-body{overflow:auto!important;padding:22px 26px 24px!important;background:linear-gradient(145deg,#3375bd,#2b67aa)!important;color:#fff!important;scrollbar-width:thin!important;scrollbar-color:rgba(255,255,255,.35) rgba(255,255,255,.06)!important}
+#searchContextModal .search-context-body::-webkit-scrollbar{width:8px!important}
+#searchContextModal .search-context-body::-webkit-scrollbar-track{background:rgba(255,255,255,.06)!important}
+#searchContextModal .search-context-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35)!important;border-radius:999px!important}
+#searchContextModal .search-context-id{color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:900!important;margin-bottom:17px!important}
+#searchContextModal .search-context-id i{color:#f5de88!important;-webkit-text-fill-color:#f5de88!important}
+#searchContextModal .search-context-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+#searchContextModal .search-context-info{background:rgba(255,255,255,.10)!important;border:1px solid rgba(255,255,255,.22)!important;border-radius:17px!important;padding:14px 15px!important;min-width:0!important}
+#searchContextModal .search-context-info.wide{grid-column:1/-1!important}
+#searchContextModal .search-context-label{color:rgba(255,255,255,.72)!important;-webkit-text-fill-color:rgba(255,255,255,.72)!important;font-size:10px!important;text-transform:uppercase!important;letter-spacing:.08em!important;font-weight:900!important}
+#searchContextModal .search-context-value{color:#fff!important;-webkit-text-fill-color:#fff!important;margin-top:5px!important;font-size:14px!important;font-weight:700!important;word-break:break-word!important;line-height:1.45!important}
+#searchContextModal .search-context-value.muted{color:rgba(255,255,255,.68)!important;-webkit-text-fill-color:rgba(255,255,255,.68)!important}
+#searchContextModal .search-context-mini{background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.17)!important;border-radius:13px!important;padding:10px 12px!important;margin-top:7px!important}
+#searchContextModal .search-context-mini b{color:#fff!important;-webkit-text-fill-color:#fff!important}
+#searchContextModal .search-context-mini span{color:rgba(255,255,255,.70)!important;-webkit-text-fill-color:rgba(255,255,255,.70)!important}
+#searchContextModal .search-context-rating{display:inline-flex!important;align-items:center!important;gap:7px!important;background:#fff3c4!important;border:1px solid #f5de88!important;color:#72500a!important;-webkit-text-fill-color:#72500a!important;border-radius:999px!important;padding:7px 11px!important;font-weight:900!important}
+#searchContextModal .search-context-rating i{color:#b77b00!important;-webkit-text-fill-color:#b77b00!important}
+#searchContextModal .badge{display:inline-flex!important;align-items:center!important;color:#fff!important;-webkit-text-fill-color:#fff!important;background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.25)!important}
+#searchContextModal .badge-green{color:#fff!important;-webkit-text-fill-color:#fff!important;background:rgba(16,185,129,.22)!important;border-color:rgba(110,231,183,.45)!important}
+#searchContextModal .badge-red{color:#fff!important;-webkit-text-fill-color:#fff!important;background:rgba(239,68,68,.22)!important;border-color:rgba(252,165,165,.45)!important}
+#searchContextModal .search-context-actions{flex:none!important;padding:16px 26px!important;border-top:1px solid rgba(255,255,255,.18)!important;background:#2b67aa!important;display:flex!important;gap:10px!important;flex-wrap:wrap!important}
+#searchContextModal .search-context-action{min-height:50px!important;border-radius:14px!important;padding:0 18px!important;border:1px solid rgba(255,255,255,.22)!important;background:rgba(255,255,255,.12)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:900!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;text-decoration:none!important;cursor:pointer!important;flex:1!important;min-width:145px!important;opacity:1!important}
+#searchContextModal .search-context-action i{color:inherit!important;-webkit-text-fill-color:inherit!important}
+#searchContextModal .search-context-action:hover{background:rgba(255,255,255,.19)!important;border-color:rgba(255,255,255,.45)!important;transform:translateY(-1px)!important}
+#searchContextModal .search-context-action.primary{background:#071a33!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:#071a33!important}
+#searchContextModal .search-context-action.gold{background:linear-gradient(135deg,#d7a63d,#f2c866)!important;color:#071a33!important;-webkit-text-fill-color:#071a33!important;border-color:#d7a63d!important}
+#searchContextModal .search-context-action.gold i{color:#071a33!important;-webkit-text-fill-color:#071a33!important}
+#searchContextModal .search-context-action.green{background:#16834b!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:#16834b!important}
+#searchContextModal .search-context-action.red{background:#b42318!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:#b42318!important}
+#searchContextModal .search-context-action[aria-disabled="true"]{opacity:.55!important;pointer-events:none!important}
+body.premium-grid #searchResults{background:linear-gradient(145deg,#3375bd,#2b67aa)!important;border:1px solid rgba(255,255,255,.28)!important;box-shadow:0 20px 55px rgba(0,0,0,.28)!important}
+body.premium-grid #searchResults button{color:#fff!important;-webkit-text-fill-color:#fff!important}
+body.premium-grid #searchResults button:hover{background:rgba(255,255,255,.12)!important}
+body.premium-grid #searchResults button span,
+body.premium-grid #searchResults button div{color:#fff!important;-webkit-text-fill-color:#fff!important}
+body.premium-grid #searchResults .text-slate-400{color:rgba(255,255,255,.72)!important;-webkit-text-fill-color:rgba(255,255,255,.72)!important}
 @media(max-width:700px){
-  #searchContextModal{padding:0}
-  .search-context-shell{width:100%;height:100%;max-height:none;border-radius:0}
-  .search-context-hero{height:250px}
-  .search-context-body{padding:18px 16px 20px}
-  .search-context-actions{padding:12px 16px}
-  .search-context-grid{grid-template-columns:1fr}
-  .search-context-info.wide{grid-column:auto}
-  .search-context-action{min-width:0;flex-basis:calc(50% - 5px)}
+#searchContextModal{padding:0!important}
+#searchContextModal .search-context-shell{width:100%!important;height:100%!important;max-height:none!important;border-radius:0!important}
+#searchContextModal .search-context-hero{height:250px!important}
+#searchContextModal .search-context-body{padding:18px 16px 20px!important}
+#searchContextModal .search-context-actions{padding:12px 16px!important}
+#searchContextModal .search-context-grid{grid-template-columns:1fr!important}
+#searchContextModal .search-context-info.wide{grid-column:auto!important}
+#searchContextModal .search-context-action{min-width:0!important;flex-basis:calc(50% - 5px)!important}
 }
-@media(max-width:430px){.search-context-hero{height:225px}.search-context-hero-content{left:18px;right:18px;bottom:18px}.search-context-title{font-size:28px}.search-context-action{flex-basis:100%}}
-
+@media(max-width:430px){
+#searchContextModal .search-context-hero{height:225px!important}
+#searchContextModal .search-context-hero-content{left:18px!important;right:18px!important;bottom:18px!important}
+#searchContextModal .search-context-title{font-size:28px!important}
+#searchContextModal .search-context-action{flex-basis:100%!important}
+}
 </style>
 </head>
 
@@ -481,27 +502,6 @@ body.premium-grid #authScreen .card{background:rgba(255,255,255,.96)!important}
       <a id="viewWhatsapp" target="_blank" rel="noopener" class="flex-1 text-center py-3 rounded-xl bg-emerald-600 text-white">WhatsApp</a>
       <button id="viewEdit" class="flex-1 py-3 rounded-xl gold-gradient-bg text-navy-950 font-bold">Edit</button>
     </div>
-  </div>
-</div>
-
-
-
-<!-- ================= CONTEXT-AWARE SEARCH DETAIL MODAL ================= -->
-<div id="searchContextModal" class="fixed inset-0 z-[500] hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="searchContextTitle">
-  <div class="search-context-shell" data-search-context-shell>
-    <div class="search-context-hero">
-      <img id="searchContextImage" src="hostel-banner.png" alt="">
-      <button type="button" class="search-context-close" data-search-context-close aria-label="Close details">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-      <div class="search-context-hero-content">
-        <div id="searchContextKicker" class="search-context-kicker"></div>
-        <h2 id="searchContextTitle" class="search-context-title">Details</h2>
-        <div id="searchContextSubtitle" class="search-context-subtitle"></div>
-      </div>
-    </div>
-    <div id="searchContextBody" class="search-context-body"></div>
-    <div id="searchContextActions" class="search-context-actions"></div>
   </div>
 </div>
 
@@ -2307,308 +2307,6 @@ masterRealtimeTables.forEach(table=>{
   adminRealtimeChannels.push(channel);
  }catch(e){console.warn("Realtime unavailable for",table,e)}
 });
-
-
-
-/* =========================================================
-   CONTEXT-AWARE SEARCH RESULT DETAIL ENGINE
-   This intentionally overrides only the final search behavior.
-   Existing dashboard modules, drawers and edit forms remain intact.
-   ========================================================= */
-(function installContextSearchUpgrade(){
-  const searchInput=$("globalSearch");
-  const searchBox=$("searchResults");
-  const modal=$("searchContextModal");
-  if(!searchInput||!searchBox||!modal)return;
-
-  const imageForType={
-    hostels:"hostel-banner.png",
-    tiffins:"tiffin-banner.png",
-    libraries:"library-banner.png",
-    cafes:"cafe-banner.png",
-    bookstores:"bookstore-banner.png"
-  };
-
-  const firstImage=value=>{
-    if(Array.isArray(value))return value.find(v=>typeof v==="string"&&v.trim())||"";
-    if(typeof value==="object"&&value){return firstImage(value.url||value.public_url||value.path||value.src||"")}
-    return text(value);
-  };
-
-  function contextImage(row,type){
-    const candidate=firstVal(row,["image","image_url","imageUrl","banner","banner_url","cover_image","cover_image_url","photo","photo_url","thumbnail","thumbnail_url","public_url","url"],"")||firstImage(row?.images);
-    return candidate||imageForType[type]||"hostel-banner.png";
-  }
-
-  function contextStatus(row){
-    return String(firstVal(row,["status","listing_status","state"],"pending")||"pending").toLowerCase();
-  }
-
-  function contextTypeLabel(type){return masterMeta[type]?.singular||propertyConfig[type]?.singular||type||"Property"}
-
-  function statusBadge(status,verified){
-    const s=String(status||"").toLowerCase();
-    if(verified)return '<span class="search-context-badge verified"><i class="fa-solid fa-circle-check"></i> Verified Listing</span>';
-    if(["rejected","declined","cancelled","blocked","suspended"].includes(s))return `<span class="search-context-badge rejected"><i class="fa-solid fa-circle-xmark"></i> ${esc(status||"Rejected")}</span>`;
-    return `<span class="search-context-badge pending"><i class="fa-solid fa-clock"></i> ${esc(status||"Pending")}</span>`;
-  }
-
-  function info(label,value,wide=false,muted=false){
-    return `<div class="search-context-info${wide?" wide":""}"><div class="search-context-label">${esc(label)}</div><div class="search-context-value${muted?" muted":""}">${value??"—"}</div></div>`;
-  }
-
-  function rawValue(row,keys,fallback="—"){
-    return esc(firstVal(row,keys,fallback));
-  }
-
-  function close(){
-    modal.classList.add("hidden");
-    modal.classList.remove("flex","search-context-open");
-    document.body.classList.remove("overflow-hidden");
-  }
-
-  function open(){
-    modal.classList.remove("hidden");
-    modal.classList.add("flex","search-context-open");
-    document.body.classList.add("overflow-hidden");
-  }
-
-  function setHero(row,type,title,kind,subtitle){
-    const img=$("searchContextImage");
-    img.style.objectFit="cover";
-    img.style.padding="0";
-    img.src=contextImage(row,type);
-    img.alt=title||"";
-    img.onerror=function(){
-      const fallback=imageForType[type]||"hostel-banner.png";
-      if(this.src.endsWith(fallback))this.onerror=null;else this.src=fallback;
-    };
-    $("searchContextTitle").textContent=title||"Details";
-    $("searchContextSubtitle").innerHTML=subtitle||"";
-    $("searchContextKicker").innerHTML=kind||"";
-  }
-
-  function contactActions(row,detailsAction,extraActions=""){
-    const phone=text(firstVal(row,["phone","owner_phone","contact_phone","claimant_phone"],""));
-    const digits=phone.replace(/\D/g,"");
-    const callHref=phone?`tel:${esc(phone)}`:"#";
-    const waHref=digits?`https://wa.me/${digits}?text=${encodeURIComponent("Hello "+(firstVal(row,["name","property_name","title","full_name","owner_name"],"")))}`:"#";
-    $("searchContextActions").innerHTML=`
-      ${detailsAction||""}
-      <a class="search-context-action" href="${callHref}" ${phone?"":"aria-disabled=\"true\" onclick=\"return false\""}><i class="fa-solid fa-phone"></i> Call</a>
-      <a class="search-context-action green" href="${waHref}" target="_blank" rel="noopener" ${digits?"":"aria-disabled=\"true\" onclick=\"return false\""}><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
-      ${extraActions}
-    `;
-  }
-
-  function openProperty(type,index){
-    const row=state[type]?.[index];
-    if(!row)return;
-    const owner=rowOwner(row);
-    const verified=propVerified(row);
-    const status=propStatus(row);
-    const rating=propRating(row);
-    const propertyId=firstVal(row,["id","property_id"],"—");
-    const title=row.name||contextTypeLabel(type);
-    setHero(row,type,title,statusBadge(status,verified),`${esc(contextTypeLabel(type))} <span>•</span> ${esc(row.area||row.city||"India")}`);
-    $("searchContextBody").innerHTML=`
-      <div class="search-context-id"><i class="fa-solid fa-fingerprint"></i> Property ID: #${esc(propertyId)}</div>
-      <div class="search-context-grid">
-        ${info("Location",esc(row.area||row.city||"India"))}
-        ${info("Property Type",esc(row.category||masterMeta[type]?.category||contextTypeLabel(type)))}
-        ${info("Full Address",esc(row.address||"—"),true)}
-        ${info("Status",masterBadge(status,status==="active"?"green":status==="rejected"||status==="suspended"?"red":""))}
-        ${info("Verification",verified?'<span class="search-context-badge verified"><i class="fa-solid fa-circle-check"></i> Verified</span>':'<span class="search-context-badge pending"><i class="fa-solid fa-shield-halved"></i> Not Verified</span>')}
-        ${info("Rating",rating?`<span class="search-context-rating"><i class="fa-solid fa-star"></i> ${esc(Number(rating).toFixed(1))} / 5</span>`:'<span class="search-context-value muted">No rating yet</span>')}
-        ${info("Contact",esc(row.phone||"—"))}
-        ${info("Owner",esc(owner?.full_name||firstVal(row,["owner_name"],"Not linked")))}
-        ${info("Timing / Hours",esc(row.timing||row.opening_time||"—"))}
-        ${info("Price / Rent",esc(firstVal(row,["price","rent","monthly_rent"],"—")))}
-        ${info("Facilities / Features",esc(row.facilities||"—"),true)}
-        ${info("Description",esc(firstVal(row,["description","details"],"—")),true)}
-      </div>`;
-
-    const publicDetails=`<button type="button" class="search-context-action primary" id="searchContextPropertyDetails"><i class="fa-solid fa-arrow-up-right-from-square"></i> View Details</button>`;
-    const edit=`<button type="button" class="search-context-action gold" id="searchContextEdit"><i class="fa-solid fa-pen"></i> Edit</button>`;
-    contactActions(row,publicDetails,edit);
-    $("searchContextPropertyDetails").onclick=()=>{
-      close();
-      if(firstVal(row,["slug"],""))window.open(`property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(row.slug)}`,"_blank","noopener,noreferrer");
-      else toast("This property has no slug for the public details page.",true);
-    };
-    $("searchContextEdit").onclick=()=>{close();openAdvancedProperty(type,index)};
-    open();
-  }
-
-  function openProfile(profile){
-    const role=String(profile.role||"user").toLowerCase();
-    const isOwner=role==="owner";
-    const title=profile.full_name||"User Profile";
-    const linked=allProps().filter(p=>String(propOwnerId(p))===String(profile.id)||normalizePhone(p.phone)===normalizePhone(profile.phone));
-    const status=String(firstVal(profile,["status","account_status"],"active"));
-    const disabled=["disabled","inactive","blocked","suspended"].includes(status.toLowerCase());
-    const avatarText=esc((title||"U").split(/\s+/).map(x=>x[0]).slice(0,2).join("").toUpperCase());
-    setHero({},"",title,`<span class="search-context-badge blue"><i class="fa-solid fa-user"></i> ${esc(isOwner?"Owner":"Profile / User")}</span>`,`${esc(profile.email||"No email")} <span>•</span> ${esc(profile.phone||"No phone")}`);
-    $("searchContextImage").src="logo.png";
-    $("searchContextImage").style.objectFit="contain";
-    $("searchContextImage").style.padding="58px";
-    $("searchContextBody").innerHTML=`
-      <div class="search-context-id"><i class="fa-solid fa-fingerprint"></i> User ID: #${esc(profile.id||"—")}</div>
-      <div class="search-context-grid">
-        ${info("Full Name",esc(title))}
-        ${info("Role",`<span class="search-context-badge blue"><i class="fa-solid fa-user-tag"></i> ${esc(role)}</span>`)}
-        ${info("Account Status",disabled?'<span class="search-context-badge rejected"><i class="fa-solid fa-user-slash"></i> Disabled</span>':'<span class="search-context-badge verified"><i class="fa-solid fa-user-check"></i> Active</span>')}
-        ${info("Joined",esc(fmtDate(profile.created_at)))}
-        ${info("Phone",esc(profile.phone||"—"))}
-        ${info("Email",esc(profile.email||"—"))}
-        ${info("Address",esc(profile.address||"—"),true)}
-        ${info("Linked Properties",linked.length?linked.map(p=>`<div class="search-context-mini"><b>${esc(p.name||masterMeta[p.__type].singular)}</b><br><span>${esc(masterMeta[p.__type].category)} • ${esc(p.area||"—")}</span></div>`).join(""):'<span class="search-context-value muted">No linked property found</span>',true)}
-      </div>`;
-    const view=`<button type="button" class="search-context-action primary" id="searchContextProfileDetails"><i class="fa-solid fa-address-card"></i> View Details</button>`;
-    const call=profile.phone?`<a class="search-context-action" href="tel:${esc(profile.phone)}"><i class="fa-solid fa-phone"></i> Call</a>`:"";
-    const edit=isOwner?`<button type="button" class="search-context-action gold" id="searchContextProfileEdit"><i class="fa-solid fa-pen"></i> Edit</button>`:"";
-    $("searchContextActions").innerHTML=view+call+edit;
-    $("searchContextProfileDetails").onclick=()=>{close();isOwner?openOwnerDetails(profile.id):openStudentDrawer(profile.id)};
-    if(isOwner)$("searchContextProfileEdit").onclick=()=>{close();editOwner(profile.id)};
-    open();
-  }
-
-  function openListingRequest(row){
-    const requestId=firstVal(row,["id","request_id"],"—");
-    const owner=resolveOwner(row);
-    const property=resolveProperty(row);
-    const title=firstVal(row,["owner_name","claimant_name","full_name","name","property_name","title"],"Listing Request");
-    const propertyName=firstVal(row,["property_name","name","title"],property?.x?.name||"Listing Request");
-    const status=contextStatus(row);
-    const verified=String(status).toLowerCase()==="approved"||String(status).toLowerCase()==="published";
-    const type=property?.type||firstVal(row,["property_table","property_type","type"],"");
-    const category=firstVal(row,["category","property_type"],type?masterMeta[type]?.category||type:"Listing");
-    setHero(row,type,title,statusBadge(status,verified),`Listing Request <span>•</span> ${esc(propertyName)}`);
-    $("searchContextBody").innerHTML=`
-      <div class="search-context-id"><i class="fa-solid fa-fingerprint"></i> Request ID: #${esc(requestId)}</div>
-      <div class="search-context-grid">
-        ${info("Applicant / Owner",esc(owner?.full_name||firstVal(row,["owner_name","claimant_name","full_name"],"—")))}
-        ${info("Property Name",esc(propertyName))}
-        ${info("Category",esc(category))}
-        ${info("Location",esc(firstVal(row,["area","locality","city"],property?.x?.area||"—")))}
-        ${info("Full Address",esc(firstVal(row,["address","full_address"],property?.x?.address||"—")),true)}
-        ${info("Phone",esc(firstVal(row,["phone","owner_phone","contact_phone"],owner?.phone||"—")))}
-        ${info("Email",esc(firstVal(row,["email","owner_email"],owner?.email||"—")))}
-        ${info("Status",masterBadge(status,status==="approved"||status==="published"?"green":status==="rejected"?"red":""))}
-        ${info("Verification",verified?'<span class="search-context-badge verified"><i class="fa-solid fa-circle-check"></i> Approved</span>':'<span class="search-context-badge pending"><i class="fa-solid fa-hourglass-half"></i> Awaiting review</span>')}
-        ${info("Submitted",esc(fmtDate(dateCreated(row))))}
-        ${info("Rating",firstVal(row,["rating","average_rating"],property?.x?propRating(property.x):"—")||"—")}
-        ${info("Facilities / Description",esc(firstVal(row,["facilities","description","details"],"—")),true)}
-        ${info("Admin Note / Message",esc(firstVal(row,["message","notes","admin_note","rejection_reason","correction_message"],"—")),true)}
-      </div>`;
-
-    const details=`<button type="button" class="search-context-action primary" id="searchContextRequestDetails"><i class="fa-solid fa-file-lines"></i> View Details</button>`;
-    const actions=`
-      <button type="button" class="search-context-action green" id="searchContextApprove"><i class="fa-solid fa-check"></i> Approve</button>
-      <button type="button" class="search-context-action gold" id="searchContextCorrection"><i class="fa-solid fa-pen-to-square"></i> Correction</button>
-      <button type="button" class="search-context-action red" id="searchContextReject"><i class="fa-solid fa-xmark"></i> Reject</button>`;
-    const call=firstVal(row,["phone","owner_phone","contact_phone"],owner?.phone||"")?`<a class="search-context-action" href="tel:${esc(firstVal(row,["phone","owner_phone","contact_phone"],owner?.phone||""))}"><i class="fa-solid fa-phone"></i> Call</a>`:"";
-    $("searchContextActions").innerHTML=details+call+actions;
-    $("searchContextRequestDetails").onclick=()=>{close();openRecordDrawer("listing_requests",requestId)};
-    $("searchContextApprove").onclick=()=>{close();processListing(requestId,"approve")};
-    $("searchContextCorrection").onclick=()=>{close();processListing(requestId,"correction")};
-    $("searchContextReject").onclick=()=>{close();processListing(requestId,"reject")};
-    open();
-  }
-
-  function searchContextResults(query){
-    const q=query.toLowerCase();
-    const results=[];
-    const push=(kind,title,sub,data)=>results.push({kind,title,sub,data});
-    const match=row=>JSON.stringify(row||{}).toLowerCase().includes(q);
-
-    /* Listing Requests first: admin workflow results should be easiest to spot. */
-    (state.advanced.requests.listing_requests||[]).forEach(row=>{
-      if(!match(row))return;
-      const owner=resolveOwner(row);
-      const property=resolveProperty(row);
-      const propertyName=firstVal(row,["property_name","name","title"],property?.x?.name||"Listing Request");
-      const ownerName=firstVal(row,["owner_name","claimant_name","full_name"],owner?.full_name||"");
-      push("listing_request",ownerName||propertyName,`Listing Request • ${propertyName} • ${firstVal(row,["phone","owner_phone"],owner?.phone||"No phone")}`,row);
-    });
-
-    /* Profiles / Users. */
-    [...state.students,...state.owners].forEach(row=>{
-      if(!match(row))return;
-      const role=String(row.role||"user").toLowerCase();
-      push("profile",row.full_name||"User",`Profile / User • ${row.phone||"No phone"} • ${row.email||"No email"}`,row);
-    });
-
-    /* Live properties. */
-    allProps().forEach(row=>{
-      if(!match(row))return;
-      push("property",row.name||masterMeta[row.__type].singular,`${masterMeta[row.__type].category} • ${row.area||""} • ${row.phone||"No phone"}`,row);
-    });
-
-    /* Other admin records remain searchable and open in the existing detail drawer. */
-    Object.entries(state.advanced.requests).forEach(([table,rows])=>{
-      if(table==="listing_requests"||!Array.isArray(rows))return;
-      rows.slice(0,150).forEach(row=>{
-        if(!match(row))return;
-        const id=firstVal(row,["id","request_id","booking_id"],"");
-        push("record",`${table.replaceAll("_"," ")} ${id?"#"+id:""}`.trim(),`${statusNorm(row)} • ${firstVal(row,["property_name","name","title","message"],"")}`,{table,id,row});
-      });
-    });
-
-    /* De-duplicate obvious collisions while keeping context types separate. */
-    const seen=new Set();
-    return results.filter(r=>{const key=`${r.kind}|${r.title}|${firstVal(r.data,["id","request_id","phone"],"")}`;if(seen.has(key))return false;seen.add(key);return true}).slice(0,40);
-  }
-
-  function renderSearchResults(results){
-    if(!results.length){searchBox.innerHTML='<div class="p-4 text-sm text-slate-400">No results found.</div>';searchBox.classList.remove("hidden");searchBox._contextResults=[];return}
-    const icons={listing_request:"fa-inbox",profile:"fa-user",property:"fa-building",record:"fa-file-lines"};
-    const labels={listing_request:"Listing Request",profile:"Profile / User",property:"Property",record:"Admin Record"};
-    searchBox.innerHTML=results.map((r,i)=>`
-      <button type="button" class="w-full text-left p-3 rounded-xl hover:bg-navy-850 transition flex items-center gap-3" data-context-search-index="${i}">
-        <span class="w-10 h-10 rounded-xl bg-navy-850 text-gold-300 flex items-center justify-center flex-none"><i class="fa-solid ${icons[r.kind]||"fa-file-lines"}"></i></span>
-        <span class="min-w-0 flex-1">
-          <span class="block font-bold truncate">${esc(r.title)}</span>
-          <span class="block text-[10px] text-slate-400 truncate"><b class="text-gold-400">${labels[r.kind]||"Result"}</b> • ${esc(r.sub)}</span>
-        </span>
-        <i class="fa-solid fa-chevron-right text-slate-500"></i>
-      </button>`).join("");
-    searchBox._contextResults=results;
-    searchBox.classList.remove("hidden");
-  }
-
-  function contextBuildSearch(){
-    const q=mtext(searchInput.value).toLowerCase();
-    if(!q){searchBox.classList.add("hidden");searchBox.innerHTML="";searchBox._contextResults=[];return}
-    renderSearchResults(searchContextResults(q));
-  }
-
-  /* Remove both earlier search listeners, then install one deterministic listener. */
-  if(typeof oldBuildSearch==="function")searchInput.removeEventListener("input",oldBuildSearch);
-  if(typeof buildSearch==="function")searchInput.removeEventListener("input",buildSearch);
-  searchInput.addEventListener("input",contextBuildSearch);
-
-  document.addEventListener("click",function(e){
-    const button=e.target.closest("[data-context-search-index]");
-    if(!button)return;
-    const result=searchBox._contextResults?.[Number(button.dataset.contextSearchIndex)];
-    if(!result)return;
-    searchBox.classList.add("hidden");
-    searchInput.value="";
-    if(result.kind==="property")return openProperty(result.data.__type,result.data.__index);
-    if(result.kind==="profile")return openProfile(result.data);
-    if(result.kind==="listing_request")return openListingRequest(result.data);
-    if(result.kind==="record")return openRecordDrawer(result.data.table,result.data.id);
-  });
-
-  document.addEventListener("click",function(e){
-    if(e.target.closest("[data-search-context-close]")||e.target===modal){close();}
-  });
-  document.addEventListener("keydown",function(e){
-    if(e.key==="Escape"&&!modal.classList.contains("hidden"))close();
-  });
-})();
-
 
 /* ================= BOOT ================= */
 
