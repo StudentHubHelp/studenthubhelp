@@ -267,6 +267,155 @@ body{background-color:var(--bg);color:var(--text);font-family:Inter,"Noto Sans D
 #app > aside .sidebar-nav-scroll::-webkit-scrollbar-thumb{background:rgba(212,175,55,.45);border-radius:999px}
 #app > aside .sidebar-nav-scroll::-webkit-scrollbar-thumb:hover{background:rgba(212,175,55,.7)}
 </style>
+
+<style id="admin-context-detail-popup">
+/* =========================================================
+   SEARCH DETAIL POPUPS
+   Scoped only to #shAdminContextPopup.
+   Existing dashboard theme / premium.css is untouched.
+   ========================================================= */
+#shAdminContextPopup{
+  position:fixed;
+  inset:0;
+  z-index:600;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(3,12,28,.70);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  animation:shAdminPopupFade .18s ease-out;
+}
+#shAdminContextPopup *{box-sizing:border-box}
+#shAdminContextPopup .acp-card{
+  width:min(430px,100%);
+  max-height:94vh;
+  overflow:auto;
+  background:#fff!important;
+  color:#0f172a!important;
+  border:1px solid #e2e8f0;
+  border-radius:28px;
+  box-shadow:0 28px 80px rgba(0,0,0,.32),0 8px 30px rgba(15,23,42,.18);
+  animation:shAdminPopupPop .22s cubic-bezier(.16,1,.3,1);
+}
+#shAdminContextPopup .acp-card::-webkit-scrollbar{width:6px}
+#shAdminContextPopup .acp-card::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+#shAdminContextPopup .acp-hero{
+  position:relative;
+  height:218px;
+  overflow:hidden;
+  background:#10233f;
+}
+#shAdminContextPopup .acp-hero img{
+  width:100%;height:100%;display:block;object-fit:cover;
+}
+#shAdminContextPopup .acp-hero-shade{
+  position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(4,15,32,.18) 25%,rgba(4,15,32,.64) 100%);
+  pointer-events:none;
+}
+#shAdminContextPopup .acp-pill{
+  position:absolute;z-index:2;top:14px;
+  padding:7px 13px;border-radius:999px;
+  font-size:11px;font-weight:800;line-height:1;
+  box-shadow:0 5px 16px rgba(0,0,0,.16);
+  white-space:nowrap;
+}
+#shAdminContextPopup .acp-pill-left{left:14px;background:#fff!important;color:#0f172a!important}
+#shAdminContextPopup .acp-pill-right{right:14px;background:rgba(15,23,42,.90)!important;color:#fff!important}
+#shAdminContextPopup .acp-pill-bottom{left:14px;bottom:14px;background:#16834b!important;color:#fff!important}
+#shAdminContextPopup .acp-pill-bottom.pending{background:#d97706!important}
+#shAdminContextPopup .acp-pill-bottom.rejected{background:#dc2626!important}
+#shAdminContextPopup .acp-body{
+  padding:23px 24px 24px;
+  background:#fff!important;
+  color:#0f172a!important;
+}
+#shAdminContextPopup .acp-heading{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+}
+#shAdminContextPopup .acp-title{
+  margin:0!important;
+  color:#0f172a!important;
+  font-size:23px!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+  letter-spacing:-.02em;
+}
+#shAdminContextPopup .acp-close{
+  width:40px;height:40px;flex:0 0 40px;
+  border:0;border-radius:50%;
+  background:#f1f5f9!important;color:#64748b!important;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+#shAdminContextPopup .acp-close:hover{background:#e2e8f0!important;color:#0f172a!important}
+#shAdminContextPopup .acp-row{
+  display:flex;align-items:flex-start;gap:10px;
+  margin-top:14px;
+  color:#64748b!important;
+  font-size:12px;line-height:1.5;
+}
+#shAdminContextPopup .acp-row i{width:18px;flex:0 0 18px;text-align:center;margin-top:2px}
+#shAdminContextPopup .acp-row.id{color:#2563eb!important;font-weight:800}
+#shAdminContextPopup .acp-row.location{color:#b45309!important;font-weight:800}
+#shAdminContextPopup .acp-row span{min-width:0;word-break:break-word}
+#shAdminContextPopup .acp-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+  margin-top:18px;
+}
+#shAdminContextPopup .acp-info{
+  padding:11px 12px;border-radius:13px;
+  background:#f8fafc!important;border:1px solid #e2e8f0;
+}
+#shAdminContextPopup .acp-label{
+  color:#94a3b8!important;font-size:9px;font-weight:800;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+#shAdminContextPopup .acp-value{
+  margin-top:5px;color:#0f172a!important;font-size:12px;font-weight:700;
+  line-height:1.4;word-break:break-word;
+}
+#shAdminContextPopup .acp-rating{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:15px;padding:7px 12px;border-radius:12px;
+  background:#fef9c3!important;border:1px solid #fef08a;
+  color:#854d0e!important;font-size:12px;font-weight:800;
+}
+#shAdminContextPopup .acp-section-title{
+  margin-top:19px;color:#64748b!important;
+  font-size:9px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;
+}
+#shAdminContextPopup .acp-list{margin-top:8px;display:grid;gap:8px}
+#shAdminContextPopup .acp-list-item{
+  padding:11px 12px;border-radius:13px;
+  background:#f8fafc!important;border:1px solid #e2e8f0;
+}
+#shAdminContextPopup .acp-list-name{color:#0f172a!important;font-size:12px;font-weight:800}
+#shAdminContextPopup .acp-list-meta{margin-top:4px;color:#64748b!important;font-size:10px;line-height:1.45}
+#shAdminContextPopup .acp-actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:21px;
+}
+#shAdminContextPopup .acp-btn{
+  min-height:50px;border:0;border-radius:17px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  cursor:pointer;text-decoration:none!important;
+  font-size:12px;font-weight:800;
+}
+#shAdminContextPopup .acp-btn-primary{background:#0a192f!important;color:#fff!important}
+#shAdminContextPopup .acp-btn-primary:hover{background:#122846!important}
+#shAdminContextPopup .acp-btn-secondary{background:#f1f5f9!important;color:#1e293b!important}
+#shAdminContextPopup .acp-btn-secondary:hover{background:#e2e8f0!important}
+@keyframes shAdminPopupFade{from{opacity:0}to{opacity:1}}
+@keyframes shAdminPopupPop{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@media(max-width:520px){
+  #shAdminContextPopup{padding:9px}
+  #shAdminContextPopup .acp-card{border-radius:23px;max-height:95vh}
+  #shAdminContextPopup .acp-hero{height:190px}
+  #shAdminContextPopup .acp-body{padding:19px}
+  #shAdminContextPopup .acp-title{font-size:21px!important}
+}
+</style>
   <link rel="stylesheet" href="css/premium.css">
   <link rel="stylesheet" href="mobile.css">
 
@@ -1635,6 +1784,7 @@ document.addEventListener("keydown",e=>{
     closeAdvancedProperty();
     closeMasterDrawer();
     closeUnverifiedPreview();
+    closeAdminContextPopup();
     $("searchResults").classList.add("hidden");
   }
 });
@@ -2472,27 +2622,120 @@ function previewPublic(type, index) {
 }
 
 function previewListingRequest(id){
-  const x=(state.advanced.requests.listing_requests||[]).find(r=>String(r.id)===String(id));
+  const rows=state.advanced?.requests?.listing_requests||[];
+  const x=rows.find(r=>String(r.id)===String(id));
   if(!x){toast("Listing request not found.",true);return;}
+
   closeUnverifiedPreview();
-  const title=firstVal(x,["name","property_name","title"],"Property");
-  const category=firstVal(x,["category","property_type"],"Property");
-  const area=firstVal(x,["area"],"Area Not Specified");
-  const address=firstVal(x,["address","full_address"],`${area}, India`);
-  const timing=firstVal(x,["timing","opening_time"],"Timing not specified");
-  const phone=firstVal(x,["phone","owner_phone"],"");
-  const rating=Number(firstVal(x,["rating"],0))>0?Number(firstVal(x,["rating"],0)).toFixed(1):"—";
-  const typeMap={hostel:"hostels",pg:"hostels",hostels:"hostels",tiffin:"tiffins",mess:"tiffins",tiffins:"tiffins",cafe:"cafes",cafes:"cafes",library:"libraries",libraries:"libraries",bookstore:"bookstores",bookstores:"bookstores"};
+  closeAdminContextPopup();
+
+  const title=firstVal(x,["name","property_name","title"],"Property Listing Request");
+  const category=firstVal(x,["category","property_type","type"],"Property");
+  const area=firstVal(x,["area","locality"],"Area Not Specified");
+  const city=firstVal(x,["city"],"");
+  const address=firstVal(x,["address","full_address"],area+(city?`, ${city}`:""));
+  const timing=firstVal(x,["timing","opening_time","opening_hours","business_hours"],"Not specified");
+  const phone=firstVal(x,["phone","owner_phone","contact_phone","mobile"],"");
+  const email=firstVal(x,["email","owner_email","contact_email"],"");
+  const ownerName=firstVal(x,["owner_name","full_name","submitted_by","name"],"—");
+  const status=firstVal(x,["status","request_status"],"pending");
+  const ratingRaw=firstVal(x,["rating"],0);
+  const rating=Number(ratingRaw)>0?Number(ratingRaw).toFixed(1):"—";
+  const verified=mbool(firstVal(x,["verified","is_verified"],false));
+  const description=firstVal(x,["description","details","about"],"");
+  const price=firstVal(x,["price","rent","monthly_rent","amount"],"");
+  const submitted=firstVal(x,["created_at","submitted_at","requested_at"],null);
+
+  const typeMap={
+    hostel:"hostels",pg:"hostels",hostels:"hostels",
+    tiffin:"tiffins",mess:"tiffins",tiffins:"tiffins",
+    cafe:"cafes",cafes:"cafes",library:"libraries",libraries:"libraries",
+    bookstore:"bookstores",bookstores:"bookstores"
+  };
   const type=typeMap[String(category).toLowerCase()]||"hostels";
-  const bannerMap={hostels:"hostel-banner.png",tiffins:"tiffin-banner.png",libraries:"library-banner.png",cafes:"cafe-banner.png",bookstores:"bookstore-banner.png"};
-  const image=firstVal(x,["image","image_url","photo","photo_url"],"");
-  const bannerImg=image||new URL(bannerMap[type]||"hostel-banner.png",document.baseURI).href;
+  const bannerMap={
+    hostels:"hostel-banner.png",tiffins:"tiffin-banner.png",
+    libraries:"library-banner.png",cafes:"cafe-banner.png",bookstores:"bookstore-banner.png"
+  };
+  const fallbackImg=new URL(bannerMap[type]||"hostel-banner.png",document.baseURI).href;
+  const image=firstVal(x,["image","image_url","photo","photo_url","banner","banner_url"],"");
+  const bannerImg=image||fallbackImg;
   const callHref=phone?`tel:${phone}`:"javascript:void(0);";
+  const statusLower=String(status||"pending").toLowerCase();
+  const statusClass=["rejected","declined","denied"].includes(statusLower)?"rejected":
+                    ["approved","accepted","active"].includes(statusLower)?"":"pending";
+  const statusText=verified?"Verified Listing":(status||"Under Review");
+  const statusIcon=verified?"fa-circle-check":(statusClass==="rejected"?"fa-circle-xmark":"fa-clock");
+
   const modal=document.createElement("div");
-  modal.id="shPropertyPopup";
-  modal.className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn";
-  modal.innerHTML=`<div class="sh-card relative w-full max-w-[385px] rounded-[28px] overflow-hidden shadow-2xl font-sans border border-slate-200" style="background:#fff!important;color:#0f172a!important"><div class="relative w-full h-52 bg-slate-950 overflow-hidden"><img src="${esc(bannerImg)}" alt="${esc(title)}" class="w-full h-full object-cover" onerror="this.src='${esc(new URL(bannerMap[type]||"hostel-banner.png",document.baseURI).href)}'" loading="lazy decoding="async"<div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60"></div><div class="absolute top-3.5 left-3.5"><span class="text-[11px] font-extrabold px-3.5 py-1.5 rounded-full shadow-md" style="background:#fff!important;color:#0f172a!important">${esc(category)}</span></div><div class="absolute top-3.5 right-3.5"><span class="text-[11px] font-bold px-3.5 py-1.5 rounded-full shadow-md" style="background:rgba(15,23,42,.85)!important;color:#fff!important">ID #${esc(x.id)}</span></div><div class="absolute bottom-3.5 left-3.5"><span class="text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md" style="background:#d97706!important;color:#fff!important"><i class="fa-solid fa-clock mr-1"></i> Under Review</span></div></div><div class="p-6 space-y-3.5 text-left" style="background:#fff!important;color:#0f172a!important"><div class="flex items-start justify-between gap-2"><h2 class="text-[22px] font-extrabold leading-snug" style="color:#0f172a!important">${esc(title)}</h2><button type="button" onclick="closeUnverifiedPreview()" class="w-8 h-8 -mt-1 -mr-1 rounded-full flex items-center justify-center" style="background:#f1f5f9!important;color:#64748b!important;border:none!important"><i class="fa-solid fa-xmark"></i></button></div><div class="flex items-center gap-2 font-bold text-xs" style="color:#2563eb!important"><i class="fa-solid fa-fingerprint"></i><span>Property ID: #${esc(x.id)}</span></div><div class="flex items-center gap-2 font-bold text-xs" style="color:#b45309!important"><i class="fa-solid fa-location-dot"></i><span>${esc(area)}</span></div><div class="flex items-start gap-2.5 text-xs leading-relaxed" style="color:#64748b!important"><i class="fa-solid fa-house mt-0.5"></i><span>${esc(address)}</span></div><div class="flex items-center gap-2.5 text-xs" style="color:#64748b!important"><i class="fa-regular fa-clock"></i><span>${esc(timing)}</span></div><div class="pt-1"><span class="inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1.5 rounded-xl" style="background:#fef9c3!important;border:1px solid #fef08a!important;color:#854d0e!important"><i class="fa-solid fa-star"></i><span>${esc(rating)} / 5</span></span></div><div class="grid grid-cols-2 gap-3 pt-3"><button type="button" onclick="openPropertyEditorFromPreview('${esc(type)}','${esc(x.id)}')" class="w-full py-3.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md" style="background:#0a192f!important;color:#fff!important;border:none!important"><i class="fa-solid fa-eye"></i><span>View Details</span></button><a href="${esc(callHref)}" ${phone?"":"onclick=\"toast('Phone number not available',true);return false\""} class="w-full py-3.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2" style="background:#f1f5f9!important;color:#1e293b!important;text-decoration:none!important"><i class="fa-solid fa-phone"></i><span>Call</span></a></div></div></div>`;
-  modal.addEventListener("click",e=>{if(e.target===modal)closeUnverifiedPreview()});
+  modal.id="shAdminContextPopup";
+  modal.innerHTML=`
+    <div class="acp-card" role="dialog" aria-modal="true" aria-label="Listing request details">
+      <div class="acp-hero">
+        <img src="${esc(bannerImg)}" alt="${esc(title)}" loading="eager" decoding="async"
+             onerror="this.onerror=null;this.src='${esc(fallbackImg)}';">
+        <div class="acp-hero-shade"></div>
+        <span class="acp-pill acp-pill-left">${esc(category)}</span>
+        <span class="acp-pill acp-pill-right">ID #${esc(x.id||"—")}</span>
+        <span class="acp-pill acp-pill-bottom ${statusClass}">
+          <i class="fa-solid ${statusIcon} mr-1"></i>${esc(statusText)}
+        </span>
+      </div>
+
+      <div class="acp-body">
+        <div class="acp-heading">
+          <h2 class="acp-title">${esc(title)}</h2>
+          <button type="button" class="acp-close" onclick="closeAdminContextPopup()" aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="acp-row id">
+          <i class="fa-solid fa-fingerprint"></i>
+          <span>Listing Request ID: #${esc(x.id||"—")}</span>
+        </div>
+
+        <div class="acp-row location">
+          <i class="fa-solid fa-location-dot"></i>
+          <span>${esc(area)}${city?` • ${esc(city)}`:""}</span>
+        </div>
+
+        <div class="acp-row">
+          <i class="fa-solid fa-house"></i>
+          <span>${esc(address||"Address not available")}</span>
+        </div>
+
+        <div class="acp-row">
+          <i class="fa-regular fa-clock"></i>
+          <span>${esc(timing)}</span>
+        </div>
+
+        ${rating!=="—"?`<div class="acp-rating"><i class="fa-solid fa-star"></i><span>${esc(rating)} / 5</span></div>`:""}
+
+        <div class="acp-grid">
+          <div class="acp-info"><div class="acp-label">Owner / Submitter</div><div class="acp-value">${esc(ownerName)}</div></div>
+          <div class="acp-info"><div class="acp-label">Status</div><div class="acp-value">${esc(status)}</div></div>
+          ${phone?`<div class="acp-info"><div class="acp-label">Phone</div><div class="acp-value">${esc(phone)}</div></div>`:""}
+          ${email?`<div class="acp-info"><div class="acp-label">Email</div><div class="acp-value">${esc(email)}</div></div>`:""}
+          ${price!==""?`<div class="acp-info"><div class="acp-label">Price / Amount</div><div class="acp-value">${esc(price)}</div></div>`:""}
+          ${submitted?`<div class="acp-info"><div class="acp-label">Submitted</div><div class="acp-value">${esc(fmtDate(submitted))}</div></div>`:""}
+        </div>
+
+        ${description?`<div class="acp-section-title">Description</div><div class="acp-row" style="margin-top:7px"><i class="fa-solid fa-align-left"></i><span>${esc(description)}</span></div>`:""}
+
+        <div class="acp-actions">
+          <button type="button" class="acp-btn acp-btn-primary" onclick="openPropertyEditorFromPreview('${esc(type)}','${esc(x.id)}')">
+            <i class="fa-solid fa-eye"></i><span>View Details</span>
+          </button>
+          <a href="${esc(callHref)}" class="acp-btn acp-btn-secondary"
+             ${phone?"":"onclick=\"toast('Phone number not available',true);return false\""}>
+            <i class="fa-solid fa-phone"></i><span>Call</span>
+          </a>
+        </div>
+      </div>
+    </div>`;
+
+  modal.addEventListener("click",e=>{if(e.target===modal)closeAdminContextPopup()});
   document.body.appendChild(modal);
 }
 
@@ -2931,25 +3174,182 @@ function adminSearchSetLoading(on){
 function adminSearchTypeLabel(t){return ({hostel:"Hostel / PG",tiffin:"Tiffin / Mess",library:"Library",cafe:"Cafe",bookstore:"Bookstore",listing_request:"Listing Request",profile:"Profile / User",review:"Review"}[t]||t||"Record")}
 function adminSearchIcon(t){return ({hostel:"fa-hotel",tiffin:"fa-bowl-food",library:"fa-book-open",cafe:"fa-mug-hot",bookstore:"fa-store",listing_request:"fa-inbox",profile:"fa-user",review:"fa-star"}[t]||"fa-magnifying-glass")}
 function adminSearchOpenResult(r){
-  const table=r.source_table,id=String(r.source_id||"");
-  if(["hostels","tiffins","libraries","cafes","bookstores"].includes(table)){
-    const idx=(state[table]||[]).findIndex(x=>String(x.id)===id);
-    if(idx>=0){previewPublic(table,idx);return;}
-    showSection(table);return;
+  const table=String(r?.source_table||"").toLowerCase();
+  const entity=String(r?.entity_type||"").toLowerCase();
+  const id=String(r?.source_id||"");
+  if(!id){toast("This search result has no record ID.",true);return;}
+
+  // Live property result -> existing Image-2 style property preview.
+  if(["hostels","tiffins","libraries","cafes","bookstores"].includes(table) ||
+     ["hostel","tiffin","library","cafe","bookstore"].includes(entity)){
+    const propertyTable=table||({hostel:"hostels",tiffin:"tiffins",library:"libraries",cafe:"cafes",bookstore:"bookstores"}[entity]||"");
+    const idx=(state[propertyTable]||[]).findIndex(x=>String(x.id)===id);
+    if(idx>=0){previewPublic(propertyTable,idx);return;}
+    if(propertyTable){showSection(propertyTable);return;}
+    toast("Property details are not available.",true);return;
   }
-  if(table==="profiles"){
-    const p=(state.owners||[]).find(x=>String(x.id)===id);
-    if(p){openOwnerDetails(p.id);return;}
-    const student=(state.students||[]).find(x=>String(x.id)===id);
-    if(student){showSection("students");return;}
-    showSection("admin");return;
+
+  // Listing Request -> dedicated request popup.
+  if(table==="listing_requests" || entity==="listing_request"){
+    previewListingRequest(id);return;
   }
+
+  // Profile/User -> dedicated profile popup, never a generic drawer.
+  if(table==="profiles" || ["profile","user","owner","student"].includes(entity)){
+    openAdminProfilePopup(id,r);return;
+  }
+
+  // Other admin modules retain the existing drawer behavior.
   const rows=state.advanced?.requests?.[table]||[];
-  if(rows.some(x=>String(firstVal(x,["id","request_id","booking_id"],""))===id)){openRecordDrawer(table,id);return;}
-  if(table==="listing_requests"){showSection("listing-requests");return;}
+  if(rows.some(x=>String(firstVal(x,["id","request_id","booking_id"],""))===id)){
+    openRecordDrawer(table,id);return;
+  }
+
   if(table==="reviews"){showSection("reviews");return;}
   if(table==="property_reports"){showSection("reports");return;}
+  if(table==="claim_requests" || table==="verification_requests"){
+    showSection("listing-requests");return;
+  }
+  showSection("admin");
 }
+
+/* =========================================================
+   SEARCH PROFILE / USER DETAIL POPUP
+   ========================================================= */
+async function openAdminProfilePopup(id,searchResult={}){
+  closeUnverifiedPreview();
+  closeAdminContextPopup();
+
+  let profile=null;
+  const localCandidates=[...(state.owners||[]),...(state.students||[])];
+  profile=localCandidates.find(x=>String(x.id)===String(id))||null;
+
+  // Merge the search RPC row first so popup still works even when a profile
+  // is not currently present in the local role-specific array.
+  profile={...(searchResult||{}),...(profile||{})};
+
+  try{
+    if(typeof supabaseClient!=="undefined" && id){
+      const {data,error}=await supabaseClient.from("profiles").select("*").eq("id",id).maybeSingle();
+      if(!error && data) profile={...profile,...data};
+    }
+  }catch(e){console.warn("Profile detail lookup failed:",e)}
+
+  const name=firstVal(profile,["full_name","name","username","display_name","title"],searchResult?.title||"User");
+  const email=firstVal(profile,["email","email_address"],searchResult?.email||"");
+  const phone=firstVal(profile,["phone","mobile","phone_number","contact_phone","owner_phone"],searchResult?.owner_phone||"");
+  const role=firstVal(profile,["role","user_role","account_type","type"],searchResult?.entity_type||"User");
+  const address=firstVal(profile,["address","full_address","location"],searchResult?.address||"");
+  const city=firstVal(profile,["city"],searchResult?.city||"");
+  const status=firstVal(profile,["status","account_status"],searchResult?.status||"active");
+  const created=firstVal(profile,["created_at","joined_at","registered_at"],null);
+  const ratingRaw=firstVal(profile,["rating","average_rating"],0);
+  const rating=Number(ratingRaw)>0?Number(ratingRaw).toFixed(1):"";
+  const image=firstVal(profile,["avatar_url","avatar","profile_image","profile_image_url","photo_url","photo","image_url","image"],"");
+  const fallback=new URL("logo.png",document.baseURI).href;
+  const hero=image||fallback;
+  const phoneNormalized=normalizePhone(phone);
+  const disabled=["disabled","inactive","blocked","suspended","banned"].includes(String(status).toLowerCase());
+  const pending=String(status).toLowerCase()==="pending";
+  const statusClass=disabled?"rejected":(pending?"pending":"");
+  const statusIcon=disabled?"fa-ban":(pending?"fa-clock":"fa-circle-check");
+
+  // Find properties belonging to this profile by owner_id/user_id or phone.
+  const linked=[];
+  for(const type of MASTER_TYPES){
+    for(const item of (state[type]||[])){
+      const ownerId=firstVal(item,["owner_id","user_id","profile_id"],"");
+      const itemPhone=normalizePhone(firstVal(item,["phone","owner_phone","contact_phone"],""));
+      if(String(ownerId)===String(id) || (phoneNormalized && itemPhone===phoneNormalized)) linked.push({type,item});
+    }
+  }
+
+  const bookings=(state.advanced?.requests?.student_bookings||[]).filter(b=>{
+    const bid=firstVal(b,["student_id","user_id","profile_id"],"");
+    const bphone=normalizePhone(firstVal(b,["student_phone","phone"],""));
+    return String(bid)===String(id) || (phoneNormalized && bphone===phoneNormalized);
+  });
+  const reviews=(state.advanced?.requests?.reviews||[]).filter(rv=>{
+    const rid=firstVal(rv,["student_id","user_id","profile_id","owner_id"],"");
+    return String(rid)===String(id);
+  });
+
+  const callHref=phone?`tel:${phone}`:"javascript:void(0);";
+  const modal=document.createElement("div");
+  modal.id="shAdminContextPopup";
+  modal.innerHTML=`
+    <div class="acp-card" role="dialog" aria-modal="true" aria-label="User profile details">
+      <div class="acp-hero">
+        <img src="${esc(hero)}" alt="${esc(name)}" loading="eager" decoding="async" onerror="this.onerror=null;this.src='${esc(fallback)}';">
+        <div class="acp-hero-shade"></div>
+        <span class="acp-pill acp-pill-left"><i class="fa-solid fa-user mr-1"></i>${esc(role)}</span>
+        <span class="acp-pill acp-pill-right">ID #${esc(id)}</span>
+        <span class="acp-pill acp-pill-bottom ${statusClass}"><i class="fa-solid ${statusIcon} mr-1"></i>${esc(status)}</span>
+      </div>
+
+      <div class="acp-body">
+        <div class="acp-heading">
+          <h2 class="acp-title">${esc(name)}</h2>
+          <button type="button" class="acp-close" onclick="closeAdminContextPopup()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="acp-row id"><i class="fa-solid fa-fingerprint"></i><span>Profile ID: #${esc(id)}</span></div>
+        ${phone?`<div class="acp-row"><i class="fa-solid fa-phone"></i><span>${esc(phone)}</span></div>`:""}
+        ${email?`<div class="acp-row"><i class="fa-solid fa-envelope"></i><span>${esc(email)}</span></div>`:""}
+        ${(address||city)?`<div class="acp-row location"><i class="fa-solid fa-location-dot"></i><span>${esc([address,city].filter(Boolean).join(" • "))}</span></div>`:""}
+        ${rating?`<div class="acp-rating"><i class="fa-solid fa-star"></i><span>${esc(rating)} / 5</span></div>`:""}
+
+        <div class="acp-grid">
+          <div class="acp-info"><div class="acp-label">Account Type</div><div class="acp-value">${esc(role)}</div></div>
+          <div class="acp-info"><div class="acp-label">Status</div><div class="acp-value">${esc(status)}</div></div>
+          <div class="acp-info"><div class="acp-label">Properties</div><div class="acp-value">${linked.length}</div></div>
+          <div class="acp-info"><div class="acp-label">Bookings</div><div class="acp-value">${bookings.length}</div></div>
+          <div class="acp-info"><div class="acp-label">Reviews</div><div class="acp-value">${reviews.length}</div></div>
+          ${created?`<div class="acp-info"><div class="acp-label">Joined</div><div class="acp-value">${esc(fmtDate(created))}</div></div>`:""}
+        </div>
+
+        ${linked.length?`
+          <div class="acp-section-title">Linked Properties</div>
+          <div class="acp-list">
+            ${linked.slice(0,6).map(({type,item})=>`
+              <div class="acp-list-item">
+                <div class="acp-list-name">${esc(item.name||masterMeta[type]?.singular||"Property")}</div>
+                <div class="acp-list-meta">${esc(masterMeta[type]?.category||type)}${item.area?` • ${esc(item.area)}`:""}${item.phone?` • ${esc(item.phone)}`:""}</div>
+              </div>`).join("")}
+          </div>`:""}
+
+        <div class="acp-actions">
+          <button type="button" class="acp-btn acp-btn-primary" onclick="adminProfileViewDetails('${esc(id)}')">
+            <i class="fa-solid fa-eye"></i><span>View Details</span>
+          </button>
+          <a href="${esc(callHref)}" class="acp-btn acp-btn-secondary" ${phone?"":"onclick=\"toast('Phone number not available',true);return false\""}>
+            <i class="fa-solid fa-phone"></i><span>Call</span>
+          </a>
+        </div>
+      </div>
+    </div>`;
+
+  modal.addEventListener("click",e=>{if(e.target===modal)closeAdminContextPopup()});
+  document.body.appendChild(modal);
+}
+
+function closeAdminContextPopup(){
+  const modal=document.getElementById("shAdminContextPopup");
+  if(modal)modal.remove();
+}
+
+function adminProfileViewDetails(id){
+  closeAdminContextPopup();
+  const owner=(state.owners||[]).find(x=>String(x.id)===String(id));
+  if(owner){openOwnerDetails(owner.id);return;}
+  const student=(state.students||[]).find(x=>String(x.id)===String(id));
+  if(student){
+    if(typeof openStudentDrawer==="function"){openStudentDrawer(student.id);return;}
+    showSection("students");return;
+  }
+  showSection("admin");
+}
+
 function adminSearchRender(rows,total,page){
   const box=adminSearchEl("searchResults");if(!box)return;
   adminSearchLastTotal=Number(total||0);adminSearchPage=page;
