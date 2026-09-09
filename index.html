@@ -387,6 +387,181 @@
       color: var(--gold-light);
     }
 
+
+    /* =========================================
+       GLOBAL SEARCH BAR UPGRADE
+       Supabase suggestions + keyboard navigation
+    ========================================= */
+    .hero-search-wrap{
+      position:relative;
+      max-width:700px;
+    }
+
+    .hero-search{
+      position:relative;
+      z-index:50;
+    }
+
+    .hero-search:focus-within{
+      box-shadow:0 25px 80px rgba(0,0,0,.38),0 0 0 3px rgba(214,168,79,.18);
+    }
+
+    .search-leading{
+      width:42px;
+      flex:0 0 42px;
+      display:grid;
+      place-items:center;
+      color:#71839c;
+      font-size:18px;
+      user-select:none;
+    }
+
+    .search-status{
+      min-width:22px;
+      width:22px;
+      height:22px;
+      display:grid;
+      place-items:center;
+      color:#71839c;
+      font-size:13px;
+      flex:0 0 22px;
+    }
+
+    .search-status.loading::before{
+      content:"";
+      width:14px;
+      height:14px;
+      border:2px solid rgba(23,34,56,.18);
+      border-top-color:#172238;
+      border-radius:50%;
+      animation:searchSpin .7s linear infinite;
+    }
+
+    @keyframes searchSpin{to{transform:rotate(360deg)}}
+
+    .search-suggestions{
+      position:absolute;
+      top:calc(100% + 9px);
+      left:0;
+      right:0;
+      z-index:100;
+      display:none;
+      overflow:hidden;
+      border:1px solid rgba(214,168,79,.30);
+      border-radius:16px;
+      background:#0b2342;
+      box-shadow:0 25px 70px rgba(0,0,0,.38);
+      backdrop-filter:blur(16px);
+    }
+
+    .search-suggestions.open{display:block}
+
+    .search-suggestion-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 13px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      color:#8498b2;
+      font-size:9px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.9px;
+    }
+
+    .search-suggestion{
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:11px;
+      padding:11px 13px;
+      border:0;
+      border-bottom:1px solid rgba(255,255,255,.055);
+      background:transparent;
+      color:#fff;
+      text-align:left;
+      cursor:pointer;
+    }
+
+    .search-suggestion:last-child{border-bottom:0}
+
+    .search-suggestion:hover,
+    .search-suggestion.active{background:rgba(214,168,79,.10)}
+
+    .search-suggestion-icon{
+      width:32px;
+      height:32px;
+      flex:0 0 32px;
+      display:grid;
+      place-items:center;
+      border-radius:10px;
+      background:rgba(214,168,79,.10);
+      color:var(--gold-light);
+      border:1px solid rgba(214,168,79,.14);
+      font-size:13px;
+    }
+
+    .search-suggestion-main{min-width:0;flex:1}
+
+    .search-suggestion-title{
+      display:block;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      color:#fff;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .search-suggestion-type{
+      display:block;
+      margin-top:2px;
+      color:#8498b2;
+      font-size:9px;
+      text-transform:capitalize;
+    }
+
+    .search-suggestion-arrow{color:#71839c;font-size:14px}
+
+    .search-empty{
+      padding:17px;
+      color:#aebed2;
+      font-size:11px;
+      text-align:center;
+    }
+
+    .search-footer{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 12px;
+      border-top:1px solid rgba(255,255,255,.07);
+      color:#71839c;
+      font-size:9px;
+    }
+
+    .search-footer kbd{
+      padding:2px 5px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:5px;
+      background:rgba(255,255,255,.04);
+      color:#aebed2;
+      font-family:inherit;
+    }
+
+    .search-helper{
+      margin-top:7px;
+      color:rgba(255,255,255,.48);
+      font-size:9px;
+    }
+
+    @media (max-width:600px){
+      .search-leading{width:34px;flex-basis:34px}
+      .search-suggestions{top:calc(100% + 7px);border-radius:14px}
+      .search-helper{display:none}
+    }
+
     /* Hero Trust Highlights Bar */
     .hero-highlights {
       display: flex;
@@ -2219,28 +2394,52 @@
 
         </p>
 
-        <form
-          class="hero-search"
-          id="mainSearchForm"
-        >
-
-          <input
-            id="mainSearch"
-            type="search"
-            placeholder="Search city, area or student place..."
+        <div class="hero-search-wrap" id="heroSearchWrap">
+          <form
+            class="hero-search"
+            id="mainSearchForm"
+            role="search"
             autocomplete="off"
-            aria-label="Search student services"
-          />
-
-          <button
-            class="search-btn"
-            type="submit"
           >
-            Search
-          </button>
 
-        </form>
+            <span class="search-leading" aria-hidden="true">⌕</span>
 
+            <input
+              id="mainSearch"
+              type="search"
+              placeholder="Search hostel, PG, tiffin, library, cafe, bookstore, city or area..."
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              enterkeyhint="search"
+              aria-label="Search StudentHubHelp"
+              aria-autocomplete="list"
+              aria-controls="mainSearchSuggestions"
+              aria-expanded="false"
+            />
+
+            <span class="search-status" id="searchStatus" aria-hidden="true"></span>
+
+            <button
+              class="search-btn"
+              type="submit"
+            >
+              Search
+            </button>
+
+          </form>
+
+          <div
+            class="search-suggestions"
+            id="mainSearchSuggestions"
+            role="listbox"
+            aria-label="Search suggestions"
+          ></div>
+
+          <div class="search-helper">
+            Search across StudentHubHelp data · Try a city, area, service name or even a spelling mistake.
+          </div>
+        </div>
 
         <div class="quick-searches">
 
@@ -4740,29 +4939,259 @@
       }, 3000); 
     } 
  
-    /* ========================================= 
-        MAIN SEARCH 
-    ========================================= */ 
-    function performSearch(value) { 
-      const cleanValue = String(value || "").trim(); 
-      window.location.href = cleanValue  
-        ? `global-search.html?q=${encodeURIComponent(cleanValue)}` 
-        : "global-search.html"; 
-    } 
- 
-    $("mainSearchForm")?.addEventListener("submit", event => { 
-      event.preventDefault(); 
-      performSearch($("mainSearch")?.value || ""); 
-    }); 
- 
-    document.querySelectorAll("[data-search]").forEach(button => { 
-      button.addEventListener("click", () => { 
-        const value = button.dataset.search || ""; 
-        if ($("mainSearch")) $("mainSearch").value = value; 
-        performSearch(value); 
-      }); 
-    }); 
- 
+    /* =========================================
+        MAIN SEARCH — SUPABASE GLOBAL SEARCH
+        Suggestions come only from StudentHubHelp's
+        own search_index via search_suggestions().
+    ========================================= */
+    const mainSearch = $("mainSearch");
+    const mainSearchForm = $("mainSearchForm");
+    const mainSearchSuggestions = $("mainSearchSuggestions");
+    const searchStatus = $("searchStatus");
+
+    let searchSuggestionTimer = null;
+    let searchSuggestionRequest = 0;
+    let searchSuggestionItems = [];
+    let searchSuggestionIndex = -1;
+
+    const SEARCH_MIN_CHARS = 2;
+    const SEARCH_DEBOUNCE_MS = 180;
+
+    function suggestionIcon(type) {
+      return ({title:"⌕", area:"📍", category:"▦"})[type] || "⌕";
+    }
+
+    function setSearchExpanded(open) {
+      if (!mainSearch || !mainSearchSuggestions) return;
+      mainSearch.setAttribute("aria-expanded", open ? "true" : "false");
+      mainSearchSuggestions.classList.toggle("open", open);
+    }
+
+    function closeSearchSuggestions() {
+      searchSuggestionItems = [];
+      searchSuggestionIndex = -1;
+      setSearchExpanded(false);
+      if (mainSearchSuggestions) mainSearchSuggestions.innerHTML = "";
+      if (mainSearch) mainSearch.removeAttribute("aria-activedescendant");
+      if (searchStatus) searchStatus.classList.remove("loading");
+    }
+
+    function rememberSearch(value) {
+      const cleanValue = String(value || "").trim();
+      if (!cleanValue) return;
+      try {
+        const key = "studenthubhelp_recent_searches";
+        const old = JSON.parse(localStorage.getItem(key) || "[]");
+        const next = [
+          cleanValue,
+          ...old.filter(x => String(x).toLowerCase() !== cleanValue.toLowerCase())
+        ].slice(0, 6);
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {}
+    }
+
+    function performSearch(value) {
+      const cleanValue = String(value || "").trim();
+      if (cleanValue) rememberSearch(cleanValue);
+      closeSearchSuggestions();
+      window.location.href = cleanValue
+        ? `global-search.html?q=${encodeURIComponent(cleanValue)}`
+        : "global-search.html";
+    }
+
+    function renderSearchSuggestions(items, term) {
+      if (!mainSearchSuggestions) return;
+
+      searchSuggestionItems = Array.isArray(items) ? items.slice(0, 8) : [];
+      searchSuggestionIndex = -1;
+
+      if (!searchSuggestionItems.length) {
+        mainSearchSuggestions.innerHTML = `
+          <div class="search-empty">
+            No close suggestion found. Press Enter to search "${escapeHTML(term)}".
+          </div>
+          <div class="search-footer">
+            <span>Global StudentHubHelp search</span>
+            <span><kbd>Enter</kbd> search</span>
+          </div>`;
+        setSearchExpanded(true);
+        return;
+      }
+
+      mainSearchSuggestions.innerHTML = `
+        <div class="search-suggestion-head">
+          <span>Suggestions from StudentHubHelp</span>
+          <span>${searchSuggestionItems.length} match${searchSuggestionItems.length === 1 ? "" : "es"}</span>
+        </div>
+        ${searchSuggestionItems.map((item, index) => `
+          <button
+            type="button"
+            class="search-suggestion"
+            id="search-option-${index}"
+            role="option"
+            aria-selected="false"
+            data-suggestion-index="${index}"
+          >
+            <span class="search-suggestion-icon">${suggestionIcon(item.suggestion_type)}</span>
+            <span class="search-suggestion-main">
+              <span class="search-suggestion-title">${escapeHTML(item.suggestion)}</span>
+              <span class="search-suggestion-type">${escapeHTML(item.suggestion_type || "result")} · ${escapeHTML(item.entity_type || "all services")}</span>
+            </span>
+            <span class="search-suggestion-arrow">→</span>
+          </button>
+        `).join("")}
+        <div class="search-footer">
+          <span>Use ↑ ↓ to move</span>
+          <span><kbd>Enter</kbd> open · <kbd>Esc</kbd> close</span>
+        </div>`;
+
+      setSearchExpanded(true);
+
+      mainSearchSuggestions.querySelectorAll(".search-suggestion").forEach(button => {
+        button.addEventListener("mousedown", event => event.preventDefault());
+        button.addEventListener("click", () => {
+          const index = Number(button.dataset.suggestionIndex);
+          const item = searchSuggestionItems[index];
+          if (!item) return;
+          const value = String(item.suggestion || "").trim();
+          if (mainSearch) mainSearch.value = value;
+          performSearch(value);
+        });
+      });
+    }
+
+    function updateSearchActive(index) {
+      const buttons = mainSearchSuggestions?.querySelectorAll(".search-suggestion") || [];
+      buttons.forEach((button, i) => {
+        const active = i === index;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
+      });
+
+      searchSuggestionIndex = index;
+
+      if (index >= 0 && buttons[index]) {
+        buttons[index].scrollIntoView({block:"nearest"});
+        if (mainSearch) {
+          mainSearch.setAttribute("aria-activedescendant", `search-option-${index}`);
+        }
+      } else if (mainSearch) {
+        mainSearch.removeAttribute("aria-activedescendant");
+      }
+    }
+
+    async function loadSearchSuggestions(value) {
+      const term = String(value || "").trim();
+      if (!mainSearchSuggestions) return;
+
+      if (term.length < SEARCH_MIN_CHARS) {
+        closeSearchSuggestions();
+        return;
+      }
+
+      const requestId = ++searchSuggestionRequest;
+      if (searchStatus) searchStatus.classList.add("loading");
+
+      try {
+        const {data, error} = await supabaseClient.rpc("search_suggestions", {
+          p_query: term
+        });
+
+        if (requestId !== searchSuggestionRequest) return;
+        if (error) throw error;
+
+        renderSearchSuggestions(data || [], term);
+      } catch (error) {
+        if (requestId !== searchSuggestionRequest) return;
+        console.error("Search suggestions error:", error);
+        mainSearchSuggestions.innerHTML = `
+          <div class="search-empty">
+            Search suggestions are temporarily unavailable. Press Enter to continue.
+          </div>`;
+        setSearchExpanded(true);
+      } finally {
+        if (requestId === searchSuggestionRequest && searchStatus) {
+          searchStatus.classList.remove("loading");
+        }
+      }
+    }
+
+    mainSearch?.addEventListener("input", () => {
+      clearTimeout(searchSuggestionTimer);
+      searchSuggestionTimer = setTimeout(
+        () => loadSearchSuggestions(mainSearch.value || ""),
+        SEARCH_DEBOUNCE_MS
+      );
+    });
+
+    mainSearch?.addEventListener("focus", () => {
+      const value = mainSearch.value || "";
+      if (value.trim().length >= SEARCH_MIN_CHARS) {
+        clearTimeout(searchSuggestionTimer);
+        searchSuggestionTimer = setTimeout(() => loadSearchSuggestions(value), 0);
+      }
+    });
+
+    mainSearch?.addEventListener("keydown", event => {
+      const buttons = mainSearchSuggestions?.querySelectorAll(".search-suggestion") || [];
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeSearchSuggestions();
+        return;
+      }
+
+      if (!mainSearchSuggestions?.classList.contains("open") || !buttons.length) return;
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        updateSearchActive(Math.min(searchSuggestionIndex + 1, buttons.length - 1));
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        updateSearchActive(Math.max(searchSuggestionIndex - 1, 0));
+      } else if (event.key === "Enter" && searchSuggestionIndex >= 0) {
+        event.preventDefault();
+        const item = searchSuggestionItems[searchSuggestionIndex];
+        const value = String(item?.suggestion || mainSearch.value || "").trim();
+        mainSearch.value = value;
+        performSearch(value);
+      }
+    });
+
+    mainSearchForm?.addEventListener("submit", event => {
+      event.preventDefault();
+      performSearch(mainSearch?.value || "");
+    });
+
+    document.addEventListener("click", event => {
+      const wrap = $("heroSearchWrap");
+      if (wrap && !wrap.contains(event.target)) closeSearchSuggestions();
+    });
+
+    document.addEventListener("keydown", event => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      const typing = ["input","textarea","select"].includes(tag);
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        mainSearch?.focus();
+        mainSearch?.select();
+      }
+
+      if (event.key === "/" && !typing && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        mainSearch?.focus();
+      }
+    });
+
+    document.querySelectorAll("[data-search]").forEach(button => {
+      button.addEventListener("click", () => {
+        const value = button.dataset.search || "";
+        if (mainSearch) mainSearch.value = value;
+        performSearch(value);
+      });
+    });
+
     /* ========================================= 
         LIVE STATS 
     ========================================= */ 
