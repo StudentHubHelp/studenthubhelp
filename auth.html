@@ -1,203 +1,171 @@
-/* =========================================================
-   GOOGLE ROLE SETUP
-   New Google users should NOT automatically become student.
-   Email/password users keep their existing student/owner flow.
-========================================================= */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Login | StudentHubHelp</title>
+<meta name="description" content="Secure StudentHubHelp login for students, property owners and authorized administrators.">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;font-family:Inter,sans-serif;color:#172033;background:linear-gradient(135deg,#f8fafc,#eef2f7);display:flex;flex-direction:column}a{color:inherit;text-decoration:none}
+.navbar{background:#071426;color:#fff}.nav-inner{max-width:1200px;margin:auto;padding:15px 20px;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:12px}.brand img{width:48px;height:48px;object-fit:contain;border-radius:12px;background:#fff;padding:4px}.brand h1{font:700 20px Poppins,sans-serif}.brand span{display:block;font-size:11px;color:#cbd5e1;margin-top:3px}.home-btn{padding:10px 16px;border:1px solid #ffffff33;border-radius:10px;font-size:14px;font-weight:700}
+.page{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 16px}.auth-wrapper{width:100%;max-width:480px}.auth-card{background:#fff;border:1px solid #e5e7eb;border-radius:24px;box-shadow:0 25px 70px #0f172a1f;overflow:hidden}.auth-top{background:linear-gradient(135deg,#071426,#0d2038);color:#fff;padding:30px;text-align:center}.auth-icon{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;background:#d4af3722;border:1px solid #f0d47755;display:grid;place-items:center;font-size:28px}.auth-top h2{font:700 27px Poppins,sans-serif;margin-bottom:8px}.auth-top p{font-size:14px;line-height:1.6;color:#cbd5e1}.auth-body{padding:28px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:#f1f5f9;padding:4px;border-radius:12px;margin-bottom:24px}.tab{border:0;background:transparent;padding:12px;border-radius:9px;font-weight:800;color:#64748b;cursor:pointer}.tab.active{background:#fff;color:#071426;box-shadow:0 2px 8px #0f172a14}
+.form-group{margin-bottom:17px}label{display:block;margin-bottom:7px;font-size:13px;font-weight:800;color:#334155}.input-wrap{position:relative}.input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.6}input{width:100%;height:48px;border:1px solid #e5e7eb;border-radius:11px;padding:0 14px 0 42px;font-size:14px;outline:none}input:focus{border-color:#d4af37;box-shadow:0 0 0 3px #d4af3720}.password-input{padding-right:45px}.password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer;font-size:17px}
+.primary-btn,.google-btn{width:100%;height:50px;border-radius:11px;font-weight:800;font-size:14px;cursor:pointer}.primary-btn{border:0;background:linear-gradient(135deg,#b99225,#d4af37,#e5c55e);color:#071426;box-shadow:0 8px 20px #d4af3738}.primary-btn:disabled,.google-btn:disabled{opacity:.55;cursor:not-allowed}.google-btn{height:48px;border:1px solid #e5e7eb;background:#fff;color:#172033;display:flex;align-items:center;justify-content:center;gap:10px}.google-btn:hover:not(:disabled){background:#f8fafc}.google-icon{font-weight:900;font-size:18px}
+.role-box{display:grid;grid-template-columns:1fr 1fr;gap:10px}.role-option{position:relative}.role-option input{position:absolute;opacity:0;pointer-events:none}.role-label{height:72px;border:1px solid #e5e7eb;border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;background:#fff}.role-label strong{display:block;margin-bottom:3px}.role-label small{color:#64748b;font-size:11px}.role-option input:checked+.role-label{border-color:#d4af37;background:#d4af3712;box-shadow:0 0 0 2px #d4af3720}.role-note,.google-role-state{font-size:11px;line-height:1.5;text-align:center;color:#64748b;margin:9px 0 16px}.role-required{color:#b45309}
+.oauth-divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:#94a3b8;font-size:11px;font-weight:800;text-transform:uppercase}.oauth-divider:before,.oauth-divider:after{content:"";height:1px;flex:1;background:#e2e8f0}.forgot-row{display:flex;justify-content:flex-end;margin:-7px 0 20px}.forgot-btn,.resend-btn{border:0;background:none;color:#8b6d13;font-size:13px;font-weight:800;cursor:pointer}.message{display:none;margin-bottom:17px;padding:12px;border-radius:10px;font-size:13px;line-height:1.5}.message.show{display:block}.message.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}.message.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.security-note,.resend-box{margin-top:18px;padding:13px;border-radius:11px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;font-size:11px;line-height:1.6;text-align:center}.resend-box p{margin-bottom:10px}.footer{text-align:center;padding:20px;color:#64748b;font-size:12px}.signup-panel,.recovery-panel,.reset-panel,.google-role-panel{display:none}.signup-panel.show,.recovery-panel.show,.reset-panel.show,.google-role-panel.show{display:block}.login-panel.hidden{display:none}
+.loading-screen{position:fixed;inset:0;background:#071426d9;display:none;align-items:center;justify-content:center;z-index:9999;color:#fff}.loading-screen.show{display:flex}.loading-box{background:#0d2038;padding:28px 34px;border-radius:18px;text-align:center}.spinner{width:32px;height:32px;margin:0 auto 12px;border:3px solid #ffffff40;border-top-color:#f0d477;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:520px){.auth-body{padding:22px 18px}.auth-top{padding:25px 20px}.auth-top h2{font-size:23px}.brand h1{font-size:17px}.home-btn{padding:8px 11px;font-size:12px}}
+</style>
+<link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+<header class="navbar"><div class="nav-inner"><a href="index.html" class="brand"><img src="logo.png" alt="StudentHubHelp Logo"><div><h1>StudentHubHelp</h1><span>Student Discovery Platform</span></div></a><a href="index.html" class="home-btn">← Home</a></div></header>
+<main class="page"><div class="auth-wrapper"><div class="auth-card">
+<div class="auth-top"><div class="auth-icon" id="authIcon">🔐</div><h2 id="authTitle">Welcome Back</h2><p id="authSubtitle">Login securely to access your StudentHubHelp account.</p></div>
+<div class="auth-body">
+<div class="tabs" id="tabs"><button class="tab active" id="loginTab" type="button">Sign In</button><button class="tab" id="signupTab" type="button">Create Account</button></div>
+<div id="message" class="message"></div>
 
+<section id="loginPanel" class="login-panel">
+<form id="loginForm">
+<div class="form-group"><label>Email Address</label><div class="input-wrap"><span class="input-icon">✉️</span><input id="loginEmail" type="email" autocomplete="username" placeholder="Enter your email" required></div></div>
+<div class="form-group"><label>Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="loginPassword" class="password-input" type="password" autocomplete="current-password" placeholder="Enter your password" required><button class="password-toggle" type="button" data-target="loginPassword">👁️</button></div></div>
+<div class="forgot-row"><button id="forgotButton" class="forgot-btn" type="button">Forgot password?</button></div>
+<button id="loginButton" class="primary-btn" type="submit">Sign In</button>
+</form>
+<div class="oauth-divider"><span>or</span></div>
+<button id="googleLoginButton" class="google-btn" type="button"><span class="google-icon">G</span>Continue with Google</button>
+</section>
 
-/* ---------------------------------------------------------
-   1. handle_new_user()
---------------------------------------------------------- */
+<section id="signupPanel" class="signup-panel">
+<form id="signupForm">
+<div class="form-group"><label>Full Name</label><div class="input-wrap"><span class="input-icon">👤</span><input id="signupName" type="text" autocomplete="name" placeholder="Enter your full name" required></div></div>
+<div class="form-group"><label>Phone</label><div class="input-wrap"><span class="input-icon">📱</span><input id="signupPhone" type="tel" inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}" placeholder="10-digit mobile number" required></div></div>
+<div class="form-group"><label>Account Type <span class="role-required">*</span></label>
+<div class="role-box">
+<div class="role-option"><input id="roleStudent" type="radio" name="signupRole" value="student"><label class="role-label" for="roleStudent"><span><strong>🎓 Student</strong><small>Find student services</small></span></label></div>
+<div class="role-option"><input id="roleOwner" type="radio" name="signupRole" value="owner"><label class="role-label" for="roleOwner"><span><strong>🏢 Owner</strong><small>Manage your listing</small></span></label></div>
+</div><div class="role-note">Pehle Student ya Owner select karo. Phir neeche Google se continue karo.</div></div>
+<div class="form-group"><label>Email Address</label><div class="input-wrap"><span class="input-icon">✉️</span><input id="signupEmail" type="email" autocomplete="email" placeholder="Enter your email" required></div></div>
+<div class="form-group"><label>Create Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="signupPassword" class="password-input" type="password" minlength="6" placeholder="Create a password" required><button class="password-toggle" type="button" data-target="signupPassword">👁️</button></div></div>
+<div class="form-group"><label>Confirm Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="signupConfirmPassword" class="password-input" type="password" minlength="6" placeholder="Re-enter your password" required><button class="password-toggle" type="button" data-target="signupConfirmPassword">👁️</button></div></div>
+<button id="signupButton" class="primary-btn" type="submit">Create Account</button>
+</form>
+<div class="oauth-divider"><span>or</span></div>
+<div id="googleRoleState" class="google-role-state">Account type select karna zaroori hai.</div>
+<button id="googleSignupButton" class="google-btn" type="button" disabled><span class="google-icon">G</span><span id="googleSignupText">Select Student / Owner first</span></button>
+<div id="resendBox" class="resend-box" style="display:none"><p>Confirmation email nahi mila? Spam/Junk folder check karke dobara email bhej sakte ho.</p><button id="resendButton" class="resend-btn" type="button">Resend Confirmation Email</button></div>
+<div class="security-note">Admin accounts public signup se create nahi hote. Authorized admin accounts Supabase me already exist karne chahiye.</div>
+</section>
 
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-DECLARE
-  requested_role text;
-  auth_provider text;
-BEGIN
+<section id="googleRolePanel" class="google-role-panel">
+<div class="security-note" style="margin:0 0 18px">Google account mil gaya. Account type select karke Continue karo.</div>
+<div class="form-group"><label>Account Type</label><div class="role-box">
+<div class="role-option"><input id="callbackRoleStudent" type="radio" name="callbackRole" value="student"><label class="role-label" for="callbackRoleStudent"><span><strong>🎓 Student</strong><small>Find student services</small></span></label></div>
+<div class="role-option"><input id="callbackRoleOwner" type="radio" name="callbackRole" value="owner"><label class="role-label" for="callbackRoleOwner"><span><strong>🏢 Owner</strong><small>Manage your listing</small></span></label></div>
+</div></div>
+<button id="saveGoogleRoleButton" class="primary-btn" type="button">Continue</button>
+</section>
 
-  auth_provider := lower(
-    coalesce(
-      new.raw_app_meta_data->>'provider',
-      new.raw_user_meta_data->>'provider',
-      ''
-    )
-  );
+<section id="recoveryPanel" class="recovery-panel"><form id="recoveryForm"><div class="form-group"><label>Account Email</label><div class="input-wrap"><span class="input-icon">✉️</span><input id="recoveryEmail" type="email" placeholder="Enter your account email" required></div></div><button id="recoveryButton" class="primary-btn" type="submit">Send Reset Link</button></form><div class="forgot-row" style="margin-top:16px;margin-bottom:0"><button id="backToLoginButton" class="forgot-btn" type="button">← Back to sign in</button></div></section>
+<section id="resetPanel" class="reset-panel"><form id="resetForm"><div class="form-group"><label>New Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="resetPassword" class="password-input" type="password" minlength="6" required><button class="password-toggle" type="button" data-target="resetPassword">👁️</button></div></div><div class="form-group"><label>Confirm New Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="resetConfirmPassword" class="password-input" type="password" minlength="6" required><button class="password-toggle" type="button" data-target="resetConfirmPassword">👁️</button></div></div><button id="resetButton" class="primary-btn" type="submit">Update Password & Continue</button></form></section>
+</div></div><footer class="footer"><strong>StudentHubHelp</strong><div>Student Discovery Platform</div></footer></div></main>
+<div id="loadingScreen" class="loading-screen" aria-hidden="true"><div class="loading-box"><div class="spinner"></div><div id="loadingText">Please wait...</div></div></div>
 
-  requested_role := lower(
-    trim(
-      coalesce(
-        new.raw_user_meta_data->>'role',
-        ''
-      )
-    )
-  );
+<script>
+"use strict";
+const SUPABASE_URL="https://idurlccrarznnnqixxsd.supabase.co";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+if(!window.supabase||typeof window.supabase.createClient!=="function"){document.body.innerHTML="<h2 style='padding:30px;font-family:Arial'>Supabase library load nahi hui. Hard refresh karo.</h2>";throw new Error("Supabase JS unavailable");}
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const $=id=>document.getElementById(id),D={student:"student-dashboard.html",owner:"owner-dashboard.html",admin:"admin-dashboard.html"};
+let routing=false,listenerReady=false,recoveryMode=false,lastSignupEmail="",pendingGoogleUser=null;
 
-  /*
-    Normal email/password signup:
-    role comes from signup form.
+function role(v){v=String(v||"").trim().toLowerCase();return["student","owner","admin"].includes(v)?v:null}
+function msg(t,type="error"){$("message").textContent=t;$("message").className="message show "+type}
+function clearMsg(){$("message").textContent="";$("message").className="message"}
+function loading(on,t="Please wait..."){$("loadingText").textContent=t;$("loadingScreen").classList.toggle("show",on)}
+function button(b,on,text){b.disabled=on;b.textContent=on?"Please wait...":text}
+function err(e){let m=String(e?.message||"").toLowerCase();if(m.includes("invalid login credentials"))return"Email ya password incorrect hai.";if(m.includes("email not confirmed"))return"Email confirm nahi hua hai.";if(m.includes("unsupported provider"))return"Google Sign In Supabase me enabled nahi hai.";if(m.includes("redirect")&&m.includes("not allowed"))return"Auth redirect URL Supabase me allowlist nahi hai.";return e?.message||"Authentication failed."}
+function pendingRole(){return role(localStorage.getItem("sh_google_signup_role"))}
+function clearPending(){localStorage.removeItem("sh_google_signup_role");localStorage.removeItem("sh_google_signup_started_at")}
+function signupRole(){return role(document.querySelector('input[name="signupRole"]:checked')?.value)}
+function callbackRole(){return role(document.querySelector('input[name="callbackRole"]:checked')?.value)}
 
-    Google signup:
-    role stays NULL until auth.html saves
-    the Student/Owner selection.
-  */
+function panels(which){
+ $("loginPanel").classList.toggle("hidden",which!=="login");
+ $("signupPanel").classList.toggle("show",which==="signup");
+ $("googleRolePanel").classList.toggle("show",which==="googleRole");
+ $("recoveryPanel").classList.toggle("show",which==="recovery");
+ $("resetPanel").classList.toggle("show",which==="reset");
+ $("tabs").style.display=["recovery","reset","googleRole"].includes(which)?"none":"grid";
+}
+function showLogin(){recoveryMode=false;clearMsg();panels("login");$("loginTab").classList.add("active");$("signupTab").classList.remove("active");$("authIcon").textContent="🔐";$("authTitle").textContent="Welcome Back";$("authSubtitle").textContent="Login securely to access your StudentHubHelp account."}
+function showSignup(){recoveryMode=false;clearMsg();panels("signup");$("loginTab").classList.remove("active");$("signupTab").classList.add("active");$("authIcon").textContent="✨";$("authTitle").textContent="Create Account";$("authSubtitle").textContent="Create your StudentHubHelp student or owner account.";updateGoogleButton()}
+function showGoogleRole(user){pendingGoogleUser=user;loading(false);clearMsg();panels("googleRole");$("authIcon").textContent="👤";$("authTitle").textContent="Choose Account Type";$("authSubtitle").textContent="Select Student or Owner to continue."}
+function updateGoogleButton(){let r=signupRole(),b=$("googleSignupButton");b.disabled=!r;if(r==="student"){$("googleRoleState").textContent="Student selected — ab Google se continue kar sakte ho.";$("googleSignupText").textContent="Continue with Google as Student"}else if(r==="owner"){$("googleRoleState").textContent="Owner selected — ab Google se continue kar sakte ho.";$("googleSignupText").textContent="Continue with Google as Owner"}else{$("googleRoleState").textContent="Account type select karna zaroori hai.";$("googleSignupText").textContent="Select Student / Owner first"}}
+function showRecovery(){clearMsg();panels("recovery");$("authIcon").textContent="📧";$("authTitle").textContent="Reset Password";$("authSubtitle").textContent="Enter your email and we'll send a password reset link."}
+function showReset(){recoveryMode=true;clearMsg();panels("reset");$("authIcon").textContent="🔑";$("authTitle").textContent="Set New Password";$("authSubtitle").textContent="Create a new secure password for your account.";loading(false)}
 
-  IF requested_role NOT IN ('student', 'owner') THEN
+async function route(user){
+ if(!user?.id)throw new Error("Authenticated user was not found.");
+ if(routing)return;routing=true;
+ try{
+  let {data:p,error}=await db.from("profiles").select("id,role,full_name,phone,email").eq("id",user.id).maybeSingle();
+  if(error)throw new Error("Profile load nahi ho saka.");
+  const pr=pendingRole();
+  if(pr&&(!p?.role||p?.role==="student")){
+   const identity=(user.identities||[]).find(x=>x.provider==="google"),created=identity?.created_at||user.created_at,age=created?Date.now()-new Date(created).getTime():Infinity;
+   if(age<10*60*1000){
+    const {error:uerr}=await db.from("profiles").update({role:pr}).eq("id",user.id);
+    if(uerr)throw new Error("Google account role save nahi ho saka.");
+    p={...(p||{}),role:pr};clearPending();
+   }else clearPending();
+  }
+  const r=role(p?.role);
+  if(!r){routing=false;showGoogleRole(user);return}
+  const md=user.user_metadata||{};
+  localStorage.setItem("sh_current_user",JSON.stringify({id:user.id,email:user.email||"",name:p?.full_name||md.full_name||md.name||user.email?.split("@")[0]||"User",phone:p?.phone||md.phone||"",role:r}));
+  loading(true,r==="admin"?"Opening Admin Dashboard...":r==="owner"?"Opening Owner Dashboard...":"Opening Student Dashboard...");
+  location.replace(new URL(D[r],location.href).href);
+ }catch(e){routing=false;throw e}
+}
 
-    IF auth_provider = 'google' THEN
-      requested_role := NULL;
-    ELSE
-      requested_role := 'student';
-    END IF;
+async function google(mode){
+ clearMsg();
+ if(mode==="signup"){let r=signupRole();if(!r){msg("Pehle Student ya Owner select karo.");return}localStorage.setItem("sh_google_signup_role",r);localStorage.setItem("sh_google_signup_started_at",String(Date.now()))}else clearPending();
+ loading(true,"Opening Google Sign In...");
+ try{let {error}=await db.auth.signInWithOAuth({provider:"google",options:{redirectTo:new URL("auth.html",location.href).href}});if(error)throw error}catch(e){loading(false);clearPending();msg(err(e))}
+}
+$("googleLoginButton").onclick=()=>google("login");
+$("googleSignupButton").onclick=()=>google("signup");
 
-  END IF;
+$("loginForm").onsubmit=async e=>{e.preventDefault();clearMsg();let email=$("loginEmail").value.trim().toLowerCase(),password=$("loginPassword").value;if(!email||!password){msg("Email aur password dono required hain.");return}let b=$("loginButton");button(b,true,"Sign In");loading(true,"Signing you in...");try{let{data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;await route(data.user)}catch(x){loading(false);button(b,false,"Sign In");msg(err(x))}};
 
+$("signupForm").onsubmit=async e=>{e.preventDefault();clearMsg();let name=$("signupName").value.trim(),phone=$("signupPhone").value.trim(),email=$("signupEmail").value.trim().toLowerCase(),pass=$("signupPassword").value,confirm=$("signupConfirmPassword").value,r=signupRole();if(!name||!phone||!email||!pass||!confirm||!r){msg("Name, phone, role, email aur password complete karo.");return}if(!/^[6-9]\d{9}$/.test(phone)){msg("Valid Indian 10-digit mobile number enter karo.");return}if(pass.length<6){msg("Password kam se kam 6 characters ka hona chahiye.");return}if(pass!==confirm){msg("Passwords same hone chahiye.");return}let b=$("signupButton");button(b,true,"Create Account");loading(true,"Creating your account...");lastSignupEmail=email;try{let{data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:name,phone,role:r}}});if(error)throw error;if(!data?.user)throw new Error("Account create nahi hua.");if(!data.session){loading(false);button(b,false,"Create Account");$("loginEmail").value=email;$("resendBox").style.display="block";msg("Account create ho gaya. Email verify karke Sign In karo.","success");return}let{error:pe}=await db.from("profiles").upsert({id:data.user.id,full_name:name,phone,role:r,email},{onConflict:"id"});if(pe)throw pe;await route(data.user)}catch(x){loading(false);button(b,false,"Create Account");msg(err(x))}};
 
-  INSERT INTO public.profiles
-    (
-      id,
-      full_name,
-      phone,
-      email,
-      role
-    )
-  VALUES
-    (
-      new.id,
-      nullif(
-        trim(
-          coalesce(
-            new.raw_user_meta_data->>'full_name',
-            ''
-          )
-        ),
-        ''
-      ),
-      nullif(
-        trim(
-          coalesce(
-            new.raw_user_meta_data->>'phone',
-            ''
-          )
-        ),
-        ''
-      ),
-      new.email,
-      requested_role
-    )
+$("saveGoogleRoleButton").onclick=async()=>{let r=callbackRole();if(!r||!pendingGoogleUser){msg("Student ya Owner select karo.");return}let b=$("saveGoogleRoleButton");button(b,true,"Continue");loading(true,"Saving account type...");try{let{error}=await db.from("profiles").update({role:r}).eq("id",pendingGoogleUser.id);if(error)throw error;clearPending();await route(pendingGoogleUser)}catch(x){loading(false);button(b,false,"Continue");msg("Account type save nahi hua: "+(x?.message||"Please try again."))}};
 
-  ON CONFLICT (id) DO UPDATE
-  SET
-    email = excluded.email,
-    full_name =
-      coalesce(
-        nullif(trim(public.profiles.full_name), ''),
-        excluded.full_name
-      ),
-    phone =
-      coalesce(
-        nullif(trim(public.profiles.phone), ''),
-        excluded.phone
-      );
+$("forgotButton").onclick=()=>{$("recoveryEmail").value=$("loginEmail").value.trim();showRecovery()};
+$("backToLoginButton").onclick=showLogin;
+$("recoveryForm").onsubmit=async e=>{e.preventDefault();let email=$("recoveryEmail").value.trim().toLowerCase(),b=$("recoveryButton");button(b,true,"Send Reset Link");loading(true,"Sending reset link...");try{let{error}=await db.auth.resetPasswordForEmail(email,{redirectTo:new URL("auth.html?mode=reset",location.href).href});if(error)throw error;loading(false);button(b,false,"Send Reset Link");msg("Password reset link email par bhej diya gaya hai.","success")}catch(x){loading(false);button(b,false,"Send Reset Link");msg(err(x))}};
+$("resetForm").onsubmit=async e=>{e.preventDefault();let p=$("resetPassword").value,c=$("resetConfirmPassword").value,b=$("resetButton");if(p.length<6||p!==c){msg(p.length<6?"Password kam se kam 6 characters ka hona chahiye.":"Passwords same hone chahiye.");return}button(b,true,"Update Password & Continue");loading(true,"Updating your password...");try{let{data,error}=await db.auth.updateUser({password:p});if(error)throw error;await route(data.user)}catch(x){loading(false);button(b,false,"Update Password & Continue");msg(err(x))}};
+$("loginTab").onclick=showLogin;$("signupTab").onclick=showSignup;
+document.querySelectorAll('input[name="signupRole"]').forEach(x=>x.onchange=updateGoogleButton);
+document.querySelectorAll(".password-toggle").forEach(b=>b.onclick=()=>{let i=$(b.dataset.target);i.type=i.type==="text"?"password":"text";b.textContent=i.type==="text"?"🙈":"👁️"});
 
-  RETURN new;
-
-END;
-$function$;
-
-
-/* ---------------------------------------------------------
-   2. sync_profile_from_auth()
---------------------------------------------------------- */
-
-CREATE OR REPLACE FUNCTION public.sync_profile_from_auth()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-
-DECLARE
-  requested_role text;
-  auth_provider text;
-
-BEGIN
-
-  auth_provider := lower(
-    coalesce(
-      NEW.raw_app_meta_data->>'provider',
-      NEW.raw_user_meta_data->>'provider',
-      ''
-    )
-  );
-
-  requested_role := lower(
-    trim(
-      coalesce(
-        NEW.raw_user_meta_data->>'role',
-        ''
-      )
-    )
-  );
-
-
-  /*
-    Email/password:
-    use selected role.
-
-    Google:
-    leave role NULL until auth.html
-    saves Student/Owner choice.
-  */
-
-  IF requested_role NOT IN ('student', 'owner') THEN
-
-    IF auth_provider = 'google' THEN
-      requested_role := NULL;
-    ELSE
-      requested_role := 'student';
-    END IF;
-
-  END IF;
-
-
-  INSERT INTO public.profiles
-    (
-      id,
-      full_name,
-      phone,
-      role,
-      email
-    )
-  VALUES
-    (
-      NEW.id,
-      COALESCE(
-        NEW.raw_user_meta_data->>'full_name',
-        split_part(
-          COALESCE(NEW.email, ''),
-          '@',
-          1
-        ),
-        'User'
-      ),
-      COALESCE(
-        NEW.raw_user_meta_data->>'phone',
-        ''
-      ),
-      requested_role,
-      NEW.email
-    )
-
-  ON CONFLICT (id) DO UPDATE
-  SET
-    email = EXCLUDED.email;
-
-  RETURN NEW;
-
-END;
-$function$;
+function resetMode(){return new URLSearchParams(location.search).get("mode")==="reset"}
+function setupAuth(){if(listenerReady)return;listenerReady=true;db.auth.onAuthStateChange(async(e,s)=>{if(e==="PASSWORD_RECOVERY"){showReset();return}if(e==="SIGNED_OUT"){loading(false);if(!recoveryMode)showLogin();return}if(e==="SIGNED_IN"&&s?.user&&!recoveryMode&&!resetMode()){try{loading(true,"Checking your account...");await route(s.user)}catch(x){loading(false);await db.auth.signOut({scope:"local"}).catch(()=>{});msg(x.message||"Account routing failed.")}}})}
+async function existing(){if(resetMode())return;let{data,error}=await db.auth.getSession();if(error||!data?.session?.user)return;loading(true,"Checking your account...");try{await route(data.session.user)}catch(x){loading(false);await db.auth.signOut({scope:"local"}).catch(()=>{});msg(x.message||"Session check failed.")}}
+document.addEventListener("DOMContentLoaded",async()=>{setupAuth();if(resetMode()){loading(true,"Preparing password reset...");setTimeout(()=>{if(!recoveryMode){let h=location.hash||"";if(h.includes("type=recovery")||h.includes("access_token="))showReset();else{loading(false);msg("Password reset link invalid ya expire ho gaya hai.")}}},1200);return}await existing();updateGoogleButton()});
+</script>
+</body>
+</html>
