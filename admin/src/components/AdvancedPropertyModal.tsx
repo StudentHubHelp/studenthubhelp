@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PropertyItem, PropertyType } from '../types';
-import { propertyConfig, MASTER_TYPES, propVerified, propFeatured, propStatus, propRating } from '../lib/supabase';
+import { propertyConfig, MASTER_TYPES, propVerified, propFeatured, propStatus, propRating, PROPERTY_TABLE_COLUMNS } from '../lib/supabase';
 import { X, Save, Building2, MapPin, Phone, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
 
 interface AdvancedPropertyModalProps {
@@ -99,13 +99,9 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({
     try {
       setSaving(true);
       setError(null);
-      await onSave({
-        ...(property || {}),
-        ...formData,
-        id: String(formData.id || property?.id || ''),
-        category: formData.category || config.category,
-        property_type: selectedType,
-      } as PropertyItem);
+      const next = { ...(property || {}), ...formData, category: formData.category || config.category } as PropertyItem;
+      if (!next.id) next.id = selectedType === 'bookstores' ? String(Date.now()) : `prop-${Date.now()}`;
+      await onSave(next);
       onClose();
     } catch (err: any) {
       setError(err?.message || 'Failed to save property');
@@ -154,444 +150,39 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({
             </div>
           )}
 
-          {/* Section 1: Basic Information */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-extrabold tracking-wider uppercase text-amber-400 flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5" /> Core Details
-            </h3>
+          {/* Exact Supabase schema form */}
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+              <div className="text-xs font-extrabold uppercase tracking-wider text-amber-400">Exact Supabase Table Columns</div>
+              <p className="text-xs text-slate-400 mt-1">{selectedType} table ke actual columns hi Master Editor aur Add Property dono me use hote hain.</p>
+            </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <div className="lg:col-span-2">
-                <label className="text-xs font-bold text-slate-300">Property / Business Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name || ''}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  placeholder="e.g. Shree Krishna Deluxe Boys PG"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Category Table</label>
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value as PropertyType)}
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                >
-                  {MASTER_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {propertyConfig[t].title} ({propertyConfig[t].category})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Owner Name</label>
-                <input
-                  type="text"
-                  value={formData.owner_name || ''}
-                  onChange={(e) => handleChange('owner_name', e.target.value)}
-                  placeholder="Owner's full name"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Contact Phone *</label>
-                <input
-                  type="tel"
-                  required
-                  value={formData.phone || ''}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  placeholder="e.g. 9829012345"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">WhatsApp Number</label>
-                <input
-                  type="tel"
-                  value={formData.whatsapp || ''}
-                  onChange={(e) => handleChange('whatsapp', e.target.value)}
-                  placeholder="WhatsApp helpline"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Email Address</label>
-                <input
-                  type="email"
-                  value={formData.email || ''}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  placeholder="Official email"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Price / Rent Display</label>
-                <input
-                  type="text"
-                  value={formData.price || ''}
-                  onChange={(e) => handleChange('price', e.target.value)}
-                  placeholder="e.g. ₹8,500/mo or ₹150 for two"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Operating Hours / Timing</label>
-                <input
-                  type="text"
-                  value={formData.timing || ''}
-                  onChange={(e) => handleChange('timing', e.target.value)}
-                  placeholder="e.g. 24/7 or 9:00 AM - 10:00 PM"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
+              {PROPERTY_TABLE_COLUMNS[selectedType].map((field) => {
+                const value = formData[field];
+                const isBoolean = ['verified','food_available','delivery_available','breakfast_available','lunch_available','dinner_available','jain_food','home_delivery','subscription_available','custom_meal','open_24_hours','ac_available','wifi','charging_point','locker','parking','newspaper','separate_cabin','girls_section','boys_section','power_backup','water','cctv','attached_bathroom','electricity_included','water_available','laundry','mess_available','delivery','takeaway','online_order','upi_payment','competitive_books','stationery','second_hand_books','book_rental','exam_books','school_books','college_books','ncert_books','photocopy','printing','lamination','spiral_binding','notes_available'].includes(field);
+                const isNumber = ['rating','latitude','longitude','monthly_rent','security_deposit','total_beds','available_beds','mess_charge','property_id','price','monthly_fee','delivery_charge','monthly_plan','weekly_plan','daily_plan','daily_fee','seating_capacity','available_seats'].includes(field);
+                const isReadonly = ['created_at','updated_at','last_verified','last_verified_at'].includes(field);
+                const label = field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+                const displayValue = Array.isArray(value) ? value.join(', ') : value ?? '';
+                const required = selectedType === 'bookstores' && ['name','category','area','address','phone'].includes(field);
+                return (
+                  <div key={field} className={['description','facilities','menu','rules','images','categories'].includes(field) ? 'sm:col-span-2 lg:col-span-3' : ''}>
+                    <label className="text-xs font-bold text-slate-300">{label}{field === 'id' ? ' (auto for new)' : required ? ' *' : ''}</label>
+                    {isBoolean ? (
+                      <select value={value === true ? 'true' : value === false ? 'false' : ''} disabled={isReadonly} onChange={(e) => handleChange(field, e.target.value === '' ? null : e.target.value === 'true')} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white"><option value="">NULL / Not set</option><option value="true">TRUE</option><option value="false">FALSE</option></select>
+                    ) : field === 'status' ? (
+                      <select value={value ?? ''} onChange={(e) => handleChange(field, e.target.value)} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white"><option value="">NULL / Not set</option><option value="active">active</option><option value="pending">pending</option><option value="suspended">suspended</option><option value="rejected">rejected</option></select>
+                    ) : ['description','facilities','menu','rules','images','categories'].includes(field) ? (
+                      <textarea rows={3} value={displayValue} readOnly={isReadonly} onChange={(e) => handleChange(field, e.target.value)} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400" />
+                    ) : (
+                      <input type={isNumber ? 'number' : 'text'} step={field === 'rating' ? '0.1' : 'any'} value={displayValue} readOnly={isReadonly} required={required} onChange={(e) => handleChange(field, isNumber && e.target.value !== '' ? Number(e.target.value) : e.target.value)} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400" />
+                    )}
+                    <div className="text-[10px] text-slate-600 mt-0.5">DB: {field}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-
-          {/* Section 2: Location & Address */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
-            <h3 className="text-xs font-extrabold tracking-wider uppercase text-amber-400 flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5" /> Geographic Location
-            </h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-300">Area / Locality *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.area || ''}
-                  onChange={(e) => handleChange('area', e.target.value)}
-                  placeholder="e.g. Rajeev Gandhi Nagar"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">City</label>
-                <input
-                  type="text"
-                  value={formData.city || ''}
-                  onChange={(e) => handleChange('city', e.target.value)}
-                  placeholder="e.g. Kota"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Pincode</label>
-                <input
-                  type="text"
-                  value={formData.pincode || ''}
-                  onChange={(e) => handleChange('pincode', e.target.value)}
-                  placeholder="e.g. 324005"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div className="sm:col-span-2 lg:col-span-3">
-                <label className="text-xs font-bold text-slate-300">Full Address *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.address || ''}
-                  onChange={(e) => handleChange('address', e.target.value)}
-                  placeholder="Complete street address and landmark"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 3: Status, Verification, Featured */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
-            <h3 className="text-xs font-extrabold tracking-wider uppercase text-amber-400 flex items-center gap-2">
-              <ShieldCheck className="w-3.5 h-3.5" /> Platform Governance
-            </h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-300">Listing Status</label>
-                <select
-                  value={formData.status || 'active'}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                >
-                  <option value="active">Active (Publicly Visible)</option>
-                  <option value="pending">Pending (Under Review)</option>
-                  <option value="suspended">Suspended (Hidden)</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Director Verification</label>
-                <select
-                  value={formData.verified ? 'true' : 'false'}
-                  onChange={(e) => handleChange('verified', e.target.value === 'true')}
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                >
-                  <option value="false">Not Verified (Standard)</option>
-                  <option value="true">Verified Badge (Director Approved)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Featured Placement</label>
-                <select
-                  value={formData.featured ? 'true' : 'false'}
-                  onChange={(e) => handleChange('featured', e.target.value === 'true')}
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                >
-                  <option value="false">Standard Listing</option>
-                  <option value="true">Featured on Homepage Top</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Rating Score (0 to 5)</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="5"
-                  step="0.1"
-                  value={formData.rating ?? ''}
-                  onChange={(e) => handleChange('rating', e.target.value === '' ? null : Number(e.target.value))}
-                  placeholder="e.g. 4.8"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 4: Category Specific Fields */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
-            <h3 className="text-xs font-extrabold tracking-wider uppercase text-amber-400">
-              {config.category} Specific Information
-            </h3>
-            {selectedType === 'hostels' && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Gender Allocation</label>
-                  <input
-                    type="text"
-                    value={formData.gender || ''}
-                    onChange={(e) => handleChange('gender', e.target.value)}
-                    placeholder="Boys / Girls / Co-ed"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Room Sharing Types</label>
-                  <input
-                    type="text"
-                    value={formData.room_types || ''}
-                    onChange={(e) => handleChange('room_types', e.target.value)}
-                    placeholder="Single AC, Double Sharing, Triple"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Total Beds</label>
-                  <input
-                    type="number"
-                    value={formData.total_beds || ''}
-                    onChange={(e) => handleChange('total_beds', e.target.value)}
-                    placeholder="e.g. 50"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Available Beds</label>
-                  <input
-                    type="number"
-                    value={formData.available_beds || ''}
-                    onChange={(e) => handleChange('available_beds', e.target.value)}
-                    placeholder="e.g. 8"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Food / Mess Details</label>
-                  <input
-                    type="text"
-                    value={formData.food_available || ''}
-                    onChange={(e) => handleChange('food_available', e.target.value)}
-                    placeholder="e.g. Pure Veg 4 Meals Included"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Security Deposit</label>
-                  <input
-                    type="text"
-                    value={formData.security_deposit || ''}
-                    onChange={(e) => handleChange('security_deposit', e.target.value)}
-                    placeholder="e.g. ₹5,000 (Refundable)"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-              </div>
-            )}
-
-            {selectedType === 'tiffins' && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Meal Type</label>
-                  <input
-                    type="text"
-                    value={formData.meal_type || ''}
-                    onChange={(e) => handleChange('meal_type', e.target.value)}
-                    placeholder="Pure Veg / Jain Available"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Plan Options</label>
-                  <input
-                    type="text"
-                    value={formData.plan_type || ''}
-                    onChange={(e) => handleChange('plan_type', e.target.value)}
-                    placeholder="Monthly, Daily Thali, Per Meal"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Doorstep Delivery Service Area</label>
-                  <input
-                    type="text"
-                    value={formData.service_area || ''}
-                    onChange={(e) => handleChange('service_area', e.target.value)}
-                    placeholder="e.g. Within 5km radius, Vigyan Nagar, Talwandi"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-              </div>
-            )}
-
-            {selectedType === 'libraries' && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Seating Capacity</label>
-                  <input
-                    type="number"
-                    value={formData.seating_capacity || ''}
-                    onChange={(e) => handleChange('seating_capacity', e.target.value)}
-                    placeholder="e.g. 120 Seats"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Membership Shifts</label>
-                  <input
-                    type="text"
-                    value={formData.membership || ''}
-                    onChange={(e) => handleChange('membership', e.target.value)}
-                    placeholder="Morning (6am-2pm), Evening, Night 24/7"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Monthly Fees</label>
-                  <input
-                    type="text"
-                    value={formData.monthly_fee || ''}
-                    onChange={(e) => handleChange('monthly_fee', e.target.value)}
-                    placeholder="e.g. ₹900 - ₹1400"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-              </div>
-            )}
-
-            {selectedType === 'cafes' && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Cuisine / Specialties</label>
-                  <input
-                    type="text"
-                    value={formData.cuisine || ''}
-                    onChange={(e) => handleChange('cuisine', e.target.value)}
-                    placeholder="Beverages, Fast Food, Snacks, Coffee"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Seating Capacity</label>
-                  <input
-                    type="number"
-                    value={formData.seating_capacity || ''}
-                    onChange={(e) => handleChange('seating_capacity', e.target.value)}
-                    placeholder="e.g. 45"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-              </div>
-            )}
-
-            {selectedType === 'bookstores' && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Book Categories Available</label>
-                  <input
-                    type="text"
-                    value={formData.categories || ''}
-                    onChange={(e) => handleChange('categories', e.target.value)}
-                    placeholder="JEE, NEET, Foundation, UPSC, NCERT"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-300">Stationery & Photocopy Services</label>
-                  <input
-                    type="text"
-                    value={formData.stationery || ''}
-                    onChange={(e) => handleChange('stationery', e.target.value)}
-                    placeholder="Bulk Photocopy, Spiral Binding, Registers"
-                    className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Facilities & Description */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
-            <h3 className="text-xs font-extrabold tracking-wider uppercase text-amber-400">
-              Facilities & Description
-            </h3>
-            <div className="grid lg:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-300">Facilities / Amenities / Highlights</label>
-                <textarea
-                  rows={4}
-                  value={formData.facilities || ''}
-                  onChange={(e) => handleChange('facilities', e.target.value)}
-                  placeholder="e.g. WiFi, RO Mineral Water, Daily Cleaning, Biometric Security, AC"
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300">Comprehensive Description</label>
-                <textarea
-                  rows={4}
-                  value={formData.description || ''}
-                  onChange={(e) => handleChange('description', e.target.value)}
-                  placeholder="Detailed description for students and parents..."
-                  className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-          </div>
-        </form>
-
         {/* Modal Footer */}
         <div className="p-4 sm:p-5 border-t border-slate-800 bg-[#0a1430]/90 backdrop-blur flex items-center justify-between gap-3 shrink-0">
           <button
