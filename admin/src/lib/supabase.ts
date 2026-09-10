@@ -77,6 +77,34 @@ export const propertyConfig: Record<
   },
 };
 
+
+export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
+  hostels: ['id','name','category','area','address','phone','timing','facilities','rating','image','owner_id','type','owner_name','whatsapp','email','city','pincode','latitude','longitude','monthly_rent','security_deposit','room_types','food_available','food_type','description','verified','status','slug','created_at','total_beds','available_beds','images','room_sharing','attached_bathroom','ac_available','wifi','electricity_included','water_available','laundry','parking','mess_available','mess_charge','rules','nearby_coaching','google_maps_url','last_verified','last_verified_at','updated_at','property_id','price','monthly_fee'],
+  tiffins: ['id','name','category','area','address','phone','timing','facilities','rating','image','owner_id','owner_name','whatsapp','city','service_area','meal_type','food_type','plan_type','price','delivery_available','delivery_charge','menu','timings','description','verified','status','slug','breakfast_available','lunch_available','dinner_available','monthly_plan','weekly_plan','daily_plan','jain_food','home_delivery','subscription_available','custom_meal','google_maps_url','email','created_at','images','updated_at','property_id','monthly_fee'],
+  libraries: ['id','name','category','area','address','phone','timing','facilities','rating','image','owner_id','owner_name','whatsapp','city','latitude','longitude','library_type','monthly_fee','daily_fee','open_24_hours','seating_capacity','available_seats','ac_available','wifi','charging_point','locker','parking','newspaper','separate_cabin','girls_section','boys_section','power_backup','water','cctv','description','google_maps_url','verified','status','slug','email','created_at','images','pincode','updated_at','property_id','price'],
+  cafes: ['id','name','category','area','address','phone','timing','facilities','rating','image','owner_id','owner_name','whatsapp','email','city','latitude','longitude','cuisine','price_range','opening_time','closing_time','weekly_off','delivery','takeaway','menu','description','seating_capacity','wifi','ac','parking','online_order','upi_payment','google_maps_url','verified','status','slug','created_at','images','pincode','updated_at','property_id','price','monthly_fee'],
+  bookstores: ['id','name','category','area','address','phone','timing','facilities','rating','owner_id','image','owner_name','whatsapp','email','city','latitude','longitude','categories','classes','competitive_books','stationery','second_hand_books','book_rental','online_order','home_delivery','exam_books','school_books','college_books','ncert_books','photocopy','printing','lamination','spiral_binding','notes_available','opening_time','closing_time','weekly_off','description','google_maps_url','verified','status','slug','created_at','images','pincode','updated_at','property_id','price','monthly_fee'],
+};
+
+export function getPropertyTableColumns(type: PropertyType): string[] {
+  return PROPERTY_TABLE_COLUMNS[type] || PROPERTY_TABLE_COLUMNS.hostels;
+}
+
+export function sanitizePropertyForTable(property: PropertyItem, type: PropertyType): Record<string, any> {
+  const allowed = new Set(getPropertyTableColumns(type));
+  const out: Record<string, any> = {};
+  for (const key of allowed) {
+    if (!Object.prototype.hasOwnProperty.call(property, key)) continue;
+    let value = (property as any)[key];
+    if (value === undefined) continue;
+    if (type === 'hostels' && key === 'room_types' && typeof value === 'string') {
+      value = value.trim() ? value.split(',').map((v: string) => v.trim()).filter(Boolean) : [];
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
 export const MASTER_TYPES: PropertyType[] = [
   "hostels",
   "tiffins",
@@ -908,10 +936,9 @@ export async function savePropertyToSupabase(
     );
   }
 
-  const table =
-    getTableNameForCategory(
-      (property as any).category
-    );
+  const table = getTableNameForCategory((property as any).category);
+  const category = String((property as any).category || '').toLowerCase();
+  const type: PropertyType = category.includes('tiffin') ? 'tiffins' : category.includes('library') ? 'libraries' : category.includes('cafe') ? 'cafes' : category.includes('book') ? 'bookstores' : 'hostels';
 
   /*
    * Do NOT send UI-only helper fields
@@ -923,11 +950,7 @@ export async function savePropertyToSupabase(
     ...rawProperty
   } = property as any;
 
-  const payload = {
-    ...rawProperty,
-    updated_at:
-      new Date().toISOString(),
-  };
+  const payload = sanitizePropertyForTable({ ...rawProperty, updated_at: new Date().toISOString() } as PropertyItem, type);
 
   /*
    * Existing property:
