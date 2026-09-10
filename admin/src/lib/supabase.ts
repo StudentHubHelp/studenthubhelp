@@ -735,39 +735,44 @@ export const initialSeedData = {
 
 export async function fetchAllDataFromSupabase() {
   const result: any = {
-    properties: initialSeedData.properties,
-    students: initialSeedData.students,
-    owners: initialSeedData.owners,
-    listingRequests: initialSeedData.listingRequests,
-    claimRequests: initialSeedData.claimRequests,
-    verificationRequests: initialSeedData.verificationRequests,
-    bookings: initialSeedData.bookings,
-    reviews: initialSeedData.reviews,
-    reports: initialSeedData.reports,
-    mediaImages: initialSeedData.mediaImages,
-    areas: initialSeedData.areas,
-    notifications: initialSeedData.notifications,
-    activityLogs: initialSeedData.activity,
-    settings: initialSeedData.settings,
+    properties: [],
+    students: [],
+    owners: [],
+    listingRequests: [],
+    claimRequests: [],
+    verificationRequests: [],
+    bookings: [],
+    reviews: [],
+    reports: [],
+    mediaImages: [],
+    areas: [],
+    notifications: [],
+    activityLogs: [],
+    settings: [],
   };
 
-  if (!supabase) return result;
+  if (!supabase) {
+    console.warn('Supabase client is not available.');
+    return result;
+  }
 
   try {
+    // These are the tables used by the live StudentHubHelp database.
+    // Do not query students/owners/property_reviews/reports because those
+    // table names do not exist in the current schema.
     const fetchPromises = [
       supabase.from('hostels').select('*').limit(100),
       supabase.from('tiffins').select('*').limit(100),
       supabase.from('libraries').select('*').limit(100),
       supabase.from('cafes').select('*').limit(100),
       supabase.from('bookstores').select('*').limit(100),
-      supabase.from('students').select('*').limit(100),
-      supabase.from('owners').select('*').limit(100),
+      supabase.from('profiles').select('*').limit(1000),
       supabase.from('listing_requests').select('*').limit(100),
       supabase.from('claim_requests').select('*').limit(100),
       supabase.from('verification_requests').select('*').limit(100),
       supabase.from('student_bookings').select('*').limit(100),
-      supabase.from('property_reviews').select('*').limit(100),
-      supabase.from('reports').select('*').limit(100),
+      supabase.from('reviews').select('*').limit(100),
+      supabase.from('property_reports').select('*').limit(100),
       supabase.from('areas').select('*').limit(100),
     ];
 
@@ -777,8 +782,7 @@ export async function fetchAllDataFromSupabase() {
       librariesRes,
       cafesRes,
       bookstoresRes,
-      studentsRes,
-      ownersRes,
+      profilesRes,
       listingRes,
       claimsRes,
       verifRes,
@@ -788,55 +792,71 @@ export async function fetchAllDataFromSupabase() {
       areasRes,
     ] = await Promise.allSettled(fetchPromises);
 
-    const liveProperties: PropertyItem[] = [];
+    const getData = (res: PromiseSettledResult<any>, label: string): any[] => {
+      if (res.status === 'rejected') {
+        console.warn(`Supabase ${label} request failed:`, res.reason);
+        return [];
+      }
+      if (res.value.error) {
+        console.warn(`Supabase ${label} query failed:`, res.value.error.message);
+        return [];
+      }
+      return Array.isArray(res.value.data) ? res.value.data : [];
+    };
 
-    if (hostelsRes.status === 'fulfilled' && hostelsRes.value.data?.length) {
-      liveProperties.push(...hostelsRes.value.data.map((d: any) => ({ ...d, category: d.category || 'Hostel' })));
-    }
-    if (tiffinsRes.status === 'fulfilled' && tiffinsRes.value.data?.length) {
-      liveProperties.push(...tiffinsRes.value.data.map((d: any) => ({ ...d, category: d.category || 'Tiffin' })));
-    }
-    if (librariesRes.status === 'fulfilled' && librariesRes.value.data?.length) {
-      liveProperties.push(...librariesRes.value.data.map((d: any) => ({ ...d, category: d.category || 'Library' })));
-    }
-    if (cafesRes.status === 'fulfilled' && cafesRes.value.data?.length) {
-      liveProperties.push(...cafesRes.value.data.map((d: any) => ({ ...d, category: d.category || 'Cafe' })));
-    }
-    if (bookstoresRes.status === 'fulfilled' && bookstoresRes.value.data?.length) {
-      liveProperties.push(...bookstoresRes.value.data.map((d: any) => ({ ...d, category: d.category || 'Bookstore' })));
-    }
+    const hostels = getData(hostelsRes, 'hostels');
+    const tiffins = getData(tiffinsRes, 'tiffins');
+    const libraries = getData(librariesRes, 'libraries');
+    const cafes = getData(cafesRes, 'cafes');
+    const bookstores = getData(bookstoresRes, 'bookstores');
+    const profiles = getData(profilesRes, 'profiles');
+    const listingRequests = getData(listingRes, 'listing_requests');
+    const claimRequests = getData(claimsRes, 'claim_requests');
+    const verificationRequests = getData(verifRes, 'verification_requests');
+    const bookings = getData(bookingsRes, 'student_bookings');
+    const reviews = getData(reviewsRes, 'reviews');
+    const reports = getData(reportsRes, 'property_reports');
+    const areas = getData(areasRes, 'areas');
 
-    if (liveProperties.length > 0) {
-      result.properties = liveProperties;
-    }
+    result.properties = [
+      ...hostels.map((d: any) => ({ ...d, category: d.category || 'Hostel' })),
+      ...tiffins.map((d: any) => ({ ...d, category: d.category || 'Tiffin' })),
+      ...libraries.map((d: any) => ({ ...d, category: d.category || 'Library' })),
+      ...cafes.map((d: any) => ({ ...d, category: d.category || 'Cafe' })),
+      ...bookstores.map((d: any) => ({ ...d, category: d.category || 'Bookstore' })),
+    ];
 
-    if (studentsRes.status === 'fulfilled' && studentsRes.value.data?.length) {
-      result.students = studentsRes.value.data;
-    }
-    if (ownersRes.status === 'fulfilled' && ownersRes.value.data?.length) {
-      result.owners = ownersRes.value.data;
-    }
-    if (listingRes.status === 'fulfilled' && listingRes.value.data?.length) {
-      result.listingRequests = listingRes.value.data;
-    }
-    if (claimsRes.status === 'fulfilled' && claimsRes.value.data?.length) {
-      result.claimRequests = claimsRes.value.data;
-    }
-    if (verifRes.status === 'fulfilled' && verifRes.value.data?.length) {
-      result.verificationRequests = verifRes.value.data;
-    }
-    if (bookingsRes.status === 'fulfilled' && bookingsRes.value.data?.length) {
-      result.bookings = bookingsRes.value.data;
-    }
-    if (reviewsRes.status === 'fulfilled' && reviewsRes.value.data?.length) {
-      result.reviews = reviewsRes.value.data;
-    }
-    if (reportsRes.status === 'fulfilled' && reportsRes.value.data?.length) {
-      result.reports = reportsRes.value.data;
-    }
-    if (areasRes.status === 'fulfilled' && areasRes.value.data?.length) {
-      result.areas = areasRes.value.data;
-    }
+    // The live database keeps students and owners in profiles.
+    // Split them by role instead of querying non-existent tables.
+    result.students = profiles.filter((p: any) =>
+      String(firstVal(p, ['role', 'user_role', 'type'], '')).toLowerCase() === 'student'
+    );
+
+    result.owners = profiles.filter((p: any) => {
+      const role = String(firstVal(p, ['role', 'user_role', 'type'], '')).toLowerCase();
+      return ['owner', 'landlord', 'property_owner', 'property-owner'].includes(role);
+    });
+
+    result.listingRequests = listingRequests;
+    result.claimRequests = claimRequests;
+    result.verificationRequests = verificationRequests;
+    result.bookings = bookings;
+    result.reviews = reviews;
+    result.reports = reports;
+    result.areas = areas;
+
+    console.log('Supabase live data loaded:', {
+      properties: result.properties.length,
+      students: result.students.length,
+      owners: result.owners.length,
+      listingRequests: result.listingRequests.length,
+      claimRequests: result.claimRequests.length,
+      verificationRequests: result.verificationRequests.length,
+      bookings: result.bookings.length,
+      reviews: result.reviews.length,
+      reports: result.reports.length,
+      areas: result.areas.length,
+    });
   } catch (e) {
     console.warn('Supabase fetch catch:', e);
   }
@@ -848,7 +868,14 @@ export async function updatePropertyVerification(id: string | number, nextVerifi
   if (!supabase) return;
   const table = getTableNameForCategory(category);
   try {
-    await supabase.from(table).update({ verified: nextVerified, is_verified: nextVerified }).eq('id', id);
+    const { error } = await supabase
+      .from(table)
+      .update({ verified: nextVerified, is_verified: nextVerified })
+      .eq('id', id);
+
+    if (error) {
+      console.warn('Supabase update verification failed:', error.message);
+    }
   } catch (err) {
     console.warn('Supabase update verification failed:', err);
   }
@@ -858,7 +885,15 @@ export async function toggleUserDisabledState(userId: string | number, nextDisab
   if (!supabase) return;
   const nextStatus = nextDisabled ? 'disabled' : 'active';
   try {
-    await supabase.from('users').update({ status: nextStatus, account_status: nextStatus }).eq('id', userId);
+    // Users are stored in profiles in the live schema.
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: nextStatus, account_status: nextStatus })
+      .eq('id', userId);
+
+    if (error) {
+      console.warn('Supabase toggle user status:', error.message);
+    }
   } catch (err) {
     console.warn('Supabase toggle user status:', err);
   }
@@ -887,7 +922,8 @@ export async function deletePropertyFromSupabase(id: string | number, category?:
   if (!supabase) return;
   const table = getTableNameForCategory(category);
   try {
-    await supabase.from(table).delete().eq('id', id);
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) console.warn('Supabase delete error:', error.message);
   } catch (err) {
     console.warn('Supabase delete error:', err);
   }
@@ -901,4 +937,3 @@ function getTableNameForCategory(category?: string): string {
   if (c.includes('book')) return 'bookstores';
   return 'hostels';
 }
-
