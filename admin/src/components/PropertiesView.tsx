@@ -63,11 +63,21 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
     return properties
       .filter((p) => {
         // Category
-        const c = (p.category || 'Hostel').toLowerCase();
+        // IMPORTANT: category text in the database is not a reliable table/category
+        // identifier (e.g. hostels can be Boy PG, Girls, Boys, etc.). The loader
+        // preserves the exact Supabase source table in _source_table, so use that
+        // as the authoritative category for admin tabs.
         let matchesCat = true;
         if (selectedCategory && selectedCategory !== 'all') {
-          const target = propertyConfig[selectedCategory as PropertyType]?.category.toLowerCase() || '';
-          matchesCat = c.includes(target) || c.includes(selectedCategory.toLowerCase());
+          const sourceTable = String((p as any)._source_table || '').toLowerCase();
+          if (sourceTable) {
+            matchesCat = sourceTable === selectedCategory.toLowerCase();
+          } else {
+            // Backward-compatible fallback for any locally-created property object.
+            const c = (p.category || 'Hostel').toLowerCase();
+            const target = propertyConfig[selectedCategory as PropertyType]?.category.toLowerCase() || '';
+            matchesCat = c.includes(target) || c.includes(selectedCategory.toLowerCase());
+          }
         }
 
         // Area
@@ -309,16 +319,23 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                   const status = propStatus(p);
                   const isSelected = selectedIds.includes(String(p.id));
 
+                  // The source table is authoritative for the editor as well.
+                  // This prevents e.g. a "Boy PG" hostel from being misclassified.
+                  const sourceTable = String((p as any)._source_table || '').toLowerCase();
                   let categoryType: PropertyType = 'hostels';
-                  const c = (p.category || '').toLowerCase();
-                  if (c.includes('tiffin') || c.includes('mess')) categoryType = 'tiffins';
-                  else if (c.includes('library')) categoryType = 'libraries';
-                  else if (c.includes('cafe')) categoryType = 'cafes';
-                  else if (c.includes('book')) categoryType = 'bookstores';
+                  if (sourceTable === 'tiffins' || sourceTable === 'libraries' || sourceTable === 'cafes' || sourceTable === 'bookstores') {
+                    categoryType = sourceTable as PropertyType;
+                  } else {
+                    const c = (p.category || '').toLowerCase();
+                    if (c.includes('tiffin') || c.includes('mess')) categoryType = 'tiffins';
+                    else if (c.includes('library')) categoryType = 'libraries';
+                    else if (c.includes('cafe')) categoryType = 'cafes';
+                    else if (c.includes('book')) categoryType = 'bookstores';
+                  }
 
                   return (
                     <tr
-                      key={p.id}
+                      key={`${sourceTable || 'property'}-${p.id}`}
                       className={`hover:bg-slate-800/40 transition-colors ${
                         isSelected ? 'bg-amber-500/5' : ''
                       }`}
