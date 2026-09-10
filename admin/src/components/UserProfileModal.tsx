@@ -35,7 +35,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const normPhone = normalizePhone(phone);
 
   // Match properties for owner
-  const matchedProperties = properties.filter((p) => {
+  const matchedProperties = (properties || []).filter((p) => {
     return (
       (p.owner_id && String(p.owner_id) === String(user.id)) ||
       (normPhone && normalizePhone(p.phone) === normPhone)
@@ -43,11 +43,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   });
 
   // Match bookings and reviews for student
-  const userBookings = bookings.filter((b) => {
+  const userBookings = (bookings || []).filter((b) => {
     return String(b.student_id) === String(user.id) || (normPhone && normalizePhone(b.student_phone) === normPhone);
   });
 
-  const userReviews = reviews.filter((r) => {
+  const userReviews = (reviews || []).filter((r) => {
     return String(r.student_id) === String(user.id) || String(r.student_name).toLowerCase() === String(user.full_name).toLowerCase();
   });
 
