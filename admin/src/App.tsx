@@ -880,24 +880,107 @@ export default function App() {
   // and real category table before publishing.
   // =========================================================
 
-  const handleApproveListing = (
+  const handleApproveListing = async (
     id: string | number
   ) => {
-    const req =
-      listingRequests.find(
-        (r) =>
-          String(r.id) ===
-          String(id)
-      );
+    const req = listingRequests.find(
+      (r) => String(r.id) === String(id)
+    );
 
     if (!req) {
+      showToast('Listing request not found.', 'error');
       return;
     }
 
-    showToast(
-      'Listing approval is not being faked. Connect the request approval mutation before publishing it.',
-      'info'
-    );
+    const rawCategory = String(
+      req.category || req.property_type || ''
+    ).trim().toLowerCase().replace(/[\s_-]+/g, '');
+
+    const table = rawCategory.includes('book') || rawCategory.includes('stationery')
+      ? 'bookstores'
+      : rawCategory.includes('cafe')
+      ? 'cafes'
+      : rawCategory.includes('library')
+      ? 'libraries'
+      : rawCategory.includes('tiffin') || rawCategory.includes('mess')
+      ? 'tiffins'
+      : 'hostels';
+
+    if (!req.name || !req.area || !req.address || !req.phone) {
+      showToast(
+        'This request is missing required listing data (name, area, address or phone). It was not published.',
+        'error'
+      );
+      return;
+    }
+
+    try {
+      const listingPayload: Record<string, any> = {
+        id: req.id,
+        name: req.name,
+        category: table === 'bookstores' ? 'bookstore' : table === 'cafes' ? 'cafe' : table === 'libraries' ? 'library' : table === 'tiffins' ? 'tiffin' : 'hostel',
+        area: req.area,
+        address: req.address,
+        phone: req.phone,
+        timing: req.timing ?? null,
+        facilities: req.facilities ?? null,
+        rating: req.rating ?? null,
+        owner_id: req.owner_id ?? null,
+        owner_name: req.owner_name ?? null,
+        image: req.image ?? null,
+        verified: false,
+        status: 'active',
+        property_id: req.id,
+        created_at: req.created_at ?? new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      if (table === 'bookstores') {
+        listingPayload.whatsapp = req.owner_phone ?? req.phone;
+      }
+
+      const { error: publishError } = await supabase
+        .from(table)
+        .upsert(listingPayload, { onConflict: 'id' });
+
+      if (publishError) throw publishError;
+
+      const { error: approvalError } = await supabase
+        .from('listing_requests')
+        .update({
+          status: 'approved',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', req.id)
+        .eq('status', 'pending');
+
+      if (approvalError) throw approvalError;
+
+      setListingRequests((prev) =>
+        prev.map((r) =>
+          String(r.id) === String(id)
+            ? { ...r, status: 'approved', updated_at: new Date().toISOString() }
+            : r
+        )
+      );
+
+      await loadData();
+
+      logActivity(
+        'approve_listing',
+        'listing_request',
+        id,
+        { table, property_id: req.id, name: req.name }
+      );
+
+      showToast(`Listing "${req.name}" approved and published in ${table}.`);
+    } catch (err: any) {
+      console.error('Listing approval failed:', err);
+      showToast(
+        err?.message || 'Listing approval failed. Nothing was marked approved.',
+        'error'
+      );
+    }
   };
 
   const handleRejectListing = (
