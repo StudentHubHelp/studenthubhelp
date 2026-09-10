@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react';
 
 import {
   SectionTab,
@@ -20,7 +25,6 @@ import {
 
 import {
   supabase,
-  initialSeedData,
   fetchAllDataFromSupabase,
   updatePropertyVerification,
   toggleUserDisabledState,
@@ -50,10 +54,13 @@ export default function App() {
   // AUTHENTICATION
   // =========================================================
 
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
-  const [adminEmail, setAdminEmail] = useState<string>(
-    'satpalswami22742@gmail.com'
-  );
+  const [isAuthenticated, setIsAuthenticated] =
+    useState<boolean>(true);
+
+  const [adminEmail, setAdminEmail] =
+    useState<string>(
+      'satpalswami22742@gmail.com'
+    );
 
   // =========================================================
   // NAVIGATION
@@ -70,10 +77,10 @@ export default function App() {
   // =========================================================
 
   const [dbConnected, setDbConnected] =
-    useState<boolean>(true);
+    useState<boolean>(false);
 
   const [lastSync, setLastSync] =
-    useState<string>('Just now');
+    useState<string>('Not synced');
 
   const [isRefreshing, setIsRefreshing] =
     useState<boolean>(false);
@@ -84,78 +91,54 @@ export default function App() {
   } | null>(null);
 
   // =========================================================
-  // DATA STATE
+  // REAL DATA STATE
+  //
+  // IMPORTANT:
+  // No seed/demo/mock data.
+  // Everything starts empty and is loaded from Supabase.
   // =========================================================
 
   const [properties, setProperties] =
-    useState<PropertyItem[]>(
-      initialSeedData.properties
-    );
+    useState<PropertyItem[]>([]);
 
   const [students, setStudents] =
-    useState<UserProfile[]>(
-      initialSeedData.students
-    );
+    useState<UserProfile[]>([]);
 
   const [owners, setOwners] =
-    useState<UserProfile[]>(
-      initialSeedData.owners
-    );
+    useState<UserProfile[]>([]);
 
   const [listingRequests, setListingRequests] =
-    useState<ListingRequest[]>(
-      initialSeedData.listingRequests
-    );
+    useState<ListingRequest[]>([]);
 
   const [claimRequests, setClaimRequests] =
-    useState<ClaimRequest[]>(
-      initialSeedData.claimRequests
-    );
+    useState<ClaimRequest[]>([]);
 
   const [verificationRequests, setVerificationRequests] =
-    useState<VerificationRequest[]>(
-      initialSeedData.verificationRequests
-    );
+    useState<VerificationRequest[]>([]);
 
   const [bookings, setBookings] =
-    useState<StudentBooking[]>(
-      initialSeedData.bookings
-    );
+    useState<StudentBooking[]>([]);
 
   const [reviews, setReviews] =
-    useState<ReviewItem[]>(
-      initialSeedData.reviews
-    );
+    useState<ReviewItem[]>([]);
 
   const [reports, setReports] =
-    useState<PropertyReport[]>(
-      initialSeedData.reports
-    );
+    useState<PropertyReport[]>([]);
 
   const [mediaImages, setMediaImages] =
-    useState<OwnerPropertyImage[]>(
-      initialSeedData.mediaImages
-    );
+    useState<OwnerPropertyImage[]>([]);
 
   const [areas, setAreas] =
-    useState<AreaItem[]>(
-      initialSeedData.areas
-    );
+    useState<AreaItem[]>([]);
 
   const [notifications, setNotifications] =
-    useState<AdminNotification[]>(
-      initialSeedData.notifications
-    );
+    useState<AdminNotification[]>([]);
 
   const [activityLogs, setActivityLogs] =
-    useState<AdminActivityLog[]>(
-      initialSeedData.activityLogs
-    );
+    useState<AdminActivityLog[]>([]);
 
   const [settings, setSettings] =
-    useState<SystemSetting[]>(
-      initialSeedData.settings
-    );
+    useState<SystemSetting[]>([]);
 
   // =========================================================
   // MODALS
@@ -198,7 +181,47 @@ export default function App() {
   );
 
   // =========================================================
-  // LOAD / SYNC DATA
+  // PROPERTY CATEGORY HELPER
+  // =========================================================
+
+  const getPropertyType = useCallback(
+    (property: PropertyItem): PropertyType => {
+      const raw = String(
+        (property as any).property_type ||
+          (property as any).type ||
+          (property as any).category ||
+          ''
+      ).toLowerCase();
+
+      if (
+        raw.includes('tiffin') ||
+        raw.includes('mess')
+      ) {
+        return 'tiffins';
+      }
+
+      if (raw.includes('library')) {
+        return 'libraries';
+      }
+
+      if (raw.includes('cafe')) {
+        return 'cafes';
+      }
+
+      if (
+        raw.includes('book') ||
+        raw.includes('bookstore')
+      ) {
+        return 'bookstores';
+      }
+
+      return 'hostels';
+    },
+    []
+  );
+
+  // =========================================================
+  // LOAD / SYNC REAL SUPABASE DATA
   // =========================================================
 
   const loadData = useCallback(async () => {
@@ -208,89 +231,144 @@ export default function App() {
       const fetched =
         await fetchAllDataFromSupabase();
 
-      if (fetched?.properties?.length) {
-        setProperties(fetched.properties);
-      }
+      // IMPORTANT:
+      // Always replace state.
+      // Do NOT check .length.
+      // If Supabase returns [], state must become [].
 
-      if (fetched?.students?.length) {
-        setStudents(fetched.students);
-      }
+      setProperties(
+        Array.isArray(fetched?.properties)
+          ? fetched.properties
+          : []
+      );
 
-      if (fetched?.owners?.length) {
-        setOwners(fetched.owners);
-      }
+      setStudents(
+        Array.isArray(fetched?.students)
+          ? fetched.students
+          : []
+      );
 
-      if (fetched?.listingRequests?.length) {
-        setListingRequests(
-          fetched.listingRequests
-        );
-      }
+      setOwners(
+        Array.isArray(fetched?.owners)
+          ? fetched.owners
+          : []
+      );
 
-      if (fetched?.claimRequests?.length) {
-        setClaimRequests(
-          fetched.claimRequests
-        );
-      }
+      setListingRequests(
+        Array.isArray(
+          fetched?.listingRequests
+        )
+          ? fetched.listingRequests
+          : []
+      );
 
-      if (fetched?.verificationRequests?.length) {
-        setVerificationRequests(
-          fetched.verificationRequests
-        );
-      }
+      setClaimRequests(
+        Array.isArray(
+          fetched?.claimRequests
+        )
+          ? fetched.claimRequests
+          : []
+      );
 
-      if (fetched?.bookings?.length) {
-        setBookings(fetched.bookings);
-      }
+      setVerificationRequests(
+        Array.isArray(
+          fetched?.verificationRequests
+        )
+          ? fetched.verificationRequests
+          : []
+      );
 
-      if (fetched?.reviews?.length) {
-        setReviews(fetched.reviews);
-      }
+      setBookings(
+        Array.isArray(fetched?.bookings)
+          ? fetched.bookings
+          : []
+      );
 
-      if (fetched?.reports?.length) {
-        setReports(fetched.reports);
-      }
+      setReviews(
+        Array.isArray(fetched?.reviews)
+          ? fetched.reviews
+          : []
+      );
 
-      if (fetched?.mediaImages?.length) {
-        setMediaImages(
-          fetched.mediaImages
-        );
-      }
+      setReports(
+        Array.isArray(fetched?.reports)
+          ? fetched.reports
+          : []
+      );
 
-      if (fetched?.areas?.length) {
-        setAreas(fetched.areas);
-      }
+      setMediaImages(
+        Array.isArray(
+          fetched?.mediaImages
+        )
+          ? fetched.mediaImages
+          : []
+      );
 
-      if (fetched?.notifications?.length) {
-        setNotifications(
-          fetched.notifications
-        );
-      }
+      setAreas(
+        Array.isArray(fetched?.areas)
+          ? fetched.areas
+          : []
+      );
 
-      if (fetched?.activityLogs?.length) {
-        setActivityLogs(
-          fetched.activityLogs
-        );
-      }
+      setNotifications(
+        Array.isArray(
+          fetched?.notifications
+        )
+          ? fetched.notifications
+          : []
+      );
 
-      if (fetched?.settings?.length) {
-        setSettings(fetched.settings);
-      }
+      setActivityLogs(
+        Array.isArray(
+          fetched?.activityLogs
+        )
+          ? fetched.activityLogs
+          : []
+      );
+
+      setSettings(
+        Array.isArray(fetched?.settings)
+          ? fetched.settings
+          : []
+      );
 
       setDbConnected(true);
+
       setLastSync(
         new Date().toLocaleTimeString()
       );
     } catch (err: any) {
       console.warn(
         'Supabase fetch notice:',
-        err?.message
+        err?.message || err
       );
 
       setDbConnected(false);
+
+      // IMPORTANT:
+      // On failed initial load, do not keep fake/stale data.
+      setProperties([]);
+      setStudents([]);
+      setOwners([]);
+      setListingRequests([]);
+      setClaimRequests([]);
+      setVerificationRequests([]);
+      setBookings([]);
+      setReviews([]);
+      setReports([]);
+      setMediaImages([]);
+      setAreas([]);
+      setNotifications([]);
+      setActivityLogs([]);
+      setSettings([]);
     } finally {
       setIsRefreshing(false);
     }
   }, []);
+
+  // =========================================================
+  // INITIAL REAL DATA LOAD
+  // =========================================================
 
   useEffect(() => {
     loadData();
@@ -314,7 +392,8 @@ export default function App() {
         entity_id: String(entityId),
         admin_email: adminEmail,
         new_value: detail,
-        created_at: new Date().toISOString(),
+        created_at:
+          new Date().toISOString(),
       };
 
       setActivityLogs((prev) => [
@@ -333,8 +412,9 @@ export default function App() {
     () =>
       listingRequests.filter(
         (r) =>
-          (r.status || 'pending')
-            .toLowerCase() === 'pending'
+          String(
+            r.status || 'pending'
+          ).toLowerCase() === 'pending'
       ).length,
     [listingRequests]
   );
@@ -343,8 +423,9 @@ export default function App() {
     () =>
       claimRequests.filter(
         (c) =>
-          (c.status || 'pending')
-            .toLowerCase() === 'pending'
+          String(
+            c.status || 'pending'
+          ).toLowerCase() === 'pending'
       ).length,
     [claimRequests]
   );
@@ -357,22 +438,25 @@ export default function App() {
     [properties]
   );
 
-  const pendingVerificationCount = useMemo(
-    () =>
-      verificationRequests.filter(
-        (v) =>
-          (v.status || 'pending')
-            .toLowerCase() === 'pending'
-      ).length,
-    [verificationRequests]
-  );
+  const pendingVerificationCount =
+    useMemo(
+      () =>
+        verificationRequests.filter(
+          (v) =>
+            String(
+              v.status || 'pending'
+            ).toLowerCase() === 'pending'
+        ).length,
+      [verificationRequests]
+    );
 
   const pendingBookingCount = useMemo(
     () =>
       bookings.filter(
         (b) =>
-          (b.status || 'active')
-            .toLowerCase() === 'pending'
+          String(
+            b.status || 'active'
+          ).toLowerCase() === 'pending'
       ).length,
     [bookings]
   );
@@ -381,8 +465,9 @@ export default function App() {
     () =>
       reviews.filter(
         (r) =>
-          (r.status || 'pending')
-            .toLowerCase() === 'pending'
+          String(
+            r.status || 'pending'
+          ).toLowerCase() === 'pending'
       ).length,
     [reviews]
   );
@@ -391,21 +476,24 @@ export default function App() {
     () =>
       reports.filter(
         (rp) =>
-          (rp.status || 'investigating')
-            .toLowerCase() !== 'resolved'
+          String(
+            rp.status || 'investigating'
+          ).toLowerCase() !== 'resolved'
       ).length,
     [reports]
   );
 
-  const unreadNotificationCount = useMemo(
-    () =>
-      notifications.filter(
-        (n) =>
-          (n.status || 'unread')
-            .toLowerCase() === 'unread'
-      ).length,
-    [notifications]
-  );
+  const unreadNotificationCount =
+    useMemo(
+      () =>
+        notifications.filter(
+          (n) =>
+            String(
+              n.status || 'unread'
+            ).toLowerCase() === 'unread'
+        ).length,
+      [notifications]
+    );
 
   // =========================================================
   // PROPERTY HANDLERS
@@ -419,12 +507,16 @@ export default function App() {
 
   const handleOpenPropertyEditor = (
     property: PropertyItem | null,
-    type: PropertyType = 'hostels'
+    type?: PropertyType
   ) => {
     setPropertyEditor({
       isOpen: true,
       property,
-      type,
+      type:
+        type ||
+        (property
+          ? getPropertyType(property)
+          : 'hostels'),
     });
   };
 
@@ -433,7 +525,9 @@ export default function App() {
   ) => {
     try {
       const result =
-        await savePropertyToSupabase(saved);
+        await savePropertyToSupabase(
+          saved
+        );
 
       setProperties((prev) => {
         const idx = prev.findIndex(
@@ -472,7 +566,7 @@ export default function App() {
       );
 
       showToast(
-        `Property "${result.name}" saved successfully in directory!`
+        `Property "${result.name}" saved successfully in Supabase.`
       );
 
       setPropertyEditor({
@@ -516,24 +610,19 @@ export default function App() {
           )
         );
 
-        if (
-          previewProperty &&
-          String(previewProperty.id) ===
+        setPreviewProperty((prev) =>
+          prev &&
+          String(prev.id) ===
             String(property.id)
-        ) {
-          setPreviewProperty(
-            (prev) =>
-              prev
-                ? {
-                    ...prev,
-                    verified:
-                      nextVerified,
-                    is_verified:
-                      nextVerified,
-                  }
-                : null
-          );
-        }
+            ? {
+                ...prev,
+                verified:
+                  nextVerified,
+                is_verified:
+                  nextVerified,
+              }
+            : prev
+        );
 
         logActivity(
           'toggle_verification',
@@ -616,6 +705,15 @@ export default function App() {
       }
     };
 
+  // =========================================================
+  // BULK PROPERTY ACTION
+  //
+  // NOTE:
+  // This currently updates UI state only.
+  // Do not pretend it is persisted until the Supabase
+  // bulk mutation is wired in supabase.ts.
+  // =========================================================
+
   const handleBulkAction = async (
     action:
       | 'verify'
@@ -628,61 +726,9 @@ export default function App() {
       return;
     }
 
-    setProperties((prev) =>
-      prev.map((p) => {
-        if (
-          !selectedIds.includes(
-            String(p.id)
-          )
-        ) {
-          return p;
-        }
-
-        if (action === 'verify') {
-          return {
-            ...p,
-            verified: true,
-            is_verified: true,
-          };
-        }
-
-        if (action === 'activate') {
-          return {
-            ...p,
-            status: 'active',
-          };
-        }
-
-        if (action === 'suspend') {
-          return {
-            ...p,
-            status: 'suspended',
-          };
-        }
-
-        if (action === 'feature') {
-          return {
-            ...p,
-            featured: true,
-            is_featured: true,
-          };
-        }
-
-        return p;
-      })
-    );
-
-    logActivity(
-      `bulk_${action}`,
-      'properties',
-      selectedIds.join(','),
-      {
-        count: selectedIds.length,
-      }
-    );
-
     showToast(
-      `Bulk action "${action}" applied to ${selectedIds.length} properties.`
+      `Bulk "${action}" selected. Individual Supabase updates should be used until bulk persistence is connected.`,
+      'info'
     );
   };
 
@@ -763,37 +809,25 @@ export default function App() {
       return;
     }
 
-    setStudents((prev) =>
-      prev.filter(
-        (s) =>
-          String(s.id) !==
-          String(userId)
-      )
-    );
-
-    setOwners((prev) =>
-      prev.filter(
-        (o) =>
-          String(o.id) !==
-          String(userId)
-      )
-    );
-
-    logActivity(
-      'delete_user',
-      'user',
-      userId,
-      {}
-    );
+    // IMPORTANT:
+    // No fake success message.
+    // Supabase delete for profiles/auth is not wired
+    // here because auth.users cannot be safely deleted
+    // using the public anon client.
 
     showToast(
-      'User profile removed.'
+      'User deletion is not connected to Supabase yet.',
+      'info'
     );
   };
 
   const handleSaveOwnerEdit = (
     updatedOwner: UserProfile
   ) => {
+    // UI update only for now.
+    // Supabase profile update needs to be explicitly
+    // wired against the confirmed profiles schema.
+
     setOwners((prev) =>
       prev.map((o) =>
         String(o.id) ===
@@ -838,12 +872,17 @@ export default function App() {
     );
 
     showToast(
-      `Owner profile for ${updatedOwner.full_name} updated successfully.`
+      `Owner profile updated in the current admin session.`
     );
   };
 
   // =========================================================
   // LISTING REQUESTS
+  //
+  // IMPORTANT:
+  // No fake property is created here.
+  // Approval must be connected to the real request row
+  // and real category table before publishing.
   // =========================================================
 
   const handleApproveListing = (
@@ -860,71 +899,9 @@ export default function App() {
       return;
     }
 
-    const newProperty: PropertyItem = {
-      id: `prop-live-${Date.now()}`,
-      name:
-        req.name ||
-        req.property_name ||
-        'Approved Accommodation',
-      category:
-        req.category ||
-        req.property_type ||
-        'Hostel',
-      area:
-        req.area ||
-        'Kota',
-      address:
-        req.address ||
-        'Landmark Road, Kota',
-      city: 'Kota',
-      owner_name:
-        req.owner_name ||
-        'Direct Owner',
-      phone:
-        req.phone ||
-        '',
-      price:
-        req.price ||
-        '₹6,500/mo',
-      status: 'active',
-      verified: true,
-      featured: false,
-      rating: 4.8,
-      views_count: 1,
-      booking_count: 0,
-      created_at:
-        new Date().toISOString(),
-    };
-
-    setProperties((prev) => [
-      newProperty,
-      ...prev,
-    ]);
-
-    setListingRequests((prev) =>
-      prev.map((r) =>
-        String(r.id) ===
-        String(id)
-          ? {
-              ...r,
-              status: 'approved',
-            }
-          : r
-      )
-    );
-
-    logActivity(
-      'approve_listing',
-      'listing_request',
-      id,
-      {
-        property_name:
-          newProperty.name,
-      }
-    );
-
     showToast(
-      `Listing "${newProperty.name}" approved & published live!`
+      'Listing approval is not being faked. Connect the request approval mutation before publishing it.',
+      'info'
     );
   };
 
@@ -951,7 +928,7 @@ export default function App() {
     );
 
     showToast(
-      'Listing request marked as rejected.'
+      'Listing request marked as rejected in the current admin session.'
     );
   };
 
@@ -982,7 +959,7 @@ export default function App() {
     );
 
     showToast(
-      'Ownership claim approved.'
+      'Ownership claim marked approved in the current admin session.'
     );
   };
 
@@ -1009,12 +986,12 @@ export default function App() {
     );
 
     showToast(
-      'Ownership claim rejected.'
+      'Ownership claim marked rejected in the current admin session.'
     );
   };
 
   // =========================================================
-  // VERIFICATION
+  // VERIFICATION REQUESTS
   // =========================================================
 
   const handleApproveVerification = (
@@ -1031,18 +1008,19 @@ export default function App() {
       v &&
       v.property_id
     ) {
-      setProperties((prev) =>
-        prev.map((p) =>
-          String(p.id) ===
-          String(v.property_id)
-            ? {
-                ...p,
-                verified: true,
-                is_verified: true,
-              }
-            : p
-        )
-      );
+      const property =
+        properties.find(
+          (p) =>
+            String(p.id) ===
+            String(v.property_id)
+        );
+
+      if (property) {
+        handleToggleVerification(
+          property,
+          true
+        );
+      }
     }
 
     setVerificationRequests(
@@ -1066,7 +1044,7 @@ export default function App() {
     );
 
     showToast(
-      'Verification request approved. Badge issued.'
+      'Verification request processed.'
     );
   };
 
@@ -1094,7 +1072,7 @@ export default function App() {
     );
 
     showToast(
-      'Verification request rejected.'
+      'Verification request marked rejected.'
     );
   };
 
@@ -1196,7 +1174,7 @@ export default function App() {
     );
 
     showToast(
-      `Report #${id} resolved.`
+      `Report #${id} status changed to ${nextStatus}.`
     );
   };
 
@@ -1228,7 +1206,7 @@ export default function App() {
     );
 
     showToast(
-      `Removed "${property.name}" from featured listings.`
+      `Removed "${property.name}" from featured listings in the current admin session.`
     );
   };
 
@@ -1241,14 +1219,17 @@ export default function App() {
     file: File,
     category: string
   ) => {
-    const mockUrl =
+    // Object URL is browser-local only.
+    // It must not be presented as a real uploaded Supabase URL.
+
+    const localUrl =
       URL.createObjectURL(file);
 
     const newMedia: OwnerPropertyImage = {
       id: Date.now(),
       property_id: propertyId,
-      url: mockUrl,
-      public_url: mockUrl,
+      url: localUrl,
+      public_url: localUrl,
       category,
       created_at:
         new Date().toISOString(),
@@ -1268,6 +1249,11 @@ export default function App() {
           propertyId,
         category,
       }
+    );
+
+    showToast(
+      'Image preview added locally. Supabase Storage upload is not connected yet.',
+      'info'
     );
   };
 
@@ -1290,7 +1276,7 @@ export default function App() {
     );
 
     showToast(
-      'Media image deleted.'
+      'Media removed from the current admin session.'
     );
   };
 
@@ -1329,7 +1315,7 @@ export default function App() {
     );
 
     showToast(
-      `Area "${name}" added.`
+      `Area "${name}" added in the current admin session.`
     );
   };
 
@@ -1360,7 +1346,7 @@ export default function App() {
     );
 
     showToast(
-      `Area updated to "${name}".`
+      `Area updated to "${name}" in the current admin session.`
     );
   };
 
@@ -1428,7 +1414,7 @@ export default function App() {
     );
 
     showToast(
-      `Setting "${key}" updated.`
+      `Setting "${key}" updated in the current admin session.`
     );
   };
 
@@ -1439,17 +1425,21 @@ export default function App() {
   const handleUpdatePassword = async (
     newPass: string
   ) => {
-    if (supabase) {
-      const {
-        error,
-      } =
-        await supabase.auth.updateUser({
-          password: newPass,
-        });
+    if (!supabase) {
+      throw new Error(
+        'Supabase client is not available.'
+      );
+    }
 
-      if (error) {
-        throw error;
-      }
+    const {
+      error,
+    } =
+      await supabase.auth.updateUser({
+        password: newPass,
+      });
+
+    if (error) {
+      throw error;
     }
 
     logActivity(
@@ -1486,9 +1476,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#050b1a] text-slate-100 flex overflow-hidden font-sans antialiased selection:bg-amber-400 selection:text-slate-950">
 
-      {/* =====================================================
-          TOAST
-      ====================================================== */}
+      {/* TOAST */}
 
       {toast && (
         <Toast
@@ -1500,12 +1488,7 @@ export default function App() {
         />
       )}
 
-      {/* =====================================================
-          SIDEBAR
-          
-          IMPORTANT:
-          Sidebar.tsx expects "badges", not "counts".
-      ====================================================== */}
+      {/* SIDEBAR */}
 
       <Sidebar
         currentTab={currentTab}
@@ -1546,17 +1529,11 @@ export default function App() {
         }
       />
 
-      {/* =====================================================
-          MAIN WORKSPACE
-      ====================================================== */}
+      {/* MAIN WORKSPACE */}
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto bg-gradient-to-b from-[#060e22] via-[#050b1a] to-[#040814]">
 
-        {/* ===================================================
-            HEADER
-
-            Header.tsx expects its own search/data props.
-        ==================================================== */}
+        {/* HEADER */}
 
         <Header
           currentTab={currentTab}
@@ -1585,15 +1562,11 @@ export default function App() {
           }
         />
 
-        {/* ===================================================
-            CONTENT
-        ==================================================== */}
+        {/* CONTENT */}
 
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto pb-20">
 
-          {/* =================================================
-              1. OVERVIEW
-          ================================================== */}
+          {/* OVERVIEW */}
 
           {currentTab === 'overview' && (
             <OverviewView
@@ -1642,9 +1615,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              2. ANALYTICS
-          ================================================== */}
+          {/* ANALYTICS */}
 
           {currentTab === 'analytics' && (
             <AnalyticsView
@@ -1666,9 +1637,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              3. USER MANAGEMENT
-          ================================================== */}
+          {/* USER MANAGEMENT */}
 
           {(
             currentTab ===
@@ -1719,18 +1688,18 @@ export default function App() {
                   isOpen: true,
                   property: {
                     id: '',
-                    name: `${owner.full_name}'s Accommodation`,
+                    name: '',
                     owner_name:
                       owner.full_name,
                     phone:
                       owner.phone,
                     category:
                       'Hostel',
-                    city: 'Kota',
+                    city: '',
                     status:
                       'active',
                     verified:
-                      true,
+                      false,
                     created_at:
                       new Date().toISOString(),
                   },
@@ -1740,9 +1709,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              4. ALL PROPERTIES
-          ================================================== */}
+          {/* ALL PROPERTIES */}
 
           {currentTab ===
             'properties' && (
@@ -1769,9 +1736,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              5. HOSTELS
-          ================================================== */}
+          {/* HOSTELS */}
 
           {currentTab ===
             'hostels' && (
@@ -1798,9 +1763,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              6. TIFFINS
-          ================================================== */}
+          {/* TIFFINS */}
 
           {currentTab ===
             'tiffins' && (
@@ -1827,9 +1790,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              7. LIBRARIES
-          ================================================== */}
+          {/* LIBRARIES */}
 
           {currentTab ===
             'libraries' && (
@@ -1856,9 +1817,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              8. CAFES
-          ================================================== */}
+          {/* CAFES */}
 
           {currentTab ===
             'cafes' && (
@@ -1885,9 +1844,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              9. BOOKSTORES
-          ================================================== */}
+          {/* BOOKSTORES */}
 
           {currentTab ===
             'bookstores' && (
@@ -1914,9 +1871,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              10. UNVERIFIED
-          ================================================== */}
+          {/* UNVERIFIED */}
 
           {currentTab ===
             'unverified-properties' && (
@@ -1944,9 +1899,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              11. PLATFORM CONTROLS
-          ================================================== */}
+          {/* PLATFORM CONTROLS */}
 
           {[
             'listing-requests',
@@ -2030,9 +1983,7 @@ export default function App() {
             />
           )}
 
-          {/* =================================================
-              12. INTELLIGENCE / GOVERNANCE
-          ================================================== */}
+          {/* INTELLIGENCE / GOVERNANCE */}
 
           {[
             'areas',
@@ -2087,10 +2038,8 @@ export default function App() {
       </div>
 
       {/* =====================================================
-          MODALS
+          PROPERTY PREVIEW
       ====================================================== */}
-
-      {/* PROPERTY PREVIEW */}
 
       {previewProperty && (
         <PropertyPreviewModal
@@ -2109,7 +2058,7 @@ export default function App() {
 
             handleOpenPropertyEditor(
               p,
-              'hostels'
+              getPropertyType(p)
             );
           }}
           onToggleVerification={(
@@ -2129,53 +2078,58 @@ export default function App() {
         />
       )}
 
-      {/* USER PROFILE */}
+      {/* =====================================================
+          USER PROFILE
+      ====================================================== */}
 
-{userProfileModal && (
-  <UserProfileModal
-    user={
-      userProfileModal
-    }
-    properties={
-      properties
-    }
-    bookings={
-      bookings
-    }
-    reviews={
-      reviews
-    }
-    onClose={() =>
-      setUserProfileModal(
-        null
-      )
-    }
-    onToggleStatus={(
-      id,
-      curDisabled
-    ) =>
-      handleToggleUserStatus(
-        id,
-        curDisabled
-      )
-    }
-    onDeleteUser={
-      handleDeleteUser
-    }
-    onViewProperty={(
-      property
-    ) => {
-      setUserProfileModal(
-        null
-      );
-      handleOpenPropertyPreview(
-        property
-      );
-    }}
-  />
-)}
+      {userProfileModal && (
+        <UserProfileModal
+          user={
+            userProfileModal
+          }
+          properties={
+            properties
+          }
+          bookings={
+            bookings
+          }
+          reviews={
+            reviews
+          }
+          onClose={() =>
+            setUserProfileModal(
+              null
+            )
+          }
+          onToggleStatus={(
+            id,
+            curDisabled
+          ) =>
+            handleToggleUserStatus(
+              id,
+              curDisabled
+            )
+          }
+          onDeleteUser={
+            handleDeleteUser
+          }
+          onViewProperty={(
+            property
+          ) => {
+            setUserProfileModal(
+              null
+            );
 
-      {/* OWNER EDIT */}
+            handleOpenPropertyPreview(
+              property
+            );
+          }}
+        />
+      )}
+
+      {/* =====================================================
+          OWNER EDIT
+      ====================================================== */}
 
       {ownerEditModal && (
         <OwnerEditModal
@@ -2193,7 +2147,9 @@ export default function App() {
         />
       )}
 
-      {/* ADVANCED PROPERTY EDITOR */}
+      {/* =====================================================
+          ADVANCED PROPERTY EDITOR
+      ====================================================== */}
 
       {propertyEditor.isOpen && (
         <AdvancedPropertyModal
