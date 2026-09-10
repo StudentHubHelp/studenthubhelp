@@ -49,7 +49,7 @@ jobs:
               <title>StudentHubHelp - Director Admin Dashboard</title>
               <meta name="description" content="Professional Director Admin Dashboard with user management, real-time Supabase integration, comprehensive analytics charts, and property management." />
               <link rel="preconnect" href="https://fonts.googleapis.com" />
-              <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+              <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
               <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
             </head>
             <body class="bg-[#040814] text-slate-100 antialiased">
@@ -58,6 +58,35 @@ jobs:
             </body>
           </html>
           EOF
+
+      - name: Fix admin overview category counts
+        working-directory: admin
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/components/OverviewView.tsx')
+          text = path.read_text()
+          old = '''  const hostels = properties.filter((p) => (p.category || '').toLowerCase().includes('hostel'));
+          const tiffins = properties.filter((p) => (p.category || '').toLowerCase().includes('tiffin') || (p.category || '').toLowerCase().includes('mess'));
+          const libraries = properties.filter((p) => (p.category || '').toLowerCase().includes('library'));
+          const cafes = properties.filter((p) => (p.category || '').toLowerCase().includes('cafe'));
+          const bookstores = properties.filter((p) => (p.category || '').toLowerCase().includes('book'));'''
+          new = '''  // Category counts must use the actual Supabase source table.
+          // The DB category field contains subtypes such as Boy PG / Girls PG,
+          // so filtering category text can undercount hostels (e.g. 55 instead of 239).
+          const sourceCount = (table: string) =>
+            properties.filter((p) => String((p as any)._source_table || '').toLowerCase() === table).length;
+
+          const hostels = properties.filter((p) => String((p as any)._source_table || '').toLowerCase() === 'hostels');
+          const tiffins = properties.filter((p) => String((p as any)._source_table || '').toLowerCase() === 'tiffins');
+          const libraries = properties.filter((p) => String((p as any)._source_table || '').toLowerCase() === 'libraries');
+          const cafes = properties.filter((p) => String((p as any)._source_table || '').toLowerCase() === 'cafes');
+          const bookstores = properties.filter((p) => String((p as any)._source_table || '').toLowerCase() === 'bookstores');'''
+          if old in text:
+              path.write_text(text.replace(old, new, 1))
+          elif "const sourceCount = (table: string)" not in text:
+              raise SystemExit('Expected OverviewView count block was not found; refusing to modify the file.')
+          PY
 
       - name: Build admin
         working-directory: admin
