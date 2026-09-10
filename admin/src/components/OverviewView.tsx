@@ -356,7 +356,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     {prop.name || 'Property'}
                   </div>
                   <div className="text-[10px] text-slate-400 mt-0.5">
-                    {prop.area || 'Kota'} • {prop.category || 'Hostel'}
+                    {prop.area || '—'} • {prop.category || '—'}
                   </div>
                 </div>
 

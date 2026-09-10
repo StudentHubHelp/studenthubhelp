@@ -59,8 +59,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   // Aggregations
   const totalProperties = properties.length;
   const totalViews = properties.reduce((sum, p) => sum + propViews(p), 0);
-  const totalBookings = bookings.length || properties.reduce((sum, p) => sum + propBookings(p), 0);
-  const totalReviews = reviews.length || properties.reduce((sum, p) => sum + propReviews(p), 0);
+  const totalBookings = bookings.length;
+  const totalReviews = reviews.length;
 
   const ratedProps = properties.filter((p) => propRating(p) > 0);
   const avgRating =
@@ -100,10 +100,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
 
   // Distribution for Pie Chart
   const pieColors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6'];
-  const pieData = categoryData.map((c) => ({
-    name: c.name,
-    value: c.count || 1,
-  }));
+  const pieData = categoryData
+    .filter((c) => c.count > 0)
+    .map((c) => ({
+      name: c.name,
+      value: c.count,
+    }));
 
   // Growth timeline is derived only from real Supabase rows.
   const growthTimelineData = useMemo(() => {
@@ -162,21 +164,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const areaData = useMemo(() => {
     const map: Record<string, { properties: number; views: number }> = {};
     properties.forEach((p) => {
-      const a = p.area || 'Unknown';
-      if (!map[a]) map[a] = { properties: 0, views: 0 };
-      map[a].properties += 1;
-      map[a].views += propViews(p);
-    });
-    return Object.entries(map)
-      .map(([area, data]) => ({ area, ...data }))
-      .sort((a, b) => b.properties - a.properties)
-      .slice(0, 8);
-  }, [properties]);
-
-  const areaData = useMemo(() => {
-    const map: Record<string, { properties: number; views: number }> = {};
-    properties.forEach((p) => {
-      const a = p.area || 'Kota City';
+      const a = String(p.area || '').trim();
+      if (!a) return;
       if (!map[a]) map[a] = { properties: 0, views: 0 };
       map[a].properties += 1;
       map[a].views += propViews(p);
@@ -239,9 +228,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             </div>
           </div>
           <div className="text-3xl font-extrabold text-white mt-3">{totalProperties}</div>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-bold mt-2">
-            <TrendingUp className="w-3.5 h-3.5" /> +18% from last month
-          </div>
+          <div className="text-[11px] text-slate-500 mt-2">Current records in Supabase</div>
         </div>
 
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0d1838] to-[#12214d] border border-slate-800/80 p-5 shadow-lg">
@@ -265,9 +252,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             </div>
           </div>
           <div className="text-3xl font-extrabold text-white mt-3">{totalViews.toLocaleString()}</div>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-bold mt-2">
-            <TrendingUp className="w-3.5 h-3.5" /> +34% student search traffic
-          </div>
+          <div className="text-[11px] text-slate-500 mt-2">Stored property view counters</div>
         </div>
 
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0d1838] to-[#12214d] border border-slate-800/80 p-5 shadow-lg">
@@ -279,7 +264,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           </div>
           <div className="text-3xl font-extrabold text-amber-300 mt-3">{avgRating} / 5.0</div>
           <div className="flex items-center gap-1 text-[11px] text-slate-400 font-bold mt-2">
-            Across {totalReviews} verified student reviews
+            {totalReviews} reviews in Supabase
           </div>
         </div>
       </div>
@@ -351,6 +336,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           </div>
 
           <div className="h-56 w-full my-2">
+            {pieData.length ? (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -377,6 +363,9 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 />
               </PieChart>
             </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500">No property records yet.</div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs">
@@ -401,7 +390,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-bold text-base text-white">Views vs Admissions by Category</h3>
-              <p className="text-xs text-slate-400">Comparison of engagement across Hostels, Tiffins, Libraries, Cafes</p>
+              <p className="text-xs text-slate-400">Comparison of stored engagement metrics across all directories</p>
             </div>
           </div>
 
@@ -429,12 +418,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           </div>
         </div>
 
-        {/* Top Kota Localities Breakdown */}
+        {/* Top Localities Breakdown */}
         <div className="rounded-3xl bg-[#081026] border border-slate-800/80 p-5 sm:p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-bold text-base text-white">Geographic Density (Top Localities)</h3>
-              <p className="text-xs text-slate-400">Number of student accommodations and services by area</p>
+              <p className="text-xs text-slate-400">Number of listings by area from current property records</p>
             </div>
           </div>
 

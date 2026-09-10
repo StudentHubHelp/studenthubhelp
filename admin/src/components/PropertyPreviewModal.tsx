@@ -22,7 +22,7 @@ export const PropertyPreviewModal: React.FC<PropertyPreviewModalProps> = ({
   const title = property.name || property.title || 'Student Accommodation';
   
   // Clean property ID
-  let propId = property.property_id || property.slug || property.id || '1000000361';
+  const propId = property.property_id || property.slug || property.id || '—';
   if (typeof propId === 'string' && propId.length > 12) {
     const numericPart = propId.replace(/[^0-9]/g, '');
     propId = numericPart.length >= 6 ? numericPart.slice(0, 10) : propId.slice(0, 10);
@@ -38,28 +38,19 @@ export const PropertyPreviewModal: React.FC<PropertyPreviewModalProps> = ({
      propertyType === 'libraries' ? 'Study Library' :
      propertyType === 'cafes' ? 'Student Cafe' : 'Bookstore');
 
-  // Realistic banner images tailored to the category
-  const bannerMap: Record<string, string> = {
-    hostels: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80',
-    tiffins: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
-    libraries: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=800&q=80',
-    cafes: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80',
-    bookstores: 'https://images.unsplash.com/photo-1507842229451-79b1be886a20?auto=format&fit=crop&w=800&q=80',
-  };
 
   const bannerImg =
     property.image ||
     property.photo ||
     property.image_url ||
-    bannerMap[propertyType] ||
-    bannerMap.hostels;
+    undefined;
 
   const phone = property.phone || property.owner_phone || '';
-  const area = property.area || 'Kota Central';
-  const address = property.address || property.full_address || `${area}, Kota, Rajasthan`;
-  const timing = property.timing || property.opening_time || 'Open 24 hours / All days';
+  const area = property.area || '';
+  const address = property.address || property.full_address || '';
+  const timing = property.timing || property.opening_time || '';
   const ratingValue = propRating(property);
-  const rating = ratingValue > 0 ? ratingValue.toFixed(1) : '4.5';
+  const rating = ratingValue > 0 ? ratingValue.toFixed(1) : '—';
   const callHref = phone ? `tel:${phone}` : undefined;
 
   return (
@@ -82,7 +73,7 @@ export const PropertyPreviewModal: React.FC<PropertyPreviewModalProps> = ({
             className="w-full h-full object-cover transition-transform hover:scale-105 duration-700"
             loading="eager"
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = bannerMap.hostels;
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/65 pointer-events-none" />

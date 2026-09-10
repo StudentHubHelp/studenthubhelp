@@ -320,7 +320,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
 
                       {/* Address */}
                       <td className="p-4 text-slate-300 max-w-xs truncate">
-                        {u.address || u.city || 'Kota, Rajasthan'}
+                        {u.address || u.city || '—'}
                       </td>
 
                       {/* Linked Properties / Bookings */}

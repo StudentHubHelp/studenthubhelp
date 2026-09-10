@@ -118,7 +118,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
               <MapPin className="w-3.5 h-3.5 text-amber-400" /> Location
             </div>
-            <div className="text-sm font-bold text-slate-200 mt-1 truncate">{user.address || user.city || 'Kota, Rajasthan'}</div>
+            <div className="text-sm font-bold text-slate-200 mt-1 truncate">{user.address || user.city || '—'}</div>
           </div>
           <div className="bg-[#0d1838] border border-slate-800/80 rounded-2xl p-3.5">
             <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
@@ -187,7 +187,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       <div>
                         <div className="font-bold text-sm text-slate-200">{b.property_name || 'Property Admission'}</div>
                         <div className="text-xs text-slate-400 mt-0.5">
-                          Duration: {b.duration || 'Semester'} • Start: {fmtDate(b.joined_date || b.start_date || b.created_at)}
+                          Duration: {b.duration || '—'} • Start: {fmtDate(b.joined_date || b.start_date || b.created_at)}
                         </div>
                       </div>
                       <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
@@ -214,10 +214,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-sm text-slate-200">{r.property_name || 'Listing Review'}</span>
                         <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-amber-400" /> {r.rating || 5} / 5
+                          <Star className="w-3 h-3 fill-amber-400" /> {r.rating ?? '—'} / 5
                         </span>
                       </div>
-                      <p className="text-xs text-slate-300 mt-1 italic">"{r.review || r.comment || 'Helpful place'}"</p>
+                      <p className="text-xs text-slate-300 mt-1 italic">"{r.review || r.comment || '—'}"</p>
                     </div>
                   ))}
                 </div>

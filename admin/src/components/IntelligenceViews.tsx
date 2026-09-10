@@ -258,7 +258,7 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
           <div>
             <h2 className="text-2xl font-serif font-extrabold text-white">Admin Notifications Log</h2>
             <p className="text-xs text-slate-400 mt-1">
-              Operational system events, incoming listings, and ownership claim alerts.
+              Notifications are shown only when a real notification source is connected.
             </p>
           </div>
           <button
@@ -306,7 +306,7 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
             })
           ) : (
             <div className="p-8 rounded-3xl bg-[#081026] border border-slate-800 text-center text-slate-400 text-xs">
-              No notifications on record.
+              No real notifications available.
             </div>
           )}
         </div>

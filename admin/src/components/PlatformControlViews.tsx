@@ -396,7 +396,7 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = ({
                       <td className="p-4 text-slate-300">{b.owner_name || '—'}</td>
                       <td className="p-4 text-slate-300">{shortDate(b.joined_date || b.booking_date || b.created_at)}</td>
                       <td className="p-4 text-slate-400">{shortDate(b.left_date)}</td>
-                      <td className="p-4 text-emerald-400 font-medium">{b.duration || 'Semester'}</td>
+                      <td className="p-4 text-emerald-400 font-medium">{b.duration || '—'}</td>
                       <td className="p-4">
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
@@ -467,9 +467,9 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = ({
                       <td className="p-4 font-bold text-white">{r.student_name || 'Student'}</td>
                       <td className="p-4 text-slate-200">{r.property_name || 'Property'}</td>
                       <td className="p-4 font-bold text-amber-400 flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-amber-400" /> {r.rating || 5} ★
+                        <Star className="w-3 h-3 fill-amber-400" /> {r.rating ?? '—'} ★
                       </td>
-                      <td className="p-4 text-slate-300 max-w-md italic">"{r.review || r.comment || 'Helpful'}"</td>
+                      <td className="p-4 text-slate-300 max-w-md italic">"{r.review || r.comment || '—'}"</td>
                       <td className="p-4 text-slate-400">{shortDate(r.created_at)}</td>
                       <td className="p-4">
                         <span
@@ -614,7 +614,7 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = ({
                 required
                 value={mediaPropId}
                 onChange={(e) => setMediaPropId(e.target.value)}
-                placeholder="e.g. hst-001 or 1000000361"
+                placeholder="Property ID"
                 className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white"
               />
             </div>
