@@ -66,7 +66,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const avgRating =
     ratedProps.length > 0
       ? (ratedProps.reduce((sum, p) => sum + propRating(p), 0) / ratedProps.length).toFixed(2)
-      : '4.7';
+      : '—';
 
   // Category performance breakdown
   const categoryData = useMemo(() => {
@@ -105,20 +105,74 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
     value: c.count || 1,
   }));
 
-  // User registration growth mock timeline
+  // Growth timeline is derived only from real Supabase rows.
   const growthTimelineData = useMemo(() => {
-    return [
-      { date: 'Aug 01', Students: 12, Owners: 3, Bookings: 5 },
-      { date: 'Aug 08', Students: 28, Owners: 6, Bookings: 14 },
-      { date: 'Aug 15', Students: 45, Owners: 11, Bookings: 26 },
-      { date: 'Aug 22', Students: 68, Owners: 17, Bookings: 42 },
-      { date: 'Aug 29', Students: 95, Owners: 22, Bookings: 65 },
-      { date: 'Sep 05', Students: 140, Owners: 31, Bookings: 98 },
-      { date: 'Sep 09', Students: students.length * 15 + 150, Owners: owners.length * 8 + 35, Bookings: totalBookings + 85 },
-    ];
-  }, [students.length, owners.length, totalBookings]);
+    const now = new Date();
+    const days =
+      timeframe === '7d' ? 7 :
+      timeframe === '30d' ? 30 :
+      timeframe === '90d' ? 90 : 0;
 
-  // Area distribution
+    const rows = [
+      ...students.map((u: any) => ({ type: 'Students', date: u.created_at || u.createdAt })),
+      ...owners.map((u: any) => ({ type: 'Owners', date: u.created_at || u.createdAt })),
+      ...bookings.map((b: any) => ({ type: 'Bookings', date: b.created_at || b.createdAt })),
+    ].filter((r) => r.date && !Number.isNaN(new Date(r.date).getTime()));
+
+    if (!rows.length) return [];
+
+    if (timeframe === 'all') {
+      const map: Record<string, { Students: number; Owners: number; Bookings: number }> = {};
+      rows.forEach((row) => {
+        const d = new Date(row.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!map[key]) map[key] = { Students: 0, Owners: 0, Bookings: 0 };
+        map[key][row.type as 'Students' | 'Owners' | 'Bookings'] += 1;
+      });
+      return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).map(([key, data]) => ({
+        date: new Date(`${key}-01T00:00:00`).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }),
+        ...data,
+      }));
+    }
+
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (days - 1));
+
+    const map: Record<string, { Students: number; Owners: number; Bookings: number }> = {};
+    for (let i = 0; i < days; i += 1) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      map[key] = { Students: 0, Owners: 0, Bookings: 0 };
+    }
+
+    rows.forEach((row) => {
+      const key = new Date(row.date).toISOString().slice(0, 10);
+      if (map[key]) map[key][row.type as 'Students' | 'Owners' | 'Bookings'] += 1;
+    });
+
+    return Object.entries(map).map(([key, data]) => ({
+      date: new Date(`${key}T00:00:00`).toLocaleDateString(undefined, { day: '2-digit', month: 'short' }),
+      ...data,
+    }));
+  }, [students, owners, bookings, timeframe]);
+
+  // Area distribution from actual property rows only.
+  const areaData = useMemo(() => {
+    const map: Record<string, { properties: number; views: number }> = {};
+    properties.forEach((p) => {
+      const a = p.area || 'Unknown';
+      if (!map[a]) map[a] = { properties: 0, views: 0 };
+      map[a].properties += 1;
+      map[a].views += propViews(p);
+    });
+    return Object.entries(map)
+      .map(([area, data]) => ({ area, ...data }))
+      .sort((a, b) => b.properties - a.properties)
+      .slice(0, 8);
+  }, [properties]);
+
   const areaData = useMemo(() => {
     const map: Record<string, { properties: number; views: number }> = {};
     properties.forEach((p) => {

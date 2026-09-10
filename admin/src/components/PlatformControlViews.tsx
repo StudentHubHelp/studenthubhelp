@@ -151,7 +151,7 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = ({
                       </td>
                       <td className="p-4 text-slate-300">{req.owner_name || '—'}</td>
                       <td className="p-4 font-mono text-slate-300">{req.phone || '—'}</td>
-                      <td className="p-4 text-slate-300">{req.area || 'Kota'}</td>
+                      <td className="p-4 text-slate-300">{req.area || '—'}</td>
                       <td className="p-4 font-bold text-emerald-400">{req.price || '—'}</td>
                       <td className="p-4 text-slate-400">{shortDate(req.created_at || req.submitted_at)}</td>
                       <td className="p-4">
@@ -666,7 +666,7 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = ({
               <div key={img.id} className="rounded-2xl bg-[#0d1838] border border-slate-800 overflow-hidden group">
                 <div className="h-40 bg-slate-950 overflow-hidden relative">
                   <img
-                    src={img.public_url || img.url || 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=400&q=80'}
+                    src={img.public_url || img.url}
                     alt="Gallery"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
@@ -734,7 +734,7 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = ({
                       </td>
                       <td className="p-4 text-slate-300">{f.owner_name || '—'}</td>
                       <td className="p-4 font-mono text-slate-300">{f.phone || '—'}</td>
-                      <td className="p-4 text-slate-300">{f.area || 'Kota'}</td>
+                      <td className="p-4 text-slate-300">{f.area || '—'}</td>
                       <td className="p-4 text-amber-400 font-bold">{f.rating || 4.8} ★</td>
                       <td className="p-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">

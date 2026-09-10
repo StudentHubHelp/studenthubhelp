@@ -7,7 +7,7 @@ interface AuthScreenProps {
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('satpalswami22742@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -25,10 +25,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
         });
 
         if (error) {
-          // If auth error, notify user or fallback if demo mode
-          console.warn('Supabase auth attempt:', error.message);
-          // Allow Director bypass with demo fallback
-          onLoginSuccess(email.trim());
+          setErrorMsg(error.message || 'Sign in failed.');
           return;
         }
 
@@ -37,21 +34,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
           return;
         }
       }
-      // Fallback
-      onLoginSuccess(email.trim());
     } catch (err: any) {
       console.error(err);
-      onLoginSuccess(email.trim());
+      setErrorMsg('Unable to sign in. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
-  const handleQuickDemo = () => {
-    onLoginSuccess('satpalswami22742@gmail.com');
-  };
-
-  return (
+return (
     <div className="min-h-screen bg-[#050b1a] text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
       {/* Background glow & aesthetic lights */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -120,22 +110,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Demo Fast Track */}
-        <div className="pt-4 border-t border-slate-800/80 space-y-3">
-          <button
-            onClick={handleQuickDemo}
-            className="w-full py-2.5 rounded-xl bg-[#0d1838] hover:bg-[#14224d] border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Instant Director Access (satpalswami22742)</span>
-          </button>
-
-          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Encrypted Supabase Postgres & RLS Policies</span>
-          </div>
-        </div>
       </div>
     </div>
   );
