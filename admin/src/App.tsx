@@ -2131,27 +2131,49 @@ export default function App() {
 
       {/* USER PROFILE */}
 
-      {userProfileModal && (
-        <UserProfileModal
-          user={
-            userProfileModal
-          }
-          onClose={() =>
-            setUserProfileModal(
-              null
-            )
-          }
-          onToggleStatus={(
-            id,
-            curDisabled
-          ) =>
-            handleToggleUserStatus(
-              id,
-              curDisabled
-            )
-          }
-        />
-      )}
+{userProfileModal && (
+  <UserProfileModal
+    user={
+      userProfileModal
+    }
+    properties={
+      properties
+    }
+    bookings={
+      bookings
+    }
+    reviews={
+      reviews
+    }
+    onClose={() =>
+      setUserProfileModal(
+        null
+      )
+    }
+    onToggleStatus={(
+      id,
+      curDisabled
+    ) =>
+      handleToggleUserStatus(
+        id,
+        curDisabled
+      )
+    }
+    onDeleteUser={
+      handleDeleteUser
+    }
+    onViewProperty={(
+      property
+    ) => {
+      setUserProfileModal(
+        null
+      );
+      handleOpenPropertyPreview(
+        property
+      );
+    }}
+  />
+)}
 
       {/* OWNER EDIT */}
 
