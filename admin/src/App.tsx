@@ -310,13 +310,8 @@ export default function App() {
           : []
       );
 
-      setNotifications(
-        Array.isArray(
-          fetched?.notifications
-        )
-          ? fetched.notifications
-          : []
-      );
+      // No confirmed notifications table/source in the live schema. Never fabricate notifications.
+      setNotifications([]);
 
       setActivityLogs(
         Array.isArray(
@@ -1354,35 +1349,13 @@ export default function App() {
   // NOTIFICATIONS
   // =========================================================
 
-  const handleMarkNotificationRead = (
-    id: string | number
-  ) => {
-    setNotifications((prev) =>
-      prev.map((n) =>
-        String(n.id) ===
-        String(id)
-          ? {
-              ...n,
-              status: 'read',
-            }
-          : n
-      )
-    );
+  const handleMarkNotificationRead = (_id: string | number) => {
+    // Notifications are intentionally empty until a real Supabase notification source exists.
   };
 
-  const handleMarkAllNotificationsRead =
-    () => {
-      setNotifications((prev) =>
-        prev.map((n) => ({
-          ...n,
-          status: 'read',
-        }))
-      );
-
-      showToast(
-        'All notifications marked as read.'
-      );
-    };
+  const handleMarkAllNotificationsRead = () => {
+    // Nothing to mark: no fabricated notification records are created.
+  };
 
   // =========================================================
   // SETTINGS
