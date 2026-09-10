@@ -1,0 +1,53 @@
+name: Build Director Admin
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'admin/src/**'
+      - 'admin/public/**'
+      - 'admin/package.json'
+      - 'admin/vite.config.ts'
+      - 'admin/index.html'
+      - '.github/workflows/admin-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-admin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: admin
+        run: npm install
+
+      - name: Build admin
+        working-directory: admin
+        run: npm run build
+
+      - name: Publish build
+        run: |
+          cp -r admin/dist/. /tmp/admin-build/
+          rm -rf admin/assets
+          cp -r /tmp/admin-build/assets admin/
+          cp /tmp/admin-build/index.html admin/
+
+      - name: Commit production build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin
+          git diff --cached --quiet || git commit -m "Build director admin [skip ci]"
+          git push
