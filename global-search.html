@@ -1499,19 +1499,44 @@ function resetStates() {
 }
 
 
-function safeUrl(url) {
-  if (!url) {
-    return "#";
+function safeUrl(row) {
+  if (!row) return "#";
+
+  let rawType = String(row.entity_type || row.category || "hostel").trim().toLowerCase();
+  let type = "hostel";
+  if (rawType.includes("tiffin") || rawType.includes("mess")) type = "tiffin";
+  else if (rawType.includes("library")) type = "library";
+  else if (rawType.includes("cafe")) type = "cafe";
+  else if (rawType.includes("book")) type = "bookstore";
+
+  // Check if result_url contains a slug query
+  let slug = row.slug || null;
+  if (!slug && row.result_url && row.result_url.includes("slug=")) {
+    try {
+      const parsedUrl = new URL(row.result_url, "https://studenthubhelp.github.io");
+      slug = parsedUrl.searchParams.get("slug");
+    } catch (_) {}
   }
 
-  if (
-    url.startsWith("http://") ||
-    url.startsWith("https://")
-  ) {
-    return url;
+  // Generate clean, direct link to property-details.html
+  if (slug) {
+    return `property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`;
   }
 
-  return url;
+  if (row.id) {
+    return `property-details.html?type=${encodeURIComponent(type)}&id=${encodeURIComponent(row.id)}`;
+  }
+
+  if (row.result_url) {
+    let target = row.result_url.replace(/^(hostel|pg|tiffin|library|cafe|bookstore)\.html/i, "property-details.html");
+    if (!target.includes("type=")) {
+      const sep = target.includes("?") ? "&" : "?";
+      target += `${sep}type=${encodeURIComponent(type)}`;
+    }
+    return target;
+  }
+
+  return "#";
 }
 
 
@@ -1629,7 +1654,7 @@ function renderCard(row) {
     "";
 
   const image = escapeHTML(actualImage || fallbackImage);
-  const url = safeUrl(row.result_url);
+  const url = safeUrl(row);
 
   const locationText = [area, city].filter(Boolean).join(", ");
 
