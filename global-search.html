@@ -1443,6 +1443,13 @@ function escapeHTML(value) {
     .replace(/'/g, "&#039;");
 }
 
+/* Helper to safely remove Property ID patterns if present in subtitle/text */
+function cleanPublicText(text) {
+  if (!text) return "";
+  return String(text)
+    .replace(/(?:property\s*id|id)\s*[:#-]?\s*#?\d+/gi, "")
+    .trim();
+}
 
 function formatEntity(entity) {
   const map = {
@@ -1592,8 +1599,9 @@ function renderResults(rows) {
 
 
 function renderCard(row) {
-  const title = escapeHTML(row.title || "Untitled listing");
-  const subtitle = escapeHTML(row.subtitle || "");
+  const title = escapeHTML(cleanPublicText(row.title || "Untitled listing"));
+  const rawSubtitle = cleanPublicText(row.subtitle || "");
+  const subtitle = escapeHTML(rawSubtitle);
   const city = escapeHTML(row.city || "");
   const area = escapeHTML(row.area || "");
   const category = escapeHTML(row.category || "");
@@ -1842,7 +1850,7 @@ async function loadSuggestions() {
     }
 
     suggestions.innerHTML = rows.map(item => {
-      const suggestion = escapeHTML(item.suggestion);
+      const suggestion = escapeHTML(cleanPublicText(item.suggestion));
       const type = escapeHTML(item.suggestion_type);
       const entity = escapeHTML(formatEntity(item.entity_type));
 
