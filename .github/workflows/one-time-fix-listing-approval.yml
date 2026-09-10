@@ -1,0 +1,33 @@
+name: One-time fix listing approval
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-time-fix-listing-approval.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch approval handler
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('admin/src/App.tsx')
+          s = p.read_text()
+          old = '''  const handleApproveListing = (\n    id: string | number\n  ) => {\n    const req =\n      listingRequests.find(\n        (r) =>\n          String(r.id) ===\n          String(id)\n      );\n\n    if (!req) {\n      return;\n    }\n\n    showToast(\n      'Listing approval is not being faked. Connect the request approval mutation before publishing it.',\n      'info'\n    );\n  };'''
+          new = '''  const handleApproveListing = async (\n    id: string | number\n  ) => {\n    const req = listingRequests.find(\n      (r) => String(r.id) === String(id)\n    );\n\n    if (!req) {\n      showToast('Listing request not found.', 'error');\n      return;\n    }\n\n    const rawCategory = String(\n      req.category || req.property_type || ''\n    ).trim().toLowerCase().replace(/[\\s_-]+/g, '');\n\n    const table = rawCategory.includes('book') || rawCategory.includes('stationery')\n      ? 'bookstores'\n      : rawCategory.includes('cafe')\n      ? 'cafes'\n      : rawCategory.includes('library')\n      ? 'libraries'\n      : rawCategory.includes('tiffin') || rawCategory.includes('mess')\n      ? 'tiffins'\n      : 'hostels';\n\n    if (!req.name || !req.area || !req.address || !req.phone) {\n      showToast(\n        'This request is missing required listing data (name, area, address or phone). It was not published.',\n        'error'\n      );\n      return;\n    }\n\n    try {\n      const listingPayload: Record<string, any> = {\n        id: req.id,\n        name: req.name,\n        category: table === 'bookstores' ? 'bookstore' : table === 'cafes' ? 'cafe' : table === 'libraries' ? 'library' : table === 'tiffins' ? 'tiffin' : 'hostel',\n        area: req.area,\n        address: req.address,\n        phone: req.phone,\n        timing: req.timing ?? null,\n        facilities: req.facilities ?? null,\n        rating: req.rating ?? null,\n        owner_id: req.owner_id ?? null,\n        owner_name: req.owner_name ?? null,\n        image: req.image ?? null,\n        verified: false,\n        status: 'active',\n        property_id: req.id,\n        created_at: req.created_at ?? new Date().toISOString(),\n        updated_at: new Date().toISOString(),\n      };\n\n      if (table === 'bookstores') {\n        listingPayload.whatsapp = req.owner_phone ?? req.phone;\n      }\n\n      const { error: publishError } = await supabase\n        .from(table)\n        .upsert(listingPayload, { onConflict: 'id' });\n\n      if (publishError) throw publishError;\n\n      const { error: approvalError } = await supabase\n        .from('listing_requests')\n        .update({\n          status: 'approved',\n          updated_at: new Date().toISOString(),\n        })\n        .eq('id', req.id)\n        .eq('status', 'pending');\n\n      if (approvalError) throw approvalError;\n\n      setListingRequests((prev) =>\n        prev.map((r) =>\n          String(r.id) === String(id)\n            ? { ...r, status: 'approved', updated_at: new Date().toISOString() }\n            : r\n        )\n      );\n\n      await loadData();\n\n      logActivity(\n        'approve_listing',\n        'listing_request',\n        id,\n        { table, property_id: req.id, name: req.name }\n      );\n\n      showToast(`Listing "${req.name}" approved and published in ${table}.`);\n    } catch (err: any) {\n      console.error('Listing approval failed:', err);\n      showToast(\n        err?.message || 'Listing approval failed. Nothing was marked approved.',\n        'error'\n      );\n    }\n  };'''
+          if old not in s:
+              raise SystemExit('Expected approval stub was not found; refusing to modify App.tsx')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit patch and remove temporary workflow
+        run: |
+          rm -f .github/workflows/one-time-fix-listing-approval.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin/src/App.tsx .github/workflows/one-time-fix-listing-approval.yml
+          git commit -m 'Connect listing request approval to Supabase publish' || exit 0
+          git push
