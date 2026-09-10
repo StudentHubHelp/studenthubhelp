@@ -55,7 +55,7 @@ export default function App() {
   // =========================================================
 
   const [isAuthenticated, setIsAuthenticated] =
-    useState<boolean>(true);
+    useState<boolean>(false);
 
   const [adminEmail, setAdminEmail] =
     useState<string>(
