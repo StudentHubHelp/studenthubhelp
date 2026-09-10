@@ -29,7 +29,30 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
           return;
         }
 
-        if (data?.user?.email) {
+        if (data?.user?.id && data?.user?.email) {
+          // IMPORTANT: Only profiles with role = "admin" may enter the dashboard.
+          // Any valid student/owner login is immediately signed out.
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, status')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+          if (profileError) {
+            await supabase.auth.signOut();
+            setErrorMsg('Unable to verify admin access. Please try again.');
+            return;
+          }
+
+          const role = String(profile?.role || '').trim().toLowerCase();
+          const status = String(profile?.status || 'active').trim().toLowerCase();
+
+          if (role !== 'admin' || status !== 'active') {
+            await supabase.auth.signOut();
+            setErrorMsg('Access denied. Only active admin accounts can sign in here.');
+            return;
+          }
+
           onLoginSuccess(data.user.email);
           return;
         }
