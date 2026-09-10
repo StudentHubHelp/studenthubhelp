@@ -8,6 +8,9 @@ interface PropertyPreviewModalProps {
   propertyType?: string;
   onClose: () => void;
   onOpenEditor?: (property: PropertyItem) => void;
+  onEdit?: (property: PropertyItem) => void;
+  onToggleVerification?: (property: PropertyItem, next: boolean) => void;
+  onDelete?: (property: PropertyItem) => void;
 }
 
 export const PropertyPreviewModal: React.FC<PropertyPreviewModalProps> = ({
@@ -15,6 +18,9 @@ export const PropertyPreviewModal: React.FC<PropertyPreviewModalProps> = ({
   propertyType = 'hostels',
   onClose,
   onOpenEditor,
+  onEdit,
+  onToggleVerification,
+  onDelete,
 }) => {
   if (!property) return null;
 
@@ -22,7 +28,7 @@ export const PropertyPreviewModal: React.FC<PropertyPreviewModalProps> = ({
   const title = property.name || property.title || 'Student Accommodation';
   
   // Clean property ID
-  const propId = property.property_id || property.slug || property.id || '—';
+  let propId = property.property_id || property.slug || property.id || '—';
   if (typeof propId === 'string' && propId.length > 12) {
     const numericPart = propId.replace(/[^0-9]/g, '');
     propId = numericPart.length >= 6 ? numericPart.slice(0, 10) : propId.slice(0, 10);
@@ -39,11 +45,30 @@ export const PropertyPreviewModal: React.FC<PropertyPreviewModalProps> = ({
      propertyType === 'cafes' ? 'Student Cafe' : 'Bookstore');
 
 
-  const bannerImg =
+  const directImage =
     property.image ||
-    property.photo ||
     property.image_url ||
-    undefined;
+    property.photo ||
+    property.photo_url ||
+    property.cover_image ||
+    '';
+  const bannerByType: Record<string, string> = {
+    hostels: '/studenthubhelp/hostel-banner.png',
+    tiffins: '/studenthubhelp/tiffin-banner.png',
+    libraries: '/studenthubhelp/library-banner.png',
+    cafes: '/studenthubhelp/cafe-banner.png',
+    bookstores: '/studenthubhelp/bookstore-banner.png',
+  };
+  const normalizeImageUrl = (value: string) => {
+    if (!value) return '';
+    if (/^(https?:|data:|blob:)/i.test(value)) return value;
+    if (value.startsWith('/studenthubhelp/')) return value;
+    if (value.startsWith('/')) return `/studenthubhelp${value}`;
+    return `/studenthubhelp/${value}`;
+  };
+  const bannerImg = normalizeImageUrl(
+    directImage || bannerByType[propertyType] || bannerByType.hostels
+  );
 
   const phone = property.phone || property.owner_phone || '';
   const area = property.area || '';
@@ -204,7 +229,8 @@ export const PropertyPreviewModal: React.FC<PropertyPreviewModalProps> = ({
               type="button"
               onClick={() => {
                 onClose();
-                if (onOpenEditor) onOpenEditor(property);
+                if (onEdit) onEdit(property);
+                else if (onOpenEditor) onOpenEditor(property);
               }}
               className="w-full py-3.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md transition hover:bg-slate-800 cursor-pointer"
               style={{ background: '#0a192f', color: '#ffffff' }}

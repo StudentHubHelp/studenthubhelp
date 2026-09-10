@@ -4,23 +4,20 @@ import { propertyConfig, MASTER_TYPES, propVerified, propFeatured, propStatus, p
 import { X, Save, Building2, MapPin, Phone, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
 
 interface AdvancedPropertyModalProps {
-  isOpen: boolean;
   property: PropertyItem | null;
-  propertyType: PropertyType;
+  initialType: PropertyType;
   onClose: () => void;
-  onSave: (type: PropertyType, propertyData: Partial<PropertyItem>, isNew: boolean) => Promise<void>;
+  onSave: (property: PropertyItem) => Promise<void>;
 }
 
 export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({
-  isOpen,
   property,
-  propertyType,
+  initialType,
   onClose,
   onSave,
 }) => {
-  if (!isOpen) return null;
-
   const isNew = !property || !property.id;
+  const propertyType = initialType;
   const config = propertyConfig[propertyType] || propertyConfig.hostels;
 
   // Form State
@@ -43,8 +40,8 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({
         whatsapp: property.whatsapp || '',
         email: property.email || '',
         area: property.area || '',
-        city: property.city || 'Kota',
-        pincode: property.pincode || '324005',
+        city: property.city || '',
+        pincode: property.pincode || '',
         address: property.address || property.full_address || '',
         status: propStatus(property),
         verified: propVerified(property),
@@ -79,14 +76,14 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({
     } else {
       setFormData({
         category: propertyConfig[propertyType].category,
-        city: 'Kota',
-        status: 'active',
+        city: '',
+        status: '',
         verified: false,
         featured: false,
-        timing: propertyType === 'libraries' ? '24/7 Open' : '',
+        timing: '',
       });
     }
-  }, [property, propertyType, isOpen]);
+  }, [property, propertyType]);
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -102,7 +99,13 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({
     try {
       setSaving(true);
       setError(null);
-      await onSave(selectedType, formData, isNew);
+      await onSave({
+        ...(property || {}),
+        ...formData,
+        id: String(formData.id || property?.id || ''),
+        category: formData.category || config.category,
+        property_type: selectedType,
+      } as PropertyItem);
       onClose();
     } catch (err: any) {
       setError(err?.message || 'Failed to save property');
