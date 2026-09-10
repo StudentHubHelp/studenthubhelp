@@ -2019,6 +2019,7 @@ export default function App() {
           property={
             previewProperty
           }
+          propertyType={getPropertyType(previewProperty)}
           onClose={() =>
             setPreviewProperty(
               null
