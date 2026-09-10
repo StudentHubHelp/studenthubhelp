@@ -758,12 +758,8 @@ export async function fetchAllDataFromSupabase() {
       ? (areasRes.data as AreaItem[])
       : [];
 
-  result.settings =
-    Array.isArray(
-      settingsRes.data
-    )
-      ? (settingsRes.data as SystemSetting[])
-      : [];
+  // No settings table is queried here because it is not part of the confirmed live schema.
+  result.settings = [];
 
   /* =======================================================
      FINAL DEBUG SUMMARY
