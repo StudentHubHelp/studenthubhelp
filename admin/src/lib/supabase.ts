@@ -345,28 +345,6 @@ export function exportToCSV(
 }
 
 /* =========================================================
-   NO FAKE / NO SEED DATA
-========================================================= */
-
-export const initialSeedData = {
-  students: [] as UserProfile[],
-  owners: [] as UserProfile[],
-  properties: [] as PropertyItem[],
-  listingRequests: [] as ListingRequest[],
-  claimRequests: [] as ClaimRequest[],
-  verificationRequests: [] as VerificationRequest[],
-  bookings: [] as StudentBooking[],
-  reviews: [] as ReviewItem[],
-  reports: [] as PropertyReport[],
-  notifications: [] as AdminNotification[],
-  areas: [] as AreaItem[],
-  settings: [] as SystemSetting[],
-  activity: [] as AdminActivityLog[],
-  activityLogs: [] as AdminActivityLog[],
-  mediaImages: [] as OwnerPropertyImage[],
-};
-
-/* =========================================================
    TABLE MAP
 ========================================================= */
 
@@ -502,11 +480,6 @@ export async function fetchAllDataFromSupabase() {
     reviewsRes,
     reportsRes,
     areasRes,
-    notificationsRes,
-    settingsRes,
-    activityLogsRes,
-    ownerImagesRes,
-    propertyImagesRes,
   ] = await Promise.all([
     supabase
       .from("hostels")
@@ -593,46 +566,6 @@ export async function fetchAllDataFromSupabase() {
         ascending: true,
       })
       .limit(1000),
-
-    supabase
-      .from("admin_notifications")
-      .select("*")
-      .order("created_at", {
-        ascending: false,
-      })
-      .limit(1000),
-
-    supabase
-      .from("system_settings")
-      .select("*")
-      .order("key", {
-        ascending: true,
-      })
-      .limit(1000),
-
-    supabase
-      .from("admin_activity_logs")
-      .select("*")
-      .order("created_at", {
-        ascending: false,
-      })
-      .limit(1000),
-
-    supabase
-      .from("owner_property_images")
-      .select("*")
-      .order("sort_order", {
-        ascending: true,
-      })
-      .limit(1000),
-
-    supabase
-      .from("property_images")
-      .select("*")
-      .order("sort_order", {
-        ascending: true,
-      })
-      .limit(1000),
   ]);
 
   /* =======================================================
@@ -670,26 +603,6 @@ export async function fetchAllDataFromSupabase() {
       reportsRes,
     ],
     ["areas", areasRes],
-    [
-      "admin_notifications",
-      notificationsRes,
-    ],
-    [
-      "system_settings",
-      settingsRes,
-    ],
-    [
-      "admin_activity_logs",
-      activityLogsRes,
-    ],
-    [
-      "owner_property_images",
-      ownerImagesRes,
-    ],
-    [
-      "property_images",
-      propertyImagesRes,
-    ],
   ];
 
   for (const [table, response] of responses) {
@@ -845,49 +758,12 @@ export async function fetchAllDataFromSupabase() {
       ? (areasRes.data as AreaItem[])
       : [];
 
-  result.notifications =
-    Array.isArray(
-      notificationsRes.data
-    )
-      ? (notificationsRes.data as AdminNotification[])
-      : [];
-
   result.settings =
     Array.isArray(
       settingsRes.data
     )
       ? (settingsRes.data as SystemSetting[])
       : [];
-
-  result.activityLogs =
-    Array.isArray(
-      activityLogsRes.data
-    )
-      ? (activityLogsRes.data as AdminActivityLog[])
-      : [];
-
-  /* =======================================================
-     REAL PROPERTY IMAGES
-  ======================================================= */
-
-  const ownerImages =
-    Array.isArray(
-      ownerImagesRes.data
-    )
-      ? ownerImagesRes.data
-      : [];
-
-  const propertyImages =
-    Array.isArray(
-      propertyImagesRes.data
-    )
-      ? propertyImagesRes.data
-      : [];
-
-  result.mediaImages = [
-    ...ownerImages,
-    ...propertyImages,
-  ] as OwnerPropertyImage[];
 
   /* =======================================================
      FINAL DEBUG SUMMARY
@@ -940,18 +816,6 @@ export async function fetchAllDataFromSupabase() {
 
       areas:
         result.areas.length,
-
-      notifications:
-        result.notifications.length,
-
-      settings:
-        result.settings.length,
-
-      activityLogs:
-        result.activityLogs.length,
-
-      mediaImages:
-        result.mediaImages.length,
     }
   );
 
