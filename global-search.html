@@ -906,7 +906,7 @@
         <img
           src="logo.png"
           alt="StudentHubHelp"
-          onerror="this.style.display='none'"
+          onerror="this.onerror=null;this.src='${escapeHTML(fallbackImage)}';"
         >
       </div>
 
@@ -1716,10 +1716,28 @@ function renderCard(row) {
   const rating =
     formatRating(row.rating);
 
-  const image =
-    row.image_url
-      ? escapeHTML(row.image_url)
-      : "";
+const imageMap = {
+  hostel: "hostel-banner.png",
+  tiffin: "tiffin-banner.png",
+  library: "library-banner.png",
+  cafe: "cafe-banner.png",
+  bookstore: "bookstore-banner.png"
+};
+
+const actualImage =
+  row.image ||
+  row.image_url ||
+  row.photo ||
+  row.photo_url ||
+  row.cover_image ||
+  "";
+
+const fallbackImage =
+  imageMap[String(row.entity_type || "").toLowerCase()] ||
+  "";
+
+const image =
+  escapeHTML(actualImage || fallbackImage);
 
   const url =
     safeUrl(row.result_url);
@@ -1744,7 +1762,7 @@ function renderCard(row) {
                 src="${image}"
                 alt="${title}"
                 loading="lazy"
-                onerror="this.style.display='none'"
+                onerror="this.onerror=null;this.src='${escapeHTML(fallbackImage)}';"
                decoding="async"
             `
             : ""
