@@ -77,31 +77,307 @@ export const propertyConfig: Record<
   },
 };
 
-
 export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
-  hostels: ['id','name','category','area','address','phone','timing','facilities','rating','image','owner_id','type','owner_name','whatsapp','email','city','pincode','latitude','longitude','monthly_rent','security_deposit','room_types','food_available','food_type','description','verified','status','slug','created_at','total_beds','available_beds','images','room_sharing','attached_bathroom','ac_available','wifi','electricity_included','water_available','laundry','parking','mess_available','mess_charge','rules','nearby_coaching','google_maps_url','last_verified','last_verified_at','updated_at','property_id','price','monthly_fee'],
-  tiffins: ['id','name','category','area','address','phone','timing','facilities','rating','image','owner_id','owner_name','whatsapp','city','service_area','meal_type','food_type','plan_type','price','delivery_available','delivery_charge','menu','timings','description','verified','status','slug','breakfast_available','lunch_available','dinner_available','monthly_plan','weekly_plan','daily_plan','jain_food','home_delivery','subscription_available','custom_meal','google_maps_url','email','created_at','images','updated_at','property_id','monthly_fee'],
-  libraries: ['id','name','category','area','address','phone','timing','facilities','rating','image','owner_id','owner_name','whatsapp','city','latitude','longitude','library_type','monthly_fee','daily_fee','open_24_hours','seating_capacity','available_seats','ac_available','wifi','charging_point','locker','parking','newspaper','separate_cabin','girls_section','boys_section','power_backup','water','cctv','description','google_maps_url','verified','status','slug','email','created_at','images','pincode','updated_at','property_id','price'],
-  cafes: ['id','name','category','area','address','phone','timing','facilities','rating','image','owner_id','owner_name','whatsapp','email','city','latitude','longitude','cuisine','price_range','opening_time','closing_time','weekly_off','delivery','takeaway','menu','description','seating_capacity','wifi','ac','parking','online_order','upi_payment','google_maps_url','verified','status','slug','created_at','images','pincode','updated_at','property_id','price','monthly_fee'],
-  bookstores: ['id','name','category','area','address','phone','timing','facilities','rating','owner_id','image','owner_name','whatsapp','email','city','latitude','longitude','categories','classes','competitive_books','stationery','second_hand_books','book_rental','online_order','home_delivery','exam_books','school_books','college_books','ncert_books','photocopy','printing','lamination','spiral_binding','notes_available','opening_time','closing_time','weekly_off','description','google_maps_url','verified','status','slug','created_at','images','pincode','updated_at','property_id','price','monthly_fee'],
+  hostels: [
+    'id',
+    'name',
+    'category',
+    'area',
+    'address',
+    'phone',
+    'timing',
+    'facilities',
+    'rating',
+    'image',
+    'owner_id',
+    'type',
+    'owner_name',
+    'whatsapp',
+    'email',
+    'city',
+    'pincode',
+    'latitude',
+    'longitude',
+    'monthly_rent',
+    'security_deposit',
+    'room_types',
+    'food_available',
+    'food_type',
+    'description',
+    'verified',
+    'status',
+    'slug',
+    'created_at',
+    'total_beds',
+    'available_beds',
+    'images',
+    'room_sharing',
+    'attached_bathroom',
+    'ac_available',
+    'wifi',
+    'electricity_included',
+    'water_available',
+    'laundry',
+    'parking',
+    'mess_available',
+    'mess_charge',
+    'rules',
+    'nearby_coaching',
+    'google_maps_url',
+    'last_verified',
+    'last_verified_at',
+    'updated_at',
+    'property_id',
+    'price',
+    'monthly_fee'
+  ],
+
+  tiffins: [
+    'id',
+    'name',
+    'category',
+    'area',
+    'address',
+    'phone',
+    'timing',
+    'facilities',
+    'rating',
+    'image',
+    'owner_id',
+    'owner_name',
+    'whatsapp',
+    'city',
+    'service_area',
+    'meal_type',
+    'food_type',
+    'plan_type',
+    'price',
+    'delivery_available',
+    'delivery_charge',
+    'menu',
+    'timings',
+    'description',
+    'verified',
+    'status',
+    'slug',
+    'breakfast_available',
+    'lunch_available',
+    'dinner_available',
+    'monthly_plan',
+    'weekly_plan',
+    'daily_plan',
+    'jain_food',
+    'home_delivery',
+    'subscription_available',
+    'custom_meal',
+    'google_maps_url',
+    'email',
+    'created_at',
+    'images',
+    'updated_at',
+    'property_id',
+    'monthly_fee'
+  ],
+
+  libraries: [
+    'id',
+    'name',
+    'category',
+    'area',
+    'address',
+    'phone',
+    'timing',
+    'facilities',
+    'rating',
+    'image',
+    'owner_id',
+    'owner_name',
+    'whatsapp',
+    'city',
+    'latitude',
+    'longitude',
+    'library_type',
+    'monthly_fee',
+    'daily_fee',
+    'open_24_hours',
+    'seating_capacity',
+    'available_seats',
+    'ac_available',
+    'wifi',
+    'charging_point',
+    'locker',
+    'parking',
+    'newspaper',
+    'separate_cabin',
+    'girls_section',
+    'boys_section',
+    'power_backup',
+    'water',
+    'cctv',
+    'description',
+    'google_maps_url',
+    'verified',
+    'status',
+    'slug',
+    'email',
+    'created_at',
+    'images',
+    'pincode',
+    'updated_at',
+    'property_id',
+    'price'
+  ],
+
+  cafes: [
+    'id',
+    'name',
+    'category',
+    'area',
+    'address',
+    'phone',
+    'timing',
+    'facilities',
+    'rating',
+    'image',
+    'owner_id',
+    'owner_name',
+    'whatsapp',
+    'email',
+    'city',
+    'latitude',
+    'longitude',
+    'cuisine',
+    'price_range',
+    'opening_time',
+    'closing_time',
+    'weekly_off',
+    'delivery',
+    'takeaway',
+    'menu',
+    'description',
+    'seating_capacity',
+    'wifi',
+    'ac',
+    'parking',
+    'online_order',
+    'upi_payment',
+    'google_maps_url',
+    'verified',
+    'status',
+    'slug',
+    'created_at',
+    'images',
+    'pincode',
+    'updated_at',
+    'property_id',
+    'price',
+    'monthly_fee'
+  ],
+
+  bookstores: [
+    'id',
+    'name',
+    'category',
+    'area',
+    'address',
+    'phone',
+    'timing',
+    'facilities',
+    'rating',
+    'owner_id',
+    'image',
+    'owner_name',
+    'whatsapp',
+    'email',
+    'city',
+    'latitude',
+    'longitude',
+    'categories',
+    'classes',
+    'competitive_books',
+    'stationery',
+    'second_hand_books',
+    'book_rental',
+    'online_order',
+    'home_delivery',
+    'exam_books',
+    'school_books',
+    'college_books',
+    'ncert_books',
+    'photocopy',
+    'printing',
+    'lamination',
+    'spiral_binding',
+    'notes_available',
+    'opening_time',
+    'closing_time',
+    'weekly_off',
+    'description',
+    'google_maps_url',
+    'verified',
+    'status',
+    'slug',
+    'created_at',
+    'images',
+    'pincode',
+    'updated_at',
+    'property_id',
+    'price',
+    'monthly_fee'
+  ],
 };
 
-export function getPropertyTableColumns(type: PropertyType): string[] {
-  return PROPERTY_TABLE_COLUMNS[type] || PROPERTY_TABLE_COLUMNS.hostels;
+export function getPropertyTableColumns(
+  type: PropertyType
+): string[] {
+  return (
+    PROPERTY_TABLE_COLUMNS[type] ||
+    PROPERTY_TABLE_COLUMNS.hostels
+  );
 }
 
-export function sanitizePropertyForTable(property: PropertyItem, type: PropertyType): Record<string, any> {
-  const allowed = new Set(getPropertyTableColumns(type));
+export function sanitizePropertyForTable(
+  property: PropertyItem,
+  type: PropertyType
+): Record<string, any> {
+  const allowed = new Set(
+    getPropertyTableColumns(type)
+  );
+
   const out: Record<string, any> = {};
+
   for (const key of allowed) {
-    if (!Object.prototype.hasOwnProperty.call(property, key)) continue;
-    let value = (property as any)[key];
-    if (value === undefined) continue;
-    if (type === 'hostels' && key === 'room_types' && typeof value === 'string') {
-      value = value.trim() ? value.split(',').map((v: string) => v.trim()).filter(Boolean) : [];
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        property,
+        key
+      )
+    ) {
+      continue;
     }
+
+    let value = (property as any)[key];
+
+    if (value === undefined) {
+      continue;
+    }
+
+    if (
+      type === 'hostels' &&
+      key === 'room_types' &&
+      typeof value === 'string'
+    ) {
+      value = value.trim()
+        ? value
+            .split(',')
+            .map((v: string) => v.trim())
+            .filter(Boolean)
+        : [];
+    }
+
     out[key] = value;
   }
+
   return out;
 }
 
@@ -121,7 +397,10 @@ export function normalizePhone(
   v: string | number | undefined | null
 ): string {
   const d = String(v ?? "").replace(/\D/g, "");
-  return d.length >= 10 ? d.slice(-10) : d;
+
+  return d.length >= 10
+    ? d.slice(-10)
+    : d;
 }
 
 export function firstVal<T = any>(
@@ -129,7 +408,9 @@ export function firstVal<T = any>(
   keys: string[],
   fallback: T = "" as any
 ): T {
-  if (!o) return fallback;
+  if (!o) {
+    return fallback;
+  }
 
   for (const k of keys) {
     if (
@@ -145,7 +426,9 @@ export function firstVal<T = any>(
   return fallback;
 }
 
-export function propOwnerId(x: PropertyItem): string {
+export function propOwnerId(
+  x: PropertyItem
+): string {
   return String(
     firstVal(
       x,
@@ -155,18 +438,28 @@ export function propOwnerId(x: PropertyItem): string {
   );
 }
 
-export function propStatus(x: PropertyItem): string {
+export function propStatus(
+  x: PropertyItem
+): string {
   return String(
     firstVal(
       x,
-      ["status", "listing_status", "state"],
+      [
+        "status",
+        "listing_status",
+        "state"
+      ],
       "active"
     ) || "active"
   ).toLowerCase();
 }
 
-export function propVerified(x: PropertyItem): boolean {
-  if (!x) return false;
+export function propVerified(
+  x: PropertyItem
+): boolean {
+  if (!x) {
+    return false;
+  }
 
   const values: any[] = [
     (x as any).verified,
@@ -176,7 +469,9 @@ export function propVerified(x: PropertyItem): boolean {
   ];
 
   return values.some((v) => {
-    if (v === true || v === 1) return true;
+    if (v === true || v === 1) {
+      return true;
+    }
 
     const s = String(v ?? "")
       .trim()
@@ -192,68 +487,107 @@ export function propVerified(x: PropertyItem): boolean {
   });
 }
 
-export function propFeatured(x: PropertyItem): boolean {
+export function propFeatured(
+  x: PropertyItem
+): boolean {
   const v: any = firstVal(
     x,
     ["featured", "is_featured"],
     false
   );
 
-  if (v === true || v === 1) return true;
+  if (v === true || v === 1) {
+    return true;
+  }
 
   const s = String(v ?? "")
     .trim()
     .toLowerCase();
 
-  return s === "true" || s === "1";
+  return (
+    s === "true" ||
+    s === "1"
+  );
 }
 
-export function propViews(x: PropertyItem): number {
+export function propViews(
+  x: PropertyItem
+): number {
   const v = Number(
     firstVal(
       x,
-      ["views", "view_count", "total_views", "visits"],
+      [
+        "views",
+        "view_count",
+        "total_views",
+        "visits"
+      ],
       0
     )
   );
 
-  return Number.isFinite(v) ? v : 0;
+  return Number.isFinite(v)
+    ? v
+    : 0;
 }
 
-export function propBookings(x: PropertyItem): number {
+export function propBookings(
+  x: PropertyItem
+): number {
   const v = Number(
     firstVal(
       x,
-      ["bookings", "booking_count", "total_bookings"],
+      [
+        "bookings",
+        "booking_count",
+        "total_bookings"
+      ],
       0
     )
   );
 
-  return Number.isFinite(v) ? v : 0;
+  return Number.isFinite(v)
+    ? v
+    : 0;
 }
 
-export function propReviews(x: PropertyItem): number {
+export function propReviews(
+  x: PropertyItem
+): number {
   const v = Number(
     firstVal(
       x,
-      ["review_count", "reviews_count"],
+      [
+        "review_count",
+        "reviews_count"
+      ],
       0
     )
   );
 
-  return Number.isFinite(v) ? v : 0;
+  return Number.isFinite(v)
+    ? v
+    : 0;
 }
 
-export function propRating(x: PropertyItem): number {
+export function propRating(
+  x: PropertyItem
+): number {
   const v = Number(
     firstVal(
       x,
-      ["rating", "average_rating", "avg_rating"],
+      [
+        "rating",
+        "average_rating",
+        "avg_rating"
+      ],
       0
     )
   );
 
-  return Number.isFinite(v) ? v : 0;
+  return Number.isFinite(v)
+    ? v
+    : 0;
 }
 
 export function dateCreated(
@@ -261,7 +595,12 @@ export function dateCreated(
 ): string | null {
   return firstVal(
     x,
-    ["created_at", "createdAt", "submitted_at", "date"],
+    [
+      "created_at",
+      "createdAt",
+      "submitted_at",
+      "date"
+    ],
     null
   );
 }
@@ -269,7 +608,9 @@ export function dateCreated(
 export function fmtDate(
   v: string | null | undefined
 ): string {
-  if (!v) return "—";
+  if (!v) {
+    return "—";
+  }
 
   const d = new Date(v);
 
@@ -284,7 +625,9 @@ export function fmtDate(
 export function shortDate(
   v: string | null | undefined
 ): string {
-  if (!v) return "—";
+  if (!v) {
+    return "—";
+  }
 
   const d = new Date(v);
 
@@ -301,7 +644,9 @@ export function exportToCSV(
   data: any[],
   filename: string
 ) {
-  if (!data || !data.length) return;
+  if (!data || !data.length) {
+    return;
+  }
 
   const allKeys = Array.from(
     new Set(
@@ -354,7 +699,10 @@ export function exportToCSV(
   const link =
     document.createElement("a");
 
-  link.setAttribute("href", url);
+  link.setAttribute(
+    "href",
+    url
+  );
 
   link.setAttribute(
     "download",
@@ -387,12 +735,22 @@ const PROPERTY_TABLES = [
 type PropertyTable =
   (typeof PROPERTY_TABLES)[number];
 
+function isPropertyTable(
+  value: string
+): value is PropertyTable {
+  return (
+    PROPERTY_TABLES as readonly string[]
+  ).includes(value);
+}
+
 function getTableNameForCategory(
   category?: string
 ): PropertyTable {
   const c = String(
     category || "hostel"
-  ).toLowerCase();
+  )
+    .toLowerCase()
+    .trim();
 
   if (
     c.includes("tiffin") ||
@@ -423,7 +781,8 @@ function getTableNameForCategory(
    PROPERTY NORMALIZATION
    IMPORTANT:
    Raw DB fields are preserved.
-   We only add common category.
+   _source_table is the authoritative
+   source for admin-side category identity.
 ========================================================= */
 
 function normalizeProperty(
@@ -452,6 +811,90 @@ function normalizeProperty(
 
     _source_id: row.id,
   } as PropertyItem;
+}
+
+/* =========================================================
+   PAGINATED SUPABASE HELPER
+   Supabase/PostgREST commonly caps a response
+   at 1000 rows. This helper keeps requesting
+   pages until all rows are received.
+========================================================= */
+
+async function fetchAllRows(
+  table: string,
+  options?: {
+    orderColumn?: string;
+    ascending?: boolean;
+    pageSize?: number;
+  }
+): Promise<{
+  data: any[];
+  error: any;
+}> {
+  const pageSize =
+    options?.pageSize || 1000;
+
+  const orderColumn =
+    options?.orderColumn;
+
+  const ascending =
+    options?.ascending ?? false;
+
+  let from = 0;
+
+  const allRows: any[] = [];
+
+  while (true) {
+    let query: any = supabase
+      .from(table)
+      .select("*")
+      .range(
+        from,
+        from + pageSize - 1
+      );
+
+    if (orderColumn) {
+      query = query.order(
+        orderColumn,
+        {
+          ascending,
+        }
+      );
+    }
+
+    const {
+      data,
+      error,
+    } = await query;
+
+    if (error) {
+      return {
+        data: allRows,
+        error,
+      };
+    }
+
+    const rows = Array.isArray(data)
+      ? data
+      : [];
+
+    allRows.push(...rows);
+
+    /*
+     * Less than one full page means
+     * there are no more records.
+     */
+    if (rows.length < pageSize) {
+      break;
+    }
+
+    from += pageSize;
+  }
+
+  return {
+    data: allRows,
+    error: null,
+  };
 }
 
 /* =========================================================
@@ -488,10 +931,12 @@ export async function fetchAllDataFromSupabase() {
   }
 
   /*
+   * Every table is loaded independently.
+   *
    * IMPORTANT:
-   * Every request is independent.
-   * One failed table will NOT destroy
-   * the other real data.
+   * Listing requests use pagination so
+   * 1000-row PostgREST limits cannot
+   * silently hide records.
    */
 
   const [
@@ -509,91 +954,121 @@ export async function fetchAllDataFromSupabase() {
     reportsRes,
     areasRes,
   ] = await Promise.all([
-    supabase
-      .from("hostels")
-      .select("*")
-      .limit(1000),
+    fetchAllRows(
+      "hostels",
+      {
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("tiffins")
-      .select("*")
-      .limit(1000),
+    fetchAllRows(
+      "tiffins",
+      {
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("libraries")
-      .select("*")
-      .limit(1000),
+    fetchAllRows(
+      "libraries",
+      {
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("cafes")
-      .select("*")
-      .limit(1000),
+    fetchAllRows(
+      "cafes",
+      {
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("bookstores")
-      .select("*")
-      .limit(1000),
+    fetchAllRows(
+      "bookstores",
+      {
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("profiles")
-      .select("*")
-      .limit(1000),
+    fetchAllRows(
+      "profiles",
+      {
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("listing_requests")
-      .select("*")
-      .order("created_at", {
+    /*
+     * THIS IS THE IMPORTANT FIX.
+     *
+     * Previously:
+     * .limit(1000)
+     *
+     * Now:
+     * fetchAllRows() -> 1000 + 1000 + ...
+     *
+     * So all listing_requests are loaded.
+     */
+    fetchAllRows(
+      "listing_requests",
+      {
+        orderColumn: "created_at",
         ascending: false,
-      })
-      .limit(1000),
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("claim_requests")
-      .select("*")
-      .order("created_at", {
+    fetchAllRows(
+      "claim_requests",
+      {
+        orderColumn: "created_at",
         ascending: false,
-      })
-      .limit(1000),
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("verification_requests")
-      .select("*")
-      .order("created_at", {
+    fetchAllRows(
+      "verification_requests",
+      {
+        orderColumn: "created_at",
         ascending: false,
-      })
-      .limit(1000),
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("student_bookings")
-      .select("*")
-      .order("created_at", {
+    fetchAllRows(
+      "student_bookings",
+      {
+        orderColumn: "created_at",
         ascending: false,
-      })
-      .limit(1000),
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("reviews")
-      .select("*")
-      .order("created_at", {
+    fetchAllRows(
+      "reviews",
+      {
+        orderColumn: "created_at",
         ascending: false,
-      })
-      .limit(1000),
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("property_reports")
-      .select("*")
-      .order("created_at", {
+    fetchAllRows(
+      "property_reports",
+      {
+        orderColumn: "created_at",
         ascending: false,
-      })
-      .limit(1000),
+        pageSize: 1000,
+      }
+    ),
 
-    supabase
-      .from("areas")
-      .select("*")
-      .order("name", {
+    fetchAllRows(
+      "areas",
+      {
+        orderColumn: "name",
         ascending: true,
-      })
-      .limit(1000),
+        pageSize: 1000,
+      }
+    ),
   ]);
 
   /* =======================================================
@@ -633,7 +1108,10 @@ export async function fetchAllDataFromSupabase() {
     ["areas", areasRes],
   ];
 
-  for (const [table, response] of responses) {
+  for (const [
+    table,
+    response,
+  ] of responses) {
     if (response?.error) {
       console.warn(
         `Supabase ${table} query failed:`,
@@ -741,52 +1219,70 @@ export async function fetchAllDataFromSupabase() {
     Array.isArray(
       listingRequestsRes.data
     )
-      ? (listingRequestsRes.data as ListingRequest[])
+      ? (
+          listingRequestsRes.data
+        ) as ListingRequest[]
       : [];
 
   result.claimRequests =
     Array.isArray(
       claimRequestsRes.data
     )
-      ? (claimRequestsRes.data as ClaimRequest[])
+      ? (
+          claimRequestsRes.data
+        ) as ClaimRequest[]
       : [];
 
   result.verificationRequests =
     Array.isArray(
       verificationRequestsRes.data
     )
-      ? (verificationRequestsRes.data as VerificationRequest[])
+      ? (
+          verificationRequestsRes.data
+        ) as VerificationRequest[]
       : [];
 
   result.bookings =
     Array.isArray(
       bookingsRes.data
     )
-      ? (bookingsRes.data as StudentBooking[])
+      ? (
+          bookingsRes.data
+        ) as StudentBooking[]
       : [];
 
   result.reviews =
     Array.isArray(
       reviewsRes.data
     )
-      ? (reviewsRes.data as ReviewItem[])
+      ? (
+          reviewsRes.data
+        ) as ReviewItem[]
       : [];
 
   result.reports =
     Array.isArray(
       reportsRes.data
     )
-      ? (reportsRes.data as PropertyReport[])
+      ? (
+          reportsRes.data
+        ) as PropertyReport[]
       : [];
 
   result.areas =
     Array.isArray(
       areasRes.data
     )
-      ? (areasRes.data as AreaItem[])
+      ? (
+          areasRes.data
+        ) as AreaItem[]
       : [];
 
-  // No settings table is queried here because it is not part of the confirmed live schema.
+  /*
+   * No settings table is queried here
+   * because it is not part of the confirmed
+   * live schema.
+   */
   result.settings = [];
 
   /* =======================================================
@@ -847,6 +1343,29 @@ export async function fetchAllDataFromSupabase() {
 }
 
 /* =========================================================
+   PROPERTY TABLE RESOLUTION
+   _source_table ALWAYS GETS PRIORITY.
+========================================================= */
+
+function getPropertyTable(
+  property?: PropertyItem
+): PropertyTable {
+  const sourceTable = String(
+    (property as any)?._source_table || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (isPropertyTable(sourceTable)) {
+    return sourceTable;
+  }
+
+  return getTableNameForCategory(
+    (property as any)?.category
+  );
+}
+
+/* =========================================================
    PROPERTY VERIFICATION
 ========================================================= */
 
@@ -878,7 +1397,9 @@ export async function updatePropertyVerification(
       error.message
     );
 
-    throw new Error(error.message);
+    throw new Error(
+      error.message
+    );
   }
 
   return true;
@@ -917,7 +1438,9 @@ export async function toggleUserDisabledState(
       error.message
     );
 
-    throw new Error(error.message);
+    throw new Error(
+      error.message
+    );
   }
 
   return true;
@@ -936,37 +1459,67 @@ export async function savePropertyToSupabase(
     );
   }
 
-  const table = getTableNameForCategory((property as any).category);
-  const category = String((property as any).category || '').toLowerCase();
-  const type: PropertyType = category.includes('tiffin') ? 'tiffins' : category.includes('library') ? 'libraries' : category.includes('cafe') ? 'cafes' : category.includes('book') ? 'bookstores' : 'hostels';
+  /*
+   * IMPORTANT:
+   *
+   * _source_table is authoritative for
+   * existing records.
+   *
+   * This prevents a hostel category such as:
+   * "Boy PG"
+   * "Girls"
+   * "Boys"
+   * "Girl PG"
+   *
+   * from being interpreted incorrectly.
+   */
+
+  const table =
+    getPropertyTable(property);
+
+  const type: PropertyType =
+    table;
 
   /*
    * Do NOT send UI-only helper fields
    * back to Supabase.
    */
+
   const {
     _source_table,
     _source_id,
     ...rawProperty
   } = property as any;
 
-  const payload = sanitizePropertyForTable({ ...rawProperty, updated_at: new Date().toISOString() } as PropertyItem, type);
+  const payload =
+    sanitizePropertyForTable(
+      {
+        ...rawProperty,
+        updated_at:
+          new Date().toISOString(),
+      } as PropertyItem,
+      type
+    );
 
-  /*
-   * Existing property:
-   * UPDATE exact record.
-   */
-  if (property.id !== undefined &&
-      property.id !== null &&
-      property.id !== "") {
+  /* =======================================================
+     EXISTING PROPERTY
+     UPDATE exact record.
+  ======================================================= */
 
-    const { data, error } =
-      await supabase
-        .from(table)
-        .update(payload)
-        .eq("id", property.id)
-        .select()
-        .single();
+  if (
+    property.id !== undefined &&
+    property.id !== null &&
+    property.id !== ""
+  ) {
+    const {
+      data,
+      error,
+    } = await supabase
+      .from(table)
+      .update(payload)
+      .eq("id", property.id)
+      .select()
+      .single();
 
     if (error) {
       console.error(
@@ -974,7 +1527,9 @@ export async function savePropertyToSupabase(
         error.message
       );
 
-      throw new Error(error.message);
+      throw new Error(
+        error.message
+      );
     }
 
     return normalizeProperty(
@@ -983,18 +1538,21 @@ export async function savePropertyToSupabase(
     );
   }
 
-  /*
-   * New property:
-   * INSERT without manually inventing
-   * an ID. Database handles identity IDs
-   * where applicable.
-   */
-  const { data, error } =
-    await supabase
-      .from(table)
-      .insert(payload)
-      .select()
-      .single();
+  /* =======================================================
+     NEW PROPERTY
+     INSERT without manually inventing
+     an ID. Database handles identity IDs
+     where applicable.
+  ======================================================= */
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(table)
+    .insert(payload)
+    .select()
+    .single();
 
   if (error) {
     console.error(
@@ -1002,7 +1560,9 @@ export async function savePropertyToSupabase(
       error.message
     );
 
-    throw new Error(error.message);
+    throw new Error(
+      error.message
+    );
   }
 
   return normalizeProperty(
@@ -1040,7 +1600,9 @@ export async function deletePropertyFromSupabase(
       error.message
     );
 
-    throw new Error(error.message);
+    throw new Error(
+      error.message
+    );
   }
 
   return true;
