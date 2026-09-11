@@ -20,15 +20,24 @@ import {
   Minimize2,
   Maximize2,
   MapPin,
-  ExternalLink,
   Target,
   Navigation,
   Calculator,
   Scale
 } from 'lucide-react';
-import { ChatMessage, ChatApiResponse, SentimentType, PropertyRecommendation } from '../types';
+import { ChatMessage, ChatApiResponse, SentimentType } from '../types';
 import { BudgetPlannerCard } from './BudgetPlannerCard';
 import { ComparisonMatrixCard } from './ComparisonMatrixCard';
+
+const CHAT_API_URL =
+  (import.meta as any).env?.VITE_CHAT_API_URL ||
+  'https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat';
+
+// This is a public Supabase client key, not the Gemini secret.
+// For Vite/GitHub Pages builds set VITE_SUPABASE_ANON_KEY at build time.
+const SUPABASE_ANON_KEY =
+  (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+
 
 interface ChatWidgetProps {
   onDiagnosisUpdate?: (diagnosis: any, userMessage: string) => void;
@@ -68,23 +77,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     {
       id: 'welcome-1',
       sender: 'bot',
-      text: 'Namaste! 🙏 Main StudentHubHelp ka Ultra Advance AI Assistant hoon.\n\n**Topic Priority Engine Active**: Aap jis bhi topic (Hostel, Tiffin, 24/7 Library, Area, Budget ya Owner contact) ke baare me puchenge, main usko **FIRST PRIORITY** dekar instant direct answer, verified rate aur Google Maps location provide karunga.\n\nAapko kis topic ki jankari chahiye?',
+      text: 'Namaste! Main StudentHubHelp AI Assistant hoon.\n\nAap hostel, tiffin, library, cafe, bookstore, area, budget ya support ke baare me pooch sakte hain. Listing recommendations live active data par based hongi.\n\nAap kis topic se start karna chahte hain?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       diagnosis: {
         intent: 'Welcome / Onboarding',
         primaryTopic: 'Student Accommodation & Services Discovery',
-        topicDirectAnswer: 'India\'s #1 zero-brokerage verified student discovery platform with 24/7 support.',
+        topicDirectAnswer: 'Aapka requested topic pehle handle kiya jayega.',
         topicPriorityReason: 'Initial onboarding guidance with Topic Priority enabled.',
         userNeedSummary: 'Initial student guidance with full AI topic priority.',
         sentiment: 'positive',
         suggestedFollowUps: [
-          'Piprali Road Boys Hostels',
-          'Tiffin monthly subscription charge',
-          '24/7 AC Library in Sikar',
-          'Director Satpal Swami Helpline'
+          'Active hostels dikhao',
+          'Active tiffin services dikhao',
+          'Active libraries dikhao',
+          'Support details batao'
         ],
-        recommendedCategory: 'hostel',
-        targetCity: 'Sikar'
       }
     }
   ]);
@@ -201,21 +208,50 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
         text: m.text
       }));
 
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          history,
-          preferredTopic: topicToPrioritize
-        })
-      });
+      if (!SUPABASE_ANON_KEY) {
+        throw new Error(
+          'Missing VITE_SUPABASE_ANON_KEY. Add the public Supabase anon/publishable key to the Vite build environment.'
+        );
+      }
+
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 20000);
+
+      let res: Response;
+      try {
+        res = await fetch(CHAT_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            message: text,
+            history,
+            preferredTopic: topicToPrioritize
+          }),
+          signal: controller.signal
+        });
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
 
       if (!res.ok) {
-        throw new Error('Server returned an error');
+        let detail = '';
+        try {
+          const errorBody = await res.json();
+          detail = errorBody?.error || errorBody?.message || '';
+        } catch {
+          // Ignore non-JSON error bodies.
+        }
+        throw new Error(detail || `Chat request failed (${res.status})`);
       }
 
       const data: ChatApiResponse = await res.json();
+      if (!data || typeof data.reply !== 'string' || !data.reply.trim()) {
+        throw new Error('Chat backend returned an invalid response.');
+      }
 
       const botMessage: ChatMessage = {
         id: `bot-${Date.now()}`,
@@ -254,7 +290,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
         if (onLeadCaptured) {
           onLeadCaptured(data.capturedLead);
         }
-        setRecentLeadAlert(`🎉 Contact number ${data.capturedLead.phone} captured! Director Satpal Swami's team will contact you.`);
+        setRecentLeadAlert(`Contact number ${data.capturedLead.phone} captured successfully.`);
         setTimeout(() => setRecentLeadAlert(null), 7000);
       }
 
@@ -268,18 +304,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       }
     } catch (err: any) {
       console.error('Chat error:', err);
+      const isTimeout = err?.name === 'AbortError';
       const errorMessage: ChatMessage = {
         id: `err-${Date.now()}`,
         sender: 'bot',
-        text: 'Namaste! Main aapki sahayata ke liye tayyar hoon. Aap direct hamare Director **Satpal Swami** ji se WhatsApp ya Call par baat kar sakte hain: **+91 9929718264**.',
+        text: isTimeout
+          ? 'Request ko response milne me zyada time lag gaya. Please thodi der baad dobara try karein.'
+          : 'Abhi AI service se response nahi mil pa raha. Please thodi der baad dobara try karein.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         diagnosis: {
-          intent: 'Direct Contact Fallback',
-          primaryTopic: 'Director Satpal Swami Direct Helpline',
-          topicDirectAnswer: 'Call or WhatsApp Director Satpal Swami at +91 9929718264 for instant zero-brokerage support.',
-          userNeedSummary: 'Direct support inquiry',
+          intent: 'Service Error',
+          primaryTopic: activeTopic || 'General Student Support',
+          topicDirectAnswer: 'The AI service is temporarily unavailable. Please try again shortly.',
+          userNeedSummary: text,
           sentiment: 'neutral',
-          suggestedFollowUps: ['Sikar Boys Hostel', 'Tiffin delivery rate', 'WhatsApp par chat karein']
+          suggestedFollowUps: ['Active hostels dikhao', 'Active tiffin services dikhao', 'Active libraries dikhao']
         }
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -301,7 +340,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       {
         id: `welcome-${Date.now()}`,
         sender: 'bot',
-        text: 'Chat restart ho gaya hai! 🙏 Batayein, aaj kis topic ko sabse pehle priority dein? (Piprali Road Hostel, Tiffin/Khana, 24/7 Library ya Director Helpline)',
+        text: 'Chat restart ho gaya hai. Aap apna topic ya requirement batayein; AI usi topic ko pehle handle karega.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         diagnosis: {
           intent: 'Chat Reset',
@@ -310,10 +349,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
           userNeedSummary: 'Fresh student conversation',
           sentiment: 'positive',
           suggestedFollowUps: [
-            'Piprali Road Boys Hostels',
-            'Daily Tiffin Service Price',
-            '24/7 AC Library Seat Booking',
-            'Director Contact Number'
+            'Active hostels dikhao',
+            'Active tiffin services dikhao',
+            'Active libraries dikhao',
+            'Support details batao'
           ]
         }
       }
@@ -323,13 +362,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   const getSentimentBadge = (sentiment?: SentimentType) => {
     switch (sentiment) {
       case 'positive':
-        return <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">😊 Positive</span>;
+        return <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">Positive</span>;
       case 'urgent':
-        return <span className="text-[10px] bg-rose-50 text-rose-700 font-bold px-2 py-0.5 rounded-full border border-rose-200">🔥 Urgent</span>;
+        return <span className="text-[10px] bg-rose-50 text-rose-700 font-bold px-2 py-0.5 rounded-full border border-rose-200">Urgent</span>;
       case 'frustrated':
-        return <span className="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200">😟 Need Support</span>;
+        return <span className="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200">Need Support</span>;
       case 'curious':
-        return <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-full border border-blue-200">🔍 Inquiring</span>;
+        return <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-full border border-blue-200">Inquiring</span>;
       default:
         return null;
     }
@@ -355,7 +394,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                 <Target className="w-3.5 h-3.5 text-amber-400" />
                 Topic Priority AI Active
               </div>
-              <div className="text-slate-300 text-[11px]">Direct Answer 24/7 • Zero Brokerage</div>
+              <div className="text-slate-300 text-[11px]">Live listing assistance</div>
             </div>
           </motion.div>
         )}
@@ -566,7 +605,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                             </div>
                             {msg.diagnosis.topicDirectAnswer && (
                               <div className="text-[11px] font-semibold text-slate-900 mt-1 leading-snug">
-                                ⚡ {msg.diagnosis.topicDirectAnswer}
+                                {msg.diagnosis.topicDirectAnswer}
                               </div>
                             )}
                           </div>
@@ -598,9 +637,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                             <div className="text-[11px] font-bold text-amber-700 flex items-center justify-between">
                               <span className="flex items-center gap-1">
                                 <Sparkles className="w-3 h-3 text-amber-500" />
-                                Topic Priority Verified Matches:
+                                Live Active Matches:
                               </span>
-                              <span className="text-[10px] text-slate-400 font-normal">Zero Brokerage</span>
+                              <span className="text-[10px] text-slate-400 font-normal">Live data</span>
                             </div>
                             {msg.diagnosis.recommendations.map(prop => (
                               <div
@@ -616,7 +655,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                                     </div>
                                     {prop.landmark && (
                                       <div className="text-[10px] text-amber-800 font-medium mt-0.5">
-                                        📍 {prop.landmark}
+                                        {prop.landmark}
                                       </div>
                                     )}
                                   </div>
@@ -627,7 +666,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
                                 {prop.matchReason && (
                                   <div className="text-[10px] bg-amber-50/80 border border-amber-200/60 rounded px-2 py-0.5 text-amber-900 font-medium">
-                                    🎯 {prop.matchReason}
+                                    {prop.matchReason}
                                   </div>
                                 )}
 
@@ -642,12 +681,14 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                                 )}
 
                                 <div className="flex items-center gap-2 mt-1 pt-1 border-t border-slate-200/60 flex-wrap">
-                                  <a
-                                    href={`tel:${prop.phone || '+919929718264'}`}
-                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg transition"
-                                  >
-                                    <Phone className="w-3 h-3 text-emerald-600" /> Call Owner
-                                  </a>
+                                  {prop.phone && (
+                                    <a
+                                      href={`tel:${prop.phone}`}
+                                      className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg transition"
+                                    >
+                                      <Phone className="w-3 h-3 text-emerald-600" /> Call Owner
+                                    </a>
+                                  )}
 
                                   {prop.mapsUrl && (
                                     <a
@@ -660,12 +701,14 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                                     </a>
                                   )}
 
-                                  <a
-                                    href={prop.link || '#'}
-                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 hover:text-amber-900 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg transition ml-auto"
-                                  >
-                                    View <ArrowUpRight className="w-3 h-3" />
-                                  </a>
+                                  {prop.link && (
+                                    <a
+                                      href={prop.link}
+                                      className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 hover:text-amber-900 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg transition ml-auto"
+                                    >
+                                      View <ArrowUpRight className="w-3 h-3" />
+                                    </a>
+                                  )}
                                 </div>
                               </div>
                             ))}
@@ -738,7 +781,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                             onClick={() => handleSendMessage(chip)}
                             className="bg-white border border-amber-300/80 hover:border-amber-500 hover:bg-amber-50 text-slate-700 hover:text-amber-950 px-2.5 py-1 rounded-full text-xs font-medium shadow-xs transition flex items-center gap-1 text-left"
                           >
-                            <span className="text-amber-500 text-[10px]">✦</span> {chip}
+                            <span className="text-amber-500 text-[10px]"></span> {chip}
                           </button>
                         ))}
                       </div>
@@ -814,10 +857,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
               </form>
 
               <div className="flex items-center justify-between text-[10px] text-slate-400 px-1">
-                <span>Free verified support • Zero brokerage</span>
-                <span className="flex items-center gap-1">
-                  Director Helpline: <strong className="text-slate-600">+91 9929718264</strong>
-                </span>
+                <span>Live listing support</span>
+                <span>AI assistance</span>
               </div>
             </div>
           </motion.div>
@@ -826,4 +867,3 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     </>
   );
 };
-
