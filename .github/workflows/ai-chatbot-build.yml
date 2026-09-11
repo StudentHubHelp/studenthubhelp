@@ -1,0 +1,62 @@
+name: Build AI Chatbot
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ai-chatbot/src/**'
+      - 'ai-chatbot/public/**'
+      - 'ai-chatbot/package.json'
+      - 'ai-chatbot/vite.config.ts'
+      - 'ai-chatbot/index.html'
+      - 'ai-chatbot/tsconfig.json'
+      - '.github/workflows/ai-chatbot-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-ai-chatbot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ai-chatbot/package.json
+
+      - name: Install dependencies
+        working-directory: ai-chatbot
+        run: npm install
+
+      - name: Build AI chatbot
+        working-directory: ai-chatbot
+        env:
+          VITE_CHAT_API_URL: https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npx vite build
+
+      - name: Publish production build into ai-chatbot
+        run: |
+          rm -rf /tmp/ai-chatbot-build
+          mkdir -p /tmp/ai-chatbot-build
+          cp -r ai-chatbot/dist/. /tmp/ai-chatbot-build/
+          rm -rf ai-chatbot/assets
+          cp -r /tmp/ai-chatbot-build/assets ai-chatbot/
+          cp /tmp/ai-chatbot-build/index.html ai-chatbot/
+          if [ -f /tmp/ai-chatbot-build/widget.js ]; then cp /tmp/ai-chatbot-build/widget.js ai-chatbot/widget.js; fi
+
+      - name: Commit production build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ai-chatbot
+          git diff --cached --quiet || git commit -m "Build AI chatbot for GitHub Pages [skip ci]"
+          git push
