@@ -1,0 +1,44 @@
+name: Embed StudentHubHelp AI Chatbot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatbot-embed.yml'
+      - 'ai-chatbot/public/widget.js'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  embed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Add chatbot widget to public HTML pages
+        shell: python
+        run: |
+          from pathlib import Path
+          marker = '<!-- StudentHubHelp AI Chatbot -->'
+          script = '  ' + marker + '\n  <script src="/studenthubhelp/ai-chatbot/public/widget.js" defer></script>'
+          for path in sorted(Path('.').glob('*.html')):
+              if path.name == 'google7168366cd2bfb7eb.html':
+                  continue
+              text = path.read_text(encoding='utf-8')
+              if marker in text:
+                  continue
+              if '</body>' not in text:
+                  continue
+              text = text.replace('</body>', script + '\n</body>', 1)
+              path.write_text(text, encoding='utf-8')
+
+      - name: Commit chatbot embed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '*.html'
+          git diff --cached --quiet || git commit -m "Embed StudentHubHelp AI chatbot widget [skip ci]"
+          git push
