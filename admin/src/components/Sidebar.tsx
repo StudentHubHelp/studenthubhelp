@@ -4,7 +4,7 @@ import { PieChart, LineChart, Users, GraduationCap, Briefcase, Building2, Hotel,
 
 interface SidebarProps { currentTab: SectionTab; onSelectTab: (tab: SectionTab) => void; badges: { listingRequests:number; claimRequests:number; unverifiedProperties:number; verificationRequests:number; bookings:number; reviews:number; reports:number; }; onLogout:()=>void; isOpenMobile:boolean; onCloseMobile:()=>void; }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentTab,onSelectTab,badges,onLogout,onCloseMobile }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentTab,onSelectTab,badges,onLogout,isOpenMobile,onCloseMobile }) => {
   const navItemClass=(tab:SectionTab)=>{const isActive=currentTab===tab;return `w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${isActive?'bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm':'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent'}`;};
   const badgeClass='text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/25';
   const item=(tab:SectionTab,label:string,Icon:any,badge?:number)=><button onClick={()=>{onSelectTab(tab);onCloseMobile();}} className={navItemClass(tab)}><span className="flex items-center gap-2.5"><Icon className="w-4 h-4 text-amber-400"/><span>{label}</span></span>{badge&&badge>0?<span className={badgeClass}>{badge}</span>:null}</button>;
