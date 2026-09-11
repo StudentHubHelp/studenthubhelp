@@ -40,7 +40,8 @@ jobs:
         working-directory: ai-chatbot
         env:
           VITE_CHAT_API_URL: https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          # Supabase anon key is intentionally public/client-side; Gemini secret stays server-side in the Edge Function.
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA
         run: npx vite build
 
       - name: Publish production build into ai-chatbot
@@ -51,7 +52,6 @@ jobs:
           rm -rf ai-chatbot/assets
           cp -r /tmp/ai-chatbot-build/assets ai-chatbot/
           cp /tmp/ai-chatbot-build/index.html ai-chatbot/
-          if [ -f /tmp/ai-chatbot-build/widget.js ]; then cp /tmp/ai-chatbot-build/widget.js ai-chatbot/widget.js; fi
 
       - name: Commit production build
         run: |
