@@ -33,55 +33,13 @@ export const BudgetPlannerCard: React.FC<BudgetPlannerCardProps> = ({
   const [showTips, setShowTips] = useState<boolean>(true);
 
   // Compute live items based on current sliderBudget
-  const calculateItems = (target: number): BudgetBreakdownItem[] => {
-    let rent = 4800;
-    let rentLabel = "Sharing Room / Hostel Rent (Piprali Road)";
-    let rentNote = "Verified double-sharing room with fan, study table & wardrobe";
-
-    if (target <= 6000) {
-      rent = 3500;
-      rentLabel = "Budget sharing room from an active listing";
-      rentNote = "Affordable room including water & basic electricity";
-    } else if (target >= 10000) {
-      rent = 6500;
-      rentLabel = "Premium room from an active listing";
-      rentNote = "Personal air-cooled / AC room with attached private bath";
-    }
-
-    let food = 2800;
-    let foodLabel = "Daily tiffin from an active listing";
-    let foodNote = "4 soft rotis, sabzi, dal, rice & salad (2 times hot delivery)";
-    if (target <= 6000) {
-      food = 2200;
-      foodLabel = "Economy Student Mess Plan";
-      foodNote = "2 meals daily at hostel mess";
-    } else if (target >= 10000) {
-      food = 3200;
-      foodLabel = "Premium 3-Time Mess + Milk/Snacks";
-      foodNote = "Breakfast + Lunch + Dinner + Sunday special feast";
-    }
-
-    let library = 700;
-    let libraryLabel = "24/7 AC Digital Study Library Seat";
-    let libraryNote = "Active library listing";
-    if (target <= 6000) {
-      library = 500;
-      libraryLabel = "Day / Evening 8-Hour Library Slot";
-      libraryNote = "Budget study cabin slot or hostel study room";
-    }
-
-    let stationery = 500;
-    let stationeryLabel = "Coaching Test Series, Notes & Xerox";
-    let stationeryNote = "OMR sheets, test papers, pens, notebooks";
-
-    let misc = 600;
-    let miscLabel = "Laundry, Toiletries & Emergency Cash";
-    let miscNote = "Self-laundry / soap, mobile recharge & tea";
-    if (target <= 6000) {
-      misc = 400;
-    } else if (target >= 10000) {
-      misc = 900;
-    }
+const [plan, setPlan] = useState<StudentBudgetPlan>(initialPlan);
+  const total =
+  Number(plan.rent || 0) +
+  Number(plan.food || 0) +
+  Number(plan.library || 0) +
+  Number(plan.stationery || 0) +
+  Number(plan.misc || 0);
 
     return [
       { category: 'rent', label: rentLabel, amount: rent, note: rentNote },
