@@ -63,6 +63,7 @@
 
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
+    stylesheet
     rel="stylesheet"
   />
 
@@ -196,7 +197,7 @@
       align-items: center;
       gap: 12px;
       color: #fff;
-      min-width: 230px;
+      min-width: 250px;
     }
 
     .brand img {
@@ -218,6 +219,28 @@
       color: rgba(255,255,255,.62);
       font-size: 10px;
       margin-top: 1px;
+    }
+
+    /* Dynamic Category ticker under header brand */
+    .brand-categories {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255,255,255,.55);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-top: 2px;
+    }
+
+    .brand-categories span {
+      transition: color .3s ease, transform .3s ease;
+    }
+
+    .brand-categories span.active-cat {
+      color: var(--gold-light);
+      font-weight: 800;
     }
 
     .nav-links {
@@ -293,19 +316,19 @@
     }
 
    .hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 13px;
-  border: 1px solid rgba(214,168,79,.4);
-  border-radius: 999px;
-  background: rgba(214,168,79,.08);
-  color: var(--gold-light);
-  font-size: 12px;
-  font-weight: 700;
-  margin-top: 12px;
-  margin-bottom: 18px;
-}
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border: 1px solid rgba(214,168,79,.4);
+      border-radius: 999px;
+      background: rgba(214,168,79,.08);
+      color: var(--gold-light);
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 12px;
+      margin-bottom: 18px;
+    }
     .hero h1 {
       margin: 0;
       max-width: 730px;
@@ -389,8 +412,8 @@
 
 
     /* =========================================
-       GLOBAL SEARCH BAR UPGRADE
-       Supabase suggestions + keyboard navigation
+        GLOBAL SEARCH BAR UPGRADE
+        Supabase suggestions + keyboard navigation
     ========================================= */
     .hero-search-wrap{
       position:relative;
@@ -617,11 +640,12 @@
       box-shadow: 0 30px 80px rgba(0,0,0,.3);
     }
 
+    /* Height reduced by approx 9% for maximum banner image visibility */
     .carousel-overlay {
       position: absolute;
-      inset: auto 16px 16px;
-      padding: 16px;
-      border-radius: 16px;
+      inset: auto 16px 14px;
+      padding: 11px 14px;
+      border-radius: 14px;
       background: rgba(4,16,32,.82);
       backdrop-filter: blur(12px);
     }
@@ -629,15 +653,17 @@
     .carousel-overlay small {
       color: var(--gold-light);
       font-weight: 700;
-      font-size: 11px;
+      font-size: 10.5px;
       letter-spacing: .5px;
+      display: block;
+      line-height: 1.1;
     }
 
     .carousel-overlay h3 {
-      margin: 4px 0 0;
+      margin: 2px 0 0;
       font-family: "Playfair Display", serif;
-      font-size: clamp(16px, 2vw, 20px);
-      line-height: 1.3;
+      font-size: clamp(14px, 1.8vw, 17.5px);
+      line-height: 1.22;
     }
 
   /* Dots are positioned below the banner, inside the reserved carousel area. */
@@ -1878,7 +1904,7 @@
         min-width: auto;
       }
 
-      .brand-sub {
+      .brand-sub, .brand-categories {
         display: none;
       }
 
@@ -2314,6 +2340,15 @@
             Student Discovery Platform
           </div>
 
+          <!-- Dynamic Categories displayed in header -->
+          <div class="brand-categories" id="headerCategoryTicker" aria-label="Available services">
+            <span data-category-index="0" class="active-cat">Hostel</span>·
+            <span data-category-index="1">Tiffin</span>·
+            <span data-category-index="2">Library</span>·
+            <span data-category-index="3">Cafe</span>·
+            <span data-category-index="4">Bookstore</span>
+          </div>
+
         </div>
 
       </a>
@@ -2637,7 +2672,8 @@
         </div>
 
       
-    </div>
+        <div class="carousel-dots" id="carouselDots"></div>
+      </div>
 
   </section>
 
@@ -4611,7 +4647,10 @@
         <div class="footer-brand">
           <img
             src="logo.png"
-            alt="StudentHubHelp logo" / loading="lazy decoding="async"
+            alt="StudentHubHelp logo"
+            loading="lazy"
+            decoding="async"
+          />
           <strong>
             StudentHubHelp
           </strong>
@@ -4685,11 +4724,11 @@
               satpalswami22742@gmail.com
             </a>
           </div>
- <div>
-<a href="https://studenthubhelp.github.io/studenthubhelp/admin/">
-  ADMIN LOGIN
-</a>
-      </div>   
+          <div>
+            <a href="https://studenthubhelp.github.io/studenthubhelp/admin/">
+              ADMIN LOGIN
+            </a>
+          </div>   
           <div>
             StudentHubHelp Platform
           </div>
@@ -4858,9 +4897,7 @@
         powerBackup: boolValue(row, ["power_backup","backup","electricity_backup"]) 
       }; 
 
-      // 10 specific fields for Data Completeness calculation: 
-      // 1. Property Name, 2. Area, 3. Full Address, 4. Timing, 5. Rating,  
-      // 6. Phone Number, 7. Description / About, 8. Photo / Image, 9. Review, 10. Google Map URL 
+      // 10 specific fields for Data Completeness calculation
       const completenessFields = [ 
         firstValue(row, ["name", "title", "business_name", "property_name"]), 
         firstValue(row, ["area", "locality", "location", "neighborhood", "address_area"]), 
@@ -4911,10 +4948,11 @@
     ); 
 
     /* ========================================= 
-        HERO CAROUSEL (5s interval)
+        HERO CAROUSEL (3s interval) + HEADER TICKER
     ========================================= */ 
     const carouselCards = document.querySelectorAll(".carousel-card"); 
     const carouselDots = $("carouselDots"); 
+    const headerTickerSpans = document.querySelectorAll("#headerCategoryTicker span[data-category-index]");
     let carouselIndex = 0; 
 
     carouselCards.forEach((_,index) => { 
@@ -4933,6 +4971,10 @@
     function showCarousel(index) { 
       carouselCards.forEach((card,i) => card.classList.toggle("active",i === index)); 
       dots.forEach((dot,i) => dot.classList.toggle("active",i === index)); 
+      // Update header category highlight dynamically
+      headerTickerSpans.forEach(span => {
+        span.classList.toggle("active-cat", Number(span.dataset.categoryIndex) === index);
+      });
     } 
     if (carouselCards.length > 1) { 
       setInterval(() => { 
