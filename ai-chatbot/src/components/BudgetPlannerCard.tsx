@@ -32,22 +32,17 @@ export const BudgetPlannerCard: React.FC<BudgetPlannerCardProps> = ({
   const [sliderBudget, setSliderBudget] = useState<number>(initialPlan.targetBudget || 8000);
   const [showTips, setShowTips] = useState<boolean>(true);
 
-  // Compute live items based on current sliderBudget
-const [plan, setPlan] = useState<StudentBudgetPlan>(initialPlan);
-  const total =
-  Number(plan.rent || 0) +
-  Number(plan.food || 0) +
-  Number(plan.library || 0) +
-  Number(plan.stationery || 0) +
-  Number(plan.misc || 0);
-
-    return [
-      { category: 'rent', label: rentLabel, amount: rent, note: rentNote },
-      { category: 'food', label: foodLabel, amount: food, note: foodNote },
-      { category: 'library', label: libraryLabel, amount: library, note: libraryNote },
-      { category: 'stationery', label: stationeryLabel, amount: stationery, note: stationeryNote },
-      { category: 'misc', label: miscLabel, amount: misc, note: miscNote }
-    ];
+  // Use only live budget items returned by the API; never invent prices.
+  const calculateItems = (_target: number): BudgetBreakdownItem[] => {
+    const source = Array.isArray(initialPlan.items) ? initialPlan.items : [];
+    return source
+      .filter((item) => item && Number.isFinite(Number(item.amount)) && Number(item.amount) >= 0)
+      .map((item) => ({
+        category: item.category,
+        label: item.label,
+        amount: Number(item.amount),
+        note: item.note,
+      }));
   };
 
   const items = calculateItems(sliderBudget);
