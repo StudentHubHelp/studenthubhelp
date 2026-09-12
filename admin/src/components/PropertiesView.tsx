@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { PropertyItem, PropertyType } from '../types';
+import React, { useEffect, useState, useMemo } from 'react';
+import { ListingRequest, PropertyItem, PropertyType } from '../types';
 import {
   propertyConfig,
   MASTER_TYPES,
@@ -11,12 +11,10 @@ import {
   propBookings,
   shortDate,
   exportToCSV,
+  supabase,
 } from '../lib/supabase';
 import {
-  Building2,
   Plus,
-  Search,
-  Filter,
   Download,
   Eye,
   Edit,
@@ -40,6 +38,30 @@ interface PropertiesViewProps {
   onBulkAction: (action: 'verify' | 'activate' | 'suspend' | 'feature', selectedIds: string[]) => void;
 }
 
+const listingRequestToProperty = (r: ListingRequest): PropertyItem => ({
+  ...(r as any),
+  id: String(r.id),
+  name: r.name || r.property_name || r.title || 'Listing Request',
+  category: r.category || r.property_type || 'Hostel',
+  property_type: r.property_type || r.category || 'Hostel',
+  status: 'pending',
+  verified: Boolean(r.verified),
+  _source_table: 'listing_requests',
+  _source_id: r.id,
+});
+
+const listingRequestTable = (p: PropertyItem): PropertyType => {
+  const raw = String(
+    (p as any).property_type || (p as any).category || ''
+  ).toLowerCase().replace(/[\s_-]+/g, '');
+
+  if (raw.includes('tiffin') || raw.includes('mess')) return 'tiffins';
+  if (raw.includes('library')) return 'libraries';
+  if (raw.includes('cafe')) return 'cafes';
+  if (raw.includes('book') || raw.includes('stationery')) return 'bookstores';
+  return 'hostels';
+};
+
 export const PropertiesView: React.FC<PropertiesViewProps> = ({
   categoryFilter = 'all',
   properties,
@@ -57,10 +79,72 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
   const [ownerFilter, setOwnerFilter] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [pendingListingProperties, setPendingListingProperties] = useState<PropertyItem[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+
+  const isPendingRequestView = categoryFilter === 'all' && statusFilter === 'pending';
+
+  // All Properties -> Pending Only must read the pending queue from
+  // listing_requests, because those records are intentionally not yet
+  // published into the live property tables.
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!isPendingRequestView) {
+      setPendingListingProperties([]);
+      setPendingLoading(false);
+      return;
+    }
+
+    const loadPendingRequests = async () => {
+      setPendingLoading(true);
+      try {
+        const rows: ListingRequest[] = [];
+        const pageSize = 1000;
+        let from = 0;
+
+        while (true) {
+          const { data, error } = await supabase
+            .from('listing_requests')
+            .select('*')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
+            .range(from, from + pageSize - 1);
+
+          if (error) throw error;
+
+          const page = Array.isArray(data) ? (data as ListingRequest[]) : [];
+          rows.push(...page);
+
+          if (page.length < pageSize) break;
+          from += pageSize;
+        }
+
+        if (!cancelled) {
+          setPendingListingProperties(rows.map(listingRequestToProperty));
+        }
+      } catch (error) {
+        console.warn('Pending listing request load failed:', error);
+        if (!cancelled) setPendingListingProperties([]);
+      } finally {
+        if (!cancelled) setPendingLoading(false);
+      }
+    };
+
+    loadPendingRequests();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isPendingRequestView]);
 
   // Filtered Properties
   const filteredProperties = useMemo(() => {
-    return properties
+    const sourceProperties = isPendingRequestView
+      ? pendingListingProperties
+      : properties;
+
+    return sourceProperties
       .filter((p) => {
         // Category
         // IMPORTANT: category text in the database is not a reliable table/category
@@ -70,7 +154,9 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
         let matchesCat = true;
         if (selectedCategory && selectedCategory !== 'all') {
           const sourceTable = String((p as any)._source_table || '').toLowerCase();
-          if (sourceTable) {
+          if (sourceTable === 'listing_requests') {
+            matchesCat = listingRequestTable(p) === selectedCategory.toLowerCase();
+          } else if (sourceTable) {
             matchesCat = sourceTable === selectedCategory.toLowerCase();
           } else {
             // Backward-compatible fallback for any locally-created property object.
@@ -116,7 +202,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
         if (sortBy === 'oldest') return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
         return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
       });
-  }, [properties, selectedCategory, areaFilter, statusFilter, verifiedFilter, featuredFilter, ownerFilter, sortBy]);
+  }, [properties, pendingListingProperties, isPendingRequestView, selectedCategory, areaFilter, statusFilter, verifiedFilter, featuredFilter, ownerFilter, sortBy]);
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredProperties.length) {
@@ -145,7 +231,9 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
         <div>
           <h2 className="text-2xl font-serif font-extrabold text-white">{pageTitle}</h2>
           <p className="text-xs text-slate-400 mt-1">
-            {filteredProperties.length} active listings • Real-time live Supabase management
+            {pendingLoading && isPendingRequestView
+              ? 'Loading pending listing requests…'
+              : `${filteredProperties.length} ${isPendingRequestView ? 'pending listing requests' : 'active listings'} • Real-time live Supabase management`}
           </p>
         </div>
 
@@ -318,12 +406,15 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                   const isFeatured = propFeatured(p);
                   const status = propStatus(p);
                   const isSelected = selectedIds.includes(String(p.id));
+                  const isPendingRequest = String((p as any)._source_table || '') === 'listing_requests';
 
                   // The source table is authoritative for the editor as well.
                   // This prevents e.g. a "Boy PG" hostel from being misclassified.
                   const sourceTable = String((p as any)._source_table || '').toLowerCase();
                   let categoryType: PropertyType = 'hostels';
-                  if (sourceTable === 'tiffins' || sourceTable === 'libraries' || sourceTable === 'cafes' || sourceTable === 'bookstores') {
+                  if (sourceTable === 'listing_requests') {
+                    categoryType = listingRequestTable(p);
+                  } else if (sourceTable === 'tiffins' || sourceTable === 'libraries' || sourceTable === 'cafes' || sourceTable === 'bookstores') {
                     categoryType = sourceTable as PropertyType;
                   } else {
                     const c = (p.category || '').toLowerCase();
@@ -354,8 +445,8 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                       {/* Property Name */}
                       <td className="p-4">
                         <button
-                          onClick={() => onOpenPreview(p)}
-                          className="font-bold text-slate-100 hover:text-amber-300 text-left transition-colors flex items-center gap-1.5 group cursor-pointer"
+                          onClick={() => !isPendingRequest && onOpenPreview(p)}
+                          className={`font-bold text-slate-100 ${!isPendingRequest ? 'hover:text-amber-300 cursor-pointer' : 'cursor-default'} text-left transition-colors flex items-center gap-1.5 group`}
                         >
                           <span>{p.name || p.title || 'Accommodation'}</span>
                           {isFeatured && (
@@ -401,29 +492,35 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                         </span>
                       </td>
 
-                      {/* Verification Toggle Button */}
+                      {/* Verification */}
                       <td className="p-4">
-                        <button
-                          onClick={() => onToggleVerification(p, !isVerified)}
-                          className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
-                            isVerified
-                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/30'
-                              : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/30'
-                          }`}
-                          title={isVerified ? 'Click to revoke verified status' : 'Click to grant Verified badge'}
-                        >
-                          {isVerified ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                              <span>Verified</span>
-                            </>
-                          ) : (
-                            <>
-                              <ShieldAlert className="w-3 h-3 text-slate-400" />
-                              <span>Verify</span>
-                            </>
-                          )}
-                        </button>
+                        {isPendingRequest ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-1 rounded-full border bg-amber-500/10 text-amber-300 border-amber-500/25">
+                            Pending Review
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => onToggleVerification(p, !isVerified)}
+                            className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                              isVerified
+                                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/30'
+                                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/30'
+                            }`}
+                            title={isVerified ? 'Click to revoke verified status' : 'Click to grant Verified badge'}
+                          >
+                            {isVerified ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                <span>Verified</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShieldAlert className="w-3 h-3 text-slate-400" />
+                                <span>Verify</span>
+                              </>
+                            )}
+                          </button>
+                        )}
                       </td>
 
                       {/* Rating */}
@@ -446,32 +543,39 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
                       {/* Actions */}
                       <td className="p-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Image-2 Style Preview */}
-                          <button
-                            onClick={() => onOpenPreview(p)}
-                            className="px-2.5 py-1.5 rounded-lg bg-[#0d1838] hover:bg-[#14224d] text-amber-300 border border-amber-500/30 hover:border-amber-400 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
-                          >
-                            <Eye className="w-3 h-3" />
-                            <span>Preview</span>
-                          </button>
+                          {!isPendingRequest && (
+                            <>
+                              {/* Image-2 Style Preview */}
+                              <button
+                                onClick={() => onOpenPreview(p)}
+                                className="px-2.5 py-1.5 rounded-lg bg-[#0d1838] hover:bg-[#14224d] text-amber-300 border border-amber-500/30 hover:border-amber-400 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>Preview</span>
+                              </button>
 
-                          {/* Master Editor */}
-                          <button
-                            onClick={() => onOpenEditor(p, categoryType)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer"
-                            title="Edit in Master Editor"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                          </button>
+                              {/* Master Editor */}
+                              <button
+                                onClick={() => onOpenEditor(p, categoryType)}
+                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer"
+                                title="Edit in Master Editor"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
 
-                          {/* Delete */}
-                          <button
-                            onClick={() => onDeleteProperty(p)}
-                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors cursor-pointer"
-                            title="Delete from Live Supabase"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                              {/* Delete */}
+                              <button
+                                onClick={() => onDeleteProperty(p)}
+                                className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors cursor-pointer"
+                                title="Delete from Live Supabase"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                          {isPendingRequest && (
+                            <span className="text-[10px] text-slate-500 font-semibold">Manage in Listing Requests</span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -480,7 +584,9 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
               ) : (
                 <tr>
                   <td colSpan={11} className="p-8 text-center text-slate-400 text-xs">
-                    No properties match your current search or filter criteria.
+                    {pendingLoading && isPendingRequestView
+                      ? 'Loading all pending listing requests…'
+                      : 'No properties match your current search or filter criteria.'}
                   </td>
                 </tr>
               )}
