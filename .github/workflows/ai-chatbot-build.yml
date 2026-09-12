@@ -37,6 +37,23 @@ jobs:
           python3 -c 'from pathlib import Path; import re; p=Path("ai-chatbot/src/components/ChatWidget.tsx"); s=p.read_text(encoding="utf-8"); pattern=r";\s*\{properties\.length\s*>\s*0\s*&&\s*\(\s*<div className=[\"\\\x27]space-y-3[\"\\\x27]>\s*\{properties\.map\(renderPropertyCard\)\}\s*</div>\s*\)\}"; fixed,count=re.subn(pattern,";",s,count=1); p.write_text(fixed,encoding="utf-8") if count else None; print("ChatWidget repaired" if count else "ChatWidget already clean")'
           python3 -c 'from pathlib import Path; p=Path("ai-chatbot/src/components/BudgetPlannerCard.tsx"); s=p.read_text(encoding="utf-8"); a=s.find("  // Compute live items based on current sliderBudget"); b=s.find("  const items = calculateItems(sliderBudget);"); r="\n".join(["  // Use only live budget items returned by the API; never invent prices.","  const calculateItems = (_target: number): BudgetBreakdownItem[] => {","    const source = Array.isArray(initialPlan.items) ? initialPlan.items : [];","    return source","      .filter((item) => item && Number.isFinite(Number(item.amount)) && Number(item.amount) >= 0)","      .map((item) => ({","        category: item.category,","        label: item.label,","        amount: Number(item.amount),","        note: item.note,","      }));","  };",""]) + "\n"; p.write_text(s[:a]+r+s[b:],encoding="utf-8") if a != -1 and b != -1 and a < b else None; print("BudgetPlanner repaired" if a != -1 and b != -1 and a < b else "BudgetPlanner already clean")'
           sed -i "s#const defaultPublicKey = .*#const defaultPublicKey = 'sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT';#" ai-chatbot/public/widget.js
+      - name: Restore Vite source entry
+        run: |
+          cat > ai-chatbot/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>StudentHubHelp AI Chatbot & CRM System</title>
+              <meta name="description" content="StudentHubHelp AI chatbot with live property search, budget planning, comparison, voice support and lead capture." />
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="module" src="/src/main.tsx"></script>
+            </body>
+          </html>
+          EOF
       - name: Build AI chatbot
         working-directory: ai-chatbot
         env:
@@ -57,5 +74,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ai-chatbot
-          git diff --cached --quiet || git commit -m "Use current Supabase publishable key for chatbot [skip ci]"
+          git diff --cached --quiet || git commit -m "Publish AI chatbot with current live build [skip ci]"
           git push
