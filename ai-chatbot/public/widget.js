@@ -1,7 +1,7 @@
 const SHH_WIDGET = (() => {
   const currentScript = document.currentScript || [...document.scripts].pop();
   const defaultApiUrl = 'https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat';
-  const defaultPublicKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxJwjocFUeLB1yMA';
+  const defaultPublicKey = 'sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT';
   const apiUrl = currentScript?.getAttribute('data-api-url') || defaultApiUrl;
   const publicKey = currentScript?.getAttribute('data-api-key') || defaultPublicKey;
   const primaryColor = currentScript?.getAttribute('data-color') || '#071a33';
