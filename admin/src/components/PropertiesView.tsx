@@ -199,6 +199,61 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
     }
   };
 
+  const handleBulkApprove = async () => {
+    if (!isPendingRequestView || !selectedIds.length || bulkBusy) return;
+    const selected = pendingListingProperties.filter((p) => selectedIds.includes(String(p.id)));
+    if (!selected.length) return;
+    if (!window.confirm(`Approve ${selected.length} selected listing request${selected.length > 1 ? 's' : ''}? This will publish them to their real property tables.`)) return;
+
+    try {
+      setBulkBusy(true);
+      const approvedIds: string[] = [];
+      for (const property of selected) {
+        const req = property as any;
+        const table = listingRequestTable(property);
+        const listingPayload: Record<string, any> = {
+          id: req.id,
+          name: req.name,
+          category: table === 'bookstores' ? 'bookstore' : table === 'cafes' ? 'cafe' : table === 'libraries' ? 'library' : table === 'tiffins' ? 'tiffin' : 'hostel',
+          area: req.area,
+          address: req.address,
+          phone: req.phone,
+          timing: req.timing ?? null,
+          facilities: req.facilities ?? null,
+          rating: req.rating ?? null,
+          owner_name: req.owner_name ?? null,
+          image: req.image ?? null,
+          verified: false,
+          status: 'active',
+          property_id: req.id,
+          created_at: req.created_at ?? new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        if (table === 'bookstores') listingPayload.whatsapp = req.owner_phone ?? req.phone;
+
+        const { error: publishError } = await supabase.from(table).upsert(listingPayload, { onConflict: 'id' });
+        if (publishError) throw publishError;
+
+        const { error: approvalError } = await supabase
+          .from('listing_requests')
+          .update({ status: 'approved', updated_at: new Date().toISOString() })
+          .eq('id', req.id)
+          .eq('status', 'pending');
+        if (approvalError) throw approvalError;
+        approvedIds.push(String(req.id));
+      }
+
+      setPendingListingProperties((prev) => prev.filter((p) => !approvedIds.includes(String(p.id))));
+      setSelectedIds([]);
+      window.alert(`${approvedIds.length} listing request${approvedIds.length > 1 ? 's' : ''} approved and published successfully.`);
+    } catch (error: any) {
+      console.error('Bulk listing approval failed:', error);
+      window.alert(error?.message || 'Bulk approval failed. No success was reported.');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const pageTitle = categoryFilter === 'all' ? 'All Property Listings' : propertyConfig[categoryFilter as PropertyType]?.title || 'Properties';
   const defaultAddType: PropertyType = categoryFilter !== 'all' ? (categoryFilter as PropertyType) : 'hostels';
 
@@ -225,7 +280,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           <input type="text" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} placeholder="Owner / Title / Phone" className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white placeholder-slate-400" />
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="newest">Sort: Newest</option><option value="oldest">Sort: Oldest</option><option value="rating-high">Rating (High to Low)</option><option value="views">Most Viewed</option><option value="bookings">Most Booked</option><option value="az">A-Z Name</option></select>
         </div>
-        {selectedIds.length > 0 && !isPendingRequestView && <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-[#0d1838] border border-amber-500/30 text-xs animate-in fade-in duration-150"><span className="font-bold text-amber-300">{selectedIds.length} properties selected</span><div className="flex items-center gap-1.5"><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('verify')} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 font-bold disabled:opacity-50">{bulkBusy ? 'Working…' : 'Bulk Verify'}</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('activate')} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold disabled:opacity-50">Bulk Activate</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('suspend')} className="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 font-bold disabled:opacity-50">Bulk Suspend</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('feature')} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 font-bold disabled:opacity-50">Bulk Feature</button></div></div>}
+        {selectedIds.length > 0 && <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-[#0d1838] border border-amber-500/30 text-xs animate-in fade-in duration-150"><span className="font-bold text-amber-300">{selectedIds.length} {isPendingRequestView ? 'listing requests' : 'properties'} selected</span><div className="flex items-center gap-1.5">{isPendingRequestView ? <button disabled={bulkBusy} onClick={handleBulkApprove} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold disabled:opacity-50">{bulkBusy ? 'Approving…' : 'Bulk Approve'}</button> : <><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('verify')} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 font-bold disabled:opacity-50">{bulkBusy ? 'Working…' : 'Bulk Verify'}</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('activate')} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold disabled:opacity-50">Bulk Activate</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('suspend')} className="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 font-bold disabled:opacity-50">Bulk Suspend</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('feature')} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 font-bold disabled:opacity-50">Bulk Feature</button></>}</div></div>}
       </div>
 
       <div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden shadow-xl"><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0d1838] text-amber-300 font-bold border-b border-slate-800"><tr><th className="p-4 w-10"><button onClick={toggleSelectAll} className="text-slate-400 hover:text-white">{selectedIds.length === filteredProperties.length && filteredProperties.length > 0 ? <CheckSquare className="w-4 h-4 text-amber-400" /> : <Square className="w-4 h-4" />}</button></th><th className="p-4">Property Name</th><th className="p-4">Category</th><th className="p-4">Owner / Contact</th><th className="p-4">Locality</th><th className="p-4">Status</th><th className="p-4">Verification</th><th className="p-4">Rating</th><th className="p-4">Views</th><th className="p-4">Updated</th><th className="p-4 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-800/60">
@@ -241,7 +296,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           else if (sourceTable === 'tiffins' || sourceTable === 'libraries' || sourceTable === 'cafes' || sourceTable === 'bookstores') categoryType = sourceTable as PropertyType;
           else { const c = (p.category || '').toLowerCase(); if (c.includes('tiffin') || c.includes('mess')) categoryType = 'tiffins'; else if (c.includes('library')) categoryType = 'libraries'; else if (c.includes('cafe')) categoryType = 'cafes'; else if (c.includes('book')) categoryType = 'bookstores'; }
           return <tr key={`${sourceTable || 'property'}-${p.id}`} className={`hover:bg-slate-800/40 transition-colors ${isSelected ? 'bg-amber-500/5' : ''}`}>
-            <td className="p-4"><button disabled={isPendingRequest} onClick={() => toggleSelectOne(String(p.id))} className="text-slate-400 hover:text-white disabled:opacity-40">{isSelected ? <CheckSquare className="w-4 h-4 text-amber-400" /> : <Square className="w-4 h-4" />}</button></td>
+            <td className="p-4"><button disabled={false} onClick={() => toggleSelectOne(String(p.id))} className="text-slate-400 hover:text-white">{isSelected ? <CheckSquare className="w-4 h-4 text-amber-400" /> : <Square className="w-4 h-4" />}</button></td>
             <td className="p-4"><button onClick={() => !isPendingRequest && onOpenPreview(p)} className={`font-bold text-slate-100 ${!isPendingRequest ? 'hover:text-amber-300 cursor-pointer' : 'cursor-default'} text-left transition-colors flex items-center gap-1.5 group`}><span>{p.name || p.title || 'Accommodation'}</span>{isFeatured && <span className="text-[10px] text-amber-400 font-extrabold flex items-center gap-0.5"><Sparkles className="w-3 h-3" /></span>}</button><div className="text-[10px] text-slate-400 font-mono mt-0.5">#{p.id}</div></td>
             <td className="p-4"><span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">{p.category || 'Hostel'}</span></td>
             <td className="p-4 font-mono"><div className="font-sans font-medium text-slate-200">{p.owner_name || '—'}</div><div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1"><Phone className="w-3 h-3 text-slate-400" />{p.phone || '—'}</div></td>
@@ -251,7 +306,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
             <td className="p-4 text-amber-300 font-bold">{propRating(p) > 0 ? <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-amber-300" /> {propRating(p)}</span> : <span className="text-slate-400">—</span>}</td>
             <td className="p-4 text-slate-300 font-mono">{propViews(p)}</td>
             <td className="p-4 text-slate-400">{shortDate(p.updated_at || p.created_at)}</td>
-            <td className="p-4 text-right whitespace-nowrap"><div className="flex items-center justify-end gap-1.5">{!isPendingRequest ? <><button onClick={() => onOpenPreview(p)} className="px-2.5 py-1.5 rounded-lg bg-[#0d1838] hover:bg-[#14224d] text-amber-300 border border-amber-500/30 hover:border-amber-400 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"><Eye className="w-3 h-3" /><span>Preview</span></button><button onClick={() => onOpenEditor(p, categoryType)} className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer" title="Edit in Master Editor"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => onDeleteProperty(p)} className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors cursor-pointer" title="Delete from Live Supabase"><Trash2 className="w-3.5 h-3.5" /></button></> : <span className="text-[10px] text-slate-500 font-semibold">Manage in Listing Requests</span>}</div></td>
+            <td className="p-4 text-right whitespace-nowrap"><div className="flex items-center justify-end gap-1.5">{!isPendingRequest ? <><button onClick={() => onOpenPreview(p)} className="px-2.5 py-1.5 rounded-lg bg-[#0d1838] hover:bg-[#14224d] text-amber-300 border border-amber-500/30 hover:border-amber-400 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"><Eye className="w-3 h-3" /><span>Preview</span></button><button onClick={() => onOpenEditor(p, categoryType)} className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer" title="Edit in Master Editor"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => onDeleteProperty(p)} className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors cursor-pointer" title="Delete from Live Supabase"><Trash2 className="w-3.5 h-3.5" /></button></> : <span className="text-[10px] text-slate-500 font-semibold">Use Bulk Approve above</span>}</div></td>
           </tr>;
         }) : <tr><td colSpan={11} className="p-8 text-center text-slate-400 text-xs">{pendingLoading && isPendingRequestView ? 'Loading all pending listing requests…' : 'No properties match your current search or filter criteria.'}</td></tr>}
       </tbody></table></div></div>
