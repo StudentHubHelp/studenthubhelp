@@ -36,20 +36,50 @@ jobs:
         working-directory: ai-chatbot
         run: npm install
 
-      - name: Repair accidental JSX insertion in ChatWidget
+      - name: Repair chatbot source build blockers
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import re
+
+          # Repair the accidental JSX fragment that was inserted inside handleSendMessage.
           p = Path('ai-chatbot/src/components/ChatWidget.tsx')
           s = p.read_text(encoding='utf-8')
-          pattern = r';\s*\{properties\.length\s*>\s*0\s*&&\s*\(\s*<div className=["\\\']space-y-3["\\\']>\s*\{properties\.map\(renderPropertyCard\)\}\s*</div>\s*\)\}'
-          fixed, count = re.subn(pattern, ';', s, count=1)
+          jsx_pattern = r';\s*\{properties\.length\s*>\s*0\s*&&\s*\(\s*<div className=["\\\']space-y-3["\\\']>\s*\{properties\.map\(renderPropertyCard\)\}\s*</div>\s*\)\}'
+          fixed, count = re.subn(jsx_pattern, ';', s, count=1)
           if count:
               p.write_text(fixed, encoding='utf-8')
               print('Removed accidental JSX insertion from ChatWidget.tsx')
+
+          # Repair the broken budget calculation block without introducing any invented prices.
+          # The planner must use only the live items returned by the API.
+          bp = Path('ai-chatbot/src/components/BudgetPlannerCard.tsx')
+          bs = bp.read_text(encoding='utf-8')
+          start_marker = '  // Compute live items based on current sliderBudget'
+          end_marker = '  const items = calculateItems(sliderBudget);'
+          start = bs.find(start_marker)
+          end = bs.find(end_marker)
+          if start != -1 and end != -1 and start < end:
+              replacement = '''  // Compute items only from the live plan returned by the API.
+  // No fallback prices or invented property facts are added here.
+  const calculateItems = (_target: number): BudgetBreakdownItem[] => {
+    const source = Array.isArray(initialPlan.items) ? initialPlan.items : [];
+    return source
+      .filter((item) => item && Number.isFinite(Number(item.amount)) && Number(item.amount) >= 0)
+      .map((item) => ({
+        category: item.category,
+        label: item.label,
+        amount: Number(item.amount),
+        note: item.note,
+      }));
+  };
+
+'''
+              bs = bs[:start] + replacement + bs[end:]
+              bp.write_text(bs, encoding='utf-8')
+              print('Repaired BudgetPlannerCard live-data calculation block')
           else:
-              print('No accidental JSX insertion found')
+              print('BudgetPlannerCard calculation block already valid or marker not found')
           PY
 
       - name: Build AI chatbot
@@ -61,7 +91,7 @@ jobs:
           import re
           from pathlib import Path
           s = Path('public/widget.js').read_text(encoding='utf-8')
-          m = re.search(r"defaultPublicKey\\s*=\\s*['\"]([^'\"]+)['\"]", s)
+          m = re.search(r"defaultPublicKey\s*=\s*['\"]([^'\"]+)['\"]", s)
           print(m.group(1) if m else '')
           PY
           )"
@@ -81,5 +111,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ai-chatbot
-          git diff --cached --quiet || git commit -m "Build AI chatbot and fix ChatWidget source [skip ci]"
+          git diff --cached --quiet || git commit -m "Build AI chatbot and repair source blockers [skip ci]"
           git push
