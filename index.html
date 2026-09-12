@@ -63,7 +63,6 @@
 
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
-    stylesheet
     rel="stylesheet"
   />
 
@@ -213,6 +212,7 @@
       font-size: 18px;
       font-weight: 800;
       letter-spacing: -.3px;
+      line-height: 1.15;
     }
 
     .brand-sub {
@@ -221,26 +221,37 @@
       margin-top: 1px;
     }
 
-    /* Dynamic Category ticker under header brand */
+    /* Dynamic Category ticker in header (Mobile, Tablet & Laptop Friendly) */
     .brand-categories {
-      display: flex;
+      display: flex !important;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 4px;
+      gap: 3px 5px;
       font-size: 9px;
       font-weight: 700;
-      color: rgba(255,255,255,.55);
+      color: inherit;
+      opacity: 0.85;
       text-transform: uppercase;
       letter-spacing: .4px;
-      margin-top: 2px;
+      margin-top: 3px;
+      line-height: 1.25;
     }
 
     .brand-categories span {
-      transition: color .3s ease, transform .3s ease;
+      transition: color .25s ease, opacity .25s ease;
+      white-space: nowrap;
     }
 
     .brand-categories span.active-cat {
-      color: var(--gold-light);
-      font-weight: 800;
+      color: var(--gold-light, #f0d48a) !important;
+      font-weight: 900 !important;
+      opacity: 1 !important;
+      text-shadow: 0 0 8px rgba(214,168,79,.35);
+    }
+
+    .brand-categories .cat-dot {
+      opacity: 0.5;
+      user-select: none;
     }
 
     .nav-links {
@@ -329,6 +340,7 @@
       margin-top: 12px;
       margin-bottom: 18px;
     }
+
     .hero h1 {
       margin: 0;
       max-width: 730px;
@@ -413,7 +425,6 @@
 
     /* =========================================
         GLOBAL SEARCH BAR UPGRADE
-        Supabase suggestions + keyboard navigation
     ========================================= */
     .hero-search-wrap{
       position:relative;
@@ -697,7 +708,6 @@
 
     /* =========================================
         LIVE STATS
-        DARK + SUPABASE LIVE
     ========================================= */
 
     .stats-wrap {
@@ -1902,10 +1912,28 @@
 
       .brand {
         min-width: auto;
+        gap: 8px;
       }
 
-      .brand-sub, .brand-categories {
+      .brand img {
+        width: 38px;
+        height: 38px;
+      }
+
+      .brand-title {
+        font-size: 16px;
+      }
+
+      .brand-sub {
         display: none;
+      }
+
+      /* Mobile par categories humesha visible rahegi */
+      .brand-categories {
+        display: flex !important;
+        font-size: 8px;
+        gap: 2px 4px;
+        margin-top: 2px;
       }
 
       .hero h1 {
@@ -2340,13 +2368,17 @@
             Student Discovery Platform
           </div>
 
-          <!-- Dynamic Categories displayed in header -->
+          <!-- Dynamic Categories displayed in header across all devices -->
           <div class="brand-categories" id="headerCategoryTicker" aria-label="Available services">
-            <span data-category-index="0" class="active-cat">Hostel</span>·
-            <span data-category-index="1">Tiffin</span>·
-            <span data-category-index="2">Library</span>·
-            <span data-category-index="3">Cafe</span>·
-            <span data-category-index="4">Bookstore</span>
+            <span data-category-index="0" class="active-cat">Hostel</span>
+            <span class="cat-dot">·</span>
+            <span data-category-index="1">Tiffin</span>
+            <span class="cat-dot">·</span>
+            <span data-category-index="2">Library</span>
+            <span class="cat-dot">·</span>
+            <span data-category-index="3">Cafe</span>
+            <span class="cat-dot">·</span>
+            <span data-category-index="4">Book Store</span>
           </div>
 
         </div>
@@ -4763,8 +4795,6 @@
   <script>
     /* =========================================
         SUPABASE CONNECTION
-        Same public anon configuration as current index.
-        Never place a service_role key in browser code.
     ========================================= */
     const SUPABASE_URL = 'https://idurlccrarznnnqixxsd.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA'; 
@@ -4776,10 +4806,6 @@
 
     /* ========================================= 
         STUDENTHUBHELP TRUST CONFIG 
-        Current workflow: published directory records 
-        are treated as manually verified by StudentHubHelp. 
-        If your database later adds explicit verification 
-        columns, those values take priority automatically. 
     ========================================= */ 
     const VERIFICATION_DEFAULT_FOR_PUBLISHED = true; 
     const RECENT_DAYS = 30; 
@@ -4897,7 +4923,6 @@
         powerBackup: boolValue(row, ["power_backup","backup","electricity_backup"]) 
       }; 
 
-      // 10 specific fields for Data Completeness calculation
       const completenessFields = [ 
         firstValue(row, ["name", "title", "business_name", "property_name"]), 
         firstValue(row, ["area", "locality", "location", "neighborhood", "address_area"]), 
@@ -4948,7 +4973,7 @@
     ); 
 
     /* ========================================= 
-        HERO CAROUSEL (3s interval) + HEADER TICKER
+        HERO CAROUSEL + HEADER CATEGORY TICKER
     ========================================= */ 
     const carouselCards = document.querySelectorAll(".carousel-card"); 
     const carouselDots = $("carouselDots"); 
@@ -4969,8 +4994,8 @@
 
     const dots = document.querySelectorAll(".carousel-dot"); 
     function showCarousel(index) { 
-      carouselCards.forEach((card,i) => card.classList.toggle("active",i === index)); 
-      dots.forEach((dot,i) => dot.classList.toggle("active",i === index)); 
+      carouselCards.forEach((card,i) => card.classList.toggle("active", i === index)); 
+      dots.forEach((dot,i) => dot.classList.toggle("active", i === index)); 
       // Update header category highlight dynamically
       headerTickerSpans.forEach(span => {
         span.classList.toggle("active-cat", Number(span.dataset.categoryIndex) === index);
@@ -4985,8 +5010,6 @@
 
     /* =========================================
         MAIN SEARCH — SUPABASE GLOBAL SEARCH
-        Suggestions come only from StudentHubHelp's
-        own search_index via search_suggestions().
     ========================================= */
     const mainSearch = $("mainSearch");
     const mainSearchForm = $("mainSearchForm");
