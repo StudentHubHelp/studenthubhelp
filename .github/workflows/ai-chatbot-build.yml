@@ -40,12 +40,13 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p = Path('ai-chatbot/src/components/ChatWidget.tsx')
           s = p.read_text(encoding='utf-8')
-          bad = '''; {properties.length > 0 && (\n  <div className=\\"space-y-3\\">\n    {properties.map(renderPropertyCard)}\n  </div>\n)}'''
-          if bad in s:
-              s = s.replace(bad, ';', 1)
-              p.write_text(s, encoding='utf-8')
+          pattern = r';\s*\{properties\.length\s*>\s*0\s*&&\s*\(\s*<div className=["\\\']space-y-3["\\\']>\s*\{properties\.map\(renderPropertyCard\)\}\s*</div>\s*\)\}'
+          fixed, count = re.subn(pattern, ';', s, count=1)
+          if count:
+              p.write_text(fixed, encoding='utf-8')
               print('Removed accidental JSX insertion from ChatWidget.tsx')
           else:
               print('No accidental JSX insertion found')
@@ -55,8 +56,16 @@ jobs:
         working-directory: ai-chatbot
         env:
           VITE_CHAT_API_URL: https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat
-          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxJwjocFUeLB1yMA
-        run: npx vite build
+        run: |
+          export VITE_SUPABASE_ANON_KEY="$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s = Path('public/widget.js').read_text(encoding='utf-8')
+          m = re.search(r"defaultPublicKey\\s*=\\s*['\"]([^'\"]+)['\"]", s)
+          print(m.group(1) if m else '')
+          PY
+          )"
+          npx vite build
 
       - name: Publish production build into ai-chatbot
         run: |
