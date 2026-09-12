@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Login | StudentHubHelp</title>
-<meta name="description" content="Secure StudentHubHelp login for students, property owners and authorized administrators.">
+<meta name="description" content="Secure StudentHubHelp login for students and property owners.">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
@@ -59,6 +59,17 @@ input:focus{border-color:#d4af37;box-shadow:0 0 0 3px #d4af3720}.password-input{
 .spinner{width:32px;height:32px;margin:0 auto 12px;border:3px solid #ffffff40;border-top-color:#f0d477;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:520px){.auth-body{padding:22px 18px}.auth-top{padding:25px 20px}.auth-top h2{font-size:23px}.brand h1{font-size:17px}.home-btn{padding:8px 11px;font-size:12px}}
+
+.auth-card{animation:authIn .35s ease both}
+.primary-btn,.google-btn,.tab,.role-label,.home-btn{transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease}
+.primary-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 24px #d4af3738}
+.google-btn:hover:not(:disabled),.home-btn:hover{transform:translateY(-1px)}
+.message{animation:messageIn .22s ease both}
+@keyframes authIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes messageIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){
+  .auth-card,.message,.primary-btn,.google-btn,.tab,.role-label,.home-btn{animation:none!important;transition:none!important}
+}
 </style>
 <link rel="stylesheet" href="mobile.css">
 </head>
@@ -98,7 +109,7 @@ input:focus{border-color:#d4af37;box-shadow:0 0 0 3px #d4af3720}.password-input{
 </div>
 <div class="role-note">Pehle Student ya Owner select karo. Phir neeche Google se continue karo.</div></div>
 <div class="form-group"><label>Email Address</label><div class="input-wrap"><span class="input-icon">✉️</span><input id="signupEmail" type="email" autocomplete="email" placeholder="Enter your email" required></div></div>
-<div class="form-group"><label>Create Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="signupPassword" class="password-input" type="password" minlength="6" placeholder="Create a password" required><button class="password-toggle" type="button" data-target="signupPassword">👁️</button></div></div>
+<div class="form-group"><label>Create Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="signupPassword" class="password-input" type="password" minlength="8" autocomplete="new-password" placeholder="Create a password" required><button class="password-toggle" type="button" data-target="signupPassword">👁️</button></div></div>
 <div class="form-group"><label>Confirm Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="signupConfirmPassword" class="password-input" type="password" minlength="6" placeholder="Re-enter your password" required><button class="password-toggle" type="button" data-target="signupConfirmPassword">👁️</button></div></div>
 <button id="signupButton" class="primary-btn" type="submit">Create Account</button>
 </form>
@@ -106,7 +117,7 @@ input:focus{border-color:#d4af37;box-shadow:0 0 0 3px #d4af3720}.password-input{
 <div id="googleRoleState" class="google-role-state">Account type select karna zaroori hai.</div>
 <button id="googleSignupButton" class="google-btn" type="button" disabled><span class="google-icon">G</span><span id="googleSignupText">Select Student / Owner first</span></button>
 <div id="resendBox" class="resend-box" style="display:none"><p>Confirmation email nahi mila? Spam/Junk folder check karke dobara email bhej sakte ho.</p><button id="resendButton" class="resend-btn" type="button">Resend Confirmation Email</button></div>
-<div class="security-note">Admin accounts public signup se create nahi hote. Authorized admin accounts Supabase me already exist karne chahiye.</div>
+<div class="security-note">Only Student/Owner accounts can be created here.</div>
 <div class="back-login-wrap"><button id="signupBackButton" class="back-login-btn" type="button">← Back to Sign In</button></div>
 </section>
 
@@ -126,7 +137,7 @@ input:focus{border-color:#d4af37;box-shadow:0 0 0 3px #d4af3720}.password-input{
 </section>
 
 <section id="resetPanel" class="reset-panel">
-<form id="resetForm"><div class="form-group"><label>New Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="resetPassword" class="password-input" type="password" minlength="6" required><button class="password-toggle" type="button" data-target="resetPassword">👁️</button></div></div>
+<form id="resetForm"><div class="form-group"><label>New Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="resetPassword" class="password-input" type="password" minlength="8" autocomplete="new-password" required><button class="password-toggle" type="button" data-target="resetPassword">👁️</button></div></div>
 <div class="form-group"><label>Confirm New Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="resetConfirmPassword" class="password-input" type="password" minlength="6" required><button class="password-toggle" type="button" data-target="resetConfirmPassword">👁️</button></div></div>
 <button id="resetButton" class="primary-btn" type="submit">Update Password & Continue</button></form>
 <div class="back-login-wrap"><button id="resetBackButton" class="back-login-btn" type="button">← Cancel & Back to Sign In</button></div>
@@ -142,368 +153,673 @@ const SUPABASE_URL="https://idurlccrarznnnqixxsd.supabase.co";
 const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
 if(!window.supabase||typeof window.supabase.createClient!=="function"){
-document.body.innerHTML="<h2 style='padding:30px;font-family:Arial'>Supabase library load nahi hui. Hard refresh karo.</h2>";
-throw new Error("Supabase JS unavailable");
+  document.body.innerHTML="<h2 style='padding:30px;font-family:Arial'>Supabase library load nahi hui. Hard refresh karo.</h2>";
+  throw new Error("Supabase JS unavailable");
 }
 
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const $=id=>document.getElementById(id);
-const D={student:"student-dashboard.html",owner:"owner-dashboard.html",admin:"admin-dashboard.html"};
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+});
 
-let routing=false,listenerReady=false,recoveryMode=false,lastSignupEmail="",pendingGoogleUser=null;
+const $=id=>document.getElementById(id);
+const D={student:"student-dashboard.html",owner:"owner-dashboard.html"};
+const PUBLIC_ROLES=["student","owner"];
+const GOOGLE_PENDING_TTL=10*60*1000;
+const RESEND_COOLDOWN=60*1000;
+
+let routing=false;
+let listenerReady=false;
+let recoveryMode=false;
+let lastSignupEmail="";
+let pendingGoogleUser=null;
 let panelChanging=false;
 
-function role(v){v=String(v||"").trim().toLowerCase();return["student","owner","admin"].includes(v)?v:null}
-function msg(t,type="error"){$("message").textContent=t;$("message").className="message show "+type}
-function clearMsg(){$("message").textContent="";$("message").className="message"}
-function loading(on,t="Please wait..."){$("loadingText").textContent=t;$("loadingScreen").classList.toggle("show",on)}
-function button(b,on,text){b.disabled=on;b.textContent=on?"Please wait...":text}
-function err(e){
-let m=String(e?.message||"").toLowerCase();
-if(m.includes("invalid login credentials"))return"Email ya password incorrect hai.";
-if(m.includes("email not confirmed"))return"Email confirm nahi hua hai.";
-if(m.includes("unsupported provider"))return"Google Sign In Supabase me enabled nahi hai.";
-if(m.includes("redirect")&&m.includes("not allowed"))return"Auth redirect URL Supabase me allowlist nahi hai.";
-return e?.message||"Authentication failed."
+function role(v){
+  v=String(v||"").trim().toLowerCase();
+  return PUBLIC_ROLES.includes(v)?v:null;
 }
-function pendingRole(){return role(localStorage.getItem("sh_google_signup_role"))}
-function clearPending(){localStorage.removeItem("sh_google_signup_role");localStorage.removeItem("sh_google_signup_started_at")}
-function signupRole(){return role(document.querySelector('input[name="signupRole"]:checked')?.value)}
-function callbackRole(){return role(document.querySelector('input[name="callbackRole"]:checked')?.value)}
+
+function rawRole(v){
+  return String(v??"").trim().toLowerCase();
+}
+
+function msg(t,type="error"){
+  $("message").textContent=t;
+  $("message").className="message show "+type;
+}
+
+function clearMsg(){
+  $("message").textContent="";
+  $("message").className="message";
+}
+
+function loading(on,t="Please wait..."){
+  $("loadingText").textContent=t;
+  $("loadingScreen").classList.toggle("show",on);
+  $("loadingScreen").setAttribute("aria-hidden",String(!on));
+}
+
+function button(b,on,text){
+  b.disabled=on;
+  b.textContent=on?"Please wait...":text;
+}
+
+function validEmail(email){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+function validPhone(phone){
+  return /^[6-9]\d{9}$/.test(phone);
+}
+
+function strongPassword(p){
+  return p.length>=8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p);
+}
+
+function passwordHint(){
+  return "Password kam se kam 8 characters ka ho aur usme uppercase, lowercase aur number ho.";
+}
+
+function friendlyError(e){
+  const m=String(e?.message||e||"").toLowerCase();
+
+  if(m.includes("invalid login credentials"))return"Email ya password incorrect hai.";
+  if(m.includes("email not confirmed"))return"Email verify nahi hua hai. Pehle confirmation email se verify karo.";
+  if(m.includes("user already registered")||m.includes("already been registered"))return"Is email se account already registered hai. Sign In try karo.";
+  if(m.includes("password")&&(m.includes("weak")||m.includes("least")||m.includes("characters")))return passwordHint();
+  if(m.includes("rate limit")||m.includes("too many requests"))return"Bahut zyada attempts ho gaye. Thodi der baad try karo.";
+  if(m.includes("unsupported provider"))return"Google Sign In Supabase me enabled nahi hai.";
+  if(m.includes("redirect")&&m.includes("not allowed"))return"Auth redirect URL Supabase me allowlist nahi hai.";
+  if(m.includes("network")||m.includes("fetch"))return"Network problem hai. Internet check karke dobara try karo.";
+  if(m.includes("same password")||m.includes("different password"))return"New password purane password se different rakho.";
+  if(m.includes("token")&&m.includes("expired"))return"Reset link expire ho gaya. Naya reset link request karo.";
+  if(m.includes("invalid")&&m.includes("email"))return"Valid email address enter karo.";
+  if(m.includes("captcha"))return"Security verification complete nahi hui. Dobara try karo.";
+  return e?.message||"Authentication failed. Please try again.";
+}
+
+function pendingRole(){
+  const r=role(localStorage.getItem("sh_google_signup_role"));
+  const started=Number(localStorage.getItem("sh_google_signup_started_at")||0);
+
+  if(!r||!started||Date.now()-started>GOOGLE_PENDING_TTL){
+    clearPending();
+    return null;
+  }
+  return r;
+}
+
+function clearPending(){
+  localStorage.removeItem("sh_google_signup_role");
+  localStorage.removeItem("sh_google_signup_started_at");
+}
+
+function signupRole(){
+  return role(document.querySelector('input[name="signupRole"]:checked')?.value);
+}
+
+function callbackRole(){
+  return role(document.querySelector('input[name="callbackRole"]:checked')?.value);
+}
+
+function isGoogleUser(user){
+  return !!(user?.identities||[]).some(x=>x.provider==="google");
+}
+
+function isEmailVerified(user){
+  return !!user?.email_confirmed_at || isGoogleUser(user);
+}
+
+function clearStoredUser(){
+  localStorage.removeItem("sh_current_user");
+}
+
+async function denyAccess(text="Is account ko Student/Owner login system se access nahi kiya ja sakta."){
+  clearStoredUser();
+  pendingGoogleUser=null;
+  clearPending();
+  loading(false);
+  try{await db.auth.signOut({scope:"local"});}catch(_){}
+  showLogin({pushHistory:false});
+  msg(text);
+}
 
 function setPanel(which,pushHistory=true){
-$("loginPanel").classList.toggle("hidden",which!=="login");
-$("signupPanel").classList.toggle("show",which==="signup");
-$("googleRolePanel").classList.toggle("show",which==="googleRole");
-$("recoveryPanel").classList.toggle("show",which==="recovery");
-$("resetPanel").classList.toggle("show",which==="reset");
-$("tabs").style.display=["recovery","reset","googleRole"].includes(which)?"none":"grid";
+  $("loginPanel").classList.toggle("hidden",which!=="login");
+  $("signupPanel").classList.toggle("show",which==="signup");
+  $("googleRolePanel").classList.toggle("show",which==="googleRole");
+  $("recoveryPanel").classList.toggle("show",which==="recovery");
+  $("resetPanel").classList.toggle("show",which==="reset");
+  $("tabs").style.display=["recovery","reset","googleRole"].includes(which)?"none":"grid";
 
-if(pushHistory&&!panelChanging){
-history.pushState({authPanel:which},"",location.href);
-}
+  if(pushHistory&&!panelChanging){
+    history.pushState({authPanel:which},"",location.href);
+  }
 }
 
 function showLogin(opts={}){
-const push=opts.pushHistory!==false;
-recoveryMode=false;
-clearMsg();
-setPanel("login",push);
-$("loginTab").classList.add("active");
-$("signupTab").classList.remove("active");
-$("authIcon").textContent="🔐";
-$("authTitle").textContent="Welcome Back";
-$("authSubtitle").textContent="Login securely to access your StudentHubHelp account.";
+  const push=opts.pushHistory!==false;
+  recoveryMode=false;
+  clearMsg();
+  setPanel("login",push);
+  $("loginTab").classList.add("active");
+  $("signupTab").classList.remove("active");
+  $("authIcon").textContent="🔐";
+  $("authTitle").textContent="Welcome Back";
+  $("authSubtitle").textContent="Login securely to access your StudentHubHelp account.";
 }
 
 function showSignup(opts={}){
-const push=opts.pushHistory!==false;
-recoveryMode=false;
-clearMsg();
-setPanel("signup",push);
-$("loginTab").classList.remove("active");
-$("signupTab").classList.add("active");
-$("authIcon").textContent="✨";
-$("authTitle").textContent="Create Account";
-$("authSubtitle").textContent="Create your StudentHubHelp student or owner account.";
-updateGoogleButton();
+  const push=opts.pushHistory!==false;
+  recoveryMode=false;
+  clearMsg();
+  setPanel("signup",push);
+  $("loginTab").classList.remove("active");
+  $("signupTab").classList.add("active");
+  $("authIcon").textContent="✨";
+  $("authTitle").textContent="Create Account";
+  $("authSubtitle").textContent="Create your StudentHubHelp student or owner account.";
+  updateGoogleButton();
 }
 
 function showGoogleRole(user,opts={}){
-const push=opts.pushHistory!==false;
-pendingGoogleUser=user;
-loading(false);
-clearMsg();
-setPanel("googleRole",push);
-$("authIcon").textContent="👤";
-$("authTitle").textContent="Choose Account Type";
-$("authSubtitle").textContent="Select Student or Owner to continue.";
+  const push=opts.pushHistory!==false;
+  pendingGoogleUser=user;
+  loading(false);
+  clearMsg();
+  setPanel("googleRole",push);
+  $("authIcon").textContent="👤";
+  $("authTitle").textContent="Choose Account Type";
+  $("authSubtitle").textContent="Select Student or Owner to continue.";
 }
 
 function showRecovery(opts={}){
-const push=opts.pushHistory!==false;
-clearMsg();
-setPanel("recovery",push);
-$("authIcon").textContent="📧";
-$("authTitle").textContent="Reset Password";
-$("authSubtitle").textContent="Enter your email and we'll send a password reset link.";
+  const push=opts.pushHistory!==false;
+  recoveryMode=false;
+  clearMsg();
+  setPanel("recovery",push);
+  $("authIcon").textContent="📧";
+  $("authTitle").textContent="Reset Password";
+  $("authSubtitle").textContent="Enter your email and we'll send a password reset link.";
 }
 
 function showReset(opts={}){
-const push=opts.pushHistory!==false;
-recoveryMode=true;
-clearMsg();
-setPanel("reset",push);
-$("authIcon").textContent="🔑";
-$("authTitle").textContent="Set New Password";
-$("authSubtitle").textContent="Create a new secure password for your account.";
-loading(false);
+  const push=opts.pushHistory!==false;
+  recoveryMode=true;
+  clearMsg();
+  setPanel("reset",push);
+  $("authIcon").textContent="🔑";
+  $("authTitle").textContent="Set New Password";
+  $("authSubtitle").textContent="Create a new secure password for your account.";
+  loading(false);
 }
 
 function updateGoogleButton(){
-let r=signupRole(),b=$("googleSignupButton");
-b.disabled=!r;
-if(r==="student"){
-$("googleRoleState").textContent="Student selected — ab Google se continue kar sakte ho.";
-$("googleSignupText").textContent="Continue with Google as Student";
-}else if(r==="owner"){
-$("googleRoleState").textContent="Owner selected — ab Google se continue kar sakte ho.";
-$("googleSignupText").textContent="Continue with Google as Owner";
-}else{
-$("googleRoleState").textContent="Account type select karna zaroori hai.";
-$("googleSignupText").textContent="Select Student / Owner first";
+  const r=signupRole();
+  const b=$("googleSignupButton");
+  b.disabled=!r;
+
+  if(r==="student"){
+    $("googleRoleState").textContent="Student selected — ab Google se continue kar sakte ho.";
+    $("googleSignupText").textContent="Continue with Google as Student";
+  }else if(r==="owner"){
+    $("googleRoleState").textContent="Owner selected — ab Google se continue kar sakte ho.";
+    $("googleSignupText").textContent="Continue with Google as Owner";
+  }else{
+    $("googleRoleState").textContent="Account type select karna zaroori hai.";
+    $("googleSignupText").textContent="Select Student / Owner first";
+  }
 }
+
+function buildProfile(user,existing,metadata={}){
+  return{
+    id:user.id,
+    full_name:existing?.full_name||metadata.full_name||metadata.name||user.email?.split("@")[0]||"User",
+    phone:existing?.phone||metadata.phone||"",
+    role:role(existing?.role)||role(metadata.role),
+    email:existing?.email||user.email||""
+  };
+}
+
+async function getProfile(user){
+  const {data,error}=await db
+    .from("profiles")
+    .select("id,role,full_name,phone,email")
+    .eq("id",user.id)
+    .maybeSingle();
+
+  if(error)throw new Error("Profile load nahi ho saka.");
+  return data;
 }
 
 async function route(user){
-if(!user?.id)throw new Error("Authenticated user was not found.");
-if(routing)return;
-routing=true;
+  if(!user?.id)throw new Error("Authenticated user was not found.");
+  if(routing)return;
+  routing=true;
 
-try{
-let{data:p,error}=await db.from("profiles").select("id,role,full_name,phone,email").eq("id",user.id).maybeSingle();
-if(error)throw new Error("Profile load nahi ho saka.");
+  try{
+    if(!isEmailVerified(user)){
+      await denyAccess("Email verify karo, phir Sign In karo. Confirmation email dobara bhejne ke liye Resend option use karo.");
+      return;
+    }
 
-const pr=pendingRole();
+    let p=await getProfile(user);
+    const existingRaw=rawRole(p?.role);
 
-if(pr&&(!p?.role||p?.role==="student")){
-const identity=(user.identities||[]).find(x=>x.provider==="google");
-const created=identity?.created_at||user.created_at;
-const age=created?Date.now()-new Date(created).getTime():Infinity;
+    if(existingRaw && !PUBLIC_ROLES.includes(existingRaw)){
+      await denyAccess("Ye account Student/Owner public login ke liye eligible nahi hai. Admin/other access separate system se handle hota hai.");
+      return;
+    }
 
-if(age<10*60*1000){
-const{error:uerr}=await db.from("profiles").update({role:pr}).eq("id",user.id);
-if(uerr)throw new Error("Google account role save nahi ho saka.");
-p={...(p||{}),role:pr};
-clearPending();
-}else{
-clearPending();
-}
-}
+    const google=isGoogleUser(user);
+    const pr=pendingRole();
+    let r=role(p?.role);
 
-const r=role(p?.role);
+    if(!r && google && pr){
+      const profileData=buildProfile(user,p,{role:pr});
+      const {data:up,error:uerr}=await db
+        .from("profiles")
+        .upsert(profileData,{onConflict:"id"})
+        .select("id,role,full_name,phone,email")
+        .single();
 
-if(!r){
-routing=false;
-showGoogleRole(user);
-return;
-}
+      if(uerr)throw new Error("Google account role save nahi ho saka.");
+      p=up;
+      r=role(p?.role);
+      clearPending();
+    }
 
-const md=user.user_metadata||{};
-localStorage.setItem("sh_current_user",JSON.stringify({
-id:user.id,
-email:user.email||"",
-name:p?.full_name||md.full_name||md.name||user.email?.split("@")[0]||"User",
-phone:p?.phone||md.phone||"",
-role:r
-}));
+    if(!r && !p && !google){
+      const md=user.user_metadata||{};
+      const mr=role(md.role);
 
-loading(true,r==="admin"?"Opening Admin Dashboard...":r==="owner"?"Opening Owner Dashboard...":"Opening Student Dashboard...");
-location.replace(new URL(D[r],location.href).href);
+      if(mr){
+        const profileData=buildProfile(user,null,{...md,role:mr});
+        const {data:up,error:uerr}=await db
+          .from("profiles")
+          .upsert(profileData,{onConflict:"id"})
+          .select("id,role,full_name,phone,email")
+          .single();
 
-}catch(e){
-routing=false;
-throw e;
-}
+        if(uerr)throw new Error("Profile create nahi ho saka.");
+        p=up;
+        r=role(p?.role);
+      }
+    }
+
+    if(!r){
+      if(google){
+        showGoogleRole(user);
+        msg("Google account ke liye Student ya Owner select karna zaroori hai.");
+        return;
+      }
+
+      await denyAccess("Student/Owner profile nahi mila. Account access continue nahi kiya gaya.");
+      return;
+    }
+
+    clearPending();
+
+    const md=user.user_metadata||{};
+    localStorage.setItem("sh_current_user",JSON.stringify({
+      id:user.id,
+      email:user.email||"",
+      name:p?.full_name||md.full_name||md.name||user.email?.split("@")[0]||"User",
+      phone:p?.phone||md.phone||"",
+      role:r
+    }));
+
+    loading(true,r==="owner"?"Opening Owner Dashboard...":"Opening Student Dashboard...");
+    location.replace(new URL(D[r],location.href).href);
+
+  }finally{
+    routing=false;
+  }
 }
 
 async function google(mode){
-clearMsg();
+  clearMsg();
 
-if(mode==="signup"){
-let r=signupRole();
-if(!r){msg("Pehle Student ya Owner select karo.");return}
-localStorage.setItem("sh_google_signup_role",r);
-localStorage.setItem("sh_google_signup_started_at",String(Date.now()));
-}else{
-clearPending();
+  if(mode==="signup"){
+    const r=signupRole();
+    if(!r){
+      msg("Pehle Student ya Owner select karo.");
+      return;
+    }
+    localStorage.setItem("sh_google_signup_role",r);
+    localStorage.setItem("sh_google_signup_started_at",String(Date.now()));
+  }else{
+    clearPending();
+  }
+
+  loading(true,"Opening Google Sign In...");
+
+  try{
+    const {error}=await db.auth.signInWithOAuth({
+      provider:"google",
+      options:{redirectTo:new URL("auth.html",location.href).href}
+    });
+    if(error)throw error;
+  }catch(e){
+    loading(false);
+    clearPending();
+    msg(friendlyError(e));
+  }
 }
 
-loading(true,"Opening Google Sign In...");
+async function resendConfirmation(email){
+  email=String(email||"").trim().toLowerCase();
 
-try{
-let{error}=await db.auth.signInWithOAuth({
-provider:"google",
-options:{redirectTo:new URL("auth.html",location.href).href}
-});
-if(error)throw error;
-}catch(e){
-loading(false);
-clearPending();
-msg(err(e));
-}
+  if(!validEmail(email)){
+    msg("Valid email address enter karo.");
+    return;
+  }
+
+  const last=Number(sessionStorage.getItem("sh_resend_at")||0);
+  const remaining=RESEND_COOLDOWN-(Date.now()-last);
+
+  if(remaining>0){
+    msg(`Resend email ke liye ${Math.ceil(remaining/1000)} seconds wait karo.`);
+    return;
+  }
+
+  const b=$("resendButton");
+  button(b,true,"Resend Confirmation Email");
+  loading(true,"Sending confirmation email...");
+
+  try{
+    const {error}=await db.auth.resend({type:"signup",email});
+    if(error)throw error;
+
+    sessionStorage.setItem("sh_resend_at",String(Date.now()));
+    loading(false);
+    button(b,false,"Resend Confirmation Email");
+    msg("Confirmation email dobara bhej diya gaya hai. Inbox/Spam check karo.","success");
+  }catch(e){
+    loading(false);
+    button(b,false,"Resend Confirmation Email");
+    msg(friendlyError(e));
+  }
 }
 
 $("googleLoginButton").onclick=()=>google("login");
 $("googleSignupButton").onclick=()=>google("signup");
 
 $("loginForm").onsubmit=async e=>{
-e.preventDefault();
-clearMsg();
+  e.preventDefault();
+  clearMsg();
 
-let email=$("loginEmail").value.trim().toLowerCase();
-let password=$("loginPassword").value;
+  const email=$("loginEmail").value.trim().toLowerCase();
+  const password=$("loginPassword").value;
 
-if(!email||!password){msg("Email aur password dono required hain.");return}
+  if(!validEmail(email)){
+    msg("Valid email address enter karo.");
+    return;
+  }
+  if(!password){
+    msg("Password enter karo.");
+    return;
+  }
 
-let b=$("loginButton");
-button(b,true,"Sign In");
-loading(true,"Signing you in...");
+  const b=$("loginButton");
+  button(b,true,"Sign In");
+  loading(true,"Signing you in...");
 
-try{
-let{data,error}=await db.auth.signInWithPassword({email,password});
-if(error)throw error;
-await route(data.user);
-}catch(x){
-loading(false);
-button(b,false,"Sign In");
-msg(err(x));
-}
+  try{
+    const {data,error}=await db.auth.signInWithPassword({email,password});
+    if(error)throw error;
+
+    if(!isEmailVerified(data.user)){
+      lastSignupEmail=email;
+      $("resendBox").style.display="block";
+      loading(false);
+      button(b,false,"Sign In");
+      await db.auth.signOut({scope:"local"}).catch(()=>{});
+      msg("Email verify nahi hua hai. Confirmation email check karo aur phir Sign In karo.");
+      return;
+    }
+
+    await route(data.user);
+  }catch(x){
+    loading(false);
+    button(b,false,"Sign In");
+    msg(friendlyError(x));
+  }
 };
 
 $("signupForm").onsubmit=async e=>{
-e.preventDefault();
-clearMsg();
+  e.preventDefault();
+  clearMsg();
 
-let name=$("signupName").value.trim();
-let phone=$("signupPhone").value.trim();
-let email=$("signupEmail").value.trim().toLowerCase();
-let pass=$("signupPassword").value;
-let confirm=$("signupConfirmPassword").value;
-let r=signupRole();
+  const name=$("signupName").value.trim();
+  const phone=$("signupPhone").value.replace(/\D/g,"");
+  const email=$("signupEmail").value.trim().toLowerCase();
+  const pass=$("signupPassword").value;
+  const confirm=$("signupConfirmPassword").value;
+  const r=signupRole();
 
-if(!name||!phone||!email||!pass||!confirm||!r){msg("Name, phone, role, email aur password complete karo.");return}
-if(!/^[6-9]\d{9}$/.test(phone)){msg("Valid Indian 10-digit mobile number enter karo.");return}
-if(pass.length<6){msg("Password kam se kam 6 characters ka hona chahiye.");return}
-if(pass!==confirm){msg("Passwords same hone chahiye.");return}
+  $("signupPhone").value=phone;
 
-let b=$("signupButton");
-button(b,true,"Create Account");
-loading(true,"Creating your account...");
-lastSignupEmail=email;
+  if(name.length<2){
+    msg("Full name enter karo.");
+    return;
+  }
+  if(!validPhone(phone)){
+    msg("Valid Indian 10-digit mobile number enter karo.");
+    return;
+  }
+  if(!validEmail(email)){
+    msg("Valid email address enter karo.");
+    return;
+  }
+  if(!r){
+    msg("Student ya Owner select karo.");
+    return;
+  }
+  if(!strongPassword(pass)){
+    msg(passwordHint());
+    return;
+  }
+  if(pass!==confirm){
+    msg("Passwords same hone chahiye.");
+    return;
+  }
 
-try{
-let{data,error}=await db.auth.signUp({
-email,
-password:pass,
-options:{data:{full_name:name,phone,role:r}}
-});
+  const b=$("signupButton");
+  button(b,true,"Create Account");
+  loading(true,"Creating your account...");
+  lastSignupEmail=email;
 
-if(error)throw error;
-if(!data?.user)throw new Error("Account create nahi hua.");
+  try{
+    const {data,error}=await db.auth.signUp({
+      email,
+      password:pass,
+      options:{data:{full_name:name,phone,role:r}}
+    });
 
-if(!data.session){
-loading(false);
-button(b,false,"Create Account");
-$("loginEmail").value=email;
-$("resendBox").style.display="block";
-msg("Account create ho gaya. Email verify karke Sign In karo.","success");
-return;
-}
+    if(error)throw error;
+    if(!data?.user)throw new Error("Account create nahi hua.");
 
-let{error:pe}=await db.from("profiles").upsert(
-{id:data.user.id,full_name:name,phone,role:r,email},
-{onConflict:"id"}
-);
+    if(!data.session){
+      loading(false);
+      button(b,false,"Create Account");
+      $("loginEmail").value=email;
+      $("resendBox").style.display="block";
+      msg("Account create ho gaya. Email verify karke Sign In karo.","success");
+      return;
+    }
 
-if(pe)throw pe;
-await route(data.user);
+    const {error:pe}=await db.from("profiles").upsert({
+      id:data.user.id,
+      full_name:name,
+      phone,
+      role:r,
+      email
+    },{onConflict:"id"});
 
-}catch(x){
-loading(false);
-button(b,false,"Create Account");
-msg(err(x));
-}
+    if(pe)throw pe;
+    await route(data.user);
+
+  }catch(x){
+    loading(false);
+    button(b,false,"Create Account");
+    msg(friendlyError(x));
+  }
+};
+
+$("resendButton").onclick=async()=>{
+  await resendConfirmation(lastSignupEmail||$("loginEmail").value.trim());
 };
 
 $("saveGoogleRoleButton").onclick=async()=>{
-let r=callbackRole();
+  const r=callbackRole();
 
-if(!r||!pendingGoogleUser){msg("Student ya Owner select karo.");return}
+  if(!r||!pendingGoogleUser){
+    msg("Student ya Owner select karo.");
+    return;
+  }
 
-let b=$("saveGoogleRoleButton");
-button(b,true,"Continue");
-loading(true,"Saving account type...");
+  const b=$("saveGoogleRoleButton");
+  button(b,true,"Continue");
+  loading(true,"Saving account type...");
 
-try{
-let{error}=await db.from("profiles").update({role:r}).eq("id",pendingGoogleUser.id);
-if(error)throw error;
-clearPending();
-await route(pendingGoogleUser);
-}catch(x){
-loading(false);
-button(b,false,"Continue");
-msg("Account type save nahi hua: "+(x?.message||"Please try again."));
-}
+  try{
+    const googleUser=pendingGoogleUser;
+    const p=await getProfile(googleUser);
+    const existingRaw=rawRole(p?.role);
+
+    if(existingRaw && PUBLIC_ROLES.includes(existingRaw)){
+      clearPending();
+      pendingGoogleUser=null;
+      await route(googleUser);
+      return;
+    }
+
+    if(existingRaw && !PUBLIC_ROLES.includes(existingRaw)){
+      throw new Error("Ye profile public Student/Owner signup ke liye eligible nahi hai.");
+    }
+
+    const md=googleUser.user_metadata||{};
+    const profileData={
+      id:googleUser.id,
+      full_name:p?.full_name||md.full_name||md.name||googleUser.email?.split("@")[0]||"User",
+      phone:p?.phone||md.phone||"",
+      role:r,
+      email:p?.email||googleUser.email||""
+    };
+
+    const {data,error}=await db
+      .from("profiles")
+      .upsert(profileData,{onConflict:"id"})
+      .select("id,role,full_name,phone,email")
+      .single();
+
+    if(error)throw error;
+    if(role(data?.role)!==r)throw new Error("Account type save nahi hua.");
+
+    clearPending();
+    pendingGoogleUser=null;
+    await route(googleUser);
+
+  }catch(x){
+    loading(false);
+    button(b,false,"Continue");
+    msg(friendlyError(x));
+  }
 };
 
 async function cancelGoogleRole(){
-pendingGoogleUser=null;
-clearPending();
-loading(false);
-try{await db.auth.signOut({scope:"local"});}catch(_){}
-showLogin({pushHistory:false});
-history.replaceState({authPanel:"login"},"",location.href);
+  pendingGoogleUser=null;
+  clearPending();
+  loading(false);
+  try{await db.auth.signOut({scope:"local"});}catch(_){}
+  showLogin({pushHistory:false});
+  history.replaceState({authPanel:"login"},"",location.href);
 }
 
 $("googleRoleBackButton").onclick=cancelGoogleRole;
 $("signupBackButton").onclick=()=>showLogin();
+
 $("forgotButton").onclick=()=>{
-$("recoveryEmail").value=$("loginEmail").value.trim();
-showRecovery();
+  $("recoveryEmail").value=$("loginEmail").value.trim();
+  showRecovery();
 };
+
 $("backToLoginButton").onclick=()=>showLogin();
+
 $("resetBackButton").onclick=async()=>{
-recoveryMode=false;
-try{await db.auth.signOut({scope:"local"});}catch(_){}
-showLogin();
+  recoveryMode=false;
+  try{await db.auth.signOut({scope:"local"});}catch(_){}
+  showLogin();
 };
 
 $("recoveryForm").onsubmit=async e=>{
-e.preventDefault();
+  e.preventDefault();
+  clearMsg();
 
-let email=$("recoveryEmail").value.trim().toLowerCase();
-let b=$("recoveryButton");
-button(b,true,"Send Reset Link");
-loading(true,"Sending reset link...");
+  const email=$("recoveryEmail").value.trim().toLowerCase();
 
-try{
-let{error}=await db.auth.resetPasswordForEmail(email,{redirectTo:new URL("auth.html?mode=reset",location.href).href});
-if(error)throw error;
-loading(false);
-button(b,false,"Send Reset Link");
-msg("Password reset link email par bhej diya gaya hai.","success");
-}catch(x){
-loading(false);
-button(b,false,"Send Reset Link");
-msg(err(x));
-}
+  if(!validEmail(email)){
+    msg("Valid email address enter karo.");
+    return;
+  }
+
+  const b=$("recoveryButton");
+  button(b,true,"Send Reset Link");
+  loading(true,"Sending reset link...");
+
+  try{
+    const {error}=await db.auth.resetPasswordForEmail(email,{
+      redirectTo:new URL("auth.html?mode=reset",location.href).href
+    });
+    if(error)throw error;
+
+    loading(false);
+    button(b,false,"Send Reset Link");
+    msg("Password reset link email par bhej diya gaya hai. Inbox/Spam check karo.","success");
+  }catch(x){
+    loading(false);
+    button(b,false,"Send Reset Link");
+    msg(friendlyError(x));
+  }
 };
 
 $("resetForm").onsubmit=async e=>{
-e.preventDefault();
+  e.preventDefault();
+  clearMsg();
 
-let p=$("resetPassword").value;
-let c=$("resetConfirmPassword").value;
-let b=$("resetButton");
+  const p=$("resetPassword").value;
+  const c=$("resetConfirmPassword").value;
+  const b=$("resetButton");
 
-if(p.length<6||p!==c){
-msg(p.length<6?"Password kam se kam 6 characters ka hona chahiye.":"Passwords same hone chahiye.");
-return;
-}
+  if(!strongPassword(p)){
+    msg(passwordHint());
+    return;
+  }
+  if(p!==c){
+    msg("New passwords same hone chahiye.");
+    return;
+  }
 
-button(b,true,"Update Password & Continue");
-loading(true,"Updating your password...");
+  button(b,true,"Update Password & Continue");
+  loading(true,"Updating your password...");
 
-try{
-let{data,error}=await db.auth.updateUser({password:p});
-if(error)throw error;
-await route(data.user);
-}catch(x){
-loading(false);
-button(b,false,"Update Password & Continue");
-msg(err(x));
-}
+  try{
+    const {data,error}=await db.auth.updateUser({password:p});
+    if(error)throw error;
+    if(!data?.user)throw new Error("Password update nahi hua.");
+
+    if(!isEmailVerified(data.user)){
+      await denyAccess("Password update ho gaya, lekin email verification required hai.");
+      return;
+    }
+
+    await route(data.user);
+  }catch(x){
+    loading(false);
+    button(b,false,"Update Password & Continue");
+    msg(friendlyError(x));
+  }
 };
 
 $("loginTab").onclick=()=>showLogin();
@@ -511,95 +827,116 @@ $("signupTab").onclick=()=>showSignup();
 
 document.querySelectorAll('input[name="signupRole"]').forEach(x=>x.onchange=updateGoogleButton);
 
+$("signupPhone").addEventListener("input",e=>{
+  e.target.value=e.target.value.replace(/\D/g,"").slice(0,10);
+});
+
 document.querySelectorAll(".password-toggle").forEach(b=>b.onclick=()=>{
-let i=$(b.dataset.target);
-i.type=i.type==="text"?"password":"text";
-b.textContent=i.type==="text"?"🙈":"👁️";
+  const i=$(b.dataset.target);
+  i.type=i.type==="text"?"password":"text";
+  b.textContent=i.type==="text"?"🙈":"👁️";
 });
 
-window.addEventListener("popstate",async()=>{
-if(panelChanging)return;
+window.addEventListener("popstate",()=>{
+  if(panelChanging)return;
 
-panelChanging=true;
-try{
-await db.auth.getSession();
-showLogin({pushHistory:false});
-}catch(_){
-showLogin({pushHistory:false});
-}finally{
-panelChanging=false;
+  panelChanging=true;
+  try{
+    const panel=history.state?.authPanel||"login";
+
+    if(panel==="signup")showSignup({pushHistory:false});
+    else if(panel==="recovery")showRecovery({pushHistory:false});
+    else if(panel==="reset")showReset({pushHistory:false});
+    else if(panel==="googleRole"&&pendingGoogleUser)showGoogleRole(pendingGoogleUser,{pushHistory:false});
+    else showLogin({pushHistory:false});
+  }finally{
+    panelChanging=false;
+  }
+});
+
+function resetMode(){
+  return new URLSearchParams(location.search).get("mode")==="reset";
 }
-});
-
-function resetMode(){return new URLSearchParams(location.search).get("mode")==="reset"}
 
 function setupAuth(){
-if(listenerReady)return;
-listenerReady=true;
+  if(listenerReady)return;
+  listenerReady=true;
 
-db.auth.onAuthStateChange(async(e,s)=>{
-if(e==="PASSWORD_RECOVERY"){
-showReset();
-return;
-}
+  db.auth.onAuthStateChange(async(e,s)=>{
+    if(e==="PASSWORD_RECOVERY"){
+      showReset({pushHistory:false});
+      return;
+    }
 
-if(e==="SIGNED_OUT"){
-loading(false);
-if(!recoveryMode)showLogin({pushHistory:false});
-return;
-}
+    if(e==="SIGNED_OUT"){
+      loading(false);
+      clearStoredUser();
+      if(!recoveryMode)showLogin({pushHistory:false});
+      return;
+    }
 
-if(e==="SIGNED_IN"&&s?.user&&!recoveryMode&&!resetMode()){
-try{
-loading(true,"Checking your account...");
-await route(s.user);
-}catch(x){
-loading(false);
-await db.auth.signOut({scope:"local"}).catch(()=>{});
-msg(x.message||"Account routing failed.");
-}
-}
-});
+    if(e==="SIGNED_IN"&&s?.user&&!recoveryMode&&!resetMode()){
+      try{
+        loading(true,"Checking your account...");
+        await route(s.user);
+      }catch(x){
+        loading(false);
+        clearStoredUser();
+        await db.auth.signOut({scope:"local"}).catch(()=>{});
+        msg(friendlyError(x));
+      }
+    }
+  });
 }
 
 async function existing(){
-if(resetMode())return;
+  if(resetMode())return;
 
-let{data,error}=await db.auth.getSession();
-if(error||!data?.session?.user)return;
+  const {data,error}=await db.auth.getSession();
 
-loading(true,"Checking your account...");
+  if(error){
+    msg(friendlyError(error));
+    return;
+  }
 
-try{
-await route(data.session.user);
-}catch(x){
-loading(false);
-await db.auth.signOut({scope:"local"}).catch(()=>{});
-msg(x.message||"Session check failed.");
-}
+  if(!data?.session?.user)return;
+
+  loading(true,"Checking your account...");
+
+  try{
+    await route(data.session.user);
+  }catch(x){
+    loading(false);
+    clearStoredUser();
+    await db.auth.signOut({scope:"local"}).catch(()=>{});
+    msg(friendlyError(x));
+  }
 }
 
 document.addEventListener("DOMContentLoaded",async()=>{
-history.replaceState({authPanel:"login"},"",location.href);
-setupAuth();
+  history.replaceState({authPanel:"login"},"",location.href);
+  setupAuth();
 
-if(resetMode()){
-loading(true,"Preparing password reset...");
-setTimeout(()=>{
-if(!recoveryMode){
-let h=location.hash||"";
-if(h.includes("type=recovery")||h.includes("access_token="))showReset({pushHistory:false});
-else{
-loading(false);
-msg("Password reset link invalid ya expire ho gaya hai.");
-}
-}
-},1200);
-return;
-}
+  if(resetMode()){
+    loading(true,"Preparing password reset...");
 
-await existing();
-updateGoogleButton();
+    setTimeout(()=>{
+      if(!recoveryMode){
+        const h=location.hash||"";
+        if(h.includes("type=recovery")||h.includes("access_token=")){
+          showReset({pushHistory:false});
+        }else{
+          loading(false);
+          msg("Password reset link invalid ya expire ho gaya hai.");
+        }
+      }
+    },1200);
+
+    return;
+  }
+
+  await existing();
+  updateGoogleButton();
 });
 </script>
   <!-- StudentHubHelp AI Chatbot -->
