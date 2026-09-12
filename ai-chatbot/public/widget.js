@@ -1,6 +1,6 @@
 /**
- * StudentHubHelp AI Chatbot - 1-Click Embeddable Widget
- * Uses the secure Supabase Edge Function backend.
+ * StudentHubHelp AI Chatbot — Advanced Live Widget
+ * UI/UX features are client-side; property facts, prices and comparisons come only from the live Supabase Edge Function.
  */
 (function () {
   if (window.StudentHubHelpChatbotLoaded) return;
@@ -10,11 +10,9 @@
     const scripts = document.getElementsByTagName('script');
     return scripts[scripts.length - 1];
   })();
-
   const defaultApiUrl = 'https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat';
-  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA';
+  const supabaseAnonKey = currentScript?.getAttribute('data-api-key') || '';
   const apiUrl = currentScript?.getAttribute('data-api-url') || defaultApiUrl;
-  const chatEndpoint = apiUrl.includes('/functions/v1/') ? apiUrl : `${apiUrl}/api/chat`;
   const primaryColor = currentScript?.getAttribute('data-color') || '#071a33';
   const accentColor = currentScript?.getAttribute('data-accent') || '#d7a63d';
   const position = currentScript?.getAttribute('data-position') || 'right';
@@ -24,103 +22,70 @@
   container.style.cssText = `position:fixed;bottom:24px;${position === 'left' ? 'left:24px;' : 'right:24px;'}z-index:999999;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;`;
 
   const launcher = document.createElement('button');
-  launcher.id = 'shh-chatbot-launcher';
   launcher.setAttribute('aria-label', 'Open StudentHubHelp AI Assistant');
-  launcher.style.cssText = `width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,${primaryColor},#0f2c52);border:2px solid ${accentColor};box-shadow:0 10px 25px rgba(7,26,51,.35);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .25s ease,box-shadow .25s ease;outline:none;`;
-  launcher.innerHTML = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><span style="position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:#22c55e;border-radius:50%;border:2px solid white;"></span>`;
+  launcher.style.cssText = `width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,${primaryColor},#0f2c52);border:2px solid ${accentColor};box-shadow:0 10px 25px rgba(7,26,51,.35);cursor:pointer;display:flex;align-items:center;justify-content:center;color:${accentColor};transition:transform .25s ease,box-shadow .25s ease;outline:none;`;
+  launcher.innerHTML = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><span style="position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:#22c55e;border-radius:50%;border:2px solid white;"></span>`;
 
   const chatWindow = document.createElement('div');
-  chatWindow.id = 'shh-chatbot-window';
-  chatWindow.style.cssText = `display:none;width:380px;height:600px;max-width:calc(100vw - 32px);max-height:calc(100vh - 100px);background:#fff;border-radius:20px;box-shadow:0 20px 50px rgba(7,26,51,.25);border:1px solid rgba(7,26,51,.12);flex-direction:column;overflow:hidden;margin-bottom:16px;animation:shhSlideUp .3s cubic-bezier(.16,1,.3,1);`;
+  chatWindow.style.cssText = `display:none;width:420px;height:700px;max-width:calc(100vw - 24px);max-height:calc(100vh - 80px);background:#fff;border-radius:24px;box-shadow:0 24px 70px rgba(7,26,51,.28);border:1px solid rgba(7,26,51,.12);flex-direction:column;overflow:hidden;margin-bottom:16px;`;
 
   const header = document.createElement('div');
-  header.style.cssText = `background:linear-gradient(135deg,${primaryColor},#0b2547);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid ${accentColor};`;
-  header.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;border-radius:10px;background:${accentColor};display:flex;align-items:center;justify-content:center;color:${primaryColor};font-weight:900;font-size:14px;">SH</div><div><div style="font-weight:800;font-size:15px;letter-spacing:-.2px;">StudentHubHelp AI</div><div style="font-size:11px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block;"></span> 24/7 Live Student Support</div></div></div><button id="shh-close-btn" style="background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:4px;">&times;</button>`;
+  header.style.cssText = `background:linear-gradient(135deg,${primaryColor},#0b2b54);color:#fff;padding:15px 17px;border-bottom:2px solid ${accentColor};`;
+  header.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;"><div style="display:flex;align-items:center;gap:10px;min-width:0;"><div style="width:42px;height:42px;border-radius:13px;background:${accentColor};display:flex;align-items:center;justify-content:center;color:${primaryColor};font-weight:900;">SH</div><div><div style="font-weight:900;font-size:15px;">StudentHubHelp AI</div><div style="font-size:10px;color:rgba(255,255,255,.72)"><span style="color:#4ade80">●</span> Live Supabase data · AI Assistant</div></div></div><div style="display:flex;gap:4px"><button id="shh-tts" aria-label="Toggle text to speech" style="background:rgba(255,255,255,.08);border:0;color:#fff;border-radius:9px;padding:7px;cursor:pointer">🔊</button><button id="shh-close-btn" aria-label="Close" style="background:rgba(255,255,255,.08);border:0;color:#fff;border-radius:9px;padding:7px 10px;font-size:18px;cursor:pointer">×</button></div></div>`;
+
+  const topics = document.createElement('div');
+  topics.style.cssText = `padding:9px 10px;background:#07152f;display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid #1e293b;`;
+  const quickTopics = [
+    ['🏠 Hostels','Active hostels dikhao'],['🍱 Tiffin','Active tiffin services dikhao'],['📚 Libraries','Active libraries dikhao'],
+    ['💰 Budget','Mera monthly budget plan banao'],['⚖️ Compare','Active hostels compare karo'],['📍 Area','Area ke active listings dikhao']
+  ];
+  quickTopics.forEach(([label,query]) => { const b=document.createElement('button'); b.textContent=label; b.style.cssText='white-space:nowrap;background:#10233f;color:#e2e8f0;border:1px solid #29415f;border-radius:999px;padding:6px 10px;font-size:10px;font-weight:800;cursor:pointer'; b.onclick=()=>sendText(query); topics.appendChild(b); });
 
   const messagesArea = document.createElement('div');
-  messagesArea.id = 'shh-messages';
-  messagesArea.style.cssText = `flex:1;overflow-y:auto;padding:16px;background:#f8fafc;display:flex;flex-direction:column;gap:12px;`;
+  messagesArea.style.cssText = `flex:1;overflow-y:auto;padding:13px;background:#f8fafc;display:flex;flex-direction:column;gap:10px;`;
 
   const inputArea = document.createElement('div');
-  inputArea.style.cssText = `padding:12px 16px;background:#fff;border-top:1px solid #e2e8f0;display:flex;gap:8px;align-items:center;`;
-  inputArea.innerHTML = `<input type="text" id="shh-input" placeholder="Hindi, English ya Hinglish me poochein..." style="flex:1;border:1px solid #cbd5e1;border-radius:12px;padding:10px 14px;font-size:13.5px;outline:none;font-family:inherit;" /><button id="shh-send-btn" style="background:${accentColor};color:${primaryColor};border:none;border-radius:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:bold;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>`;
+  inputArea.style.cssText = `padding:11px;background:#fff;border-top:1px solid #e2e8f0;`;
+  inputArea.innerHTML = `<div style="display:flex;gap:7px;align-items:center"><button id="shh-mic" aria-label="Voice input" style="width:42px;height:42px;border-radius:12px;background:#f8fafc;border:1px solid #cbd5e1;cursor:pointer">🎙️</button><input type="text" id="shh-input" placeholder="Hindi, English ya Hinglish me poochein..." style="flex:1;border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;font-size:13px;outline:none;font-family:inherit"/><button id="shh-send-btn" aria-label="Send" style="background:${accentColor};color:${primaryColor};border:0;border-radius:12px;width:42px;height:42px;cursor:pointer;font-weight:900">➤</button></div><div style="display:flex;justify-content:space-between;margin-top:7px;color:#94a3b8;font-size:9px"><span id="shh-status">Ready · Live listing support</span><button id="shh-clear" style="border:0;background:none;color:#64748b;cursor:pointer">Clear chat</button></div>`;
 
-  chatWindow.appendChild(header);
-  chatWindow.appendChild(messagesArea);
-  chatWindow.appendChild(inputArea);
-  container.appendChild(chatWindow);
-  container.appendChild(launcher);
-  document.body.appendChild(container);
+  chatWindow.appendChild(header); chatWindow.appendChild(topics); chatWindow.appendChild(messagesArea); chatWindow.appendChild(inputArea); container.appendChild(chatWindow); container.appendChild(launcher); document.body.appendChild(container);
 
   const styleTag = document.createElement('style');
-  styleTag.innerHTML = '@keyframes shhSlideUp{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}';
+  styleTag.textContent = '#shh-chatbot-container button:hover{filter:brightness(1.04)}@media(max-width:520px){#shh-chatbot-container{right:10px!important;left:10px!important;bottom:10px!important}#shh-chatbot-container>div{width:100%!important;height:min(700px,calc(100vh - 80px))!important}}';
   document.head.appendChild(styleTag);
 
   let history = [];
+  let speaking = true;
+  let recognition = null;
+  let sessionId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'chat-' + Date.now();
 
-  function addMessage(text, isBot = false, followUps = []) {
-    const msg = document.createElement('div');
-    msg.style.cssText = `align-self:${isBot ? 'flex-start' : 'flex-end'};background:${isBot ? '#fff' : primaryColor};color:${isBot ? '#1e293b' : '#fff'};border:1px solid ${isBot ? '#e2e8f0' : 'transparent'};border-radius:14px;padding:10px 14px;font-size:13px;line-height:1.55;max-width:85%;box-shadow:0 2px 6px rgba(0,0,0,.04);white-space:pre-wrap;`;
-    msg.textContent = text;
-    messagesArea.appendChild(msg);
-    if (followUps && followUps.length) {
-      const chipsContainer = document.createElement('div');
-      chipsContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;';
-      followUps.forEach(chip => {
-        const chipBtn = document.createElement('button');
-        chipBtn.textContent = chip;
-        chipBtn.style.cssText = 'background:#f1f5f9;border:1px solid #cbd5e1;border-radius:999px;padding:5px 10px;font-size:11px;color:#334155;cursor:pointer;';
-        chipBtn.onclick = () => { document.getElementById('shh-input').value = chip; sendMessage(); };
-        chipsContainer.appendChild(chipBtn);
-      });
-      messagesArea.appendChild(chipsContainer);
-    }
-    messagesArea.scrollTop = messagesArea.scrollHeight;
+  function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmt(value) { return value === null || value === undefined || String(value).trim() === '' ? '' : escapeHtml(value); }
+  function addMessage(text, isBot, data) {
+    const wrap=document.createElement('div'); wrap.style.cssText=`align-self:${isBot?'flex-start':'flex-end'};max-width:94%;`;
+    const msg=document.createElement('div'); msg.style.cssText=`background:${isBot?'#fff':primaryColor};color:${isBot?'#1e293b':'#fff'};border:1px solid ${isBot?'#e2e8f0':'transparent'};border-radius:17px;padding:10px 13px;font-size:13px;line-height:1.55;box-shadow:0 2px 7px rgba(15,23,42,.06);white-space:pre-wrap;`;
+    msg.textContent=text; wrap.appendChild(msg);
+    if(isBot && data) renderData(wrap,data);
+    messagesArea.appendChild(wrap); messagesArea.scrollTop=messagesArea.scrollHeight;
+    if(isBot && speaking) speak(text);
   }
-
-  addMessage('Namaste! Main StudentHubHelp ka Smart Assistant hoon. Sikar, Kota, Delhi me Hostel, Tiffin ya Library chahiye?', true, [
-    'Piprali Road par Hostel dikhao',
-    'Monthly Tiffin rate kya hai?',
-    'Director contact number'
-  ]);
-
-  async function sendMessage() {
-    const input = document.getElementById('shh-input');
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-    addMessage(text, false);
-    history.push({ role: 'user', text });
-
-    const typingIndicator = document.createElement('div');
-    typingIndicator.textContent = 'Typing...';
-    typingIndicator.style.cssText = 'color:#64748b;font-size:12px;margin-left:8px;font-style:italic;';
-    messagesArea.appendChild(typingIndicator);
-    messagesArea.scrollTop = messagesArea.scrollHeight;
-
-    try {
-      const res = await fetch(chatEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': supabaseAnonKey, 'Authorization': `Bearer ${supabaseAnonKey}` },
-        body: JSON.stringify({ message: text, history })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Chat request failed');
-      typingIndicator.remove();
-      addMessage(data.reply || 'Thank you for your message.', true, data.suggestedFollowUps);
-      history.push({ role: 'model', text: data.reply || '' });
-    } catch (err) {
-      typingIndicator.remove();
-      addMessage('AI service is temporarily unavailable. Please try again in a moment.', true);
-    }
+  function renderData(wrap,data){
+    const recs=Array.isArray(data.recommendations)?data.recommendations:[];
+    if(recs.length){ const box=document.createElement('div'); box.style.cssText='margin-top:8px;display:grid;gap:8px'; recs.slice(0,6).forEach(p=>{const card=document.createElement('div');card.style.cssText='background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;box-shadow:0 2px 6px rgba(15,23,42,.04)';const location=[p.area,p.city].filter(Boolean).map(escapeHtml).join(', ');const price=p.price!==undefined&&p.price!==null&&String(p.price).trim()!==''?`<b>₹${escapeHtml(p.price)}</b>`:'';const rating=p.rating!==undefined?` · ⭐ ${escapeHtml(p.rating)}`:'';let html=`<div style="display:flex;justify-content:space-between;gap:8px"><strong style="font-size:12px">${escapeHtml(p.name||'Active listing')}</strong>${p.verified?'<span style="font-size:9px;color:#047857">✓ Verified</span>':''}</div>`;if(location)html+=`<div style="font-size:10px;color:#64748b;margin-top:3px">📍 ${location}</div>`;if(price||rating)html+=`<div style="font-size:10px;color:#334155;margin-top:5px">${price}${rating}</div>`;if(p.description)html+=`<div style="font-size:10px;color:#475569;margin-top:5px;line-height:1.45">${escapeHtml(p.description)}</div>`;const details=[];[['Room / Sharing',p.roomSharing||p.roomTypes],['Food / Meal',p.foodType||p.mealType],['Nearby coaching',p.nearbyCoaching],['Wi-Fi',p.wifi===true?'Available':undefined],['CCTV',p.cctv===true?'Available':undefined],['Beds',p.availableBeds]].forEach(([k,v])=>{if(v!==undefined&&v!==null&&String(v).trim()!==''&&String(v).toLowerCase()!=='false')details.push(`<span style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:3px 6px">${escapeHtml(k)}: ${escapeHtml(v)}</span>`)});if(details.length)html+=`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px">${details.slice(0,6).join('')}</div>`;const actions=[];if(p.phone)actions.push(`<a href="tel:${encodeURIComponent(p.phone)}" style="flex:1;text-align:center;text-decoration:none;background:${accentColor};color:${primaryColor};padding:7px;border-radius:9px;font-size:10px;font-weight:800">Call</a>`);if(p.mapsUrl)actions.push(`<a target="_blank" rel="noreferrer" href="${escapeHtml(p.mapsUrl)}" style="flex:1;text-align:center;text-decoration:none;border:1px solid #cbd5e1;color:#334155;padding:7px;border-radius:9px;font-size:10px;font-weight:800">Maps</a>`);if(p.detailsUrl)actions.push(`<a href="${escapeHtml(p.detailsUrl)}" style="flex:1;text-align:center;text-decoration:none;background:${primaryColor};color:#fff;padding:7px;border-radius:9px;font-size:10px;font-weight:800">View Details</a>`);if(actions.length)html+=`<div style="display:flex;gap:5px;margin-top:8px">${actions.join('')}</div>`;card.innerHTML=html;box.appendChild(card)});wrap.appendChild(box); }
+    if(data.budgetPlan){const b=data.budgetPlan;const box=document.createElement('div');box.style.cssText='margin-top:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:10px';let h='<strong style="font-size:12px">💰 Live Budget Planner</strong>';h+=`<div style="font-size:10px;color:#475569;margin-top:4px">Target: ₹${escapeHtml(b.targetBudget)} · Live listed total: ₹${escapeHtml(b.totalEstimated)}</div>`;if(Array.isArray(b.items)&&b.items.length)h+=`<div style="margin-top:7px;display:grid;gap:4px">${b.items.map(x=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span>${escapeHtml(x.label)}</span><b>₹${escapeHtml(x.amount)}</b></div>`).join('')}</div>`;h+=`<div style="font-size:10px;font-weight:800;margin-top:6px">${escapeHtml(b.savingsOrOverrun>=0?'Remaining':'Over budget')}: ₹${escapeHtml(Math.abs(b.savingsOrOverrun))}</div>`;box.innerHTML=h;wrap.appendChild(box)}
+    if(data.comparisonMatrix){const c=data.comparisonMatrix;const box=document.createElement('div');box.style.cssText='margin-top:8px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;padding:10px;overflow:auto';let h=`<strong style="font-size:12px">⚖️ ${escapeHtml(c.title||'Live Comparison')}</strong>`;if(Array.isArray(c.items))h+=`<table style="width:100%;border-collapse:collapse;margin-top:7px;font-size:9px"><tr><th style="text-align:left;padding:5px;border-bottom:1px solid #cbd5e1">Field</th>${c.items.map(x=>`<th style="padding:5px;border-bottom:1px solid #cbd5e1">${escapeHtml(x.name)}</th>`).join('')}</tr>${['priceMonthly','location','rating'].map(k=>`<tr><td style="padding:5px;font-weight:700;border-bottom:1px solid #e2e8f0">${k==='priceMonthly'?'Price':k==='location'?'Location':'Rating'}</td>${c.items.map(x=>`<td style="padding:5px;border-bottom:1px solid #e2e8f0">${escapeHtml(x[k]??'')}</td>`).join('')}</tr>`).join('')}</table>`;if(c.winnerReason)h+=`<div style="font-size:10px;margin-top:7px;color:#334155">${escapeHtml(c.winnerReason)}</div>`;box.innerHTML=h;wrap.appendChild(box)}
+    if(Array.isArray(data.suggestedFollowUps)&&data.suggestedFollowUps.length){const chips=document.createElement('div');chips.style.cssText='display:flex;flex-wrap:wrap;gap:5px;margin-top:8px';data.suggestedFollowUps.slice(0,4).forEach(q=>{const b=document.createElement('button');b.textContent=q;b.style.cssText='background:#f1f5f9;border:1px solid #cbd5e1;border-radius:999px;padding:5px 9px;font-size:9px;color:#334155;cursor:pointer';b.onclick=()=>sendText(q);chips.appendChild(b)});wrap.appendChild(chips)}
   }
-
-  launcher.addEventListener('click', () => {
-    const isOpen = chatWindow.style.display === 'flex';
-    chatWindow.style.display = isOpen ? 'none' : 'flex';
-    if (!isOpen) document.getElementById('shh-input').focus();
-  });
-  document.getElementById('shh-close-btn').addEventListener('click', () => { chatWindow.style.display = 'none'; });
-  document.getElementById('shh-send-btn').addEventListener('click', sendMessage);
-  document.getElementById('shh-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+  function speak(text){if(!speaking||!window.speechSynthesis)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text).replace(/[*_#`]/g,' ').replace(/\n+/g,'. '));u.lang='hi-IN';const voices=window.speechSynthesis.getVoices();const v=voices.find(x=>/^hi(-|_)/i.test(x.lang))||voices.find(x=>/^en(-|_)/i.test(x.lang));if(v)u.voice=v;window.speechSynthesis.speak(u)}
+  function initVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;recognition=new SR();recognition.lang='hi-IN';recognition.continuous=false;recognition.interimResults=false;recognition.onresult=e=>{document.getElementById('shh-input').value=e.results[0][0].transcript};recognition.onstart=()=>document.getElementById('shh-status').textContent='Listening…';recognition.onend=()=>document.getElementById('shh-status').textContent='Ready · Live listing support';}
+  function sendText(text){const input=document.getElementById('shh-input');input.value=text;sendMessage()}
+  async function sendMessage(){const input=document.getElementById('shh-input');const text=input.value.trim();if(!text)return;input.value='';addMessage(text,false);history.push({role:'user',text});document.getElementById('shh-status').textContent='Checking live Supabase listings…';const typing=document.createElement('div');typing.textContent='AI is checking live data…';typing.style.cssText='color:#64748b;font-size:11px;font-style:italic';messagesArea.appendChild(typing);messagesArea.scrollTop=messagesArea.scrollHeight;try{const res=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json','apikey':supabaseAnonKey,'Authorization':`Bearer ${supabaseAnonKey}`},body:JSON.stringify({message:text,history,sessionId})});const data=await res.json();typing.remove();if(!res.ok)throw new Error(data?.error||'Chat request failed');addMessage(data.reply||'No response returned.',true,data);history.push({role:'model',text:data.reply||''});document.getElementById('shh-status').textContent=`Live · ${data.liveActivePropertyCount??0} active listings`; }catch(e){typing.remove();addMessage('AI service is temporarily unavailable. Please try again.',true);document.getElementById('shh-status').textContent='Service unavailable';}}
+  launcher.onclick=()=>{const open=chatWindow.style.display==='flex';chatWindow.style.display=open?'none':'flex';if(!open){initVoice();document.getElementById('shh-input').focus()}};
+  document.getElementById('shh-close-btn').onclick=()=>chatWindow.style.display='none';
+  document.getElementById('shh-send-btn').onclick=sendMessage;
+  document.getElementById('shh-input').onkeydown=e=>{if(e.key==='Enter')sendMessage()};
+  document.getElementById('shh-clear').onclick=()=>{history=[];messagesArea.innerHTML='';addMessage('Namaste! Main StudentHubHelp AI hoon. Aap active hostel, tiffin, library, cafe ya bookstore ke baare me pooch sakte hain.',true,{suggestedFollowUps:['Find active hostels','Find active tiffin','Find active libraries','Search by area']})};
+  document.getElementById('shh-tts').onclick=()=>{speaking=!speaking;document.getElementById('shh-tts').textContent=speaking?'🔊':'🔇';if(!speaking&&window.speechSynthesis)window.speechSynthesis.cancel()};
+  document.getElementById('shh-mic').onclick=()=>{if(!recognition){initVoice()}if(!recognition){document.getElementById('shh-status').textContent='Voice input is not supported in this browser';return}try{recognition.start()}catch(_){}};
+  addMessage('Namaste! Main StudentHubHelp AI hoon. Aap live active hostels, tiffin, libraries, cafes aur bookstores ke baare me pooch sakte hain.',true,{suggestedFollowUps:['Piprali Road par active hostels dikhao','Monthly tiffin price batao','Active libraries dikhao','Compare active hostels']});
 })();
