@@ -20,83 +20,29 @@ permissions:
 jobs:
   build-ai-chatbot:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: ai-chatbot/package.json
-
       - name: Install dependencies
         working-directory: ai-chatbot
         run: npm install
-
-      - name: Repair chatbot source build blockers
+      - name: Repair source build blockers
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          # Repair the accidental JSX fragment that was inserted inside handleSendMessage.
-          p = Path('ai-chatbot/src/components/ChatWidget.tsx')
-          s = p.read_text(encoding='utf-8')
-          jsx_pattern = r';\s*\{properties\.length\s*>\s*0\s*&&\s*\(\s*<div className=["\\\']space-y-3["\\\']>\s*\{properties\.map\(renderPropertyCard\)\}\s*</div>\s*\)\}'
-          fixed, count = re.subn(jsx_pattern, ';', s, count=1)
-          if count:
-              p.write_text(fixed, encoding='utf-8')
-              print('Removed accidental JSX insertion from ChatWidget.tsx')
-
-          # Repair the broken budget calculation block without introducing any invented prices.
-          # The planner must use only the live items returned by the API.
-          bp = Path('ai-chatbot/src/components/BudgetPlannerCard.tsx')
-          bs = bp.read_text(encoding='utf-8')
-          start_marker = '  // Compute live items based on current sliderBudget'
-          end_marker = '  const items = calculateItems(sliderBudget);'
-          start = bs.find(start_marker)
-          end = bs.find(end_marker)
-          if start != -1 and end != -1 and start < end:
-              replacement = '''  // Compute items only from the live plan returned by the API.
-  // No fallback prices or invented property facts are added here.
-  const calculateItems = (_target: number): BudgetBreakdownItem[] => {
-    const source = Array.isArray(initialPlan.items) ? initialPlan.items : [];
-    return source
-      .filter((item) => item && Number.isFinite(Number(item.amount)) && Number(item.amount) >= 0)
-      .map((item) => ({
-        category: item.category,
-        label: item.label,
-        amount: Number(item.amount),
-        note: item.note,
-      }));
-  };
-
-'''
-              bs = bs[:start] + replacement + bs[end:]
-              bp.write_text(bs, encoding='utf-8')
-              print('Repaired BudgetPlannerCard live-data calculation block')
-          else:
-              print('BudgetPlannerCard calculation block already valid or marker not found')
-          PY
-
+          python3 -c 'from pathlib import Path; import re; p=Path("ai-chatbot/src/components/ChatWidget.tsx"); s=p.read_text(encoding="utf-8"); pattern=r";\s*\{properties\.length\s*>\s*0\s*&&\s*\(\s*<div className=[\"\\\x27]space-y-3[\"\\\x27]>\s*\{properties\.map\(renderPropertyCard\)\}\s*</div>\s*\)\}"; fixed,count=re.subn(pattern,";",s,count=1); p.write_text(fixed,encoding="utf-8") if count else None; print("ChatWidget repaired" if count else "ChatWidget already clean")'
+          python3 -c 'from pathlib import Path; p=Path("ai-chatbot/src/components/BudgetPlannerCard.tsx"); s=p.read_text(encoding="utf-8"); a=s.find("  // Compute live items based on current sliderBudget"); b=s.find("  const items = calculateItems(sliderBudget);"); r="\n".join(["  // Use only live budget items returned by the API; never invent prices.","  const calculateItems = (_target: number): BudgetBreakdownItem[] => {","    const source = Array.isArray(initialPlan.items) ? initialPlan.items : [];","    return source","      .filter((item) => item && Number.isFinite(Number(item.amount)) && Number(item.amount) >= 0)","      .map((item) => ({","        category: item.category,","        label: item.label,","        amount: Number(item.amount),","        note: item.note,","      }));","  };",""]) + "\n"; p.write_text(s[:a]+r+s[b:],encoding="utf-8") if a != -1 and b != -1 and a < b else None; print("BudgetPlanner repaired" if a != -1 and b != -1 and a < b else "BudgetPlanner already clean")'
       - name: Build AI chatbot
         working-directory: ai-chatbot
         env:
           VITE_CHAT_API_URL: https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat
         run: |
-          export VITE_SUPABASE_ANON_KEY="$(python3 - <<'PY'
-          import re
-          from pathlib import Path
-          s = Path('public/widget.js').read_text(encoding='utf-8')
-          m = re.search(r"defaultPublicKey\s*=\s*['\"]([^'\"]+)['\"]", s)
-          print(m.group(1) if m else '')
-          PY
-          )"
+          export VITE_SUPABASE_ANON_KEY="$(python3 -c 'import re; from pathlib import Path; s=Path("public/widget.js").read_text(encoding="utf-8"); m=re.search(r"defaultPublicKey\s*=\s*[\x22\x27]([^\x22\x27]+)[\x22\x27]",s); print(m.group(1) if m else "")')"
           npx vite build
-
       - name: Publish production build into ai-chatbot
         run: |
           rm -rf /tmp/ai-chatbot-build
@@ -105,7 +51,6 @@ jobs:
           rm -rf ai-chatbot/assets
           cp -r /tmp/ai-chatbot-build/assets ai-chatbot/
           cp /tmp/ai-chatbot-build/index.html ai-chatbot/
-
       - name: Commit production build and source repair
         run: |
           git config user.name "github-actions[bot]"
