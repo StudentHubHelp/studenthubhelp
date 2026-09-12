@@ -15,17 +15,13 @@ jobs:
       - name: Prepare endpoint credentials
         run: |
           echo "API=https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat" >> "$GITHUB_ENV"
-          KEY=$(python3 - <<'PY'
-          import re
-          s=open('ai-chatbot/public/widget.js',encoding='utf-8').read()
-          print(re.search(r"defaultPublicKey\\s*=\\s*['\"]([^'\"]+)",s).group(1))
-          PY
-          )
+          KEY=$(grep -o "defaultPublicKey *= *'[^']*'" ai-chatbot/public/widget.js | head -1 | cut -d"'" -f2)
+          test -n "$KEY"
           echo "KEY=$KEY" >> "$GITHUB_ENV"
       - name: Test Sikar budget
         run: |
           set -euo pipefail
-          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" --data '{"message":"sikar me rhne ka hr mhine ka kharcha lgbg kitna hoga","sessionId":"smoke-sikar-budget-v3"}' -o /tmp/a.json
+          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" --data '{"message":"sikar me rhne ka hr mhine ka kharcha lgbg kitna hoga","sessionId":"smoke-sikar-budget-v4"}' -o /tmp/a.json
           python3 - <<'PY'
           import json
           x=json.load(open('/tmp/a.json'))
@@ -37,7 +33,7 @@ jobs:
       - name: Test Sikar hostel
         run: |
           set -euo pipefail
-          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" --data '{"message":"Sikar me active boys hostel dikhao","sessionId":"smoke-sikar-hostel-v3"}' -o /tmp/b.json
+          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" --data '{"message":"Sikar me active boys hostel dikhao","sessionId":"smoke-sikar-hostel-v4"}' -o /tmp/b.json
           python3 - <<'PY'
           import json
           x=json.load(open('/tmp/b.json'))
@@ -48,7 +44,7 @@ jobs:
       - name: Test Jaipur fallback
         run: |
           set -euo pipefail
-          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" --data '{"message":"jaipur me ik mhine ka kharcha kitna hoga","sessionId":"smoke-jaipur-budget-v3"}' -o /tmp/c.json
+          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" --data '{"message":"jaipur me ik mhine ka kharcha kitna hoga","sessionId":"smoke-jaipur-budget-v4"}' -o /tmp/c.json
           python3 - <<'PY'
           import json
           x=json.load(open('/tmp/c.json'))
