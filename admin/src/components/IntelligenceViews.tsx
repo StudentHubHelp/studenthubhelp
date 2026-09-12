@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChatbotAdminView } from './ChatbotAdminView';
 import { ChatbotAdminControls } from './ChatbotAdminControls';
 import {
@@ -8,7 +8,7 @@ import {
   SystemSetting,
   PropertyItem,
 } from '../types';
-import { fmtDate, shortDate, exportToCSV } from '../lib/supabase';
+import { fmtDate, exportToCSV, supabase } from '../lib/supabase';
 import {
   MapPin,
   Plus,
@@ -29,17 +29,10 @@ import {
   Coffee,
   Store,
   Edit,
-  Save,
 } from 'lucide-react';
 
 interface IntelligenceViewsProps {
-  currentSubTab:
-    | 'areas'
-    | 'notifications'
-    | 'activity'
-    | 'settings'
-    | 'categories'
-    | 'admin';
+  currentSubTab: 'areas' | 'notifications' | 'activity' | 'settings' | 'categories' | 'admin';
   areas: AreaItem[];
   notifications: AdminNotification[];
   activityLogs: AdminActivityLog[];
@@ -60,11 +53,6 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
   activityLogs,
   settings,
   properties,
-  onAddArea,
-  onEditArea,
-  onMarkNotificationRead,
-  onMarkAllNotificationsRead,
-  onUpdateSetting,
   onUpdatePassword,
 }) => {
   const [showAddAreaModal, setShowAddAreaModal] = useState(false);
@@ -75,12 +63,112 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
   const [passMessage, setPassMessage] = useState<{ text: string; success: boolean } | null>(null);
   const [updatingPass, setUpdatingPass] = useState(false);
   const [editingSetting, setEditingSetting] = useState<{ key: string; value: string } | null>(null);
+  const [liveAreas, setLiveAreas] = useState<AreaItem[]>(areas);
+  const [liveNotifications, setLiveNotifications] = useState<AdminNotification[]>(notifications);
+  const [liveSettings, setLiveSettings] = useState<SystemSetting[]>(settings);
+  const [controlLoading, setControlLoading] = useState(false);
+
+  useEffect(() => setLiveAreas(areas), [areas]);
+  useEffect(() => setLiveNotifications(notifications), [notifications]);
+  useEffect(() => setLiveSettings(settings), [settings]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadControls = async () => {
+      try {
+        setControlLoading(true);
+        if (currentSubTab === 'areas') {
+          const { data, error } = await supabase.from('areas').select('*').order('name', { ascending: true });
+          if (error) throw error;
+          if (!cancelled) {
+            setLiveAreas((data || []).map((a: any) => ({ ...a, status: a.is_active === false ? 'inactive' : 'active' })) as AreaItem[]);
+          }
+        }
+        if (currentSubTab === 'notifications') {
+          const { data, error } = await supabase.from('admin_notifications').select('*').order('created_at', { ascending: false }).range(0, 1999);
+          if (error) throw error;
+          if (!cancelled) {
+            setLiveNotifications((data || []).map((n: any) => ({ ...n, status: n.is_read ? 'read' : (n.status || 'unread') })) as AdminNotification[]);
+          }
+        }
+        if (currentSubTab === 'settings') {
+          const { data, error } = await supabase.from('system_settings').select('*').order('key', { ascending: true });
+          if (error) throw error;
+          if (!cancelled) setLiveSettings((data || []) as SystemSetting[]);
+        }
+      } catch (error) {
+        console.warn('Admin control data load failed:', error);
+      } finally {
+        if (!cancelled) setControlLoading(false);
+      }
+    };
+    loadControls();
+    return () => { cancelled = true; };
+  }, [currentSubTab]);
 
   const handleAddAreaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAreaName.trim()) return;
-    await onAddArea(newAreaName.trim(), newAreaCity);
-    setNewAreaName(''); setShowAddAreaModal(false);
+    const name = newAreaName.trim();
+    const city = newAreaCity.trim() || 'Kota';
+    if (!name) return;
+    try {
+      const duplicate = liveAreas.some((a) => String(a.name || a.area_name || '').trim().toLowerCase() === name.toLowerCase() && String(a.city || '').trim().toLowerCase() === city.toLowerCase());
+      if (duplicate) throw new Error('This locality already exists for this city.');
+      const { data, error } = await supabase.from('areas').insert({ name, city, state: 'Rajasthan', is_active: true }).select().single();
+      if (error) throw error;
+      setLiveAreas((prev) => [...prev, { ...(data as any), status: 'active' } as AreaItem].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''))));
+      setNewAreaName('');
+      setShowAddAreaModal(false);
+    } catch (error: any) {
+      window.alert(error?.message || 'Unable to add locality.');
+    }
+  };
+
+  const handleEditArea = async (id: string | number, name: string) => {
+    const nextName = name.trim();
+    if (!nextName) return;
+    try {
+      const { data, error } = await supabase.from('areas').update({ name: nextName, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+      if (error) throw error;
+      setLiveAreas((prev) => prev.map((a) => String(a.id) === String(id) ? ({ ...(data as any), status: data?.is_active === false ? 'inactive' : 'active' } as AreaItem) : a));
+    } catch (error: any) {
+      window.alert(error?.message || 'Unable to update locality.');
+    }
+  };
+
+  const markNotificationRead = async (id: string | number) => {
+    try {
+      const { error } = await supabase.from('admin_notifications').update({ is_read: true, status: 'read' }).eq('id', id);
+      if (error) throw error;
+      setLiveNotifications((prev) => prev.map((n) => String(n.id) === String(id) ? ({ ...n, is_read: true, status: 'read' } as any) : n));
+    } catch (error: any) {
+      window.alert(error?.message || 'Unable to mark notification as read.');
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    try {
+      const { error } = await supabase.from('admin_notifications').update({ is_read: true, status: 'read' }).eq('is_read', false);
+      if (error) throw error;
+      setLiveNotifications((prev) => prev.map((n) => ({ ...n, is_read: true, status: 'read' } as any)));
+    } catch (error: any) {
+      window.alert(error?.message || 'Unable to mark notifications as read.');
+    }
+  };
+
+  const updateSetting = async (key: string, value: string) => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const { data, error } = await supabase.from('system_settings').upsert({ key, value, updated_by: authData.user?.id ?? null, updated_at: new Date().toISOString() }, { onConflict: 'key' }).select().single();
+      if (error) throw error;
+      setLiveSettings((prev) => {
+        const exists = prev.some((s) => String(s.key || s.setting_key) === key);
+        return exists ? prev.map((s) => String(s.key || s.setting_key) === key ? data as SystemSetting : s) : [...prev, data as SystemSetting];
+      });
+    } catch (error: any) {
+      window.alert(error?.message || 'Unable to save setting.');
+      throw error;
+    }
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -95,18 +183,28 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
   if (currentSubTab === 'areas') {
     return (
       <div className="space-y-6 animate-in fade-in duration-200">
-        <div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-2xl font-serif font-extrabold text-white">Areas & Localities</h2><p className="text-xs text-slate-400 mt-1">Standardized coaching and student residential areas in Kota, Jaipur, and surrounding zones.</p></div><button onClick={() => setShowAddAreaModal(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shadow-lg"><Plus className="w-4 h-4" /><span>Add Locality</span></button></div>
-        <div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden shadow-xl"><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0d1838] text-amber-300 font-bold border-b border-slate-800"><tr><th className="p-4">Locality / Area Name</th><th className="p-4">City</th><th className="p-4">State</th><th className="p-4">Live Properties</th><th className="p-4">Status</th><th className="p-4 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-800/60">{areas.length ? areas.map((a) => { const count = properties.filter((p) => (p.area || '').toLowerCase() === (a.name || a.area_name || '').toLowerCase()).length; return <tr key={a.id} className="hover:bg-slate-800/40"><td className="p-4 font-bold text-white flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-amber-400" />{a.name || a.area_name}</td><td className="p-4 text-slate-300">{a.city || 'Kota'}</td><td className="p-4 text-slate-300">{a.state || 'Rajasthan'}</td><td className="p-4"><span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">{count} listings</span></td><td className="p-4"><span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">{a.status || 'active'}</span></td><td className="p-4 text-right"><button onClick={() => { const n = prompt('Enter new locality name:', a.name || a.area_name || ''); if (n) onEditArea(a.id, n.trim()); }} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-bold">Edit</button></td></tr>; }) : <tr><td colSpan={6} className="p-8 text-center text-slate-400 text-xs">No standardized areas configured.</td></tr>}</tbody></table></div></div>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div><h2 className="text-2xl font-serif font-extrabold text-white">Areas & Localities</h2><p className="text-xs text-slate-400 mt-1">Standardized coaching and student residential areas in Kota, Jaipur, and surrounding zones.</p></div>
+          <button onClick={() => setShowAddAreaModal(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shadow-lg"><Plus className="w-4 h-4" /><span>Add Locality</span></button>
+        </div>
+        <div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden shadow-xl">
+          <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0d1838] text-amber-300 font-bold border-b border-slate-800"><tr><th className="p-4">Locality / Area Name</th><th className="p-4">City</th><th className="p-4">State</th><th className="p-4">Live Properties</th><th className="p-4">Status</th><th className="p-4 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-800/60">
+            {controlLoading ? <tr><td colSpan={6} className="p-8 text-center text-slate-400 text-xs">Loading areas…</td></tr> : liveAreas.length ? liveAreas.map((a) => { const count = properties.filter((p) => (p.area || '').toLowerCase() === String(a.name || a.area_name || '').toLowerCase()).length; return <tr key={a.id} className="hover:bg-slate-800/40"><td className="p-4 font-bold text-white flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-amber-400" />{a.name || a.area_name}</td><td className="p-4 text-slate-300">{a.city || 'Kota'}</td><td className="p-4 text-slate-300">{a.state || 'Rajasthan'}</td><td className="p-4"><span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">{count} listings</span></td><td className="p-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${a.status === 'inactive' ? 'bg-slate-500/10 text-slate-400 border border-slate-500/25' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'}`}>{a.status || 'active'}</span></td><td className="p-4 text-right"><button onClick={() => { const n = window.prompt('Enter new locality name:', a.name || a.area_name || ''); if (n) handleEditArea(a.id, n); }} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-bold">Edit</button></td></tr>; }) : <tr><td colSpan={6} className="p-8 text-center text-slate-400 text-xs">No standardized areas configured.</td></tr>}
+          </tbody></table></div>
+        </div>
         {showAddAreaModal && <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/75" onClick={(e) => { if (e.target === e.currentTarget) setShowAddAreaModal(false); }}><div className="w-full max-w-md rounded-3xl bg-[#081026] border border-amber-500/30 p-6 text-white space-y-4"><h3 className="font-bold text-lg">Add New Standardized Locality</h3><form onSubmit={handleAddAreaSubmit} className="space-y-3"><input type="text" required value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} placeholder="Area / Locality Name" className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white" /><input type="text" value={newAreaCity} onChange={(e) => setNewAreaCity(e.target.value)} placeholder="City" className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white" /><div className="flex justify-end gap-2"><button type="button" onClick={() => setShowAddAreaModal(false)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">Cancel</button><button type="submit" className="px-5 py-2 rounded-xl bg-amber-400 text-slate-950 text-xs font-extrabold">Save Area</button></div></form></div></div>}
       </div>
     );
   }
 
-  if (currentSubTab === 'notifications') return <div className="space-y-6"><h2 className="text-2xl font-serif font-extrabold text-white">Admin Notifications Log</h2><div className="space-y-3">{notifications.length ? notifications.map(n => <div key={n.id} onClick={() => onMarkNotificationRead(n.id)} className="p-4 rounded-2xl bg-[#081026] border border-slate-800"><div className="font-bold text-white">{n.title || 'System Notification'}</div><p className="text-xs text-slate-300 mt-1.5">{n.message || n.body || ''}</p><div className="text-[10px] text-slate-500 mt-2">{fmtDate(n.created_at)}</div></div>) : <div className="p-8 rounded-3xl bg-[#081026] border border-slate-800 text-center text-slate-400 text-xs">No real notifications available.</div>}</div></div>;
+  if (currentSubTab === 'notifications') {
+    const unread = liveNotifications.filter((n: any) => !n.is_read && String(n.status || 'unread').toLowerCase() !== 'read').length;
+    return <div className="space-y-6"><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-2xl font-serif font-extrabold text-white">Admin Notifications Log</h2><p className="text-xs text-slate-400 mt-1">Live notifications from Supabase. {unread} unread.</p></div><button disabled={!unread} onClick={markAllNotificationsRead} className="px-4 py-2 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 text-xs font-bold disabled:opacity-40"><CheckCircle className="w-3.5 h-3.5 inline mr-1" />Mark all read</button></div><div className="space-y-3">{controlLoading ? <div className="p-8 rounded-3xl bg-[#081026] border border-slate-800 text-center text-slate-400 text-xs">Loading notifications…</div> : liveNotifications.length ? liveNotifications.map((n: any) => <div key={n.id} onClick={() => markNotificationRead(n.id)} className={`p-4 rounded-2xl bg-[#081026] border ${n.is_read ? 'border-slate-800' : 'border-amber-500/30'} cursor-pointer`}><div className="flex items-center justify-between gap-3"><div className="font-bold text-white">{n.title || 'System Notification'}</div>{!n.is_read && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/25">Unread</span>}</div><p className="text-xs text-slate-300 mt-1.5">{n.message || n.body || ''}</p><div className="text-[10px] text-slate-500 mt-2">{fmtDate(n.created_at)}</div></div>) : <div className="p-8 rounded-3xl bg-[#081026] border border-slate-800 text-center text-slate-400 text-xs">No notifications available.</div>}</div></div>;
+  }
 
   if (currentSubTab === 'activity') return <div className="space-y-6"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-serif font-extrabold text-white">Activity & Audit Trail</h2><p className="text-xs text-slate-400 mt-1">Historical Director changes and audit records.</p></div><button onClick={() => exportToCSV(activityLogs, 'activity-logs')} className="px-3.5 py-2 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5"><Download className="w-3.5 h-3.5" />Export CSV</button></div><div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0d1838] text-amber-300"><tr><th className="p-4">Action</th><th className="p-4">Entity</th><th className="p-4">ID</th><th className="p-4">Admin</th><th className="p-4">Timestamp</th><th className="p-4">Changes</th></tr></thead><tbody className="divide-y divide-slate-800/60">{activityLogs.length ? activityLogs.map((log,i) => <tr key={log.id || i}><td className="p-4 font-bold text-white">{log.action || 'update'}</td><td className="p-4 text-slate-300">{log.entity_type || '—'}</td><td className="p-4 font-mono text-slate-400">{log.entity_id || '—'}</td><td className="p-4 text-slate-300">{log.admin_email || 'Director Admin'}</td><td className="p-4 text-slate-400">{fmtDate(log.created_at)}</td><td className="p-4 max-w-xs truncate font-mono text-slate-400">{log.new_value ? JSON.stringify(log.new_value) : '—'}</td></tr>) : <tr><td colSpan={6} className="p-8 text-center text-slate-400 text-xs">No admin activity logs found.</td></tr>}</tbody></table></div></div></div>;
 
-  if (currentSubTab === 'settings') return <div className="space-y-6"><h2 className="text-2xl font-serif font-extrabold text-white">System Settings & Policies</h2><p className="text-xs text-slate-400">Live configurations stored in Supabase.</p><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{settings.map(s => <div key={s.key || s.setting_key} className="rounded-2xl bg-[#081026] border border-slate-800 p-4"><div className="flex items-center justify-between"><span className="text-xs font-bold text-amber-400 font-mono">{s.key || s.setting_key}</span><button onClick={() => setEditingSetting({ key: String(s.key || s.setting_key), value: String(s.value || '') })}><Edit className="w-3.5 h-3.5 text-slate-400" /></button></div><div className="text-sm font-bold text-white break-all">{s.value || 'Not configured'}</div></div>)}</div>{editingSetting && <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/75"><div className="w-full max-w-md rounded-3xl bg-[#081026] border border-amber-500/30 p-6 space-y-4"><h3 className="font-bold text-lg text-white">Edit Setting</h3><input value={editingSetting.value} onChange={e => setEditingSetting({...editingSetting,value:e.target.value})} className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white" /><div className="flex justify-end gap-2"><button onClick={() => setEditingSetting(null)} className="px-4 py-2 bg-slate-800 rounded-xl text-xs">Cancel</button><button onClick={async () => { await onUpdateSetting(editingSetting.key, editingSetting.value); setEditingSetting(null); }} className="px-5 py-2 bg-amber-400 rounded-xl text-slate-950 text-xs font-bold">Save</button></div></div></div>}</div>;
+  if (currentSubTab === 'settings') return <div className="space-y-6"><h2 className="text-2xl font-serif font-extrabold text-white">System Settings & Policies</h2><p className="text-xs text-slate-400">Live configurations stored in Supabase.</p><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{controlLoading ? <div className="p-8 text-slate-400 text-xs">Loading settings…</div> : liveSettings.map(s => <div key={s.key || s.setting_key} className="rounded-2xl bg-[#081026] border border-slate-800 p-4"><div className="flex items-center justify-between"><span className="text-xs font-bold text-amber-400 font-mono">{s.key || s.setting_key}</span><button onClick={() => setEditingSetting({ key: String(s.key || s.setting_key), value: String(s.value || '') })}><Edit className="w-3.5 h-3.5 text-slate-400" /></button></div><div className="text-sm font-bold text-white break-all">{s.value || 'Not configured'}</div></div>)}</div>{editingSetting && <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/75"><div className="w-full max-w-md rounded-3xl bg-[#081026] border border-amber-500/30 p-6 space-y-4"><h3 className="font-bold text-lg text-white">Edit Setting</h3><input value={editingSetting.value} onChange={e => setEditingSetting({...editingSetting,value:e.target.value})} className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white" /><div className="flex justify-end gap-2"><button onClick={() => setEditingSetting(null)} className="px-4 py-2 bg-slate-800 rounded-xl text-xs">Cancel</button><button onClick={async () => { await updateSetting(editingSetting.key, editingSetting.value); setEditingSetting(null); }} className="px-5 py-2 bg-amber-400 rounded-xl text-slate-950 text-xs font-bold">Save</button></div></div></div>}</div>;
 
   if (currentSubTab === 'categories') {
     const categories = [
