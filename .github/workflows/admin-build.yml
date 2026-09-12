@@ -35,6 +35,28 @@ jobs:
         working-directory: admin
         run: npm install
 
+      - name: Wire enterprise AI controls
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('admin/src/components/IntelligenceViews.tsx')
+          s = p.read_text(encoding='utf-8')
+          import_line = "import { ChatbotAdminControls } from './ChatbotAdminControls';"
+          if import_line not in s:
+              marker = "import { ChatbotAdminView } from './ChatbotAdminView';"
+              if marker not in s:
+                  raise SystemExit('ChatbotAdminView import marker not found')
+              s = s.replace(marker, marker + "\n" + import_line, 1)
+          old = '<ChatbotAdminView />'
+          new = '<ChatbotAdminView /><ChatbotAdminControls />'
+          if new not in s:
+              if old not in s:
+                  raise SystemExit('ChatbotAdminView render marker not found')
+              s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          print('Enterprise AI controls wired into Director Admin')
+          PY
+
       - name: Restore source index
         working-directory: admin
         run: |
