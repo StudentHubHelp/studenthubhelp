@@ -103,8 +103,8 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   recommendedProperties?: any[];
-budgetPlan?: any;
-comparisonMatrix?: any;
+  budgetPlan?: any;
+  comparisonMatrix?: any;
   diagnosis?: ChatDiagnosis;
   feedback?: 'up' | 'down' | null;
 }
@@ -152,6 +152,7 @@ export interface ChatApiRequest {
   }>;
   configOverride?: Partial<BotConfig>;
   preferredTopic?: string;
+  sessionId?: string;
 }
 
 export interface ChatApiResponse {
@@ -170,28 +171,10 @@ export interface ChatApiResponse {
   isFallback?: boolean;
   latencyMs?: number;
   recommendedProperties?: any[];
-recommendations?: any[];
-
-budgetPlan?: any;
-comparisonMatrix?: any;
-
-intent?: string;
-primaryTopic?: string;
-topicDirectAnswer?: string;
-topicPriorityReason?: string;
-
-userNeedSummary?: string;
-sentiment?: string;
-
-suggestedFollowUps?: string[];
-
-capturedLead?: any;
-
-recommendedCategory?: string;
-targetCity?: string;
-
-isFallback?: boolean;
-grounded?: boolean;
-liveActivePropertyCount?: number;
+  recommendedCategory?: string;
+  targetCity?: string;
+  grounded?: boolean;
+  liveActivePropertyCount?: number;
+  searchMode?: 'hybrid_lexical_trigram_ai_rerank' | string;
+  sessionId?: string;
 }
-
