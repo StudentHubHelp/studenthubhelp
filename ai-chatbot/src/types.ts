@@ -102,6 +102,9 @@ export interface ChatMessage {
   sender: 'user' | 'bot';
   text: string;
   timestamp: string;
+  recommendedProperties?: any[];
+budgetPlan?: any;
+comparisonMatrix?: any;
   diagnosis?: ChatDiagnosis;
   feedback?: 'up' | 'down' | null;
 }
@@ -166,5 +169,29 @@ export interface ChatApiResponse {
   comparisonMatrix?: ComparisonMatrix;
   isFallback?: boolean;
   latencyMs?: number;
+  recommendedProperties?: any[];
+recommendations?: any[];
+
+budgetPlan?: any;
+comparisonMatrix?: any;
+
+intent?: string;
+primaryTopic?: string;
+topicDirectAnswer?: string;
+topicPriorityReason?: string;
+
+userNeedSummary?: string;
+sentiment?: string;
+
+suggestedFollowUps?: string[];
+
+capturedLead?: any;
+
+recommendedCategory?: string;
+targetCity?: string;
+
+isFallback?: boolean;
+grounded?: boolean;
+liveActivePropertyCount?: number;
 }
 
