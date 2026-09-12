@@ -37,18 +37,29 @@ jobs:
           python3 -c 'from pathlib import Path; import re; p=Path("ai-chatbot/src/components/ChatWidget.tsx"); s=p.read_text(encoding="utf-8"); pattern=r";\s*\{properties\.length\s*>\s*0\s*&&\s*\(\s*<div className=[\"\\\x27]space-y-3[\"\\\x27]>\s*\{properties\.map\(renderPropertyCard\)\}\s*</div>\s*\)\}"; fixed,count=re.subn(pattern,";",s,count=1); p.write_text(fixed,encoding="utf-8") if count else None; print("ChatWidget repaired" if count else "ChatWidget already clean")'
           python3 -c 'from pathlib import Path; p=Path("ai-chatbot/src/components/BudgetPlannerCard.tsx"); s=p.read_text(encoding="utf-8"); a=s.find("  // Compute live items based on current sliderBudget"); b=s.find("  const items = calculateItems(sliderBudget);"); r="\n".join(["  // Use only live budget items returned by the API; never invent prices.","  const calculateItems = (_target: number): BudgetBreakdownItem[] => {","    const source = Array.isArray(initialPlan.items) ? initialPlan.items : [];","    return source","      .filter((item) => item && Number.isFinite(Number(item.amount)) && Number(item.amount) >= 0)","      .map((item) => ({","        category: item.category,","        label: item.label,","        amount: Number(item.amount),","        note: item.note,","      }));","  };",""]) + "\n"; p.write_text(s[:a]+r+s[b:],encoding="utf-8") if a != -1 and b != -1 and a < b else None; print("BudgetPlanner repaired" if a != -1 and b != -1 and a < b else "BudgetPlanner already clean")'
           sed -i "s#const defaultPublicKey = .*#const defaultPublicKey = 'sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT';#" ai-chatbot/public/widget.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('ai-chatbot/src/components/ChatWidget.tsx')
+          s=p.read_text(encoding='utf-8')
+          old="${isExpanded?'w-[min(760px,calc(100vw-2rem))] h-[min(760px,calc(100vh-2rem))]':'w-[min(420px,calc(100vw-2rem))] h-[min(700px,calc(100vh-2rem))]'}"
+          new="${isExpanded?'w-[min(760px,calc(100vw-2rem))] h-[min(760px,calc(100vh-2rem))]':'w-[min(380px,62vw)] h-[min(640px,calc(100vh-90px))] sm:w-[380px] sm:h-[640px]'}"
+          if old not in s:
+              raise SystemExit('Expected React chatbot sizing class was not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          print('React chatbot sizing updated')
+          PY
       - name: Compact responsive chatbot panel
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('ai-chatbot/public/widget.js')
           s = p.read_text(encoding='utf-8')
-          old = "#shh-chatbot-container button:hover{filter:brightness(1.04)}@media(max-width:520px){#shh-chatbot-container{right:10px!important;left:10px!important;bottom:10px!important}#shh-chatbot-container>div{width:100%!important;height:min(700px,calc(100vh - 80px))!important}}"
-          new = "#shh-chatbot-container button:hover{filter:brightness(1.04)}@media(max-width:520px){#shh-chatbot-container{right:10px!important;left:auto!important;bottom:10px!important}#shh-chatbot-container>div{width:60vw!important;max-width:360px!important;height:min(620px,calc(100vh - 90px))!important}}@media(min-width:521px) and (max-width:900px){#shh-chatbot-container{right:16px!important;left:auto!important;bottom:16px!important}#shh-chatbot-container>div{width:min(380px,46vw)!important;height:min(640px,calc(100vh - 100px))!important}}@media(min-width:901px){#shh-chatbot-container>div{width:380px!important;height:min(660px,calc(100vh - 90px))!important}}"
+          old = "#shh-chatbot-container button:hover{filter:brightness(1.04)}@media(max-width:520px){#shh-chatbot-container{right:10px!important;left:auto!important;bottom:10px!important}#shh-chatbot-container>div{width:60vw!important;max-width:360px!important;height:min(620px,calc(100vh - 90px))!important}}@media(min-width:521px) and (max-width:900px){#shh-chatbot-container{right:16px!important;left:auto!important;bottom:16px!important}#shh-chatbot-container>div{width:min(380px,46vw)!important;height:min(640px,calc(100vh - 100px))!important}}@media(min-width:901px){#shh-chatbot-container>div{width:380px!important;height:min(660px,calc(100vh - 90px))!important}}"
+          new = "#shh-chatbot-container button:hover{filter:brightness(1.04)}@media(max-width:520px){#shh-chatbot-container{right:12px!important;left:auto!important;bottom:12px!important}#shh-chatbot-container>div{width:62vw!important;max-width:320px!important;height:min(600px,calc(100vh - 110px))!important;border-radius:20px!important}}@media(min-width:521px) and (max-width:900px){#shh-chatbot-container{right:16px!important;left:auto!important;bottom:16px!important}#shh-chatbot-container>div{width:min(380px,46vw)!important;height:min(640px,calc(100vh - 100px))!important}}@media(min-width:901px){#shh-chatbot-container>div{width:380px!important;height:min(660px,calc(100vh - 90px))!important}}"
           if old not in s:
-              raise SystemExit('Expected chatbot responsive CSS block was not found')
+              raise SystemExit('Expected public widget responsive CSS block was not found')
           p.write_text(s.replace(old, new, 1), encoding='utf-8')
-          print('Responsive chatbot sizing updated')
+          print('Public widget sizing updated')
           PY
       - name: Restore Vite source entry
         run: |
