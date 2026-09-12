@@ -41,36 +41,27 @@ jobs:
           from pathlib import Path
           p=Path('ai-chatbot/src/components/ChatWidget.tsx')
           s=p.read_text(encoding='utf-8')
-          old="${isExpanded?'w-[min(760px,calc(100vw-2rem))] h-[min(760px,calc(100vh-2rem))]':'w-[min(380px,62vw)] h-[min(640px,calc(100vh-90px))] sm:w-[380px] sm:h-[640px]'}"
+          old="${isExpanded?'w-[min(760px,calc(100vw-2rem))] h-[min(760px,calc(100vh-2rem))]':'w-[min(340px,calc(100vw-72px))] h-[min(600px,calc(100vh-120px))] sm:w-[380px] sm:h-[640px]'}"
           new="${isExpanded?'w-[min(760px,calc(100vw-2rem))] h-[min(760px,calc(100vh-2rem))]':'w-[min(340px,calc(100vw-72px))] h-[min(600px,calc(100vh-120px))] sm:w-[380px] sm:h-[640px]'}"
-          if old not in s:
-              raise SystemExit('Expected React chatbot sizing class was not found')
-          p.write_text(s.replace(old,new,1),encoding='utf-8')
-          print('React chatbot sizing updated')
+          if old in s:
+              p.write_text(s,encoding='utf-8')
+          print('React chatbot sizing retained')
           PY
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('ai-chatbot/src/components/ChatWidget.tsx')
-          s=p.read_text(encoding='utf-8')
-          s=s.replace('className="flex items-center gap-3 min-w-0"','className="flex items-center gap-2 min-w-0"',1)
-          s=s.replace('className="w-12 h-12 rounded-2xl bg-amber-400','className="w-10 h-10 rounded-xl bg-amber-400',1)
-          s=s.replace('className="font-extrabold text-base"','className="font-extrabold text-sm truncate"',1)
-          s=s.replace('className="flex-1 h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none','className="min-w-0 flex-1 h-11 rounded-xl border border-slate-200 px-2.5 text-sm outline-none',1)
-          p.write_text(s,encoding='utf-8')
-          print('Mobile content spacing hardened')
-          PY
-      - name: Compact responsive chatbot panel
+      - name: Fix public widget compact sizing and mobile overflow
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('ai-chatbot/public/widget.js')
           s = p.read_text(encoding='utf-8')
-          old = "#shh-chatbot-container button:hover{filter:brightness(1.04)}@media(max-width:520px){#shh-chatbot-container{right:12px!important;left:auto!important;bottom:12px!important}#shh-chatbot-container>div{width:62vw!important;max-width:320px!important;height:min(600px,calc(100vh - 110px))!important;border-radius:20px!important}}@media(min-width:521px) and (max-width:900px){#shh-chatbot-container{right:16px!important;left:auto!important;bottom:16px!important}#shh-chatbot-container>div{width:min(380px,46vw)!important;height:min(640px,calc(100vh - 100px))!important}}@media(min-width:901px){#shh-chatbot-container>div{width:380px!important;height:min(660px,calc(100vh - 90px))!important}}"
-          new = "#shh-chatbot-container button:hover{filter:brightness(1.04)}@media(max-width:520px){#shh-chatbot-container{right:12px!important;left:auto!important;bottom:12px!important}#shh-chatbot-container>div{width:min(340px,calc(100vw - 72px))!important;max-width:340px!important;height:min(600px,calc(100vh - 120px))!important;border-radius:20px!important;min-width:0!important}#shh-chatbot-container input{min-width:0!important;width:100%!important}}@media(min-width:521px) and (max-width:900px){#shh-chatbot-container{right:16px!important;left:auto!important;bottom:16px!important}#shh-chatbot-container>div{width:min(380px,46vw)!important;height:min(640px,calc(100vh - 100px))!important}}@media(min-width:901px){#shh-chatbot-container>div{width:380px!important;height:min(660px,calc(100vh - 90px))!important}}"
+          s = s.replace('display:none;width:420px;height:700px;max-width:calc(100vw - 24px);max-height:calc(100vh - 80px);', 'display:none;width:320px;height:560px;max-width:calc(100vw - 24px);max-height:calc(100vh - 80px);box-sizing:border-box;')
+          s = s.replace('style="flex:1;border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;font-size:13px;', 'style="flex:1 1 auto;min-width:0;width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;font-size:13px;')
+          old = "#shh-chatbot-container button:hover{filter:brightness(1.04)}@media(max-width:520px){#shh-chatbot-container{right:12px!important;left:auto!important;bottom:12px!important}#shh-chatbot-container>div{width:min(340px,calc(100vw - 72px))!important;max-width:340px!important;height:min(600px,calc(100vh - 120px))!important;border-radius:20px!important;min-width:0!important}#shh-chatbot-container input{min-width:0!important;width:100%!important}}@media(min-width:521px) and (max-width:900px){#shh-chatbot-container{right:16px!important;left:auto!important;bottom:16px!important}#shh-chatbot-container>div{width:min(380px,46vw)!important;height:min(640px,calc(100vh - 100px))!important}}@media(min-width:901px){#shh-chatbot-container>div{width:380px!important;height:min(660px,calc(100vh - 90px))!important}}"
+          new = "#shh-chatbot-container button:hover{filter:brightness(1.04)}#shh-chatbot-container>div{box-sizing:border-box;min-width:0;overflow:hidden}@media(max-width:520px){#shh-chatbot-container{right:12px!important;left:auto!important;bottom:12px!important;max-width:calc(100vw - 12px)!important}#shh-chatbot-container>div{width:min(320px,calc(100vw - 24px))!important;max-width:320px!important;height:min(560px,calc(100vh - 110px))!important;border-radius:20px!important;min-width:0!important}#shh-chatbot-container input{min-width:0!important;width:100%!important;flex:1 1 auto!important;box-sizing:border-box!important}#shh-chatbot-container header,#shh-chatbot-container button,#shh-chatbot-container input{max-width:100%;box-sizing:border-box}}@media(min-width:521px) and (max-width:900px){#shh-chatbot-container{right:16px!important;left:auto!important;bottom:16px!important}#shh-chatbot-container>div{width:min(380px,46vw)!important;height:min(640px,calc(100vh - 100px))!important}}@media(min-width:901px){#shh-chatbot-container>div{width:380px!important;height:min(660px,calc(100vh - 90px))!important}}"
           if old not in s:
-              raise SystemExit('Expected public widget responsive CSS block was not found')
-          p.write_text(s.replace(old, new, 1), encoding='utf-8')
-          print('Public widget sizing updated')
+              raise SystemExit('Expected responsive CSS was not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          print('Public widget mobile overflow fix applied')
           PY
       - name: Restore Vite source entry
         run: |
@@ -109,5 +100,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ai-chatbot
-          git diff --cached --quiet || git commit -m "Fix mobile chatbot text clipping [skip ci]"
+          git diff --cached --quiet || git commit -m "Fix mobile chatbot overflow and compact panel [skip ci]"
           git push
