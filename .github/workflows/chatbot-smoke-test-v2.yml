@@ -11,17 +11,12 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - name: Prepare endpoint credentials
-        run: |
-          echo "API=https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat" >> "$GITHUB_ENV"
-          KEY=$(grep -o "defaultPublicKey *= *'[^']*'" ai-chatbot/public/widget.js | head -1 | cut -d"'" -f2)
-          test -n "$KEY"
-          echo "KEY=$KEY" >> "$GITHUB_ENV"
       - name: Test Sikar budget
+        env:
+          API: https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat
         run: |
           set -euo pipefail
-          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" -H "apikey: $KEY" --data '{"message":"sikar me rhne ka hr mhine ka kharcha lgbg kitna hoga","sessionId":"smoke-sikar-budget-v6"}' -o /tmp/a.json
+          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" --data '{"message":"sikar me rhne ka hr mhine ka kharcha lgbg kitna hoga","sessionId":"smoke-sikar-budget-v7"}' -o /tmp/a.json
           python3 - <<'PY'
           import json
           x=json.load(open('/tmp/a.json'))
@@ -31,9 +26,11 @@ jobs:
           print('Sikar budget PASS')
           PY
       - name: Test Sikar hostel
+        env:
+          API: https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat
         run: |
           set -euo pipefail
-          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" -H "apikey: $KEY" --data '{"message":"Sikar me active boys hostel dikhao","sessionId":"smoke-sikar-hostel-v6"}' -o /tmp/b.json
+          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" --data '{"message":"Sikar me active boys hostel dikhao","sessionId":"smoke-sikar-hostel-v7"}' -o /tmp/b.json
           python3 - <<'PY'
           import json
           x=json.load(open('/tmp/b.json'))
@@ -42,9 +39,11 @@ jobs:
           print('Sikar hostel PASS', len(x.get('recommendations',[])))
           PY
       - name: Test Jaipur fallback
+        env:
+          API: https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat
         run: |
           set -euo pipefail
-          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" -H "apikey: $KEY" --data '{"message":"jaipur me ik mhine ka kharcha kitna hoga","sessionId":"smoke-jaipur-budget-v6"}' -o /tmp/c.json
+          curl -sS --fail-with-body "$API" -X POST -H "Content-Type: application/json" --data '{"message":"jaipur me ik mhine ka kharcha kitna hoga","sessionId":"smoke-jaipur-budget-v7"}' -o /tmp/c.json
           python3 - <<'PY'
           import json
           x=json.load(open('/tmp/c.json'))
