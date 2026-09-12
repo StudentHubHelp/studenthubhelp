@@ -36,12 +36,26 @@ jobs:
         working-directory: ai-chatbot
         run: npm install
 
+      - name: Repair accidental JSX insertion in ChatWidget
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('ai-chatbot/src/components/ChatWidget.tsx')
+          s = p.read_text(encoding='utf-8')
+          bad = '''; {properties.length > 0 && (\n  <div className=\\"space-y-3\\">\n    {properties.map(renderPropertyCard)}\n  </div>\n)}'''
+          if bad in s:
+              s = s.replace(bad, ';', 1)
+              p.write_text(s, encoding='utf-8')
+              print('Removed accidental JSX insertion from ChatWidget.tsx')
+          else:
+              print('No accidental JSX insertion found')
+          PY
+
       - name: Build AI chatbot
         working-directory: ai-chatbot
         env:
           VITE_CHAT_API_URL: https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat
-          # Supabase anon key is intentionally public/client-side; Gemini secret stays server-side in the Edge Function.
-          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxJwjocFUeLB1yMA
         run: npx vite build
 
       - name: Publish production build into ai-chatbot
@@ -53,10 +67,10 @@ jobs:
           cp -r /tmp/ai-chatbot-build/assets ai-chatbot/
           cp /tmp/ai-chatbot-build/index.html ai-chatbot/
 
-      - name: Commit production build
+      - name: Commit production build and source repair
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ai-chatbot
-          git diff --cached --quiet || git commit -m "Build AI chatbot for GitHub Pages [skip ci]"
+          git diff --cached --quiet || git commit -m "Build AI chatbot and fix ChatWidget source [skip ci]"
           git push
