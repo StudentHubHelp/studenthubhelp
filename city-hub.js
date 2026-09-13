@@ -2,7 +2,7 @@
   const root=document.getElementById('cityHub'); if(!root||!window.supabase)return;
   const city=root.dataset.city;
   const config={Sikar:{areas:['Piprali Road','Samarthpura','Station Road','Devli Road']},Kota:{areas:['Talwandi','Vigyan Nagar','Landmark City','Kunhadi']},Jaipur:{areas:['Mansarovar','Malviya Nagar','Vaishali Nagar','Gopalpura']},Delhi:{areas:['Mukherjee Nagar','Laxmi Nagar','Rajinder Nagar','South Delhi']},Ahmedabad:{areas:['Navrangpura','Chandkheda','Vastrapur','Maninagar']},Lucknow:{areas:['Aliganj','Gomti Nagar','Hazratganj','Indira Nagar']},Hyderabad:{areas:['Kukatpally','Ameerpet','Dilsukhnagar','Himayatnagar']},Pune:{areas:['Kothrud','Viman Nagar','Shivajinagar','Wakad']}}[city]||{areas:[]};
-  const sb=window.supabase.createClient('https://idurlccrarznnnqixxsd.supabase.co','sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFh5');
+  const sb=window.supabase.createClient('https://idurlccrarznnnqixxsd.supabase.co','sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT');
   const tables=[['hostels','Hostels & PGs','🏠','pg-finder.html'],['tiffins','Tiffin & Mess','🍱','tiffin-finder.html'],['libraries','Libraries & Study Spaces','📚','library-finder.html'],['cafes','Student Cafes','☕','cafe-finder.html'],['bookstores','Book Stores','📖','bookstore-finder.html']];
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money=v=>Number(v)>0?'₹'+Math.round(Number(v)).toLocaleString('en-IN'):'';
