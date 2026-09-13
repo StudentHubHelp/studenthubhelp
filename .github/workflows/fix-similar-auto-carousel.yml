@@ -1,0 +1,109 @@
+name: Fix similar properties auto carousel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-similar-auto-carousel.yml'
+      - 'property-details.html'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore property details and enable auto carousel
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+
+          p = Path('property-details.html')
+          # Restore the last known-good Property Details page before the
+          # accidental placeholder write, then apply only this requested change.
+          good = subprocess.check_output([
+              'git','show','ff9528ca7fff42e52ba3a5a1dbd0221c5b601874:property-details.html'
+          ], text=True)
+          s = good
+
+          old_select = "let q=db.from(cfg.table).select('id,slug,name,service_name,image,area,city,rent,price,monthly_rent,monthly_price,starting_price,price_per_month,amount,rating,verified,status').limit(80);"
+          new_select = "let q=db.from(cfg.table).select('id,slug,name,image,area,city,price,monthly_fee,rating,verified,status').limit(80);"
+          if old_select in s:
+              s = s.replace(old_select, new_select, 1)
+
+          old = """    const track=document.getElementById('similarTrack');
+          document.getElementById('similarPrev')?.addEventListener('click',()=>track?.scrollBy({left:-280,behavior:'smooth'}));
+          document.getElementById('similarNext')?.addEventListener('click',()=>track?.scrollBy({left:280,behavior:'smooth'}));"""
+          new = """    const track=document.getElementById('similarTrack');
+          const prev=document.getElementById('similarPrev');
+          const next=document.getElementById('similarNext');
+          prev?.addEventListener('click',()=>track?.scrollBy({left:-280,behavior:'smooth'}));
+          next?.addEventListener('click',()=>track?.scrollBy({left:280,behavior:'smooth'}));
+
+          // Continuous auto-carousel: duplicate the real cards so the track can
+          // loop endlessly without requiring manual left/right scrolling.
+          if(track && rows.length > 1){
+            const cards=[...track.children];
+            cards.forEach(card=>track.appendChild(card.cloneNode(true)));
+            let paused=false;
+            const getStep=()=>{
+              const card=track.querySelector('.similar-card');
+              if(!card)return 280;
+              const gap=parseFloat(getComputedStyle(track).gap)||13;
+              return card.getBoundingClientRect().width+gap;
+            };
+            const loopWidth=()=>track.scrollWidth/2;
+            const tick=()=>{
+              if(paused)return;
+              const target=track.scrollLeft+getStep();
+              const half=loopWidth();
+              if(target>=half){
+                track.scrollTo({left:target-half,behavior:'auto'});
+                requestAnimationFrame(()=>track.scrollBy({left:getStep(),behavior:'smooth'}));
+              }else{
+                track.scrollBy({left:getStep(),behavior:'smooth'});
+              }
+            };
+            track.addEventListener('mouseenter',()=>paused=true);
+            track.addEventListener('mouseleave',()=>paused=false);
+            track.addEventListener('touchstart',()=>paused=true,{passive:true});
+            track.addEventListener('touchend',()=>paused=false,{passive:true});
+            window.addEventListener('resize',()=>{ if(track.scrollLeft>=loopWidth()) track.scrollTo({left:track.scrollLeft-loopWidth(),behavior:'auto'}); });
+            setInterval(tick,2600);
+          }"""
+          if old not in s:
+              raise SystemExit('carousel block not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+      - name: Validate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('property-details.html').read_text(encoding='utf-8')
+          assert 'Similar Properties' in s
+          assert "select('id,slug,name,image,area,city,price,monthly_fee,rating,verified,status')" in s
+          assert 'Continuous auto-carousel' in s
+          assert 'setInterval(tick,2600)' in s
+          assert 'PLACEHOLDER' not in s
+          print('property-details auto carousel validation passed')
+          PY
+
+      - name: Commit and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name 'StudentHubHelp'
+          git config user.email 'actions@users.noreply.github.com'
+          git add property-details.html
+          git diff --cached --quiet || git commit -m 'Enable automatic looping similar properties carousel'
+          git rm .github/workflows/fix-similar-auto-carousel.yml
+          git commit -m 'Remove one-time similar carousel workflow'
+          git push
