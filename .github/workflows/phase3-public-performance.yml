@@ -1,0 +1,54 @@
+name: Phase 3 public performance pass
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply conservative public performance hints
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in ./*.html; do
+            [ -f "$f" ] || continue
+
+            # Avoid browser smooth-scroll animation interfering with wheel/trackpad navigation.
+            sed -i 's/scroll-behavior:[[:space:]]*smooth/scroll-behavior: auto/g' "$f"
+
+            # Load the small image-hint layer after HTML parsing without blocking first paint.
+            if ! grep -q 'performance.js' "$f"; then
+              sed -i 's#</head>#  <script src="performance.js" defer></script>\n</head>#' "$f"
+            fi
+
+            # Establish the Supabase connection early only on pages that actually use it.
+            if grep -q 'idurlccrarznnnqixxsd.supabase.co' "$f" && ! grep -q 'preconnect.*idurlccrarznnnqixxsd.supabase.co' "$f"; then
+              sed -i 's#</head>#  <link rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co" crossorigin>\n</head>#' "$f"
+            fi
+          done
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.html'
+          if git diff --cached --quiet; then
+            echo 'No public HTML changes required.'
+          else
+            git commit -m 'Optimize public pages for Phase 3 performance'
+            git push
+          fi
+
+      - name: Remove one-time workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/phase3-public-performance.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Remove one-time Phase 3 performance workflow'
+          git push
