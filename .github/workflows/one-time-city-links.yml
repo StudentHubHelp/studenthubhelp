@@ -1,0 +1,42 @@
+name: One-time city hub links
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  update:
+    if: github.event.head_commit.message != 'Connect homepage city cards to city hubs'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Link city cards and sitemap
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          for city in ['Sikar','Kota','Jaipur','Delhi','Ahmedabad','Lucknow','Hyderabad','Pune']:
+            slug=city.lower()
+            s=s.replace(f'href="pg-finder.html?q={city}"',f'href="{slug}.html"',1)
+          p.write_text(s,encoding='utf-8')
+          sm=Path('sitemap.xml'); x=sm.read_text(encoding='utf-8')
+          marker='  <url><loc>https://studenthubhelp.github.io/studenthubhelp/sikar.html</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>'
+          if 'sikar.html</loc>' not in x:
+            pages=['sikar','kota','jaipur','delhi','ahmedabad','lucknow','hyderabad','pune']
+            block='\n'.join(f'  <url><loc>https://studenthubhelp.github.io/studenthubhelp/{c}.html</loc><changefreq>weekly</changefreq><priority>0.85</priority></url>' for c in pages)+'\n'
+            x=x.replace('</urlset>',block+'</urlset>')
+          sm.write_text(x,encoding='utf-8')
+      - name: Commit homepage links
+        run: |
+          git config user.name 'StudentHubHelp'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html sitemap.xml
+          git commit -m 'Connect homepage city cards to city hubs'
+          git push
+      - name: Remove one-time workflow
+        if: success()
+        run: |
+          rm -f .github/workflows/one-time-city-links.yml
+          git add .github/workflows/one-time-city-links.yml
+          git commit -m 'Remove one-time city hub links workflow'
+          git push
