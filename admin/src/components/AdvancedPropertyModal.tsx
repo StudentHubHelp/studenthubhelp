@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { PropertyItem, PropertyType } from '../types';
-import { PROPERTY_TABLE_COLUMNS, propertyConfig } from '../lib/supabase';
+import { PROPERTY_TABLE_COLUMNS, propertyConfig, supabase } from '../lib/supabase';
 import { AlertCircle, Building2, Save, X } from 'lucide-react';
 
 interface AdvancedPropertyModalProps {
@@ -77,6 +77,18 @@ function normalizeInputValue(field: string, value: string) {
   return value;
 }
 
+function makeTextPropertyId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return `property-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function makeBookstorePropertyId() {
+  const { data, error } = await supabase.from('bookstores').select('id').order('id', { ascending: false }).limit(1).maybeSingle();
+  if (error) throw new Error(`Unable to prepare bookstore ID: ${error.message}`);
+  const currentMax = Number(data?.id || 0);
+  return Math.max(currentMax + 1, 1);
+}
+
 export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ property, initialType, onClose, onSave }) => {
   const selectedType = initialType;
   const columns = PROPERTY_TABLE_COLUMNS[selectedType] || PROPERTY_TABLE_COLUMNS.hostels;
@@ -127,6 +139,13 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
         if (field === 'id' && isNew) continue;
         if (Object.prototype.hasOwnProperty.call(formData, field)) payload[field] = formData[field];
       }
+
+      // The live property tables require an ID before their public-ID trigger can build entity_key.
+      // Generate it here for new Master Editor entries; existing IDs are never changed.
+      if (isNew) {
+        payload.id = selectedType === 'bookstores' ? await makeBookstorePropertyId() : makeTextPropertyId();
+      }
+
       payload._source_table = selectedType;
       await onSave(payload as PropertyItem);
       onClose();
