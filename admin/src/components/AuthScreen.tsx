@@ -5,7 +5,6 @@ import {
   Mail,
   ArrowRight,
   Fingerprint,
-  KeyRound,
   Loader2,
   CheckCircle2,
   AlertTriangle,
@@ -17,49 +16,33 @@ interface AuthScreenProps {
   onLoginSuccess: (email: string) => void;
 }
 
-// Supabase Auth/WebAuthn owns the credential verification. The browser/device
-// authenticator keeps the private key; this application never receives raw
-// fingerprint or Face ID data.
-const securityAuth = createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      experimental: {
-        passkey: true,
-      },
-    },
-  }
-);
+const securityAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    experimental: { passkey: true },
+  },
+});
 
 const ADMIN_ROLE = 'admin';
-
-type AuthMode = 'login' | 'enroll' | 'biometric';
 
 function readableAuthError(error: any): string {
   const message = String(error?.message || error || '').trim();
   const lower = message.toLowerCase();
-
   if (lower.includes('passkey_disabled')) {
-    return 'Passkey security is not enabled in Supabase yet. Enable Authentication → Passkeys for the production project.';
+    return 'Passkey login is currently disabled in Supabase. Password login is still available.';
   }
-
   if (lower.includes('not supported') || lower.includes('webauthn')) {
-    return 'This browser or device does not support the required biometric/passkey security.';
+    return 'This browser or device does not support passkey / biometric login.';
   }
-
   if (lower.includes('cancel') || lower.includes('abort')) {
     return 'Biometric verification was cancelled. Try again.';
   }
-
   return message || 'Authentication failed. Please try again.';
 }
 
 async function verifyAdminUser(client: typeof supabase) {
   const { data: userData, error: userError } = await client.auth.getUser();
-
   if (userError || !userData.user?.id || !userData.user.email) {
     throw new Error('Unable to verify the signed-in account.');
   }
@@ -70,72 +53,29 @@ async function verifyAdminUser(client: typeof supabase) {
     .eq('id', userData.user.id)
     .maybeSingle();
 
-  if (profileError) {
-    throw new Error('Unable to verify admin access. Please try again.');
-  }
+  if (profileError) throw new Error('Unable to verify admin access. Please try again.');
 
   const role = String(profile?.role || '').trim().toLowerCase();
   const status = String(profile?.status || 'active').trim().toLowerCase();
-
   if (role !== ADMIN_ROLE || status !== 'active') {
     await client.auth.signOut();
     throw new Error('Access denied. Only an active admin account can enter the Director Control Center.');
   }
 
-  return {
-    id: userData.user.id,
-    email: userData.user.email,
-  };
+  return { id: userData.user.id, email: userData.user.email };
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<AuthMode>('login');
-  const [enrolling, setEnrolling] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
 
-  const handlePasskeyLogin = async () => {
-    if (!window.isSecureContext) {
-      setErrorMsg('Biometric login requires HTTPS. Use the deployed HTTPS Admin URL.');
-      return;
-    }
-
-    if (!('PublicKeyCredential' in window)) {
-      setErrorMsg('Passkey / fingerprint / Face ID is not available in this browser.');
-      return;
-    }
-
-    setLoading(true);
-    setErrorMsg(null);
-    setInfoMsg('Waiting for your device biometric security…');
-
-    try {
-      const { data, error } = await securityAuth.auth.signInWithPasskey();
-
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.user?.email) {
-        throw new Error('Passkey authentication returned no user account.');
-      }
-
-      await verifyAdminUser(securityAuth);
-      onLoginSuccess(data.user.email);
-    } catch (err: any) {
-      try {
-        await securityAuth.auth.signOut();
-      } catch {
-        // Ignore cleanup errors after a failed authentication ceremony.
-      }
-      setInfoMsg(null);
-      setErrorMsg(readableAuthError(err));
-    } finally {
-      setLoading(false);
-    }
+  const completeLogin = async (client: typeof supabase, emailAddress?: string) => {
+    const admin = await verifyAdminUser(client);
+    setInfoMsg('Authentication successful. Opening the Director Control Center…');
+    onLoginSuccess(emailAddress || admin.email);
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -143,99 +83,49 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setErrorMsg(null);
     setInfoMsg(null);
-
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
+      if (error) throw error;
+      if (!data?.session || !data.user?.email) throw new Error('Sign in did not return a valid admin session.');
 
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.user?.id || !data.user.email || !data.session) {
-        throw new Error('Sign in did not return a valid admin session.');
-      }
-
-      // Validate role/status before doing anything with biometric credentials.
-      await verifyAdminUser(supabase);
-
-      // Pass the already authenticated session to the passkey-enabled client.
-      const { error: sessionError } = await securityAuth.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      });
-
-      if (sessionError) {
-        throw sessionError;
-      }
-
-      const { data: passkeys, error: passkeyListError } =
-        await securityAuth.auth.passkey.list();
-
-      if (passkeyListError) {
-        throw passkeyListError;
-      }
-
-      if (!passkeys || passkeys.length === 0) {
-        // First secure bootstrap: password has authenticated the admin, then the
-        // same session must register a real device-bound passkey before dashboard access.
-        setMode('enroll');
-        setInfoMsg('Password verified. Register this device with Face ID, fingerprint, Windows Hello, or a secure device PIN before entering the dashboard.');
-        return;
-      }
-
-      // Existing passkey means password alone is never sufficient anymore.
-      await supabase.auth.signOut();
-      await securityAuth.auth.signOut();
-      setMode('biometric');
-      setInfoMsg('Password verified. Complete the second security check with your registered device biometric.');
+      // PASSWORD IS ONE COMPLETE LOGIN METHOD.
+      // Do not force a second biometric/passkey step after password login.
+      await completeLogin(supabase, data.user.email);
     } catch (err: any) {
-      try {
-        await supabase.auth.signOut();
-        await securityAuth.auth.signOut();
-      } catch {
-        // Ignore cleanup errors.
-      }
+      try { await supabase.auth.signOut(); } catch { /* cleanup only */ }
       setErrorMsg(readableAuthError(err));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEnrollPasskey = async () => {
-    setEnrolling(true);
+  const handlePasskeyLogin = async () => {
+    if (!window.isSecureContext) {
+      setErrorMsg('Biometric/passkey login requires HTTPS.');
+      return;
+    }
+    if (!('PublicKeyCredential' in window)) {
+      setErrorMsg('Passkey / fingerprint / Face ID is not available in this browser.');
+      return;
+    }
+
+    setLoading(true);
     setErrorMsg(null);
-    setInfoMsg('Preparing your secure device credential…');
-
+    setInfoMsg('Waiting for Face ID, fingerprint, Windows Hello, device PIN, or your registered passkey…');
     try {
-      const { data: sessionData, error: sessionError } = await securityAuth.auth.getSession();
-      if (sessionError || !sessionData.session) {
-        throw new Error('Your admin session is no longer active. Sign in with your password first.');
-      }
-
-      await verifyAdminUser(securityAuth);
-
-      const { data, error } = await securityAuth.auth.registerPasskey();
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.id) {
-        throw new Error('Passkey registration did not return a credential.');
-      }
-
-      // Registration itself is the second proof for this first login.
-      const admin = await verifyAdminUser(securityAuth);
-      setInfoMsg('Biometric security registered successfully. Opening the Director Control Center…');
-      setMode('login');
-      onLoginSuccess(admin.email);
+      const { data, error } = await securityAuth.auth.signInWithPasskey();
+      if (error) throw error;
+      if (!data?.user?.email) throw new Error('Passkey authentication returned no user account.');
+      await completeLogin(securityAuth, data.user.email);
     } catch (err: any) {
+      try { await securityAuth.auth.signOut(); } catch { /* cleanup only */ }
       setInfoMsg(null);
       setErrorMsg(readableAuthError(err));
     } finally {
-      setEnrolling(false);
+      setLoading(false);
     }
   };
 
@@ -251,101 +141,43 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
           </div>
           <h1 className="text-2xl font-serif font-extrabold text-white tracking-wide">StudentHubHelp</h1>
           <p className="text-xs uppercase tracking-widest text-amber-400 font-bold">Managing Director Control Center</p>
-          <p className="text-xs text-slate-400 mt-1">Protected by Supabase Auth and device-bound biometric security.</p>
+          <p className="text-xs text-slate-400 mt-1">Choose one secure login method: Director password OR device-bound passkey.</p>
         </div>
 
-        {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex gap-2 items-start">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+        {errorMsg && <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex gap-2 items-start"><AlertTriangle className="w-4 h-4 shrink-0" /><span>{errorMsg}</span></div>}
+        {infoMsg && <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex gap-2 items-start"><CheckCircle2 className="w-4 h-4 shrink-0" /><span>{infoMsg}</span></div>}
 
-        {infoMsg && (
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex gap-2 items-start">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>{infoMsg}</span>
-          </div>
-        )}
-
-        {mode === 'biometric' ? (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-slate-700 bg-[#0d1838] p-5 text-center space-y-3">
-              <Fingerprint className="w-12 h-12 mx-auto text-amber-400" />
-              <h2 className="text-lg font-bold text-white">Second security check</h2>
-              <p className="text-xs leading-5 text-slate-400">Password was accepted. Now prove possession of the registered device using fingerprint, Face ID, Windows Hello, secure PIN, or another registered passkey.</p>
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-slate-300 block mb-1">Director Email</label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Director email" autoComplete="username" className="w-full pl-9 pr-3 py-2.5 bg-[#0d1838] border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400" />
             </div>
-
-            <button
-              type="button"
-              onClick={handlePasskeyLogin}
-              disabled={loading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-4 h-4" />}
-              {loading ? 'Verifying securely…' : 'Unlock with Face ID / Fingerprint'}
-            </button>
-
-            <button type="button" onClick={() => setMode('login')} disabled={loading} className="w-full py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-800/60 disabled:opacity-60">Back to password</button>
           </div>
-        ) : mode === 'enroll' ? (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 text-center space-y-3">
-              <KeyRound className="w-11 h-11 mx-auto text-amber-400" />
-              <h2 className="text-lg font-bold text-white">Secure first-time setup</h2>
-              <p className="text-xs leading-5 text-slate-400">Register this device as a real WebAuthn passkey. The private key remains inside your device/authenticator; StudentHubHelp never receives your raw fingerprint or Face ID data.</p>
+          <div>
+            <label className="text-xs font-bold text-slate-300 block mb-1">Director Password</label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your secure password" autoComplete="current-password" className="w-full pl-9 pr-3 py-2.5 bg-[#0d1838] border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400" />
             </div>
-
-            <button
-              type="button"
-              onClick={handleEnrollPasskey}
-              disabled={enrolling}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-extrabold text-xs shadow-lg flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {enrolling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-4 h-4" />}
-              {enrolling ? 'Registering device…' : 'Register biometric lock'}
-            </button>
-
-            <button type="button" onClick={async () => { await supabase.auth.signOut(); await securityAuth.auth.signOut(); setMode('login'); setInfoMsg(null); }} disabled={enrolling} className="w-full py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-800/60">Cancel</button>
           </div>
-        ) : (
-          <>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Director Email</label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Director email" autoComplete="username" className="w-full pl-9 pr-3 py-2.5 bg-[#0d1838] border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400" />
-                </div>
-              </div>
+          <button type="submit" disabled={loading} className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+            {loading ? 'Signing in securely…' : 'Sign In with Password'}
+          </button>
+        </form>
 
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Director Password</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your secure password" autoComplete="current-password" className="w-full pl-9 pr-3 py-2.5 bg-[#0d1838] border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400" />
-                </div>
-              </div>
+        <div className="relative py-1"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-800" /></div><div className="relative flex justify-center"><span className="bg-[#081026] px-3 text-[10px] uppercase tracking-widest text-slate-500">OR</span></div></div>
 
-              <button type="submit" disabled={loading} className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                <span>{loading ? 'Authenticating…' : 'Sign In as Director'}</span>
-              </button>
-            </form>
+        <button type="button" onClick={handlePasskeyLogin} disabled={loading} className="w-full py-3 rounded-xl border border-amber-500/40 bg-amber-500/5 hover:bg-amber-500/10 text-amber-300 font-extrabold text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-4 h-4" />}
+          {loading ? 'Verifying…' : 'Sign In with Face ID / Fingerprint'}
+        </button>
 
-            <div className="relative py-1">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-800" /></div>
-              <div className="relative flex justify-center"><span className="bg-[#081026] px-3 text-[10px] uppercase tracking-widest text-slate-500">Secure access</span></div>
-            </div>
-
-            <button type="button" onClick={() => { setErrorMsg(null); setInfoMsg(null); setMode('biometric'); }} disabled={loading} className="w-full py-3 rounded-xl border border-amber-500/40 bg-amber-500/5 hover:bg-amber-500/10 text-amber-300 font-extrabold text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-60">
-              <Fingerprint className="w-4 h-4" />
-              Use Face ID / Fingerprint
-            </button>
-
-            <p className="text-[10px] text-center text-slate-600 leading-4">Biometric authentication is performed by your device's secure authenticator. StudentHubHelp does not receive your raw fingerprint or Face ID data.</p>
-          </>
-        )}
+        <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-3 text-[10px] leading-4 text-slate-500">
+          Passkey login uses WebAuthn. Your fingerprint or Face ID stays inside the device authenticator; StudentHubHelp receives only the cryptographic authentication result.
+        </div>
       </div>
     </div>
   );
