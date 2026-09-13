@@ -126,7 +126,12 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
           <button type="button" onClick={onClose} className="w-10 h-10 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><X className="w-5 h-5" /></button>
         </div>
 
-        <form id="property-master-editor-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
+        <form
+          id="property-master-editor-form"
+          onSubmit={handleSubmit}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth p-5 sm:p-7 space-y-6"
+          style={{ WebkitOverflowScrolling: 'touch', scrollbarGutter: 'stable' }}
+        >
           {error && <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2"><AlertCircle className="w-4 h-4 shrink-0" /><span>{error}</span></div>}
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4"><div className="text-xs font-extrabold uppercase tracking-wider text-amber-400">Master Data Entry</div><p className="text-xs text-slate-400 mt-1">Fields are grouped for faster and cleaner property data entry. Every exact live database field remains available in the appropriate section.</p></div>
 
