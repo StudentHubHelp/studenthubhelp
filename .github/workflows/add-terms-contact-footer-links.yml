@@ -1,0 +1,52 @@
+name: Add Terms and Contact footer links
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update-footer:
+    if: github.event.head_commit.author.name != 'StudentHubHelp Footer Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Add only the two requested footer links
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = '          <a href="privacy-policy.html">Privacy Policy</a>'
+          new = old + '\n          <a href="terms-and-conditions.html">Terms &amp; Conditions</a>\n          <a href="contact-us.html">Contact Us</a>'
+          if s.count(old) != 1:
+              raise SystemExit(f'Expected exactly one footer Privacy Policy link, found {s.count(old)}')
+          if 'href="terms-and-conditions.html"' in s or 'href="contact-us.html"' in s:
+              raise SystemExit('One or both requested links already exist; stopping without changes.')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+      - name: Validate requested links
+        shell: python
+        run: |
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          assert s.count('href="terms-and-conditions.html"') == 1
+          assert s.count('href="contact-us.html"') == 1
+          print('Footer links validated.')
+
+      - name: Commit index change and remove this one-time workflow
+        shell: bash
+        run: |
+          git config user.name 'StudentHubHelp Footer Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Add Terms and Contact links to footer'
+          git rm .github/workflows/add-terms-contact-footer-links.yml
+          git commit -m 'Remove one-time footer workflow'
+          git push
