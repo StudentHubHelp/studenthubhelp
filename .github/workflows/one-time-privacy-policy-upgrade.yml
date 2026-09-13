@@ -1,0 +1,101 @@
+name: One-time privacy policy upgrade
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    if: github.event.head_commit.message != 'Upgrade privacy policy and listing verification transparency'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upgrade privacy policy
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('privacy-policy.html')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace('Effective Date: 30 August 2026\n        &nbsp;•&nbsp;\n        Last Updated: 30 August 2026', 'Effective Date: 30 August 2026\n        &nbsp;•&nbsp;\n        Last Updated: 13 September 2026')
+
+          s = s.replace('''      <a href="#verification">\n        4. Verification System\n      </a>''', '''      <a href="#verification">\n        4. Verification & Review Status\n      </a>\n\n      <a href="#unverified">\n        5. Unverified / Pending Review\n      </a>\n\n      <a href="#accuracy">\n        6. Accuracy, Freshness & Corrections\n      </a>''')
+
+          s = s.replace('''      <a href="#owners">\n        5. Owner Requests\n      </a>\n\n      <a href="#reports">\n        6. Reports & Fraud\n      </a>\n\n      <a href="#safety">\n        7. Student Safety\n      </a>\n\n      <a href="#payments">\n        8. Payments & Brokerage\n      </a>\n\n      <a href="#sharing">\n        9. Data Sharing\n      </a>\n\n      <a href="#retention">\n        10. Data Retention\n      </a>\n\n      <a href="#cookies">\n        11. Cookies & Storage\n      </a>\n\n      <a href="#minors">\n        12. Students & Families\n      </a>\n\n      <a href="#security">\n        13. Security\n      </a>\n\n      <a href="#intellectual">\n        14. Intellectual Property\n      </a>\n\n      <a href="#legal">\n        15. Governing Framework\n      </a>\n\n      <a href="#grievance">\n        16. Grievance Contact\n      </a>''', '''      <a href="#owners">\n        7. Owner Claims & Requests\n      </a>\n\n      <a href="#reports">\n        8. Reports & Fraud\n      </a>\n\n      <a href="#safety">\n        9. Student Safety\n      </a>\n\n      <a href="#payments">\n        10. Payments & Brokerage\n      </a>\n\n      <a href="#sharing">\n        11. Data Sharing\n      </a>\n\n      <a href="#retention">\n        12. Data Retention\n      </a>\n\n      <a href="#rights">\n        13. Privacy Rights & Choices\n      </a>\n\n      <a href="#cookies">\n        14. Cookies & Storage\n      </a>\n\n      <a href="#minors">\n        15. Students & Families\n      </a>\n\n      <a href="#security">\n        16. Security & Breach Response\n      </a>\n\n      <a href="#intellectual">\n        17. User Submissions & IP\n      </a>\n\n      <a href="#legal">\n        18. Applicable Law\n      </a>\n\n      <a href="#grievance">\n        19. Privacy & Grievance Contact\n      </a>''')
+
+          marker = '''        <!-- 5 -->\n\n        <section id="owners">'''
+          insert = '''        <!-- 5 -->\n\n        <section id="unverified">\n\n          <h2>5. Unverified & Pending Review Listings</h2>\n\n          <p>\n            Some directory listings may be published before StudentHubHelp completes its internal review. An\n            <strong>Unverified</strong> or <strong>Pending Review</strong> status means that the relevant review has not yet been completed; it does not by itself mean that the listing is false, unsafe or fraudulent.\n          </p>\n\n          <p>\n            Until a listing is reviewed, students and parents should treat its information as unconfirmed and independently check important details such as the exact address, current contact information, price, availability, facilities, rules and payment terms.\n          </p>\n\n        </section>\n\n\n        <!-- 6 -->\n\n        <section id="accuracy">\n\n          <h2>6. Accuracy, Freshness & Correction of Directory Information</h2>\n\n          <p>\n            Directory information can change over time. StudentHubHelp may review listings individually, receive owner-submitted updates, process user reports and make reasonable corrections when reliable information becomes available.\n          </p>\n\n          <div class="verification">\n\n            <div class="verification-item verified">\n              <strong>🟢 Verified status</strong>\n              <p>\n                Indicates that StudentHubHelp completed the applicable review or confirmation process described for the listing. The scope and date of review matter; verification is not a permanent guarantee of safety, quality, availability, ownership or future accuracy.\n              </p>\n            </div>\n\n            <div class="verification-item update">\n              <strong>🕒 Review / freshness</strong>\n              <p>\n                A listing may be reviewed or updated again when material information changes, a credible correction is received, or the platform determines that a fresh review is appropriate.\n              </p>\n            </div>\n\n          </div>\n\n          <p>\n            If you identify an incorrect, outdated, duplicate or misleading listing, please report it through the available contact or reporting channel. We may request reasonable information needed to evaluate the correction.\n          </p>\n\n        </section>\n\n\n        <!-- 7 -->\n\n        <section id="owners">'''
+          if marker not in s:
+              raise SystemExit('owners marker not found')
+          s = s.replace(marker, insert, 1)
+
+          # Add rights section before cookies.
+          marker = '''        <!-- 11 -->\n\n        <section id="cookies">'''
+          insert = '''        <!-- 13 -->\n\n        <section id="rights">\n\n          <h2>13. Privacy Rights, Choices & Consent</h2>\n\n          <p>\n            Subject to applicable law, users may have rights and choices concerning their digital personal data, including requesting access to information about processing, correction or updating of inaccurate personal data, erasure where legally available, withdrawal of consent where processing is based on consent, and grievance redressal.\n          </p>\n\n          <p>\n            Requests should be made using the privacy and grievance contact provided on this page. We may need to verify a requester's authority before making changes to an account or personal data, particularly where a request could affect another person's information.\n          </p>\n\n          <p>\n            The Digital Personal Data Protection Act, 2023 and the Digital Personal Data Protection Rules, 2025 have a phased commencement framework. StudentHubHelp will apply mandatory provisions to the extent and from the dates they become applicable to the platform. Nothing in this policy is intended to remove any right that cannot lawfully be excluded.\n          </p>\n\n        </section>\n\n\n        <!-- 14 -->\n\n        <section id="cookies">'''
+          if marker not in s:
+              raise SystemExit('cookies marker not found')
+          s = s.replace(marker, insert, 1)
+
+          # Rename headings/numbering for sections after inserted blocks.
+          replacements = [
+            ('<!-- 5 -->\n\n        <section id="owners">', '<!-- 7 -->\n\n        <section id="owners">'),
+            ('<h2>\n            5. Business Owner Updates, Claims & Removal\n          </h2>', '<h2>\n            7. Business Owner Updates, Claims & Removal\n          </h2>'),
+            ('<h2>\n            6. Report Listing & Anti-Fraud Policy\n          </h2>', '<h2>\n            8. Report Listing & Anti-Fraud Policy\n          </h2>'),
+            ('<h2>\n            7. Student & Parent Safety Disclaimer\n          </h2>', '<h2>\n            9. Student & Parent Safety Disclaimer\n          </h2>'),
+            ('<h2>\n            8. Payments, Brokerage & Third-Party Transactions\n          </h2>', '<h2>\n            10. Payments, Brokerage & Third-Party Transactions\n          </h2>'),
+            ('<h2>\n            9. Data Sharing & Personal Data Protection\n          </h2>', '<h2>\n            11. Data Sharing & Personal Data Protection\n          </h2>'),
+            ('<h2>\n            10. Account Deletion & Data Retention\n          </h2>', '<h2>\n            12. Account Deletion & Data Retention\n          </h2>'),
+            ('<h2>\n            11. Cookies, Local Storage & Advertising\n          </h2>', '<h2>\n            14. Cookies, Local Storage & Advertising\n          </h2>'),
+            ('<h2>\n            12. Students, Minors & Family Safety\n          </h2>', '<h2>\n            15. Students, Minors & Family Safety\n          </h2>'),
+            ('<h2>\n            13. Technical & Organisational Security\n          </h2>', '<h2>\n            16. Technical & Organisational Security\n          </h2>'),
+            ('<h2>\n            14. User Submissions & Intellectual Property\n          </h2>', '<h2>\n            17. User Submissions & Intellectual Property\n          </h2>'),
+            ('<h2>\n            15. Applicable Legal Framework\n          </h2>', '<h2>\n            18. Applicable Legal Framework\n          </h2>'),
+            ('<h2>\n            16. Grievance Officer & Contact Information\n          </h2>', '<h2>\n            19. Privacy & Grievance Contact\n          </h2>'),
+          ]
+          for a,b in replacements:
+              if a not in s:
+                  raise SystemExit('expected heading not found: ' + a[:50])
+              s = s.replace(a,b,1)
+
+          # Avoid claiming a formally appointed officer unless that appointment exists.
+          s = s.replace('''            StudentHubHelp — Grievance Contact''', '''            StudentHubHelp — Privacy & Grievance Contact''')
+          s = s.replace('''            For privacy concerns, listing disputes, correction\n            requests, removal requests, safety reports or other\n            platform grievances, users may contact:''', '''            For privacy concerns, personal-data requests, listing disputes, correction\n            requests, removal requests, safety reports or other platform grievances, users may contact:''')
+
+          # Add an explicit legal-position notice after the first important notice.
+          marker = '''        <!-- TRUST -->'''
+          insert = '''        <div class="notice" style="background:#f8fafc;border-color:#e2e8f0;color:#475467;">\n          <strong>Legal clarity:</strong> This policy is intended to explain StudentHubHelp's current data and directory practices in plain language. It is not a substitute for legal advice. Applicable Indian law, including mandatory data-protection requirements as they come into force, prevails where it applies.\n        </div>\n\n\n        <!-- TRUST -->'''
+          if marker not in s:
+              raise SystemExit('trust marker not found')
+          s = s.replace(marker, insert, 1)
+
+          # Fix malformed footer img tag without changing the visual design.
+          s = s.replace('''          <img\n            src="logo.png"\n            alt="StudentHubHelp"\n          / loading="lazy decoding="async"''', '''          <img\n            src="logo.png"\n            alt="StudentHubHelp"\n            loading="lazy"\n            decoding="async"\n          />''')
+
+          # Add compact legal/trust styling.
+          marker = '''    /* ================= MOBILE ================= */'''
+          css = '''    .legal-note {\n      border: 1px solid var(--border);\n      background: #fbfcfe;\n      border-radius: 15px;\n      padding: 17px 18px;\n      margin: 18px 0;\n      color: #475467;\n      font-size: 13px;\n    }\n\n    .legal-note strong {\n      color: var(--navy);\n    }\n\n    /* ================= MOBILE ================= */'''
+          if marker not in s:
+              raise SystemExit('mobile marker not found')
+          s = s.replace(marker, css, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit policy upgrade
+        run: |
+          git config user.name 'StudentHubHelp'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add privacy-policy.html
+          git commit -m 'Upgrade privacy policy and listing verification transparency'
+          git push
+
+      - name: Remove one-time workflow
+        if: success()
+        run: |
+          rm -f .github/workflows/one-time-privacy-policy-upgrade.yml
+          git add .github/workflows/one-time-privacy-policy-upgrade.yml
+          git commit -m 'Remove one-time privacy policy upgrade workflow'
+          git push
