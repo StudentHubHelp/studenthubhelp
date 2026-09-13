@@ -1,0 +1,161 @@
+name: Sitemap sync
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * *'
+  push:
+    paths:
+      - '*.html'
+      - 'sitemap.xml'
+      - 'sitemap-pages.xml'
+      - 'sitemap-properties*.xml'
+      - '.github/workflows/sitemap-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate sitemap index, pages and property sitemaps
+        env:
+          SUPABASE_URL: https://idurlccrarznnnqixxsd.supabase.co
+          SUPABASE_KEY: sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT
+          BASE_URL: https://studenthubhelp.github.io/studenthubhelp/
+        run: |
+          python - <<'PY'
+          import json, os, re, subprocess, urllib.parse, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          BASE = os.environ['BASE_URL'].rstrip('/') + '/'
+          SB = os.environ['SUPABASE_URL'].rstrip('/')
+          KEY = os.environ['SUPABASE_KEY']
+          NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+
+          def clean_dt(value):
+              if not value:
+                  return None
+              try:
+                  dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                  return dt.astimezone(timezone.utc).isoformat(timespec='seconds').replace('+00:00','Z')
+              except Exception:
+                  return None
+
+          def git_date(path):
+              try:
+                  out = subprocess.check_output(['git','log','-1','--format=%cI','--',path], text=True).strip()
+                  return clean_dt(out)
+              except Exception:
+                  return None
+
+          existing = {}
+          if Path('sitemap.xml').exists():
+              try:
+                  root = ET.parse('sitemap.xml').getroot()
+                  for u in root.findall(f'{{{NS}}}url'):
+                      loc = u.find(f'{{{NS}}}loc')
+                      if loc is not None and loc.text:
+                          lm = u.find(f'{{{NS}}}lastmod')
+                          existing[loc.text.strip()] = clean_dt(lm.text.strip()) if lm is not None and lm.text else None
+              except Exception:
+                  pass
+
+          def fetch_rows(table):
+              rows=[]
+              offset=0
+              while True:
+                  params=urllib.parse.urlencode({'select':'slug,updated_at','limit':'1000','offset':str(offset)})
+                  req=urllib.request.Request(f'{SB}/rest/v1/{table}?{params}', headers={'apikey':KEY,'Authorization':f'Bearer {KEY}'})
+                  try:
+                      with urllib.request.urlopen(req, timeout=30) as r:
+                          chunk=json.load(r)
+                  except Exception as e:
+                      print(f'WARN {table}: {e}')
+                      break
+                  if not chunk:
+                      break
+                  rows.extend(chunk)
+                  if len(chunk) < 1000:
+                      break
+                  offset += 1000
+              return rows
+
+          types = [('hostels','hostel'),('tiffins','tiffin'),('libraries','library'),('cafes','cafe'),('bookstores','bookstore')]
+          properties={}
+          for table, typ in types:
+              for row in fetch_rows(table):
+                  slug = str(row.get('slug') or '').strip()
+                  if not slug:
+                      continue
+                  slug_q = urllib.parse.quote(slug, safe='')
+                  loc = f'{BASE}property-details.html?type={typ}&slug={slug_q}'
+                  properties[loc] = clean_dt(row.get('updated_at')) or existing.get(loc)
+
+          prop_re = re.compile(r'property-details\.html\?type=(hostel|tiffin|library|cafe|bookstore)&slug=')
+          for loc,lm in existing.items():
+              if prop_re.search(loc):
+                  properties.setdefault(loc,lm)
+
+          excluded = {'auth.html','property-details.html','global-search.html','404.html','add-listing.html'}
+          pages=[]
+          for p in sorted(Path('.').glob('*.html')):
+              if p.name in excluded or p.name.startswith('_'):
+                  continue
+              pages.append((BASE + p.name, git_date(str(p))))
+
+          page_map={loc:lm for loc,lm in pages if loc.startswith(BASE)}
+          pages=sorted(page_map.items())
+
+          def write_urlset(path, items):
+              root=ET.Element(f'{{{NS}}}urlset')
+              for loc,lm in items:
+                  u=ET.SubElement(root,f'{{{NS}}}url')
+                  ET.SubElement(u,f'{{{NS}}}loc').text=loc
+                  if lm:
+                      ET.SubElement(u,f'{{{NS}}}lastmod').text=lm
+              tree=ET.ElementTree(root)
+              ET.indent(tree, space='  ')
+              tree.write(path, encoding='utf-8', xml_declaration=True)
+
+          write_urlset('sitemap-pages.xml', pages)
+
+          prop_items=sorted(properties.items())
+          for old in Path('.').glob('sitemap-properties*.xml'):
+              old.unlink()
+          chunks=[prop_items[i:i+45000] for i in range(0,len(prop_items),45000)] or [[]]
+          prop_files=[]
+          for i,chunk in enumerate(chunks,1):
+              name='sitemap-properties.xml' if len(chunks)==1 else f'sitemap-properties-{i}.xml'
+              write_urlset(name,chunk)
+              prop_files.append(name)
+
+          root=ET.Element(f'{{{NS}}}sitemapindex')
+          for name in ['sitemap-pages.xml'] + prop_files:
+              s=ET.SubElement(root,f'{{{NS}}}sitemap')
+              ET.SubElement(s,f'{{{NS}}}loc').text=BASE+name
+          tree=ET.ElementTree(root)
+          ET.indent(tree, space='  ')
+          tree.write('sitemap.xml', encoding='utf-8', xml_declaration=True)
+          print(f'pages={len(pages)} properties={len(prop_items)} property_maps={len(prop_files)}')
+          PY
+
+      - name: Commit sitemap changes only when needed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sitemap.xml sitemap-pages.xml sitemap-properties*.xml
+          if git diff --cached --quiet; then
+            echo "Sitemap already up to date."
+            exit 0
+          fi
+          git commit -m "Upgrade and automate XML sitemap"
+          git push
