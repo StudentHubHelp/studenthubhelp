@@ -3,6 +3,8 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  Suspense,
+  lazy,
 } from 'react';
 
 import {
@@ -35,13 +37,13 @@ import {
 
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
-import { OverviewView } from './components/OverviewView';
-import { AnalyticsView } from './components/AnalyticsView';
-import { UserManagementView } from './components/UserManagementView';
-import { PropertiesView } from './components/PropertiesView';
-import { UnverifiedPropertiesView } from './components/UnverifiedPropertiesView';
-import { PlatformControlViews } from './components/PlatformControlViews';
-import { IntelligenceViews } from './components/IntelligenceViews';
+const OverviewView = lazy(() => import('./components/OverviewView').then((m) => ({ default: m.OverviewView })));
+const AnalyticsView = lazy(() => import('./components/AnalyticsView').then((m) => ({ default: m.AnalyticsView })));
+const UserManagementView = lazy(() => import('./components/UserManagementView').then((m) => ({ default: m.UserManagementView })));
+const PropertiesView = lazy(() => import('./components/PropertiesView').then((m) => ({ default: m.PropertiesView })));
+const UnverifiedPropertiesView = lazy(() => import('./components/UnverifiedPropertiesView').then((m) => ({ default: m.UnverifiedPropertiesView })));
+const PlatformControlViews = lazy(() => import('./components/PlatformControlViews').then((m) => ({ default: m.PlatformControlViews })));
+const IntelligenceViews = lazy(() => import('./components/IntelligenceViews').then((m) => ({ default: m.IntelligenceViews })));
 import { PropertyPreviewModal } from './components/PropertyPreviewModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { OwnerEditModal } from './components/OwnerEditModal';
@@ -1621,6 +1623,7 @@ export default function App() {
         {/* CONTENT */}
 
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto pb-20">
+          <Suspense fallback={<div className="min-h-[240px] flex items-center justify-center text-xs text-slate-400">Loading section…</div>}>
 
           {/* OVERVIEW */}
 
@@ -2090,6 +2093,7 @@ export default function App() {
               }
             />
           )}
+          </Suspense>
         </main>
       </div>
 
