@@ -1,0 +1,47 @@
+name: One Time Public Performance Optimization
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    if: github.event.head_commit.message != 'Remove one-time public performance workflow'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply safe public performance optimizations
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ['index.html', 'global-search.html']:
+              p = Path(name)
+              s = p.read_text(encoding='utf-8')
+              s = s.replace('html {\n      scroll-behavior: smooth;\n    }', 'html {\n      scroll-behavior: auto;\n    }')
+              marker = '<link rel="preconnect" href="https://fonts.googleapis.com" />'
+              if marker in s and 'href="https://idurlccrarznnnqixxsd.supabase.co"' not in s:
+                  s = s.replace(marker, marker + '\n  <link rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co" crossorigin />', 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit optimized files
+        run: |
+          git config user.name "StudentHub"
+          git config user.email "satpalnehra30@gmail.com"
+          git add index.html global-search.html
+          git diff --cached --quiet || git commit -m "Optimize public page connections and scrolling"
+          git push
+
+      - name: Remove this one-time workflow
+        run: |
+          rm .github/workflows/one-time-public-performance.yml
+          git config user.name "StudentHub"
+          git config user.email "satpalnehra30@gmail.com"
+          git add -u .github/workflows/one-time-public-performance.yml
+          git commit -m "Remove one-time public performance workflow"
+          git push
