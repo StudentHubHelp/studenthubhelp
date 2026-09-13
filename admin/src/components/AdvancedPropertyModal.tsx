@@ -115,7 +115,7 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
   };
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-[500] flex items-center justify-center p-3 sm:p-5 bg-black/80" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="relative w-full max-w-6xl max-h-[94vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-amber-500/30 bg-[#081026] text-white">
         <div className="p-5 border-b border-slate-800 flex items-center justify-between gap-4 bg-[#0a1430] shrink-0">
           <div>
@@ -129,8 +129,8 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
         <form
           id="property-master-editor-form"
           onSubmit={handleSubmit}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth p-5 sm:p-7 space-y-6"
-          style={{ WebkitOverflowScrolling: 'touch', scrollbarGutter: 'stable' }}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-5 sm:p-7 space-y-6"
+          style={{ WebkitOverflowScrolling: 'touch', scrollbarGutter: 'stable', scrollBehavior: 'auto', willChange: 'scroll-position', contain: 'layout paint' }}
         >
           {error && <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2"><AlertCircle className="w-4 h-4 shrink-0" /><span>{error}</span></div>}
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4"><div className="text-xs font-extrabold uppercase tracking-wider text-amber-400">Master Data Entry</div><p className="text-xs text-slate-400 mt-1">Fields are grouped for faster and cleaner property data entry. Every exact live database field remains available in the appropriate section.</p></div>
