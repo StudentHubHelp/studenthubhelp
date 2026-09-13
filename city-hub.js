@@ -20,12 +20,13 @@
   const cityQ=encodeURIComponent(city);
   const cards=document.getElementById('liveCards'), stats=document.getElementById('liveStats'), areas=document.getElementById('areaGrid');
   areas.innerHTML=config.areas.map(a=>`<a class="area-card" href="global-search.html?q=${encodeURIComponent(a+' '+city)}"><span>📍</span><div><strong>${esc(a)}</strong><small>Explore student services →</small></div></a>`).join('');
-  document.getElementById('searchCity').href='global-search.html?q='+cityQ;
-  document.getElementById('allHostels').href='pg-finder.html?q='+cityQ;
-  document.getElementById('allTiffin').href='tiffin-finder.html?q='+cityQ;
-  document.getElementById('allLibraries').href='library-finder.html?q='+cityQ;
-  document.getElementById('allCafes').href='cafe-finder.html?q='+cityQ;
-  document.getElementById('allBooks').href='bookstore-finder.html?q='+cityQ;
+  const setHref=(id,url)=>{const el=document.getElementById(id); if(el) el.href=url;};
+  setHref('searchCity','global-search.html?q='+cityQ);
+  setHref('allHostels','pg-finder.html?q='+cityQ);
+  setHref('allTiffin','tiffin-finder.html?q='+cityQ);
+  setHref('allLibraries','library-finder.html?q='+cityQ);
+  setHref('allCafes','cafe-finder.html?q='+cityQ);
+  setHref('allBooks','bookstore-finder.html?q='+cityQ);
   const searches={hostel:'hostel near coaching '+city,tiffin:'tiffin near coaching '+city,library:'library near coaching '+city,cafe:'cafe '+city,bookstore:'bookstore '+city};
   document.querySelectorAll('[data-search]').forEach(a=>a.href='global-search.html?q='+encodeURIComponent(searches[a.dataset.search]||city));
   async function loadTable([table,label,icon]){
