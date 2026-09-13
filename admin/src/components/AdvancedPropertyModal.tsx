@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { PropertyItem, PropertyType } from '../types';
 import { PROPERTY_TABLE_COLUMNS, propertyConfig } from '../lib/supabase';
 import { AlertCircle, Building2, Save, X } from 'lucide-react';
@@ -20,6 +20,45 @@ const NUMBER_COLUMNS = new Set([
 
 const READONLY_COLUMNS = new Set(['created_at','updated_at','last_verified','last_verified_at']);
 const TEXTAREA_COLUMNS = new Set(['facilities','description','menu','rules','images','categories','room_types']);
+
+const GROUP_DEFINITIONS: Array<{ key: string; title: string; description: string; fields: string[] }> = [
+  {
+    key: 'property',
+    title: 'Property Details',
+    description: 'Core identity, category, type and primary property information.',
+    fields: ['id','name','category','type','property_id','library_type','meal_type','food_type','plan_type','cuisine','price_range','room_types','room_sharing'],
+  },
+  {
+    key: 'location',
+    title: 'Address & Location',
+    description: 'Complete address, locality and map/location information.',
+    fields: ['area','address','city','pincode','service_area','latitude','longitude','google_maps_url','nearby_coaching'],
+  },
+  {
+    key: 'facilities',
+    title: 'Facilities & Amenities',
+    description: 'Facilities, services and availability options for students.',
+    fields: ['facilities','food_available','delivery_available','breakfast_available','lunch_available','dinner_available','jain_food','home_delivery','subscription_available','custom_meal','open_24_hours','ac_available','wifi','charging_point','locker','parking','newspaper','separate_cabin','girls_section','boys_section','power_backup','water','cctv','attached_bathroom','electricity_included','water_available','laundry','mess_available','delivery','takeaway','online_order','upi_payment','competitive_books','stationery','second_hand_books','book_rental','exam_books','school_books','college_books','ncert_books','photocopy','printing','lamination','spiral_binding','notes_available'],
+  },
+  {
+    key: 'contact',
+    title: 'Contact & Other Details',
+    description: 'Owner/contact details, timings, pricing, rules and descriptive information.',
+    fields: ['phone','whatsapp','email','owner_id','owner_name','timing','timings','opening_time','closing_time','weekly_off','monthly_rent','security_deposit','mess_charge','price','monthly_fee','delivery_charge','monthly_plan','weekly_plan','daily_plan','daily_fee','seating_capacity','available_seats','description','menu','rules','classes'],
+  },
+  {
+    key: 'media',
+    title: 'Media',
+    description: 'Primary image and additional property images.',
+    fields: ['image','images'],
+  },
+  {
+    key: 'verification',
+    title: 'Verification & Metadata',
+    description: 'Publishing, verification, slug and system timestamps.',
+    fields: ['verified','status','slug','created_at','last_verified','last_verified_at','updated_at'],
+  },
+];
 
 function labelFor(field: string) {
   return field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -54,6 +93,22 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
     setFormData(next);
     setError(null);
   }, [property, selectedType]);
+
+  const groups = useMemo(() => {
+    const used = new Set<string>();
+    return GROUP_DEFINITIONS.map((group) => {
+      const fields = group.fields.filter((field) => columns.includes(field));
+      fields.forEach((field) => used.add(field));
+      return { ...group, fields };
+    }).filter((group) => group.fields.length > 0).concat([
+      {
+        key: 'other',
+        title: 'Other Details',
+        description: 'Any remaining database fields are kept here so no live field is lost from the Master Editor.',
+        fields: columns.filter((field) => !used.has(field)),
+      },
+    ]).filter((group) => group.fields.length > 0);
+  }, [columns]);
 
   const handleChange = (field: string, value: any) => setFormData((prev) => ({ ...prev, [field]: value }));
 
@@ -97,33 +152,44 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
         <form id="property-master-editor-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
           {error && <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2"><AlertCircle className="w-4 h-4 shrink-0" /><span>{error}</span></div>}
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
-            <div className="text-xs font-extrabold uppercase tracking-wider text-amber-400">Exact Supabase Table Columns</div>
-            <p className="text-xs text-slate-400 mt-1">Master Editor aur Add Property me isi selected table ke saare actual columns dikh rahe hain.</p>
+            <div className="text-xs font-extrabold uppercase tracking-wider text-amber-400">Master Data Entry</div>
+            <p className="text-xs text-slate-400 mt-1">Fields are grouped for faster and cleaner property data entry. Every exact live database field remains available in the appropriate section.</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {columns.map((field) => {
-              const value = formData[field];
-              const isBoolean = BOOLEAN_COLUMNS.has(field);
-              const isNumber = NUMBER_COLUMNS.has(field);
-              const isReadonly = READONLY_COLUMNS.has(field);
-              const isTextarea = TEXTAREA_COLUMNS.has(field);
-              const required = ['name','phone','area','address'].includes(field);
-              const valueForInput = displayValue(value);
-              return (
-                <div key={field} className={isTextarea ? 'sm:col-span-2 lg:col-span-3' : ''}>
-                  <label className="text-xs font-bold text-slate-300">{labelFor(field)}{field === 'id' && isNew ? ' (DB generated)' : required ? ' *' : ''}</label>
-                  {isBoolean ? (
-                    <select value={value === true ? 'true' : value === false ? 'false' : ''} disabled={isReadonly} onChange={(e) => handleChange(field, normalizeInputValue(field, e.target.value))} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white"><option value="">NULL / Not set</option><option value="true">TRUE</option><option value="false">FALSE</option></select>
-                  ) : isTextarea ? (
-                    <textarea rows={3} value={valueForInput} readOnly={isReadonly} onChange={(e) => handleChange(field, normalizeInputValue(field, e.target.value))} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400" />
-                  ) : (
-                    <input type={isNumber ? 'number' : 'text'} step={field === 'rating' ? '0.1' : 'any'} value={valueForInput} readOnly={isReadonly || (field === 'id' && isNew)} required={required} onChange={(e) => handleChange(field, normalizeInputValue(field, e.target.value))} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400" />
-                  )}
-                  <div className="text-[10px] text-slate-600 mt-0.5">DB: {field}</div>
-                </div>
-              );
-            })}
-          </div>
+
+          {groups.map((group) => (
+            <section key={group.key} className="rounded-2xl border border-slate-800 bg-[#0a1430]/70 p-4 sm:p-5">
+              <div className="mb-4">
+                <h3 className="text-sm sm:text-base font-extrabold text-white">{group.title}</h3>
+                <p className="text-[11px] text-slate-500 mt-1">{group.description}</p>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {group.fields.map((field) => {
+                  const value = formData[field];
+                  const isBoolean = BOOLEAN_COLUMNS.has(field);
+                  const isNumber = NUMBER_COLUMNS.has(field);
+                  const isReadonly = READONLY_COLUMNS.has(field);
+                  const isTextarea = TEXTAREA_COLUMNS.has(field);
+                  const required = ['name','phone','area','address'].includes(field);
+                  const valueForInput = displayValue(value);
+                  const isGeneratedId = field === 'id' && isNew;
+                  const isGeneratedPublicId = field === 'property_id' && isNew;
+                  return (
+                    <div key={field} className={isTextarea ? 'sm:col-span-2 lg:col-span-3' : ''}>
+                      <label className="text-xs font-bold text-slate-300">{labelFor(field)}{isGeneratedId ? ' (auto-generated)' : isGeneratedPublicId ? ' (auto-generated)' : required ? ' *' : ''}</label>
+                      {isBoolean ? (
+                        <select value={value === true ? 'true' : value === false ? 'false' : ''} disabled={isReadonly} onChange={(e) => handleChange(field, normalizeInputValue(field, e.target.value))} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-sm text-white"><option value="">NULL / Not set</option><option value="true">TRUE</option><option value="false">FALSE</option></select>
+                      ) : isTextarea ? (
+                        <textarea rows={3} value={valueForInput} readOnly={isReadonly} onChange={(e) => handleChange(field, normalizeInputValue(field, e.target.value))} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400" />
+                      ) : (
+                        <input type={isNumber ? 'number' : 'text'} step={field === 'rating' ? '0.1' : 'any'} value={valueForInput} readOnly={isReadonly || isGeneratedId || isGeneratedPublicId} required={required} onChange={(e) => handleChange(field, normalizeInputValue(field, e.target.value))} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400" />
+                      )}
+                      <div className="text-[10px] text-slate-600 mt-0.5">DB: {field}{isGeneratedId || isGeneratedPublicId ? ' · system generated' : ''}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </form>
 
         <div className="p-4 sm:p-5 border-t border-slate-800 bg-[#0a1430] flex items-center justify-between gap-3 shrink-0">
