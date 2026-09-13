@@ -140,10 +140,12 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
         if (Object.prototype.hasOwnProperty.call(formData, field)) payload[field] = formData[field];
       }
 
-      // The live property tables require an ID before their public-ID trigger can build entity_key.
-      // Generate it here for new Master Editor entries; existing IDs are never changed.
+      // New Master Editor records still need a real row ID because the database
+      // public-ID/entity-key trigger uses the row ID. The save layer must therefore
+      // know that this generated ID belongs to a NEW record and must INSERT it.
       if (isNew) {
         payload.id = selectedType === 'bookstores' ? await makeBookstorePropertyId() : makeTextPropertyId();
+        payload._is_new = true;
       }
 
       payload._source_table = selectedType;
