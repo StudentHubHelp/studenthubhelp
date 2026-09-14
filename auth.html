@@ -108,8 +108,9 @@ input:focus{border-color:#d4af37;box-shadow:0 0 0 3px #d4af3720}.password-input{
 <div class="role-box">
 <div class="role-option"><input id="roleStudent" type="radio" name="signupRole" value="student"><label class="role-label" for="roleStudent"><span><strong>🎓 Student</strong><small>Find student services</small></span></label></div>
 <div class="role-option"><input id="roleOwner" type="radio" name="signupRole" value="owner"><label class="role-label" for="roleOwner"><span><strong>🏢 Owner</strong><small>Manage your listing</small></span></label></div>
+<div class="role-option"><input id="rolePartner" type="radio" name="signupRole" value="partner"><label class="role-label" for="rolePartner"><span><strong>🤝 Partner</strong><small>Approved applicants only</small></span></label></div>
 </div>
-<div class="role-note">Pehle Student ya Owner select karo. Phir neeche Google se continue karo.</div></div>
+<div class="role-note">Student, Owner ya approved Partner select karo. Partner sirf approved Partner applicants ke liye available hai.</div></div>
 <div class="form-group"><label>Email Address</label><div class="input-wrap"><span class="input-icon">✉️</span><input id="signupEmail" type="email" autocomplete="email" placeholder="Enter your email" required></div></div>
 <div class="form-group"><label>Create Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="signupPassword" class="password-input" type="password" minlength="8" autocomplete="new-password" placeholder="Create a password" required><button class="password-toggle" type="button" data-target="signupPassword">👁️</button></div></div>
 <div class="form-group"><label>Confirm Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="signupConfirmPassword" class="password-input" type="password" minlength="6" placeholder="Re-enter your password" required><button class="password-toggle" type="button" data-target="signupConfirmPassword">👁️</button></div></div>
@@ -117,9 +118,9 @@ input:focus{border-color:#d4af37;box-shadow:0 0 0 3px #d4af3720}.password-input{
 </form>
 <div class="oauth-divider"><span>or</span></div>
 <div id="googleRoleState" class="google-role-state">Account type select karna zaroori hai.</div>
-<button id="googleSignupButton" class="google-btn" type="button" disabled><span class="google-icon">G</span><span id="googleSignupText">Select Student / Owner first</span></button>
+<button id="googleSignupButton" class="google-btn" type="button" disabled><span class="google-icon">G</span><span id="googleSignupText">Select account type first</span></button>
 <div id="resendBox" class="resend-box" style="display:none"><p>Confirmation email nahi mila? Spam/Junk folder check karke dobara email bhej sakte ho.</p><button id="resendButton" class="resend-btn" type="button">Resend Confirmation Email</button></div>
-<div class="security-note">Only Student/Owner accounts can be created here.</div>
+<div class="security-note">Student/Owner accounts aur approved Partner accounts yahan create ho sakte hain.</div>
 <div class="back-login-wrap"><button id="signupBackButton" class="back-login-btn" type="button">← Back to Sign In</button></div>
 </section>
 
@@ -264,6 +265,29 @@ function callbackRole(){
   return role(document.querySelector('input[name="callbackRole"]:checked')?.value);
 }
 
+async function isApprovedPartnerEmail(email){
+  const e=String(email||"").trim().toLowerCase();
+  if(!e)return false;
+  const {data,error}=await db.from("partner_applications").select("id,status").eq("email",e).eq("status","approved").limit(1);
+  if(error)throw new Error("Partner approval check nahi ho saka.");
+  return !!data?.length;
+}
+
+async function ensurePartnerProfile(user, profile){
+  if(!user?.id || !profile || role(profile.role)!=="partner") return profile;
+  const {data:existing,error:readError}=await db.from("partner_profiles").select("id").eq("user_id",user.id).maybeSingle();
+  if(readError)throw new Error("Partner profile load nahi ho saka.");
+  if(existing)return profile;
+  const email=String(profile.email||user.email||"").trim().toLowerCase();
+  const {data:apps,error:appError}=await db.from("partner_applications").select("id,full_name,phone,email,state,district,city,area,status").eq("email",email).eq("status","approved").order("created_at",{ascending:false}).limit(1);
+  if(appError)throw new Error("Approved Partner application load nahi ho saki.");
+  const app=apps?.[0];
+  if(!app)throw new Error("Approved Partner application nahi mili.");
+  const {error}=await db.from("partner_profiles").insert({user_id:user.id,application_id:app.id,full_name:app.full_name||profile.full_name||"Partner",email:app.email||email,phone:app.phone||profile.phone||"",state:app.state,district:app.district,city:app.city,areas:app.area?[app.area]:[],status:"active"});
+  if(error && !String(error.message||"").toLowerCase().includes("duplicate"))throw error;
+  return profile;
+}
+
 function isGoogleUser(user){
   return !!(user?.identities||[]).some(x=>x.provider==="google");
 }
@@ -369,7 +393,7 @@ function updateGoogleButton(){
     $("googleSignupText").textContent="Continue with Google as Owner";
   }else{
     $("googleRoleState").textContent="Account type select karna zaroori hai.";
-    $("googleSignupText").textContent="Select Student / Owner first";
+    $("googleSignupText").textContent="Select account type first";
   }
 }
 
@@ -462,6 +486,8 @@ async function route(user){
 
     clearPending();
 
+    if(r==="partner") await ensurePartnerProfile(user,p);
+
     const md=user.user_metadata||{};
     localStorage.setItem("sh_current_user",JSON.stringify({
       id:user.id,
@@ -485,7 +511,7 @@ async function google(mode){
   if(mode==="signup"){
     const r=signupRole();
     if(!r){
-      msg("Pehle Student ya Owner select karo.");
+      msg("Pehle Student, Owner ya approved Partner select karo.");
       return;
     }
     localStorage.setItem("sh_google_signup_role",r);
@@ -615,7 +641,7 @@ $("signupForm").onsubmit=async e=>{
     return;
   }
   if(!r){
-    msg("Student ya Owner select karo.");
+    msg("Student, Owner ya approved Partner select karo.");
     return;
   }
   if(!strongPassword(pass)){
@@ -633,7 +659,8 @@ $("signupForm").onsubmit=async e=>{
   lastSignupEmail=email;
 
   try{
-    const {data,error}=await db.auth.signUp({
+    if(r==="partner" && !(await isApprovedPartnerEmail(email))){ throw new Error("Partner account sirf approved Partner application ke baad create kiya ja sakta hai."); }
+
       email,
       password:pass,
       options:{data:{full_name:name,phone,role:r}}
@@ -677,7 +704,7 @@ $("saveGoogleRoleButton").onclick=async()=>{
   const r=callbackRole();
 
   if(!r||!pendingGoogleUser){
-    msg("Student ya Owner select karo.");
+    msg("Student, Owner ya approved Partner select karo.");
     return;
   }
 
@@ -686,7 +713,8 @@ $("saveGoogleRoleButton").onclick=async()=>{
   loading(true,"Saving account type...");
 
   try{
-    const googleUser=pendingGoogleUser;
+    if(r==="partner" && !(await isApprovedPartnerEmail(googleUser.email||""))){ throw new Error("Is Google email ke liye approved Partner application nahi mili."); }
+
     const p=await getProfile(googleUser);
     const existingRaw=rawRole(p?.role);
 
