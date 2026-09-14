@@ -33,18 +33,19 @@
     let data;
     try{data=JSON.parse(el.textContent||'{}')}catch(_){return}
     if(!data||!Array.isArray(data['@graph'])) return;
+
     const business=data['@graph'].find(x=>x&&((x['@type']==='LocalBusiness')||Object.values(typeMap).includes(x['@type'])));
     if(business){
       business['@type']=typeMap[type]||'LocalBusiness';
       business.url=canonicalUrl();
       business['@id']=canonicalUrl()+'#business';
-      if(business.address&&business.address.addressLocality&&business.address.addressRegion){
-        const area=business.address.addressLocality;
-        const city=business.address.addressRegion;
-        business.address.extendedAddress=business.address.extendedAddress||area;
-        business.address.addressLocality=city;
-        delete business.address.addressRegion;
+      business.inLanguage='en-IN';
+      business.areaServed=business.areaServed||{'@type':'Country','name':'India'};
+
+      if(business.address&&business.address.addressLocality){
+        business.address.addressCountry=business.address.addressCountry||'IN';
       }
+
       const visible=document.body?.innerText||'';
       if(/Verified by StudentHubHelp/i.test(visible)){
         business.additionalProperty=[{'@type':'PropertyValue','name':'Verification status','value':'Verified by StudentHubHelp'}];
@@ -52,14 +53,30 @@
         business.additionalProperty=[{'@type':'PropertyValue','name':'Verification status','value':'Not currently verified'}];
       }
     }
+
     const page=data['@graph'].find(x=>x&&x['@type']==='WebPage');
-    if(page){page.url=canonicalUrl();page['@id']=canonicalUrl()+'#webpage';if(business)page.mainEntity={'@id':canonicalUrl()+'#business'};}
+    if(page){
+      page.url=canonicalUrl();
+      page['@id']=canonicalUrl()+'#webpage';
+      page.inLanguage='en-IN';
+      if(business) page.mainEntity={'@id':canonicalUrl()+'#business'};
+    }
+
     const breadcrumb=data['@graph'].find(x=>x&&x['@type']==='BreadcrumbList');
-    if(breadcrumb){breadcrumb['@id']=canonicalUrl()+'#breadcrumb';const last=breadcrumb.itemListElement?.find(x=>x.position===3);if(last)last.item=canonicalUrl();}
+    if(breadcrumb){
+      breadcrumb['@id']=canonicalUrl()+'#breadcrumb';
+      const last=breadcrumb.itemListElement?.find(x=>x.position===3);
+      if(last) last.item=canonicalUrl();
+    }
+
     el.textContent=JSON.stringify(data,null,2);
   }
   function apply(){
-    if(!id&&!slug){setRobots('noindex, follow');setCanonical(new URL(finder,BASE).href);return;}
+    if(!id&&!slug){
+      setRobots('noindex, follow');
+      setCanonical(new URL(finder,BASE).href);
+      return;
+    }
     setRobots('index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
     setCanonical(canonicalUrl());
     normalizeSchema();
