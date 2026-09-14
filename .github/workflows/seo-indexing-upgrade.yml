@@ -31,47 +31,134 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Attach SEO layers without changing page UI
+      - name: Attach SEO and GEO layers without changing page UI
         shell: python
         run: |
           from pathlib import Path
+          import json
+
           finder_pages = ['pg-finder.html','tiffin-finder.html','library-finder.html','cafe-finder.html','bookstore-finder.html']
+
           def add_before(text, marker, tag):
               if tag in text: return text
               if marker not in text: raise SystemExit(f'Marker not found: {marker}')
               return text.replace(marker, tag + marker, 1)
+
           p=Path('property-details.html')
           p.write_text(add_before(p.read_text(encoding='utf-8'),'</head>','  <script src="js/property-seo-upgrade.js" defer></script>\n'),encoding='utf-8')
+
           for name in finder_pages:
               p=Path(name)
               p.write_text(add_before(p.read_text(encoding='utf-8'),'</head>','  <script src="js/seo-location-entities.js" defer></script>\n'),encoding='utf-8')
 
-      - name: Validate SEO implementation
+          site_graph={
+            '@context':'https://schema.org',
+            '@graph':[
+              {
+                '@type':'WebSite',
+                '@id':'https://studenthubhelp.github.io/studenthubhelp/#website',
+                'name':'StudentHubHelp',
+                'url':'https://studenthubhelp.github.io/studenthubhelp/',
+                'inLanguage':'en-IN',
+                'description':'India-wide student discovery platform for hostels, PGs, tiffin and mess services, libraries, cafes and book stores.',
+                'publisher':{'@id':'https://studenthubhelp.github.io/studenthubhelp/#organization'},
+                'potentialAction':{
+                  '@type':'SearchAction',
+                  'target':{'@type':'EntryPoint','urlTemplate':'https://studenthubhelp.github.io/studenthubhelp/global-search.html?q={search_term_string}'},
+                  'query-input':'required name=search_term_string'
+                }
+              },
+              {
+                '@type':'Organization',
+                '@id':'https://studenthubhelp.github.io/studenthubhelp/#organization',
+                'name':'StudentHubHelp',
+                'url':'https://studenthubhelp.github.io/studenthubhelp/',
+                'logo':'https://studenthubhelp.github.io/studenthubhelp/logo.png',
+                'areaServed':{'@type':'Country','name':'India'},
+                'knowsAbout':['student accommodation','hostels','PGs','tiffin and mess services','libraries','cafes','book stores','student resources'],
+                'contactPoint':{
+                  '@type':'ContactPoint',
+                  'telephone':'+91-9929718264',
+                  'contactType':'customer support',
+                  'email':'satpalswami22742@gmail.com',
+                  'areaServed':'IN',
+                  'availableLanguage':['en','hi']
+                },
+                'sameAs':['https://www.instagram.com/studenthubhelp/']
+              },
+              {
+                '@type':'WebPage',
+                '@id':'https://studenthubhelp.github.io/studenthubhelp/#homepage',
+                'url':'https://studenthubhelp.github.io/studenthubhelp/',
+                'name':'StudentHubHelp | Hostel, PG, Tiffin, Library, Cafe & Book Store Finder India',
+                'isPartOf':{'@id':'https://studenthubhelp.github.io/studenthubhelp/#website'},
+                'about':{'@id':'https://studenthubhelp.github.io/studenthubhelp/#organization'},
+                'inLanguage':'en-IN'
+              },
+              {
+                '@type':'Service',
+                '@id':'https://studenthubhelp.github.io/studenthubhelp/#student-finder-service',
+                'name':'StudentHubHelp Student Finder',
+                'serviceType':'Student accommodation and local student services discovery',
+                'provider':{'@id':'https://studenthubhelp.github.io/studenthubhelp/#organization'},
+                'areaServed':{'@type':'Country','name':'India'},
+                'audience':{'@type':'Audience','audienceType':'Students and parents'},
+                'hasOfferCatalog':{
+                  '@type':'OfferCatalog',
+                  'name':'Student services',
+                  'itemListElement':[
+                    {'@type':'Offer','itemOffered':{'@type':'Service','name':'Hostel and PG Finder'}},
+                    {'@type':'Offer','itemOffered':{'@type':'Service','name':'Tiffin and Mess Finder'}},
+                    {'@type':'Offer','itemOffered':{'@type':'Service','name':'Library Finder'}},
+                    {'@type':'Offer','itemOffered':{'@type':'Service','name':'Cafe Finder'}},
+                    {'@type':'Offer','itemOffered':{'@type':'Service','name':'Bookstore Finder'}}
+                  ]
+                }
+              }
+            ]
+          }
+          graph_tag='<script id="studenthubhelp-site-graph" type="application/ld+json">'+json.dumps(site_graph,ensure_ascii=False,separators=(',',':'))+'</script>\n'
+          p=Path('index.html')
+          p.write_text(add_before(p.read_text(encoding='utf-8'),'</head>',graph_tag),encoding='utf-8')
+
+      - name: Validate SEO and GEO implementation
         shell: python
         run: |
           from pathlib import Path
-          import re
+          import json,re
 
           def html_document_is_well_formed(text, name):
               assert re.search(r'^<!doctype html>', text, re.I | re.M), name
               assert len(re.findall(r'^<html(?:\s|>)', text, re.I | re.M)) == 1, name
               assert len(re.findall(r'^</html>\s*$', text, re.I | re.M)) == 1, name
 
+          index=Path('index.html').read_text(encoding='utf-8')
+          assert 'studenthubhelp-site-graph' in index
+          assert 'StudentHubHelp Student Finder' in index
+          assert 'https://www.instagram.com/studenthubhelp/' in index
+          html_document_is_well_formed(index, 'index.html')
+
           prop=Path('property-details.html').read_text(encoding='utf-8')
           assert 'js/property-seo-upgrade.js' in prop and 'propertySchema' in prop
           html_document_is_well_formed(prop, 'property-details.html')
+
           for name in ['pg-finder.html','tiffin-finder.html','library-finder.html','cafe-finder.html','bookstore-finder.html']:
               text=Path(name).read_text(encoding='utf-8')
               assert 'js/seo-location-entities.js' in text and 'js/finder-power-search.js' in text, name
               html_document_is_well_formed(text, name)
-          print('SEO page validation passed. Sitemap generation and validation are owned by sitemap-sync.yml.')
 
-      - name: Commit SEO upgrade
+          robots=Path('robots.txt').read_text(encoding='utf-8')
+          for private_path in ['/admin/','/auth.html','/owner-dashboard.html','/student-dashboard.html','/partner-dashboard.html']:
+              assert f'Disallow: {private_path}' in robots, private_path
+          assert 'Sitemap: https://studenthubhelp.github.io/studenthubhelp/sitemap.xml' in robots
+          print('SEO/GEO validation passed. Sitemap generation and validation remain owned by sitemap-sync.yml.')
+
+      - name: Commit SEO/GEO upgrade
         run: |
           git config user.name 'StudentHubHelp SEO Optimizer'
           git config user.email 'actions@github.com'
-          git add property-details.html pg-finder.html tiffin-finder.html library-finder.html cafe-finder.html bookstore-finder.html js/property-seo-upgrade.js js/seo-location-entities.js .github/workflows/seo-indexing-upgrade.yml
-          git diff --cached --quiet || git commit -m 'feat: complete listing SEO indexing upgrade [seo-optimized]'
+          git add index.html property-details.html pg-finder.html tiffin-finder.html library-finder.html cafe-finder.html bookstore-finder.html robots.txt js/property-seo-upgrade.js js/seo-location-entities.js .github/workflows/seo-indexing-upgrade.yml
+          git diff --cached --quiet || git commit -m 'feat: complete SEO GEO entity upgrade [seo-optimized]'
           git push
 
-# SEO automation is intentionally UI-neutral: no layout, theme, search controls or DB schema changes.
+# SEO/GEO automation is intentionally UI-neutral: no layout, theme, search controls or DB schema changes.
