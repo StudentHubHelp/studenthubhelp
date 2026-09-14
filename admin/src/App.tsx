@@ -371,6 +371,12 @@ export default function App() {
     loadData();
   }, [loadData]);
 
+  // Preload the Properties section chunk after authentication so navigation to All Properties is immediate.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    import('./components/PropertiesView').catch(() => {});
+  }, [isAuthenticated]);
+
   // =========================================================
   // ACTIVITY LOG
   // =========================================================
