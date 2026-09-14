@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - '*.html'
       - 'property-details.html'
       - 'pg-finder.html'
       - 'tiffin-finder.html'
@@ -14,6 +15,8 @@ on:
       - 'js/seo-location-entities.js'
       - 'scripts/generate-sitemap.mjs'
       - 'sitemap.xml'
+      - 'sitemap-pages.xml'
+      - 'sitemap-properties*.xml'
       - '.github/workflows/seo-indexing-upgrade.yml'
   schedule:
     - cron: '17 2 * * *'
@@ -29,6 +32,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Attach SEO layers without changing page UI
         shell: python
@@ -45,38 +50,22 @@ jobs:
               p=Path(name)
               p.write_text(add_before(p.read_text(encoding='utf-8'),'</head>','  <script src="js/seo-location-entities.js" defer></script>\n'),encoding='utf-8')
 
-      - name: Extract public Supabase API configuration
-        shell: python
-        run: |
-          import re
-          from pathlib import Path
-          text=Path('property-details.html').read_text(encoding='utf-8')
-          url=re.search(r"const SUPABASE_URL='([^']+)'",text)
-          key=re.search(r"const SUPABASE_ANON_KEY='([^']+)'",text)
-          if not url or not key: raise SystemExit('Supabase public API configuration not found.')
-          Path('seo-env.txt').write_text(f'SUPABASE_URL={url.group(1)}\nSUPABASE_ANON_KEY={key.group(1)}\n',encoding='utf-8')
-
-      - name: Generate dynamic listing sitemap
-        shell: bash
-        run: |
-          set -euo pipefail
-          set -a
-          source seo-env.txt
-          set +a
-          node scripts/generate-sitemap.mjs
-          rm -f seo-env.txt
-
-      - name: Validate SEO implementation
+      - name: Validate SEO implementation and sitemap index
         shell: python
         run: |
           from pathlib import Path
+          from urllib.parse import urlparse, parse_qs
           import re
           import xml.etree.ElementTree as ET
-          from urllib.parse import urlparse, parse_qs
+
+          NS='http://www.sitemaps.org/schemas/sitemap/0.9'
+          BASE='https://studenthubhelp.github.io/studenthubhelp/'
+
           def html_document_is_well_formed(text, name):
               assert re.search(r'^<!doctype html>', text, re.I | re.M), name
               assert len(re.findall(r'^<html(?:\s|>)', text, re.I | re.M)) == 1, name
               assert len(re.findall(r'^</html>\s*$', text, re.I | re.M)) == 1, name
+
           prop=Path('property-details.html').read_text(encoding='utf-8')
           assert 'js/property-seo-upgrade.js' in prop and 'propertySchema' in prop
           html_document_is_well_formed(prop, 'property-details.html')
@@ -84,25 +73,49 @@ jobs:
               text=Path(name).read_text(encoding='utf-8')
               assert 'js/seo-location-entities.js' in text and 'js/finder-power-search.js' in text, name
               html_document_is_well_formed(text, name)
+
           root=ET.parse('sitemap.xml').getroot()
-          urls=root.findall('{http://www.sitemaps.org/schemas/sitemap/0.9}url')
-          assert urls and all(u.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc') is not None for u in urls)
+          assert root.tag == f'{{{NS}}}sitemapindex', 'sitemap.xml must be a sitemap index, not a urlset'
+          child_locs=[]
+          for sitemap in root.findall(f'{{{NS}}}sitemap'):
+              loc=sitemap.find(f'{{{NS}}}loc')
+              assert loc is not None and loc.text and loc.text.startswith(BASE), 'Invalid sitemap child URL'
+              child_locs.append(loc.text.strip())
+          assert child_locs and len(child_locs)==len(set(child_locs)), 'Duplicate sitemap child'
+
           seen=set()
-          for item in urls:
-              loc=item.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc').text
-              assert loc not in seen, f'Duplicate sitemap URL: {loc}'
-              seen.add(loc)
-              parsed=urlparse(loc)
-              if parsed.path.endswith('/property-details.html'):
-                  params=parse_qs(parsed.query)
-                  assert params.get('type') and (params.get('id') or params.get('slug')), f'Invalid property URL: {loc}'
-          print(f'SEO validation passed: {len(urls)} unique sitemap URLs.')
+          for child_loc in child_locs:
+              filename=Path(urlparse(child_loc).path).name
+              assert Path(filename).exists(), f'Missing sitemap child: {filename}'
+              child=ET.parse(filename).getroot()
+              assert child.tag == f'{{{NS}}}urlset', f'{filename} must be a urlset'
+              urls=child.findall(f'{{{NS}}}url')
+              assert len(urls) <= 50000, f'{filename} exceeds 50,000 URL limit'
+              for item in urls:
+                  loc=item.find(f'{{{NS}}}loc')
+                  assert loc is not None and loc.text and loc.text.startswith(BASE), f'Invalid sitemap URL: {filename}'
+                  value=loc.text.strip()
+                  assert value not in seen, f'Duplicate sitemap URL: {value}'
+                  seen.add(value)
+                  lastmod=item.find(f'{{{NS}}}lastmod')
+                  if lastmod is not None and lastmod.text:
+                      assert re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$', lastmod.text.strip()), f'Invalid lastmod: {value}'
+                  parsed=urlparse(value)
+                  if parsed.path.endswith('/property-details.html'):
+                      params=parse_qs(parsed.query)
+                      assert params.get('type') and (params.get('slug') or params.get('id')), f'Invalid property URL: {value}'
+                      assert params['type'][0] in {'hostel','tiffin','library','cafe','bookstore'}, f'Invalid property type: {value}'
+
+          private_paths=('/auth.html','/owner-dashboard.html','/student-dashboard.html','/partner-dashboard.html','/admin/index.html')
+          for value in seen:
+              assert not value.endswith(private_paths), f'Private URL in sitemap: {value}'
+          print(f'SEO validation passed: {len(seen)} unique sitemap URLs across {len(child_locs)} child sitemaps.')
 
       - name: Commit SEO upgrade
         run: |
           git config user.name 'StudentHubHelp SEO Optimizer'
           git config user.email 'actions@github.com'
-          git add property-details.html pg-finder.html tiffin-finder.html library-finder.html cafe-finder.html bookstore-finder.html js/property-seo-upgrade.js js/seo-location-entities.js scripts/generate-sitemap.mjs sitemap.xml .github/workflows/seo-indexing-upgrade.yml
+          git add property-details.html pg-finder.html tiffin-finder.html library-finder.html cafe-finder.html bookstore-finder.html js/property-seo-upgrade.js js/seo-location-entities.js .github/workflows/seo-indexing-upgrade.yml
           git diff --cached --quiet || git commit -m 'feat: complete listing SEO indexing upgrade [seo-optimized]'
           git push
 
