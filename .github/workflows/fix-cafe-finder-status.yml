@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   fix:
-    if: github.event.head_commit.message != 'fix: include legacy cafes in finder'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,29 +22,27 @@ jobs:
           from pathlib import Path
           p = Path('cafe-finder.html')
           s = p.read_text(encoding='utf-8')
-          old = '''        const { data, error } = await db
+          old = """        const { data, error } = await db
           .from('cafes').select('*').eq('status', 'active')
-          .order("name", { ascending: true });'''
-          new = '''        const { data, error } = await db
+          .order(\"name\", { ascending: true });"""
+          new = """        const { data, error } = await db
           .from('cafes').select('*')
-          .order("name", { ascending: true });'''
+          .order(\"name\", { ascending: true });"""
           if old not in s:
               raise SystemExit('Expected cafe query not found')
           s = s.replace(old, new, 1)
-
-          old2 = '''        allRecords = Array.isArray(data) ? data : [];
-        renderRecords();'''
-          new2 = '''        allRecords = (Array.isArray(data) ? data : []).filter(record => {
+          old2 = """        allRecords = Array.isArray(data) ? data : [];
+        renderRecords();"""
+          new2 = """        allRecords = (Array.isArray(data) ? data : []).filter(record => {
           const status = clean(record.status).toLowerCase();
           return !status || status === 'active';
         });
-        renderRecords();'''
+        renderRecords();"""
           if old2 not in s:
               raise SystemExit('Expected cafe records assignment not found')
           s = s.replace(old2, new2, 1)
           p.write_text(s, encoding='utf-8')
           PY
-
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add cafe-finder.html
