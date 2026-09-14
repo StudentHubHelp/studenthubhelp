@@ -4,12 +4,6 @@ on:
     paths:
       - 'admin/src/components/PropertiesView.tsx'
       - '.github/workflows/normalize-property-filter-source.yml'
-      - 'pg-finder.html'
-      - 'tiffin-finder.html'
-      - 'library-finder.html'
-      - 'cafe-finder.html'
-      - 'bookstore-finder.html'
-      - 'property-details.html'
 permissions:
   contents: write
 jobs:
@@ -19,63 +13,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Normalize and protect public property flow
+      - name: Normalize injected filter block
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
-
-          finder_tables = {
-              'pg-finder.html': 'hostels',
-              'tiffin-finder.html': 'tiffins',
-              'library-finder.html': 'libraries',
-              'cafe-finder.html': 'cafes',
-              'bookstore-finder.html': 'bookstores',
-          }
-          for filename, table in finder_tables.items():
-              p = Path(filename)
-              if not p.exists():
-                  continue
-              s = p.read_text(encoding='utf-8')
-              query = re.compile(
-                  r"\.from\(\s*['\"]" + re.escape(table) + r"['\"]\s*\)\s*"
-                  r"(?:\.eq\(\s*['\"]status['\"]\s*,\s*['\"]active['\"]\s*\)\s*)?"
-                  r"\.select\(\s*['\"]\*['\"]\s*\)"
-                  r"(?!\s*\.eq\(\s*['\"]status['\"]\s*,\s*['\"]active['\"]\s*\))"
-              )
-              s = query.sub(".from('" + table + "').select('*').eq('status', 'active')", s, count=1)
-              if table == 'tiffins':
-                  s = re.sub(r"table\s*:\s*['\"]tiffin['\"]", "table: 'tiffins'", s)
-                  s = re.sub(r"property_table\s*:\s*['\"]tiffin['\"]", "property_table: 'tiffins'", s)
-              p.write_text(s, encoding='utf-8')
-
-          p = Path('property-details.html')
-          if p.exists():
-              s = p.read_text(encoding='utf-8')
-              s = re.sub(
-                  r"(\.from\(\s*cfg\.table\s*\)\s*\.select\([\s\S]*?\))\s*(?:\.eq\(\s*['\"]status['\"]\s*,\s*['\"]active['\"]\s*\)\s*)*\.limit\(\s*80\s*\)",
-                  r"\1.eq('status', 'active').limit(80)",
-                  s,
-                  count=1,
-              )
-              s = re.sub(r"table\s*:\s*['\"]tiffin['\"]", "table: 'tiffins'", s)
-              p.write_text(s, encoding='utf-8')
-
           p = Path('admin/src/components/PropertiesView.tsx')
-          if p.exists():
-              s = p.read_text(encoding='utf-8')
-              start = s.find('  useEffect(() => setLiveProperties(properties), [properties]);')
-              end = s.find('  useEffect(() => setSelectedIds([])', start)
-              if start != -1 and end != -1:
-                  block = s[start:end].replace('\\n', '\n')
-                  s = s[:start] + block + s[end:]
-                  p.write_text(s, encoding='utf-8')
+          s = p.read_text(encoding='utf-8')
+          start = s.find('  useEffect(() => setLiveProperties(properties), [properties]);')
+          end = s.find('  useEffect(() => setSelectedIds([])', start)
+          if start == -1 or end == -1:
+              raise SystemExit('filter block markers not found')
+          block = s[start:end]
+          block = block.replace('\\n', '\n')
+          s = s[:start] + block + s[end:]
+          p.write_text(s, encoding='utf-8')
           PY
       - name: Commit normalization
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add admin/src/components/PropertiesView.tsx pg-finder.html tiffin-finder.html library-finder.html cafe-finder.html bookstore-finder.html property-details.html
+          git add admin/src/components/PropertiesView.tsx
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'fix: normalize suspension filters'
+          git commit -m 'Normalize property filter source [skip ci]'
           git push origin HEAD:main
