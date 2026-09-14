@@ -85,7 +85,51 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
   const isPendingRequestView = categoryFilter === 'all' && statusFilter === 'pending';
 
   useEffect(() => setLiveProperties(properties), [properties]);
-\n  // Load the complete live property set for All Property Listings filters.\n  // This keeps filtering client-side but removes any upstream page/limit gap.\n  useEffect(() => {\n    let cancelled = false;\n    if (categoryFilter !== 'all' || statusFilter === 'pending') return;\n\n    const loadAllPropertyRows = async () => {\n      try {\n        const tables: PropertyType[] = ['hostels', 'tiffins', 'libraries', 'cafes', 'bookstores'];\n        const rows: PropertyItem[] = [];\n        const pageSize = 1000;\n\n        for (const table of tables) {\n          let from = 0;\n          while (true) {\n            const { data, error } = await supabase\n              .from(table)\n              .select('*')\n              .order('created_at', { ascending: false })\n              .range(from, from + pageSize - 1);\n            if (error) throw error;\n\n            const page = Array.isArray(data) ? data : [];\n            rows.push(...(page as PropertyItem[]).map((row) => ({\n              ...row,\n              id: String((row as any).id),\n              _source_table: table,\n            })));\n\n            if (page.length < pageSize) break;\n            from += pageSize;\n          }\n        }\n\n        if (!cancelled) setLiveProperties(rows);\n      } catch (error) {\n        console.warn('Complete All Property Listings load failed:', error);\n      }\n    };\n\n    loadAllPropertyRows();\n    return () => { cancelled = true; };\n  }, [categoryFilter, statusFilter]);\n  useEffect(() => setSelectedIds([]), [categoryFilter, selectedCategory, statusFilter, verifiedFilter, featuredFilter, areaFilter, ownerFilter]);
+
+  // Load the complete live property set for All Property Listings filters.
+  // This keeps filtering client-side but removes any upstream page/limit gap.
+  useEffect(() => {
+    let cancelled = false;
+    if (categoryFilter !== 'all' || statusFilter === 'pending') return;
+
+    const loadAllPropertyRows = async () => {
+      try {
+        const tables: PropertyType[] = ['hostels', 'tiffins', 'libraries', 'cafes', 'bookstores'];
+        const rows: PropertyItem[] = [];
+        const pageSize = 1000;
+
+        for (const table of tables) {
+          let from = 0;
+          while (true) {
+            const { data, error } = await supabase
+              .from(table)
+              .select('*')
+              .order('created_at', { ascending: false })
+              .range(from, from + pageSize - 1);
+            if (error) throw error;
+
+            const page = Array.isArray(data) ? data : [];
+            rows.push(...(page as PropertyItem[]).map((row) => ({
+              ...row,
+              id: String((row as any).id),
+              _source_table: table,
+            })));
+
+            if (page.length < pageSize) break;
+            from += pageSize;
+          }
+        }
+
+        if (!cancelled) setLiveProperties(rows);
+      } catch (error) {
+        console.warn('Complete All Property Listings load failed:', error);
+      }
+    };
+
+    loadAllPropertyRows();
+    return () => { cancelled = true; };
+  }, [categoryFilter, statusFilter]);
+  useEffect(() => setSelectedIds([]), [categoryFilter, selectedCategory, statusFilter, verifiedFilter, featuredFilter, areaFilter, ownerFilter]);
 
   useEffect(() => {
     let cancelled = false;
