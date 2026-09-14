@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/reviews-production-fix.yml'
+      - 'admin/src/BUILD_TRIGGER.txt'
   workflow_dispatch:
 
 permissions:
@@ -15,7 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
       - name: Patch owner review editor and admin persistence
         run: |
           python3 - <<'PY'
@@ -37,10 +37,7 @@ jobs:
   if(!box) return;
   const owned = Array.isArray(properties) ? properties : [];
   if(!owned.length){ box.innerHTML = ""; return; }
-  const options = owned.map(p => {
-    const key = propertyKey(p);
-    return `<option value="${esc(key)}">${esc(p.name || "Property")}</option>`;
-  }).join("");
+  const options = owned.map(p => { const key = propertyKey(p); return `<option value="${esc(key)}">${esc(p.name || "Property")}</option>`; }).join("");
   const selected = document.getElementById("ownerReviewProperty")?.value || propertyKey(owned[0]);
   const p = findProperty(selected) || owned[0];
   const table = String(p.table || p.property_type || "hostels");
@@ -50,16 +47,7 @@ jobs:
   const text = pending || live;
   const rating = mine?.pending_rating ?? mine?.rating ?? 5;
   const state = pending ? "Pending admin approval — previous approved review remains live." : (live ? "Published review" : "New review — admin approval required.");
-  box.innerHTML = `
-    <div class="card" style="border:1px solid var(--border);">
-      <div class="card-head"><div><div class="card-title">Manage Your Property Review</div><div class="card-sub">New or edited reviews stay pending until Admin approves them.</div></div><span class="badge ${pending ? "pending-badge" : "active-badge"}">${esc(state)}</span></div>
-      <div class="form-grid">
-        <div class="field"><label>Property</label><select id="ownerReviewProperty" onchange="renderOwnerReviewEditor()">${options}</select></div>
-        <div class="field"><label>Rating</label><select id="ownerReviewRating">${[5,4,3,2,1].map(n => `<option value="${n}" ${Number(rating)===n?'selected':''}>${n} / 5</option>`).join("")}</select></div>
-        <div class="field full"><label>Review</label><textarea id="ownerReviewText" maxlength="10000" placeholder="Write your property review...">${esc(text)}</textarea></div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:12px;"><button class="btn primary" type="button" onclick="saveOwnerReview()"><i class="fa-solid fa-paper-plane"></i> Submit for Admin Approval</button></div>
-    </div>`;
+  box.innerHTML = `<div class="card" style="border:1px solid var(--border);"><div class="card-head"><div><div class="card-title">Manage Your Property Review</div><div class="card-sub">New or edited reviews stay pending until Admin approves them.</div></div><span class="badge ${pending ? "pending-badge" : "active-badge"}">${esc(state)}</span></div><div class="form-grid"><div class="field"><label>Property</label><select id="ownerReviewProperty" onchange="renderOwnerReviewEditor()">${options}</select></div><div class="field"><label>Rating</label><select id="ownerReviewRating">${[5,4,3,2,1].map(n => `<option value="${n}" ${Number(rating)===n?'selected':''}>${n} / 5</option>`).join("")}</select></div><div class="field full"><label>Review</label><textarea id="ownerReviewText" maxlength="10000" placeholder="Write your property review...">${esc(text)}</textarea></div></div><div style="display:flex;justify-content:flex-end;margin-top:12px;"><button class="btn primary" type="button" onclick="saveOwnerReview()"><i class="fa-solid fa-paper-plane"></i> Submit for Admin Approval</button></div></div>`;
   const select = document.getElementById("ownerReviewProperty");
   if(select) select.value = selected;
 }
@@ -77,13 +65,8 @@ async function saveOwnerReview(){
   const existing = (Array.isArray(reviews) ? reviews : []).filter(r => String(r.property_id) === String(p.id) && String(r.property_type || r.table || "") === table && String(r.user_id) === String(currentUser.id)).sort((a,b) => String(b.created_at||"").localeCompare(String(a.created_at||"")))[0];
   try{
     let error;
-    if(existing?.id){
-      const result = await db.from("reviews").update({ review_text:text, rating:String(rating) }).eq("id", existing.id);
-      error = result.error;
-    }else{
-      const result = await db.from("reviews").insert({ property_id:String(p.id), property_type:table, user_id:currentUser.id, student_id:currentUser.id, user_name:currentProfile?.full_name || currentProfile?.name || currentUser.email || "Property Owner", rating:String(rating), review_text:text, status:"pending" });
-      error = result.error;
-    }
+    if(existing?.id){ const result = await db.from("reviews").update({ review_text:text, rating:String(rating) }).eq("id", existing.id); error = result.error; }
+    else { const result = await db.from("reviews").insert({ property_id:String(p.id), property_type:table, user_id:currentUser.id, student_id:currentUser.id, user_name:currentProfile?.full_name || currentProfile?.name || currentUser.email || "Property Owner", rating:String(rating), review_text:text, status:"pending" }); error = result.error; }
     if(error) throw error;
     alert("Review submitted. It will go live only after Admin approval.");
     await loadReviews();
@@ -98,7 +81,6 @@ window.saveOwnerReview = saveOwnerReview;
           if 'renderOwnerReviewEditor();\n\n' not in s:
               s = s.replace(needle, needle + '  renderOwnerReviewEditor();\n\n', 1)
           p.write_text(s, encoding='utf-8')
-
           p = Path('admin/src/App.tsx')
           s = p.read_text(encoding='utf-8')
           pattern = r'''  const handleToggleReviewStatus = \(\n    id: string \| number,\n    nextStatus: string\n  \) => \{.*?\n  \};'''
@@ -107,34 +89,18 @@ window.saveOwnerReview = saveOwnerReview;
     nextStatus: string
   ) => {
     try {
-      const { data, error } = await supabase
-        .from('reviews')
-        .update({ status: nextStatus })
-        .eq('id', id)
-        .select('*')
-        .maybeSingle();
+      const { data, error } = await supabase.from('reviews').update({ status: nextStatus }).eq('id', id).select('*').maybeSingle();
       if (error) throw error;
-      if (data) {
-        setReviews((prev) => prev.map((r) => String(r.id) === String(id) ? { ...r, ...data } : r));
-      }
-      showToast(
-        nextStatus.toLowerCase() === 'published'
-          ? 'Review approved and published.'
-          : nextStatus.toLowerCase() === 'rejected'
-            ? 'Review rejected.'
-            : `Review status changed to ${nextStatus}.`
-      );
+      if (data) setReviews((prev) => prev.map((r) => String(r.id) === String(id) ? { ...r, ...data } : r));
+      showToast(nextStatus.toLowerCase() === 'published' ? 'Review approved and published.' : nextStatus.toLowerCase() === 'rejected' ? 'Review rejected.' : `Review status changed to ${nextStatus}.`);
     } catch (err: any) {
       showToast(err?.message || 'Unable to update review status.', 'error');
     }
   };'''
           s2, n = re.subn(pattern, replacement, s, count=1, flags=re.S)
-          if n != 1:
-              raise SystemExit('admin review handler pattern not found')
+          if n != 1: raise SystemExit('admin review handler pattern not found')
           p.write_text(s2, encoding='utf-8')
-          print('Review production patch applied.')
           PY
-
       - name: Commit patched source
         run: |
           git config user.name "github-actions[bot]"
