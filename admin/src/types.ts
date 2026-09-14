@@ -270,6 +270,7 @@ export type SectionTab =
   | 'students'
   | 'owners'
   | 'properties'
+  | 'suspended-properties'
   | 'hostels'
   | 'tiffins'
   | 'libraries'

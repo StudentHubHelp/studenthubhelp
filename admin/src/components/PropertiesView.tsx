@@ -221,7 +221,9 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
 
         let matchesCat = true;
         if (categoryQuery && categoryQuery !== 'all') {
-          matchesCat = sourceTable === categoryQuery || listingRequestTable(p) === categoryQuery;
+          matchesCat = categoryQuery === 'suspended-properties'
+            ? normalizeText(propStatus(p)) === 'suspended'
+            : sourceTable === categoryQuery || listingRequestTable(p) === categoryQuery;
         }
 
         // Location filter intentionally searches every useful location field,

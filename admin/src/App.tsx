@@ -1795,6 +1795,20 @@ export default function App() {
             />
           )}
 
+          {/* SUSPENDED PROPERTIES */}
+
+          {currentTab === 'suspended-properties' && (
+            <PropertiesView
+              categoryFilter="suspended-properties"
+              properties={properties}
+              onOpenPreview={handleOpenPropertyPreview}
+              onOpenEditor={handleOpenPropertyEditor}
+              onToggleVerification={handleToggleVerification}
+              onDeleteProperty={handleDeleteProperty}
+              onBulkAction={handleBulkAction}
+            />
+          )}
+
           {/* HOSTELS */}
 
           {currentTab ===
