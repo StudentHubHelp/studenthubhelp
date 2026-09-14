@@ -1,7 +1,7 @@
 const SHH_WIDGET=(()=>{
   const s=document.currentScript||[...document.scripts].pop();
   const API=s?.getAttribute('data-api-url')||'https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat';
-  const KEY=s?.getAttribute('data-api-key')||'sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFh5';
+  const KEY=s?.getAttribute('data-api-key')||'sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT';
   const accent=s?.getAttribute('data-accent')||'#d7a63d';
   const position=s?.getAttribute('data-position')||'right';
   if(window.StudentHubHelpChatbotLoaded||window.StudentHubHelpHelpChatbotLoaded)return null;
