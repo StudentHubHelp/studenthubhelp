@@ -43,7 +43,7 @@ async function fetchRows(table) {
   const pageSize = 1000;
   for (let offset = 0; offset < 50000; offset += pageSize) {
     const url = new URL(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${table}`);
-    url.searchParams.set('select', 'id,property_id,slug,status,updated_at,modified_at,created_at');
+    url.searchParams.set('select', 'id,property_id,slug,status,updated_at,created_at');
     url.searchParams.set('status', 'eq.active');
     url.searchParams.set('offset', String(offset));
     url.searchParams.set('limit', String(pageSize));
@@ -107,7 +107,7 @@ for (const [type, table] of Object.entries(TABLES)) {
   for (const row of await fetchRows(table)) {
     const loc = recordUrl(type, row);
     if (!loc) continue;
-    const lastmod = validDate(row.updated_at || row.modified_at || row.created_at);
+    const lastmod = validDate(row.updated_at || row.created_at);
     const current = properties.get(loc);
     if (!current || (lastmod && (!current.lastmod || lastmod > current.lastmod))) {
       properties.set(loc, { loc, lastmod });
