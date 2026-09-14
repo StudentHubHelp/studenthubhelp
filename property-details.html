@@ -528,7 +528,7 @@ async function load(){
    const {data,error}=await db
      .from(cfg.table)
      .select('*')
-     .eq(lookupField,lookupValue).eq("status","active")
+     .eq(lookupField,lookupValue).or_("status.eq.active,status.is.null")
      .maybeSingle();
 
    if(error) return fail('Unable to load property',error.message);
