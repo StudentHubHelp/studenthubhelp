@@ -1,0 +1,44 @@
+name: Add Partner Footer Link
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update-footer:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add Partner Program link to homepage footer
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          marker = '<a href="add-listing.html">Add Listing</a>'
+          link = '<a href="partner.html">Partner Program</a>'
+          if link not in text and marker in text:
+              text = text.replace(marker, marker + '\n          ' + link, 1)
+              p.write_text(text, encoding='utf-8')
+          else:
+              print('Partner footer link already present or footer marker not found.')
+
+      - name: Commit homepage footer update
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No change needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat: add partner program link to homepage footer"
+          git push
