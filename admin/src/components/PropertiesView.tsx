@@ -38,6 +38,27 @@ interface PropertiesViewProps {
   onBulkAction: (action: 'verify' | 'activate' | 'suspend' | 'feature', selectedIds: string[]) => void;
 }
 
+const LIVE_TABLES: PropertyType[] = ['hostels', 'tiffins', 'libraries', 'cafes', 'bookstores'];
+
+const normalizeText = (value: unknown): string =>
+  String(value ?? '')
+    .normalize('NFKC')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+const normalizeCompact = (value: unknown): string =>
+  normalizeText(value).replace(/[^a-z0-9]+/g, '');
+
+const digitsOnly = (value: unknown): string => String(value ?? '').replace(/\D/g, '');
+
+const valueMatches = (value: unknown, query: string): boolean => {
+  const q = normalizeText(query);
+  if (!q) return false;
+  const text = normalizeText(value);
+  return text.includes(q) || normalizeCompact(text).includes(normalizeCompact(q));
+};
+
 const listingRequestToProperty = (r: ListingRequest): PropertyItem => ({
   ...(r as any),
   id: String(r.id),
@@ -51,13 +72,24 @@ const listingRequestToProperty = (r: ListingRequest): PropertyItem => ({
 });
 
 const listingRequestTable = (p: PropertyItem): PropertyType => {
-  const raw = String((p as any).property_type || (p as any).category || '')
-    .toLowerCase()
-    .replace(/[\s_-]+/g, '');
+  const raw = normalizeCompact((p as any).property_type || (p as any).category || '');
   if (raw.includes('tiffin') || raw.includes('mess')) return 'tiffins';
   if (raw.includes('library')) return 'libraries';
   if (raw.includes('cafe')) return 'cafes';
   if (raw.includes('book') || raw.includes('stationery')) return 'bookstores';
+  return 'hostels';
+};
+
+const propertySourceTable = (p: PropertyItem): string => {
+  const source = normalizeCompact((p as any)._source_table || '');
+  if (LIVE_TABLES.includes(source as PropertyType)) return source;
+  if (source === 'listingrequests') return 'listing_requests';
+
+  const rawCategory = normalizeCompact((p as any).property_type || (p as any).category || '');
+  if (rawCategory.includes('tiffin') || rawCategory.includes('mess')) return 'tiffins';
+  if (rawCategory.includes('library')) return 'libraries';
+  if (rawCategory.includes('cafe')) return 'cafes';
+  if (rawCategory.includes('book') || rawCategory.includes('stationery')) return 'bookstores';
   return 'hostels';
 };
 
@@ -81,54 +113,60 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
   const [pendingLoading, setPendingLoading] = useState(false);
   const [liveProperties, setLiveProperties] = useState<PropertyItem[]>(properties);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [liveLoading, setLiveLoading] = useState(false);
 
   const isPendingRequestView = categoryFilter === 'all' && statusFilter === 'pending';
 
+  useEffect(() => {
+    setSelectedCategory(categoryFilter);
+  }, [categoryFilter]);
+
   useEffect(() => setLiveProperties(properties), [properties]);
 
-  // Load the complete live property set for All Property Listings filters.
-  // This keeps filtering client-side but removes any upstream page/limit gap.
+  // All Property Listings must use the complete live Supabase dataset.
+  // Each property table is independently fetched so one table cannot silently
+  // leave the UI showing the smaller upstream `properties` array.
   useEffect(() => {
     let cancelled = false;
     if (categoryFilter !== 'all' || statusFilter === 'pending') return;
 
     const loadAllPropertyRows = async () => {
+      setLiveLoading(true);
       try {
-        const tables: PropertyType[] = ['hostels', 'tiffins', 'libraries', 'cafes', 'bookstores'];
         const rows: PropertyItem[] = [];
-        const pageSize = 1000;
 
-        for (const table of tables) {
-          let from = 0;
-          while (true) {
-            const { data, error } = await supabase
-              .from(table)
-              .select('*')
-              .order('created_at', { ascending: false })
-              .range(from, from + pageSize - 1);
-            if (error) throw error;
+        for (const table of LIVE_TABLES) {
+          const { data, error } = await supabase
+            .from(table)
+            .select('*')
+            .range(0, 9999);
 
-            const page = Array.isArray(data) ? data : [];
-            rows.push(...(page as PropertyItem[]).map((row) => ({
-              ...row,
-              id: String((row as any).id),
-              _source_table: table,
-            })));
+          if (error) throw new Error(`${table}: ${error.message}`);
 
-            if (page.length < pageSize) break;
-            from += pageSize;
-          }
+          const page = Array.isArray(data) ? data : [];
+          rows.push(...(page as PropertyItem[]).map((row) => ({
+            ...row,
+            id: String((row as any).id),
+            _source_table: table,
+          })));
         }
 
-        if (!cancelled) setLiveProperties(rows);
+        if (!cancelled) {
+          setLiveProperties(rows);
+        }
       } catch (error) {
-        console.warn('Complete All Property Listings load failed:', error);
+        console.error('Complete All Property Listings load failed:', error);
+        // Keep the existing central dataset rather than replacing it with an
+        // empty/partial result when a live query fails.
+      } finally {
+        if (!cancelled) setLiveLoading(false);
       }
     };
 
     loadAllPropertyRows();
     return () => { cancelled = true; };
   }, [categoryFilter, statusFilter]);
+
   useEffect(() => setSelectedIds([]), [categoryFilter, selectedCategory, statusFilter, verifiedFilter, featuredFilter, areaFilter, ownerFilter]);
 
   useEffect(() => {
@@ -171,55 +209,98 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
 
   const filteredProperties = useMemo(() => {
     const sourceProperties = isPendingRequestView ? pendingListingProperties : liveProperties;
-    return sourceProperties.filter((p) => {
-      let matchesCat = true;
-      if (selectedCategory && selectedCategory !== 'all') {
-        const sourceTable = String((p as any)._source_table || '').toLowerCase();
-        if (sourceTable === 'listing_requests') matchesCat = listingRequestTable(p) === selectedCategory.toLowerCase();
-        else if (sourceTable) matchesCat = sourceTable === selectedCategory.toLowerCase();
-        else {
-          const c = (p.category || 'Hostel').toLowerCase();
-          const target = propertyConfig[selectedCategory as PropertyType]?.category.toLowerCase() || '';
-          matchesCat = c.includes(target) || c.includes(selectedCategory.toLowerCase());
+    const categoryQuery = normalizeCompact(selectedCategory);
+    const areaQuery = normalizeText(areaFilter);
+    const ownerQuery = normalizeText(ownerFilter);
+    const ownerPhoneQuery = digitsOnly(ownerFilter);
+    const requestedStatus = normalizeText(statusFilter);
+
+    return sourceProperties
+      .filter((p) => {
+        const sourceTable = propertySourceTable(p);
+
+        let matchesCat = true;
+        if (categoryQuery && categoryQuery !== 'all') {
+          matchesCat = sourceTable === categoryQuery || listingRequestTable(p) === categoryQuery;
         }
-      }
-      const areaQuery = areaFilter.trim().toLowerCase();
-const ownerQuery = ownerFilter.trim().toLowerCase();
-const ownerPhoneQuery = ownerFilter.replace(/\D/g, '');
-const matchesArea = !areaQuery || [p.city, p.area, p.address, p.pincode]
-  .filter(Boolean)
-  .some((value) => String(value).toLowerCase().includes(areaQuery));
-const matchesStatus = !statusFilter || propStatus(p) === statusFilter.toLowerCase();
-const matchesVerified = !verifiedFilter || (verifiedFilter === 'true' && propVerified(p)) || (verifiedFilter === 'false' && !propVerified(p));
-const matchesFeatured = !featuredFilter || (featuredFilter === 'true' && propFeatured(p)) || (featuredFilter === 'false' && !propFeatured(p));
-const matchesOwner = !ownerQuery ||
-  (p.owner_name || '').toLowerCase().includes(ownerQuery) ||
-  (p.name || '').toLowerCase().includes(ownerQuery) ||
-  (p.email || '').toLowerCase().includes(ownerQuery) ||
-  (String(p.id || '').toLowerCase().includes(ownerQuery)) ||
-  (ownerPhoneQuery && String(p.phone || '').replace(/\D/g, '').includes(ownerPhoneQuery));
-      return matchesCat && matchesArea && matchesStatus && matchesVerified && matchesFeatured && matchesOwner;
-    }).sort((a, b) => {
-      if (sortBy === 'rating-high') return propRating(b) - propRating(a);
-      if (sortBy === 'rating-low') return propRating(a) - propRating(b);
-      if (sortBy === 'views') return propViews(b) - propViews(a);
-      if (sortBy === 'bookings') return propBookings(b) - propBookings(a);
-      if (sortBy === 'az') return (a.name || '').localeCompare(b.name || '');
-      if (sortBy === 'oldest') return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
-      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-    });
+
+        // Location filter intentionally searches every useful location field,
+        // not only `area`. This makes city, locality, address, pincode and
+        // service/delivery areas all behave consistently.
+        const locationValues = [
+          (p as any).city,
+          (p as any).area,
+          (p as any).address,
+          (p as any).pincode,
+          (p as any).service_area,
+          (p as any).delivery_area,
+          (p as any).deliveryArea,
+          (p as any).nearby_coaching,
+          (p as any).nearby,
+          (p as any).locality,
+          (p as any).location,
+        ];
+        const matchesArea = !areaQuery || locationValues.some((value) => valueMatches(value, areaQuery));
+
+        const currentStatus = normalizeText(propStatus(p));
+        const matchesStatus = !requestedStatus || currentStatus === requestedStatus;
+
+        const matchesVerified = !verifiedFilter ||
+          (verifiedFilter === 'true' && propVerified(p)) ||
+          (verifiedFilter === 'false' && !propVerified(p));
+
+        const matchesFeatured = !featuredFilter ||
+          (featuredFilter === 'true' && propFeatured(p)) ||
+          (featuredFilter === 'false' && !propFeatured(p));
+
+        // Owner / Title / Phone searches all owner/contact/property identifiers.
+        // Phone matching uses digits only so 07073160088, 07073-160088 and
+        // +91 70731 60088 are treated as the same searchable value.
+        const ownerName = (p as any).owner_name;
+        const ownerId = (p as any).owner_id;
+        const propertyId = (p as any).id;
+        const propertyIdAlt = (p as any).property_id;
+        const phone = (p as any).phone;
+        const whatsapp = (p as any).whatsapp;
+        const email = (p as any).email;
+        const name = (p as any).name || (p as any).title || (p as any).property_name;
+        const matchesOwner = !ownerQuery ||
+          valueMatches(ownerName, ownerQuery) ||
+          valueMatches(name, ownerQuery) ||
+          valueMatches(email, ownerQuery) ||
+          valueMatches(ownerId, ownerQuery) ||
+          valueMatches(propertyId, ownerQuery) ||
+          valueMatches(propertyIdAlt, ownerQuery) ||
+          valueMatches(phone, ownerQuery) ||
+          valueMatches(whatsapp, ownerQuery) ||
+          (!!ownerPhoneQuery && (digitsOnly(phone).includes(ownerPhoneQuery) || digitsOnly(whatsapp).includes(ownerPhoneQuery)));
+
+        return matchesCat && matchesArea && matchesStatus && matchesVerified && matchesFeatured && matchesOwner;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'rating-high') return propRating(b) - propRating(a);
+        if (sortBy === 'rating-low') return propRating(a) - propRating(b);
+        if (sortBy === 'views') return propViews(b) - propViews(a);
+        if (sortBy === 'bookings') return propBookings(b) - propBookings(a);
+        if (sortBy === 'az') return String(a.name || a.title || '').localeCompare(String(b.name || b.title || ''), undefined, { sensitivity: 'base' });
+        if (sortBy === 'oldest') return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      });
   }, [liveProperties, pendingListingProperties, isPendingRequestView, selectedCategory, areaFilter, statusFilter, verifiedFilter, featuredFilter, ownerFilter, sortBy]);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === filteredProperties.length ? [] : filteredProperties.map((p) => String(p.id)));
-  const toggleSelectOne = (id: string) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === filteredProperties.length ? [] : filteredProperties.map((p) => `${propertySourceTable(p)}:${String(p.id)}`));
+  const toggleSelectOne = (p: PropertyItem) => {
+    const key = `${propertySourceTable(p)}:${String(p.id)}`;
+    setSelectedIds((prev) => prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]);
+  };
 
   const handlePersistedBulkAction = async (action: 'verify' | 'activate' | 'suspend' | 'feature') => {
     if (isPendingRequestView || !selectedIds.length || bulkBusy) return;
-    const selected = liveProperties.filter((p) => selectedIds.includes(String(p.id)));
+    const selected = liveProperties.filter((p) => selectedIds.includes(`${propertySourceTable(p)}:${String(p.id)}`));
     const grouped = new Map<string, string[]>();
     for (const property of selected) {
-      const table = String((property as any)._source_table || '').toLowerCase();
-      if (!['hostels', 'tiffins', 'libraries', 'cafes', 'bookstores'].includes(table)) continue;
+      const table = propertySourceTable(property);
+      if (!LIVE_TABLES.includes(table as PropertyType)) continue;
       grouped.set(table, [...(grouped.get(table) || []), String(property.id)]);
     }
     if (!grouped.size) {
@@ -238,7 +319,7 @@ const matchesOwner = !ownerQuery ||
         if (error) throw error;
       }
       setLiveProperties((prev) => prev.map((property) => {
-        if (!selectedIds.includes(String(property.id))) return property;
+        if (!selectedIds.includes(`${propertySourceTable(property)}:${String(property.id)}`)) return property;
         if (action === 'verify') return { ...property, verified: true };
         if (action === 'activate') return { ...property, status: 'active' };
         if (action === 'suspend') return { ...property, status: 'suspended' };
@@ -255,7 +336,7 @@ const matchesOwner = !ownerQuery ||
 
   const handleBulkApprove = async () => {
     if (!isPendingRequestView || !selectedIds.length || bulkBusy) return;
-    const selected = pendingListingProperties.filter((p) => selectedIds.includes(String(p.id)));
+    const selected = pendingListingProperties.filter((p) => selectedIds.includes(`${propertySourceTable(p)}:${String(p.id)}`));
     if (!selected.length) return;
     if (!window.confirm(`Approve ${selected.length} selected listing request${selected.length > 1 ? 's' : ''}? This will publish them to their real property tables.`)) return;
 
@@ -316,7 +397,7 @@ const matchesOwner = !ownerQuery ||
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-serif font-extrabold text-white">{pageTitle}</h2>
-          <p className="text-xs text-slate-400 mt-1">{pendingLoading && isPendingRequestView ? 'Loading pending listing requests…' : `${filteredProperties.length} ${isPendingRequestView ? 'pending listing requests' : 'active listings'} • Real-time live Supabase management`}</p>
+          <p className="text-xs text-slate-400 mt-1">{pendingLoading && isPendingRequestView ? 'Loading pending listing requests…' : liveLoading && !isPendingRequestView ? 'Loading complete property data…' : `${filteredProperties.length} ${isPendingRequestView ? 'pending listing requests' : 'active listings'} • Real-time live Supabase management`}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => exportToCSV(filteredProperties, `properties-${selectedCategory}`)} className="px-3.5 py-2 rounded-xl bg-[#0d1838] hover:bg-[#14224d] border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"><Download className="w-3.5 h-3.5" /><span>Export CSV</span></button>
@@ -342,7 +423,8 @@ const matchesOwner = !ownerQuery ||
           const isVerified = propVerified(p);
           const isFeatured = propFeatured(p);
           const status = propStatus(p);
-          const isSelected = selectedIds.includes(String(p.id));
+          const selectionKey = `${propertySourceTable(p)}:${String(p.id)}`;
+          const isSelected = selectedIds.includes(selectionKey);
           const isPendingRequest = String((p as any)._source_table || '') === 'listing_requests';
           const sourceTable = String((p as any)._source_table || '').toLowerCase();
           let categoryType: PropertyType = 'hostels';
@@ -350,7 +432,7 @@ const matchesOwner = !ownerQuery ||
           else if (sourceTable === 'tiffins' || sourceTable === 'libraries' || sourceTable === 'cafes' || sourceTable === 'bookstores') categoryType = sourceTable as PropertyType;
           else { const c = (p.category || '').toLowerCase(); if (c.includes('tiffin') || c.includes('mess')) categoryType = 'tiffins'; else if (c.includes('library')) categoryType = 'libraries'; else if (c.includes('cafe')) categoryType = 'cafes'; else if (c.includes('book')) categoryType = 'bookstores'; }
           return <tr key={`${sourceTable || 'property'}-${p.id}`} className={`hover:bg-slate-800/40 transition-colors ${isSelected ? 'bg-amber-500/5' : ''}`}>
-            <td className="p-4"><button disabled={false} onClick={() => toggleSelectOne(String(p.id))} className="text-slate-400 hover:text-white">{isSelected ? <CheckSquare className="w-4 h-4 text-amber-400" /> : <Square className="w-4 h-4" />}</button></td>
+            <td className="p-4"><button disabled={false} onClick={() => toggleSelectOne(p)} className="text-slate-400 hover:text-white">{isSelected ? <CheckSquare className="w-4 h-4 text-amber-400" /> : <Square className="w-4 h-4" />}</button></td>
             <td className="p-4"><button onClick={() => !isPendingRequest && onOpenPreview(p)} className={`font-bold text-slate-100 ${!isPendingRequest ? 'hover:text-amber-300 cursor-pointer' : 'cursor-default'} text-left transition-colors flex items-center gap-1.5 group`}><span>{p.name || p.title || 'Accommodation'}</span>{isFeatured && <span className="text-[10px] text-amber-400 font-extrabold flex items-center gap-0.5"><Sparkles className="w-3 h-3" /></span>}</button><div className="text-[10px] text-slate-400 font-mono mt-0.5">#{p.id}</div></td>
             <td className="p-4"><span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">{p.category || 'Hostel'}</span></td>
             <td className="p-4 font-mono"><div className="font-sans font-medium text-slate-200">{p.owner_name || '—'}</div><div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1"><Phone className="w-3 h-3 text-slate-400" />{p.phone || '—'}</div></td>
@@ -362,7 +444,7 @@ const matchesOwner = !ownerQuery ||
             <td className="p-4 text-slate-400">{shortDate(p.updated_at || p.created_at)}</td>
             <td className="p-4 text-right whitespace-nowrap"><div className="flex items-center justify-end gap-1.5">{!isPendingRequest ? <><button onClick={() => onOpenPreview(p)} className="px-2.5 py-1.5 rounded-lg bg-[#0d1838] hover:bg-[#14224d] text-amber-300 border border-amber-500/30 hover:border-amber-400 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"><Eye className="w-3 h-3" /><span>Preview</span></button><button onClick={() => onOpenEditor(p, categoryType)} className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer" title="Edit in Master Editor"><Edit className="w-3.5 h-3.5" /></button><button onClick={() => onDeleteProperty(p)} className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors cursor-pointer" title="Delete from Live Supabase"><Trash2 className="w-3.5 h-3.5" /></button></> : <span className="text-[10px] text-slate-500 font-semibold">Use Bulk Approve above</span>}</div></td>
           </tr>;
-        }) : <tr><td colSpan={11} className="p-8 text-center text-slate-400 text-xs">{pendingLoading && isPendingRequestView ? 'Loading all pending listing requests…' : 'No properties match your current search or filter criteria.'}</td></tr>}
+        }) : <tr><td colSpan={11} className="p-8 text-center text-slate-400 text-xs">{pendingLoading && isPendingRequestView ? 'Loading all pending listing requests…' : liveLoading ? 'Loading complete property data…' : 'No properties match your current search or filter criteria.'}</td></tr>}
       </tbody></table></div></div>
     </div>
   );
