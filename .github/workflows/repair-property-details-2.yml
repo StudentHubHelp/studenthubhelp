@@ -23,9 +23,9 @@ jobs:
           from pathlib import Path
           p=Path('property-details.html')
           s=p.read_text(encoding='utf-8')
-          old='.eq(lookupField,lookupValue).eq("status","active")'
+          old='.eq(lookupField,lookupValue).or_("status.eq.active,status.is.null")'
           if old not in s:
-              raise SystemExit('Expected original query not found')
+              raise SystemExit('Expected legacy status query not found')
           s=s.replace(old,'.eq(lookupField,lookupValue)',1)
           marker="   if(!data) return fail('Property not found','This listing may have been removed or its URL is incorrect.');"
           if marker not in s:
@@ -39,4 +39,3 @@ jobs:
           git add property-details.html
           git commit -m 'fix: restore property details and handle null status'
           git push
-          echo "Repair completed. This workflow is temporary and should be removed after verification."
