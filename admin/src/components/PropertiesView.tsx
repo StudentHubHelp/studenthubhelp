@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 
 interface PropertiesViewProps {
-  categoryFilter?: PropertyType | 'all';
+  categoryFilter?: PropertyType | 'all' | 'suspended-properties';
   properties: PropertyItem[];
   onOpenPreview: (property: PropertyItem) => void;
   onOpenEditor: (property: PropertyItem | null, type: PropertyType) => void;
