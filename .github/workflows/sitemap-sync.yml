@@ -25,6 +25,45 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: One-time cafe finder compatibility patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('cafe-finder.html')
+          s = p.read_text(encoding='utf-8')
+          old = """        const { data, error } = await db
+          .from('cafes').select('*').eq('status', 'active')
+          .order(\"name\", { ascending: true });"""
+          new = """        const { data, error } = await db
+          .from('cafes').select('*')
+          .order(\"name\", { ascending: true });"""
+          if old in s:
+              s = s.replace(old, new, 1)
+              old2 = """        allRecords = Array.isArray(data) ? data : [];
+        renderRecords();"""
+              new2 = """        allRecords = (Array.isArray(data) ? data : []).filter(record => {
+          const status = clean(record.status).toLowerCase();
+          return !status || status === 'active';
+        });
+        renderRecords();"""
+              if old2 not in s:
+                  raise SystemExit('Expected cafe records assignment not found')
+              s = s.replace(old2, new2, 1)
+              p.write_text(s, encoding='utf-8')
+              print('Cafe finder patched for legacy NULL status listings.')
+          else:
+              print('Cafe finder patch already applied.')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cafe-finder.html
+          if git diff --cached --quiet; then
+            echo "No cafe finder change needed."
+            exit 0
+          fi
+          git commit -m "fix: include legacy cafes in finder"
+          git push
+
       - name: Generate canonical sitemap index and child sitemaps
         env:
           SUPABASE_URL: https://idurlccrarznnnqixxsd.supabase.co
