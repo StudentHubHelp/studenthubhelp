@@ -17,23 +17,29 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
 
           path = Path('admin/src/components/PropertiesView.tsx')
           text = path.read_text(encoding='utf-8')
 
           start_marker = "  // All Property Listings must use the complete live Supabase dataset."
           end_marker = "  useEffect(() => setSelectedIds([])"
-
           start = text.find(start_marker)
           end = text.find(end_marker, start if start >= 0 else 0)
 
-          if start < 0 or end < 0 or end <= start:
-              raise SystemExit('Duplicate All Properties fetch block markers not found')
-
-          replacement = "  // The parent App already loads the complete paginated Supabase property dataset.\n  // Re-fetching all five property tables here caused a second, sequential network load.\n\n"
-          text = text[:start] + replacement + text[end:]
-          path.write_text(text, encoding='utf-8')
-          print('Removed duplicate All Properties fetch.')
+          if start >= 0 and end > start:
+              replacement = "  // The parent App already loads the complete paginated Supabase property dataset.\n  // Re-fetching all five property tables here caused a second, sequential network load.\n\n"
+              text = text[:start] + replacement + text[end:]
+              path.write_text(text, encoding='utf-8')
+              print('Removed duplicate All Properties fetch using primary markers.')
+          else:
+              pattern = re.compile(r"\n  useEffect\(\(\) => \{\n    let cancelled = false;\n    if \(categoryFilter !== 'all' \|\| statusFilter === 'pending'\) return;.*?\n  \}, \[categoryFilter, statusFilter\]\);\n", re.S)
+              updated, count = pattern.subn("\n  // The parent App already loads the complete paginated Supabase property dataset.\n  // Re-fetching all five property tables here caused a second, sequential network load.\n\n", text, count=1)
+              if count:
+                  path.write_text(updated, encoding='utf-8')
+                  print('Removed duplicate All Properties fetch using fallback pattern.')
+              else:
+                  print('All Properties duplicate fetch is already removed; nothing to change.')
 
       - name: Commit fix and remove temporary workflow
         shell: bash
@@ -42,5 +48,9 @@ jobs:
           git config user.email 'actions@github.com'
           git add admin/src/components/PropertiesView.tsx
           git rm .github/workflows/admin-speed-fix.yml
+          if git diff --cached --quiet; then
+            echo 'No source changes required.'
+            exit 0
+          fi
           git commit -m 'perf: remove duplicate admin property fetch'
           git push
