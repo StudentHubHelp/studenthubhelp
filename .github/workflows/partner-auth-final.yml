@@ -1,0 +1,56 @@
+name: Complete Partner Authentication Wiring
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Patch auth
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('auth.html'); s=p.read_text(encoding='utf-8')
+          owner='''<div class="role-option"><input id="roleOwner" type="radio" name="signupRole" value="owner"><label class="role-label" for="roleOwner"><span><strong>🏢 Owner</strong><small>Manage your listing</small></span></label></div>'''
+          if 'id="rolePartner"' not in s and owner in s:
+            s=s.replace(owner, owner+'''\n<div class="role-option"><input id="rolePartner" type="radio" name="signupRole" value="partner"><label class="role-label" for="rolePartner"><span><strong>🤝 Partner</strong><small>Approved applicants only</small></span></label></div>''',1)
+          s=s.replace('Pehle Student ya Owner select karo. Phir neeche Google se continue karo.','Student ya Owner select karo. Partner sirf approved Partner applicants ke liye available hai.')
+          s=s.replace('Only Student/Owner accounts can be created here.','Student/Owner accounts aur approved Partner accounts yahan create ho sakte hain.')
+          s=s.replace('Select Student / Owner first','Select account type first')
+          s=s.replace('Student ya Owner select karo.','Student, Owner ya approved Partner select karo.')
+          s=s.replace('const D={student:"student-dashboard.html",owner:"owner-dashboard.html"};','const D={student:"student-dashboard.html",owner:"owner-dashboard.html",partner:"partner-dashboard.html"};')
+          s=s.replace('const PUBLIC_ROLES=["student","owner"];','const PUBLIC_ROLES=["student","owner","partner"];')
+          s=s.replace('function denyAccess(text="Is account ko Student/Owner login system se access nahi kiya ja sakta."){','function denyAccess(text="Is account ko public login system se access nahi kiya ja sakta."){')
+          s=s.replace('await denyAccess("Student/Owner profile nahi mila. Account access continue nahi kiya gaya.");','await denyAccess("Student/Owner/Partner profile nahi mila. Account access continue nahi kiya gaya.");')
+          s=s.replace('loading(true,r==="owner"?"Opening Owner Dashboard...":"Opening Student Dashboard...");','loading(true,r==="owner"?"Opening Owner Dashboard...":r==="partner"?"Opening Partner Dashboard...":"Opening Student Dashboard...");')
+          if 'function isApprovedPartnerEmail' not in s:
+            anchor='function isGoogleUser(user){'
+            helper='''async function isApprovedPartnerEmail(email){\n  const e=String(email||"").trim().toLowerCase();\n  if(!e)return false;\n  const {data,error}=await db.from("partner_applications").select("id,status").eq("email",e).eq("status","approved").limit(1);\n  if(error)throw new Error("Partner approval check nahi ho saka.");\n  return !!data?.length;\n}\n\nasync function ensurePartnerProfile(user, profile){\n  if(!user?.id || !profile || role(profile.role)!=="partner") return profile;\n  const {data:existing,error:readError}=await db.from("partner_profiles").select("id").eq("user_id",user.id).maybeSingle();\n  if(readError)throw new Error("Partner profile load nahi ho saka.");\n  if(existing)return profile;\n  const email=String(profile.email||user.email||"").trim().toLowerCase();\n  const {data:apps,error:appError}=await db.from("partner_applications").select("id,full_name,phone,email,state,district,city,area,status").eq("email",email).eq("status","approved").order("created_at",{ascending:false}).limit(1);\n  if(appError)throw new Error("Approved Partner application load nahi ho saki.");\n  const app=apps?.[0];\n  if(!app)throw new Error("Approved Partner application nahi mili.");\n  const {error}=await db.from("partner_profiles").insert({user_id:user.id,application_id:app.id,full_name:app.full_name||profile.full_name||"Partner",email:app.email||email,phone:app.phone||profile.phone||"",state:app.state,district:app.district,city:app.city,areas:app.area?[app.area]:[],status:"active"});\n  if(error && !String(error.message||"").toLowerCase().includes("duplicate"))throw error;\n  return profile;\n}\n\n'''
+            if anchor not in s: raise SystemExit('Google user anchor missing')
+            s=s.replace(anchor,helper+anchor,1)
+          # Password signup: approved application is mandatory for Partner role.
+          if 'Partner account sirf approved Partner application' not in s:
+            s=re.sub(r'(\n\s*const \{data,error\}=await db\.auth\.signUp\(\{)', '\n    if(r==="partner" && !(await isApprovedPartnerEmail(email))){ throw new Error("Partner account sirf approved Partner application ke baad create kiya ja sakta hai."); }\n\1', s, count=1)
+          # Google signup: don't check email before OAuth; callback validates the Google email.
+          s=re.sub(r'\n\s*if\(r==="partner"\)\s*\{\s*const emailHint=\$\("signupEmail"\)\.value\.trim\(\)\.toLowerCase\(\);\s*if\(!emailHint \|\| !\(await isApprovedPartnerEmail\(emailHint\)\)\)\{.*?\}\s*\}\s*', '\n', s, count=1, flags=re.S)
+          # Google callback guard.
+          if 'Is Google email ke liye approved Partner application nahi mili.' not in s:
+            s=re.sub(r'(\n\s*const googleUser=pendingGoogleUser;)', '\n    if(r==="partner" && !(await isApprovedPartnerEmail(googleUser.email||""))){ throw new Error("Is Google email ke liye approved Partner application nahi mili."); }\n\1', s, count=1)
+          # Provision the partner profile after route has resolved the role.
+          if 'await ensurePartnerProfile(user,p);' not in s:
+            s=s.replace('    clearPending();\n\n    const md=user.user_metadata||{};', '    clearPending();\n\n    if(r==="partner") await ensurePartnerProfile(user,p);\n\n    const md=user.user_metadata||{};',1)
+          p.write_text(s,encoding='utf-8')
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add auth.html
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: complete partner authentication wiring"
+          git push
