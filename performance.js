@@ -31,7 +31,7 @@
             <div class="footer-trust-line"><span>✓ Student-focused</span><span>✓ Local discovery</span><span>✓ India-wide</span></div>
             <div class="footer-socials" aria-label="Social and sharing links">
               <a class="footer-social" href="https://www.instagram.com/studenthubhelp/" target="_blank" rel="noopener noreferrer" aria-label="StudentHubHelp on Instagram"><span class="social-icon">◎</span><span>Instagram</span></a>
-              <a class="footer-social" href="https://wa.me/?text=Discover%20StudentHubHelp%20-%20https%3A%2F%2Fstudenthubhelp.github.io%2Fstudenthubhelp%2F" target="_blank" rel="noopener noreferrer" aria-label="Share StudentHubHelp on WhatsApp"><span class="social-icon">◉</span><span>WhatsApp</span></a>
+              <a class="footer-social" href="https://wa.me/919929718264" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp StudentHubHelp at +91 9929718264"><span class="social-icon">◉</span><span>+91 9929718264</span></a>
               <button class="footer-social" type="button" data-share-studenthubhelp aria-label="Share StudentHubHelp"><span class="social-icon">↗</span><span>Share</span></button>
             </div>
           </section>
