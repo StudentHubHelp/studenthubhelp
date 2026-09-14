@@ -123,49 +123,8 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
 
   useEffect(() => setLiveProperties(properties), [properties]);
 
-  // All Property Listings must use the complete live Supabase dataset.
-  // Each property table is independently fetched so one table cannot silently
-  // leave the UI showing the smaller upstream `properties` array.
-  useEffect(() => {
-    let cancelled = false;
-    if (categoryFilter !== 'all' || statusFilter === 'pending') return;
-
-    const loadAllPropertyRows = async () => {
-      setLiveLoading(true);
-      try {
-        const rows: PropertyItem[] = [];
-
-        for (const table of LIVE_TABLES) {
-          const { data, error } = await supabase
-            .from(table)
-            .select('*')
-            .range(0, 9999);
-
-          if (error) throw new Error(`${table}: ${error.message}`);
-
-          const page = Array.isArray(data) ? data : [];
-          rows.push(...(page as PropertyItem[]).map((row) => ({
-            ...row,
-            id: String((row as any).id),
-            _source_table: table,
-          })));
-        }
-
-        if (!cancelled) {
-          setLiveProperties(rows);
-        }
-      } catch (error) {
-        console.error('Complete All Property Listings load failed:', error);
-        // Keep the existing central dataset rather than replacing it with an
-        // empty/partial result when a live query fails.
-      } finally {
-        if (!cancelled) setLiveLoading(false);
-      }
-    };
-
-    loadAllPropertyRows();
-    return () => { cancelled = true; };
-  }, [categoryFilter, statusFilter]);
+  // The parent App already loads the complete paginated Supabase property dataset.
+  // Re-fetching all five property tables here caused a second, sequential network load.
 
   useEffect(() => setSelectedIds([]), [categoryFilter, selectedCategory, statusFilter, verifiedFilter, featuredFilter, areaFilter, ownerFilter]);
 
