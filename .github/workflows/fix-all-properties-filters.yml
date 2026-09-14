@@ -1,0 +1,74 @@
+name: Fix All Property Listings Filters
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch PropertiesView filters only
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('admin/src/components/PropertiesView.tsx')
+          s = p.read_text(encoding='utf-8')
+
+          old = '''      const matchesArea = !areaFilter || (p.area || '').toLowerCase().includes(areaFilter.toLowerCase());
+          const matchesStatus = !statusFilter || propStatus(p) === statusFilter.toLowerCase();
+          const matchesVerified = !verifiedFilter || (verifiedFilter === 'true' && propVerified(p)) || (verifiedFilter === 'false' && !propVerified(p));
+          const matchesFeatured = !featuredFilter || (featuredFilter === 'true' && propFeatured(p)) || (featuredFilter === 'false' && !propFeatured(p));
+          const matchesOwner = !ownerFilter || (p.owner_name || '').toLowerCase().includes(ownerFilter.toLowerCase()) || (p.phone || '').includes(ownerFilter) || (p.name || '').toLowerCase().includes(ownerFilter.toLowerCase());
+          return matchesCat && matchesArea && matchesStatus && matchesVerified && matchesFeatured && matchesOwner;'''
+
+          new = '''      const areaQuery = areaFilter.trim().toLowerCase();
+          const ownerQuery = ownerFilter.trim().toLowerCase();
+          const ownerPhoneQuery = ownerFilter.replace(/\\D/g, '');
+          const matchesArea = !areaQuery || [p.city, p.area, p.address, p.pincode]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(areaQuery));
+          const matchesStatus = !statusFilter || propStatus(p) === statusFilter.toLowerCase();
+          const matchesVerified = !verifiedFilter || (verifiedFilter === 'true' && propVerified(p)) || (verifiedFilter === 'false' && !propVerified(p));
+          const matchesFeatured = !featuredFilter || (featuredFilter === 'true' && propFeatured(p)) || (featuredFilter === 'false' && !propFeatured(p));
+          const matchesOwner = !ownerQuery ||
+            (p.owner_name || '').toLowerCase().includes(ownerQuery) ||
+            (p.name || '').toLowerCase().includes(ownerQuery) ||
+            (p.email || '').toLowerCase().includes(ownerQuery) ||
+            (String(p.id || '').toLowerCase().includes(ownerQuery)) ||
+            (ownerPhoneQuery && String(p.phone || '').replace(/\\D/g, '').includes(ownerPhoneQuery));
+          return matchesCat && matchesArea && matchesStatus && matchesVerified && matchesFeatured && matchesOwner;'''
+
+          if old not in s:
+              raise SystemExit('Expected filter block not found; no changes made.')
+          s = s.replace(old, new, 1)
+
+          old2 = 'placeholder="Locality / Area"'
+          new2 = 'placeholder="City / Locality / Area"'
+          if old2 not in s:
+              raise SystemExit('Expected area placeholder not found; no changes made.')
+          s = s.replace(old2, new2, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Build admin to verify patch
+        working-directory: admin
+        run: |
+          npm ci
+          npm run build
+
+      - name: Commit and self-delete workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/src/components/PropertiesView.tsx .github/workflows/fix-all-properties-filters.yml
+          git commit -m "Fix All Property Listings filters"
+          git push
+          git rm .github/workflows/fix-all-properties-filters.yml
+          git commit -m "Remove temporary filter fix workflow"
+          git push
