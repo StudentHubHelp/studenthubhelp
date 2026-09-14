@@ -164,8 +164,8 @@ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
 });
 
 const $=id=>document.getElementById(id);
-const D={student:"student-dashboard.html",owner:"owner-dashboard.html"};
-const PUBLIC_ROLES=["student","owner"];
+const D={student:"student-dashboard.html",owner:"owner-dashboard.html",partner:"partner-dashboard.html"};
+const PUBLIC_ROLES=["student","owner","partner"];
 const GOOGLE_PENDING_TTL=10*60*1000;
 const RESEND_COOLDOWN=60*1000;
 
@@ -276,7 +276,7 @@ function clearStoredUser(){
   localStorage.removeItem("sh_current_user");
 }
 
-async function denyAccess(text="Is account ko Student/Owner login system se access nahi kiya ja sakta."){
+async function denyAccess(text="Is account ko public login system se access nahi kiya ja sakta."){
   clearStoredUser();
   pendingGoogleUser=null;
   clearPending();
@@ -456,7 +456,7 @@ async function route(user){
         return;
       }
 
-      await denyAccess("Student/Owner profile nahi mila. Account access continue nahi kiya gaya.");
+      await denyAccess("Student/Owner/Partner profile nahi mila. Account access continue nahi kiya gaya.");
       return;
     }
 
@@ -471,7 +471,7 @@ async function route(user){
       role:r
     }));
 
-    loading(true,r==="owner"?"Opening Owner Dashboard...":"Opening Student Dashboard...");
+    loading(true,r==="owner"?"Opening Owner Dashboard...":r==="partner"?"Opening Partner Dashboard...":"Opening Student Dashboard...");
     location.replace(new URL(D[r],location.href).href);
 
   }finally{

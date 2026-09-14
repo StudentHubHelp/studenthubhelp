@@ -290,4 +290,5 @@ export type SectionTab =
   | 'activity'
   | 'settings'
   | 'categories'
-  | 'admin';
+  | 'admin'
+  | 'partners';

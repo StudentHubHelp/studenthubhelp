@@ -42,6 +42,7 @@ const AnalyticsView = lazy(() => import('./components/AnalyticsView').then((m) =
 const UserManagementView = lazy(() => import('./components/UserManagementView').then((m) => ({ default: m.UserManagementView })));
 const PropertiesView = lazy(() => import('./components/PropertiesView').then((m) => ({ default: m.PropertiesView })));
 const UnverifiedPropertiesView = lazy(() => import('./components/UnverifiedPropertiesView').then((m) => ({ default: m.UnverifiedPropertiesView })));
+const PartnerManagementView = lazy(() => import('./components/PartnerManagementView').then((m) => ({ default: m.PartnerManagementView })));
 const PlatformControlViews = lazy(() => import('./components/PlatformControlViews').then((m) => ({ default: m.PlatformControlViews })));
 const IntelligenceViews = lazy(() => import('./components/IntelligenceViews').then((m) => ({ default: m.IntelligenceViews })));
 import { PropertyPreviewModal } from './components/PropertyPreviewModal';
@@ -1630,6 +1631,10 @@ export default function App() {
 
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto pb-20">
           <Suspense fallback={<div className="min-h-[240px] flex items-center justify-center text-xs text-slate-400">Loading section…</div>}>
+
+          {currentTab === 'partners' && (
+            <PartnerManagementView />
+          )}
 
           {/* OVERVIEW */}
 
