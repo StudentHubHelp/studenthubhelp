@@ -255,6 +255,38 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
     setSelectedIds((prev) => prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]);
   };
 
+  const handleBulkDeleteProperties = async () => {
+    if (categoryFilter !== 'all' || isPendingRequestView || !selectedIds.length || bulkBusy) return;
+    const selected = liveProperties.filter((p) => selectedIds.includes(`${propertySourceTable(p)}:${String(p.id)}`));
+    const grouped = new Map<string, string[]>();
+    for (const property of selected) {
+      const table = propertySourceTable(property);
+      if (!LIVE_TABLES.includes(table as PropertyType)) continue;
+      grouped.set(table, [...(grouped.get(table) || []), String(property.id)]);
+    }
+    if (!grouped.size) {
+      window.alert('No live properties were selected.');
+      return;
+    }
+    const confirmed = window.confirm(`Delete ${selected.length} selected propert${selected.length === 1 ? 'y' : 'ies'} permanently from Supabase? This action cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      setBulkBusy(true);
+      for (const [table, ids] of grouped.entries()) {
+        const { error } = await supabase.from(table).delete().in('id', ids);
+        if (error) throw error;
+      }
+      setLiveProperties((prev) => prev.filter((property) => !selectedIds.includes(`${propertySourceTable(property)}:${String(property.id)}`)));
+      setSelectedIds([]);
+      window.alert(`${selected.length} propert${selected.length === 1 ? 'y' : 'ies'} deleted successfully.`);
+    } catch (error: any) {
+      console.error('Bulk property delete failed:', error);
+      window.alert(error?.message || 'Bulk property delete failed. No success was reported.');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const handlePersistedBulkAction = async (action: 'verify' | 'activate' | 'suspend' | 'feature') => {
     if (isPendingRequestView || !selectedIds.length || bulkBusy) return;
     const selected = liveProperties.filter((p) => selectedIds.includes(`${propertySourceTable(p)}:${String(p.id)}`));
@@ -376,7 +408,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           <input type="text" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} placeholder="Owner / Title / Phone" className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white placeholder-slate-400" />
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="newest">Sort: Newest</option><option value="oldest">Sort: Oldest</option><option value="rating-high">Rating (High to Low)</option><option value="views">Most Viewed</option><option value="bookings">Most Booked</option><option value="az">A-Z Name</option></select>
         </div>
-        {selectedIds.length > 0 && <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-[#0d1838] border border-amber-500/30 text-xs animate-in fade-in duration-150"><span className="font-bold text-amber-300">{selectedIds.length} {isPendingRequestView ? 'listing requests' : 'properties'} selected</span><div className="flex items-center gap-1.5">{isPendingRequestView ? <button disabled={bulkBusy} onClick={handleBulkApprove} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold disabled:opacity-50">{bulkBusy ? 'Approving…' : 'Bulk Approve'}</button> : <><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('verify')} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 font-bold disabled:opacity-50">{bulkBusy ? 'Working…' : 'Bulk Verify'}</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('activate')} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold disabled:opacity-50">Bulk Activate</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('suspend')} className="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 font-bold disabled:opacity-50">Bulk Suspend</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('feature')} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 font-bold disabled:opacity-50">Bulk Feature</button></>}</div></div>}
+        {selectedIds.length > 0 && <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-[#0d1838] border border-amber-500/30 text-xs animate-in fade-in duration-150"><span className="font-bold text-amber-300">{selectedIds.length} {isPendingRequestView ? 'listing requests' : 'properties'} selected</span><div className="flex items-center gap-1.5">{isPendingRequestView ? <button disabled={bulkBusy} onClick={handleBulkApprove} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold disabled:opacity-50">{bulkBusy ? 'Approving…' : 'Bulk Approve'}</button> : <><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('verify')} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 font-bold disabled:opacity-50">{bulkBusy ? 'Working…' : 'Bulk Verify'}</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('activate')} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold disabled:opacity-50">Bulk Activate</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('suspend')} className="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 font-bold disabled:opacity-50">Bulk Suspend</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('feature')} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 font-bold disabled:opacity-50">Bulk Feature</button><button disabled={bulkBusy || categoryFilter !== 'all'} onClick={handleBulkDeleteProperties} className="px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 font-bold disabled:opacity-50">{bulkBusy ? 'Working…' : 'Bulk Delete'}</button></>}</div></div>}
       </div>
 
       <div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden shadow-xl"><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0d1838] text-amber-300 font-bold border-b border-slate-800"><tr><th className="p-4 w-10"><button onClick={toggleSelectAll} className="text-slate-400 hover:text-white">{selectedIds.length === filteredProperties.length && filteredProperties.length > 0 ? <CheckSquare className="w-4 h-4 text-amber-400" /> : <Square className="w-4 h-4" />}</button></th><th className="p-4">Property Name</th><th className="p-4">Category</th><th className="p-4">Owner / Contact</th><th className="p-4">Locality</th><th className="p-4">Status</th><th className="p-4">Verification</th><th className="p-4">Rating</th><th className="p-4">Views</th><th className="p-4">Updated</th><th className="p-4 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-800/60">
