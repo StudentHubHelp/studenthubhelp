@@ -1,0 +1,74 @@
+name: Apply status visibility upgrade
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/status-visibility-upgrade.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[status-visibility-upgraded]')"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply targeted changes
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p=Path('admin/src/types.ts'); s=p.read_text()
+          if "| 'suspended-properties'" not in s:
+              s=s.replace("  | 'properties'\n", "  | 'properties'\n  | 'suspended-properties'\n",1)
+          s=s.replace("categoryFilter?: PropertyType | 'all';", "categoryFilter?: PropertyType | 'all' | 'suspended-properties';",1)
+          p.write_text(s)
+
+          p=Path('admin/src/components/Sidebar.tsx'); s=p.read_text()
+          if "'suspended-properties','Suspended Properties'" not in s:
+              s=s.replace("{item('properties','All Properties',Building2)}{item('hostels','Hostels & PGs',Hotel)}", "{item('properties','All Properties',Building2)}{item('suspended-properties','Suspended Properties',AlertTriangle)}{item('hostels','Hostels & PGs',Hotel)}",1)
+          p.write_text(s)
+
+          p=Path('admin/src/components/PropertiesView.tsx'); s=p.read_text()
+          old="""        if (categoryQuery && categoryQuery !== 'all') {\n          matchesCat = sourceTable === categoryQuery || listingRequestTable(p) === categoryQuery;\n        }"""
+          new="""        if (categoryQuery && categoryQuery !== 'all') {\n          matchesCat = categoryQuery === 'suspended-properties'\n            ? normalizeText(propStatus(p)) === 'suspended'\n            : sourceTable === categoryQuery || listingRequestTable(p) === categoryQuery;\n        }"""
+          if old not in s: raise SystemExit('PropertiesView filter block not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('admin/src/App.tsx'); s=p.read_text()
+          if "currentTab === 'suspended-properties'" not in s:
+              marker="          {/* HOSTELS */}"
+              branch="""          {/* SUSPENDED PROPERTIES */}\n\n          {currentTab === 'suspended-properties' && (\n            <PropertiesView\n              categoryFilter=\"suspended-properties\"\n              properties={properties}\n              onOpenPreview={handleOpenPropertyPreview}\n              onOpenEditor={handleOpenPropertyEditor}\n              onToggleVerification={handleToggleVerification}\n              onDeleteProperty={handleDeleteProperty}\n              onBulkAction={handleBulkAction}\n            />\n          )}\n\n"""
+              if marker not in s: raise SystemExit('App insertion point not found')
+              s=s.replace(marker,branch+marker,1)
+          p.write_text(s)
+
+          tables={'pg-finder.html':'hostels','tiffin-finder.html':'tiffins','library-finder.html':'libraries','cafe-finder.html':'cafes','bookstore-finder.html':'bookstores'}
+          for name,table in tables.items():
+              p=Path(name); s=p.read_text()
+              pattern=rf'\.from\(["\']{table}["\']\)\.select\(["\']\*["\']\)'
+              s2,n=re.subn(pattern, lambda m:m.group(0)+'.eq("status","active")', s, count=1)
+              if n!=1: raise SystemExit(f'Finder query not found: {name}')
+              p.write_text(s2)
+
+          p=Path('property-details.html'); s=p.read_text()
+          pattern=r"\.eq\((['\"])slug\1\s*,\s*slug\)\.maybeSingle\(\)"
+          s2,n=re.subn(pattern, lambda m:m.group(0).replace('.maybeSingle()', ".eq('status','active').maybeSingle()"), s, count=1)
+          if n!=1: raise SystemExit('Property details query not found')
+          p.write_text(s2)
+
+          Path('.github/workflows/status-visibility-upgrade.yml').unlink()
+      - name: Validate and commit
+        shell: bash
+        run: |
+          test ! -e .github/workflows/status-visibility-upgrade.yml
+          grep -q "suspended-properties" admin/src/types.ts
+          grep -q "Suspended Properties" admin/src/components/Sidebar.tsx
+          grep -q "currentTab === 'suspended-properties'" admin/src/App.tsx
+          grep -q "categoryQuery === 'suspended-properties'" admin/src/components/PropertiesView.tsx
+          git config user.name 'StudentHubHelp Status Guard'
+          git config user.email 'actions@github.com'
+          git add admin/src/types.ts admin/src/components/Sidebar.tsx admin/src/components/PropertiesView.tsx admin/src/App.tsx pg-finder.html tiffin-finder.html library-finder.html cafe-finder.html bookstore-finder.html property-details.html
+          git commit -m 'feat: hide suspended properties and add admin suspended section [status-visibility-upgraded]'
+          git push
