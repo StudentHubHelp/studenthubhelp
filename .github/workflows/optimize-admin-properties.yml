@@ -1,0 +1,49 @@
+name: Optimize Admin Properties
+on: push
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Optimize PropertiesView loading and bulk action visibility
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          app = Path('admin/src/App.tsx')
+          s = app.read_text(encoding='utf-8')
+          marker = "  useEffect(() => {\n    loadData();\n  }, [loadData]);"
+          insert = marker + "\n\n  // Preload the Properties section chunk after authentication so navigation to All Properties is immediate.\n  useEffect(() => {\n    if (!isAuthenticated) return;\n    import('./components/PropertiesView').catch(() => {});\n  }, [isAuthenticated]);"
+          if "import('./components/PropertiesView').catch(() => {});" not in s:
+              if marker not in s:
+                  raise SystemExit('App loadData marker not found')
+              s = s.replace(marker, insert, 1)
+              app.write_text(s, encoding='utf-8')
+
+          props = Path('admin/src/components/PropertiesView.tsx')
+          p = props.read_text(encoding='utf-8')
+          old = 'className="px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 font-bold disabled:opacity-50">{bulkBusy ? \'Working…\' : \'Bulk Delete\'}'
+          new = 'className="px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 font-bold whitespace-nowrap shrink-0 disabled:opacity-50">{bulkBusy ? \'Working…\' : \'Bulk Delete\'}'
+          if old not in p:
+              raise SystemExit('Bulk Delete button marker not found')
+          p = p.replace(old, new, 1)
+          props.write_text(p, encoding='utf-8')
+          PY
+      - name: Verify changes
+        run: |
+          grep -q "import('./components/PropertiesView').catch(() => {});" admin/src/App.tsx
+          grep -q "Bulk Delete" admin/src/components/PropertiesView.tsx
+      - name: Commit changes and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin/src/App.tsx admin/src/components/PropertiesView.tsx
+          git commit -m 'perf: preload admin properties section and keep bulk delete visible'
+          git rm .github/workflows/optimize-admin-properties.yml
+          git commit -m 'chore: remove temporary admin optimization workflow'
+          git push origin HEAD:main
