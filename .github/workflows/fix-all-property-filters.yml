@@ -1,0 +1,57 @@
+name: Fix All Property Listings filters
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-all-property-filters.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Patch only All Property Listings data loading
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('admin/src/components/PropertiesView.tsx')
+          s = p.read_text()
+          marker = "  useEffect(() => setLiveProperties(properties), [properties]);\n"
+          if marker not in s:
+              raise SystemExit('target marker not found; no changes made')
+          if 'Load the complete live property set for All Property Listings filters' in s:
+              raise SystemExit('patch already present; no changes made')
+          insert = r'''\n  // Load the complete live property set for All Property Listings filters.\n  // This keeps filtering client-side but removes any upstream page/limit gap.\n  useEffect(() => {\n    let cancelled = false;\n    if (categoryFilter !== 'all' || statusFilter === 'pending') return;\n\n    const loadAllPropertyRows = async () => {\n      try {\n        const tables: PropertyType[] = ['hostels', 'tiffins', 'libraries', 'cafes', 'bookstores'];\n        const rows: PropertyItem[] = [];\n        const pageSize = 1000;\n\n        for (const table of tables) {\n          let from = 0;\n          while (true) {\n            const { data, error } = await supabase\n              .from(table)\n              .select('*')\n              .order('created_at', { ascending: false })\n              .range(from, from + pageSize - 1);\n            if (error) throw error;\n\n            const page = Array.isArray(data) ? data : [];\n            rows.push(...(page as PropertyItem[]).map((row) => ({\n              ...row,\n              id: String((row as any).id),\n              _source_table: table,\n            })));\n\n            if (page.length < pageSize) break;\n            from += pageSize;\n          }\n        }\n\n        if (!cancelled) setLiveProperties(rows);\n      } catch (error) {\n        console.warn('Complete All Property Listings load failed:', error);\n      }\n    };\n\n    loadAllPropertyRows();\n    return () => { cancelled = true; };\n  }, [categoryFilter, statusFilter]);\n'''
+          s = s.replace(marker, marker + insert, 1)
+          p.write_text(s)
+          PY
+
+      - name: Commit filter-only fix
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin/src/components/PropertiesView.tsx
+          if git diff --cached --quiet; then
+            echo 'No filter change to commit.'
+            exit 0
+          fi
+          git commit -m 'Fix All Property Listings filters to load complete data'
+          git push origin HEAD:main
+
+      - name: Remove temporary workflow
+        if: success()
+        shell: bash
+        run: |
+          git rm .github/workflows/fix-all-property-filters.yml
+          git commit -m 'Remove temporary All Property Listings filter workflow'
+          git push origin HEAD:main
