@@ -1,0 +1,83 @@
+name: Add Admin Bulk Property Delete
+on:
+  push:
+    paths:
+      - '.github/workflows/add-bulk-delete-properties.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add bulk delete to All Properties
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('admin/src/components/PropertiesView.tsx')
+          s = p.read_text(encoding='utf-8')
+
+          marker = "  const handlePersistedBulkAction = async (action: 'verify' | 'activate' | 'suspend' | 'feature') => {"
+          if 'handleBulkDeleteProperties' not in s:
+              fn = '''  const handleBulkDeleteProperties = async () => {
+            if (categoryFilter !== 'all' || isPendingRequestView || !selectedIds.length || bulkBusy) return;
+            const selected = liveProperties.filter((p) => selectedIds.includes(`${propertySourceTable(p)}:${String(p.id)}`));
+            const grouped = new Map<string, string[]>();
+            for (const property of selected) {
+              const table = propertySourceTable(property);
+              if (!LIVE_TABLES.includes(table as PropertyType)) continue;
+              grouped.set(table, [...(grouped.get(table) || []), String(property.id)]);
+            }
+            if (!grouped.size) {
+              window.alert('No live properties were selected.');
+              return;
+            }
+            const confirmed = window.confirm(`Delete ${selected.length} selected propert${selected.length === 1 ? 'y' : 'ies'} permanently from Supabase? This action cannot be undone.`);
+            if (!confirmed) return;
+            try {
+              setBulkBusy(true);
+              for (const [table, ids] of grouped.entries()) {
+                const { error } = await supabase.from(table).delete().in('id', ids);
+                if (error) throw error;
+              }
+              setLiveProperties((prev) => prev.filter((property) => !selectedIds.includes(`${propertySourceTable(property)}:${String(property.id)}`)));
+              setSelectedIds([]);
+              window.alert(`${selected.length} propert${selected.length === 1 ? 'y' : 'ies'} deleted successfully.`);
+            } catch (error: any) {
+              console.error('Bulk property delete failed:', error);
+              window.alert(error?.message || 'Bulk property delete failed. No success was reported.');
+            } finally {
+              setBulkBusy(false);
+            }
+          };
+
+'''
+              if marker not in s:
+                  raise SystemExit('bulk action marker not found')
+              s = s.replace(marker, fn + marker, 1)
+
+          old = "<button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('feature')} className=\"px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 font-bold disabled:opacity-50\">Bulk Feature</button>"
+          new = old + "<button disabled={bulkBusy || categoryFilter !== 'all'} onClick={handleBulkDeleteProperties} className=\"px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 font-bold disabled:opacity-50\">{bulkBusy ? 'Working…' : 'Bulk Delete'}</button>"
+          if 'Bulk Delete</button>' not in s:
+              if old not in s:
+                  raise SystemExit('bulk feature button marker not found')
+              s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Verify build and commit
+        run: |
+          grep -q "handleBulkDeleteProperties" admin/src/components/PropertiesView.tsx
+          grep -q "Bulk Delete" admin/src/components/PropertiesView.tsx
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin/src/components/PropertiesView.tsx
+          git commit -m 'feat: add admin bulk property delete' || true
+          git push origin HEAD:main
+      - name: Remove temporary workflow
+        run: |
+          git rm .github/workflows/add-bulk-delete-properties.yml
+          git commit -m 'chore: remove temporary bulk delete workflow'
+          git push origin HEAD:main
