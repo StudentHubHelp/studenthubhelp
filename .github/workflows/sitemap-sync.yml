@@ -7,6 +7,7 @@ on:
   push:
     paths:
       - '*.html'
+      - 'scripts/generate-sitemap.mjs'
       - 'sitemap.xml'
       - 'sitemap-pages.xml'
       - 'sitemap-properties*.xml'
@@ -24,128 +25,62 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate sitemap index, pages and property sitemaps
+      - name: Generate canonical sitemap index and child sitemaps
         env:
           SUPABASE_URL: https://idurlccrarznnnqixxsd.supabase.co
           SUPABASE_KEY: sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT
           BASE_URL: https://studenthubhelp.github.io/studenthubhelp/
+        run: node scripts/generate-sitemap.mjs
+
+      - name: Validate sitemap architecture and SEO safety
+        env:
+          BASE_URL: https://studenthubhelp.github.io/studenthubhelp/
         run: |
           python - <<'PY'
-          import json, os, re, subprocess, urllib.parse, urllib.request
-          from datetime import datetime, timezone
           from pathlib import Path
+          from urllib.parse import urlparse, parse_qs
           import xml.etree.ElementTree as ET
+          import re
 
-          BASE = os.environ['BASE_URL'].rstrip('/') + '/'
-          SB = os.environ['SUPABASE_URL'].rstrip('/')
-          KEY = os.environ['SUPABASE_KEY']
-          NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+          NS='http://www.sitemaps.org/schemas/sitemap/0.9'
+          BASE='https://studenthubhelp.github.io/studenthubhelp/'
+          root=ET.parse('sitemap.xml').getroot()
+          assert root.tag == f'{{{NS}}}sitemapindex', 'sitemap.xml must be a sitemap index'
 
-          def clean_dt(value):
-              if not value:
-                  return None
-              try:
-                  dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
-                  return dt.astimezone(timezone.utc).isoformat(timespec='seconds').replace('+00:00','Z')
-              except Exception:
-                  return None
+          sitemap_locs=[]
+          for item in root.findall(f'{{{NS}}}sitemap'):
+              loc=item.find(f'{{{NS}}}loc')
+              assert loc is not None and loc.text and loc.text.startswith(BASE), 'Invalid sitemap child URL'
+              sitemap_locs.append(loc.text.strip())
+          assert sitemap_locs and len(sitemap_locs)==len(set(sitemap_locs)), 'Duplicate sitemap child'
 
-          def git_date(path):
-              try:
-                  out = subprocess.check_output(['git','log','-1','--format=%cI','--',path], text=True).strip()
-                  return clean_dt(out)
-              except Exception:
-                  return None
+          all_urls=[]
+          for loc in sitemap_locs:
+              name=Path(urlparse(loc).path).name
+              assert Path(name).exists(), f'Missing referenced sitemap file: {name}'
+              child=ET.parse(name).getroot()
+              assert child.tag == f'{{{NS}}}urlset', f'{name} must be a urlset'
+              entries=child.findall(f'{{{NS}}}url')
+              assert len(entries) <= 50000, f'{name} exceeds sitemap URL limit'
+              for entry in entries:
+                  url=entry.find(f'{{{NS}}}loc')
+                  assert url is not None and url.text and url.text.startswith(BASE), f'Invalid URL in {name}'
+                  value=url.text.strip()
+                  all_urls.append(value)
+                  lastmod=entry.find(f'{{{NS}}}lastmod')
+                  if lastmod is not None and lastmod.text:
+                      assert re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$', lastmod.text.strip()), f'Invalid lastmod: {value}'
+                  parsed=urlparse(value)
+                  if parsed.path.endswith('/property-details.html'):
+                      params=parse_qs(parsed.query)
+                      assert params.get('type') and params.get('slug') or params.get('id'), f'Invalid property URL: {value}'
+                      assert params.get('type',[None])[0] in {'hostel','tiffin','library','cafe','bookstore'}, f'Invalid property type: {value}'
 
-          existing = {}
-          if Path('sitemap.xml').exists():
-              try:
-                  root = ET.parse('sitemap.xml').getroot()
-                  for u in root.findall(f'{{{NS}}}url'):
-                      loc = u.find(f'{{{NS}}}loc')
-                      if loc is not None and loc.text:
-                          lm = u.find(f'{{{NS}}}lastmod')
-                          existing[loc.text.strip()] = clean_dt(lm.text.strip()) if lm is not None and lm.text else None
-              except Exception:
-                  pass
-
-          def fetch_rows(table):
-              rows=[]
-              offset=0
-              while True:
-                  params=urllib.parse.urlencode({'select':'slug,updated_at','limit':'1000','offset':str(offset)})
-                  req=urllib.request.Request(f'{SB}/rest/v1/{table}?{params}', headers={'apikey':KEY,'Authorization':f'Bearer {KEY}'})
-                  try:
-                      with urllib.request.urlopen(req, timeout=30) as r:
-                          chunk=json.load(r)
-                  except Exception as e:
-                      print(f'WARN {table}: {e}')
-                      break
-                  if not chunk:
-                      break
-                  rows.extend(chunk)
-                  if len(chunk) < 1000:
-                      break
-                  offset += 1000
-              return rows
-
-          types = [('hostels','hostel'),('tiffins','tiffin'),('libraries','library'),('cafes','cafe'),('bookstores','bookstore')]
-          properties={}
-          for table, typ in types:
-              for row in fetch_rows(table):
-                  slug = str(row.get('slug') or '').strip()
-                  if not slug:
-                      continue
-                  slug_q = urllib.parse.quote(slug, safe='')
-                  loc = f'{BASE}property-details.html?type={typ}&slug={slug_q}'
-                  properties[loc] = clean_dt(row.get('updated_at')) or existing.get(loc)
-
-          prop_re = re.compile(r'property-details\.html\?type=(hostel|tiffin|library|cafe|bookstore)&slug=')
-          for loc,lm in existing.items():
-              if prop_re.search(loc):
-                  properties.setdefault(loc,lm)
-
-          excluded = {'auth.html','property-details.html','global-search.html','404.html','add-listing.html'}
-          pages=[]
-          for p in sorted(Path('.').glob('*.html')):
-              if p.name in excluded or p.name.startswith('_'):
-                  continue
-              pages.append((BASE + p.name, git_date(str(p))))
-
-          page_map={loc:lm for loc,lm in pages if loc.startswith(BASE)}
-          pages=sorted(page_map.items())
-
-          def write_urlset(path, items):
-              root=ET.Element(f'{{{NS}}}urlset')
-              for loc,lm in items:
-                  u=ET.SubElement(root,f'{{{NS}}}url')
-                  ET.SubElement(u,f'{{{NS}}}loc').text=loc
-                  if lm:
-                      ET.SubElement(u,f'{{{NS}}}lastmod').text=lm
-              tree=ET.ElementTree(root)
-              ET.indent(tree, space='  ')
-              tree.write(path, encoding='utf-8', xml_declaration=True)
-
-          write_urlset('sitemap-pages.xml', pages)
-
-          prop_items=sorted(properties.items())
-          for old in Path('.').glob('sitemap-properties*.xml'):
-              old.unlink()
-          chunks=[prop_items[i:i+45000] for i in range(0,len(prop_items),45000)] or [[]]
-          prop_files=[]
-          for i,chunk in enumerate(chunks,1):
-              name='sitemap-properties.xml' if len(chunks)==1 else f'sitemap-properties-{i}.xml'
-              write_urlset(name,chunk)
-              prop_files.append(name)
-
-          root=ET.Element(f'{{{NS}}}sitemapindex')
-          for name in ['sitemap-pages.xml'] + prop_files:
-              s=ET.SubElement(root,f'{{{NS}}}sitemap')
-              ET.SubElement(s,f'{{{NS}}}loc').text=BASE+name
-          tree=ET.ElementTree(root)
-          ET.indent(tree, space='  ')
-          tree.write('sitemap.xml', encoding='utf-8', xml_declaration=True)
-          print(f'pages={len(pages)} properties={len(prop_items)} property_maps={len(prop_files)}')
+          assert len(all_urls)==len(set(all_urls)), 'Duplicate URL across sitemap files'
+          private={'auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','admin/index.html'}
+          for url in all_urls:
+              assert not any(url.endswith('/'+p) for p in private), f'Private URL in sitemap: {url}'
+          print(f'Sitemap validation passed: {len(all_urls)} unique URLs across {len(sitemap_locs)} child sitemaps.')
           PY
 
       - name: Commit sitemap changes only when needed
@@ -157,5 +92,5 @@ jobs:
             echo "Sitemap already up to date."
             exit 0
           fi
-          git commit -m "Upgrade and automate XML sitemap"
+          git commit -m "chore: synchronize XML sitemap index"
           git push
