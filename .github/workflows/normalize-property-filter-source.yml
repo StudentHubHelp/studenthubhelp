@@ -1,0 +1,38 @@
+name: Normalize Property Filter Source
+on:
+  push:
+    paths:
+      - 'admin/src/components/PropertiesView.tsx'
+      - '.github/workflows/normalize-property-filter-source.yml'
+permissions:
+  contents: write
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Normalize injected filter block
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('admin/src/components/PropertiesView.tsx')
+          s = p.read_text(encoding='utf-8')
+          start = s.find('  useEffect(() => setLiveProperties(properties), [properties]);')
+          end = s.find('  useEffect(() => setSelectedIds([])', start)
+          if start == -1 or end == -1:
+              raise SystemExit('filter block markers not found')
+          block = s[start:end]
+          block = block.replace('\\n', '\n')
+          s = s[:start] + block + s[end:]
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit normalization
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin/src/components/PropertiesView.tsx
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Normalize property filter source [skip ci]'
+          git push origin HEAD:main
