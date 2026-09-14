@@ -1,0 +1,41 @@
+name: Repair property details file
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore and patch
+        shell: bash
+        run: |
+          if [ "$(wc -l < property-details.html)" -gt 10 ]; then
+            echo "Property details file already restored; nothing to do."
+            exit 0
+          fi
+          git checkout 9b6f058044f1d4fc4117559144d740f26fd20e70 -- property-details.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('property-details.html')
+          s=p.read_text(encoding='utf-8')
+          old='.eq(lookupField,lookupValue).eq("status","active")'
+          if old not in s:
+              raise SystemExit('Expected original query not found')
+          s=s.replace(old,'.eq(lookupField,lookupValue)',1)
+          marker="   if(!data) return fail('Property not found','This listing may have been removed or its URL is incorrect.');"
+          if marker not in s:
+              raise SystemExit('Expected guard not found')
+          replacement=marker+"\n\n   // Legacy listings may have NULL status. Treat NULL like active, while keeping explicitly non-active listings hidden.\n   const propertyStatus=String(data.status ?? '').trim().toLowerCase();\n   if(propertyStatus && propertyStatus!=='active'){\n     return fail('Property not found','This listing may have been removed or its URL is incorrect.');\n   }"
+          s=s.replace(marker,replacement,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add property-details.html
+          git commit -m 'fix: restore property details and handle null status'
+          git push
