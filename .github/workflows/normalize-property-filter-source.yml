@@ -38,10 +38,6 @@ jobs:
               if not p.exists():
                   continue
               s = p.read_text(encoding='utf-8')
-
-              # Normalize the public finder list query to an explicit
-              # active-only Supabase query. This intentionally targets the
-              # first table query only; other UI queries are left untouched.
               query = re.compile(
                   r"\.from\(\s*['\"]" + re.escape(table) + r"['\"]\s*\)\s*"
                   r"(?:\.eq\(\s*['\"]status['\"]\s*,\s*['\"]active['\"]\s*\)\s*)?"
@@ -49,15 +45,10 @@ jobs:
                   r"(?!\s*\.eq\(\s*['\"]status['\"]\s*,\s*['\"]active['\"]\s*\))"
               )
               s = query.sub(".from('" + table + "').select('*').eq('status', 'active')", s, count=1)
-
-              # Tiffin realtime must listen to the actual Supabase table.
               if table == 'tiffins':
-                  s = s.replace("table: 'tiffin'", "table: 'tiffins'")
-                  s = s.replace('table: "tiffin"', 'table: "tiffins"')
-
+                  s = re.sub(r"table\s*:\s*['\"]tiffin['\"]", "table: 'tiffins'", s)
               p.write_text(s, encoding='utf-8')
 
-          # Similar Properties on the public detail page must also be active-only.
           p = Path('property-details.html')
           if p.exists():
               s = p.read_text(encoding='utf-8')
@@ -67,11 +58,9 @@ jobs:
                   s,
                   count=1,
               )
-              s = s.replace("table: 'tiffin'", "table: 'tiffins'")
-              s = s.replace('table: "tiffin"', 'table: "tiffins"')
+              s = re.sub(r"table\s*:\s*['\"]tiffin['\"]", "table: 'tiffins'", s)
               p.write_text(s, encoding='utf-8')
 
-          # Keep the existing PropertiesView normalization intact.
           p = Path('admin/src/components/PropertiesView.tsx')
           if p.exists():
               s = p.read_text(encoding='utf-8')
@@ -85,7 +74,7 @@ jobs:
       - name: Verify suspension protections
         run: |
           grep -n -E "from\(['\"](hostels|tiffins|libraries|cafes|bookstores)['\"]\)|eq\(['\"]status['\"], ['\"]active['\"]\)" pg-finder.html tiffin-finder.html library-finder.html cafe-finder.html bookstore-finder.html
-          grep -n -E "status.*active|table: ['\"]tiffin" property-details.html
+          grep -n -E "status.*active|table\s*:\s*['\"]tiffin" property-details.html tiffin-finder.html || true
       - name: Commit normalization
         run: |
           git config user.name 'github-actions[bot]'
