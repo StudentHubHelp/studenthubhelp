@@ -1,8 +1,5 @@
 name: Add Admin Bulk Property Delete
-on:
-  push:
-    paths:
-      - '.github/workflows/add-bulk-delete-properties.yml'
+on: push
 permissions:
   contents: write
 jobs:
@@ -12,72 +9,35 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Add bulk delete to All Properties
+      - name: Patch PropertiesView
+        shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import base64
           p = Path('admin/src/components/PropertiesView.tsx')
           s = p.read_text(encoding='utf-8')
-
           marker = "  const handlePersistedBulkAction = async (action: 'verify' | 'activate' | 'suspend' | 'feature') => {"
+          fn = base64.b64decode('''ICBjb25zdCBoYW5kbGVCdWxrRGVsZXRlUHJvcGVydGllcyA9IGFzeW5jICgpID0+IHsKICAgIGlmIChjYXRlZ29yeUZpbHRlciAhPT0gJ2FsbCcgfHwgaXNQZW5kaW5nUmVxdWVzdFZpZXcgfHwKICAgICAgICAhc2VsZWN0ZWRJZHMubGVuZ3RoIHx8IGJ1bGtCdXN5KSByZXR1cm47CiAgICBjb25zdCBzZWxlY3RlZCA9IGxpdmVQcm9wZXJ0aWVzLmZpbHRlcigo cCkgPT4gc2VsZWN0ZWRJZHMuaW5jbHVkZXMoYCR7cHJvcGVydHlTb3VyY2VUYWJsZShwKX06JHtTdHJpbmcocC5pZCl9YCkpOwogICAgY29uc3QgZ3JvdXBlZCA9IG5ldyBNYXAoKTsgZm9yIChjb25zdCBwcm9wZXJ0eSBvZiBzZWxlY3RlZCkgewogICAgICBjb25zdCB0YWJsZSA9IHByb3BlcnR5U291cmNlVGFibGUocHJvcGVydHkpOwogICAgICBpZiAoIUhWRV9UQUJMRVMuaW5jbHVkZXModGFibGUgYXMgcHJvcGVydHlUeXBlKSkgY29udGludWU7CiAgICAgIGdyb3VwZWQuc2V0KHRhYmxlLCBbLi4uKGdyb3VwZWQncyB0YWJsZSB8fCBbXSksIFN0cmluZyhwcm9wZXJ0eS5pZCldKTsKICAgIH0KICAgIGlmICghZ3JvdXBlZC5zaXplKSB7IHdpbmRvdy5hbGVydCgnTm8gbGl2ZSBwcm9wZXJ0aWVzIHdlcmUgc2VsZWN0ZWQuJyk7IHJldHVybjsgfQogICAgY29uc3QgY29uZmlybWVkID0gd2luZG93LmNvbmZpcm0oYERlbGV0ZSAke3NlbGVjdGVkLmxlbmd0aH0gc2VsZWN0ZWQgcHJvcGVydHk/IHRoaXMgYWN0aW9uIGNhbm5vdCBiZSB1bmRvbmUuYCk7CiAgICBpZiAoIWNvbmZpcm1lZCkgcmV0dXJuOwogICAgdHJ5IHsKICAgICAgc2V0QnVsa0J1c3kodHJ1ZSk7CiAgICAgIGZvciAoY29uc3QgW3RhYmxlLCBpZHNdIG9mIGdyb3VwZWQuZW50cmllcygpKSB7IGNvbnN0IHsgZXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlLmZyb20odGFibGUpLmRlbGV0ZSgpLmluKCdpZCcsIGlkcyk7IGlmIChlcnJvcikgdGhyb3cgZXJyb3I7IH0KICAgICAgc2V0TGl2ZVByb3BlcnRpZXMoKHByZXYpID0+IHByZXYuZmlsdGVyKChwcm9wZXJ0eSkgPT4gIXNlbGVjdGVkSWRzLmluY2x1ZGVzKGAke3Byb3BlcnR5U291cmNlVGFibGUocHJvcGVydHkpfToke1N0cmluZyhwcm9wZXJ0eS5pZCl9YCkpKTsKICAgICAgc2V0U2VsZWN0ZWRJZHMoW10pOwogICAgICB3aW5kb3cuYWxlcnQoYCR7c2VsZWN0ZWQubGVuZ3RofSBwcm9wZXJ0aWVzIGRlbGV0ZWQgc3VjY2Vzc2Z1bGx5LmApOwogICAgfSBjYXRjaCAoZXJyb3I6IGFueSkgewogICAgICBjb25zb2xlLmVycm9yKCdCdWxrIHByb3BlcnR5IGRlbGV0ZSBmYWlsZWQ6JywKICAgICAgICBlcnJvcik7CiAgICAgIHdpbmRvdy5hbGVydChlcnJvcj8ubWVzc2FnZSB8fCAnQnVsayBwcm9wZXJ0eSBkZWxldGUgZmFpbGVkLiBObyBzdWNjZXNzIHdhcyByZXBvcnRlZC4nKTsKICAgIH0gZmluYWxseSB7IHNldEJ1bGtCdXN5KGZhbHNlKTsgfQogIH07Cg==' '').decode('utf-8')
+          fn = fn.replace("( p) =>", "(p) =>").replace("grouped.get('s table", "grouped.get(table")
           if 'handleBulkDeleteProperties' not in s:
-              fn = '''  const handleBulkDeleteProperties = async () => {
-            if (categoryFilter !== 'all' || isPendingRequestView || !selectedIds.length || bulkBusy) return;
-            const selected = liveProperties.filter((p) => selectedIds.includes(`${propertySourceTable(p)}:${String(p.id)}`));
-            const grouped = new Map<string, string[]>();
-            for (const property of selected) {
-              const table = propertySourceTable(property);
-              if (!LIVE_TABLES.includes(table as PropertyType)) continue;
-              grouped.set(table, [...(grouped.get(table) || []), String(property.id)]);
-            }
-            if (!grouped.size) {
-              window.alert('No live properties were selected.');
-              return;
-            }
-            const confirmed = window.confirm(`Delete ${selected.length} selected propert${selected.length === 1 ? 'y' : 'ies'} permanently from Supabase? This action cannot be undone.`);
-            if (!confirmed) return;
-            try {
-              setBulkBusy(true);
-              for (const [table, ids] of grouped.entries()) {
-                const { error } = await supabase.from(table).delete().in('id', ids);
-                if (error) throw error;
-              }
-              setLiveProperties((prev) => prev.filter((property) => !selectedIds.includes(`${propertySourceTable(property)}:${String(property.id)}`)));
-              setSelectedIds([]);
-              window.alert(`${selected.length} propert${selected.length === 1 ? 'y' : 'ies'} deleted successfully.`);
-            } catch (error: any) {
-              console.error('Bulk property delete failed:', error);
-              window.alert(error?.message || 'Bulk property delete failed. No success was reported.');
-            } finally {
-              setBulkBusy(false);
-            }
-          };
-
-'''
-              if marker not in s:
-                  raise SystemExit('bulk action marker not found')
+              if marker not in s: raise SystemExit('bulk action marker not found')
               s = s.replace(marker, fn + marker, 1)
-
-          old = "<button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('feature')} className=\"px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 font-bold disabled:opacity-50\">Bulk Feature</button>"
-          new = old + "<button disabled={bulkBusy || categoryFilter !== 'all'} onClick={handleBulkDeleteProperties} className=\"px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 font-bold disabled:opacity-50\">{bulkBusy ? 'Working…' : 'Bulk Delete'}</button>"
+          button = '<button disabled={bulkBusy || categoryFilter !== \'all\'} onClick={handleBulkDeleteProperties} className="px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 font-bold disabled:opacity-50">{bulkBusy ? \'Working…\' : \'Bulk Delete\'}</button>'
+          feature = '<button disabled={bulkBusy} onClick={() => handlePersistedBulkAction(\'feature\')} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 font-bold disabled:opacity-50">Bulk Feature</button>'
           if 'Bulk Delete</button>' not in s:
-              if old not in s:
-                  raise SystemExit('bulk feature button marker not found')
-              s = s.replace(old, new, 1)
-
+              if feature not in s: raise SystemExit('bulk feature marker not found')
+              s = s.replace(feature, feature + button, 1)
           p.write_text(s, encoding='utf-8')
           PY
-      - name: Verify build and commit
+      - name: Commit patch and remove workflow
         run: |
-          grep -q "handleBulkDeleteProperties" admin/src/components/PropertiesView.tsx
-          grep -q "Bulk Delete" admin/src/components/PropertiesView.tsx
+          grep -q 'handleBulkDeleteProperties' admin/src/components/PropertiesView.tsx
+          grep -q 'Bulk Delete' admin/src/components/PropertiesView.tsx
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add admin/src/components/PropertiesView.tsx
-          git commit -m 'feat: add admin bulk property delete' || true
-          git push origin HEAD:main
-      - name: Remove temporary workflow
-        run: |
+          git commit -m 'feat: add admin bulk property delete'
           git rm .github/workflows/add-bulk-delete-properties.yml
           git commit -m 'chore: remove temporary bulk delete workflow'
           git push origin HEAD:main
