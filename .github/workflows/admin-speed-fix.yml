@@ -1,0 +1,49 @@
+name: Admin speed fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/admin-speed-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Remove duplicate All Properties fetch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('admin/src/components/PropertiesView.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          start_marker = "  // All Property Listings must use the complete live Supabase dataset."
+          end_marker = "  useEffect(() => setSelectedIds([])"
+
+          start = text.find(start_marker)
+          end = text.find(end_marker, start if start >= 0 else 0)
+
+          if start < 0 or end < 0 or end <= start:
+              raise SystemExit('Duplicate All Properties fetch block markers not found')
+
+          replacement = "  // The parent App already loads the complete paginated Supabase property dataset.\n  // Re-fetching all five property tables here caused a second, sequential network load.\n\n"
+          text = text[:start] + replacement + text[end:]
+          path.write_text(text, encoding='utf-8')
+          print('Removed duplicate All Properties fetch.')
+
+      - name: Commit fix and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name 'StudentHubHelp Performance Guard'
+          git config user.email 'actions@github.com'
+          git add admin/src/components/PropertiesView.tsx
+          git add -A .github/workflows/admin-speed-fix.yml
+          git rm .github/workflows/admin-speed-fix.yml
+          git commit -m 'perf: remove duplicate admin property fetch'
+          git push
