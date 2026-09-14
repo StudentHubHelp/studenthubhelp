@@ -1,0 +1,35 @@
+name: Fix Bulk Delete Visibility
+on: push
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fix bulk action layout
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('admin/src/components/PropertiesView.tsx')
+          s = p.read_text(encoding='utf-8')
+          old = '<div className="flex items-center gap-1.5">{isPendingRequestView ?'
+          new = '<div className="flex flex-wrap items-center justify-end gap-1.5 flex-1 min-w-0">{isPendingRequestView ?'
+          if old not in s:
+              raise SystemExit('bulk action container marker not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit and remove temporary workflow
+        run: |
+          grep -q 'flex flex-wrap items-center justify-end gap-1.5 flex-1 min-w-0' admin/src/components/PropertiesView.tsx
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin/src/components/PropertiesView.tsx
+          git commit -m 'fix: make bulk delete button visible'
+          git rm .github/workflows/fix-bulk-delete-visibility.yml
+          git commit -m 'chore: remove temporary bulk delete visibility workflow'
+          git push origin HEAD:main
