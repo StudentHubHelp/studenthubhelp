@@ -1,0 +1,81 @@
+from pathlib import Path
+import re
+
+# Review-only production source patch. Idempotent: safe to run repeatedly.
+owner = Path('owner-dashboard.html')
+s = owner.read_text(encoding='utf-8')
+
+marker = '<div id="reviewsContent">\n    </div>'
+replacement = '<div id="ownerReviewEditor" style="margin-bottom:20px;"></div>\n\n    <div id="reviewsContent">\n    </div>'
+if 'id="ownerReviewEditor"' not in s:
+    if marker not in s:
+        raise SystemExit('owner review content marker not found')
+    s = s.replace(marker, replacement, 1)
+
+if 'function renderOwnerReviewEditor(){' not in s:
+    marker_fn = 'function renderReviews(){'
+    if marker_fn not in s:
+        raise SystemExit('renderReviews marker not found')
+    owner_fn = r'''function renderOwnerReviewEditor(){
+  const box = document.getElementById("ownerReviewEditor");
+  if(!box) return;
+  const owned = Array.isArray(properties) ? properties : [];
+  if(!owned.length){ box.innerHTML = ""; return; }
+  const options = owned.map(p => { const key = propertyKey(p); return `<option value="${esc(key)}">${esc(p.name || "Property")}</option>`; }).join("");
+  const selected = document.getElementById("ownerReviewProperty")?.value || propertyKey(owned[0]);
+  const p = findProperty(selected) || owned[0];
+  const table = String(p.table || p.property_type || "hostels");
+  const mine = (Array.isArray(reviews) ? reviews : []).filter(r => String(r.property_id) === String(p.id) && String(r.property_type || r.table || "") === table && currentUser && String(r.user_id) === String(currentUser.id)).sort((a,b) => String(b.created_at||"").localeCompare(String(a.created_at||"")))[0];
+  const pending = mine?.pending_review_text ? String(mine.pending_review_text) : "";
+  const live = mine?.published_review_text || mine?.review_text || "";
+  const text = pending || live;
+  const rating = mine?.pending_rating ?? mine?.rating ?? 5;
+  const state = pending ? "Pending admin approval — previous approved review remains live." : (live ? "Published review" : "New review — admin approval required.");
+  box.innerHTML = `<div class="card" style="border:1px solid var(--border);"><div class="card-head"><div><div class="card-title">Manage Your Property Review</div><div class="card-sub">New or edited reviews stay pending until Admin approves them.</div></div><span class="badge ${pending ? "pending-badge" : "active-badge"}">${esc(state)}</span></div><div class="form-grid"><div class="field"><label>Property</label><select id="ownerReviewProperty" onchange="renderOwnerReviewEditor()">${options}</select></div><div class="field"><label>Rating</label><select id="ownerReviewRating">${[5,4,3,2,1].map(n => `<option value="${n}" ${Number(rating)===n?'selected':''}>${n} / 5</option>`).join("")}</select></div><div class="field full"><label>Review</label><textarea id="ownerReviewText" maxlength="10000" placeholder="Write your property review...">${esc(text)}</textarea></div></div><div style="display:flex;justify-content:flex-end;margin-top:12px;"><button class="btn primary" type="button" onclick="saveOwnerReview()"><i class="fa-solid fa-paper-plane"></i> Submit for Admin Approval</button></div></div>`;
+  const select = document.getElementById("ownerReviewProperty");
+  if(select) select.value = selected;
+}
+window.renderOwnerReviewEditor = renderOwnerReviewEditor;
+async function saveOwnerReview(){
+  if(!currentUser) return;
+  const key = document.getElementById("ownerReviewProperty")?.value;
+  const p = findProperty(key);
+  const text = String(document.getElementById("ownerReviewText")?.value || "").trim();
+  const rating = Number(document.getElementById("ownerReviewRating")?.value || 5);
+  if(!p){ alert("Please select a property."); return; }
+  if(!text){ alert("Please enter a review."); return; }
+  if(rating < 1 || rating > 5){ alert("Rating must be between 1 and 5."); return; }
+  const table = String(p.table || p.property_type || "hostels");
+  const existing = (Array.isArray(reviews) ? reviews : []).filter(r => String(r.property_id) === String(p.id) && String(r.property_type || r.table || "") === table && String(r.user_id) === String(currentUser.id)).sort((a,b) => String(b.created_at||"").localeCompare(String(a.created_at||"")))[0];
+  try{
+    let error;
+    if(existing?.id){ const result = await db.from("reviews").update({ review_text:text, rating:String(rating) }).eq("id", existing.id); error = result.error; }
+    else { const result = await db.from("reviews").insert({ property_id:String(p.id), property_type:table, user_id:currentUser.id, student_id:currentUser.id, user_name:currentProfile?.full_name || currentProfile?.name || currentUser.email || "Property Owner", rating:String(rating), review_text:text, status:"pending" }); error = result.error; }
+    if(error) throw error;
+    alert("Review submitted. It will go live only after Admin approval.");
+    await loadReviews();
+    renderOwnerReviewEditor();
+  }catch(err){ console.error("Owner review save error:", err); alert(err?.message || "Unable to save review."); }
+}
+window.saveOwnerReview = saveOwnerReview;
+'''
+    s = s.replace(marker_fn, owner_fn + marker_fn, 1)
+
+needle = 'function renderReviews(){\n'
+if 'renderOwnerReviewEditor();' not in s:
+    if needle not in s:
+        raise SystemExit('renderReviews call marker not found')
+    s = s.replace(needle, needle + '  renderOwnerReviewEditor();\n\n', 1)
+owner.write_text(s, encoding='utf-8')
+
+app = Path('admin/src/App.tsx')
+s = app.read_text(encoding='utf-8')
+if 'Review approved and published.' not in s:
+    pattern = re.compile(r'  const handleToggleReviewStatus = \(\n    id: string \| number,\n    nextStatus: string\n  \) => \{.*?\n  \};', re.S)
+    replacement = '''  const handleToggleReviewStatus = async (\n    id: string | number,\n    nextStatus: string\n  ) => {\n    try {\n      const { data, error } = await supabase.from('reviews').update({ status: nextStatus }).eq('id', id).select('*').maybeSingle();\n      if (error) throw error;\n      if (data) setReviews((prev) => prev.map((r) => String(r.id) === String(id) ? { ...r, ...data } : r));\n      showToast(nextStatus.toLowerCase() === 'published' ? 'Review approved and published.' : nextStatus.toLowerCase() === 'rejected' ? 'Review rejected.' : `Review status changed to ${nextStatus}.`);\n    } catch (err: any) {\n      showToast(err?.message || 'Unable to update review status.', 'error');\n    }\n  };'''
+    s2, n = pattern.subn(replacement, s, count=1)
+    if n != 1:
+        raise SystemExit('admin review handler pattern not found')
+    app.write_text(s2, encoding='utf-8')
+
+print('Review production source patch applied.')
