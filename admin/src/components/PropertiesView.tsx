@@ -139,11 +139,21 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           matchesCat = c.includes(target) || c.includes(selectedCategory.toLowerCase());
         }
       }
-      const matchesArea = !areaFilter || (p.area || '').toLowerCase().includes(areaFilter.toLowerCase());
-      const matchesStatus = !statusFilter || propStatus(p) === statusFilter.toLowerCase();
-      const matchesVerified = !verifiedFilter || (verifiedFilter === 'true' && propVerified(p)) || (verifiedFilter === 'false' && !propVerified(p));
-      const matchesFeatured = !featuredFilter || (featuredFilter === 'true' && propFeatured(p)) || (featuredFilter === 'false' && !propFeatured(p));
-      const matchesOwner = !ownerFilter || (p.owner_name || '').toLowerCase().includes(ownerFilter.toLowerCase()) || (p.phone || '').includes(ownerFilter) || (p.name || '').toLowerCase().includes(ownerFilter.toLowerCase());
+      const areaQuery = areaFilter.trim().toLowerCase();
+const ownerQuery = ownerFilter.trim().toLowerCase();
+const ownerPhoneQuery = ownerFilter.replace(/\D/g, '');
+const matchesArea = !areaQuery || [p.city, p.area, p.address, p.pincode]
+  .filter(Boolean)
+  .some((value) => String(value).toLowerCase().includes(areaQuery));
+const matchesStatus = !statusFilter || propStatus(p) === statusFilter.toLowerCase();
+const matchesVerified = !verifiedFilter || (verifiedFilter === 'true' && propVerified(p)) || (verifiedFilter === 'false' && !propVerified(p));
+const matchesFeatured = !featuredFilter || (featuredFilter === 'true' && propFeatured(p)) || (featuredFilter === 'false' && !propFeatured(p));
+const matchesOwner = !ownerQuery ||
+  (p.owner_name || '').toLowerCase().includes(ownerQuery) ||
+  (p.name || '').toLowerCase().includes(ownerQuery) ||
+  (p.email || '').toLowerCase().includes(ownerQuery) ||
+  (String(p.id || '').toLowerCase().includes(ownerQuery)) ||
+  (ownerPhoneQuery && String(p.phone || '').replace(/\D/g, '').includes(ownerPhoneQuery));
       return matchesCat && matchesArea && matchesStatus && matchesVerified && matchesFeatured && matchesOwner;
     }).sort((a, b) => {
       if (sortBy === 'rating-high') return propRating(b) - propRating(a);
@@ -273,7 +283,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
       <div className="rounded-3xl bg-[#081026] border border-slate-800 p-4 space-y-3 shadow-xl">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 text-xs">
           {categoryFilter === 'all' && <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="all">All Categories</option>{MASTER_TYPES.map((t) => <option key={t} value={t}>{propertyConfig[t].category}</option>)}</select>}
-          <input type="text" value={areaFilter} onChange={(e) => setAreaFilter(e.target.value)} placeholder="Locality / Area" className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white placeholder-slate-400" />
+          <input type="text" value={areaFilter} onChange={(e) => setAreaFilter(e.target.value)} placeholder="City / Locality / Area" className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white placeholder-slate-400" />
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="">Any Status</option><option value="active">Active Only</option><option value="pending">Pending Only</option><option value="suspended">Suspended Only</option></select>
           <select value={verifiedFilter} onChange={(e) => setVerifiedFilter(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="">Verification: Any</option><option value="true">Verified Badge</option><option value="false">Unverified</option></select>
           <select value={featuredFilter} onChange={(e) => setFeaturedFilter(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="">Featured: Any</option><option value="true">Featured Only</option><option value="false">Non-Featured</option></select>
