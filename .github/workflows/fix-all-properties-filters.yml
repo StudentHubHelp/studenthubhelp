@@ -1,0 +1,93 @@
+name: Fix All Property Listings Filters
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fix-all-properties-filters.yml'
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply only filter fix
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('admin/src/components/PropertiesView.tsx')
+          s = p.read_text(encoding='utf-8')
+
+          pattern = re.compile(
+              r"(?m)^\s*const areaQuery = areaFilter\.trim\(\)\.toLowerCase\(\);.*?^\s*return matchesCat && matchesArea && matchesStatus && matchesVerified && matchesFeatured && matchesOwner;",
+              re.S,
+          )
+
+          replacement = '''      const areaQuery = areaFilter.trim().toLowerCase();
+      const ownerQuery = ownerFilter.trim().toLowerCase();
+      const ownerPhoneQuery = ownerFilter.replace(/\\D/g, '');
+
+      const textMatches = (value: unknown, query: string) =>
+        !query || String(value ?? '').trim().toLowerCase().includes(query);
+
+      const matchesArea = !areaQuery || [
+        p.city,
+        p.area,
+        p.address,
+        p.pincode,
+      ].some((value) => textMatches(value, areaQuery));
+
+      const matchesStatus =
+        !statusFilter || propStatus(p) === statusFilter.trim().toLowerCase();
+
+      const matchesVerified =
+        !verifiedFilter ||
+        (verifiedFilter === 'true' && propVerified(p)) ||
+        (verifiedFilter === 'false' && !propVerified(p));
+
+      const matchesFeatured =
+        !featuredFilter ||
+        (featuredFilter === 'true' && propFeatured(p)) ||
+        (featuredFilter === 'false' && !propFeatured(p));
+
+      const matchesOwner = !ownerQuery ||
+        textMatches(p.owner_name, ownerQuery) ||
+        textMatches(p.name, ownerQuery) ||
+        textMatches(p.email, ownerQuery) ||
+        textMatches(p.id, ownerQuery) ||
+        (!!ownerPhoneQuery && String(p.phone ?? '').replace(/\\D/g, '').includes(ownerPhoneQuery));
+
+      return matchesCat && matchesArea && matchesStatus && matchesVerified && matchesFeatured && matchesOwner;'''
+
+          s2, count = pattern.subn(replacement, s, count=1)
+          if count != 1:
+              raise SystemExit('Current filter block not found; no changes made.')
+
+          p.write_text(s2, encoding='utf-8')
+          print('Filter logic updated successfully.')
+
+      - name: Commit source fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/src/components/PropertiesView.tsx
+          if git diff --cached --quiet; then
+            echo "No source changes needed."
+            exit 0
+          fi
+          git commit -m "Fix All Property Listings filter matching"
+          git push
+
+      - name: Remove temporary workflow
+        shell: bash
+        run: |
+          git rm .github/workflows/fix-all-properties-filters.yml
+          git commit -m "Remove temporary filter fix workflow"
+          git push
