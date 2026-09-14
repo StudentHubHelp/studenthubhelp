@@ -1,0 +1,57 @@
+name: Wire Approved Partner Signup
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Patch auth partner signup
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('auth.html'); s=p.read_text(encoding='utf-8')
+          owner='''<div class="role-option"><input id="roleOwner" type="radio" name="signupRole" value="owner"><label class="role-label" for="roleOwner"><span><strong>🏢 Owner</strong><small>Manage your listing</small></span></label></div>'''
+          partner=owner+'''\n<div class="role-option"><input id="rolePartner" type="radio" name="signupRole" value="partner"><label class="role-label" for="rolePartner"><span><strong>🤝 Partner</strong><small>Approved applicants only</small></span></label></div>'''
+          if 'id="rolePartner"' not in s:
+            if owner not in s: raise SystemExit('owner role anchor not found')
+            s=s.replace(owner,partner,1)
+          s=s.replace('Pehle Student ya Owner select karo. Phir neeche Google se continue karo.','Student ya Owner select karo. Partner sirf approved Partner applicants ke liye available hai.')
+          s=s.replace('Only Student/Owner accounts can be created here.','Student/Owner accounts aur approved Partner accounts yahan create ho sakte hain.')
+          s=s.replace('Select Student / Owner first','Select account type first')
+          s=s.replace('Student ya Owner select karo.','Student, Owner ya approved Partner select karo.')
+          marker='''function callbackRole(){\n  return role(document.querySelector('input[name="callbackRole"]:checked')?.value);\n}'''
+          helper=marker+'''\n\nasync function isApprovedPartnerEmail(email){\n  const e=String(email||"").trim().toLowerCase();\n  if(!e)return false;\n  const {data,error}=await db.from("partner_applications").select("id,status").eq("email",e).eq("status","approved").limit(1);\n  if(error)throw new Error("Partner approval check nahi ho saka.");\n  return !!data?.length;\n}'''
+          if 'function isApprovedPartnerEmail' not in s:
+            if marker not in s: raise SystemExit('callback role anchor not found')
+            s=s.replace(marker,helper,1)
+          s=s.replace('''  }else{\n    clearPending();\n  }\n\n  loading(true,"Opening Google Sign In...");''','''  }else{\n    clearPending();\n  }\n\n  loading(true,"Opening Google Sign In...");''',1)
+          # Add partner approval guard immediately before signUp.
+          old='''    const {data,error}=await db.auth.signUp({\n      email,\n      password:pass,'''
+          new='''    if(r==="partner" && !(await isApprovedPartnerEmail(email))){\n      throw new Error("Partner account sirf approved Partner application ke baad create kiya ja sakta hai.");\n    }\n\n    const {data,error}=await db.auth.signUp({\n      email,\n      password:pass,'''
+          if old not in s: raise SystemExit('signup auth anchor not found')
+          s=s.replace(old,new,1)
+          # Google signup approval guard after role selection.
+          old='''    if(!r){\n      msg("Pehle Student ya Owner select karo.");\n      return;\n    }\n    localStorage.setItem("sh_google_signup_role",r);'''
+          new='''    if(!r){\n      msg("Student, Owner ya approved Partner select karo.");\n      return;\n    }\n    if(r==="partner") {\n      const emailHint=$("signupEmail").value.trim().toLowerCase();\n      if(!emailHint || !(await isApprovedPartnerEmail(emailHint))){\n        msg("Partner ke liye pehle approved application ke same email se continue karo.");\n        return;\n      }\n    }\n    localStorage.setItem("sh_google_signup_role",r);'''
+          if old not in s: raise SystemExit('google signup anchor not found')
+          s=s.replace(old,new,1)
+          # Google callback partner approval guard.
+          old='''    const googleUser=pendingGoogleUser;\n    const p=await getProfile(googleUser);'''
+          new='''    const googleUser=pendingGoogleUser;\n    if(r==="partner" && !(await isApprovedPartnerEmail(googleUser.email||""))){\n      throw new Error("Is Google email ke liye approved Partner application nahi mili.");\n    }\n    const p=await getProfile(googleUser);'''
+          if old not in s: raise SystemExit('google callback anchor not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add auth.html
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: allow approved partner accounts in auth"
+          git push
