@@ -76,6 +76,8 @@ jobs:
                       assert params.get('type') and params.get('slug') or params.get('id'), f'Invalid property URL: {value}'
                       assert params.get('type',[None])[0] in {'hostel','tiffin','library','cafe','bookstore'}, f'Invalid property type: {value}'
 
+          assert BASE in all_urls, 'Canonical homepage URL is missing from sitemap'
+          assert f'{BASE}index.html' not in all_urls, 'Non-canonical index.html homepage URL must not be in sitemap'
           assert len(all_urls)==len(set(all_urls)), 'Duplicate URL across sitemap files'
           private={'auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','admin/index.html'}
           for url in all_urls:
