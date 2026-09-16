@@ -207,3 +207,11 @@
   `;
   document.head.appendChild(style);
 })();
+
+/* HERO CATEGORY LABEL CLEANUP — remove both duplicate badge labels. */
+(function(){
+  const style=document.createElement('style');
+  style.id='shh-hero-category-label-cleanup';
+  style.textContent=`.hero-visual .carousel-overlay small{display:none !important;}`;
+  document.head.appendChild(style);
+})();
