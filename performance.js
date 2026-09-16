@@ -185,19 +185,46 @@
         #heroCarousel .hero-search-mobile-overlay .hero-search{
           width:100%;
           max-width:none;
+          height:205px;
+          min-height:205px;
+          display:grid;
+          grid-template-columns:34px minmax(0,1fr) 22px;
+          grid-template-rows:147px 48px;
+          gap:0;
           padding:6px;
           border-radius:15px;
           box-shadow:0 18px 45px rgba(0,0,0,.38);
         }
+        #heroCarousel .hero-search-mobile-overlay .hero-search .search-leading{
+          grid-column:1;
+          grid-row:1;
+          width:34px;
+          min-height:0;
+          height:52px;
+          align-self:center;
+          flex:none;
+        }
         #heroCarousel .hero-search-mobile-overlay .hero-search input{
+          grid-column:2;
+          grid-row:1;
+          width:100%;
+          min-height:0;
+          height:52px;
+          align-self:center;
           padding:11px 9px;
           font-size:13px;
         }
-        #heroCarousel .hero-search-mobile-overlay .search-leading{
-          width:34px;
-          flex-basis:34px;
+        #heroCarousel .hero-search-mobile-overlay .hero-search .search-status{
+          grid-column:3;
+          grid-row:1;
+          align-self:center;
         }
-        #heroCarousel .hero-search-mobile-overlay .search-btn{
+        #heroCarousel .hero-search-mobile-overlay .hero-search .search-btn{
+          grid-column:1 / -1;
+          grid-row:2;
+          width:100%;
+          min-height:48px;
+          height:48px;
           padding:0 14px;
           border-radius:10px;
           font-size:12px;
