@@ -17,8 +17,6 @@
     const carousel = document.getElementById('heroCarousel');
     if (!hero || !carousel) return;
 
-    // The homepage currently contains a malformed first <img> tag. Rebuild only
-    // this homepage carousel with valid markup so the existing banner files load.
     const sources = [
       ['hostelherobanner.jpg', 'Student hostel and PG services'],
       ['tiffinherobanner.jpg', 'Student tiffin and mess services'],
@@ -60,6 +58,24 @@
         window.__studentHubHelpHeroTimer = setInterval(() => show(index + 1), 2500);
       });
     });
+  };
+
+  const upgradeFinderHeroText = () => {
+    // Finder-only visual override. No other page uses .hero-banner-box.
+    if (!document.querySelector('.hero-banner-box')) return;
+    if (document.getElementById('studenthubhelp-finder-hero-text-white')) return;
+
+    const style = document.createElement('style');
+    style.id = 'studenthubhelp-finder-hero-text-white';
+    style.textContent = `
+      .hero-banner-box h1,
+      .hero-banner-box h1 span,
+      .hero-banner-box p{
+        color:#fff !important;
+        opacity:1 !important;
+      }
+    `;
+    document.head.appendChild(style);
   };
 
   const upgradeFooter = () => {
@@ -152,7 +168,6 @@
     const carousel = document.getElementById('heroCarousel');
     if (!hero || !carousel) return;
 
-    // Only the homepage Hero carousel is changed here. Property/listing images are untouched.
     const heroBannerSources = [
       'hostelherobanner.jpg',
       'tiffinherobanner.jpg',
@@ -180,13 +195,11 @@
       });
     });
 
-    // The new banners already contain their own headline/details, so the old duplicate short description is removed visually.
     hero.querySelectorAll('.hero-text').forEach((text) => {
       text.setAttribute('hidden', 'hidden');
       text.setAttribute('aria-hidden', 'true');
     });
 
-    // On mobile, keep the existing search functionality but place only the search bar at the banner footer.
     const searchWrap = document.getElementById('heroSearchWrap');
     const searchHome = searchWrap?.parentElement;
     if (!searchWrap || !searchHome) return;
@@ -294,6 +307,7 @@
   const run = () => {
     applyImageHints();
     repairHomepageHero();
+    upgradeFinderHeroText();
     upgradeFooter();
     upgradeHero();
   };
