@@ -1,118 +1,5 @@
 /* StudentHubHelp — audience knowledge hub modal */
 (function(){
-  /* Homepage hero mobile-only visual correction. Kept here so no
-     existing homepage structure, search logic, or database code changes. */
-  const heroMobileStyle=document.createElement('style');
-  heroMobileStyle.id='shh-hero-mobile-fix';
-  heroMobileStyle.textContent=`
-    @media (max-width:600px){
-      /* Keep the complete banner visible on narrow screens. */
-      .hero > .container.hero-grid{
-        min-height:clamp(560px,78svh,720px) !important;
-        height:clamp(560px,78svh,720px) !important;
-      }
-      .hero-visual{
-        height:100% !important;
-        min-height:100% !important;
-        background:#06162b !important;
-      }
-      .carousel-card img{
-        object-fit:contain !important;
-        object-position:center center !important;
-        background:#06162b !important;
-      }
-
-      /* Keep headline/description inside the visible mobile banner area. */
-      .carousel-overlay{
-        left:14px !important;
-        right:14px !important;
-        top:78px !important;
-        width:auto !important;
-        max-width:none !important;
-      }
-      .carousel-overlay small{
-        padding:5px 8px !important;
-        margin-bottom:8px !important;
-        font-size:8px !important;
-      }
-      .carousel-overlay h3{
-        max-width:100% !important;
-        font-size:clamp(24px,8vw,35px) !important;
-        line-height:1.06 !important;
-        letter-spacing:-.7px !important;
-      }
-      .carousel-overlay h3::after{
-        margin-top:9px !important;
-        max-width:100% !important;
-        font-size:11px !important;
-        line-height:1.4 !important;
-      }
-
-      /* Search stays functional, but moves into the bottom footer band. */
-      .hero-grid > div:first-child .hero-search-wrap{
-        left:12px !important;
-        right:12px !important;
-        bottom:64px !important;
-        width:auto !important;
-        max-width:none !important;
-      }
-      .hero-grid > div:first-child .hero-search{
-        height:44px !important;
-        min-height:44px !important;
-        padding:5px !important;
-        gap:5px !important;
-        border-radius:15px !important;
-      }
-      .hero-grid > div:first-child .hero-search input{
-        min-width:0 !important;
-        padding:8px 5px !important;
-        font-size:12px !important;
-      }
-      .hero-grid > div:first-child .search-leading{
-        width:27px !important;
-        flex-basis:27px !important;
-        font-size:15px !important;
-      }
-      .hero-grid > div:first-child .search-status{display:none !important}
-      .hero-grid > div:first-child .search-btn{
-        height:34px !important;
-        min-height:34px !important;
-        padding:0 13px !important;
-        border-radius:10px !important;
-        font-size:11px !important;
-      }
-      .hero-grid > div:first-child .search-helper{display:none !important}
-
-      /* Compact category cards at the very bottom. */
-      .carousel-dots{
-        left:8px !important;
-        right:8px !important;
-        bottom:8px !important;
-        gap:5px !important;
-      }
-      .carousel-dots .carousel-dot{
-        min-height:49px !important;
-        height:49px !important;
-        border-radius:12px !important;
-        padding:4px 2px !important;
-        gap:2px !important;
-      }
-      .carousel-dots .carousel-dot::before{
-        width:23px !important;
-        height:23px !important;
-        flex-basis:23px !important;
-        font-size:13px !important;
-      }
-      .carousel-dots .carousel-dot::after{
-        font-size:7px !important;
-      }
-
-      /* Hide the old quick search row only; main search remains unchanged. */
-      .hero-grid > div:first-child .quick-searches{display:none !important}
-    }
-  `;
-  document.head.appendChild(heroMobileStyle);
-
   const guides=[
     {key:'student',title:'For Students',url:'student-guide.html',kicker:'STUDENT GUIDE',subtitle:'A practical guide to choosing accommodation, food, study spaces and everyday student services.'},
     {key:'parent',title:'For Parents',url:'parent-guide.html',kicker:'PARENT GUIDE',subtitle:'A practical, evidence-minded checklist for evaluating student accommodation and local services.'},
@@ -152,4 +39,164 @@
   backdrop.querySelector('.shh-guide-close').addEventListener('click',closeGuide);
   backdrop.addEventListener('click',e=>{if(e.target===backdrop)closeGuide()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&backdrop.classList.contains('is-open'))closeGuide()});
+})();
+
+/* =========================================================
+   StudentHubHelp — MOBILE HERO PRESENTATION FIX
+   Injected only for the homepage Hero. Search/data logic is untouched.
+========================================================= */
+(function(){
+  if(!document.querySelector('.hero-visual')) return;
+  const style=document.createElement('style');
+  style.id='shh-mobile-hero-presentation-fix';
+  style.textContent=`
+    @media (max-width:767px){
+      .hero > .container.hero-grid{
+        min-height:660px !important;
+        height:660px !important;
+        overflow:hidden !important;
+      }
+
+      .hero-visual{
+        height:660px !important;
+        min-height:660px !important;
+        aspect-ratio:auto !important;
+        border-radius:18px !important;
+        background:#06162b !important;
+      }
+
+      /* Show the complete banner artwork instead of portrait-cropping it. */
+      .carousel-card img{
+        object-fit:contain !important;
+        object-position:center center !important;
+        background:#06162b !important;
+      }
+
+      .carousel-overlay{
+        left:18px !important;
+        top:54px !important;
+        width:calc(100% - 36px) !important;
+        max-width:none !important;
+      }
+
+      .carousel-overlay small{
+        margin-bottom:8px !important;
+        padding:5px 9px !important;
+        font-size:9px !important;
+      }
+
+      .carousel-overlay h3{
+        max-width:96% !important;
+        font-size:clamp(27px,8.2vw,36px) !important;
+        line-height:1.04 !important;
+        letter-spacing:-.7px !important;
+      }
+
+      .carousel-overlay h3::after{
+        max-width:96% !important;
+        margin-top:10px !important;
+        font-size:12px !important;
+        line-height:1.42 !important;
+      }
+
+      /* Search sits as a compact footer band, about the final 9% of Hero. */
+      .hero-grid > div:first-child .hero-search-wrap{
+        left:18px !important;
+        right:18px !important;
+        bottom:86px !important;
+        width:auto !important;
+        max-width:none !important;
+        margin:0 !important;
+      }
+
+      .hero-grid > div:first-child .hero-search{
+        width:100% !important;
+        height:56px !important;
+        min-height:56px !important;
+        display:flex !important;
+        align-items:center !important;
+        gap:4px !important;
+        padding:4px !important;
+        border-radius:16px !important;
+        box-shadow:0 16px 42px rgba(0,0,0,.35) !important;
+      }
+
+      .hero-grid > div:first-child .hero-search input{
+        min-width:0 !important;
+        min-height:46px !important;
+        height:46px !important;
+        flex:1 1 auto !important;
+        padding:9px 6px !important;
+        font-size:13px !important;
+        border:0 !important;
+        background:transparent !important;
+      }
+
+      .hero-grid > div:first-child .search-leading{
+        width:28px !important;
+        flex:0 0 28px !important;
+        font-size:15px !important;
+      }
+
+      .hero-grid > div:first-child .search-status{
+        width:16px !important;
+        min-width:16px !important;
+        flex:0 0 16px !important;
+      }
+
+      .hero-grid > div:first-child .search-btn{
+        min-height:46px !important;
+        height:46px !important;
+        flex:0 0 92px !important;
+        padding:0 10px !important;
+        border-radius:12px !important;
+        font-size:13px !important;
+      }
+
+      .hero-grid > div:first-child .search-helper{
+        display:none !important;
+      }
+
+      .carousel-dots{
+        left:10px !important;
+        right:10px !important;
+        bottom:8px !important;
+        gap:5px !important;
+        grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+      }
+
+      .carousel-dots .carousel-dot{
+        min-height:66px !important;
+        height:66px !important;
+        border-radius:13px !important;
+        padding:6px 3px !important;
+        gap:3px !important;
+      }
+
+      .carousel-dots .carousel-dot::before{
+        width:28px !important;
+        height:28px !important;
+        flex-basis:28px !important;
+        font-size:15px !important;
+      }
+
+      .carousel-dots .carousel-dot::after{
+        font-size:8px !important;
+        line-height:1.05 !important;
+        white-space:nowrap !important;
+      }
+
+      /* Let the CSS 2.5s animation be the visible source of the header highlight. */
+      .brand-categories span[data-category-index].active-cat{
+        color:inherit !important;
+        text-shadow:none !important;
+        transform:none !important;
+      }
+
+      .brand-categories span[data-category-index]{
+        opacity:1 !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 })();
