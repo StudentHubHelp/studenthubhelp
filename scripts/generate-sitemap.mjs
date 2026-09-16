@@ -38,6 +38,10 @@ function recordUrl(type, row) {
   return url.href;
 }
 
+function pageUrl(name) {
+  return name === 'index.html' ? BASE : new URL(name, BASE).href;
+}
+
 async function fetchRows(table) {
   const rows = [];
   const pageSize = 1000;
@@ -94,12 +98,12 @@ for (const name of rootFiles) {
   if (explicitExcluded.has(name) || /^google[a-z0-9_-]*\.html$/i.test(name)) continue;
   const html = await readFile(name, 'utf8');
   if (hasNoindex(html)) continue;
-  pages.set(new URL(name, BASE).href, gitLastModified(name));
+  pages.set(pageUrl(name), gitLastModified(name));
 }
 
 const finderPages = ['pg-finder.html', 'tiffin-finder.html', 'library-finder.html', 'cafe-finder.html', 'bookstore-finder.html'];
 for (const name of finderPages) {
-  if (!pages.has(new URL(name, BASE).href)) pages.set(new URL(name, BASE).href, gitLastModified(name));
+  if (!pages.has(pageUrl(name))) pages.set(pageUrl(name), gitLastModified(name));
 }
 
 const properties = new Map();
