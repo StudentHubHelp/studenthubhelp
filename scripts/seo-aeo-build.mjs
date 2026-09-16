@@ -56,6 +56,10 @@ function buildSchema(name, html) {
   const description = attr(html, 'description') || title;
   const finder = finderMap[name];
   const pageType = finder ? 'CollectionPage' : 'WebPage';
+  const serviceId = finder
+    ? `${BASE}#${name.replace(/-finder\.html$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-service`
+    : null;
+
   const nodes = [
     {
       '@type': pageType,
@@ -78,10 +82,10 @@ function buildSchema(name, html) {
   ];
 
   if (finder) {
-    nodes[0].about = { '@id': `${BASE}#student-finder-service` };
+    nodes[0].about = { '@id': serviceId };
     nodes.push({
       '@type': 'Service',
-      '@id': `${BASE}#${name.replace(/-finder\.html$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-service`,
+      '@id': serviceId,
       name: finder.name,
       serviceType: finder.service,
       provider: { '@id': ORG_ID },
