@@ -32,6 +32,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Repair truncated homepage before SEO generation
+        shell: bash
+        run: |
+          if [ "$(wc -l < index.html)" -lt 500 ]; then
+            git checkout 89b77b7a72314da350ac1236b672b1b781e33657 -- index.html
+            echo "Homepage restored from the last known-good revision before SEO generation."
+          fi
+
       - name: Attach SEO and GEO layers without changing page UI
         shell: python
         run: |
