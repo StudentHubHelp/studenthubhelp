@@ -48,7 +48,7 @@
             'position':items.length+1,
             'name':name,
             'url':url,
-            ...(city?{'item':{'@type':'Thing','name':name,'url':url,'additionalProperty':[{'@type':'PropertyValue','name':'City','value':city},...(area?[{'@type':'PropertyValue','name':'Area','value':area}]:[])]}}}: {})
+            ...(city?{'item':{'@type':'Thing','name':name,'url':url,'additionalProperty':[{'@type':'PropertyValue','name':'City','value':city},...(area?[{'@type':'PropertyValue','name':'Area','value':area}]:[])]}}: {})
           });
         }
       }
