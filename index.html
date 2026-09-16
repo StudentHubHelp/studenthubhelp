@@ -172,24 +172,24 @@
 
 
     /* =========================================
-        NAVBAR
+        NAVBAR & DYNAMIC BRAND CATEGORIES
     ========================================= */
 
     .navbar {
       position: sticky;
       top: 0;
       z-index: 1000;
-      background: rgba(7, 26, 51, .97);
+      background: rgba(7, 26, 51, .98);
       backdrop-filter: blur(14px);
       border-bottom: 1px solid rgba(255,255,255,.08);
     }
 
     .nav-inner {
-      min-height: 76px;
+      min-height: 72px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
+      gap: 16px;
     }
 
     .brand {
@@ -197,7 +197,8 @@
       align-items: center;
       gap: 12px;
       color: #fff;
-      min-width: 250px;
+      text-decoration: none;
+      flex-shrink: 0;
     }
 
     .brand img {
@@ -207,6 +208,7 @@
       border-radius: 12px;
       background: #fff;
       padding: 3px;
+      flex-shrink: 0;
     }
 
     .brand-title {
@@ -216,10 +218,36 @@
       line-height: 1.15;
     }
 
-    .brand-sub {
-      color: rgba(255,255,255,.62);
-      font-size: 10px;
-      margin-top: 1px;
+    .brand-categories {
+      display: flex !important;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 4px;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-top: 3px;
+      line-height: 1.2;
+    }
+
+    .brand-categories span.cat-item {
+      transition: color .3s ease, transform .2s ease;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .brand-categories span.cat-item.active-cat {
+      color: var(--gold-light, #f0d48a) !important;
+      font-weight: 900 !important;
+      text-shadow: 0 0 10px rgba(214,168,79,.65);
+      transform: scale(1.05);
+    }
+
+    .brand-categories .cat-dot {
+      opacity: 0.45;
+      user-select: none;
     }
 
     .nav-links {
@@ -230,7 +258,7 @@
 
     .nav-links a {
       color: rgba(255,255,255,.78);
-      padding: 9px 13px;
+      padding: 8px 12px;
       border-radius: 999px;
       font-size: 13px;
       font-weight: 600;
@@ -252,89 +280,63 @@
 
 
     /* =========================================
-        HERO CAROUSEL
+        HERO BANNER (75% LAPTOP SCREEN VIEW)
     ========================================= */
 
-    .hero-visual {
-      position: relative;
+    .hero-upgraded {
+      padding: 24px 0 !important;
+      background: #001E3D !important;
+      overflow: hidden;
+    }
+
+    .hero-banner-wrap {
       width: 100%;
-      aspect-ratio: 16 / 9;
-      min-height: 310px;
-    }
-    .carousel-card {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      transform: translateX(20px) scale(.98);
-      transition: .6s ease;
-      pointer-events: none;
+      background: #001E3D;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    .carousel-card.active {
-      opacity: 1;
-      transform: translateX(0) scale(1);
-      pointer-events: auto;
+    .hero-banner-container {
+      position: relative;
+      width: 75vw;
+      max-width: 1150px;
+      min-height: 280px;
+      margin: 0 auto;
+      padding: 0;
+      overflow: hidden;
+      border-radius: 24px;
+      box-shadow: 0 25px 70px rgba(0,0,0,.5);
+      border: 1.5px solid rgba(255,255,255,.14);
+      background: #001428;
     }
 
-    .carousel-card img {
+    .hero-slide {
+      display: none;
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      border-radius: 24px;
-      border: 1px solid rgba(255,255,255,.15);
-      box-shadow: 0 30px 80px rgba(0,0,0,.3);
+      opacity: 0;
     }
 
-    .carousel-overlay {
-      position: absolute;
-      inset: auto 16px 14px;
-      padding: 11px 14px;
-      border-radius: 14px;
-      background: rgba(4,16,32,.82);
-      backdrop-filter: blur(12px);
-    }
-
-    .carousel-overlay small {
-      color: var(--gold-light);
-      font-weight: 700;
-      font-size: 10.5px;
-      letter-spacing: .5px;
+    .hero-slide.active {
       display: block;
-      line-height: 1.1;
+      animation: heroBannerFade .55s ease both;
     }
 
-    .carousel-overlay h3 {
-      margin: 2px 0 0;
-      font-family: "Playfair Display", serif;
-      font-size: clamp(14px, 1.8vw, 17.5px);
-      line-height: 1.22;
+    .hero-slide img {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 16 / 7.2;
+      object-fit: cover;
+      object-position: center;
+      margin: 0 auto;
+      display: block;
+      background: #001E3D;
     }
 
-    .carousel-dots {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: -22px;
-      min-height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      z-index: 10;
-      pointer-events: auto;
-    }
-
-    .carousel-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.3);
-    }
-
-    .carousel-dot.active {
-      width: 24px;
-      border-radius: 99px;
-      background: var(--gold);
+    @keyframes heroBannerFade {
+      from { opacity: 0; transform: scale(1.008); }
+      to { opacity: 1; transform: scale(1); }
     }
 
 
@@ -1428,10 +1430,15 @@
 
 
     /* =========================================
-        RESPONSIVE
+        MOBILE & RESPONSIVE REFINEMENT
     ========================================= */
 
     @media (max-width: 1050px) {
+
+      .hero-banner-container {
+        width: 86vw;
+        min-height: 240px;
+      }
 
       .nav-links a {
         padding-inline: 8px;
@@ -1460,15 +1467,37 @@
 
     @media (max-width: 850px) {
 
+      .hero-upgraded {
+        padding: 14px 0 !important;
+      }
+
+      .hero-banner-container {
+        width: calc(100% - 24px);
+        border-radius: 16px;
+        min-height: 200px;
+      }
+
+      .hero-slide img {
+        aspect-ratio: 16 / 9;
+      }
+
       .nav-inner {
-        min-height: 68px;
+        flex-direction: column;
+        align-items: flex-start;
+        padding-block: 10px;
+        gap: 8px;
       }
 
       .nav-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        justify-content: center;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+
+      .nav-links::-webkit-scrollbar {
+        display: none;
       }
 
       .city-grid {
@@ -1506,12 +1535,25 @@
     @media (max-width: 600px) {
 
       .container {
-        width: min(100% - 22px, 1180px);
+        width: min(100% - 20px, 1180px);
+      }
+
+      .hero-upgraded {
+        padding: 10px 0 16px !important;
+      }
+
+      .hero-banner-container {
+        width: calc(100% - 16px);
+        border-radius: 14px;
+        min-height: 170px;
+      }
+
+      .hero-slide img {
+        aspect-ratio: 16 / 9;
       }
 
       .brand {
-        min-width: auto;
-        gap: 8px;
+        gap: 10px;
       }
 
       .brand img {
@@ -1523,8 +1565,15 @@
         font-size: 16px;
       }
 
-      .brand-sub {
-        display: none;
+      .brand-categories {
+        font-size: 8px;
+        gap: 2px 3px;
+        letter-spacing: .3px;
+      }
+
+      .nav-links a {
+        padding: 6px 10px;
+        font-size: 11px;
       }
 
       .stats-grid {
@@ -1545,15 +1594,15 @@
       }
 
       .section {
-        padding: 65px 0;
+        padding: 55px 0;
       }
 
       .article-box {
-        padding: 22px;
+        padding: 20px;
       }
 
       .faq {
-        padding-inline: 18px;
+        padding-inline: 16px;
       }
 
       .footer-bottom {
@@ -1908,63 +1957,6 @@
   <link rel="stylesheet" href="audience-hub.css">
 <script id="studenthubhelp-site-graph" type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://studenthubhelp.github.io/studenthubhelp/#website","name":"StudentHubHelp","url":"https://studenthubhelp.github.io/studenthubhelp/","inLanguage":"en-IN","description":"India-wide student discovery platform for hostels, PGs, tiffin and mess services, libraries, cafes and book stores.","publisher":{"@id":"https://studenthubhelp.github.io/studenthubhelp/#organization"}},{"@type":"Organization","@id":"https://studenthubhelp.github.io/studenthubhelp/#organization","name":"StudentHubHelp","url":"https://studenthubhelp.github.io/studenthubhelp/","logo":"https://studenthubhelp.github.io/studenthubhelp/logo.png","areaServed":{"@type":"Country","name":"India"},"knowsAbout":["student accommodation","hostels","PGs","tiffin and mess services","libraries","cafes","book stores","student resources"],"contactPoint":{"@type":"ContactPoint","telephone":"+91-9929718264","contactType":"customer support","email":"satpalswami22742@gmail.com","areaServed":"IN","availableLanguage":["en","hi"]},"sameAs":["https://www.instagram.com/studenthubhelp/"]},{"@type":"WebPage","@id":"https://studenthubhelp.github.io/studenthubhelp/#homepage","url":"https://studenthubhelp.github.io/studenthubhelp/","name":"StudentHubHelp | Hostel, PG, Tiffin, Library, Cafe & Book Store Finder India","isPartOf":{"@id":"https://studenthubhelp.github.io/studenthubhelp/#website"},"about":{"@id":"https://studenthubhelp.github.io/studenthubhelp/#organization"},"inLanguage":"en-IN"},{"@type":"Service","@id":"https://studenthubhelp.github.io/studenthubhelp/#student-finder-service","name":"StudentHubHelp Student Finder","serviceType":"Student accommodation and local student services discovery","provider":{"@id":"https://studenthubhelp.github.io/studenthubhelp/#organization"},"areaServed":{"@type":"Country","name":"India"},"audience":{"@type":"Audience","audienceType":"Students and parents"},"hasOfferCatalog":{"@type":"OfferCatalog","name":"Student services","itemListElement":[{"@type":"Offer","itemOffered":{"@type":"Service","name":"Hostel and PG Finder"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Tiffin and Mess Finder"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Library Finder"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Cafe Finder"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Bookstore Finder"}}]}}]}</script>
 
-  <style id="hero-category-banner-upgrade">
-    .hero-upgraded {
-      padding: 0 !important;
-      background: #001E3D !important;
-      overflow: hidden;
-    }
-
-    .hero-upgraded::before {
-      display: none;
-    }
-
-    .hero-banner-wrap {
-      background: #001E3D;
-      padding: 0;
-    }
-
-    .hero-banner-container {
-      position: relative;
-      width: 100%;
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    .hero-slide {
-      display: none;
-      width: 100%;
-      opacity: 0;
-    }
-
-    .hero-slide.active {
-      display: block;
-      animation: heroBannerFade .55s ease both;
-    }
-
-    .hero-slide img {
-      width: 100%;
-      height: auto;
-      max-height: min(58vw, 620px);
-      object-fit: contain;
-      object-position: center;
-      margin: 0 auto;
-      background: #001E3D;
-    }
-
-    @keyframes heroBannerFade {
-      from { opacity: 0; transform: scale(1.008); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .hero-slide.active { animation: none; }
-    }
-  </style>
-
-<script id="studenthubhelp-site-graph" type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://studenthubhelp.github.io/studenthubhelp/#website","name":"StudentHubHelp","url":"https://studenthubhelp.github.io/studenthubhelp/","inLanguage":"en-IN","description":"India-wide student discovery platform for hostels, PGs, tiffin and mess services, libraries, cafes and book stores.","publisher":{"@id":"https://studenthubhelp.github.io/studenthubhelp/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://studenthubhelp.github.io/studenthubhelp/global-search.html?q={search_term_string}"},"query-input":"required name=search_term_string"}},{"@type":"Organization","@id":"https://studenthubhelp.github.io/studenthubhelp/#organization","name":"StudentHubHelp","url":"https://studenthubhelp.github.io/studenthubhelp/","logo":"https://studenthubhelp.github.io/studenthubhelp/logo.png","areaServed":{"@type":"Country","name":"India"},"knowsAbout":["student accommodation","hostels","PGs","tiffin and mess services","libraries","cafes","book stores","student resources"],"contactPoint":{"@type":"ContactPoint","telephone":"+91-9929718264","contactType":"customer support","email":"satpalswami22742@gmail.com","areaServed":"IN","availableLanguage":["en","hi"]},"sameAs":["https://www.instagram.com/studenthubhelp/"]},{"@type":"WebPage","@id":"https://studenthubhelp.github.io/studenthubhelp/#homepage","url":"https://studenthubhelp.github.io/studenthubhelp/","name":"StudentHubHelp | Hostel, PG, Tiffin, Library, Cafe & Book Store Finder India","isPartOf":{"@id":"https://studenthubhelp.github.io/studenthubhelp/#website"},"about":{"@id":"https://studenthubhelp.github.io/studenthubhelp/#organization"},"inLanguage":"en-IN"},{"@type":"Service","@id":"https://studenthubhelp.github.io/studenthubhelp/#student-finder-service","name":"StudentHubHelp Student Finder","serviceType":"Student accommodation and local student services discovery","provider":{"@id":"https://studenthubhelp.github.io/studenthubhelp/#organization"},"areaServed":{"@type":"Country","name":"India"},"audience":{"@type":"Audience","audienceType":"Students and parents"},"hasOfferCatalog":{"@type":"OfferCatalog","name":"Student services","itemListElement":[{"@type":"Offer","itemOffered":{"@type":"Service","name":"Hostel and PG Finder"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Tiffin and Mess Finder"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Library Finder"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Cafe Finder"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Bookstore Finder"}}]}}]}</script>
 </head>
 
 
@@ -1991,8 +1983,17 @@
             StudentHubHelp
           </div>
 
-          <div class="brand-sub">
-            Student Discovery Platform
+          <!-- Dynamic Category Ticker under Logo/Title -->
+          <div class="brand-categories" id="headerCategoryTicker" aria-label="Available services">
+            <span data-category-index="0" class="cat-item active-cat">HOSTEL</span>
+            <span class="cat-dot">·</span>
+            <span data-category-index="1" class="cat-item">TIFFIN</span>
+            <span class="cat-dot">·</span>
+            <span data-category-index="2" class="cat-item">LIBRARY</span>
+            <span class="cat-dot">·</span>
+            <span data-category-index="3" class="cat-item">CAFE</span>
+            <span class="cat-dot">·</span>
+            <span data-category-index="4" class="cat-item">BOOKSTORE</span>
           </div>
 
         </div>
@@ -2026,11 +2027,11 @@
           Book Store
         </a>
         
-<a href="student-helplines-safety.html">
-  Student Helplines & Safety
-</a>
+        <a href="student-helplines-safety.html">
+          Student Helplines & Safety
+        </a>
 
-<a href="about.html">About</a>
+        <a href="about.html">About</a>
         
         <a href="auth.html" class="login-btn">
           Login
@@ -2044,14 +2045,13 @@
 
 
   <!-- =========================================
-        HERO
+        HERO (75% Screen View on Laptop)
   ========================================= -->
 
   <section class="hero hero-upgraded">
 
-    <!-- HERO BANNER -->
     <div class="hero-banner-wrap">
-      <div class="container hero-banner-container" id="heroCarousel">
+      <div class="hero-banner-container" id="heroCarousel">
 
         <div class="hero-slide active" data-category-index="0">
           <img src="hostelherobanner.jpg" alt="Student hostel and PG services" fetchpriority="high" decoding="async">
@@ -4336,9 +4336,10 @@
     } 
 
     /* ========================================= 
-        HERO BANNER CAROUSEL
+        HERO BANNER CAROUSEL & LINKED TICKER
     ========================================= */ 
     const heroSlides = document.querySelectorAll(".hero-slide");
+    const tickerItems = document.querySelectorAll("#headerCategoryTicker .cat-item");
     let carouselIndex = 0;
     let carouselTimer = null;
 
@@ -4349,6 +4350,10 @@
       heroSlides.forEach((slide, i) => { 
         slide.classList.toggle("active", i === carouselIndex); 
       }); 
+
+      tickerItems.forEach((item, i) => {
+        item.classList.toggle("active-cat", i === carouselIndex);
+      });
     } 
 
     function resetCarouselTimer() { 
@@ -4359,6 +4364,13 @@
         }, 2500); 
       } 
     } 
+
+    tickerItems.forEach((item, idx) => {
+      item.addEventListener("click", () => {
+        showCarousel(idx);
+        resetCarouselTimer();
+      });
+    });
 
     showCarousel(0); 
     resetCarouselTimer(); 
