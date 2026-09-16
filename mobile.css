@@ -1,6 +1,6 @@
 @import url("mobile-base.css");
 
-/* Final homepage hero search refinement — search box only */
+/* Final homepage search sizing */
 .hero-search-wrap.hero-search-wrap{
   width:60% !important;
   max-width:420px !important;
@@ -52,53 +52,46 @@
   white-space:nowrap !important;
 }
 
-@media(max-width:767px){
-  .hero-search-wrap.hero-search-wrap{
-    width:100% !important;
-    max-width:420px !important;
-  }
-  .hero-search.hero-search{
-    display:flex !important;
-    grid-template-columns:none !important;
-    padding:5px !important;
-    gap:4px !important;
-    border-radius:13px !important;
-  }
-  .hero-search.hero-search input{
-    min-height:38px !important;
-    height:38px !important;
-    padding:7px 6px !important;
-    font-size:14px !important;
-  }
-  .hero-search .search-leading{
-    width:28px !important;
-    min-width:28px !important;
-    flex-basis:28px !important;
-  }
-  .hero-search .search-btn{
-    min-height:38px !important;
-    height:38px !important;
-    padding:0 13px !important;
-    font-size:12px !important;
-    border-radius:9px !important;
-  }
-}
-
-@media(max-width:420px){
-  .hero-search-wrap.hero-search-wrap{width:100% !important}
-  .hero-search.hero-search{padding:4px !important}
-  .hero-search.hero-search input{font-size:13px !important}
-  .hero-search .search-btn{padding-inline:11px !important}
-}
-
 /* =========================================================
-   MOBILE HOMEPAGE HERO — reference-style front layout
-   Banner first → category/search panel → existing details below.
-   No JS/data/search functionality changes.
+   RESPONSIVE HOMEPAGE HERO UPGRADE
+   Banner first -> compact search panel only when opened.
+   Works across mobile, tablet and laptop widths.
 ========================================================= */
-@media(max-width:767px){
-  /* Give the hero a clean white/page background and remove the old
-     large split-hero presentation on the phone front page. */
+
+/* Header search trigger: hamburger + search icon in one compact control.
+   The existing mobile-menu JS remains intact; opening the menu also reveals
+   the search panel through the :has() state below. */
+@media(max-width:1050px){
+  .mobile-menu{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    place-items:center !important;
+    gap:0 !important;
+    width:86px !important;
+    height:42px !important;
+    padding:0 !important;
+    border:1px solid rgba(255,255,255,.18) !important;
+    border-radius:12px !important;
+    font-size:0 !important;
+    color:#fff !important;
+  }
+
+  .mobile-menu::before,
+  .mobile-menu::after{
+    display:grid;
+    place-items:center;
+    width:100%;
+    height:100%;
+    font-size:21px;
+    line-height:1;
+  }
+
+  .mobile-menu::before{content:"☰"}
+  .mobile-menu::after{content:"⌕";color:#f0d48a}
+}
+
+/* Make the hero banner the full-width focal point on every responsive size. */
+@media(max-width:1050px){
   .hero{
     padding:0 !important;
     background:#fff !important;
@@ -122,8 +115,6 @@
     align-items:stretch !important;
   }
 
-  /* Let the hero copy's children participate in the mobile stack so
-     the existing search remains functional without moving it in HTML. */
   .hero-grid > *:first-child{display:contents !important}
 
   .hero-grid > .hero-visual,
@@ -136,8 +127,10 @@
   .hero-visual{
     width:100% !important;
     max-width:none !important;
-    aspect-ratio:691 / 370 !important;
+    aspect-ratio:16 / 9 !important;
     min-height:0 !important;
+    height:auto !important;
+    margin:0 !important;
     border-radius:0 !important;
     overflow:hidden !important;
     box-shadow:none !important;
@@ -155,7 +148,6 @@
     border-radius:0 !important;
   }
 
-  /* Keep only the visual banner from the old text column. */
   .hero-badge,
   .hero h1,
   .hero-text,
@@ -165,24 +157,29 @@
     display:none !important;
   }
 
+  /* Search is hidden by default: only the header search/menu control opens it. */
   .hero-search-wrap{
+    display:none !important;
     order:2 !important;
     width:100% !important;
     max-width:none !important;
     margin:0 !important;
-    padding:28px 30px 30px !important;
+    padding:24px 30px 28px !important;
     background:#071f3b !important;
     position:relative !important;
   }
 
-  /* Category heading shown above the search, matching the reference
-     composition while leaving the existing search logic untouched. */
+  /* Modern browsers: the existing menu click adds .open to #navLinks. */
+  body:has(#navLinks.open) .hero-search-wrap{
+    display:block !important;
+  }
+
   .hero-search-wrap::before{
     content:"Student Services";
     display:block;
-    margin:0 0 16px !important;
+    margin:0 0 14px !important;
     color:#fff !important;
-    font-size:25px !important;
+    font-size:23px !important;
     font-weight:500 !important;
     line-height:1.2 !important;
     letter-spacing:-.3px !important;
@@ -240,14 +237,8 @@
     transform:none !important;
   }
 
-  /* Keep the existing category/service strip visually below the search. */
-  .hero + *{
-    position:relative !important;
-    z-index:2 !important;
-  }
-
   .carousel-overlay{
-    inset:auto 10px 10px !important;
+    inset:auto 12px 12px !important;
     padding:10px 12px !important;
     border-radius:10px !important;
   }
@@ -258,16 +249,23 @@
   }
 }
 
-@media(max-width:420px){
-  .hero-visual{aspect-ratio:691 / 360 !important}
+@media(max-width:600px){
+  .mobile-menu{
+    width:82px !important;
+    height:40px !important;
+  }
+
+  .hero-visual{
+    aspect-ratio:16 / 9 !important;
+  }
 
   .hero-search-wrap{
-    padding:24px 20px 26px !important;
+    padding:22px 20px 24px !important;
   }
 
   .hero-search-wrap::before{
-    font-size:23px !important;
-    margin-bottom:14px !important;
+    font-size:22px !important;
+    margin-bottom:13px !important;
   }
 
   .hero-search-wrap .hero-search input{
@@ -288,4 +286,18 @@
     padding:0 16px !important;
     font-size:13px !important;
   }
+}
+
+@media(max-width:380px){
+  .mobile-menu{width:78px !important}
+  .hero-search-wrap{padding-inline:14px !important}
+  .hero-search-wrap .hero-search{gap:1px !important}
+  .hero-search-wrap .search-leading{width:34px !important;min-width:34px !important;flex-basis:34px !important}
+  .hero-search-wrap .search-btn{padding-inline:12px !important}
+}
+
+/* Keep the following content directly below the hero without overlap. */
+.hero + *{
+  position:relative !important;
+  z-index:2 !important;
 }
