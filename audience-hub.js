@@ -159,3 +159,51 @@
   `;
   document.head.appendChild(style);
 })();
+
+/* HERO IMAGE + TEXT: full brightness on every device */
+(function(){
+  if(!document.querySelector('.hero-visual')) return;
+  const style=document.createElement('style');
+  style.id='shh-hero-full-brightness';
+  style.textContent=`
+    .hero-visual::before{
+      background:transparent !important;
+      opacity:1 !important;
+    }
+    .carousel-card::after{
+      background:transparent !important;
+      opacity:1 !important;
+    }
+    .carousel-card img{
+      filter:brightness(1.20) saturate(1.08) contrast(1.03) !important;
+    }
+    .carousel-overlay,
+    .carousel-overlay small,
+    .carousel-overlay h3,
+    .carousel-overlay h3::after{
+      opacity:1 !important;
+      filter:none !important;
+    }
+    .carousel-overlay h3{
+      color:#fff !important;
+      text-shadow:0 3px 10px rgba(0,0,0,.72) !important;
+    }
+    .carousel-overlay h3::after{
+      color:#fff !important;
+      text-shadow:0 2px 7px rgba(0,0,0,.72) !important;
+    }
+    .carousel-overlay small{
+      color:#fff !important;
+      background:rgba(7,26,51,.28) !important;
+      border-color:rgba(240,212,138,.64) !important;
+    }
+    @media(max-width:767px){
+      .hero-visual::before{background:transparent !important}
+      .carousel-card::after{background:transparent !important}
+      .carousel-card img{filter:brightness(1.20) saturate(1.08) contrast(1.03) !important}
+      .carousel-overlay h3,
+      .carousel-overlay h3::after{color:#fff !important;opacity:1 !important}
+    }
+  `;
+  document.head.appendChild(style);
+})();
