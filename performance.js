@@ -12,6 +12,56 @@
     });
   };
 
+  const repairHomepageHero = () => {
+    const hero = document.querySelector('.hero-upgraded');
+    const carousel = document.getElementById('heroCarousel');
+    if (!hero || !carousel) return;
+
+    // The homepage currently contains a malformed first <img> tag. Rebuild only
+    // this homepage carousel with valid markup so the existing banner files load.
+    const sources = [
+      ['hostelherobanner.jpg', 'Student hostel and PG services'],
+      ['tiffinherobanner.jpg', 'Student tiffin and mess services'],
+      ['libraryherobanner.jpg', 'Student library and study spaces'],
+      ['cafeherobanner.jpg', 'Student friendly cafes'],
+      ['bookstoreherobanner.jpg', 'Student book stores and study essentials']
+    ];
+
+    carousel.innerHTML = sources.map(([src, alt], index) => `
+      <div class="hero-slide${index === 0 ? ' active' : ''}" data-category-index="${index}">
+        <img src="${src}" alt="${alt}" ${index === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"'} decoding="async">
+      </div>
+    `).join('');
+
+    const slides = Array.from(carousel.querySelectorAll('.hero-slide'));
+    const tickerItems = Array.from(document.querySelectorAll('#headerCategoryTicker .cat-item'));
+    let index = 0;
+
+    const show = (nextIndex) => {
+      if (!slides.length) return;
+      index = (nextIndex + slides.length) % slides.length;
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      tickerItems.forEach((item, i) => item.classList.toggle('active-cat', i === index));
+    };
+
+    show(0);
+
+    if (window.__studentHubHelpHeroTimer) {
+      clearInterval(window.__studentHubHelpHeroTimer);
+    }
+    window.__studentHubHelpHeroTimer = setInterval(() => show(index + 1), 2500);
+
+    tickerItems.forEach((item, itemIndex) => {
+      if (item.dataset.heroRepairBound === 'true') return;
+      item.dataset.heroRepairBound = 'true';
+      item.addEventListener('click', () => {
+        show(itemIndex);
+        clearInterval(window.__studentHubHelpHeroTimer);
+        window.__studentHubHelpHeroTimer = setInterval(() => show(index + 1), 2500);
+      });
+    });
+  };
+
   const upgradeFooter = () => {
     const oldFooter = document.querySelector('footer');
     if (!oldFooter || oldFooter.dataset.footerV2 === 'true') return;
@@ -243,6 +293,7 @@
 
   const run = () => {
     applyImageHints();
+    repairHomepageHero();
     upgradeFooter();
     upgradeHero();
   };
