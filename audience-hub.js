@@ -124,3 +124,38 @@
   `;
   document.head.appendChild(style);
 })();
+
+(function(){
+  if(!document.querySelector('.stats-grid')) return;
+  const style=document.createElement('style');
+  style.id='shh-mobile-stats-one-row';
+  style.textContent=`
+    @media (max-width:600px){
+      .stats-wrap .stats-grid{
+        display:grid !important;
+        grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+        gap:4px !important;
+        width:100% !important;
+      }
+      .stats-wrap .stat-card{
+        min-width:0 !important;
+        width:100% !important;
+        padding:10px 3px !important;
+        border-radius:12px !important;
+      }
+      .stats-wrap .stat-number{
+        font-size:clamp(20px,6.2vw,30px) !important;
+        line-height:1 !important;
+        white-space:nowrap !important;
+      }
+      .stats-wrap .stat-label{
+        font-size:clamp(7px,2.15vw,10px) !important;
+        line-height:1.08 !important;
+        white-space:nowrap !important;
+        overflow:hidden !important;
+        text-overflow:clip !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
