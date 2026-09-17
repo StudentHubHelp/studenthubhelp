@@ -15,12 +15,12 @@
     premium:['premium','luxury','ac','best','top','high end']
   };
   const CATEGORY={hostel:['hostel','pg','paying guest'],tiffin:['tiffin','mess'],library:['library','study library','reading room'],cafe:['cafe','coffee shop','restaurant','restro'],bookstore:['bookstore','book store','book shop','stationery']};
-  const STOP=new Set(['the','a','an','is','are','me','mujhe','mujko','mko','chahiye','chaiye','please','for','of','in','on','at','par','pe','pr','ke','ka','ki','k','near','nearby','pass','pas','paas','hai','hain','ko','se','tak','and','or','ya','with','under','within','less','than','me','mein','mai','m','में','पर','के','का','की','पास','को','से','तक','और','या','चाहिए','चाहिये']);
+  const STOP=new Set(['the','a','an','is','are','me','mujhe','mujko','mko','chahiye','chaiye','please','for','of','in','on','at','par','pe','pr','ke','ka','ki','k','near','nearby','pass','pas','paas','hai','hain','ko','se','tak','and','or','ya','with','under','within','less','than','above','over','more','greater','minimum','min','at','least','budget','me','mein','mai','m','में','पर','के','का','की','पास','को','से','तक','और','या','चाहिए','चाहिये']);
   const norm=s=>String(s??'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[|,;:/()[\]{}.!?]+/g,' ').replace(/\s+/g,' ').trim();
   const toks=s=>norm(s).split(/\s+/).filter(Boolean);
   const num=s=>{const m=String(s??'').replace(/,/g,'').match(/\d+(?:\.\d+)?/);return m?Number(m[0]):null;};
-  function maxPrice(q){const n=norm(q);const m=n.match(/(?:under|below|upto|up to|less than|within|kam se kam|se kam|budget|₹|rs\.?)[^0-9]{0,12}(\d[\d,]*(?:\.\d+)?)/i);return m?Number(m[1].replace(/,/g,'')):null;}
-  function minPrice(q){const n=norm(q);const m=n.match(/(?:above|over|more than|greater than|minimum|min|at least)[^0-9]{0,12}(\d[\d,]*(?:\.\d+)?)/i);return m?Number(m[1].replace(/,/g,'')):null;}
+  function maxPrice(q){const n=norm(q);const m=n.match(/(?:under|below|upto|up to|less than|within|budget)[^0-9]{0,12}(\d[\d,]*(?:\.\d+)?)/i);return m?Number(m[1].replace(/,/g,'')):null;}
+  function minPrice(q){const n=norm(q);const m=n.match(/(?:above|over|more than|greater than|minimum|min|at least|kam se kam|se kam)[^0-9]{0,12}(\d[\d,]*(?:\.\d+)?)/i);return m?Number(m[1].replace(/,/g,'')):null;}
   function groups(q){const n=norm(q),out=[];for(const [k,a] of Object.entries(SYN))if(a.some(x=>n.includes(norm(x))))out.push(k);return [...new Set(out)];}
   function category(q){const g=groups(q);return ['hostel','tiffin','library','cafe','bookstore'].find(x=>g.includes(x))||null;}
   function fieldText(r){const parts=[];for(const [k,v] of Object.entries(r||{})){if(/^(__|created_at$|updated_at$|image$|images$)/i.test(k)||v==null)continue;parts.push(typeof v==='object'?JSON.stringify(v):String(v));}return norm(parts.join(' '));}
@@ -35,23 +35,24 @@
     const hi=maxPrice(q),lo=minPrice(q),rp=priceOf(r);
     if(hi!=null){required++;if(rp!=null&&rp<=hi){s+=80;matched++;}else if(rp!=null)s-=100;}
     if(lo!=null){required++;if(rp!=null&&rp>=lo){s+=60;matched++;}else if(rp!=null)s-=70;}
-    const nonStop=toks(n).filter(x=>!STOP.has(x)&&x.length>2);
-    let tokenHits=0;for(const t of nonStop){if(h.includes(t)){s+=10;tokenHits++;continue;}for(const [k,a] of Object.entries(SYN)){if(a.some(x=>norm(x)===t)&&a.some(x=>h.includes(norm(x)))){s+=7;tokenHits++;break;}}}
+    const nonStop=toks(n).filter(x=>!STOP.has(x)&&x.length>2);let tokenHits=0;
+    for(const t of nonStop){if(h.includes(t)){s+=10;tokenHits++;continue;}for(const [k,a] of Object.entries(SYN)){if(a.some(x=>norm(x)===t)&&a.some(x=>h.includes(norm(x)))){s+=7;tokenHits++;break;}}}
     if(nonStop.length&&tokenHits===nonStop.length)s+=35;
     if(required&&matched===required)s+=55;
     return {score:s,required,matched,cat,groups:g,price:rp,max:hi,min:lo};
   }
+  const iName=r=>String(r?.name||r?.property_name||r?.service_name||r?.title||'').toLowerCase();
   function install(){
     if(typeof window.ranked!=='function'||window.__studentHubPhase2Installed)return;
     const old=window.ranked;window.__studentHubPhase2Installed=true;
     window.ranked=function(data,q){
       const base=old(data,q);if(!Array.isArray(base)||!q)return base;
-      const nq=String(q);const scored=base.map((r,i)=>{const c=conditionScore(r,nq);return {...r,__phase2Score:c.score,__phase2Conditions:c};});
+      const nq=String(q);const scored=base.map(r=>{const c=conditionScore(r,nq);return {...r,__phase2Score:c.score,__phase2Conditions:c};});
       const explicit=groups(nq).length||maxPrice(nq)!=null||minPrice(nq)!=null;
       if(!explicit)return scored;
       return scored.filter(r=>r.__phase2Conditions.required===0||r.__phase2Conditions.matched>0).sort((a,b)=>b.__phase2Score-a.__phase2Score||(a.__score||0)-(b.__score||0)||iName(a).localeCompare(iName(b)));
     };
-    window.__studentHubPhase2={groups,category,maxPrice,minPrice,priceOf,conditionScore,version:'1.0.0'};
+    window.__studentHubPhase2={groups,category,maxPrice,minPrice,priceOf,conditionScore,version:'1.1.0'};
   }
   const timer=setInterval(()=>{if(typeof window.ranked==='function'){clearInterval(timer);install();}},50);setTimeout(()=>{clearInterval(timer);install();},10000);
 })();
