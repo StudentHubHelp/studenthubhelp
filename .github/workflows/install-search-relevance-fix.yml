@@ -1,0 +1,47 @@
+name: install search relevance fix
+
+on:
+  push:
+    paths:
+      - global-search.html
+      - search-relevance-fix.js
+      - .github/workflows/install-search-relevance-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Attach relevance fix to global search
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('global-search.html')
+          s = p.read_text(encoding='utf-8')
+          tag = '  <script src="search-relevance-fix.js"></script>\n'
+          if 'search-relevance-fix.js' not in s:
+              marker = '  </script>\n</body>'
+              if marker not in s:
+                  raise SystemExit('global-search script marker not found')
+              s = s.replace(marker, marker.replace('</body>', tag + '</body>'), 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit and push
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet -- global-search.html; then
+            echo 'No HTML change needed.'
+            exit 0
+          fi
+          git add global-search.html
+          git commit -m 'fix: enforce strict local search relevance'
+          git push
