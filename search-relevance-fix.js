@@ -1,11 +1,29 @@
 (function(){
+  // Normalize common Indian/local address abbreviations so queries such as
+  // "Piprali Road" also match stored values such as "Piprali Rd".
+  function shhNormalizeLocationText(v){
+    return norm(String(v||'')
+      .replace(/\broad\b/g,' rd ')
+      .replace(/\brd\.?\b/g,' rd ')
+      .replace(/\broad\.?\b/g,' rd ')
+      .replace(/\bstreet\b/g,' st ')
+      .replace(/\bst\.?\b/g,' st ')
+      .replace(/\blane\b/g,' ln ')
+      .replace(/\bln\.?\b/g,' ln ')
+      .replace(/\broad\s+road\b/g,'rd')
+      .replace(/\bchowk\b/g,' chowk ')
+      .replace(/\bchoke\b/g,' chowk '));
+  }
+
   function shhLocationTokenMatch(token, fields){
+    const t=shhNormalizeLocationText(token);
     const sources=[fields.city,fields.area,fields.address,fields.landmark];
     return sources.some(s=>{
-      const hay=norm(s);
+      const hay=shhNormalizeLocationText(s);
       if(!hay) return false;
-      if(hay.split(' ').includes(token)) return true;
-      return toks(hay).some(x=>sim(token,x)>=.90);
+      const words=toks(hay);
+      if(words.includes(t)) return true;
+      return words.some(x=>sim(t,x)>=.90);
     });
   }
 
@@ -14,11 +32,19 @@
     return loc.every(t=>shhLocationTokenMatch(t,f));
   }
 
+  function shhGenderMatch(info,f){
+    const text=norm([f.name,f.room,f.description,f.facilities,f.food].join(' '));
+    if(info.ins.girls) return /(girls|girl|female|ladki|ladies|women|mahila)/.test(text);
+    if(info.ins.boys) return /(boys|boy|male|ladka|gents|men|purush)/.test(text);
+    return true;
+  }
+
   function shhBetterScore(r,info){
     const f=fields(r),why=[];
     let s=0;
     if(info.cat && r.__category!==info.cat) return {s:-999,why:[]};
     if(info.location.length && !shhStrictLocationMatch(f,info.location)) return {s:-999,why:[]};
+    if((info.ins.girls||info.ins.boys) && !shhGenderMatch(info,f)) return {s:-999,why:[]};
 
     const queryTerms=info.ts.filter(t=>!STOP.has(t));
     const categoryTerms=new Set(Object.values(ALIASES).flat().map(norm));
@@ -31,10 +57,15 @@
       else {const z=sim(info.n,f.name);if(z>=.72){s+=150*z;why.push('Name similarity');}}
     } else if(info.location.length){
       for(const t of info.location){
-        if(toks(f.city).includes(t)){s+=300;why.push('City match');}
-        else if(toks(f.area).includes(t)){s+=240;why.push('Area match');}
-        else if(toks(f.landmark).includes(t)){s+=190;why.push('Nearby match');}
-        else if(toks(f.address).includes(t)){s+=160;why.push('Address match');}
+        const nt=shhNormalizeLocationText(t);
+        const city=shhNormalizeLocationText(f.city);
+        const area=shhNormalizeLocationText(f.area);
+        const landmark=shhNormalizeLocationText(f.landmark);
+        const address=shhNormalizeLocationText(f.address);
+        if(toks(city).includes(nt)){s+=300;why.push('City match');}
+        else if(toks(area).includes(nt)){s+=240;why.push('Area match');}
+        else if(toks(landmark).includes(nt)){s+=190;why.push('Nearby match');}
+        else if(toks(address).includes(nt)){s+=160;why.push('Address match');}
         else if(shhLocationTokenMatch(t,f)){s+=120;why.push('Location match');}
       }
     }
@@ -55,7 +86,6 @@
     if(info.ins.nearby&&(f.area||f.landmark||f.address))s+=28;
     if(info.ins.late&&f.timing){s+=18;if(/24|late|night|open|hour|am|pm/.test(f.timing))s+=28;}
     if(info.ins.veg&&/veg|vegetarian|shakahari/.test(f.food+' '+f.facilities))s+=35;
-    if((info.ins.boys||info.ins.girls)&&/(boys|girls|male|female|ladke|ladki)/.test(f.room+' '+f.description+' '+f.facilities))s+=35;
     if(info.ins.premium){const rating=Number(r.rating);if(Number.isFinite(rating)&&rating>0)s+=rating*10;}
     if(info.budget!=null){const nums=(f.price.match(/\d+(?:\.\d+)?/g)||[]).map(Number);if(nums.length){const p=Math.min(...nums);s+=p<=info.budget?50:-Math.min(50,(p-info.budget)/Math.max(1,info.budget)*50);}}
     if(r.verified===true||r.is_verified===true||norm(r.verification_status)==='verified')s+=15;
