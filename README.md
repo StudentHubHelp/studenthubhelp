@@ -1,3 +1,0 @@
-# StudentHubHelp
-
-Repository maintenance marker.
