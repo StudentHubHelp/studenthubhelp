@@ -8,6 +8,7 @@ on:
       - search-distance-intelligence.js
       - search-phase1-intelligence.js
       - search-phase2-intelligence.js
+      - search-phase3-location-intelligence.js
       - .github/workflows/install-search-relevance-fix.yml
 
 permissions:
@@ -27,8 +28,9 @@ jobs:
           node --check search-distance-intelligence.js
           node --check search-phase1-intelligence.js
           node --check search-phase2-intelligence.js
+          node --check search-phase3-location-intelligence.js
 
-      - name: Test phase 1 and phase 2 runtime APIs
+      - name: Test phase 1 phase 2 and phase 3 runtime APIs
         shell: bash
         run: |
           node <<'NODE'
@@ -54,10 +56,27 @@ jobs:
               ];
               const out=window.ranked(rows,'girls hostel under 5000');
               if(!out.length||out[0].name!=='Girls PG A') throw new Error('Phase 2 compound ranking test failed');
-              console.log('Phase 1 + Phase 2 runtime tests passed');
+              global.window.__studentHubPhase2Installed=false;
+              window.ranked=(data)=>data.map((r,i)=>({...r,__score:i}));
+              eval(fs.readFileSync('search-phase3-location-intelligence.js','utf8'));
+              setTimeout(()=>{
+                if(!window.__studentHubPhase3) throw new Error('Phase 3 did not install');
+                const p3=window.__studentHubPhase3;
+                const qi=p3.queryInfo('girls hostel near Allen on Piprali Road');
+                if(!qi.roads.includes('piprali')||!qi.landmarks.includes('allen')||!qi.relations.includes('near')) throw new Error('Phase 3 query parsing test failed');
+                const locRows=[
+                  {name:'Girls PG Piprali Allen',category:'hostel',gender:'girls',area:'Piprali Road',nearby:'Allen Career Institute'},
+                  {name:'Girls PG Nawalgarh',category:'hostel',gender:'girls',area:'Nawalgarh Road',nearby:'CLC'}
+                ];
+                const locOut=window.ranked(locRows,'girls hostel near Allen on Piprali Road');
+                if(!locOut.length||locOut[0].name!=='Girls PG Piprali Allen') throw new Error('Phase 3 location ranking test failed');
+                const between=p3.queryInfo('hostel between Allen and CLC');
+                if(!between.between||between.landmarks.length!==2) throw new Error('Phase 3 between-landmarks test failed');
+                console.log('Phase 1 + Phase 2 + Phase 3 runtime tests passed');
+              },100);
             },100);
           },100);
-          setTimeout(()=>process.exit(0),500);
+          setTimeout(()=>process.exit(0),700);
           NODE
 
       - name: Attach all search intelligence layers in order
@@ -72,9 +91,9 @@ jobs:
               'search-relevance-fix.js',
               'search-distance-intelligence.js',
               'search-phase1-intelligence.js',
-              'search-phase2-intelligence.js'
+              'search-phase2-intelligence.js',
+              'search-phase3-location-intelligence.js'
           ]
-          # Remove any previous copies so order is deterministic and duplicates cannot accumulate.
           for f in files:
               s=re.sub(r'\s*<script\s+src=["\']'+re.escape(f)+r'["\']\s*></script>', '', s, flags=re.I)
           m=re.search(r'</body\s*>',s,re.I) or re.search(r'</html\s*>',s,re.I)
@@ -91,11 +110,11 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           s=Path('global-search.html').read_text(encoding='utf-8')
-          files=['search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js']
+          files=['search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js','search-phase3-location-intelligence.js']
           pos=[s.find(f'<script src="{f}"></script>') for f in files]
-          if any(x<0 for x in pos) or pos!=sorted(pos) or len(set(pos))!=4:
+          if any(x<0 for x in pos) or pos!=sorted(pos) or len(set(pos))!=5:
               raise SystemExit(f'Invalid search layer attachment: {pos}')
-          print('All 4 search layers attached once and in correct order:', pos)
+          print('All 5 search layers attached once and in correct order:', pos)
           PY
 
       - name: Commit and push
@@ -108,5 +127,5 @@ jobs:
             echo 'Global search attachment already correct.'
             exit 0
           fi
-          git commit -m 'fix: attach complete search intelligence chain'
+          git commit -m 'fix: attach complete search intelligence chain with phase 3'
           git push
