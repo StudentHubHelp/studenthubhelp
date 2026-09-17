@@ -1,6 +1,4 @@
 (function(){
-  // ULTRA+ landmark -> property distance intelligence.
-  // Distance is matched to the REQUESTED landmark, not merely the first number in a record.
   const oldRanked=window.ranked;if(typeof oldRanked!=='function')return;
   const landmarkCoords=window.STUDENTHUB_LANDMARK_COORDS||{};
   const normDI=v=>String(v??'').toLowerCase().replace(/[|,;:/()[\]{}]+/g,' ').replace(/\s+/g,' ').trim();
@@ -8,14 +6,17 @@
   const findLandmarkDI=q=>{const n=normDI(q),hits=[];Object.entries(aliasesDI).forEach(([k,a])=>{if(a.some(x=>n.includes(normDI(x))))hits.push(k);});return hits.sort((a,b)=>b.length-a.length)[0]||'';};
   const unitKmDI=u=>/^m$|^meter|^metre|^मीटर$/i.test(u)?0.001:1;
   function parseDistanceDI(text){
-    const n=normDI(text).replace(/[–—−]/g,'-');
-    let m=n.match(/(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)\s*(?:-|to|से|तक)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)/i);
-    if(!m)m=n.match(/(\d+(?:\.\d+)?)\s*(?:-|to|से|तक)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)/i);
-    if(!m)m=n.match(/(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)/i);
-    if(!m)return null;
-    const a=Number(m[1]),hasTwo=!!m[3]&&!/^km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी$/i.test(m[3]),b=hasTwo?Number(m[3]):a;
-    const firstUnit=hasTwo?m[2]:m[2],secondUnit=hasTwo?(m[4]||m[2]):m[2];
-    if(!Number.isFinite(a)||!Number.isFinite(b))return null;const x=a*unitKmDI(firstUnit),y=b*unitKmDI(secondUnit);return {minKm:Math.min(x,y),maxKm:Math.max(x,y),midKm:(x+y)/2};
+    const n=normDI(text).replace(/[–—−]/g,'-');let m;
+    // number + unit -> separator -> number + unit
+    m=n.match(/(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)\s*(?:-|to|से|तक)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)/i);
+    if(m){const x=Number(m[1])*unitKmDI(m[2]),y=Number(m[3])*unitKmDI(m[4]);return {minKm:Math.min(x,y),maxKm:Math.max(x,y),midKm:(x+y)/2};}
+    // number -> separator -> number + unit
+    m=n.match(/(\d+(?:\.\d+)?)\s*(?:-|to|से|तक)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)/i);
+    if(m){const x=Number(m[1])*unitKmDI(m[3]),y=Number(m[2])*unitKmDI(m[3]);return {minKm:Math.min(x,y),maxKm:Math.max(x,y),midKm:(x+y)/2};}
+    // single distance
+    m=n.match(/(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)/i);
+    if(m){const x=Number(m[1])*unitKmDI(m[2]);return {minKm:x,maxKm:x,midKm:x};}
+    return null;
   }
   const distanceFromLandmarkTextDI=(text,landmark)=>{const n=normDI(text).replace(/[–—−]/g,'-'),als=aliasesDI[landmark]||[landmark],hits=[];als.forEach(a=>{let from=0,idx;const aa=normDI(a);while((idx=n.indexOf(aa,from))>=0){hits.push(idx);from=idx+aa.length;}});if(!hits.length)return null;let best=null;for(const idx of hits){const d=parseDistanceDI(n.slice(idx,Math.min(n.length,idx+220)));if(d&&(best==null||d.minKm<best.minKm))best=d;}return best;};
   const haversineDI=(lat1,lon1,lat2,lon2)=>{const a=[lat1,lon1,lat2,lon2].map(Number);if(a.some(v=>!Number.isFinite(v)))return null;const rad=Math.PI/180,R=6371,dLat=(a[2]-a[0])*rad,dLon=(a[3]-a[1])*rad,x=Math.sin(dLat/2)**2+Math.cos(a[0]*rad)*Math.cos(a[2]*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(Math.min(1,x)));};
