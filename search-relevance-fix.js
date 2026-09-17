@@ -72,4 +72,10 @@
       .filter(r=>r.__score>=35)
       .sort((a,b)=>b.__score-a.__score||(Number(b.rating)||0)-(Number(a.rating)||0)||nameFromRecord(a).localeCompare(nameFromRecord(b)));
   };
+
+  // The page's original inline script can run the initial URL query before this file loads.
+  // Re-run it once so the first visible results use the strict relevance rules too.
+  if(typeof performSearch==='function' && input && input.value.trim()){
+    setTimeout(()=>performSearch(input.value),0);
+  }
 })();
