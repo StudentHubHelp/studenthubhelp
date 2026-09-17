@@ -5,6 +5,7 @@ on:
     paths:
       - global-search.html
       - search-relevance-fix.js
+      - search-distance-intelligence.js
       - .github/workflows/install-search-relevance-fix.yml
 
 permissions:
@@ -17,19 +18,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Attach relevance fix to global search
+      - name: Attach relevance layers to global search
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('global-search.html')
           s = p.read_text(encoding='utf-8')
-          tag = '  <script src="search-relevance-fix.js"></script>\n'
-          if 'search-relevance-fix.js' not in s:
-              marker = '  </script>\n</body>'
-              if marker not in s:
-                  raise SystemExit('global-search script marker not found')
-              s = s.replace(marker, marker.replace('</body>', tag + '</body>'), 1)
+          tags = [
+              '  <script src="search-relevance-fix.js"></script>\n',
+              '  <script src="search-distance-intelligence.js"></script>\n'
+          ]
+          marker = '  </script>\n</body>'
+          if marker not in s:
+              raise SystemExit('global-search script marker not found')
+          insert = ''.join(t for t in tags if t.strip() not in s)
+          if insert:
+              s = s.replace(marker, marker.replace('</body>', insert + '</body>'), 1)
               p.write_text(s, encoding='utf-8')
           PY
 
@@ -43,5 +48,5 @@ jobs:
             exit 0
           fi
           git add global-search.html
-          git commit -m 'fix: enforce strict local search relevance'
+          git commit -m 'fix: attach landmark distance intelligence'
           git push
