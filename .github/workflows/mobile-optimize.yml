@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Inject shared mobile CSS, image hints and Finder smart search
+      - name: Inject shared mobile CSS, image hints, Finder smart search and mobile navbar control
         shell: python
         run: |
           from pathlib import Path
@@ -37,6 +37,15 @@ jobs:
 
               if path.name in finder_pages and 'js/finder-power-search.js' not in text and '</body>' in text.lower():
                   text = re.sub(r'</body>', '  <script src="js/finder-power-search.js" defer></script>\n</body>', text, count=1, flags=re.I)
+
+              # Mobile navbar: add one real, tappable three-line menu button only when the page
+              # has the shared navbar structure. Desktop/tablet remain unchanged.
+              if path.name == 'index.html' and 'id="mobileMenuToggle"' not in text and '</nav>' in text.lower():
+                  button = '''\n      <button id="mobileMenuToggle" class="mobile-menu" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks"><span aria-hidden="true"></span></button>\n'''
+                  text = re.sub(r'(</nav>)', button + r'\1', text, count=1, flags=re.I)
+
+                  mobile_nav_script = r'''\n<script id="studenthubhelp-mobile-navbar-fix">\n(function(){\n  const initMobileNav = () => {\n    const button = document.getElementById('mobileMenuToggle');\n    const nav = document.getElementById('navLinks') || document.querySelector('.nav-links');\n    if (!button || !nav || button.dataset.bound === 'true') return;\n    button.dataset.bound = 'true';\n    const sync = (open) => {\n      nav.classList.toggle('open', open);\n      button.setAttribute('aria-expanded', String(open));\n      button.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');\n      document.body.classList.toggle('mobile-nav-open', open);\n    };\n    button.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); sync(!nav.classList.contains('open')); });\n    nav.addEventListener('click', (event) => { if (event.target.closest('a')) sync(false); });\n    document.addEventListener('click', (event) => {\n      if (!nav.classList.contains('open')) return;\n      if (!nav.contains(event.target) && !button.contains(event.target)) sync(false);\n    });\n    window.addEventListener('resize', () => { if (window.innerWidth > 767) sync(false); });\n  };\n  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMobileNav, {once:true}); else initMobileNav();\n})();\n</script>\n'''
+                  text = text.replace('</body>', mobile_nav_script + '</body>')
 
               imgs = []
               first = True
@@ -69,10 +78,21 @@ jobs:
 
               path.write_text(text, encoding='utf-8')
 
+      - name: Ensure mobile navbar control styling exists
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('mobile.css')
+          text = path.read_text(encoding='utf-8')
+          marker = '/* StudentHubHelp mobile navbar tap control */'
+          if marker not in text:
+              text += '''\n\n/* StudentHubHelp mobile navbar tap control */\n#mobileMenuToggle{display:none;position:relative;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;padding:0;margin:0;border:1px solid rgba(7,26,51,.16);border-radius:12px;background:#fff;color:#071a33;box-shadow:0 4px 14px rgba(7,26,51,.08);cursor:pointer;z-index:1105;-webkit-tap-highlight-color:transparent}\n#mobileMenuToggle span,#mobileMenuToggle span::before,#mobileMenuToggle span::after{content:"";display:block;width:20px;height:2px;border-radius:2px;background:#071a33;transition:transform .2s ease,opacity .2s ease}\n#mobileMenuToggle span{position:relative}\n#mobileMenuToggle span::before,#mobileMenuToggle span::after{position:absolute;left:0}\n#mobileMenuToggle span::before{top:-6px}\n#mobileMenuToggle span::after{top:6px}\n#mobileMenuToggle[aria-expanded="true"] span{background:transparent}\n#mobileMenuToggle[aria-expanded="true"] span::before{transform:translateY(6px) rotate(45deg)}\n#mobileMenuToggle[aria-expanded="true"] span::after{transform:translateY(-6px) rotate(-45deg)}\n@media(max-width:767px){\n  .nav-inner{position:relative!important}\n  #mobileMenuToggle{display:inline-flex!important;margin-left:auto!important;flex:0 0 44px!important}\n  .nav-links{position:absolute!important;top:calc(100% + 8px)!important;left:12px!important;right:12px!important;display:none!important;flex-direction:column!important;align-items:stretch!important;gap:4px!important;padding:10px!important;background:rgba(255,255,255,.98)!important;border:1px solid #e4e9f0!important;border-radius:16px!important;box-shadow:0 18px 50px rgba(7,26,51,.16)!important;z-index:1100!important}\n  .nav-links.open{display:flex!important}\n  .nav-links a{display:flex!important;align-items:center!important;min-height:46px!important;padding:10px 14px!important;border-radius:10px!important}\n  body.mobile-nav-open{overflow:hidden!important}\n}\n@media(min-width:768px){#mobileMenuToggle{display:none!important}.nav-links{position:static!important;display:flex!important}}\n@media(prefers-reduced-motion:reduce){#mobileMenuToggle span,#mobileMenuToggle span::before,#mobileMenuToggle span::after{transition:none!important}}\n'''
+              path.write_text(text, encoding='utf-8')
+
       - name: Commit mobile optimization changes
         run: |
           git config user.name 'StudentHubHelp Mobile Optimizer'
           git config user.email 'actions@github.com'
           git add '*.html' mobile.css js/finder-power-search.js
-          git diff --cached --quiet || git commit -m 'perf: optimize mobile responsiveness and Finder search [mobile-optimized]'
+          git diff --cached --quiet || git commit -m 'perf: add tappable mobile navbar menu [mobile-optimized]'
           git push
