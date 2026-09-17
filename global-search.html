@@ -5,2066 +5,2600 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Global Search | StudentHubHelp</title>
-  <meta name="description" content="Search hostels, PGs, tiffin services, libraries, cafes and bookstores on StudentHubHelp.">
+  <meta name="description" content="Search hostels, PGs, tiffin services, libraries, cafes and bookstores in one place on StudentHubHelp.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://studenthubhelp.github.io/studenthubhelp/global-search.html">
 
-  <link rel="icon" type="image/png" href="logo.png">
+  <meta property="og:title" content="Global Search | StudentHubHelp">
+  <meta property="og:description" content="Find student hostels, PGs, tiffin services, libraries, cafes and bookstores in one search.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://studenthubhelp.github.io/studenthubhelp/global-search.html">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Global Search | StudentHubHelp">
+  <meta name="twitter:description" content="One search for student services across StudentHubHelp.">
+
+  <link rel="icon" href="favicon.ico">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 
-  <!-- Supabase -->
+  <link rel="stylesheet" href="mobile.css">
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    :root {
-      --navy: #071a33;
-      --navy-2: #0b2343;
-      --navy-3: #12365c;
-      --gold: #d7a63d;
-      --gold-light: #f2c866;
-
-      --bg: #f5f7fb;
-      --white: #ffffff;
-      --text: #162033;
-      --muted: #667085;
-      --border: #e4e8ef;
-
-      --green: #16834b;
-      --red: #c62828;
-
-      --shadow: 0 12px 35px rgba(7, 26, 51, 0.08);
-      --radius: 18px;
+    :root{
+      --navy:#071a33;
+      --navy-2:#0b2343;
+      --navy-3:#12365c;
+      --gold:#d7a63d;
+      --gold-2:#f2c866;
+      --gold-soft:#fff7df;
+      --bg:#f5f7fb;
+      --surface:#fff;
+      --text:#162033;
+      --muted:#667085;
+      --muted-2:#98a2b3;
+      --border:#e6eaf0;
+      --green:#16834b;
+      --red:#c62828;
+      --blue:#2563eb;
+      --shadow:0 18px 50px rgba(7,26,51,.10);
+      --shadow-sm:0 8px 25px rgba(7,26,51,.08);
+      --radius:22px;
     }
 
-    * {
-      box-sizing: border-box;
+    *{box-sizing:border-box}
+
+    html{
+      scroll-behavior:smooth;
+      scroll-padding-top:110px;
     }
 
-    html {
-      scroll-behavior: auto;
+    body{
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(215,166,61,.08), transparent 25rem),
+        var(--bg);
+      overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;
     }
 
-    body {
-      margin: 0;
-      font-family: Inter, Arial, sans-serif;
-      color: var(--text);
-      background: var(--bg);
+    body.modal-open{overflow:hidden}
+
+    button,input{font:inherit}
+
+    button,a{ -webkit-tap-highlight-color:transparent }
+
+    a{color:inherit;text-decoration:none}
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible{
+      outline:3px solid rgba(242,200,102,.9);
+      outline-offset:3px;
     }
 
-    button,
-    input,
-    select {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
+    .container{
+      width:min(1320px,calc(100% - 44px));
+      margin:auto;
     }
 
     /* ================= NAVBAR ================= */
-
-    .navbar {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background: var(--navy);
-      border-bottom: 1px solid rgba(255,255,255,.08);
+    .navbar{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      background:rgba(7,26,51,.97);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      box-shadow:0 8px 28px rgba(0,0,0,.12);
+      backdrop-filter:blur(16px);
     }
 
-    .nav-inner {
-      width: min(1320px, calc(100% - 40px));
-      min-height: 72px;
-      margin: auto;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
+    .nav-container{
+      min-height:76px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:24px;
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: white;
-      min-width: 0;
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-width:0;
     }
 
-    .brand-logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      overflow: hidden;
-      background: var(--gold-light);
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      flex-shrink: 0;
+    .brand-mark{
+      width:58px;
+      height:58px;
+      flex:0 0 58px;
+      display:grid;
+      place-items:center;
+      border-radius:18px;
+      background:linear-gradient(145deg,var(--gold-2),#d99f27);
+      color:var(--navy);
+      font-weight:900;
+      font-size:20px;
+      box-shadow:0 10px 24px rgba(215,166,61,.20);
     }
 
-    .brand-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+    .brand-copy{min-width:0}
+
+    .brand-title{
+      color:#fff;
+      font-size:22px;
+      font-weight:800;
+      line-height:1.1;
+      letter-spacing:-.4px;
+      white-space:nowrap;
     }
 
-    .brand-name {
-      font-size: 19px;
-      font-weight: 800;
+    .brand-subtitle{
+      color:#aebbd0;
+      font-size:12px;
+      font-weight:600;
+      margin-top:5px;
     }
 
-    .brand-sub {
-      font-size: 11px;
-      color: #b8c5d7;
-      margin-top: 3px;
+    .nav-links{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:7px;
+      list-style:none;
+      margin:0;
+      padding:0;
     }
 
-    .nav-links {
-      display: flex;
-      gap: 7px;
-      align-items: center;
+    .nav-links a{
+      color:#dce5f1;
+      font-size:15px;
+      font-weight:700;
+      padding:12px 15px;
+      border:1px solid transparent;
+      border-radius:15px;
+      transition:.2s ease;
+      white-space:nowrap;
     }
 
-    .nav-links a {
-      color: #dce5f1;
-      padding: 10px 13px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
+    .nav-links a:hover{
+      color:#fff;
+      background:rgba(255,255,255,.07);
     }
 
-    .nav-links a:hover,
-    .nav-links a.active {
-      background: rgba(255,255,255,.08);
-      color: white;
+    .nav-links a.active{
+      color:#fff;
+      border-color:rgba(242,200,102,.38);
+      background:rgba(255,255,255,.08);
     }
 
-    .mobile-menu {
-      display: none;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.15);
-      color: white;
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
+    .menu-btn{
+      display:none;
+      width:46px;
+      height:46px;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:14px;
+      background:rgba(255,255,255,.07);
+      color:#fff;
+      cursor:pointer;
+      font-size:19px;
     }
 
     /* ================= HERO ================= */
-
-    .hero {
+    .hero{
+      position:relative;
+      overflow:hidden;
       background:
-        linear-gradient(
-          135deg,
-          var(--navy),
-          var(--navy-2) 60%,
-          var(--navy-3)
-        );
-
-      color: white;
-      padding: 65px 20px 75px;
+        linear-gradient(135deg,rgba(7,26,51,.98),rgba(11,35,67,.94) 60%,rgba(18,54,92,.92));
+      color:#fff;
     }
 
-    .hero-inner {
-      width: min(1050px, 100%);
-      margin: auto;
-      text-align: center;
+    .hero::before,
+    .hero::after{
+      content:"";
+      position:absolute;
+      border-radius:999px;
+      pointer-events:none;
+      filter:blur(2px);
     }
 
-    .badge {
-      display: inline-flex;
-      padding: 8px 14px;
-      border-radius: 999px;
-
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(242,200,102,.35);
-
-      color: var(--gold-light);
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: .5px;
+    .hero::before{
+      width:420px;height:420px;
+      right:-130px;top:-180px;
+      background:rgba(215,166,61,.13);
     }
 
-    .hero h1 {
-      margin: 18px 0 12px;
-      font-size: clamp(34px, 5vw, 58px);
-      line-height: 1.05;
+    .hero::after{
+      width:300px;height:300px;
+      left:-160px;bottom:-190px;
+      background:rgba(37,99,235,.12);
     }
 
-    .hero h1 span {
-      color: var(--gold-light);
+    .hero-inner{
+      position:relative;
+      z-index:1;
+      min-height:380px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:58px 0 64px;
     }
 
-    .hero p {
-      max-width: 700px;
-      margin: 0 auto 28px;
-      color: #c8d4e4;
-      line-height: 1.7;
-      font-size: 15px;
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 13px;
+      border:1px solid rgba(242,200,102,.32);
+      background:rgba(255,255,255,.07);
+      border-radius:999px;
+      color:#f7d988;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.8px;
+      text-transform:uppercase;
     }
 
-    /* ================= SEARCH ================= */
-
-    .search-wrapper {
-      position: relative;
-      width: min(900px, 100%);
-      margin: auto;
+    .hero h1{
+      margin:18px 0 10px;
+      max-width:850px;
+      font-family:"Playfair Display",Georgia,serif;
+      font-size:clamp(38px,5vw,66px);
+      line-height:1.04;
+      letter-spacing:-1.4px;
     }
 
-    .search-box {
-      display: flex;
-      align-items: center;
+    .hero h1 span{color:var(--gold-2)}
 
-      min-height: 62px;
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-
-      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    .hero p{
+      max-width:720px;
+      margin:0 auto 28px;
+      color:#c7d2e2;
+      font-size:16px;
+      line-height:1.7;
     }
 
-    .search-symbol {
-      width: 56px;
-      flex-shrink: 0;
-      color: #667085;
-      font-size: 20px;
+    .search-shell{
+      width:min(940px,100%);
+      padding:8px;
+      border-radius:20px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow:0 18px 55px rgba(0,0,0,.20);
     }
 
-    #searchInput {
-      flex: 1;
-      min-width: 0;
-
-      height: 62px;
-      border: 0;
-      outline: 0;
-
-      font-size: 16px;
-      color: var(--text);
+    .global-search{
+      min-height:62px;
+      display:flex;
+      align-items:stretch;
+      background:#fff;
+      border-radius:14px;
+      overflow:hidden;
     }
 
-    #searchInput::placeholder {
-      color: #98a2b3;
+    .search-icon{
+      width:58px;
+      display:grid;
+      place-items:center;
+      color:var(--muted);
+      font-size:19px;
+      flex:0 0 58px;
     }
 
-    .search-button {
-      margin: 6px;
-      padding: 0 22px;
-      height: 50px;
-
-      border: 0;
-      border-radius: 11px;
-
-      background: linear-gradient(
-        135deg,
-        var(--gold-light),
-        var(--gold)
-      );
-
-      color: var(--navy);
-      font-weight: 800;
+    .global-search input{
+      flex:1;
+      min-width:0;
+      border:0;
+      outline:0;
+      color:var(--text);
+      background:#fff;
+      font-size:16px;
+      font-weight:600;
     }
 
-    .search-button:hover {
-      filter: brightness(1.04);
+    .global-search input::placeholder{color:#9aa5b5}
+
+    .search-submit{
+      margin:5px;
+      min-width:132px;
+      border:0;
+      border-radius:11px;
+      background:linear-gradient(135deg,var(--gold-2),var(--gold));
+      color:var(--navy);
+      font-weight:900;
+      cursor:pointer;
+      padding:0 20px;
+      transition:.2s ease;
     }
 
-    /* ================= SUGGESTIONS ================= */
+    .search-submit:hover{transform:translateY(-1px);filter:brightness(1.03)}
 
-    .suggestions {
-      display: none;
-
-      position: absolute;
-      z-index: 50;
-
-      top: calc(100% + 8px);
-      left: 0;
-      right: 0;
-
-      background: white;
-      border-radius: 15px;
-      overflow: hidden;
-
-      text-align: left;
-
-      box-shadow: 0 20px 50px rgba(0,0,0,.18);
+    .popular-searches{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:16px;
     }
 
-    .suggestions.show {
-      display: block;
+    .popular-searches span{
+      color:#aebbd0;
+      font-size:12px;
+      font-weight:700;
     }
 
-    .suggestion-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-
-      width: 100%;
-      padding: 13px 16px;
-
-      border: 0;
-      border-bottom: 1px solid #edf0f4;
-
-      background: white;
-      text-align: left;
+    .quick-search{
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      color:#e7edf6;
+      border-radius:999px;
+      padding:7px 11px;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
     }
 
-    .suggestion-item:hover {
-      background: #f7f9fc;
-    }
-
-    .suggestion-icon {
-      width: 35px;
-      height: 35px;
-      border-radius: 10px;
-
-      display: grid;
-      place-items: center;
-
-      background: #eef3f9;
-      color: var(--navy);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .suggestion-main {
-      flex: 1;
-    }
-
-    .suggestion-title {
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    .suggestion-type {
-      margin-top: 3px;
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: capitalize;
-    }
-
-    /* ================= QUICK SEARCH ================= */
-
-    .quick-searches {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 16px;
-    }
-
-    .quick-searches span {
-      color: #aebbd0;
-      font-size: 12px;
-    }
-
-    .quick-btn {
-      border: 1px solid rgba(255,255,255,.15);
-      background: rgba(255,255,255,.06);
-
-      color: #e7edf6;
-
-      padding: 7px 12px;
-      border-radius: 999px;
-
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .quick-btn:hover {
-      border-color: rgba(242,200,102,.45);
-      color: white;
+    .quick-search:hover{
+      border-color:rgba(242,200,102,.42);
+      color:#fff;
     }
 
     /* ================= MAIN ================= */
+    main{padding:36px 0 78px}
 
-    main {
-      width: min(1320px, calc(100% - 40px));
-      margin: auto;
-      padding: 38px 0 80px;
+    .summary-bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom:22px;
     }
 
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-
-      margin-bottom: 22px;
+    .summary-left h2{
+      margin:0;
+      font-size:25px;
+      letter-spacing:-.5px;
     }
 
-    .toolbar h2 {
-      margin: 0;
-      font-size: 25px;
+    .summary-left p{
+      margin:7px 0 0;
+      color:var(--muted);
+      font-size:13px;
     }
 
-    .toolbar p {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
+    .result-count{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      flex:0 0 auto;
+      padding:10px 14px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow-sm);
+      color:var(--navy);
+      font-size:13px;
+      font-weight:800;
     }
 
-    .count {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 9px 14px;
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--navy);
+    .category-filter{
+      display:flex;
+      gap:9px;
+      overflow-x:auto;
+      padding:3px 2px 12px;
+      margin-bottom:25px;
+      scrollbar-width:thin;
     }
 
-    /* ================= FILTERS ================= */
-
-    .filters {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-
-      padding: 18px;
-      margin-bottom: 25px;
-
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-
-      box-shadow: var(--shadow);
+    .filter-btn{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      min-height:42px;
+      padding:0 15px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:#fff;
+      color:#344054;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+      transition:.2s ease;
     }
 
-    .filter-group label {
-      display: block;
-      margin-bottom: 6px;
+    .filter-btn:hover{border-color:#c7d0dd}
 
-      color: #475467;
-      font-size: 12px;
-      font-weight: 700;
+    .filter-btn.active{
+      color:#fff;
+      background:var(--navy);
+      border-color:var(--navy);
+      box-shadow:0 8px 20px rgba(7,26,51,.14);
     }
 
-    .filter-group input,
-    .filter-group select {
-      width: 100%;
-      height: 42px;
-
-      border: 1px solid var(--border);
-      border-radius: 10px;
-
-      padding: 0 11px;
-      outline: 0;
-
-      background: white;
-      color: var(--text);
-      font-size: 13px;
+    /* ================= STATUS ================= */
+    .state{
+      display:none;
+      text-align:center;
+      padding:70px 22px;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background:#fff;
+      box-shadow:var(--shadow-sm);
     }
 
-    .filter-group input:focus,
-    .filter-group select:focus {
-      border-color: var(--navy-3);
-      box-shadow: 0 0 0 3px rgba(18,54,92,.08);
+    .state.show{display:block}
+
+    .state-icon{
+      width:62px;
+      height:62px;
+      margin:0 auto 16px;
+      display:grid;
+      place-items:center;
+      border-radius:20px;
+      background:var(--gold-soft);
+      color:#a77a18;
+      font-size:24px;
     }
 
-    .filter-actions {
-      display: flex;
-      align-items: end;
-      gap: 8px;
+    .state h3{margin:0 0 8px;font-size:21px}
+
+    .state p{
+      margin:0 auto;
+      max-width:560px;
+      color:var(--muted);
+      line-height:1.6;
+      font-size:14px;
     }
 
-    .filter-actions button {
-      width: 100%;
-      height: 42px;
-      border-radius: 10px;
-      border: 0;
-      font-weight: 800;
+    .spinner{
+      width:42px;
+      height:42px;
+      margin:0 auto 17px;
+      border:4px solid #e9edf3;
+      border-top-color:var(--gold);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
     }
 
-    .apply-btn {
-      background: var(--navy);
-      color: white;
-    }
-
-    .reset-btn {
-      background: #eef1f5;
-      color: var(--navy);
-    }
-
-    /* ================= CATEGORY ================= */
-
-    .categories {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 10px;
-      margin-bottom: 25px;
-    }
-
-    .category-btn {
-      flex-shrink: 0;
-
-      padding: 10px 15px;
-
-      border: 1px solid var(--border);
-      border-radius: 999px;
-
-      background: white;
-      color: #344054;
-
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .category-btn.active {
-      background: var(--navy);
-      color: white;
-      border-color: var(--navy);
-    }
-
-    /* ================= STATES ================= */
-
-    .state {
-      display: none;
-
-      padding: 65px 20px;
-
-      text-align: center;
-
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-
-      box-shadow: var(--shadow);
-    }
-
-    .state.show {
-      display: block;
-    }
-
-    .state-icon {
-      font-size: 38px;
-      margin-bottom: 14px;
-    }
-
-    .state h3 {
-      margin: 0 0 8px;
-      font-size: 20px;
-    }
-
-    .state p {
-      max-width: 550px;
-      margin: auto;
-      color: var(--muted);
-      line-height: 1.6;
-      font-size: 14px;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-
-      margin: 0 auto 18px;
-
-      border: 4px solid #e8edf3;
-      border-top-color: var(--gold);
-
-      border-radius: 50%;
-
-      animation: spin .8s linear infinite;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+    @keyframes spin{to{transform:rotate(360deg)}}
 
     /* ================= RESULTS ================= */
-
-    .results-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 18px;
+    .results-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:18px;
     }
 
-    .result-card {
-      overflow: hidden;
-
-      display: flex;
-      flex-direction: column;
-
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-
-      box-shadow: var(--shadow);
-
-      transition: .2s ease;
+    .result-card{
+      min-width:0;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:var(--shadow-sm);
+      transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
     }
 
-    .result-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 18px 45px rgba(7,26,51,.13);
+    .result-card:hover{
+      transform:translateY(-4px);
+      box-shadow:var(--shadow);
+      border-color:#d6dce6;
     }
 
-    .result-image {
-      height: 185px;
-      background: #e9eef5;
-      overflow: hidden;
-      position: relative;
+    .card-media{
+      position:relative;
+      height:178px;
+      background:
+        linear-gradient(135deg,#dbe4f0,#eef2f7);
+      background-position:center;
+      background-size:cover;
+      overflow:hidden;
     }
 
-    .result-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .card-media::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg,rgba(7,26,51,.04),rgba(7,26,51,.66));
     }
 
-    .entity-badge {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-
-      padding: 6px 9px;
-
-      border-radius: 999px;
-
-      background: rgba(7,26,51,.9);
-      color: white;
-
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: capitalize;
+    .category-badge{
+      position:absolute;
+      z-index:2;
+      top:12px;
+      left:12px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      max-width:calc(100% - 24px);
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(7,26,51,.88);
+      color:#fff;
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
-    .verified {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-
-      padding: 6px 9px;
-
-      border-radius: 999px;
-
-      background: white;
-      color: var(--green);
-
-      font-size: 10px;
-      font-weight: 800;
+    .verified{
+      position:absolute;
+      z-index:2;
+      right:12px;
+      top:12px;
+      width:30px;
+      height:30px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      background:#fff;
+      color:var(--green);
+      box-shadow:0 6px 16px rgba(0,0,0,.14);
+      font-size:13px;
     }
 
-    .result-body {
-      padding: 17px;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
+    .card-media-title{
+      position:absolute;
+      z-index:2;
+      left:14px;
+      right:14px;
+      bottom:13px;
+      color:#fff;
+      font-size:17px;
+      line-height:1.2;
+      font-weight:800;
+      display:-webkit-box;
+      -webkit-box-orient:vertical;
+      -webkit-line-clamp:2;
+      overflow:hidden;
     }
 
-    .result-title {
-      margin: 0;
-      font-size: 17px;
-      line-height: 1.3;
+    .card-body{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      flex:1;
+      padding:16px;
     }
 
-    .result-subtitle {
-      margin-top: 6px;
-
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.5;
+    .card-title{
+      margin:0 0 7px;
+      font-size:16px;
+      line-height:1.3;
+      letter-spacing:-.2px;
+      display:-webkit-box;
+      -webkit-box-orient:vertical;
+      -webkit-line-clamp:2;
+      overflow:hidden;
     }
 
-    .location {
-      margin-top: 12px;
-
-      color: #475467;
-      font-size: 12px;
+    .card-location{
+      display:flex;
+      gap:7px;
+      align-items:flex-start;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+      min-height:35px;
     }
 
-    .meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-
-      margin-top: 12px;
+    .card-location i{
+      color:var(--gold);
+      margin-top:2px;
+      flex:0 0 auto;
     }
 
-    .meta span {
-      padding: 6px 8px;
-
-      background: #f3f5f8;
-      border-radius: 8px;
-
-      font-size: 11px;
-      color: #475467;
-      font-weight: 700;
+    .card-meta{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin:13px 0;
+      padding-top:12px;
+      border-top:1px solid #eef1f5;
     }
 
-    .result-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      gap: 10px;
-
-      margin-top: auto;
-      padding-top: 16px;
+    .rating{
+      color:#a06f08;
+      font-size:12px;
+      font-weight:800;
     }
 
-    .rating {
-      font-size: 13px;
-      font-weight: 800;
+    .type-label{
+      color:#667085;
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
     }
 
-    .rating span {
-      color: #f5a623;
+    .card-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:auto;
     }
 
-    .view-btn {
-      padding: 9px 12px;
-
-      border-radius: 999px;
-      background: var(--navy);
-
-      color: white;
-
-      font-size: 12px;
-      font-weight: 800;
+    .btn{
+      min-height:40px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      padding:0 10px;
+      border-radius:11px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+      transition:.2s ease;
     }
 
-    /* ================= PAGINATION ================= */
+    button.btn{border:0}
 
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-
-      margin-top: 35px;
+    .btn-primary{
+      background:var(--navy);
+      color:#fff;
     }
 
-    .page-btn {
-      min-width: 40px;
-      height: 40px;
+    .btn-primary:hover{background:var(--navy-3)}
 
-      border: 1px solid var(--border);
-      border-radius: 10px;
-
-      background: white;
-      color: var(--navy);
-
-      font-weight: 700;
+    .btn-light{
+      border:1px solid var(--border);
+      background:#fff;
+      color:#344054;
     }
 
-    .page-btn.active {
-      background: var(--navy);
-      color: white;
-      border-color: var(--navy);
+    .btn-light:hover{border-color:#bfc8d5;background:#f9fafb}
+
+    /* ================= CATEGORY HEADER ================= */
+    .section-block{
+      margin-top:34px;
     }
 
-    .page-btn:disabled {
-      opacity: .45;
-      cursor: not-allowed;
+    .category-section{
+      margin-bottom:28px;
+    }
+
+    .category-heading{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:14px;
+    }
+
+    .category-heading-left{
+      display:flex;
+      align-items:center;
+      gap:11px;
+      min-width:0;
+    }
+
+    .category-icon{
+      width:43px;
+      height:43px;
+      flex:0 0 43px;
+      display:grid;
+      place-items:center;
+      border-radius:14px;
+      background:var(--gold-soft);
+      color:#9c7115;
+      font-size:17px;
+    }
+
+    .category-heading h3{
+      margin:0;
+      font-size:19px;
+      letter-spacing:-.3px;
+    }
+
+    .category-heading p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .view-all{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      color:var(--blue);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    /* ================= MODAL ================= */
+    .modal{
+      position:fixed;
+      inset:0;
+      z-index:2000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(2,10,21,.68);
+      backdrop-filter:blur(8px);
+    }
+
+    .modal.show{display:flex}
+
+    .modal-dialog{
+      width:min(720px,100%);
+      max-height:min(86vh,780px);
+      overflow:auto;
+      border-radius:24px;
+      background:#fff;
+      box-shadow:0 30px 90px rgba(0,0,0,.30);
+    }
+
+    .modal-head{
+      position:relative;
+      min-height:220px;
+      display:flex;
+      align-items:flex-end;
+      padding:25px;
+      background:
+        linear-gradient(90deg,rgba(7,26,51,.96),rgba(7,26,51,.52)),
+        linear-gradient(135deg,#173c65,#081a31);
+      background-position:center;
+      background-size:cover;
+      color:#fff;
+    }
+
+    .modal-close{
+      position:absolute;
+      top:14px;
+      right:14px;
+      width:40px;
+      height:40px;
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:50%;
+      background:rgba(0,0,0,.22);
+      color:#fff;
+      cursor:pointer;
+      font-size:16px;
+    }
+
+    .modal-category{
+      display:inline-flex;
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      color:#f7d988;
+      font-size:11px;
+      font-weight:800;
+      margin-bottom:9px;
+    }
+
+    .modal-head h2{
+      margin:0;
+      font-size:27px;
+      line-height:1.15;
+    }
+
+    .modal-content{padding:24px}
+
+    .modal-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:13px;
+    }
+
+    .detail-item{
+      min-width:0;
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:15px;
+      background:#fbfcfe;
+    }
+
+    .detail-label{
+      color:var(--muted-2);
+      font-size:10px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.7px;
+      margin-bottom:5px;
+    }
+
+    .detail-value{
+      color:var(--text);
+      font-size:13px;
+      font-weight:700;
+      line-height:1.5;
+      overflow-wrap:anywhere;
+    }
+
+    .modal-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:9px;
+      margin-top:18px;
+    }
+
+    .modal-actions a,
+    .modal-actions button{
+      border:0;
+    }
+
+    .modal-actions .disabled{
+      opacity:.45;
+      pointer-events:none;
     }
 
     /* ================= FOOTER ================= */
-
-    footer {
-      background: var(--navy);
-      color: #b8c5d7;
-      text-align: center;
-
-      padding: 28px 20px;
-
-      font-size: 13px;
+    footer{
+      padding:34px 22px;
+      background:var(--navy);
+      color:#aebbd0;
+      text-align:center;
+      border-top:1px solid rgba(255,255,255,.07);
     }
 
-    footer strong {
-      color: white;
+    footer p{margin:0 0 9px;font-size:13px}
+
+    footer strong{color:#fff}
+
+    .director{
+      font-size:12px;
+      line-height:1.7;
     }
 
     /* ================= RESPONSIVE ================= */
+    @media (max-width:1240px){
+      .results-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .nav-links a{padding-left:11px;padding-right:11px}
+    }
 
-    @media (max-width: 1100px) {
-      .results-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+    @media (max-width:1100px){
+      .menu-btn{display:block}
+
+      .nav-links{
+        position:absolute;
+        left:22px;
+        right:22px;
+        top:calc(100% + 8px);
+        display:none;
+        flex-direction:column;
+        align-items:stretch;
+        padding:10px;
+        border:1px solid rgba(255,255,255,.12);
+        border-radius:18px;
+        background:rgba(7,26,51,.99);
+        box-shadow:0 18px 40px rgba(0,0,0,.25);
       }
 
-      .filters {
-        grid-template-columns: repeat(3, 1fr);
+      .nav-links.show{display:flex}
+
+      .nav-links a{
+        display:block;
+        padding:13px 14px;
+      }
+
+      .nav-links a.active{
+        background:rgba(255,255,255,.08);
       }
     }
 
-    @media (max-width: 800px) {
-
-      .nav-links {
-        display: none;
-      }
-
-      .mobile-menu {
-        display: block;
-      }
-
-      .nav-links.open {
-        display: flex;
-
-        position: absolute;
-        top: 72px;
-        left: 0;
-        right: 0;
-
-        padding: 12px 20px;
-
-        background: var(--navy);
-
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .nav-links.open a {
-        display: block;
-      }
-
-      .results-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .filters {
-        grid-template-columns: repeat(2, 1fr);
-      }
+    @media (max-width:900px){
+      .results-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .hero-inner{min-height:350px}
+      .hero h1{font-size:48px}
     }
 
-    @media (max-width: 600px) {
+    @media (max-width:680px){
+      .container{width:min(100% - 24px,1320px)}
 
-      .nav-inner,
-      main {
-        width: min(100% - 24px, 1320px);
+      .nav-container{min-height:70px}
+      .brand-mark{width:48px;height:48px;flex-basis:48px;border-radius:15px;font-size:17px}
+      .brand-title{font-size:18px}
+      .brand-subtitle{font-size:10px;margin-top:3px}
+
+      .nav-links{
+        left:12px;
+        right:12px;
       }
 
-      .hero {
-        padding: 45px 12px 55px;
+      .hero-inner{
+        min-height:auto;
+        padding:42px 0 45px;
       }
 
-      .hero h1 {
-        font-size: 36px;
+      .hero h1{
+        font-size:38px;
+        letter-spacing:-.8px;
       }
 
-      .search-box {
-        min-height: 55px;
+      .hero p{
+        font-size:14px;
+        line-height:1.6;
+        margin-bottom:20px;
       }
 
-      .search-symbol {
-        width: 43px;
+      .search-shell{padding:6px;border-radius:16px}
+
+      .global-search{
+        min-height:auto;
+        display:grid;
+        grid-template-columns:44px 1fr;
       }
 
-      #searchInput {
-        height: 55px;
-        font-size: 14px;
+      .search-icon{
+        width:44px;
+        flex-basis:44px;
+        min-height:55px;
       }
 
-      .search-button {
-        min-width: 70px;
-        padding: 0 12px;
+      .global-search input{
+        min-height:55px;
+        font-size:14px;
       }
 
-      .filters {
-        grid-template-columns: 1fr;
+      .search-submit{
+        grid-column:1 / -1;
+        min-height:48px;
+        margin:5px;
       }
 
-      .results-grid {
-        grid-template-columns: 1fr;
+      .popular-searches{
+        justify-content:flex-start;
+        overflow-x:auto;
+        flex-wrap:nowrap;
+        padding-bottom:3px;
       }
 
-      .toolbar {
-        align-items: flex-start;
+      .popular-searches span{display:none}
+
+      main{padding-top:25px}
+
+      .summary-bar{
+        align-items:flex-start;
+        flex-direction:column;
       }
 
-      .toolbar h2 {
-        font-size: 21px;
+      .summary-left h2{font-size:22px}
+
+      .results-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:11px;
       }
 
-      .count {
-        font-size: 11px;
+      .result-card{border-radius:16px}
+
+      .card-media{height:135px}
+
+      .category-badge{
+        top:8px;left:8px;
+        padding:6px 8px;
+        font-size:9px;
+      }
+
+      .verified{
+        top:8px;right:8px;
+        width:27px;height:27px;
+        font-size:11px;
+      }
+
+      .card-media-title{
+        left:10px;right:10px;bottom:9px;
+        font-size:13px;
+      }
+
+      .card-body{padding:11px}
+
+      .card-title{font-size:13px}
+
+      .card-location{
+        font-size:10px;
+        min-height:31px;
+      }
+
+      .card-meta{
+        margin:9px 0;
+        padding-top:9px;
+      }
+
+      .rating,.type-label{font-size:9px}
+
+      .card-actions{
+        grid-template-columns:1fr;
+        gap:6px;
+      }
+
+      .btn{
+        min-height:36px;
+        font-size:10px;
+      }
+
+      .category-heading h3{font-size:17px}
+      .category-heading p{font-size:11px}
+
+      .modal{padding:10px}
+      .modal-dialog{max-height:92vh;border-radius:20px}
+      .modal-head{min-height:190px;padding:19px}
+      .modal-head h2{font-size:23px}
+      .modal-content{padding:17px}
+      .modal-grid{grid-template-columns:1fr}
+      .modal-actions{grid-template-columns:1fr}
+    }
+
+    @media (max-width:430px){
+      .results-grid{gap:8px}
+      .card-media{height:122px}
+      .card-body{padding:9px}
+      .card-title{font-size:12px}
+      .card-location{font-size:9px}
+      .btn{min-height:34px;font-size:9px}
+      .hero h1{font-size:33px}
+    }
+
+    @media (prefers-reduced-motion:reduce){
+      html{scroll-behavior:auto}
+      *,*::before,*::after{
+        animation-duration:.01ms!important;
+        animation-iteration-count:1!important;
+        transition-duration:.01ms!important;
       }
     }
   </style>
-  <link rel="stylesheet" href="mobile.css">
-
-  <style id="fix-card-image-shape">
-    /* mobile.css के गोलाकार (circle) इफ़ेक्ट को ओवरराइड करके रेक्टैंगुलर बैनर बनाना */
-    .result-card {
-      border-radius: 18px !important;
-      overflow: hidden !important;
-    }
-    .result-image,
-    .result-image img,
-    .result-card img {
-      width: 100% !important;
-      height: 185px !important;
-      max-height: 185px !important;
-      border-radius: 18px 18px 0 0 !important;
-      object-fit: cover !important;
-      display: block !important;
-      clip-path: none !important;
-      -webkit-clip-path: none !important;
-      mask-image: none !important;
-      -webkit-mask-image: none !important;
-    }
-  </style>
-  <script src="performance.js" defer></script>
-  <link rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co" crossorigin>
 </head>
 
 <body>
 
-<!-- ================= NAVBAR ================= -->
+  <!-- ================= NAVBAR ================= -->
+  <header class="navbar">
+    <div class="nav-container container">
 
-<header class="navbar">
-  <div class="nav-inner">
-
-    <a href="index.html" class="brand">
-
-      <div class="brand-logo">
-        <img
-          src="logo.png"
-          alt="StudentHubHelp"
-          onerror="this.onerror=null;this.src='logo.png';"
-        >
-      </div>
-
-      <div>
-        <div class="brand-name">StudentHubHelp</div>
-        <div class="brand-sub">Student Services Directory</div>
-      </div>
-
-    </a>
-
-    <button
-      class="mobile-menu"
-      id="mobileMenu"
-      aria-label="Open menu"
-    >
-      ☰
-    </button>
-
-    <nav class="nav-links" id="navLinks">
-      <a href="index.html">Home</a>
-      <a href="pg-finder.html">Hostels</a>
-      <a href="tiffin-finder.html">Tiffin</a>
-      <a href="library-finder.html">Libraries</a>
-      <a href="cafe-finder.html">Cafes</a>
-      <a href="bookstore-finder.html">Bookstores</a>
-      <a href="global-search.html" class="active">Search</a>
-    </nav>
-
-  </div>
-</header>
-
-
-<!-- ================= HERO ================= -->
-
-<section class="hero">
-
-  <div class="hero-inner">
-
-    <div class="badge">
-      🔎 STUDENTHUBHELP GLOBAL SEARCH
-    </div>
-
-    <h1>
-      Find Anything on
-      <span>StudentHubHelp</span>
-    </h1>
-
-    <p>
-      Search hostels, PGs, tiffin services, libraries,
-      cafes and bookstores from one powerful search.
-    </p>
-
-
-    <div class="search-wrapper">
-
-      <form class="search-box" id="searchForm">
-
-        <div class="search-symbol">
-          🔍
+      <a class="brand" href="index.html" aria-label="StudentHubHelp Home">
+        <div class="brand-mark">SH</div>
+        <div class="brand-copy">
+          <div class="brand-title">StudentHubHelp</div>
+          <div class="brand-subtitle">Student Discovery Platform</div>
         </div>
+      </a>
 
-        <input
-          id="searchInput"
-          type="search"
-          autocomplete="off"
-          placeholder="Search hostel, cafe, library, bookstore..."
-          aria-label="Search StudentHubHelp"
-        >
-
+      <nav aria-label="Main navigation">
         <button
-          class="search-button"
-          type="submit"
-        >
-          Search
+          class="menu-btn"
+          id="menuBtn"
+          type="button"
+          aria-label="Open navigation"
+          aria-controls="navLinks"
+          aria-expanded="false">
+          <i class="fa-solid fa-bars">☰</i>
         </button>
 
-      </form>
-
-
-      <div
-        class="suggestions"
-        id="suggestions"
-      ></div>
-
-    </div>
-
-
-    <div class="quick-searches">
-
-      <span>Popular:</span>
-
-      <button class="quick-btn" data-search="hostel">
-        Hostels
-      </button>
-
-      <button class="quick-btn" data-search="tiffin">
-        Tiffin
-      </button>
-
-      <button class="quick-btn" data-search="library">
-        Libraries
-      </button>
-
-      <button class="quick-btn" data-search="cafe">
-        Cafes
-      </button>
-
-      <button class="quick-btn" data-search="bookstore">
-        Bookstores
-      </button>
+        <ul class="nav-links" id="navLinks">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="pg-finder.html">Hostel / PG</a></li>
+          <li><a href="tiffin-finder.html">Tiffin / Mess</a></li>
+          <li><a href="library-finder.html">Library</a></li>
+          <li><a href="cafe-finder.html">Cafe</a></li>
+          <li><a href="bookstore-finder.html">Book Store</a></li>
+          <li><a href="auth.html">Login</a></li>
+        </ul>
+      </nav>
 
     </div>
+  </header>
 
-  </div>
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="hero-inner container">
 
-</section>
+      <div class="eyebrow">
+        <i class="fa-solid fa-sparkles">✦</i>
+        One Search • Every Student Need
+      </div>
 
+      <h1>Find everything <span>students need</span></h1>
 
-<!-- ================= MAIN ================= -->
-
-<main>
-
-  <div class="toolbar">
-
-    <div>
-      <h2 id="resultHeading">
-        Explore Student Services
-      </h2>
-
-      <p id="resultDescription">
-        Search across StudentHubHelp's public listings.
+      <p>
+        Search hostels, PGs, tiffin services, libraries, cafes and bookstores
+        across StudentHubHelp from one powerful search box.
       </p>
-    </div>
 
-    <div class="count" id="resultCount">
-      0 results
-    </div>
+      <div class="search-shell">
+        <form class="global-search" id="globalSearchForm">
+          <div class="search-icon">
+            <i class="fa-solid fa-magnifying-glass">⌕</i>
+          </div>
 
-  </div>
+          <input
+            id="globalSearchInput"
+            type="search"
+            name="q"
+            placeholder="Search Sikar, hostel, cafe, library, tiffin..."
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Search all StudentHubHelp services">
 
+          <button class="search-submit" id="searchSubmit" type="submit">
+            <i class="fa-solid fa-magnifying-glass">⌕</i>
+            Search
+          </button>
+        </form>
+      </div>
 
-  <!-- ================= FILTERS ================= -->
-
-  <section class="filters">
-
-    <div class="filter-group">
-
-      <label for="entityFilter">
-        Category
-      </label>
-
-      <select id="entityFilter">
-
-        <option value="">
-          All categories
-        </option>
-
-        <option value="hostel">
-          Hostels
-        </option>
-
-        <option value="tiffin">
-          Tiffin
-        </option>
-
-        <option value="library">
-          Libraries
-        </option>
-
-        <option value="cafe">
-          Cafes
-        </option>
-
-        <option value="bookstore">
-          Bookstores
-        </option>
-
-      </select>
+      <div class="popular-searches" aria-label="Popular searches">
+        <span>Popular:</span>
+        <button class="quick-search" type="button" data-query="Sikar">Sikar</button>
+        <button class="quick-search" type="button" data-query="Hostel">Hostel</button>
+        <button class="quick-search" type="button" data-query="Tiffin">Tiffin</button>
+        <button class="quick-search" type="button" data-query="Library">Library</button>
+        <button class="quick-search" type="button" data-query="Cafe">Cafe</button>
+        <button class="quick-search" type="button" data-query="Book Store">Book Store</button>
+      </div>
 
     </div>
-
-
-    <div class="filter-group">
-
-      <label for="cityFilter">
-        City
-      </label>
-
-      <input
-        id="cityFilter"
-        type="text"
-        placeholder="e.g. Sikar"
-      >
-
-    </div>
-
-
-    <div class="filter-group">
-
-      <label for="areaFilter">
-        Area
-      </label>
-
-      <input
-        id="areaFilter"
-        type="text"
-        placeholder="e.g. Piprali"
-      >
-
-    </div>
-
-
-    <div class="filter-group">
-
-      <label for="minRating">
-        Minimum Rating
-      </label>
-
-      <select id="minRating">
-
-        <option value="">
-          Any rating
-        </option>
-
-        <option value="4.5">
-          4.5+
-        </option>
-
-        <option value="4">
-          4.0+
-        </option>
-
-        <option value="3">
-          3.0+
-        </option>
-
-      </select>
-
-    </div>
-
-
-    <div class="filter-actions">
-
-      <button
-        class="apply-btn"
-        id="applyFilters"
-      >
-        Apply Filters
-      </button>
-
-      <button
-        class="reset-btn"
-        id="resetFilters"
-      >
-        Reset
-      </button>
-
-    </div>
-
   </section>
 
-
-  <!-- ================= CATEGORY BUTTONS ================= -->
-
-  <div class="categories">
-
-    <button
-      class="category-btn active"
-      data-category=""
-    >
-      All
-    </button>
-
-    <button
-      class="category-btn"
-      data-category="hostel"
-    >
-      🏠 Hostels
-    </button>
-
-    <button
-      class="category-btn"
-      data-category="tiffin"
-    >
-      🍱 Tiffin
-    </button>
-
-    <button
-      class="category-btn"
-      data-category="library"
-    >
-      📚 Libraries
-    </button>
-
-    <button
-      class="category-btn"
-      data-category="cafe"
-    >
-      ☕ Cafes
-    </button>
-
-    <button
-      class="category-btn"
-      data-category="bookstore"
-    >
-      📖 Bookstores
-    </button>
-
-  </div>
-
-
-  <!-- ================= LOADING ================= -->
-
-  <div
-    class="state"
-    id="loadingState"
-  >
-
-    <div class="spinner"></div>
-
-    <h3>
-      Searching...
-    </h3>
-
-    <p>
-      Finding the most relevant results for you.
-    </p>
-
-  </div>
-
-
-  <!-- ================= ERROR ================= -->
-
-  <div
-    class="state"
-    id="errorState"
-  >
-
-    <div class="state-icon">
-      ⚠️
-    </div>
-
-    <h3>
-      Search temporarily unavailable
-    </h3>
-
-    <p id="errorMessage">
-      Please try again.
-    </p>
-
-  </div>
-
-
-  <!-- ================= EMPTY ================= -->
-
-  <div
-    class="state"
-    id="emptyState"
-  >
-
-    <div class="state-icon">
-      🔎
-    </div>
-
-    <h3>
-      No results found
-    </h3>
-
-    <p>
-      Try another keyword, area, city or category.
-    </p>
-
-  </div>
-
-
-  <!-- ================= RESULTS ================= -->
-
-  <div
-    class="results-grid"
-    id="resultsGrid"
-  ></div>
-
-
-  <!-- ================= PAGINATION ================= -->
-
-  <div
-    class="pagination"
-    id="pagination"
-  ></div>
-
-</main>
-
-
-<!-- ================= FOOTER ================= -->
-
-<footer>
-
-  © <span id="year"></span>
-  <strong>StudentHubHelp</strong>.
-  All rights reserved.
-
-</footer>
-
-
-<script>
-
-/* ============================================================
-   SUPABASE CONFIGURATION
-   ============================================================ */
-
-const SUPABASE_URL =
-  "https://idurlccrarznnnqixxsd.supabase.co";
-
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
-
-
-/* ============================================================
-   SUPABASE CLIENT
-   ============================================================ */
-
-const {
-  createClient
-} = window.supabase;
-
-const supabaseClient =
-  createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
-
-/* ============================================================
-   STATE
-   ============================================================ */
-
-const state = {
-  query: "",
-  entity: "",
-  city: "",
-  area: "",
-  minRating: null,
-  page: 1,
-  pageSize: 24,
-  totalLoaded: 0
-};
-
-
-/* ============================================================
-   DOM
-   ============================================================ */
-
-const searchForm =
-  document.getElementById("searchForm");
-
-const searchInput =
-  document.getElementById("searchInput");
-
-const suggestions =
-  document.getElementById("suggestions");
-
-const resultsGrid =
-  document.getElementById("resultsGrid");
-
-const pagination =
-  document.getElementById("pagination");
-
-const loadingState =
-  document.getElementById("loadingState");
-
-const emptyState =
-  document.getElementById("emptyState");
-
-const errorState =
-  document.getElementById("errorState");
-
-const errorMessage =
-  document.getElementById("errorMessage");
-
-const resultCount =
-  document.getElementById("resultCount");
-
-const resultHeading =
-  document.getElementById("resultHeading");
-
-const resultDescription =
-  document.getElementById("resultDescription");
-
-const entityFilter =
-  document.getElementById("entityFilter");
-
-const cityFilter =
-  document.getElementById("cityFilter");
-
-const areaFilter =
-  document.getElementById("areaFilter");
-
-const minRating =
-  document.getElementById("minRating");
-
-
-/* ============================================================
-   HELPERS
-   ============================================================ */
-
-function escapeHTML(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-/* Helper to safely remove Property ID patterns if present in subtitle/text */
-function cleanPublicText(text) {
-  if (!text) return "";
-  return String(text)
-    .replace(/(?:property\s*id|id)\s*[:#-]?\s*#?\d+/gi, "")
-    .trim();
-}
-
-function formatEntity(entity) {
-  const map = {
-    hostel: "Hostel",
-    tiffin: "Tiffin",
-    library: "Library",
-    cafe: "Cafe",
-    bookstore: "Bookstore",
-    pg: "PG",
-    area: "Area"
-  };
-  return map[entity] || entity || "Listing";
-}
-
-
-function formatRating(rating) {
-  if (
-    rating === null ||
-    rating === undefined ||
-    rating === ""
-  ) {
-    return "No rating";
-  }
-
-  const number = Number(rating);
-  if (!Number.isFinite(number)) {
-    return "No rating";
-  }
-  return number.toFixed(1);
-}
-
-
-function showState(element) {
-  element.classList.add("show");
-}
-
-
-function hideState(element) {
-  element.classList.remove("show");
-}
-
-
-function resetStates() {
-  hideState(loadingState);
-  hideState(emptyState);
-  hideState(errorState);
-}
-
-
-function safeUrl(row) {
-  if (!row) return "#";
-
-  let rawType = String(row.entity_type || row.category || "hostel").trim().toLowerCase();
-  let type = "hostel";
-  if (rawType.includes("tiffin") || rawType.includes("mess")) type = "tiffin";
-  else if (rawType.includes("library")) type = "library";
-  else if (rawType.includes("cafe")) type = "cafe";
-  else if (rawType.includes("book")) type = "bookstore";
-
-  // Check if result_url contains a slug query
-  let slug = row.slug || null;
-  if (!slug && row.result_url && row.result_url.includes("slug=")) {
-    try {
-      const parsedUrl = new URL(row.result_url, "https://studenthubhelp.github.io");
-      slug = parsedUrl.searchParams.get("slug");
-    } catch (_) {}
-  }
-
-  // Generate clean, direct link to property-details.html
-  if (slug) {
-    return `property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`;
-  }
-
-  if (row.id) {
-    return `property-details.html?type=${encodeURIComponent(type)}&id=${encodeURIComponent(row.id)}`;
-  }
-
-  if (row.result_url) {
-    let target = row.result_url.replace(/^(hostel|pg|tiffin|library|cafe|bookstore)\.html/i, "property-details.html");
-    if (!target.includes("type=")) {
-      const sep = target.includes("?") ? "&" : "?";
-      target += `${sep}type=${encodeURIComponent(type)}`;
-    }
-    return target;
-  }
-
-  return "#";
-}
-
-
-/* ============================================================
-   SEARCH
-   ============================================================ */
-
-async function performSearch() {
-  resetStates();
-  showState(loadingState);
-
-  resultsGrid.innerHTML = "";
-  pagination.innerHTML = "";
-
-  state.query = searchInput.value.trim();
-  state.entity = entityFilter.value;
-  state.city = cityFilter.value.trim();
-  state.area = areaFilter.value.trim();
-  state.minRating = minRating.value ? Number(minRating.value) : null;
-
-  try {
-    const {
-      data,
-      error
-    } = await supabaseClient
-      .rpc(
-        "search_all",
-        {
-          search_query: state.query,
-          entity_filter: state.entity || null,
-          city_filter: state.city || null,
-          area_filter: state.area || null,
-          min_price: null,
-          max_price: null,
-          min_rating: state.minRating,
-          verified_only: false,
-          page_number: state.page,
-          page_size: state.pageSize
-        }
-      );
-
-    if (error) {
-      throw error;
-    }
-
-    hideState(loadingState);
-
-    const rows = Array.isArray(data) ? data : [];
-    state.totalLoaded = rows.length;
-
-    resultCount.textContent = `${rows.length} result${rows.length === 1 ? "" : "s"}`;
-
-    if (state.query) {
-      resultHeading.textContent = `Search results for "${state.query}"`;
-      resultDescription.textContent = "Results are ranked by relevance.";
-    } else {
-      resultHeading.textContent = "Explore Student Services";
-      resultDescription.textContent = "Browse public listings on StudentHubHelp.";
-    }
-
-    if (!rows.length) {
-      showState(emptyState);
-      return;
-    }
-
-    renderResults(rows);
-    renderPagination(rows.length);
-
-  } catch (error) {
-    console.error("Global search error:", error);
-    hideState(loadingState);
-    showState(errorState);
-    errorMessage.textContent = error?.message || "Unable to connect to search.";
-  }
-}
-
-
-/* ============================================================
-   RENDER RESULTS
-   ============================================================ */
-
-function renderResults(rows) {
-  resultsGrid.innerHTML = rows.map(renderCard).join("");
-}
-
-
-function renderCard(row) {
-  const title = escapeHTML(cleanPublicText(row.title || "Untitled listing"));
-  const rawSubtitle = cleanPublicText(row.subtitle || "");
-  const subtitle = escapeHTML(rawSubtitle);
-  const city = escapeHTML(row.city || "");
-  const area = escapeHTML(row.area || "");
-  const category = escapeHTML(row.category || "");
-  const entity = formatEntity(row.entity_type);
-  const rating = formatRating(row.rating);
-
-  const imageMap = {
-    hostel: "hostel-banner.png",
-    tiffin: "tiffin-banner.png",
-    library: "library-banner.png",
-    cafe: "cafe-banner.png",
-    bookstore: "bookstore-banner.png"
-  };
-
-  const actualImage =
-    row.image ||
-    row.image_url ||
-    row.photo ||
-    row.photo_url ||
-    row.cover_image ||
-    "";
-
-  const fallbackImage =
-    imageMap[String(row.entity_type || "").toLowerCase()] ||
-    "";
-
-  const image = escapeHTML(actualImage || fallbackImage);
-  const url = safeUrl(row);
-
-  const locationText = [area, city].filter(Boolean).join(", ");
-
-  return `
-    <article class="result-card">
-
-      <div class="result-image">
-
-        ${
-          image
-            ? `
-              <img
-                src="${image}"
-                alt="${title}"
-                loading="lazy"
-                onerror="this.onerror=null;this.src='${escapeHTML(fallbackImage)}';"
-                decoding="async"
-              >
-            `
-            : ""
-        }
-
-        <div class="entity-badge">
-          ${escapeHTML(entity)}
+  <!-- ================= MAIN ================= -->
+  <main>
+    <div class="container">
+
+      <div class="summary-bar">
+        <div class="summary-left">
+          <h2 id="resultsTitle">Explore StudentHubHelp</h2>
+          <p id="resultsSubtitle">Search across all student services in one place.</p>
         </div>
 
-        ${
-          row.verified
-            ? `
-              <div class="verified">
-                ✓ Verified
-              </div>
-            `
-            : ""
-        }
-
+        <div class="result-count" id="resultCount">
+          <i class="fa-solid fa-layer-group">▦</i>
+          <span>Ready to search</span>
+        </div>
       </div>
 
+      <div class="category-filter" id="categoryFilter" aria-label="Filter search results">
+        <button class="filter-btn active" type="button" data-filter="all">All</button>
+        <button class="filter-btn" type="button" data-filter="hostel">🏠 Hostel / PG</button>
+        <button class="filter-btn" type="button" data-filter="tiffin">🍱 Tiffin / Mess</button>
+        <button class="filter-btn" type="button" data-filter="library">📚 Library</button>
+        <button class="filter-btn" type="button" data-filter="cafe">☕ Cafe</button>
+        <button class="filter-btn" type="button" data-filter="bookstore">📖 Book Store</button>
+      </div>
 
-      <div class="result-body">
+      <section class="state" id="loadingState" aria-live="polite">
+        <div class="spinner"></div>
+        <h3>Searching StudentHubHelp</h3>
+        <p>Checking all student-service categories for matching listings...</p>
+      </section>
 
-        <h3 class="result-title">
-          ${title}
-        </h3>
+      <section class="state" id="emptyState">
+        <div class="state-icon">⌕</div>
+        <h3 id="emptyTitle">No matching listings found</h3>
+        <p id="emptyText">
+          Try another city, area, property name or service such as hostel, cafe, library or tiffin.
+        </p>
+      </section>
 
+      <section id="resultsSection" aria-live="polite">
+        <div class="results-grid" id="resultsGrid"></div>
+      </section>
 
-        ${
-          subtitle
-            ? `
-              <div class="result-subtitle">
-                ${subtitle}
-              </div>
-            `
-            : ""
-        }
+    </div>
+  </main>
 
+  <!-- ================= DETAILS MODAL ================= -->
+  <div
+    class="modal"
+    id="detailModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalTitle"
+    aria-hidden="true">
 
-        ${
-          locationText
-            ? `
-              <div class="location">
-                📍 ${locationText}
-              </div>
-            `
-            : ""
-        }
+    <div class="modal-dialog">
 
+      <div class="modal-head" id="modalHead">
+        <button class="modal-close" id="modalClose" type="button" aria-label="Close details">
+          ✕
+        </button>
 
-        <div class="meta">
+        <div>
+          <div class="modal-category" id="modalCategory">Student Service</div>
+          <h2 id="modalTitle">Listing</h2>
+        </div>
+      </div>
 
-          ${
-            category
-              ? `
-                <span>
-                  ${category}
-                </span>
-              `
-              : ""
-          }
+      <div class="modal-content">
 
-          ${
-            row.price !== null &&
-            row.price !== undefined
-              ? `
-                <span>
-                  ₹${escapeHTML(row.price)}
-                </span>
-              `
-              : ""
-          }
+        <div class="modal-grid">
+          <div class="detail-item">
+            <div class="detail-label">Location</div>
+            <div class="detail-value" id="modalArea">Not available</div>
+          </div>
 
+          <div class="detail-item">
+            <div class="detail-label">Rating</div>
+            <div class="detail-value" id="modalRating">Not rated</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Address</div>
+            <div class="detail-value" id="modalAddress">Not available</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Timing</div>
+            <div class="detail-value" id="modalTiming">Not available</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Phone</div>
+            <div class="detail-value" id="modalPhone">Not available</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Facilities</div>
+            <div class="detail-value" id="modalFacilities">Not available</div>
+          </div>
         </div>
 
+        <div class="modal-actions">
+          <a class="btn btn-primary" id="modalFinderBtn" href="#">
+            Open Finder
+          </a>
+          <a class="btn btn-light" id="modalCallBtn" href="#">
+            Call
+          </a>
+          <a class="btn btn-light" id="modalMapBtn" href="#" target="_blank" rel="noopener">
+            Maps
+          </a>
+        </div>
 
-        <div class="result-footer">
+      </div>
+    </div>
+  </div>
 
-          <div class="rating">
+  <!-- ================= FOOTER ================= -->
+  <footer>
+    <p>
+      © <span id="year"></span>
+      <strong>StudentHubHelp</strong>.
+      Student services made simple.
+    </p>
 
-            ${
-              row.rating !== null &&
-              row.rating !== undefined
-                ? `
-                  <span>★</span>
-                  ${rating}
-                `
-                : "No rating"
+    <div class="director">
+      Director: <strong>SATPAL SWAMI</strong><br>
+      +91 9929718264<br>
+      satpalswami22742@gmail.com
+    </div>
+  </footer>
+
+  <script>
+    /* =========================================================
+       SUPABASE CONFIG
+       Same project used by the current StudentHubHelp finders.
+    ========================================================= */
+
+    const SUPABASE_URL =
+      "https://idurlccrarznnnqixxsd.supabase.co";
+
+    const SUPABASE_ANON_KEY =
+      "PASTE_YOUR_CURRENT_SUPABASE_ANON_KEY_HERE";
+
+    const db =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+    /* =========================================================
+       CATEGORY CONFIG
+    ========================================================= */
+
+    const CATEGORIES = {
+      hostel: {
+        key: "hostel",
+        label: "Hostel / PG",
+        icon: "🏠",
+        table: "hostels",
+        finder: "pg-finder.html",
+        type: "hostel",
+        emptyMessage: "No hostel or PG listings matched your search."
+      },
+
+      tiffin: {
+        key: "tiffin",
+        label: "Tiffin / Mess",
+        icon: "🍱",
+        table: "tiffins",
+        finder: "tiffin-finder.html",
+        type: "tiffin",
+        emptyMessage: "No tiffin or mess listings matched your search."
+      },
+
+      library: {
+        key: "library",
+        label: "Library",
+        icon: "📚",
+        table: "libraries",
+        finder: "library-finder.html",
+        type: "library",
+        emptyMessage: "No library listings matched your search."
+      },
+
+      cafe: {
+        key: "cafe",
+        label: "Cafe",
+        icon: "☕",
+        table: "cafes",
+        finder: "cafe-finder.html",
+        type: "cafe",
+        emptyMessage: "No cafe listings matched your search."
+      },
+
+      bookstore: {
+        key: "bookstore",
+        label: "Book Store",
+        icon: "📖",
+        table: "bookstores",
+        finder: "bookstore-finder.html",
+        type: "bookstore",
+        emptyMessage: "No bookstore listings matched your search."
+      }
+    };
+
+    const CATEGORY_KEYS =
+      Object.keys(CATEGORIES);
+
+    /* =========================================================
+       DOM
+    ========================================================= */
+
+    const globalSearchForm =
+      document.getElementById("globalSearchForm");
+
+    const globalSearchInput =
+      document.getElementById("globalSearchInput");
+
+    const searchSubmit =
+      document.getElementById("searchSubmit");
+
+    const resultsGrid =
+      document.getElementById("resultsGrid");
+
+    const resultsTitle =
+      document.getElementById("resultsTitle");
+
+    const resultsSubtitle =
+      document.getElementById("resultsSubtitle");
+
+    const resultCount =
+      document.getElementById("resultCount");
+
+    const loadingState =
+      document.getElementById("loadingState");
+
+    const emptyState =
+      document.getElementById("emptyState");
+
+    const emptyTitle =
+      document.getElementById("emptyTitle");
+
+    const emptyText =
+      document.getElementById("emptyText");
+
+    const categoryFilter =
+      document.getElementById("categoryFilter");
+
+    const detailModal =
+      document.getElementById("detailModal");
+
+    const modalHead =
+      document.getElementById("modalHead");
+
+    const modalClose =
+      document.getElementById("modalClose");
+
+    const modalCategory =
+      document.getElementById("modalCategory");
+
+    const modalTitle =
+      document.getElementById("modalTitle");
+
+    const modalArea =
+      document.getElementById("modalArea");
+
+    const modalRating =
+      document.getElementById("modalRating");
+
+    const modalAddress =
+      document.getElementById("modalAddress");
+
+    const modalTiming =
+      document.getElementById("modalTiming");
+
+    const modalPhone =
+      document.getElementById("modalPhone");
+
+    const modalFacilities =
+      document.getElementById("modalFacilities");
+
+    const modalFinderBtn =
+      document.getElementById("modalFinderBtn");
+
+    const modalCallBtn =
+      document.getElementById("modalCallBtn");
+
+    const modalMapBtn =
+      document.getElementById("modalMapBtn");
+
+    const menuBtn =
+      document.getElementById("menuBtn");
+
+    const navLinks =
+      document.getElementById("navLinks");
+
+    document.getElementById("year").textContent =
+      new Date().getFullYear();
+
+    /* =========================================================
+       STATE
+    ========================================================= */
+
+    let allResults = [];
+    let activeFilter = "all";
+    let currentQuery = "";
+    let searchTimer = null;
+    let activeRequest = 0;
+
+    /* =========================================================
+       HELPERS
+    ========================================================= */
+
+    function clean(value) {
+      if (
+        value === null ||
+        value === undefined ||
+        String(value).trim() === ""
+      ) {
+        return "";
+      }
+
+      return String(value).trim();
+    }
+
+    function escapeHTML(value) {
+      return clean(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function normalizePhone(phone) {
+      return clean(phone).replace(/\D/g, "");
+    }
+
+    function getRating(value) {
+      const number = Number(value);
+
+      if (
+        !Number.isFinite(number) ||
+        number <= 0
+      ) {
+        return null;
+      }
+
+      return Math.max(
+        0,
+        Math.min(5, number)
+      );
+    }
+
+    function ratingText(value) {
+      const rating = getRating(value);
+
+      return rating === null
+        ? "Not rated"
+        : "⭐ " + rating.toFixed(1);
+    }
+
+    function imageFromRecord(record) {
+      return clean(
+        record.image ||
+        record.image_url ||
+        record.photo ||
+        record.photo_url ||
+        record.cover_image
+      );
+    }
+
+    function areaFromRecord(record) {
+      return clean(
+        record.area ||
+        record.location ||
+        record.city ||
+        record.locality
+      );
+    }
+
+    function addressFromRecord(record) {
+      return clean(
+        record.address ||
+        record.full_address ||
+        record.location_address
+      );
+    }
+
+    function timingFromRecord(record) {
+      return clean(
+        record.timing ||
+        record.timings ||
+        record.opening_hours ||
+        record.hours
+      );
+    }
+
+    function facilitiesFromRecord(record) {
+      return clean(
+        record.facilities ||
+        record.services ||
+        record.features
+      );
+    }
+
+    function phoneFromRecord(record) {
+      return clean(
+        record.phone ||
+        record.mobile ||
+        record.contact ||
+        record.contact_number
+      );
+    }
+
+    function nameFromRecord(record) {
+      return clean(
+        record.name ||
+        record.title ||
+        record.property_name
+      );
+    }
+
+    function propertyIdFromRecord(record) {
+      return clean(
+        record.property_id ||
+        record.id
+      );
+    }
+
+    function searchableText(record) {
+      return [
+        record.id,
+        record.property_id,
+        record.name,
+        record.title,
+        record.property_name,
+        record.category,
+        record.area,
+        record.city,
+        record.locality,
+        record.address,
+        record.phone,
+        record.mobile,
+        record.timing,
+        record.timings,
+        record.opening_hours,
+        record.facilities,
+        record.services,
+        record.features,
+        record.rating
+      ]
+        .map(clean)
+        .join(" ")
+        .toLowerCase();
+    }
+
+    function setURLQuery(query) {
+      const url =
+        new URL(window.location.href);
+
+      if (query) {
+        url.searchParams.set("q", query);
+      } else {
+        url.searchParams.delete("q");
+      }
+
+      window.history.replaceState(
+        {},
+        "",
+        url.toString()
+      );
+    }
+
+    function showLoading(show) {
+      loadingState.classList.toggle("show", show);
+      resultsGrid.style.display =
+        show ? "none" : "";
+    }
+
+    function showEmpty(show) {
+      emptyState.classList.toggle("show", show);
+    }
+
+    function updateSummary(results, query) {
+      const count = results.length;
+
+      if (query) {
+        resultsTitle.textContent =
+          `Search results for "${query}"`;
+
+        resultsSubtitle.textContent =
+          count
+            ? `Found ${count} matching listing${count === 1 ? "" : "s"} across StudentHubHelp.`
+            : "Try a different city, area, property name or student service.";
+      } else {
+        resultsTitle.textContent =
+          "Explore StudentHubHelp";
+
+        resultsSubtitle.textContent =
+          "Search across all student services in one place.";
+      }
+
+      resultCount.innerHTML = `
+        <i class="fa-solid fa-layer-group">▦</i>
+        <span>${count} result${count === 1 ? "" : "s"}</span>
+      `;
+    }
+
+    /* =========================================================
+       LOAD ALL CATEGORIES
+    ========================================================= */
+
+    async function loadCategory(categoryKey, query, requestId) {
+      const category =
+        CATEGORIES[categoryKey];
+
+      try {
+        const {
+          data,
+          error
+        } = await db
+          .from(category.table)
+          .select("*")
+          .limit(1000);
+
+        if (requestId !== activeRequest) {
+          return [];
+        }
+
+        if (error) {
+          console.error(
+            `${category.label} search error:`,
+            error
+          );
+
+          return [];
+        }
+
+        const records =
+          Array.isArray(data)
+            ? data
+            : [];
+
+        const normalizedQuery =
+          clean(query).toLowerCase();
+
+        return records
+          .filter(record => {
+            if (!normalizedQuery) {
+              return true;
             }
 
-          </div>
+            return searchableText(record)
+              .includes(normalizedQuery);
+          })
+          .map(record => ({
+            ...record,
+            __category: categoryKey,
+            __categoryConfig: category
+          }));
 
+      } catch (error) {
+        console.error(
+          `${category.label} load error:`,
+          error
+        );
 
-          <a
-            class="view-btn"
-            href="${escapeHTML(url)}"
-          >
-            View Details
-          </a>
-
-        </div>
-
-      </div>
-
-    </article>
-  `;
-}
-
-
-/* ============================================================
-   PAGINATION
-   ============================================================ */
-
-function renderPagination(rowCount) {
-  pagination.innerHTML = "";
-
-  const hasNext = rowCount === state.pageSize;
-  const hasPrevious = state.page > 1;
-
-  if (!hasPrevious && !hasNext) {
-    return;
-  }
-
-  const previousButton = document.createElement("button");
-  previousButton.className = "page-btn";
-  previousButton.textContent = "‹";
-  previousButton.disabled = !hasPrevious;
-  previousButton.onclick = () => {
-    if (state.page > 1) {
-      state.page--;
-      performSearch();
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      });
+        return [];
+      }
     }
-  };
-  pagination.appendChild(previousButton);
 
-  const currentButton = document.createElement("button");
-  currentButton.className = "page-btn active";
-  currentButton.textContent = state.page;
-  pagination.appendChild(currentButton);
+    async function performSearch(query) {
+      const requestId =
+        ++activeRequest;
 
-  const nextButton = document.createElement("button");
-  nextButton.className = "page-btn";
-  nextButton.textContent = "›";
-  nextButton.disabled = !hasNext;
-  nextButton.onclick = () => {
-    if (hasNext) {
-      state.page++;
-      performSearch();
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      });
+      currentQuery =
+        clean(query);
+
+      setURLQuery(currentQuery);
+
+      showEmpty(false);
+      showLoading(true);
+
+      resultsGrid.innerHTML = "";
+
+      const chunks =
+        await Promise.all(
+          CATEGORY_KEYS.map(
+            key =>
+              loadCategory(
+                key,
+                currentQuery,
+                requestId
+              )
+          )
+        );
+
+      if (requestId !== activeRequest) {
+        return;
+      }
+
+      allResults =
+        chunks.flat();
+
+      renderResults();
+      showLoading(false);
     }
-  };
-  pagination.appendChild(nextButton);
-}
 
+    /* =========================================================
+       FILTER
+    ========================================================= */
 
-/* ============================================================
-   AUTOCOMPLETE
-   ============================================================ */
+    function filteredResults() {
+      if (activeFilter === "all") {
+        return [...allResults];
+      }
 
-let suggestionTimer = null;
+      return allResults.filter(
+        item =>
+          item.__category === activeFilter
+      );
+    }
 
-async function loadSuggestions() {
-  const query = searchInput.value.trim();
+    function setActiveFilter(filter) {
+      activeFilter = filter;
 
-  if (query.length < 2) {
-    suggestions.innerHTML = "";
-    suggestions.classList.remove("show");
-    return;
-  }
+      categoryFilter
+        .querySelectorAll(".filter-btn")
+        .forEach(button => {
+          button.classList.toggle(
+            "active",
+            button.dataset.filter === filter
+          );
+        });
 
-  try {
-    const {
-      data,
-      error
-    } = await supabaseClient
-      .rpc(
-        "search_suggestions",
-        {
-          p_query: query
-        }
+      renderResults();
+    }
+
+    /* =========================================================
+       RENDER
+    ========================================================= */
+
+    function renderResults() {
+      const results =
+        filteredResults();
+
+      resultsGrid.innerHTML = "";
+
+      updateSummary(
+        results,
+        currentQuery
       );
 
-    if (error) {
-      throw error;
+      if (!results.length) {
+        showEmpty(true);
+
+        emptyTitle.textContent =
+          currentQuery
+            ? "No matching listings found"
+            : "No listings available";
+
+        emptyText.textContent =
+          currentQuery
+            ? `We couldn't find a matching ${activeFilter === "all" ? "student service" : CATEGORIES[activeFilter].label.toLowerCase()} for "${currentQuery}". Try another keyword.`
+            : "No listings are currently available in the selected category.";
+
+        return;
+      }
+
+      showEmpty(false);
+
+      results.forEach(
+        record => {
+          resultsGrid.appendChild(
+            createCard(record)
+          );
+        }
+      );
     }
 
-    const rows = Array.isArray(data) ? data : [];
+    function createCard(record) {
+      const card =
+        document.createElement("article");
 
-    if (!rows.length) {
-      suggestions.innerHTML = "";
-      suggestions.classList.remove("show");
-      return;
-    }
+      card.className =
+        "result-card";
 
-    suggestions.innerHTML = rows.map(item => {
-      const suggestion = escapeHTML(cleanPublicText(item.suggestion));
-      const type = escapeHTML(item.suggestion_type);
-      const entity = escapeHTML(formatEntity(item.entity_type));
+      const category =
+        record.__categoryConfig;
 
-      return `
-        <button
-          type="button"
-          class="suggestion-item"
-          data-value="${suggestion}"
+      const name =
+        nameFromRecord(record) ||
+        category.label;
+
+      const area =
+        areaFromRecord(record);
+
+      const address =
+        addressFromRecord(record);
+
+      const image =
+        imageFromRecord(record);
+
+      const rating =
+        ratingText(record.rating);
+
+      const verified =
+        record.verified === true ||
+        record.is_verified === true;
+
+      const background =
+        image
+          ? `
+            background-image:
+              linear-gradient(
+                180deg,
+                rgba(7,26,51,.08),
+                rgba(7,26,51,.74)
+              ),
+              url("${escapeHTML(image)}");
+          `
+          : "";
+
+      card.innerHTML = `
+        <div
+          class="card-media"
+          style="${background}"
         >
-          <div class="suggestion-icon">
-            ${type === "area" ? "📍" :
-              type === "category" ? "▦" :
-              "🔎"}
+          <div class="category-badge">
+            ${category.icon}
+            ${escapeHTML(category.label)}
           </div>
 
-          <div class="suggestion-main">
-            <div class="suggestion-title">
-              ${suggestion}
-            </div>
+          ${
+            verified
+              ? `
+                <div
+                  class="verified"
+                  title="Verified listing"
+                  aria-label="Verified listing"
+                >
+                  ✓
+                </div>
+              `
+              : ""
+          }
 
-            <div class="suggestion-type">
-              ${type} · ${entity}
-            </div>
+          <div class="card-media-title">
+            ${escapeHTML(name)}
           </div>
-        </button>
+        </div>
+
+        <div class="card-body">
+          <h3 class="card-title">
+            ${escapeHTML(name)}
+          </h3>
+
+          <div class="card-location">
+            <i class="fa-solid fa-location-dot">⌖</i>
+            <span>
+              ${escapeHTML(
+                area ||
+                address ||
+                "Location not available"
+              )}
+            </span>
+          </div>
+
+          <div class="card-meta">
+            <span class="rating">
+              ${escapeHTML(rating)}
+            </span>
+
+            <span class="type-label">
+              ${escapeHTML(category.label)}
+            </span>
+          </div>
+
+          <div class="card-actions">
+            <button
+              class="btn btn-primary view-btn"
+              type="button">
+              <i class="fa-solid fa-eye">◉</i>
+              View Details
+            </button>
+
+            <a
+              class="btn btn-light finder-btn"
+              href="${escapeHTML(category.finder)}">
+              Open Finder
+            </a>
+          </div>
+        </div>
       `;
-    }).join("");
 
-    suggestions.classList.add("show");
+      card
+        .querySelector(".view-btn")
+        .addEventListener(
+          "click",
+          () => openDetails(record)
+        );
 
-  } catch (error) {
-    console.error("Suggestion error:", error);
-  }
-}
+      return card;
+    }
+
+    /* =========================================================
+       DETAILS MODAL
+    ========================================================= */
+
+    function openDetails(record) {
+      const category =
+        record.__categoryConfig;
+
+      const name =
+        nameFromRecord(record) ||
+        category.label;
+
+      const area =
+        areaFromRecord(record);
+
+      const address =
+        addressFromRecord(record);
+
+      const timing =
+        timingFromRecord(record);
+
+      const phone =
+        phoneFromRecord(record);
+
+      const facilities =
+        facilitiesFromRecord(record);
+
+      const image =
+        imageFromRecord(record);
+
+      modalCategory.textContent =
+        `${category.icon} ${category.label}`;
+
+      modalTitle.textContent =
+        name;
+
+      modalArea.textContent =
+        area || "Not available";
+
+      modalRating.textContent =
+        ratingText(record.rating);
+
+      modalAddress.textContent =
+        address || "Not available";
+
+      modalTiming.textContent =
+        timing || "Not available";
+
+      modalPhone.textContent =
+        phone || "Not available";
+
+      modalFacilities.textContent =
+        facilities || "Not available";
+
+      modalHead.style.backgroundImage =
+        image
+          ? `
+            linear-gradient(
+              90deg,
+              rgba(7,26,51,.96),
+              rgba(7,26,51,.55)
+            ),
+            url("${image}")
+          `
+          : `
+            linear-gradient(
+              90deg,
+              rgba(7,26,51,.96),
+              rgba(7,26,51,.55)
+            ),
+            linear-gradient(
+              135deg,
+              #173c65,
+              #081a31
+            )
+          `;
+
+      modalFinderBtn.href =
+        category.finder;
+
+      if (phone) {
+        modalCallBtn.href =
+          "tel:" + normalizePhone(phone);
+
+        modalCallBtn.classList.remove(
+          "disabled"
+        );
+      } else {
+        modalCallBtn.href = "#";
+        modalCallBtn.classList.add(
+          "disabled"
+        );
+      }
+
+      if (address || area) {
+        modalMapBtn.href =
+          "https://www.google.com/maps/search/?api=1&query=" +
+          encodeURIComponent(
+            address || area
+          );
+
+        modalMapBtn.classList.remove(
+          "disabled"
+        );
+      } else {
+        modalMapBtn.href = "#";
+        modalMapBtn.classList.add(
+          "disabled"
+        );
+      }
+
+      detailModal.classList.add("show");
+      detailModal.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+      document.body.classList.add(
+        "modal-open"
+      );
+    }
+
+    function closeDetails() {
+      detailModal.classList.remove("show");
+      detailModal.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+      document.body.classList.remove(
+        "modal-open"
+      );
+    }
+
+    /* =========================================================
+       NAV
+    ========================================================= */
+
+    function closeMobileNav() {
+      if (!navLinks || !menuBtn) {
+        return;
+      }
+
+      navLinks.classList.remove("show");
+
+      menuBtn.setAttribute(
+        "aria-expanded",
+        "false"
+      );
+
+      menuBtn.setAttribute(
+        "aria-label",
+        "Open navigation"
+      );
+
+      menuBtn.innerHTML =
+        '<i class="fa-solid fa-bars">☰</i>';
+    }
+
+    if (menuBtn && navLinks) {
+      menuBtn.addEventListener(
+        "click",
+        event => {
+          event.stopPropagation();
+
+          const isOpen =
+            navLinks.classList.toggle(
+              "show"
+            );
+
+          menuBtn.setAttribute(
+            "aria-expanded",
+            String(isOpen)
+          );
+
+          menuBtn.setAttribute(
+            "aria-label",
+            isOpen
+              ? "Close navigation"
+              : "Open navigation"
+          );
+
+          menuBtn.innerHTML =
+            isOpen
+              ? '<i class="fa-solid fa-xmark">✕</i>'
+              : '<i class="fa-solid fa-bars">☰</i>';
+        }
+      );
+    }
+
+    document
+      .querySelectorAll(".nav-links a")
+      .forEach(link => {
+        link.addEventListener(
+          "click",
+          closeMobileNav
+        );
+      });
+
+    document.addEventListener(
+      "click",
+      event => {
+        if (
+          window.innerWidth <= 1100 &&
+          navLinks &&
+          navLinks.classList.contains("show") &&
+          !navLinks.contains(event.target) &&
+          !menuBtn.contains(event.target)
+        ) {
+          closeMobileNav();
+        }
+      }
+    );
+
+    window.addEventListener(
+      "resize",
+      () => {
+        if (window.innerWidth > 1100) {
+          closeMobileNav();
+        }
+      }
+    );
+
+    /* =========================================================
+       SEARCH EVENTS
+    ========================================================= */
+
+    globalSearchForm.addEventListener(
+      "submit",
+      event => {
+        event.preventDefault();
+
+        performSearch(
+          globalSearchInput.value
+        );
+      }
+    );
+
+    globalSearchInput.addEventListener(
+      "input",
+      () => {
+        clearTimeout(searchTimer);
+
+        searchTimer =
+          setTimeout(
+            () => {
+              const query =
+                globalSearchInput.value.trim();
+
+              if (query.length >= 2) {
+                performSearch(query);
+              }
+
+              if (!query) {
+                performSearch("");
+              }
+            },
+            350
+          );
+      }
+    );
+
+    document
+      .querySelectorAll(".quick-search")
+      .forEach(button => {
+        button.addEventListener(
+          "click",
+          () => {
+            const query =
+              button.dataset.query || "";
+
+            globalSearchInput.value =
+              query;
+
+            performSearch(query);
+          }
+        );
+      });
+
+    categoryFilter
+      .querySelectorAll(".filter-btn")
+      .forEach(button => {
+        button.addEventListener(
+          "click",
+          () => {
+            setActiveFilter(
+              button.dataset.filter
+            );
+          }
+        );
+      });
+
+    /* =========================================================
+       MODAL EVENTS
+    ========================================================= */
+
+    modalClose.addEventListener(
+      "click",
+      closeDetails
+    );
+
+    detailModal.addEventListener(
+      "click",
+      event => {
+        if (
+          event.target === detailModal
+        ) {
+          closeDetails();
+        }
+      }
+    );
+
+    document.addEventListener(
+      "keydown",
+      event => {
+        if (
+          event.key === "Escape"
+        ) {
+          closeMobileNav();
+
+          if (
+            detailModal.classList.contains(
+              "show"
+            )
+          ) {
+            closeDetails();
+          }
+        }
+      }
+    );
+
+    /* =========================================================
+       INITIAL LOAD
+    ========================================================= */
+
+    const initialQuery =
+      new URLSearchParams(
+        window.location.search
+      ).get("q") || "";
+
+    globalSearchInput.value =
+      initialQuery;
+
+    if (initialQuery) {
+      performSearch(initialQuery);
+    } else {
+      /*
+        Initial page load intentionally stays lightweight.
+        Listings are fetched when the user searches.
+      */
+      updateSummary([], "");
+      showLoading(false);
+      showEmpty(false);
+    }
+  </script>
 
 
-/* ============================================================
-   SUGGESTION CLICK
-   ============================================================ */
+  <script id="studenthubhelp-ultra-search-v2">
+  (function(){
+    'use strict';
+  
+    /* =========================================================
+       STUDENTHUBHELP ULTRA SEARCH V2
+       - Hindi / English / Hinglish normalization
+       - typo-tolerant fuzzy matching
+       - intent + category understanding
+       - weighted relevance ranking
+       - smart suggestions + keyboard navigation
+       - one-time dataset cache for fast repeat searches
+       - optional server-side vector/AI hook (no client secret)
+    ========================================================= */
+  
+    const U = window.__SHH_ULTRA__ = window.__SHH_ULTRA__ || {};
+    if (U.loaded) return;
+    U.loaded = true;
+  
+    const input = document.getElementById('globalSearchInput');
+    const form = document.getElementById('globalSearchForm');
+    const grid = document.getElementById('resultsGrid');
+    const filter = document.getElementById('categoryFilter');
+    const loading = document.getElementById('loadingState');
+    const empty = document.getElementById('emptyState');
+    const emptyTitle = document.getElementById('emptyTitle');
+    const emptyText = document.getElementById('emptyText');
+    const title = document.getElementById('resultsTitle');
+    const subtitle = document.getElementById('resultsSubtitle');
+    const count = document.getElementById('resultCount');
+    if (!input || !form || !grid) return;
+  
+    const STOP = new Set(('me mein mai m par pe ke ki ka ko se hai hain ho chahiye batao btao dikhao do de wala wali wale near nearest nearby pass paas around in at the a an for of to and with on from mein men par ke ki ka ko se hai hain chahiye पास पास नजदीक नज़दीक आसपास और').split(' '));
+  
+    const ALIASES = {
+      hostel:['hostel','hostels','hostal','pg','p g','paying guest','paying-guest','boys hostel','girls hostel','room','rooms','stay','accommodation','हॉस्टल','होस्टल','पीजी','आवास'],
+      tiffin:['tiffin','tiffins','tifin','tifin','mess','food','meal','meals','dabba','lunch','dinner','breakfast','thali','टिफिन','टिफिन','मेस','खाना','भोजन'],
+      library:['library','libraries','libary','study','study room','reading room','reading','self study','self-study','पुस्तकालय','लाइब्रेरी','स्टडी'],
+      cafe:['cafe','cafes','café','cafee','coffee','coffee shop','cafeteria','chai','tea','snacks','कैफे','कॉफी','चाय'],
+      bookstore:['bookstore','book store','book shop','books','stationery','stationary','किताब','किताबें','बुकस्टोर','बुक स्टोर','स्टेशनरी']
+    };
+  
+    const INTENTS = {
+      nearby:['near','nearest','nearby','pass','paas','ke paas','ke pass','nazdeek','najdik','around','aas paas','aaspaas','नजदीक','नज़दीक','पास','आसपास'],
+      cheap:['cheap','cheapest','budget','affordable','sasta','sasti','kam price','low price','कम कीमत','सस्ता','बजट'],
+      premium:['premium','best','top','luxury','high rated','अच्छा','बेहतरीन'],
+      late:['late','late night','night','24 hour','24 hours','open late','रात','रात में','लेट नाइट'],
+      veg:['veg','vegetarian','shakahari','शाकाहारी','वेज'],
+      boys:['boys','boy','male','लड़के','पुरुष'],
+      girls:['girls','girl','female','women','ladies','लड़कियां','महिला']
+    };
+  
+    const DEV = {
+      'अ':'a','आ':'aa','इ':'i','ई':'ee','उ':'u','ऊ':'oo','ए':'e','ऐ':'ai','ओ':'o','औ':'au',
+      'क':'k','ख':'kh','ग':'g','घ':'gh','ङ':'ng','च':'ch','छ':'chh','ज':'j','झ':'jh','ञ':'ny',
+      'ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n','त':'t','थ':'th','द':'d','ध':'dh','न':'n',
+      'प':'p','फ':'ph','ब':'b','भ':'bh','म':'m','य':'y','र':'r','ल':'l','व':'v','श':'sh','ष':'sh','स':'s','ह':'h',
+      'क्ष':'ksh','त्र':'tr','ज्ञ':'gy','ड़':'r','ढ़':'rh','क़':'q','ख़':'kh','ग़':'gh','ज़':'z','फ़':'f',
+      'ा':'aa','ि':'i','ी':'ee','ु':'u','ू':'oo','े':'e','ै':'ai','ो':'o','ौ':'au','ं':'n','ँ':'n','ः':'h','्':''
+    };
+  
+    function clean(v){
+      if(v==null) return '';
+      if(Array.isArray(v)) return v.map(clean).filter(Boolean).join(' ');
+      if(typeof v==='object'){try{return Object.values(v).map(clean).filter(Boolean).join(' ')}catch(e){return ''}}
+      return String(v).trim();
+    }
+  
+    function hindiLatin(s){
+      let v=clean(s); if(!/[\u0900-\u097F]/.test(v)) return v;
+      Object.keys(DEV).sort((a,b)=>b.length-a.length).forEach(k=>v=v.split(k).join(DEV[k]));
+      return v;
+    }
+  
+    function norm(s){
+      return hindiLatin(s).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+        .replace(/&/g,' and ').replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim();
+    }
+    function toks(s){return norm(s).split(' ').filter(Boolean)}
+    function uniq(a){return [...new Set(a.filter(Boolean))]}
+    function esc(v){return clean(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+  
+    function lev(a,b){
+      a=norm(a); b=norm(b); if(a===b)return 0; if(!a||!b)return Math.max(a.length,b.length);
+      if(Math.abs(a.length-b.length)>5)return Math.max(a.length,b.length);
+      let p=Array.from({length:b.length+1},(_,i)=>i);
+      for(let i=1;i<=a.length;i++){
+        const c=[i];
+        for(let j=1;j<=b.length;j++) c[j]=Math.min(c[j-1]+1,p[j]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));
+        p=c;
+      }
+      return p[b.length];
+    }
+    function sim(a,b){
+      a=norm(a);b=norm(b);if(!a||!b)return 0;if(a===b)return 1;if(a.includes(b)||b.includes(a))return .9;
+      return Math.max(0,1-lev(a,b)/Math.max(a.length,b.length));
+    }
+    function tokenScore(q,field){
+      const fs=uniq(toks(field)); let best=0;
+      for(const f of fs){
+        if(f===q)best=1;
+        else if(f.includes(q)||q.includes(f))best=Math.max(best,.84);
+        else if(Math.min(f.length,q.length)>=4)best=Math.max(best,sim(q,f));
+      }
+      return best;
+    }
+  
+    function aliasCategory(q){
+      const n=norm(q); let best=null,bestScore=0;
+      for(const [cat,arr] of Object.entries(ALIASES)) for(const a of arr){
+        const x=norm(a); if(!x)continue;
+        const s=n.includes(x)?(x.includes(' ')?100:85):0;
+        if(s>bestScore){bestScore=s;best=cat}
+      }
+      return best;
+    }
+  
+    function intents(q){
+      const n=norm(q), out={};
+      for(const [k,arr] of Object.entries(INTENTS)) out[k]=arr.some(a=>n.includes(norm(a)));
+      return out;
+    }
+  
+    function budget(q){
+      const m=clean(q).toLowerCase().match(/(?:under|below|less than|upto|up to|max|within|se kam|तक|से कम)\s*(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)/i);
+      return m && Number.isFinite(Number(m[1])) ? Number(m[1]) : null;
+    }
+  
+    function fields(r){
+      return {
+        name:norm(r.name||r.title||r.property_name||r.service_name),
+        category:norm(r.category||r.type||r.service_type),
+        area:norm(r.area||r.locality||r.neighborhood),
+        city:norm(r.city),
+        address:norm(r.address||r.full_address||r.location_address),
+        landmark:norm(r.landmark||r.nearby||r.near),
+        description:norm(r.description||r.about),
+        facilities:norm(r.facilities||r.services||r.features||r.menu),
+        timing:norm(r.timing||r.timings||r.opening_hours||r.hours),
+        food:norm(r.food_type||r.meal_type||r.food),
+        room:norm(r.room_type||r.room_types||r.sharing),
+        price:norm(r.price||r.rent||r.monthly_rent||r.monthly_fee||r.price_range),
+        all:norm(Object.values(r||{}).map(clean).join(' '))
+      };
+    }
+  
+    function parse(q){
+      const n=norm(q), ts=toks(q), cat=aliasCategory(q), ins=intents(q);
+      const concepts=new Set();
+      for(const [c,arr] of Object.entries(ALIASES)) if(arr.some(a=>n.includes(norm(a)))) concepts.add(c);
+      const categoryWords=new Set(Object.values(ALIASES).flat().map(norm));
+      const location=ts.filter(t=>!STOP.has(t)&&!categoryWords.has(t));
+      return {raw:clean(q),n,ts,cat,ins,budget:budget(q),location,concepts};
+    }
+  
+    function score(r,info){
+      const f=fields(r); let s=0; const why=[]; const q=info.n;
+      if(f.name===q){s+=180;why.push('Exact name')}
+      else if(f.name.includes(q)){s+=135;why.push('Name match')}
+      else {const z=sim(q,f.name);if(z>=.68){s+=65*z;why.push('Close name')}}
+      if(info.cat===r.__category){s+=70;why.push(CATEGORIES[r.__category]?.label||'Category match')}
+      if(info.concepts.has(r.__category))s+=45;
+      const weights={area:105,city:82,landmark:76,address:58,category:52,facilities:34,food:34,room:30,timing:28,description:22,price:18};
+      for(const t of info.ts){
+        if(STOP.has(t))continue; let best=0,bf='';
+        for(const [field,w] of Object.entries(weights)){const z=tokenScore(t,f[field]);if(z*w>best){best=z*w;bf=field}}
+        if(best){s+=best;if(bf==='area')why.push('Area match');if(bf==='city')why.push('City match');if(bf==='landmark')why.push('Landmark match')}
+        else if(tokenScore(t,f.all)>=.72)s+=8;
+      }
+      if(f.all.includes(q))s+=40;
+      if(info.ins.nearby && (f.area||f.landmark||f.address))s+=15;
+      if(info.ins.late && f.timing){s+=20;if(/24|late|night|open|hour|am|pm/.test(f.timing))s+=18}
+      if(info.ins.veg && /veg|vegetarian|shakahari/.test(f.food+' '+f.facilities))s+=30;
+      const rating=Number(r.rating); if(info.ins.premium&&Number.isFinite(rating)&&rating>0)s+=rating*7;
+      if(info.budget!=null){const nums=(f.price.match(/\d+(?:\.\d+)?/g)||[]).map(Number);if(nums.length){const p=Math.min(...nums);s+=p<=info.budget?35:-Math.min(35,(p-info.budget)/Math.max(1,info.budget)*35)}}
+      if(r.verified===true||r.is_verified===true)s+=8;
+      return {s,why:uniq(why).slice(0,4)};
+    }
+  
+    function ranked(data,q){
+      const info=parse(q);
+      return data.filter(r=>activeFilter==='all'||r.__category===activeFilter).map(r=>{
+        const x=score(r,info);return Object.assign({},r,{__score:x.s,__reasons:x.why});
+      }).filter(r=>r.__score>=8).sort((a,b)=>b.__score-a.__score || (Number(b.rating)||0)-(Number(a.rating)||0) || clean(a.name).localeCompare(clean(b.name)));
+    }
+  
+    async function loadAll(){
+      if(U.dataPromise)return U.dataPromise;
+      U.dataPromise=Promise.all(Object.keys(CATEGORIES).map(async key=>{
+        try{
+          const {data,error}=await db.from(CATEGORIES[key].table).select('*').limit(1000);
+          if(error){console.error('Ultra search',CATEGORIES[key].label,error);return []}
+          return (Array.isArray(data)?data:[]).map(r=>Object.assign({},r,{__category:key,__categoryConfig:CATEGORIES[key]}));
+        }catch(e){console.error('Ultra search load',key,e);return []}
+      })).then(x=>x.flat());
+      return U.dataPromise;
+    }
+  
+    function ensureCSS(){
+      if(document.getElementById('shhUltraCSS'))return;
+      const s=document.createElement('style');s.id='shhUltraCSS';s.textContent=`
+        .shh-ultra-suggest{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:2000;background:#fff;border:1px solid #e6eaf0;border-radius:16px;box-shadow:0 22px 60px rgba(7,26,51,.22);overflow:auto;max-height:min(520px,65vh);text-align:left}
+        .shh-ultra-item{display:flex;align-items:center;gap:12px;width:100%;padding:12px 15px;border:0;border-bottom:1px solid #edf0f4;background:#fff;color:#162033;text-align:left}
+        .shh-ultra-item:hover,.shh-ultra-item.active{background:#f5f8fc}.shh-ultra-icon{width:36px;height:36px;flex:0 0 36px;border-radius:10px;display:grid;place-items:center;background:#eef3f9;font-weight:800}.shh-ultra-main{min-width:0;flex:1}.shh-ultra-title{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.shh-ultra-sub{display:block;margin-top:3px;font-size:11px;color:#667085;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.shh-ultra-kind{font-size:10px;font-weight:800;color:#2563eb;white-space:nowrap}
+        .shh-match{display:inline-flex;margin:7px 0 0;padding:4px 8px;border-radius:999px;background:#eef7f1;color:#16834b;font-size:10px;font-weight:800}
+        @media(max-width:767px){.shh-ultra-suggest{top:calc(100% + 6px);max-height:58vh}.shh-ultra-item{padding:11px 12px}.shh-ultra-title{font-size:13px}}
+      `;document.head.appendChild(s);
+    }
+  
+    function box(){
+      if(U.box)return U.box;ensureCSS();
+      const wrap=input.closest('.search-shell')||input.parentElement;if(!wrap)return null;
+      if(getComputedStyle(wrap).position==='static')wrap.style.position='relative';
+      const b=document.createElement('div');b.className='shh-ultra-suggest';b.id='shhUltraSuggestions';b.setAttribute('role','listbox');b.hidden=true;wrap.appendChild(b);U.box=b;return b;
+    }
+    function hide(){if(U.box){U.box.hidden=true;U.box.innerHTML='';U.idx=-1}}
+  
+    function suggestions(q,data){
+      const n=norm(q);if(!n)return[];const out=[],seen=new Set();
+      for(const [key,c] of Object.entries(CATEGORIES)){
+        const z=[c.label,...(ALIASES[key]||[])];
+        for(const a of z){const t=clean(a);const x=norm(t);if((x.includes(n)||n.includes(x)||sim(n,x)>.63)&&!seen.has('c'+x)){seen.add('c'+x);out.push({q:t,title:t,sub:'Search matching listings',kind:c.label,icon:c.icon})}}
+      }
+      const vals=[];
+      for(const r of data){
+        const name=clean(r.name||r.title||r.property_name||r.service_name), area=clean(r.area||r.locality||r.neighborhood), city=clean(r.city);
+        if(name)vals.push({q:name,title:name,sub:area||city,kind:CATEGORIES[r.__category]?.label||'Property',icon:CATEGORIES[r.__category]?.icon||'⌕'});
+        if(area)vals.push({q:area,title:area,sub:city,kind:'Area',icon:'⌖'});
+        if(city)vals.push({q:city,title:city,sub:'Location',kind:'City',icon:'⌖'});
+      }
+      vals.sort((a,b)=>sim(n,b.title)-sim(n,a.title));
+      for(const v of vals){const k='v'+norm(v.title)+'|'+v.kind;if(seen.has(k))continue;if(norm(v.title).includes(n)||n.includes(norm(v.title))||sim(n,v.title)>.63){seen.add(k);out.push(v)}if(out.length>=8)break}
+      const info=parse(q);if(info.cat&&info.location.length){const q2=info.location.join(' ')+' '+CATEGORIES[info.cat].label;if(!seen.has('i'+norm(q2)))out.unshift({q:q2,title:q2,sub:'Smart category + location search',kind:'Smart Search',icon:'✦'})}
+      return out.slice(0,8);
+    }
+  
+    async function showSuggestions(q){
+      if(!q.trim()){hide();return}const data=await loadAll();
+      if(input.value.trim()!==q.trim())return;const b=box();if(!b)return;const arr=suggestions(q,data);if(!arr.length){hide();return}
+      U.items=arr;U.idx=-1;b.innerHTML=arr.map((x,i)=>`<button class="shh-ultra-item" type="button" data-i="${i}"><span class="shh-ultra-icon">${esc(x.icon)}</span><span class="shh-ultra-main"><span class="shh-ultra-title">${esc(x.title)}</span><span class="shh-ultra-sub">${esc(x.sub||'Smart StudentHubHelp search')}</span></span><span class="shh-ultra-kind">${esc(x.kind)}</span></button>`).join('');b.hidden=false;
+      b.querySelectorAll('.shh-ultra-item').forEach(btn=>btn.addEventListener('click',()=>{const x=U.items[Number(btn.dataset.i)];input.value=x.q;hide();perform(x.q)}));
+    }
+  
+    async function perform(q){
+      const request=(U.request||0)+1;U.request=request;currentQuery=clean(q);hide();showLoading(true);grid.innerHTML='';setURLQuery(currentQuery);
+      const data=await loadAll();if(request!==U.request)return;
+      if(!currentQuery){allResults=data;renderResults();showLoading(false);return}
+      let result=ranked(data,currentQuery);
+      /* Optional real vector/AI endpoint. Leave empty until a server-side embedding endpoint is deployed. */
+      const vectorURL=clean(window.STUDENTHUBHELP_VECTOR_SEARCH_URL||'');
+      if(vectorURL){try{const r=await fetch(vectorURL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:currentQuery,limit:20})});if(r.ok){const p=await r.json();if(Array.isArray(p.results)){const m=new Map(p.results.map(x=>[clean(x.id||x.property_id),Number(x.similarity||x.score||0)]));result.forEach(x=>{const v=m.get(clean(x.id||x.property_id));if(v!=null)x.__score+=v*80});result.sort((a,b)=>b.__score-a.__score)}}}catch(e){console.debug('Vector search fallback',e)}}
+      allResults=result;renderResults();showLoading(false);
+    }
+  
+    /* Use existing renderer but add a relevance note without changing the card design. */
+    const originalCreate=window.createCard;
+    window.createCard=function(r){
+      const card=originalCreate(r);if(r.__reasons?.length){const body=card.querySelector('.card-body');if(body&&!body.querySelector('.shh-match')){const n=document.createElement('span');n.className='shh-match';n.textContent='✦ '+r.__reasons[0];const actions=body.querySelector('.card-actions');if(actions)body.insertBefore(n,actions)}}return card;
+    };
+  
+    /* Capture phase prevents the old basic input handler from firing separately. */
+    form.addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation();perform(input.value)},true);
+    input.addEventListener('input',e=>{
+      e.stopImmediatePropagation();clearTimeout(U.timer);const q=input.value.trim();
+      if(!q){hide();perform('');return}showSuggestions(q);U.timer=setTimeout(()=>{if(input.value.trim()===q&&q.length>=2)perform(q)},420);
+    },true);
+    input.addEventListener('keydown',e=>{
+      if(!U.box||U.box.hidden||!U.items?.length)return;const items=[...U.box.querySelectorAll('.shh-ultra-item')];
+      if(e.key==='ArrowDown'){e.preventDefault();U.idx=Math.min(items.length-1,(U.idx??-1)+1)}
+      else if(e.key==='ArrowUp'){e.preventDefault();U.idx=Math.max(0,(U.idx??0)-1)}
+      else if(e.key==='Enter'&&U.idx>=0){e.preventDefault();items[U.idx].click();return}
+      else if(e.key==='Escape'){hide();return}else return;
+      items.forEach((x,i)=>x.classList.toggle('active',i===U.idx));
+    },true);
+    document.addEventListener('click',e=>{if(U.box&&!U.box.contains(e.target)&&e.target!==input)hide()});
+  
+    /* Capture quick-search/filter controls so the old basic search handler is bypassed. */
+    document.querySelectorAll('.quick-search').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();input.value=btn.dataset.query||'';perform(input.value)},true));
+    if(filter) filter.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();activeFilter=btn.dataset.filter||'all';filter.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active',x===btn));perform(currentQuery||'')},true));
 
-suggestions.addEventListener("click", event => {
-  const button = event.target.closest(".suggestion-item");
-  if (!button) return;
-
-  const value = button.dataset.value || "";
-  searchInput.value = value;
-  suggestions.classList.remove("show");
-  state.page = 1;
-  performSearch();
-});
-
-
-/* ============================================================
-   SEARCH INPUT
-   ============================================================ */
-
-searchInput.addEventListener("input", () => {
-  clearTimeout(suggestionTimer);
-  suggestionTimer = setTimeout(loadSuggestions, 220);
-});
-
-
-/* ============================================================
-   SEARCH FORM
-   ============================================================ */
-
-searchForm.addEventListener("submit", event => {
-  event.preventDefault();
-  suggestions.classList.remove("show");
-  state.page = 1;
-  performSearch();
-});
-
-
-/* ============================================================
-   CATEGORY BUTTONS
-   ============================================================ */
-
-document.querySelectorAll(".category-btn").forEach(button => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".category-btn").forEach(btn => btn.classList.remove("active"));
-    button.classList.add("active");
-
-    const category = button.dataset.category || "";
-    entityFilter.value = category;
-    state.page = 1;
-    performSearch();
-  });
-});
-
-
-/* ============================================================
-   QUICK SEARCH
-   ============================================================ */
-
-document.querySelectorAll(".quick-btn").forEach(button => {
-  button.addEventListener("click", () => {
-    searchInput.value = button.dataset.search || "";
-    state.page = 1;
-    performSearch();
-  });
-});
-
-
-/* ============================================================
-   FILTERS
-   ============================================================ */
-
-document.getElementById("applyFilters").addEventListener("click", () => {
-  state.page = 1;
-  performSearch();
-});
-
-
-document.getElementById("resetFilters").addEventListener("click", () => {
-  entityFilter.value = "";
-  cityFilter.value = "";
-  areaFilter.value = "";
-  minRating.value = "";
-  state.page = 1;
-
-  document.querySelectorAll(".category-btn").forEach(btn => btn.classList.remove("active"));
-  document.querySelector('.category-btn[data-category=""]')?.classList.add("active");
-
-  performSearch();
-});
-
-
-/* ============================================================
-   CLOSE SUGGESTIONS
-   ============================================================ */
-
-document.addEventListener("click", event => {
-  if (!event.target.closest(".search-wrapper")) {
-    suggestions.classList.remove("show");
-  }
-});
-
-
-/* ============================================================
-   MOBILE MENU
-   ============================================================ */
-
-document.getElementById("mobileMenu").addEventListener("click", () => {
-  document.getElementById("navLinks").classList.toggle("open");
-});
-
-
-/* ============================================================
-   URL QUERY SUPPORT
-   ============================================================ */
-
-function loadQueryFromURL() {
-  const params = new URLSearchParams(window.location.search);
-  const query = params.get("q");
-  const category = params.get("category");
-
-  if (query) {
-    searchInput.value = query;
-  }
-
-  if (category) {
-    entityFilter.value = category;
-    document.querySelectorAll(".category-btn").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.category === category);
+    /* Replace the global function used by the existing quick-search buttons. */
+    window.performSearch=perform;
+    loadAll().then(()=>{
+      const initial=new URLSearchParams(window.location.search).get('q')||'';
+      if(initial && input.value.trim()===initial.trim()) perform(initial);
     });
-  }
-}
+  })();
+  </script>
+  
 
-
-/* ============================================================
-   YEAR
-   ============================================================ */
-
-document.getElementById("year").textContent = new Date().getFullYear();
-
-
-/* ============================================================
-   INITIAL LOAD
-   ============================================================ */
-
-loadQueryFromURL();
-performSearch();
-
-</script>
-
-  <!-- StudentHubHelp AI Chatbot -->
-  <script src="/studenthubhelp/ai-chatbot/public/widget.js" defer></script>
 </body>
 </html>
