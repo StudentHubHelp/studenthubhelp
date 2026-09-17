@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   fix:
-    if: !contains(github.event.head_commit.message, '[showloading-fixed]')
+    if: ${{ !contains(github.event.head_commit.message, '[showloading-fixed]') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -49,14 +49,16 @@ jobs:
     function updateSummary(results,q){
       if(title) title.textContent=q?'Smart search: '+q:'All Student Services';
       if(subtitle) subtitle.textContent=q?'Relevant StudentHubHelp listings':'Explore verified student services';
-      if(count) count.textContent=String(results.length);
+      if(count){
+        const span=count.querySelector('span');
+        if(span) span.textContent=String(results.length)+' results';
+        else count.textContent=String(results.length)+' results';
+      }
     }
 
 '''
               s = s.replace(marker, helpers + marker, 1)
-          else:
-              print('helpers already present')
-          p.write_text(s,encoding='utf-8')
+          p.write_text(s, encoding='utf-8')
           print('patched', len(s), 'bytes')
 
       - name: Validate JavaScript
@@ -81,7 +83,7 @@ jobs:
           git push
 
       - name: Remove one-time workflow
-        if: success()
+        if: ${{ success() }}
         run: |
           git rm -f .github/workflows/fix-global-search-showloading.yml || true
           git config user.name 'StudentHubHelp'
