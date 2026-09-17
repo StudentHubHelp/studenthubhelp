@@ -7,5 +7,101 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test
-        run: echo "global search patch workflow is valid"
+      - name: Patch global search
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path('global-search.html')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace('<link rel="icon" href="favicon.ico">', '<link rel="icon" type="image/png" href="logo.png">', 1)
+
+          old = '''const db =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );'''
+          new = '''const db =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
+      );'''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          old_img = '''function imageFromRecord(record) {
+      return clean(
+        record.image ||
+        record.image_url ||
+        record.photo ||
+        record.photo_url ||
+        record.cover_image
+      );
+    }'''
+          new_img = '''function imageFromRecord(record) {
+      let image =
+        record.image ||
+        record.images ||
+        record.image_url ||
+        record.photo ||
+        record.photo_url ||
+        record.cover_image;
+
+      if (Array.isArray(image)) {
+        image = image.find(Boolean) || '';
+      } else if (typeof image === 'string') {
+        const raw = image.trim();
+        if (raw.startsWith('[')) {
+          try {
+            const parsed = JSON.parse(raw);
+            image = Array.isArray(parsed) ? (parsed.find(Boolean) || '') : raw;
+          } catch (_) {
+            image = raw;
+          }
+        } else if (raw.includes(',') && !raw.includes('://')) {
+          image = raw.split(',').map(x => x.trim()).find(Boolean) || raw;
+        } else {
+          image = raw;
+        }
+      }
+
+      if (clean(image)) return clean(image);
+
+      const banners = {
+        hostel: 'hostel-banner.png',
+        tiffin: 'tiffin-banner.png',
+        library: 'library-banner.png',
+        cafe: 'cafe-banner.png',
+        bookstore: 'bookstore-banner.png'
+      };
+
+      return banners[clean(record.__category).toLowerCase()] || '';
+    }'''
+          if old_img in s:
+              s = s.replace(old_img, new_img, 1)
+
+          marker = '<meta property="og:type" content="website">'
+          if marker in s and '<meta property="og:image"' not in s:
+              s = s.replace(marker, marker + '\n  <meta property="og:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">\n  <meta property="og:image:alt" content="StudentHubHelp">', 1)
+
+          marker2 = '<meta name="twitter:card" content="summary">'
+          if marker2 in s and '<meta name="twitter:image"' not in s:
+              s = s.replace(marker2, '<meta name="twitter:card" content="summary_large_image">\n  <meta name="twitter:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">', 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          rm -f .github/workflows/apply-global-search-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add global-search.html .github/workflows/apply-global-search-fix.yml
+          git diff --cached --quiet || git commit -m "fix: repair global search auth branding and property images"
+          git push
