@@ -1,0 +1,132 @@
+name: Apply Global Search Fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-global-search-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch global-search.html
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('global-search.html')
+          text = path.read_text(encoding='utf-8')
+
+          text = text.replace(
+              '<link rel="icon" href="favicon.ico">',
+              '<link rel="icon" type="image/png" href="logo.png">'
+          )
+
+          old_client = '''const db =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );'''
+          new_client = '''const db =
+      supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
+      );'''
+          if old_client in text:
+              text = text.replace(old_client, new_client, 1)
+
+          old_image = '''function imageFromRecord(record) {
+      return clean(
+        record.image ||
+        record.image_url ||
+        record.photo ||
+        record.photo_url ||
+        record.cover_image
+      );
+    }'''
+          new_image = '''function imageFromRecord(record) {
+      let image =
+        record.image ||
+        record.images ||
+        record.image_url ||
+        record.photo ||
+        record.photo_url ||
+        record.cover_image;
+
+      if (Array.isArray(image)) {
+        image = image.find(Boolean) || '';
+      } else if (typeof image === 'string') {
+        const raw = image.trim();
+        if (raw.startsWith('[')) {
+          try {
+            const parsed = JSON.parse(raw);
+            image = Array.isArray(parsed) ? (parsed.find(Boolean) || '') : raw;
+          } catch (_) {
+            image = raw;
+          }
+        } else if (raw.includes(',') && !raw.includes('://')) {
+          image = raw.split(',').map(x => x.trim()).find(Boolean) || raw;
+        } else {
+          image = raw;
+        }
+      }
+
+      if (clean(image)) return clean(image);
+
+      const banners = {
+        hostel: 'hostel-banner.png',
+        tiffin: 'tiffin-banner.png',
+        library: 'library-banner.png',
+        cafe: 'cafe-banner.png',
+        bookstore: 'bookstore-banner.png'
+      };
+
+      return banners[clean(record.__category).toLowerCase()] || '';
+    }'''
+          if old_image in text:
+              text = text.replace(old_image, new_image, 1)
+
+          # Add useful image/brand metadata for the page and social previews.
+          marker = '<meta property="og:type" content="website">'
+          if marker in text and 'og:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png"' not in text:
+              text = text.replace(
+                  marker,
+                  marker + '\n  <meta property="og:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">\n  <meta property="og:image:alt" content="StudentHubHelp">',
+                  1
+              )
+
+          marker2 = '<meta name="twitter:card" content="summary">'
+          if marker2 in text and '<meta name="twitter:image"' not in text:
+              text = text.replace(
+                  marker2,
+                  '<meta name="twitter:card" content="summary_large_image">\n  <meta name="twitter:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">',
+                  1
+              )
+
+          path.write_text(text, encoding='utf-8')
+
+      - name: Commit fix and remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-global-search-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add global-search.html .github/workflows/apply-global-search-fix.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: repair global search auth branding and property images"
+          git push
