@@ -1,81 +1,197 @@
 @import "tailwindcss";
 
 /* =========================================================
-   StudentHubHelp Admin — Spatial UI visual layer
-   Additive only: does not alter data, navigation, CRUD, or
-   Supabase behaviour. Components keep their existing classes.
+   StudentHubHelp Admin — Ultra Spatial Command Center
+   VISUAL ONLY. Existing data, sections, CRUD, Supabase,
+   navigation, search and modal behaviour remain untouched.
    ========================================================= */
 
-:root {
-  color-scheme: dark;
-}
-
-html,
-body,
-#root {
-  min-height: 100%;
-}
-
+:root { color-scheme: dark; }
+html, body, #root { min-height: 100%; }
+html { scroll-behavior: smooth; }
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 82% 8%, rgba(245, 158, 11, 0.055), transparent 28rem),
-    radial-gradient(circle at 12% 70%, rgba(59, 130, 246, 0.035), transparent 30rem),
-    #040814;
+    radial-gradient(900px 520px at 84% -8%, rgba(245,158,11,.075), transparent 62%),
+    radial-gradient(760px 560px at 5% 78%, rgba(37,99,235,.045), transparent 64%),
+    #030711;
 }
+#root { isolation: isolate; }
 
-/* Spatial depth without changing component dimensions or layout rules. */
-#root {
-  isolation: isolate;
-}
-
+/* App shell: depth + fine ambient grid */
 #root > div.min-h-screen {
   position: relative;
-  background-image:
-    radial-gradient(circle at 90% 0%, rgba(245, 158, 11, 0.035), transparent 24rem),
-    linear-gradient(180deg, rgba(8, 16, 38, 0.22), transparent 30%);
+  background:
+    linear-gradient(rgba(255,255,255,.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.012) 1px, transparent 1px),
+    radial-gradient(circle at 75% 0%, rgba(245,158,11,.035), transparent 32rem),
+    #050a18;
+  background-size: 42px 42px, 42px 42px, auto, auto;
 }
 
-/* Subtle enterprise-grade scrollbar. */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(245, 158, 11, 0.28) rgba(7, 19, 44, 0.5);
+/* ── Spatial sidebar ─────────────────────────────────── */
+#root aside {
+  background:
+    linear-gradient(180deg, rgba(10,22,49,.98), rgba(4,11,27,.99)),
+    #07132c !important;
+  border-right-color: rgba(245,158,11,.16) !important;
+  box-shadow: 18px 0 55px rgba(0,0,0,.24), inset -1px 0 rgba(255,255,255,.018);
 }
-
-*::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+#root aside > div:first-child {
+  background: linear-gradient(135deg, rgba(245,158,11,.055), transparent 65%);
+  border-bottom-color: rgba(148,163,184,.10) !important;
 }
-
-*::-webkit-scrollbar-track {
-  background: rgba(7, 19, 44, 0.45);
+#root aside nav > div {
+  position: relative;
 }
-
-*::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.28);
+#root aside nav > div > div:first-child {
+  letter-spacing: .18em;
+  color: rgba(148,163,184,.55) !important;
+}
+#root aside nav button {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+#root aside nav button::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 2px;
   border-radius: 999px;
+  background: linear-gradient(180deg, #fbbf24, #f59e0b);
+  opacity: 0;
+  transform: scaleY(.3);
+  transition: .22s ease;
+}
+#root aside nav button:hover::after { opacity: .55; transform: scaleY(1); }
+#root aside nav button[class*="bg-amber-500/15"]::after { opacity: 1; transform: scaleY(1); }
+#root aside nav button[class*="bg-amber-500/15"] {
+  box-shadow: inset 0 0 24px rgba(245,158,11,.045), 0 5px 18px rgba(0,0,0,.12) !important;
 }
 
-*::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 158, 11, 0.48);
+/* ── Command header ──────────────────────────────────── */
+#root header {
+  background: rgba(4,11,27,.86) !important;
+  border-bottom-color: rgba(245,158,11,.14) !important;
+  box-shadow: 0 14px 42px rgba(0,0,0,.18), 0 1px rgba(255,255,255,.018);
+}
+#root header input {
+  background: rgba(13,24,56,.72) !important;
+  border-color: rgba(245,158,11,.20) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025), 0 8px 28px rgba(0,0,0,.16) !important;
+}
+#root header input:focus {
+  box-shadow: 0 0 0 3px rgba(245,158,11,.055), inset 0 1px rgba(255,255,255,.03), 0 10px 30px rgba(0,0,0,.22) !important;
 }
 
-/* Preserve readable focus states for keyboard users. */
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid rgba(251, 191, 36, 0.75);
+/* ── Main spatial canvas ─────────────────────────────── */
+#root main {
+  position: relative;
+}
+#root main::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  width: 420px;
+  height: 220px;
+  right: -80px;
+  top: -50px;
+  background: radial-gradient(circle, rgba(245,158,11,.045), transparent 68%);
+  filter: blur(10px);
+}
+
+/* Cards/panels: layered glass-metal treatment, while retaining
+   their existing sizes, spacing and Tailwind behaviour. */
+#root main .rounded-3xl,
+#root main .rounded-2xl {
+  box-shadow: 0 14px 36px rgba(0,0,0,.13), inset 0 1px rgba(255,255,255,.018);
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+#root main .rounded-3xl:hover,
+#root main .rounded-2xl:hover {
+  box-shadow: 0 18px 42px rgba(0,0,0,.17), inset 0 1px rgba(255,255,255,.025);
+}
+
+/* KPI cards get a restrained spatial lift. */
+#root main .rounded-2xl[class*="p-4"],
+#root main .rounded-2xl[class*="p-5"] {
+  position: relative;
+  overflow: hidden;
+}
+#root main .rounded-2xl[class*="p-4"]::before,
+#root main .rounded-2xl[class*="p-5"]::before {
+  content: "";
+  position: absolute;
+  width: 130px;
+  height: 80px;
+  right: -45px;
+  top: -40px;
+  background: radial-gradient(circle, rgba(245,158,11,.055), transparent 68%);
+  pointer-events: none;
+}
+
+/* Spatial status/badge treatment */
+#root main span[class*="rounded-full"] {
+  backdrop-filter: blur(8px);
+}
+
+/* Buttons gain premium tactile depth without changing their palette. */
+#root main button[class*="rounded-xl"],
+#root header button[class*="rounded-xl"] {
+  box-shadow: inset 0 1px rgba(255,255,255,.025);
+}
+#root main button[class*="bg-gradient-to-r"] {
+  box-shadow: 0 8px 24px rgba(245,158,11,.10), inset 0 1px rgba(255,255,255,.20) !important;
+}
+
+/* Tables / dense workspaces */
+#root main table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+#root main thead tr {
+  background: rgba(13,24,56,.42);
+}
+#root main tbody tr {
+  transition: background-color .16s ease;
+}
+#root main tbody tr:hover {
+  background: rgba(245,158,11,.028) !important;
+}
+
+/* Recharts / SVG presentation */
+#root main svg {
+  shape-rendering: geometricPrecision;
+}
+
+/* Scrollbars */
+* { scrollbar-width: thin; scrollbar-color: rgba(245,158,11,.30) rgba(7,19,44,.45); }
+*::-webkit-scrollbar { width: 7px; height: 7px; }
+*::-webkit-scrollbar-track { background: rgba(7,19,44,.45); }
+*::-webkit-scrollbar-thumb { background: rgba(245,158,11,.30); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,.52); }
+
+/* Accessibility */
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid rgba(251,191,36,.78);
   outline-offset: 2px;
 }
 
+@media (max-width: 767px) {
+  #root > div.min-h-screen {
+    background-size: 32px 32px, 32px 32px, auto, auto;
+  }
+  #root header { box-shadow: 0 10px 30px rgba(0,0,0,.24); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
+    animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: .01ms !important;
   }
 }
