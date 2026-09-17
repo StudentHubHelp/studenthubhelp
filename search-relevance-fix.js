@@ -5,14 +5,12 @@
     return norm(String(v||'')
       .replace(/\broad\b/g,' rd ')
       .replace(/\brd\.?\b/g,' rd ')
-      .replace(/\broad\.?\b/g,' rd ')
       .replace(/\bstreet\b/g,' st ')
       .replace(/\bst\.?\b/g,' st ')
       .replace(/\blane\b/g,' ln ')
       .replace(/\bln\.?\b/g,' ln ')
-      .replace(/\broad\s+road\b/g,'rd')
-      .replace(/\bchowk\b/g,' chowk ')
-      .replace(/\bchoke\b/g,' chowk '));
+      .replace(/\bchoke\b/g,' chowk ')
+      .replace(/\s+/g,' ').trim());
   }
 
   function shhLocationTokenMatch(token, fields){
@@ -39,12 +37,17 @@
     return true;
   }
 
+  function shhVegMatch(f){
+    return /(veg|vegetarian|shakahari|pure veg)/.test(norm([f.food,f.facilities,f.menu,f.description].join(' ')));
+  }
+
   function shhBetterScore(r,info){
     const f=fields(r),why=[];
     let s=0;
     if(info.cat && r.__category!==info.cat) return {s:-999,why:[]};
     if(info.location.length && !shhStrictLocationMatch(f,info.location)) return {s:-999,why:[]};
     if((info.ins.girls||info.ins.boys) && !shhGenderMatch(info,f)) return {s:-999,why:[]};
+    if(info.ins.veg && !shhVegMatch(f)) return {s:-999,why:[]};
 
     const queryTerms=info.ts.filter(t=>!STOP.has(t));
     const categoryTerms=new Set(Object.values(ALIASES).flat().map(norm));
@@ -85,7 +88,7 @@
 
     if(info.ins.nearby&&(f.area||f.landmark||f.address))s+=28;
     if(info.ins.late&&f.timing){s+=18;if(/24|late|night|open|hour|am|pm/.test(f.timing))s+=28;}
-    if(info.ins.veg&&/veg|vegetarian|shakahari/.test(f.food+' '+f.facilities))s+=35;
+    if(info.ins.veg)s+=35;
     if(info.ins.premium){const rating=Number(r.rating);if(Number.isFinite(rating)&&rating>0)s+=rating*10;}
     if(info.budget!=null){const nums=(f.price.match(/\d+(?:\.\d+)?/g)||[]).map(Number);if(nums.length){const p=Math.min(...nums);s+=p<=info.budget?50:-Math.min(50,(p-info.budget)/Math.max(1,info.budget)*50);}}
     if(r.verified===true||r.is_verified===true||norm(r.verification_status)==='verified')s+=15;
@@ -103,8 +106,7 @@
       .sort((a,b)=>b.__score-a.__score||(Number(b.rating)||0)-(Number(a.rating)||0)||nameFromRecord(a).localeCompare(nameFromRecord(b)));
   };
 
-  // The page's original inline script can run the initial URL query before this file loads.
-  // Re-run it once so the first visible results use the strict relevance rules too.
+  // Re-run the initial URL query after this override loads.
   if(typeof performSearch==='function' && input && input.value.trim()){
     setTimeout(()=>performSearch(input.value),0);
   }
