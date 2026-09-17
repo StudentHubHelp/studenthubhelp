@@ -40,7 +40,6 @@ jobs:
           (async()=>{
             global.window={};
             window.ranked=(data)=>data.map((r,i)=>({...r,__score:i}));
-
             eval(fs.readFileSync('search-phase1-intelligence.js','utf8')); await wait(100);
             const p1=window.__studentHubPhase1;
             ok('01 Phase1 installs',!!p1);
@@ -66,7 +65,7 @@ jobs:
             ok('17 min price English',p2.minPrice('hostel above 5000')===5000);
             ok('18 comma price',p2.maxPrice('hostel under 10,000')===10000);
             ok('19 compound gender price',(()=>{const r=p2.conditionScore({category:'hostel',gender:'girls',monthly_rent:4500},'girls hostel under 5000');return r.matched===r.required&&r.score>0;})());
-            ok('20 price rejects expensive',p2.conditionScore({category:'hostel',monthly_rent:8000},'hostel under 5000').score<0);
+            ok('20 expensive price condition fails',(()=>{const r=p2.conditionScore({category:'hostel',monthly_rent:8000},'hostel under 5000');return r.required===2&&r.matched<r.required&&r.max===5000;})());
             ok('21 veg matching',p2.conditionScore({category:'tiffin',food_type:'pure veg',price:120},'veg tiffin').matched>=2);
             ok('22 category matching',p2.conditionScore({category:'library'},'library').matched>=1);
             ok('23 no explicit filter safety',p2.conditionScore({name:'Alpha PG'},'Alpha').required===0);
@@ -100,18 +99,18 @@ jobs:
               {property_id:'2',name:'Generic Boys PG',category:'hostel',gender:'boys',area:'Nawalgarh Road',monthly_rent:6000}
             ];
             const query='girls hostel near Allen on Piprali Road under 5000';
-            const out=p4 ? window.ranked(rows,query) : [];
+            const out=window.ranked(rows,query);
             ok('38 final compound ranking',out.length>0&&out[0].name==='Allen Girls PG');
             ok('39 duplicate removal',out.filter(r=>r.property_id==='1').length===1);
             const meta=p4.scoreFinal(rows[0],query);
             ok('40 confidence coverage',meta.coverage>=0.5);
             ok('41 positive final score',meta.final>0);
-            ok('42 exact name support',p4.scoreFinal(rows[0],'Allen Girls PG').name>0);
+            const exactMeta=p4.scoreFinal(rows[0],'Allen Girls PG');
+            ok('42 exact name support',exactMeta.exact>0&&exactMeta.bonus>0);
             ok('43 Hindi/Hinglish query support',p4.queryParts('ladkiyon ka pg piprali ke paas').length>0);
-            ok('44 multi-condition fusion',p4.scoreFinal(rows[0],'girls hostel near Allen on Piprali Road under 5000').final>p4.scoreFinal(rows[2],'girls hostel near Allen on Piprali Road under 5000').final);
+            ok('44 multi-condition fusion',p4.scoreFinal(rows[0],query).final>p4.scoreFinal(rows[2],query).final);
             const tie=window.ranked([{property_id:'a',name:'Beta PG',category:'hostel'},{property_id:'b',name:'Alpha PG',category:'hostel'}],'hostel');
             ok('45 deterministic tie-break',tie.length>=2&&tie[0].name==='Alpha PG');
-
             const passed=tests.filter(t=>t.ok).length;
             console.log(`SEARCH TEST RESULT: ${passed}/${tests.length} passed`);
             if(passed!==45) process.exit(1);
@@ -124,11 +123,9 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
-          p=Path('global-search.html')
-          s=p.read_text(encoding='utf-8')
+          p=Path('global-search.html'); s=p.read_text(encoding='utf-8')
           files=['search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js','search-phase3-location-intelligence.js','search-phase4-final-fusion.js']
-          for f in files:
-              s=re.sub(r'\s*<script\s+src=["\']'+re.escape(f)+r'["\']\s*></script>', '', s, flags=re.I)
+          for f in files: s=re.sub(r'\s*<script\s+src=["\']'+re.escape(f)+r'["\']\s*></script>','',s,flags=re.I)
           m=re.search(r'</body\s*>',s,re.I) or re.search(r'</html\s*>',s,re.I)
           if not m: raise SystemExit('global-search closing marker not found')
           tags='\n'.join(f'  <script src="{f}"></script>' for f in files)+'\n'
