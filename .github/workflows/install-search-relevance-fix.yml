@@ -9,6 +9,7 @@ on:
       - search-phase1-intelligence.js
       - search-phase2-intelligence.js
       - search-phase3-location-intelligence.js
+      - search-phase4-final-fusion.js
       - .github/workflows/install-search-relevance-fix.yml
 
 permissions:
@@ -29,54 +30,66 @@ jobs:
           node --check search-phase1-intelligence.js
           node --check search-phase2-intelligence.js
           node --check search-phase3-location-intelligence.js
+          node --check search-phase4-final-fusion.js
 
-      - name: Test phase 1 phase 2 and phase 3 runtime APIs
+      - name: Test all search intelligence phases
         shell: bash
         run: |
           node <<'NODE'
           const fs=require('fs');
-          global.window={};
-          window.ranked=(data)=>data.map((r,i)=>({...r,__score:i}));
-          eval(fs.readFileSync('search-phase1-intelligence.js','utf8'));
-          setTimeout(()=>{
+          const wait=ms=>new Promise(r=>setTimeout(r,ms));
+          (async()=>{
+            global.window={};
+            window.ranked=(data)=>data.map((r,i)=>({...r,__score:i}));
+            eval(fs.readFileSync('search-phase1-intelligence.js','utf8'));
+            await wait(100);
             if(!window.__studentHubPhase1) throw new Error('Phase 1 did not install');
             const p1=window.__studentHubPhase1.parseIntent('girls hostal near piprali');
             if(p1.category!=='hostel'||!p1.groups.includes('girls')||!p1.near) throw new Error('Phase 1 intent test failed');
-            global.window.__studentHubPhase1Installed=false;
+
             window.ranked=(data)=>data;
             eval(fs.readFileSync('search-phase2-intelligence.js','utf8'));
-            setTimeout(()=>{
-              if(!window.__studentHubPhase2) throw new Error('Phase 2 did not install');
-              const p2=window.__studentHubPhase2;
-              if(p2.maxPrice('hostel under 5000')!==5000) throw new Error('Phase 2 max-price test failed');
-              if(p2.minPrice('hostel kam se kam 5000')!==5000) throw new Error('Phase 2 min-price test failed');
-              const rows=[
-                {name:'Girls PG A',category:'hostel',gender:'girls',monthly_rent:4500},
-                {name:'Boys PG B',category:'hostel',gender:'boys',monthly_rent:4500}
-              ];
-              const out=window.ranked(rows,'girls hostel under 5000');
-              if(!out.length||out[0].name!=='Girls PG A') throw new Error('Phase 2 compound ranking test failed');
-              global.window.__studentHubPhase2Installed=false;
-              window.ranked=(data)=>data.map((r,i)=>({...r,__score:i}));
-              eval(fs.readFileSync('search-phase3-location-intelligence.js','utf8'));
-              setTimeout(()=>{
-                if(!window.__studentHubPhase3) throw new Error('Phase 3 did not install');
-                const p3=window.__studentHubPhase3;
-                const qi=p3.queryInfo('girls hostel near Allen on Piprali Road');
-                if(!qi.roads.includes('piprali')||!qi.landmarks.includes('allen')||!qi.relations.includes('near')) throw new Error('Phase 3 query parsing test failed');
-                const locRows=[
-                  {name:'Girls PG Piprali Allen',category:'hostel',gender:'girls',area:'Piprali Road',nearby:'Allen Career Institute'},
-                  {name:'Girls PG Nawalgarh',category:'hostel',gender:'girls',area:'Nawalgarh Road',nearby:'CLC'}
-                ];
-                const locOut=window.ranked(locRows,'girls hostel near Allen on Piprali Road');
-                if(!locOut.length||locOut[0].name!=='Girls PG Piprali Allen') throw new Error('Phase 3 location ranking test failed');
-                const between=p3.queryInfo('hostel between Allen and CLC');
-                if(!between.between||between.landmarks.length!==2) throw new Error('Phase 3 between-landmarks test failed');
-                console.log('Phase 1 + Phase 2 + Phase 3 runtime tests passed');
-              },100);
-            },100);
-          },100);
-          setTimeout(()=>process.exit(0),700);
+            await wait(100);
+            if(!window.__studentHubPhase2) throw new Error('Phase 2 did not install');
+            const p2=window.__studentHubPhase2;
+            if(p2.maxPrice('hostel under 5000')!==5000) throw new Error('Phase 2 max-price test failed');
+            if(p2.minPrice('hostel kam se kam 5000')!==5000) throw new Error('Phase 2 min-price test failed');
+            const rows=[{name:'Girls PG A',category:'hostel',gender:'girls',monthly_rent:4500},{name:'Boys PG B',category:'hostel',gender:'boys',monthly_rent:4500}];
+            const out=window.ranked(rows,'girls hostel under 5000');
+            if(!out.length||out[0].name!=='Girls PG A') throw new Error('Phase 2 compound ranking test failed');
+
+            window.ranked=(data)=>data.map((r,i)=>({...r,__score:i}));
+            eval(fs.readFileSync('search-phase3-location-intelligence.js','utf8'));
+            await wait(100);
+            if(!window.__studentHubPhase3) throw new Error('Phase 3 did not install');
+            const p3=window.__studentHubPhase3;
+            const qi=p3.queryInfo('girls hostel near Allen on Piprali Road');
+            if(!qi.roads.includes('piprali')||!qi.landmarks.includes('allen')||!qi.relations.includes('near')) throw new Error('Phase 3 query parsing test failed');
+            const locRows=[{name:'Girls PG Piprali Allen',category:'hostel',gender:'girls',area:'Piprali Road',nearby:'Allen Career Institute'},{name:'Girls PG Nawalgarh',category:'hostel',gender:'girls',area:'Nawalgarh Road',nearby:'CLC'}];
+            const locOut=window.ranked(locRows,'girls hostel near Allen on Piprali Road');
+            if(!locOut.length||locOut[0].name!=='Girls PG Piprali Allen') throw new Error('Phase 3 location ranking test failed');
+            const between=p3.queryInfo('hostel between Allen and CLC');
+            if(!between.between||between.landmarks.length!==2) throw new Error('Phase 3 between-landmarks test failed');
+
+            window.ranked=(data)=>data.map((r,i)=>({...r,__score:i}));
+            eval(fs.readFileSync('search-phase4-final-fusion.js','utf8'));
+            await wait(100);
+            if(!window.__studentHubPhase4) throw new Error('Phase 4 did not install');
+            const p4=window.__studentHubPhase4;
+            const finalRows=[
+              {property_id:'1',name:'Allen Girls PG',category:'hostel',gender:'girls',area:'Piprali Road',monthly_rent:4500,verified:true,phone:'9999999999'},
+              {property_id:'1',name:'Allen Girls PG Duplicate',category:'hostel',gender:'girls',area:'Piprali Road',monthly_rent:4500},
+              {property_id:'2',name:'Generic PG',category:'hostel',gender:'boys',area:'Nawalgarh Road',monthly_rent:6000}
+            ];
+            const fq='girls hostel near Allen on Piprali Road under 5000';
+            const fin=window.ranked(finalRows,fq);
+            if(!fin.length||fin[0].name!=='Allen Girls PG') throw new Error('Phase 4 final fusion ranking test failed');
+            if(fin.filter(r=>r.property_id==='1').length!==1) throw new Error('Phase 4 dedupe test failed');
+            const meta=p4.scoreFinal(finalRows[0],fq);
+            if(meta.coverage<0.5||meta.final<=0) throw new Error('Phase 4 confidence/final score test failed');
+            if(!p4.queryParts('hostel under 5000').length) throw new Error('Phase 4 query tokenization test failed');
+            console.log('Phase 1 + Phase 2 + Phase 3 + Phase 4 runtime tests passed');
+          })().catch(err=>{console.error(err);process.exitCode=1;});
           NODE
 
       - name: Attach all search intelligence layers in order
@@ -92,7 +105,8 @@ jobs:
               'search-distance-intelligence.js',
               'search-phase1-intelligence.js',
               'search-phase2-intelligence.js',
-              'search-phase3-location-intelligence.js'
+              'search-phase3-location-intelligence.js',
+              'search-phase4-final-fusion.js'
           ]
           for f in files:
               s=re.sub(r'\s*<script\s+src=["\']'+re.escape(f)+r'["\']\s*></script>', '', s, flags=re.I)
@@ -110,11 +124,11 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           s=Path('global-search.html').read_text(encoding='utf-8')
-          files=['search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js','search-phase3-location-intelligence.js']
+          files=['search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js','search-phase3-location-intelligence.js','search-phase4-final-fusion.js']
           pos=[s.find(f'<script src="{f}"></script>') for f in files]
-          if any(x<0 for x in pos) or pos!=sorted(pos) or len(set(pos))!=5:
+          if any(x<0 for x in pos) or pos!=sorted(pos) or len(set(pos))!=6:
               raise SystemExit(f'Invalid search layer attachment: {pos}')
-          print('All 5 search layers attached once and in correct order:', pos)
+          print('All 6 search layers attached once and in correct order:', pos)
           PY
 
       - name: Commit and push
@@ -127,5 +141,5 @@ jobs:
             echo 'Global search attachment already correct.'
             exit 0
           fi
-          git commit -m 'fix: attach complete search intelligence chain with phase 3'
+          git commit -m 'fix: attach complete search intelligence chain with phase 4'
           git push
