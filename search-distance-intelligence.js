@@ -1,13 +1,8 @@
 (function(){
   // ULTRA+ landmark -> property distance intelligence.
-  // Keeps the existing search/ranking intact and adds a distance layer on top.
-  // Distance sources, in priority order:
-  // 1) exact property/landmark coordinates when available,
-  // 2) explicit distance written in the property data (e.g. "500 m from Allen"),
-  // 3) relation/landmark evidence without a measurable distance.
+  // Distance is matched to the REQUESTED landmark, not merely the first number in a record.
   const oldRanked=window.ranked;
   if(typeof oldRanked!=='function')return;
-
   const landmarkCoords=window.STUDENTHUB_LANDMARK_COORDS||{};
   const normDI=v=>String(v??'').toLowerCase().replace(/[|,;:/()[\]{}]+/g,' ').replace(/\s+/g,' ').trim();
   const aliasesDI={
@@ -21,91 +16,46 @@
     path:['path','path coaching','path career institute','path academy'],
     aakash:['aakash','aakash institute','akash institute']
   };
-  const findLandmarkDI=q=>{
-    const n=normDI(q),hits=[];
-    Object.entries(aliasesDI).forEach(([k,a])=>{if(a.some(x=>n.includes(normDI(x))))hits.push(k);});
-    return hits.sort((a,b)=>b.length-a.length)[0]||'';
+  const findLandmarkDI=q=>{const n=normDI(q),hits=[];Object.entries(aliasesDI).forEach(([k,a])=>{if(a.some(x=>n.includes(normDI(x))))hits.push(k);});return hits.sort((a,b)=>b.length-a.length)[0]||'';};
+  const unitKmDI=u=>/^m$|^meter|^metre|^मीटर$/i.test(u)?0.001:1;
+  function parseDistanceDI(text){
+    const n=normDI(text).replace(/[–—−]/g,'-');
+    const m=n.match(/(\d+(?:\.\d+)?)\s*(?:-|to|से|तक)?\s*(\d+(?:\.\d+)?)?\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर)\b/i);
+    if(!m)return null;const a=Number(m[1]),b=m[2]?Number(m[2]):a;if(!Number.isFinite(a)||!Number.isFinite(b))return null;const f=unitKmDI(m[3]);return {minKm:Math.min(a,b)*f,maxKm:Math.max(a,b)*f,midKm:((a+b)/2)*f};
+  }
+  const distanceFromLandmarkTextDI=(text,landmark)=>{
+    const n=normDI(text).replace(/[–—−]/g,'-'),als=aliasesDI[landmark]||[landmark],hits=[];
+    als.forEach(a=>{let from=0,idx;const aa=normDI(a);while((idx=n.indexOf(aa,from))>=0){hits.push(idx);from=idx+aa.length;}});
+    if(!hits.length)return null;let best=null;
+    for(const idx of hits){const d=parseDistanceDI(n.slice(idx,Math.min(n.length,idx+220)));if(d&&(best==null||d.minKm<best.minKm))best=d;}
+    return best;
   };
-  const numberDistanceDI=text=>{
-    const n=normDI(text);
-    const re=/(?:~|about|approx(?:imately)?|around|within|under|upto|up to|less than|distance|duri|from|se|की दूरी|दूर|पास)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर)\b/i;
-    const m=n.match(re);
-    if(!m)return null;
-    const value=Number(m[1]);
-    if(!Number.isFinite(value))return null;
-    return /^m|meter|metre|मीटर$/i.test(m[2])?value/1000:value;
-  };
-  const haversineDI=(lat1,lon1,lat2,lon2)=>{
-    const a=[lat1,lon1,lat2,lon2].map(Number);
-    if(a.some(v=>!Number.isFinite(v)))return null;
-    const rad=Math.PI/180,R=6371;
-    const dLat=(a[2]-a[0])*rad,dLon=(a[3]-a[1])*rad;
-    const x=Math.sin(dLat/2)**2+Math.cos(a[0]*rad)*Math.cos(a[2]*rad)*Math.sin(dLon/2)**2;
-    return 2*R*Math.asin(Math.sqrt(Math.min(1,x)));
-  };
-  const coordFromRecordDI=r=>{
-    const lat=Number(r?.latitude??r?.lat),lon=Number(r?.longitude??r?.lng??r?.lon);
-    return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;
-  };
-  const coordFromLandmarkDI=key=>{
-    const c=landmarkCoords[key]||landmarkCoords[normDI(key)];
-    if(!c)return null;
-    const lat=Number(c.lat??c.latitude),lon=Number(c.lon??c.lng??c.longitude);
-    return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;
-  };
+  const haversineDI=(lat1,lon1,lat2,lon2)=>{const a=[lat1,lon1,lat2,lon2].map(Number);if(a.some(v=>!Number.isFinite(v)))return null;const rad=Math.PI/180,R=6371,dLat=(a[2]-a[0])*rad,dLon=(a[3]-a[1])*rad,x=Math.sin(dLat/2)**2+Math.cos(a[0]*rad)*Math.cos(a[2]*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(Math.min(1,x)));};
+  const coordFromRecordDI=r=>{const lat=Number(r?.latitude??r?.lat),lon=Number(r?.longitude??r?.lng??r?.lon);return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;};
+  const coordFromLandmarkDI=key=>{const c=landmarkCoords[key]||landmarkCoords[normDI(key)];if(!c)return null;const lat=Number(c.lat??c.latitude),lon=Number(c.lon??c.lng??c.longitude);return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;};
   const distanceFromRecordDI=(r,info)=>{
-    const landmark=info?.landmark||findLandmarkDI(info?.raw||'');
-    if(!landmark)return {km:null,source:'none',confidence:0};
-    const pc=coordFromRecordDI(r),lc=coordFromLandmarkDI(landmark);
-    if(pc&&lc){const km=haversineDI(pc.lat,pc.lon,lc.lat,lc.lon);if(km!=null)return {km,source:'coordinates',confidence:1};}
+    const landmark=info?.landmark||findLandmarkDI(info?.raw||'');if(!landmark)return {minKm:null,maxKm:null,midKm:null,source:'none',confidence:0};
+    const pc=coordFromRecordDI(r),lc=coordFromLandmarkDI(landmark);if(pc&&lc){const km=haversineDI(pc.lat,pc.lon,lc.lat,lc.lon);if(km!=null)return {minKm:km,maxKm:km,midKm:km,source:'coordinates',confidence:1};}
     const fields=['nearby_coaching','landmark','address','area','service_area','description','facilities','location','nearby'];
-    for(const f of fields){const d=numberDistanceDI(r?.[f]);if(d!=null)return {km:d,source:'property-text',confidence:.85};}
-    const all=Object.values(r||{}).filter(v=>v!==null&&v!==undefined).map(v=>typeof v==='object'?JSON.stringify(v):String(v)).join(' ');
-    const d=numberDistanceDI(all);
-    if(d!=null)return {km:d,source:'record-text',confidence:.7};
-    return {km:null,source:'landmark-only',confidence:.35};
+    for(const f of fields){const d=distanceFromLandmarkTextDI(r?.[f],landmark);if(d)return {...d,source:'landmark-specific-text',confidence:.9};}
+    return {minKm:null,maxKm:null,midKm:null,source:'landmark-only',confidence:.35};
   };
   const queryDistanceDI=q=>{
-    const n=normDI(q);
-    const limit=n.match(/(?:within|under|upto|up to|less than|around|about|approx(?:imately)?)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर)\b/i);
-    const target=limit?Number(limit[1])*(/^m|meter|metre|मीटर$/i.test(limit[2])?.001:1):null;
+    const n=normDI(q).replace(/[–—−]/g,'-');
+    const lm=n.match(/(?:within|under|upto|up to|less than|के अंदर|अंदर)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर)\b/i);
+    const limit=lm?Number(lm[1])*unitKmDI(lm[2]):null;
     const nearest=/\b(closest|nearest|sabse paas|sabse pass|सबसे पास|near me|nearest to)\b/i.test(n);
-    return {limitKm:target,nearest};
+    return {limitKm:Number.isFinite(limit)?limit:null,nearest};
   };
-
   window.ranked=function(data,q){
-    const base=oldRanked(data,q), info=(base[0]&&base[0].__searchInfo)||{};
-    const landmark=info.landmark||findLandmarkDI(q);
-    if(!landmark)return base;
-    const qd=queryDistanceDI(q);
-    const scored=base.map(r=>{
-      const d=distanceFromRecordDI(r,{...info,landmark,raw:q});
-      let bonus=0;
-      if(d.km!=null){
-        // Stronger separation for close properties; measurable distance always beats
-        // an unmeasured landmark mention, while the original relevance remains primary.
-        bonus=260+Math.max(0,180-Math.min(180,d.km*90));
-        if(qd.nearest)bonus+=Math.max(0,220-Math.min(220,d.km*110));
-        if(qd.limitKm!=null)bonus+=d.km<=qd.limitKm?180: -500;
-      }else{
-        bonus=qd.limitKm!=null||qd.nearest?-120:0;
-      }
-      return {...r,__landmarkDistanceKm:d.km,__distanceSource:d.source,__distanceConfidence:d.confidence,__score:r.__score+bonus};
-    });
-    return scored.filter(r=>qd.limitKm==null||r.__landmarkDistanceKm!=null&&r.__landmarkDistanceKm<=qd.limitKm)
-      .sort((a,b)=>b.__score-a.__score||((a.__landmarkDistanceKm??Infinity)-(b.__landmarkDistanceKm??Infinity))||nameFromRecord(a).localeCompare(nameFromRecord(b)));
+    const base=oldRanked(data,q),info=(base[0]&&base[0].__searchInfo)||{},landmark=info.landmark||findLandmarkDI(q);if(!landmark)return base;const qd=queryDistanceDI(q);
+    const scored=base.map(r=>{const d=distanceFromRecordDI(r,{...info,landmark,raw:q});let bonus=0;if(d.minKm!=null){bonus=260+Math.max(0,180-Math.min(180,d.midKm*90));if(qd.nearest)bonus+=Math.max(0,220-Math.min(220,d.minKm*110));if(qd.limitKm!=null)bonus+=d.maxKm<=qd.limitKm?180:(d.minKm>qd.limitKm?-500:0);}else if(qd.limitKm!=null||qd.nearest)bonus=-120;return {...r,__landmarkDistanceKm:d.midKm,__landmarkDistanceMinKm:d.minKm,__landmarkDistanceMaxKm:d.maxKm,__distanceSource:d.source,__distanceConfidence:d.confidence,__score:r.__score+bonus};});
+    return scored.filter(r=>qd.limitKm==null||r.__landmarkDistanceMinKm!=null&&r.__landmarkDistanceMinKm<=qd.limitKm&&r.__landmarkDistanceMaxKm<=qd.limitKm).sort((a,b)=>b.__score-a.__score||((a.__landmarkDistanceKm??Infinity)-(b.__landmarkDistanceKm??Infinity))||nameFromRecord(a).localeCompare(nameFromRecord(b)));
   };
-
-  // Lightweight deterministic regression hook. It is not used by the UI.
   window.__studentHubDistanceIntelligenceTest=function(){
-    const info={landmark:'allen',raw:'allen'};
-    const rows=[
-      {name:'A - 250m',nearby_coaching:'250 m from Allen'},
-      {name:'B - 1km',nearby_coaching:'1 km from Allen'},
-      {name:'C - 2km',nearby_coaching:'2 km from Allen'},
-      {name:'D - unknown',nearby_coaching:'Near Allen'}
+    const cases=[
+      ['ALLEN 100 m','ALLEN Career Institute: 100 m',.1],['ALLEN 200-500 m','ALLEN Career Institute: 200–500 m',.35],['ALLEN 1.5-2 km','ALLEN Career Institute: 1.5 – 2 km',1.75],['ALLEN Hindi','ALLEN Career Institute: लगभग 800 मीटर – 1.2 किमी',1],['CLC','CLC Sikar: Lagbhag 150 – 350 meters',.25],['Gurukripa','Gurukripa Career Institute: ~500 m to 800 m',.65],['Matrix','Matrix Academy: ~1.2 km to 1.5 km',1.35],['Wrong landmark first','Matrix: 20–50 m ALLEN: 1.5–2.0 km',1.75],['No distance','Near ALLEN coaching',null],['Multiple landmarks','PCP: 400–600 m ALLEN: 800 m – 1.2 km',1]
     ];
-    const out=rows.map(r=>({name:r.name,distance:distanceFromRecordDI(r,info).km}));
-    return JSON.stringify(out[0].distance===.25&&out[1].distance===1&&out[2].distance===2&&out[3].distance===null);
+    return cases.map(([name,text,expected])=>{const landmark=name==='Wrong landmark first'?'allen':name==='Multiple landmarks'?'allen':findLandmarkDI(name),d=distanceFromLandmarkTextDI(text,landmark);return {name,pass:expected===null?d===null:!!d&&Math.abs(d.midKm-expected)<.001,midKm:d?.midKm??null};});
   };
 })();
