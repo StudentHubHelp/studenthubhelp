@@ -12,13 +12,16 @@
   <meta property="og:title" content="Global Search | StudentHubHelp">
   <meta property="og:description" content="Find student hostels, PGs, tiffin services, libraries, cafes and bookstores in one search.">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">
+  <meta property="og:image:alt" content="StudentHubHelp">
   <meta property="og:url" content="https://studenthubhelp.github.io/studenthubhelp/global-search.html">
 
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">
   <meta name="twitter:title" content="Global Search | StudentHubHelp">
   <meta name="twitter:description" content="One search for student services across StudentHubHelp.">
 
-  <link rel="icon" href="favicon.ico">
+  <link rel="icon" type="image/png" href="logo.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1295,7 +1298,14 @@
     const db =
       supabase.createClient(
         SUPABASE_URL,
-        SUPABASE_ANON_KEY
+        SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
       );
 
     /* =========================================================
@@ -1512,13 +1522,43 @@
     }
 
     function imageFromRecord(record) {
-      return clean(
+      let image =
         record.image ||
+        record.images ||
         record.image_url ||
         record.photo ||
         record.photo_url ||
-        record.cover_image
-      );
+        record.cover_image;
+
+      if (Array.isArray(image)) {
+        image = image.find(Boolean) || '';
+      } else if (typeof image === 'string') {
+        const raw = image.trim();
+        if (raw.startsWith('[')) {
+          try {
+            const parsed = JSON.parse(raw);
+            image = Array.isArray(parsed) ? (parsed.find(Boolean) || '') : raw;
+          } catch (_) {
+            image = raw;
+          }
+        } else if (raw.includes(',') && !raw.includes('://')) {
+          image = raw.split(',').map(x => x.trim()).find(Boolean) || raw;
+        } else {
+          image = raw;
+        }
+      }
+
+      if (clean(image)) return clean(image);
+
+      const banners = {
+        hostel: 'hostel-banner.png',
+        tiffin: 'tiffin-banner.png',
+        library: 'library-banner.png',
+        cafe: 'cafe-banner.png',
+        bookstore: 'bookstore-banner.png'
+      };
+
+      return banners[clean(record.__category).toLowerCase()] || '';
     }
 
     function areaFromRecord(record) {
