@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   fix-images:
-    if: !contains(github.event.head_commit.message, '[global-search-images-fixed]')
+    if: ${{ !contains(github.event.head_commit.message, '[global-search-images-fixed]') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,34 +23,17 @@ jobs:
         run: |
           from pathlib import Path
           import re
-
-          p = Path('global-search.html')
-          s = p.read_text(encoding='utf-8')
-
-          base = 'https://studenthubhelp.github.io/studenthubhelp/'
-          banners = {
-              'hostel': 'hostel-banner.png',
-              'tiffin': 'tiffin-banner.png',
-              'library': 'library-banner.png',
-              'cafe': 'cafe-banner.png',
-              'bookstore': 'bookstore-banner.png',
-          }
-
-          # Replace the current image helper with a resolver that handles
-          # absolute URLs, relative GitHub Pages assets and JSON image lists.
-          helper = r'''function imageFromRecord(r){
+          p=Path('global-search.html')
+          s=p.read_text(encoding='utf-8')
+          helper=r'''function imageFromRecord(r){
             let image=r.image||r.images||r.image_url||r.photo||r.photo_url||r.cover_image;
             if(Array.isArray(image)) image=image.find(Boolean)||'';
             if(typeof image==='string'){
               const raw=image.trim();
               if(raw.startsWith('[')||raw.startsWith('{')){
-                try{
-                  const parsed=JSON.parse(raw);
-                  image=Array.isArray(parsed)?(parsed.find(Boolean)||''):(parsed&&typeof parsed==='object'?(Object.values(parsed).find(Boolean)||''):raw);
-                }catch(e){image=raw}
-              }else if(raw.includes(',')&&!raw.includes('://')){
-                image=raw.split(',').map(x=>x.trim()).find(Boolean)||raw;
-              }else image=raw;
+                try{const parsed=JSON.parse(raw);image=Array.isArray(parsed)?(parsed.find(Boolean)||''):(parsed&&typeof parsed==='object'?(Object.values(parsed).find(Boolean)||''):raw)}catch(e){image=raw}
+              }else if(raw.includes(',')&&!raw.includes('://')) image=raw.split(',').map(x=>x.trim()).find(Boolean)||raw;
+              else image=raw;
             }
             if(image){
               const v=String(image).trim();
@@ -60,43 +43,25 @@ jobs:
             }
             return 'https://studenthubhelp.github.io/studenthubhelp/'+({hostel:'hostel-banner.png',tiffin:'tiffin-banner.png',library:'library-banner.png',cafe:'cafe-banner.png',bookstore:'bookstore-banner.png'})[r.__category]||'https://studenthubhelp.github.io/studenthubhelp/logo.png';
           }'''
-
-          s2, n = re.subn(r'function imageFromRecord\(r\)\{.*?\}\n\s*function nameFromRecord', helper+'\n    function nameFromRecord', s, count=1, flags=re.S)
-          if n != 1:
-              raise SystemExit('imageFromRecord helper not found')
-          s = s2
-
-          # Ensure card media uses an actual IMG element. CSS background images
-          # can be silently skipped when a URL is malformed; IMG gives us a
-          # deterministic onerror fallback.
-          card = r'''function createCard(r){
-            const c=document.createElement('article');
-            c.className='result-card';
-            const cat=r.__categoryConfig||CATEGORIES[r.__category];
-            const name=nameFromRecord(r)||cat.label;
-            const area=areaFromRecord(r);
-            const address=addressFromRecord(r);
-            const image=imageFromRecord(r);
-            const verified=r.verified===true||r.is_verified===true||norm(r.verification_status)==='verified';
+          s2,n=re.subn(r'function imageFromRecord\(r\)\{.*?\}\n\s*function createCard',helper+'\n    function createCard',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('image helper not found')
+          s=s2
+          card=r'''function createCard(r){
+            const c=document.createElement('article');c.className='result-card';
+            const cat=r.__categoryConfig||CATEGORIES[r.__category],name=nameFromRecord(r)||cat.label,area=areaFromRecord(r),address=addressFromRecord(r),image=imageFromRecord(r),verified=r.verified===true||r.is_verified===true||norm(r.verification_status)==='verified';
             c.innerHTML='<div class="card-media"><img class="shh-card-image" src="'+esc(image)+'" alt="'+esc(name)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'https://studenthubhelp.github.io/studenthubhelp/'+(cat.key==='hostel'?'hostel-banner.png':cat.key==='tiffin'?'tiffin-banner.png':cat.key==='library'?'library-banner.png':cat.key==='cafe'?'cafe-banner.png':'bookstore-banner.png')+'\';"><div class="category-badge">'+cat.icon+' '+esc(cat.label)+'</div>'+(verified?'<div class="verified" title="Verified listing">✓</div>':'')+'<div class="card-media-title">'+esc(name)+'</div></div><div class="card-body"><h3 class="card-title">'+esc(name)+'</h3><div class="card-location"><i>⌖</i><span>'+esc(area||address||'Location not available')+'</span></div><div class="card-meta"><span class="rating">'+esc(ratingText(r.rating))+'</span><span class="type-label">'+esc(cat.label)+'</span></div><div class="card-actions"><button class="btn btn-primary view-btn" type="button">◉ View Details</button><a class="btn btn-light finder-btn" href="'+esc(cat.finder)+'">Open Finder</a></div></div>';
-            c.querySelector('.view-btn').addEventListener('click',()=>openDetails(r));
-            return c;
+            c.querySelector('.view-btn').addEventListener('click',()=>openDetails(r));return c;
           }
           function renderResults'''
-          s2, n = re.subn(r'function createCard\(r\)\{.*?\}\n\s*function renderResults', card, s, count=1, flags=re.S)
-          if n != 1:
-              raise SystemExit('createCard function not found')
-          s = s2
-
-          css = '''\n<style id="shh-global-search-image-fix">\n.shh-card-image{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;object-position:center;z-index:0}\n.card-media::after{z-index:1}.category-badge,.verified,.card-media-title{z-index:2}\n</style>\n'''
-          if 'id="shh-global-search-image-fix"' not in s:
-              s=s.replace('</head>',css+'</head>',1)
-
+          s2,n=re.subn(r'function createCard\(r\)\{.*?\}\n\s*function renderResults',card,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('card function not found')
+          s=s2
+          css='''\n<style id="shh-global-search-image-fix">\n.shh-card-image{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;object-position:center;z-index:0}\n.card-media::after{z-index:1}.category-badge,.verified,.card-media-title{z-index:2}\n</style>\n'''
+          if 'id="shh-global-search-image-fix"' not in s:s=s.replace('</head>',css+'</head>',1)
           p.write_text(s,encoding='utf-8')
-          print('patched',len(s),'bytes')
+          print('patched',len(s))
 
-      - name: Validate HTML scripts
-        shell: bash
+      - name: Validate scripts
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -116,11 +81,11 @@ jobs:
           git commit -m 'fix: global search banners [global-search-images-fixed]'
           git push
 
-      - name: Remove patch workflow
-        if: success()
+      - name: Remove one-time workflow
+        if: ${{ success() }}
         run: |
           git rm -f .github/workflows/fix-global-search-images.yml || true
           git config user.name 'StudentHubHelp'
           git config user.email 'satpalnehra30@gmail.com'
-          git commit -m 'chore: remove one-time global search image fixer [global-search-images-fixed]' || true
+          git commit -m 'chore: remove global search image fixer [global-search-images-fixed]' || true
           git push || true
