@@ -1,0 +1,47 @@
+name: repair global search rating helper
+
+on:
+  push:
+    paths:
+      - global-search.html
+      - .github/workflows/repair-global-search-rating.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add missing rating helper
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('global-search.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '    function nameFromRecord(r){'
+          block = """    function ratingText(v){
+            const n=Number(v);
+            return Number.isFinite(n)&&n>0 ? '★ '+n.toFixed(1) : 'Not rated';
+          }
+          """
+          if 'function ratingText(' not in s:
+              if marker not in s:
+                  raise SystemExit('marker not found')
+              p.write_text(s.replace(marker, block + marker, 1), encoding='utf-8')
+          PY
+      - name: Commit repair
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet -- global-search.html; then
+            echo 'No changes needed.'
+            exit 0
+          fi
+          git add global-search.html
+          git commit -m 'fix: restore global search rating helper'
+          git push
