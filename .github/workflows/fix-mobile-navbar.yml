@@ -5,8 +5,6 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/fix-mobile-navbar.yml'
-      - 'index.html'
-      - 'mobile.css'
   workflow_dispatch:
 
 permissions:
@@ -14,7 +12,6 @@ permissions:
 
 jobs:
   fix:
-    if: "!contains(github.event.head_commit.message, '[mobile-navbar-fixed]')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,23 +25,23 @@ jobs:
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
 
-          # The existing generated button was incorrectly nested inside .nav-links.
-          # Move it outside the nav so hiding .nav-links on phones cannot hide the button.
+          # Move the existing hamburger outside .nav-links so mobile hiding of
+          # the links cannot hide the hamburger itself.
           button_re = re.compile(r'\s*<button\s+id=["\']mobileMenuToggle["\'][\s\S]*?</button>', re.I)
           match = button_re.search(text)
           if match:
               button = match.group(0).strip()
               text = text[:match.start()] + text[match.end():]
               nav_close = re.search(r'</nav>', text, re.I)
-              if nav_close and 'id="mobileMenuToggle"' not in text[nav_close.start():nav_close.start()+200]:
+              if nav_close:
                   text = text[:nav_close.end()] + '\n\n      ' + button + text[nav_close.end():]
-          elif 'id="mobileMenuToggle"' not in text and 'id=\'mobileMenuToggle\'' not in text:
+          elif 'id="mobileMenuToggle"' not in text and "id='mobileMenuToggle'" not in text:
               nav_close = re.search(r'</nav>', text, re.I)
               if nav_close:
                   button = '<button id="mobileMenuToggle" class="mobile-menu" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks"><span aria-hidden="true"></span></button>'
                   text = text[:nav_close.end()] + '\n\n      ' + button + text[nav_close.end():]
 
-          # Replace the previously injected escaped/newline-corrupted script with a clean script.
+          # Remove any previous version of this targeted script.
           text = re.sub(r'\\n<script id="studenthubhelp-mobile-navbar-fix">[\s\S]*?</script>\\n', '', text, flags=re.I)
           text = re.sub(r'<script id="studenthubhelp-mobile-navbar-fix">[\s\S]*?</script>', '', text, flags=re.I)
 
