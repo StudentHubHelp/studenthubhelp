@@ -1,61 +1,23 @@
 (function(){
   // ULTRA+ landmark -> property distance intelligence.
   // Distance is matched to the REQUESTED landmark, not merely the first number in a record.
-  const oldRanked=window.ranked;
-  if(typeof oldRanked!=='function')return;
+  const oldRanked=window.ranked;if(typeof oldRanked!=='function')return;
   const landmarkCoords=window.STUDENTHUB_LANDMARK_COORDS||{};
   const normDI=v=>String(v??'').toLowerCase().replace(/[|,;:/()[\]{}]+/g,' ').replace(/\s+/g,' ').trim();
-  const aliasesDI={
-    allen:['allen','allen coaching','allen career institute','allen institute','allen career','allen sikar'],
-    clc:['clc','clc coaching','clc sikar','career line coaching','career line classes','clc kvm','clc-b'],
-    vibrant:['vibrant','vibrant coaching','vibrant career institute','vibrant academy','vibrant sikar'],
-    gurukripa:['gurukripa','gurukripa coaching','gurukripa career institute','gci','gurukripa g8','gurukripa g-8','gurukripa g9','gurukripa g-9'],
-    matrix:['matrix','matrix coaching','matrix academy','matrix neet division'],
-    aayaam:['aayaam','aayaam career academy','aayam','aayam academy'],
-    pcp:['pcp','pcp coaching','pcp sikar','pcp career institute'],
-    path:['path','path coaching','path career institute','path academy'],
-    aakash:['aakash','aakash institute','akash institute']
-  };
+  const aliasesDI={allen:['allen','allen coaching','allen career institute','allen institute','allen career','allen sikar'],clc:['clc','clc coaching','clc sikar','career line coaching','career line classes','clc kvm','clc-b'],vibrant:['vibrant','vibrant coaching','vibrant career institute','vibrant academy','vibrant sikar'],gurukripa:['gurukripa','gurukripa coaching','gurukripa career institute','gci','gurukripa g8','gurukripa g-8','gurukripa g9','gurukripa g-9'],matrix:['matrix','matrix coaching','matrix academy','matrix neet division'],aayaam:['aayaam','aayaam career academy','aayam','aayam academy'],pcp:['pcp','pcp coaching','pcp sikar','pcp career institute'],path:['path','path coaching','path career institute','path academy'],aakash:['aakash','aakash institute','akash institute']};
   const findLandmarkDI=q=>{const n=normDI(q),hits=[];Object.entries(aliasesDI).forEach(([k,a])=>{if(a.some(x=>n.includes(normDI(x))))hits.push(k);});return hits.sort((a,b)=>b.length-a.length)[0]||'';};
   const unitKmDI=u=>/^m$|^meter|^metre|^मीटर$/i.test(u)?0.001:1;
   function parseDistanceDI(text){
     const n=normDI(text).replace(/[–—−]/g,'-');
-    const m=n.match(/(\d+(?:\.\d+)?)\s*(?:-|to|से|तक)?\s*(\d+(?:\.\d+)?)?\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर)\b/i);
-    if(!m)return null;const a=Number(m[1]),b=m[2]?Number(m[2]):a;if(!Number.isFinite(a)||!Number.isFinite(b))return null;const f=unitKmDI(m[3]);return {minKm:Math.min(a,b)*f,maxKm:Math.max(a,b)*f,midKm:((a+b)/2)*f};
+    const m=n.match(/(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)\s*(?:-|to|से|तक)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)\b/i)||n.match(/(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)\b/i);
+    if(!m)return null;const a=Number(m[1]),b=m[3]?Number(m[3]):a;if(!Number.isFinite(a)||!Number.isFinite(b))return null;const f1=unitKmDI(m[2]),f2=m[4]?unitKmDI(m[4]):f1;const x=a*f1,y=b*f2;return {minKm:Math.min(x,y),maxKm:Math.max(x,y),midKm:(x+y)/2};
   }
-  const distanceFromLandmarkTextDI=(text,landmark)=>{
-    const n=normDI(text).replace(/[–—−]/g,'-'),als=aliasesDI[landmark]||[landmark],hits=[];
-    als.forEach(a=>{let from=0,idx;const aa=normDI(a);while((idx=n.indexOf(aa,from))>=0){hits.push(idx);from=idx+aa.length;}});
-    if(!hits.length)return null;let best=null;
-    for(const idx of hits){const d=parseDistanceDI(n.slice(idx,Math.min(n.length,idx+220)));if(d&&(best==null||d.minKm<best.minKm))best=d;}
-    return best;
-  };
+  const distanceFromLandmarkTextDI=(text,landmark)=>{const n=normDI(text).replace(/[–—−]/g,'-'),als=aliasesDI[landmark]||[landmark],hits=[];als.forEach(a=>{let from=0,idx;const aa=normDI(a);while((idx=n.indexOf(aa,from))>=0){hits.push(idx);from=idx+aa.length;}});if(!hits.length)return null;let best=null;for(const idx of hits){const d=parseDistanceDI(n.slice(idx,Math.min(n.length,idx+220)));if(d&&(best==null||d.minKm<best.minKm))best=d;}return best;};
   const haversineDI=(lat1,lon1,lat2,lon2)=>{const a=[lat1,lon1,lat2,lon2].map(Number);if(a.some(v=>!Number.isFinite(v)))return null;const rad=Math.PI/180,R=6371,dLat=(a[2]-a[0])*rad,dLon=(a[3]-a[1])*rad,x=Math.sin(dLat/2)**2+Math.cos(a[0]*rad)*Math.cos(a[2]*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(Math.min(1,x)));};
   const coordFromRecordDI=r=>{const lat=Number(r?.latitude??r?.lat),lon=Number(r?.longitude??r?.lng??r?.lon);return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;};
   const coordFromLandmarkDI=key=>{const c=landmarkCoords[key]||landmarkCoords[normDI(key)];if(!c)return null;const lat=Number(c.lat??c.latitude),lon=Number(c.lon??c.lng??c.longitude);return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;};
-  const distanceFromRecordDI=(r,info)=>{
-    const landmark=info?.landmark||findLandmarkDI(info?.raw||'');if(!landmark)return {minKm:null,maxKm:null,midKm:null,source:'none',confidence:0};
-    const pc=coordFromRecordDI(r),lc=coordFromLandmarkDI(landmark);if(pc&&lc){const km=haversineDI(pc.lat,pc.lon,lc.lat,lc.lon);if(km!=null)return {minKm:km,maxKm:km,midKm:km,source:'coordinates',confidence:1};}
-    const fields=['nearby_coaching','landmark','address','area','service_area','description','facilities','location','nearby'];
-    for(const f of fields){const d=distanceFromLandmarkTextDI(r?.[f],landmark);if(d)return {...d,source:'landmark-specific-text',confidence:.9};}
-    return {minKm:null,maxKm:null,midKm:null,source:'landmark-only',confidence:.35};
-  };
-  const queryDistanceDI=q=>{
-    const n=normDI(q).replace(/[–—−]/g,'-');
-    const lm=n.match(/(?:within|under|upto|up to|less than|के अंदर|अंदर)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर)\b/i);
-    const limit=lm?Number(lm[1])*unitKmDI(lm[2]):null;
-    const nearest=/\b(closest|nearest|sabse paas|sabse pass|सबसे पास|near me|nearest to)\b/i.test(n);
-    return {limitKm:Number.isFinite(limit)?limit:null,nearest};
-  };
-  window.ranked=function(data,q){
-    const base=oldRanked(data,q),info=(base[0]&&base[0].__searchInfo)||{},landmark=info.landmark||findLandmarkDI(q);if(!landmark)return base;const qd=queryDistanceDI(q);
-    const scored=base.map(r=>{const d=distanceFromRecordDI(r,{...info,landmark,raw:q});let bonus=0;if(d.minKm!=null){bonus=260+Math.max(0,180-Math.min(180,d.midKm*90));if(qd.nearest)bonus+=Math.max(0,220-Math.min(220,d.minKm*110));if(qd.limitKm!=null)bonus+=d.maxKm<=qd.limitKm?180:(d.minKm>qd.limitKm?-500:0);}else if(qd.limitKm!=null||qd.nearest)bonus=-120;return {...r,__landmarkDistanceKm:d.midKm,__landmarkDistanceMinKm:d.minKm,__landmarkDistanceMaxKm:d.maxKm,__distanceSource:d.source,__distanceConfidence:d.confidence,__score:r.__score+bonus};});
-    return scored.filter(r=>qd.limitKm==null||r.__landmarkDistanceMinKm!=null&&r.__landmarkDistanceMinKm<=qd.limitKm&&r.__landmarkDistanceMaxKm<=qd.limitKm).sort((a,b)=>b.__score-a.__score||((a.__landmarkDistanceKm??Infinity)-(b.__landmarkDistanceKm??Infinity))||nameFromRecord(a).localeCompare(nameFromRecord(b)));
-  };
-  window.__studentHubDistanceIntelligenceTest=function(){
-    const cases=[
-      ['ALLEN 100 m','ALLEN Career Institute: 100 m',.1],['ALLEN 200-500 m','ALLEN Career Institute: 200–500 m',.35],['ALLEN 1.5-2 km','ALLEN Career Institute: 1.5 – 2 km',1.75],['ALLEN Hindi','ALLEN Career Institute: लगभग 800 मीटर – 1.2 किमी',1],['CLC','CLC Sikar: Lagbhag 150 – 350 meters',.25],['Gurukripa','Gurukripa Career Institute: ~500 m to 800 m',.65],['Matrix','Matrix Academy: ~1.2 km to 1.5 km',1.35],['Wrong landmark first','Matrix: 20–50 m ALLEN: 1.5–2.0 km',1.75],['No distance','Near ALLEN coaching',null],['Multiple landmarks','PCP: 400–600 m ALLEN: 800 m – 1.2 km',1]
-    ];
-    return cases.map(([name,text,expected])=>{const landmark=name==='Wrong landmark first'?'allen':name==='Multiple landmarks'?'allen':findLandmarkDI(name),d=distanceFromLandmarkTextDI(text,landmark);return {name,pass:expected===null?d===null:!!d&&Math.abs(d.midKm-expected)<.001,midKm:d?.midKm??null};});
-  };
+  const distanceFromRecordDI=(r,info)=>{const landmark=info?.landmark||findLandmarkDI(info?.raw||'');if(!landmark)return {minKm:null,maxKm:null,midKm:null,source:'none',confidence:0};const pc=coordFromRecordDI(r),lc=coordFromLandmarkDI(landmark);if(pc&&lc){const km=haversineDI(pc.lat,pc.lon,lc.lat,lc.lon);if(km!=null)return {minKm:km,maxKm:km,midKm:km,source:'coordinates',confidence:1};}const fields=['nearby_coaching','landmark','address','area','service_area','description','facilities','location','nearby'];for(const f of fields){const d=distanceFromLandmarkTextDI(r?.[f],landmark);if(d)return {...d,source:'landmark-specific-text',confidence:.9};}return {minKm:null,maxKm:null,midKm:null,source:'landmark-only',confidence:.35};};
+  const queryDistanceDI=q=>{const n=normDI(q).replace(/[–—−]/g,'-'),lm=n.match(/(?:within|under|upto|up to|less than|के अंदर|अंदर)\s*(\d+(?:\.\d+)?)\s*(km|kilometer|kilometre|kms|m|meter|metre|मीटर|किलोमीटर|किमी)\b/i),limit=lm?Number(lm[1])*unitKmDI(lm[2]):null,nearest=/\b(closest|nearest|sabse paas|sabse pass|सबसे पास|near me|nearest to)\b/i.test(n);return {limitKm:Number.isFinite(limit)?limit:null,nearest};};
+  window.ranked=function(data,q){const base=oldRanked(data,q),info=(base[0]&&base[0].__searchInfo)||{},landmark=info.landmark||findLandmarkDI(q);if(!landmark)return base;const qd=queryDistanceDI(q),scored=base.map(r=>{const d=distanceFromRecordDI(r,{...info,landmark,raw:q});let bonus=0;if(d.minKm!=null){bonus=260+Math.max(0,180-Math.min(180,d.midKm*90));if(qd.nearest)bonus+=Math.max(0,220-Math.min(220,d.minKm*110));if(qd.limitKm!=null)bonus+=d.maxKm<=qd.limitKm?180:(d.minKm>qd.limitKm?-500:0);}else if(qd.limitKm!=null||qd.nearest)bonus=-120;return {...r,__landmarkDistanceKm:d.midKm,__landmarkDistanceMinKm:d.minKm,__landmarkDistanceMaxKm:d.maxKm,__distanceSource:d.source,__distanceConfidence:d.confidence,__score:r.__score+bonus};});return scored.filter(r=>qd.limitKm==null||r.__landmarkDistanceMinKm!=null&&r.__landmarkDistanceMinKm<=qd.limitKm&&r.__landmarkDistanceMaxKm<=qd.limitKm).sort((a,b)=>b.__score-a.__score||((a.__landmarkDistanceKm??Infinity)-(b.__landmarkDistanceKm??Infinity))||nameFromRecord(a).localeCompare(nameFromRecord(b)));};
+  window.__studentHubDistanceIntelligenceTest=function(){const cases=[['ALLEN 100 m','ALLEN Career Institute: 100 m',.1],['ALLEN 200-500 m','ALLEN Career Institute: 200–500 m',.35],['ALLEN 1.5-2 km','ALLEN Career Institute: 1.5 – 2 km',1.75],['ALLEN Hindi','ALLEN Career Institute: लगभग 800 मीटर – 1.2 किमी',1],['CLC','CLC Sikar: Lagbhag 150 – 350 meters',.25],['Gurukripa','Gurukripa Career Institute: ~500 m to 800 m',.65],['Matrix','Matrix Academy: ~1.2 km to 1.5 km',1.35],['Wrong landmark first','Matrix: 20–50 m ALLEN: 1.5–2.0 km',1.75],['No distance','Near ALLEN coaching',null],['Multiple landmarks','PCP: 400–600 m ALLEN: 800 m – 1.2 km',1]];return cases.map(([name,text,expected])=>{const landmark=name==='Wrong landmark first'?'allen':name==='Multiple landmarks'?'allen':findLandmarkDI(name),d=distanceFromLandmarkTextDI(text,landmark);return {name,pass:expected===null?d===null:!!d&&Math.abs(d.midKm-expected)<.001,midKm:d?.midKm??null};});};
 })();
