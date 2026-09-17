@@ -1,0 +1,63 @@
+name: repair global search record helpers
+
+on:
+  push:
+    paths:
+      - global-search.html
+      - .github/workflows/repair-global-search-record-helpers.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add missing global search record helpers
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('global-search.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '    function imageFromRecord(r){'
+          block = """    function nameFromRecord(r){
+            return clean(r.name||r.title||r.property_name||r.propertyName||r.service_name||r.business_name||r.hostel_name||r.pg_name||r.library_name||r.cafe_name||r.bookstore_name);
+          }
+          function areaFromRecord(r){
+            return clean(r.area||r.locality||r.neighborhood||r.location_area);
+          }
+          function addressFromRecord(r){
+            return clean(r.address||r.full_address||r.location_address||r.fullAddress||r.location);
+          }
+          function timingFromRecord(r){
+            return clean(r.timing||r.timings||r.opening_hours||r.hours||r.openingHours);
+          }
+          function phoneFromRecord(r){
+            return clean(r.phone||r.contact_phone||r.contactPhone||r.mobile||r.mobile_number||r.phone_number||r.whatsapp);
+          }
+          function facilitiesFromRecord(r){
+            return clean(r.facilities||r.services||r.features||r.menu||r.amenities);
+          }
+          """
+          if 'function nameFromRecord(r)' not in s:
+              if marker not in s:
+                  raise SystemExit('marker not found')
+              p.write_text(s.replace(marker, block + marker, 1), encoding='utf-8')
+          PY
+
+      - name: Commit repair
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet -- global-search.html; then
+            echo 'No changes needed.'
+            exit 0
+          fi
+          git add global-search.html
+          git commit -m 'fix: restore global search record helpers'
+          git push
