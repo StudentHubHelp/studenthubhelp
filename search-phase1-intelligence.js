@@ -26,8 +26,15 @@
   function typoToken(t){if(t.length<4)return t;let best=t,bd=99;for(const s of allSyn){if(s.includes(' ')||/[^a-z]/i.test(s))continue;const d=lev(t,s);if(d<bd && d<=Math.max(1,Math.floor(t.length*.28))){best=s;bd=d;}}return best;}
   function normalizeQuery(q){const n=norm(q),ts=tokens(n),corrected=ts.map(typoToken);return {raw:String(q??''),normalized:n,tokens:ts,correctedTokens:corrected,corrected:corrected.join(' ')};}
   function groups(q){const n=norm(q),out=[];for(const [k,arr] of Object.entries(SYN)){if(arr.some(x=>n.includes(norm(x))))out.push(k);}return [...new Set(out)];}
+  function groupsFromIntent(x){
+    const corrected=norm(x.corrected);
+    const out=groups(corrected);
+    // Also preserve exact matches from the original query (important for roads/landmarks and Hindi phrases).
+    for(const g of groups(x.normalized)) if(!out.includes(g)) out.push(g);
+    return [...new Set(out)];
+  }
   function parseIntent(q){
-    const x=normalizeQuery(q),g=groups(q),n=x.normalized;
+    const x=normalizeQuery(q),g=groupsFromIntent(x),n=x.normalized;
     const category=['hostel','tiffin','library','cafe','bookstore'].find(k=>g.includes(k))||null;
     return {category,groups:g,corrected:x.corrected,original:x.raw,hasTypoCorrection:x.corrected!==x.tokens.join(' '),near:/\b(near|nearby|paas|pas|pass|beside|next to|samne|saamne|opposite|across|piche|behind)\b/i.test(n),availability:g.includes('availability'),timing:g.includes('timing'),price:n.match(/(?:under|below|upto|up to|less than|within|kam|se kam|₹|rs\.?)[^0-9]{0,8}(\d[\d,]*(?:\.\d+)?)/i)?.[1]||null};
   }
@@ -49,7 +56,7 @@
       return base.map(r=>{const bonus=semanticBonus(r,intent);return {...r,__phase1Intent:intent,__phase1Bonus:bonus,__score:(r.__score||0)+bonus};}).sort((a,b)=>b.__score-a.__score||iName(a).localeCompare(iName(b)));
     };
     function iName(r){return String(r?.name||r?.title||r?.property_name||'');}
-    window.__studentHubPhase1={normalizeQuery,parseIntent,lev,semanticBonus,version:'1.0.1'};
+    window.__studentHubPhase1={normalizeQuery,parseIntent,lev,semanticBonus,version:'1.0.2'};
   }
   const timer=setInterval(()=>{if(typeof window.ranked==='function'){clearInterval(timer);install();}},50);setTimeout(()=>{clearInterval(timer);install();},10000);
 })();
