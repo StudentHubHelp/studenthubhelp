@@ -199,6 +199,34 @@ function renderResults(results){grid.innerHTML='';updateSummary(results,currentQ
     let suggestBox=null,suggestItems=[],suggestIndex=-1;function hideSuggestions(){if(suggestBox){suggestBox.hidden=true;suggestBox.innerHTML='';suggestIndex=-1}}function getSuggestBox(){if(suggestBox)return suggestBox;ensureSuggestCSS();const wrap=input.closest('.search-shell');if(getComputedStyle(wrap).position==='static')wrap.style.position='relative';suggestBox=document.createElement('div');suggestBox.className='shh-ultra-suggest';suggestBox.hidden=true;wrap.appendChild(suggestBox);return suggestBox}
     function suggestions(q,data){const n=norm(q),info=parse(q),out=[],seen=new Set();if(info.cat&&info.location.length){const smart=info.location.join(' ')+' '+CATEGORIES[info.cat].label;out.push({q:smart,title:smart,sub:'Smart location + service search',kind:'Smart Search',icon:'✦'});seen.add(norm(smart))}for(const [key,c] of Object.entries(CATEGORIES))for(const a of [c.label,...ALIASES[key]]){const x=clean(a);if(!x||seen.has(norm(x)))continue;if(norm(x).includes(n)||n.includes(norm(x))||sim(n,x)>.68){seen.add(norm(x));out.push({q:x,title:x,sub:'Search matching listings',kind:c.label,icon:c.icon})}}const vals=[];for(const r of data){const name=nameFromRecord(r),area=clean(r.area||r.locality||r.neighborhood),city=clean(r.city);if(name)vals.push({q:name,title:name,sub:area||city,kind:CATEGORIES[r.__category]?.label||'Property',icon:CATEGORIES[r.__category]?.icon||'⌕'});if(area)vals.push({q:area,title:area,sub:city,kind:'Area',icon:'⌖'});if(city)vals.push({q:city,title:city,sub:'Location',kind:'City',icon:'⌖'})}vals.sort((a,b)=>sim(n,b.title)-sim(n,a.title));for(const v of vals){const k=norm(v.title)+'|'+v.kind;if(seen.has(k))continue;if(norm(v.title).includes(n)||n.includes(norm(v.title))||sim(n,v.title)>.68){seen.add(k);out.push(v)}if(out.length>=8)break}return out.slice(0,8)}
     async function showSuggestions(q){if(!q.trim()){hideSuggestions();return}const data=await loadAll();if(input.value.trim()!==q.trim())return;const b=getSuggestBox(),arr=suggestions(q,data);if(!arr.length){hideSuggestions();return}suggestItems=arr;suggestIndex=-1;b.innerHTML=arr.map((x,i)=>'<button class="shh-ultra-item" type="button" data-i="'+i+'"><span class="shh-ultra-icon">'+esc(x.icon)+'</span><span class="shh-ultra-main"><span class="shh-ultra-title">'+esc(x.title)+'</span><span class="shh-ultra-sub">'+esc(x.sub)+'</span></span><span class="shh-ultra-kind">'+esc(x.kind)+'</span></button>').join('');b.hidden=false;b.querySelectorAll('.shh-ultra-item').forEach(btn=>btn.addEventListener('click',()=>{const x=suggestItems[Number(btn.dataset.i)];input.value=x.q;hideSuggestions();performSearch(x.q)}))}
+    function showLoading(show){
+    if(loading) loading.style.display=show?'block':'none';
+    if(show && grid) grid.innerHTML='';
+  }
+
+  function showEmpty(show){
+    if(empty) empty.style.display=show?'block':'none';
+  }
+
+  function setURLQuery(q){
+    try{
+      const url=new URL(window.location.href);
+      if(q) url.searchParams.set('q',q);
+      else url.searchParams.delete('q');
+      window.history.replaceState({},'',url.toString());
+    }catch(e){}
+  }
+
+  function updateSummary(results,q){
+    if(title) title.textContent=q?'Smart search: '+q:'Explore StudentHubHelp';
+    if(subtitle) subtitle.textContent=q?'Relevant StudentHubHelp listings':'Search across all student services in one place.';
+    if(count){
+      const span=count.querySelector('span');
+      if(span) span.textContent=String(results.length)+' results';
+      else count.textContent=String(results.length)+' results';
+    }
+  }
+
     async function performSearch(q){const req=++requestNo;currentQuery=clean(q);hideSuggestions();showLoading(true);showEmpty(false);setURLQuery(currentQuery);const data=await loadAll();if(req!==requestNo)return;const result=currentQuery?ranked(data,currentQuery):data.filter(r=>activeFilter==='all'||r.__category===activeFilter);allResults=result;renderResults(result);showLoading(false);if(currentQuery){const info=parse(currentQuery),parts=[];if(info.location.length)parts.push(info.location.join(' '));if(info.cat)parts.push(CATEGORIES[info.cat].label);if(info.ins.cheap)parts.push('Budget');if(info.ins.nearby)parts.push('Nearby');if(info.ins.boys)parts.push('Boys');if(info.ins.girls)parts.push('Girls');if(info.ins.veg)parts.push('Veg');let strip=document.getElementById('shhSmartStrip');if(parts.length){if(!strip){strip=document.createElement('div');strip.id='shhSmartStrip';strip.className='shh-smart-strip';document.querySelector('.summary-bar').insertAdjacentElement('afterend',strip)}strip.innerHTML='<span>Smart search:</span>'+parts.map(x=>'<span class="shh-smart-chip">'+esc(x)+'</span>').join('')}else strip?.remove()}}
     form.addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation();performSearch(input.value)},true);input.addEventListener('input',e=>{e.stopImmediatePropagation();clearTimeout(timer);const q=input.value.trim();if(!q){hideSuggestions();performSearch('');return}showSuggestions(q);timer=setTimeout(()=>{if(input.value.trim()===q&&q.length>=2)performSearch(q)},450)},true);input.addEventListener('keydown',e=>{if(!suggestBox||suggestBox.hidden)return;const items=[...suggestBox.querySelectorAll('.shh-ultra-item')];if(e.key==='ArrowDown'){e.preventDefault();suggestIndex=Math.min(items.length-1,suggestIndex+1)}else if(e.key==='ArrowUp'){e.preventDefault();suggestIndex=Math.max(0,suggestIndex-1)}else if(e.key==='Enter'&&suggestIndex>=0){e.preventDefault();items[suggestIndex].click();return}else if(e.key==='Escape'){hideSuggestions();return}else return;items.forEach((x,i)=>x.classList.toggle('active',i===suggestIndex))},true);
     document.addEventListener('click',e=>{if(suggestBox&&!suggestBox.contains(e.target)&&e.target!==input)hideSuggestions()});document.querySelectorAll('.quick-search').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();input.value=btn.dataset.query||'';performSearch(input.value)},true));filter.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();activeFilter=btn.dataset.filter||'all';filter.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active',x===btn));performSearch(currentQuery||'')},true));
