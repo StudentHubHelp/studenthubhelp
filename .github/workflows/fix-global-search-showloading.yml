@@ -1,0 +1,90 @@
+name: Fix global search loading helpers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'global-search.html'
+      - '.github/workflows/fix-global-search-showloading.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: !contains(github.event.head_commit.message, '[showloading-fixed]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore missing helper functions
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('global-search.html')
+          s = p.read_text(encoding='utf-8')
+          marker = "    async function performSearch(q){"
+          if marker not in s:
+              raise SystemExit('performSearch marker not found')
+          if 'function showLoading(' not in s:
+              helpers = r'''    function showLoading(show){
+      if(loading) loading.style.display=show?'flex':'none';
+      if(show && grid) grid.innerHTML='';
+    }
+
+    function showEmpty(show){
+      if(empty) empty.style.display=show?'block':'none';
+    }
+
+    function setURLQuery(q){
+      try{
+        const url=new URL(window.location.href);
+        if(q) url.searchParams.set('q',q);
+        else url.searchParams.delete('q');
+        window.history.replaceState({},'',url.toString());
+      }catch(e){}
+    }
+
+    function updateSummary(results,q){
+      if(title) title.textContent=q?'Smart search: '+q:'All Student Services';
+      if(subtitle) subtitle.textContent=q?'Relevant StudentHubHelp listings':'Explore verified student services';
+      if(count) count.textContent=String(results.length);
+    }
+
+'''
+              s = s.replace(marker, helpers + marker, 1)
+          else:
+              print('helpers already present')
+          p.write_text(s,encoding='utf-8')
+          print('patched', len(s), 'bytes')
+
+      - name: Validate JavaScript
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('global-search.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S)
+          Path('/tmp/scripts.js').write_text('\n\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/scripts.js
+
+      - name: Commit fix
+        run: |
+          git config user.name 'StudentHubHelp'
+          git config user.email 'satpalnehra30@gmail.com'
+          git add global-search.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: restore global search loading helpers [showloading-fixed]'
+          git push
+
+      - name: Remove one-time workflow
+        if: success()
+        run: |
+          git rm -f .github/workflows/fix-global-search-showloading.yml || true
+          git config user.name 'StudentHubHelp'
+          git config user.email 'satpalnehra30@gmail.com'
+          git commit -m 'chore: remove one-time loading fixer [showloading-fixed]' || true
+          git push || true
