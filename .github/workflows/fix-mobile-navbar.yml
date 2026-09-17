@@ -12,72 +12,67 @@ permissions:
 
 jobs:
   fix:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fix mobile navbar without changing desktop/tablet layout
-        shell: python
+      - name: Validate mobile navbar inputs
+        shell: bash
         run: |
+          test -f index.html
+          test -f mobile.css
+          grep -qi '<nav' index.html || { echo 'No nav element found'; exit 1; }
+
+      - name: Fix mobile navbar without changing desktop/tablet layout
+        shell: bash
+        run: |
+          python3 <<'PY'
           from pathlib import Path
           import re
 
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
 
-          # Move the existing hamburger outside .nav-links so mobile hiding of
-          # the links cannot hide the hamburger itself.
           button_re = re.compile(r'\s*<button\s+id=["\']mobileMenuToggle["\'][\s\S]*?</button>', re.I)
           match = button_re.search(text)
           if match:
               button = match.group(0).strip()
               text = text[:match.start()] + text[match.end():]
               nav_close = re.search(r'</nav>', text, re.I)
-              if nav_close:
-                  text = text[:nav_close.end()] + '\n\n      ' + button + text[nav_close.end():]
+              if not nav_close:
+                  raise SystemExit('Closing </nav> not found')
+              text = text[:nav_close.end()] + '\n\n      ' + button + text[nav_close.end():]
           elif 'id="mobileMenuToggle"' not in text and "id='mobileMenuToggle'" not in text:
               nav_close = re.search(r'</nav>', text, re.I)
-              if nav_close:
-                  button = '<button id="mobileMenuToggle" class="mobile-menu" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks"><span aria-hidden="true"></span></button>'
-                  text = text[:nav_close.end()] + '\n\n      ' + button + text[nav_close.end():]
+              if not nav_close:
+                  raise SystemExit('Closing </nav> not found')
+              button = '<button id="mobileMenuToggle" class="mobile-menu" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks"><span aria-hidden="true"></span></button>'
+              text = text[:nav_close.end()] + '\n\n      ' + button + text[nav_close.end():]
 
-          # Remove any previous version of this targeted script.
-          text = re.sub(r'\\n<script id="studenthubhelp-mobile-navbar-fix">[\s\S]*?</script>\\n', '', text, flags=re.I)
           text = re.sub(r'<script id="studenthubhelp-mobile-navbar-fix">[\s\S]*?</script>', '', text, flags=re.I)
-
           script = '''<script id="studenthubhelp-mobile-navbar-fix">
-(function(){
-  function initMobileNav(){
-    const button=document.getElementById('mobileMenuToggle');
-    const nav=document.getElementById('navLinks')||document.querySelector('.nav-links');
-    if(!button||!nav||button.dataset.bound==='true') return;
-    button.dataset.bound='true';
-    function sync(open){
-      nav.classList.toggle('open',open);
-      button.setAttribute('aria-expanded',String(open));
-      button.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu');
-      document.body.classList.toggle('mobile-nav-open',open);
-    }
-    button.addEventListener('click',function(event){
-      event.preventDefault();
-      event.stopPropagation();
-      sync(!nav.classList.contains('open'));
-    });
-    nav.addEventListener('click',function(event){
-      if(event.target.closest('a')) sync(false);
-    });
-    document.addEventListener('click',function(event){
-      if(!nav.classList.contains('open')) return;
-      if(!nav.contains(event.target)&&!button.contains(event.target)) sync(false);
-    });
-    window.addEventListener('resize',function(){
-      if(window.innerWidth>=768) sync(false);
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initMobileNav,{once:true});
-  else initMobileNav();
-})();
-</script>'''
+          (function(){
+            function initMobileNav(){
+              const button=document.getElementById('mobileMenuToggle');
+              const nav=document.getElementById('navLinks')||document.querySelector('.nav-links');
+              if(!button||!nav||button.dataset.bound==='true') return;
+              button.dataset.bound='true';
+              function sync(open){
+                nav.classList.toggle('open',open);
+                button.setAttribute('aria-expanded',String(open));
+                button.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu');
+                document.body.classList.toggle('mobile-nav-open',open);
+              }
+              button.addEventListener('click',function(event){event.preventDefault();event.stopPropagation();sync(!nav.classList.contains('open'));});
+              nav.addEventListener('click',function(event){if(event.target.closest('a')) sync(false);});
+              document.addEventListener('click',function(event){if(nav.classList.contains('open')&&!nav.contains(event.target)&&!button.contains(event.target)) sync(false);});
+              window.addEventListener('resize',function(){if(window.innerWidth>=768) sync(false);});
+            }
+            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initMobileNav,{once:true});
+            else initMobileNav();
+          })();
+          </script>'''
           text = text.replace('</body>', script + '\n</body>')
           path.write_text(text, encoding='utf-8')
 
@@ -86,31 +81,53 @@ jobs:
           marker = '/* FINAL MOBILE NAVBAR: single tappable hamburger */'
           if marker not in css_text:
               css_text += '''\n\n/* FINAL MOBILE NAVBAR: single tappable hamburger */
-@media(max-width:767px){
-  .nav-inner{position:relative!important;flex-direction:row!important;align-items:center!important;gap:8px!important;padding-block:12px!important}
-  .nav-links{position:absolute!important;top:calc(100% + 8px)!important;left:12px!important;right:12px!important;width:auto!important;display:none!important;flex-direction:column!important;align-items:stretch!important;gap:4px!important;padding:10px!important;background:rgba(255,255,255,.98)!important;border:1px solid #e4e9f0!important;border-radius:16px!important;box-shadow:0 18px 50px rgba(7,26,51,.16)!important;z-index:1100!important;overflow:visible!important;white-space:normal!important}
-  .nav-links.open{display:flex!important}
-  .nav-links a{display:flex!important;align-items:center!important;min-height:46px!important;padding:10px 14px!important;border-radius:10px!important}
-  #mobileMenuToggle{display:inline-flex!important;position:relative!important;align-items:center!important;justify-content:center!important;width:44px!important;height:44px!important;min-width:44px!important;margin-left:auto!important;padding:0!important;border:1px solid rgba(7,26,51,.16)!important;border-radius:12px!important;background:#fff!important;box-shadow:0 4px 14px rgba(7,26,51,.08)!important;cursor:pointer!important;z-index:1105!important;-webkit-tap-highlight-color:transparent!important}
-  #mobileMenuToggle::before,#mobileMenuToggle::after{display:none!important;content:none!important}
-  #mobileMenuToggle span,#mobileMenuToggle span::before,#mobileMenuToggle span::after{content:"";display:block;width:20px;height:2px;border-radius:2px;background:#071a33;position:absolute;transition:transform .2s ease,opacity .2s ease}
-  #mobileMenuToggle span{position:relative!important}
-  #mobileMenuToggle span::before,#mobileMenuToggle span::after{left:0}
-  #mobileMenuToggle span::before{top:-6px}
-  #mobileMenuToggle span::after{top:6px}
-  #mobileMenuToggle[aria-expanded="true"] span{background:transparent}
-  #mobileMenuToggle[aria-expanded="true"] span::before{transform:translateY(6px) rotate(45deg)}
-  #mobileMenuToggle[aria-expanded="true"] span::after{transform:translateY(-6px) rotate(-45deg)}
-  body.mobile-nav-open{overflow:hidden!important}
-}
-@media(min-width:768px){#mobileMenuToggle{display:none!important}}
-'''
+          @media(max-width:767px){
+            .nav-inner{position:relative!important;flex-direction:row!important;align-items:center!important;gap:8px!important;padding-block:12px!important}
+            .nav-links{position:absolute!important;top:calc(100% + 8px)!important;left:12px!important;right:12px!important;width:auto!important;display:none!important;flex-direction:column!important;align-items:stretch!important;gap:4px!important;padding:10px!important;background:rgba(255,255,255,.98)!important;border:1px solid #e4e9f0!important;border-radius:16px!important;box-shadow:0 18px 50px rgba(7,26,51,.16)!important;z-index:1100!important;overflow:visible!important;white-space:normal!important}
+            .nav-links.open{display:flex!important}
+            .nav-links a{display:flex!important;align-items:center!important;min-height:46px!important;padding:10px 14px!important;border-radius:10px!important}
+            #mobileMenuToggle{display:inline-flex!important;position:relative!important;align-items:center!important;justify-content:center!important;width:44px!important;height:44px!important;min-width:44px!important;margin-left:auto!important;padding:0!important;border:1px solid rgba(7,26,51,.16)!important;border-radius:12px!important;background:#fff!important;box-shadow:0 4px 14px rgba(7,26,51,.08)!important;cursor:pointer!important;z-index:1105!important;-webkit-tap-highlight-color:transparent!important}
+            #mobileMenuToggle::before,#mobileMenuToggle::after{display:none!important;content:none!important}
+            #mobileMenuToggle span,#mobileMenuToggle span::before,#mobileMenuToggle span::after{content:"";display:block;width:20px;height:2px;border-radius:2px;background:#071a33;position:absolute;transition:transform .2s ease,opacity .2s ease}
+            #mobileMenuToggle span{position:relative!important}
+            #mobileMenuToggle span::before,#mobileMenuToggle span::after{left:0}
+            #mobileMenuToggle span::before{top:-6px}
+            #mobileMenuToggle span::after{top:6px}
+            #mobileMenuToggle[aria-expanded="true"] span{background:transparent}
+            #mobileMenuToggle[aria-expanded="true"] span::before{transform:translateY(6px) rotate(45deg)}
+            #mobileMenuToggle[aria-expanded="true"] span::after{transform:translateY(-6px) rotate(-45deg)}
+            body.mobile-nav-open{overflow:hidden!important}
+          }
+          @media(min-width:768px){#mobileMenuToggle{display:none!important}}
+          '''
               css.write_text(css_text, encoding='utf-8')
+          PY
 
-      - name: Commit fix
+      - name: Validate navbar result
+        shell: bash
+        run: |
+          node --check <(python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf-8')
+          m=re.search(r'<script id="studenthubhelp-mobile-navbar-fix">([\s\S]*?)</script>',s,re.I)
+          if not m: raise SystemExit('mobile navbar fix script missing')
+          print(m.group(1))
+          PY
+          )
+          grep -q 'id="mobileMenuToggle"' index.html
+          grep -q 'FINAL MOBILE NAVBAR' mobile.css
+          grep -q '@media(min-width:768px)' mobile.css
+
+      - name: Commit fix only when changed
+        shell: bash
         run: |
           git config user.name 'StudentHubHelp Mobile Optimizer'
           git config user.email 'actions@github.com'
           git add index.html mobile.css
-          git diff --cached --quiet || git commit -m 'fix: mobile navbar hamburger placement [mobile-navbar-fixed]'
+          if git diff --cached --quiet; then
+            echo 'Mobile navbar already correct; nothing to commit.'
+            exit 0
+          fi
+          git commit -m 'fix: mobile navbar hamburger placement [mobile-navbar-fixed]'
           git push
