@@ -36,7 +36,7 @@
   function parseIntent(q){
     const x=normalizeQuery(q),g=groupsFromIntent(x),n=x.normalized;
     const category=['hostel','tiffin','library','cafe','bookstore'].find(k=>g.includes(k))||null;
-    return {category,groups:g,corrected:x.corrected,original:x.raw,hasTypoCorrection:x.corrected!==x.tokens.join(' '),near:/\b(near|nearby|paas|pas|pass|beside|next to|samne|saamne|opposite|across|piche|behind)\b/i.test(n),availability:g.includes('availability'),timing:g.includes('timing'),price:n.match(/(?:under|below|upto|up to|less than|within|kam|se kam|₹|rs\.?)[^0-9]{0,8}(\d[\d,]*(?:\.\d+)?)/i)?.[1]||null};
+    return {category,groups:g,corrected:x.corrected,correctedTokens:x.correctedTokens,original:x.raw,hasTypoCorrection:x.corrected!==x.tokens.join(' '),near:/\b(near|nearby|paas|pas|pass|beside|next to|samne|saamne|opposite|across|piche|behind)\b/i.test(n),availability:g.includes('availability'),timing:g.includes('timing'),price:n.match(/(?:under|below|upto|up to|less than|within|kam|se kam|₹|rs\.?)[^0-9]{0,8}(\d[\d,]*(?:\.\d+)?)/i)?.[1]||null};
   }
   function hay(r){const vals=[];Object.keys(r||{}).forEach(k=>{if(/^(__|created_at$|updated_at$|image$|images$)/i.test(k))return;const v=r[k];if(v!=null)vals.push(typeof v==='object'?JSON.stringify(v):String(v));});return norm(vals.join(' '));}
   function semanticBonus(r,intent){
@@ -56,7 +56,7 @@
       return base.map(r=>{const bonus=semanticBonus(r,intent);return {...r,__phase1Intent:intent,__phase1Bonus:bonus,__score:(r.__score||0)+bonus};}).sort((a,b)=>b.__score-a.__score||iName(a).localeCompare(iName(b)));
     };
     function iName(r){return String(r?.name||r?.title||r?.property_name||'');}
-    window.__studentHubPhase1={normalizeQuery,parseIntent,lev,semanticBonus,version:'1.0.2'};
+    window.__studentHubPhase1={normalizeQuery,parseIntent,lev,semanticBonus,version:'1.0.3'};
   }
   const timer=setInterval(()=>{if(typeof window.ranked==='function'){clearInterval(timer);install();}},50);setTimeout(()=>{clearInterval(timer);install();},10000);
 })();
