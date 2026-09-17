@@ -2,34 +2,38 @@ name: Fix global search loading helpers
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - 'global-search.html'
-      - '.github/workflows/fix-global-search-showloading.yml'
+      - global-search.html
+      - .github/workflows/fix-global-search-showloading.yml
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   fix:
-    if: ${{ !contains(github.event.head_commit.message, '[showloading-fixed]') }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Restore missing helper functions
+      - name: Restore missing global search helpers
         shell: python
         run: |
           from pathlib import Path
-          p = Path('global-search.html')
-          s = p.read_text(encoding='utf-8')
-          marker = "    async function performSearch(q){"
-          if marker not in s:
+
+          path = Path('global-search.html')
+          text = path.read_text(encoding='utf-8')
+          marker = '    async function performSearch(q){'
+
+          if marker not in text:
               raise SystemExit('performSearch marker not found')
-          if 'function showLoading(' not in s:
-              helpers = r'''    function showLoading(show){
-      if(loading) loading.style.display=show?'flex':'none';
+
+          if 'function showLoading(show)' not in text:
+              helpers = '''    function showLoading(show){
+      if(loading) loading.style.display=show?'block':'none';
       if(show && grid) grid.innerHTML='';
     }
 
@@ -47,8 +51,8 @@ jobs:
     }
 
     function updateSummary(results,q){
-      if(title) title.textContent=q?'Smart search: '+q:'All Student Services';
-      if(subtitle) subtitle.textContent=q?'Relevant StudentHubHelp listings':'Explore verified student services';
+      if(title) title.textContent=q?'Smart search: '+q:'Explore StudentHubHelp';
+      if(subtitle) subtitle.textContent=q?'Relevant StudentHubHelp listings':'Search across all student services in one place.';
       if(count){
         const span=count.querySelector('span');
         if(span) span.textContent=String(results.length)+' results';
@@ -57,36 +61,45 @@ jobs:
     }
 
 '''
-              s = s.replace(marker, helpers + marker, 1)
-          p.write_text(s, encoding='utf-8')
-          print('patched', len(s), 'bytes')
+              text=text.replace(marker,helpers+marker,1)
+              path.write_text(text,encoding='utf-8')
+              print('Global search helpers inserted.')
+          else:
+              print('Global search helpers already present.')
 
-      - name: Validate JavaScript
+      - name: Validate global-search JavaScript
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
-          s=Path('global-search.html').read_text(encoding='utf-8')
-          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S)
-          Path('/tmp/scripts.js').write_text('\n\n'.join(scripts),encoding='utf-8')
+          text=Path('global-search.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',text,re.S)
+          Path('/tmp/global-search.js').write_text('\n\n'.join(scripts),encoding='utf-8')
           PY
-          node --check /tmp/scripts.js
+          node --check /tmp/global-search.js
 
-      - name: Commit fix
+      - name: Commit patched global-search.html
+        shell: bash
         run: |
           git config user.name 'StudentHubHelp'
           git config user.email 'satpalnehra30@gmail.com'
           git add global-search.html
-          git diff --cached --quiet && exit 0
+          if git diff --cached --quiet; then
+            echo 'No global-search changes required.'
+            exit 0
+          fi
           git commit -m 'fix: restore global search loading helpers [showloading-fixed]'
           git push
 
-      - name: Remove one-time workflow
+      - name: Remove one-time fixer after successful validation
         if: ${{ success() }}
+        shell: bash
         run: |
-          git rm -f .github/workflows/fix-global-search-showloading.yml || true
           git config user.name 'StudentHubHelp'
           git config user.email 'satpalnehra30@gmail.com'
-          git commit -m 'chore: remove one-time loading fixer [showloading-fixed]' || true
-          git push || true
+          if [ -f .github/workflows/fix-global-search-showloading.yml ]; then
+            git rm .github/workflows/fix-global-search-showloading.yml
+            git commit -m 'chore: remove global search one-time fixer'
+            git push
+          fi
