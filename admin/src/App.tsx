@@ -1201,34 +1201,18 @@ export default function App() {
   // REVIEWS
   // =========================================================
 
-  const handleToggleReviewStatus = (
+  const handleToggleReviewStatus = async (
     id: string | number,
     nextStatus: string
   ) => {
-    setReviews((prev) =>
-      prev.map((r) =>
-        String(r.id) ===
-        String(id)
-          ? {
-              ...r,
-              status: nextStatus,
-            }
-          : r
-      )
-    );
-
-    logActivity(
-      'update_review_status',
-      'review',
-      id,
-      {
-        status: nextStatus,
-      }
-    );
-
-    showToast(
-      `Review #${id} status changed to ${nextStatus}.`
-    );
+    try {
+      const { data, error } = await supabase.from('reviews').update({ status: nextStatus }).eq('id', id).select('*').maybeSingle();
+      if (error) throw error;
+      if (data) setReviews((prev) => prev.map((r) => String(r.id) === String(id) ? { ...r, ...data } : r));
+      showToast(nextStatus.toLowerCase() === 'published' ? 'Review approved and published.' : nextStatus.toLowerCase() === 'rejected' ? 'Review rejected.' : `Review status changed to ${nextStatus}.`);
+    } catch (err: any) {
+      showToast(err?.message || 'Unable to update review status.', 'error');
+    }
   };
 
   // =========================================================
