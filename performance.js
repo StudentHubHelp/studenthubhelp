@@ -111,7 +111,7 @@
           </div></section>
 
           <section class="footer-column"><h4>Quick Discovery</h4><div class="footer-links">
-            <a href="global-search.html">Find a Service</a><a href="pg-finder.html">Find Accommodation</a><a href="tiffin-finder.html">Find Food</a><a href="library-finder.html">Find Study Spaces</a><a href="about.html#faq">FAQs</a>
+            <a href="global-search.html">Find a Service</a><a href="pg-finder.html">Find Accommodation</a><a href="tiffin-finder.html">Find Food</a><a href="library-finder.html">Find Study Spaces</a><a href="about.html#faq">FAQs</a>${(window.location.pathname === '/studenthubhelp/' || window.location.pathname.endsWith('/studenthubhelp/index.html')) ? '<a href="404.html">404 Page</a><a href="thank-you.html">Thank You</a>' : ''}
           </div></section>
 
           <section class="footer-column footer-contact"><h4>Director &amp; Support</h4>
