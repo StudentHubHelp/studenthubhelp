@@ -187,9 +187,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
       if (error) throw error;
       if (!data?.session || !data.user?.email) throw new Error('Sign in did not return a valid admin session.');
 
-      // PASSWORD IS ONE COMPLETE LOGIN METHOD.
-      // Do not force a second biometric/passkey step after password login.
-      await completeLogin(supabase, data.user.email);
+      // Password is a complete login method.
+      // Do not require MFA/passkey after a successful password login.
+      // Admin authorization is still enforced by verifyAdminUser().
+      await finishAdminLogin(supabase, data.user.email);
     } catch (err: any) {
       try { await supabase.auth.signOut(); } catch { /* cleanup only */ }
       setErrorMsg(readableAuthError(err));
