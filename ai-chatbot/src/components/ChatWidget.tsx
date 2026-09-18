@@ -111,10 +111,20 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     setMessages(prev => [...prev, userMessage]); setInputText(''); setIsLoading(true);
     try {
       const history = messages.slice(-6).map(m => ({ role: m.sender === 'user' ? ('user' as const) : ('model' as const), text: m.text }));
+      const lastPropertyMessage = [...messages].reverse().find(m => m.sender === 'bot' && Array.isArray(m.recommendedProperties) && m.recommendedProperties.length > 0);
+      const isPropertyFollowUp = /\b(iske|iska|iski|is property|this|that|details|detail|phone|number|contact)\b/i.test(text);
+      const focusedProperty = isPropertyFollowUp ? lastPropertyMessage?.recommendedProperties?.[0] : undefined;
       if (!SUPABASE_ANON_KEY) throw new Error('Missing VITE_SUPABASE_ANON_KEY. Add the public Supabase anon/publishable key to the Vite build environment.');
       const controller = new AbortController(); const timeoutId = window.setTimeout(() => controller.abort(), 20000); let res: Response;
       try {
-        res = await fetch(CHAT_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, body: JSON.stringify({ message: text, history, preferredTopic: topicToPrioritize, sessionId }), signal: controller.signal });
+        res = await fetch(CHAT_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, body: JSON.stringify({
+          message: text,
+          history,
+          preferredTopic: topicToPrioritize,
+          sessionId,
+          focusPropertyId: focusedProperty?.id ? String(focusedProperty.id) : undefined,
+          focusPropertyType: focusedProperty?.type ? String(focusedProperty.type) : undefined
+        }), signal: controller.signal });
       } finally { window.clearTimeout(timeoutId); }
       if (!res.ok) { let detail = ''; try { const errorBody = await res.json(); detail = errorBody?.error || errorBody?.message || ''; } catch {} throw new Error(detail || `Chat request failed (${res.status})`); }
       const data: ChatApiResponse = await res.json(); if (!data || typeof data.reply !== 'string' || !data.reply.trim()) throw new Error('Chat backend returned an invalid response.');
@@ -149,7 +159,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     property?.whatsapp;
 
   const facilities = [
-    property?.facilities,
     property?.wifi,
     property?.ac,
     property?.parking,
@@ -236,9 +245,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       )}
 
       {/* DESCRIPTION */}
-      {property?.description && (
+      {property?.description && String(property.description).trim().length <= 280 && (
         <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-xs text-slate-700 leading-relaxed">
-          {property.description}
+          {String(property.description).trim()}
         </div>
       )}
 
@@ -278,7 +287,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
           <div className="flex flex-wrap gap-1.5">
 
-            {facilities.slice(0, 8).map(
+            {facilities.slice(0, 4).map(
               (item: string, i: number) => (
                 <span
                   key={i}
