@@ -4,978 +4,4948 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Login | StudentHubHelp</title>
+
 <meta name="description" content="Secure StudentHubHelp login for students and property owners.">
 <meta name="robots" content="noindex,nofollow,noarchive">
+
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;font-family:Inter,sans-serif;color:#172033;background:linear-gradient(135deg,#f8fafc,#eef2f7);display:flex;flex-direction:column}
-a{color:inherit;text-decoration:none}
-.navbar{background:#071426;color:#fff}.nav-inner{max-width:1200px;margin:auto;padding:15px 20px;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:12px}.brand img{width:48px;height:48px;object-fit:contain;border-radius:12px;background:#fff;padding:4px}
-.brand h1{font:700 20px Poppins,sans-serif}.brand span{display:block;font-size:11px;color:#cbd5e1;margin-top:3px}
-.home-btn{padding:10px 16px;border:1px solid #ffffff33;border-radius:10px;font-size:14px;font-weight:700}
-.page{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 16px}
-.auth-wrapper{width:100%;max-width:480px}.auth-card{background:#fff;border:1px solid #e5e7eb;border-radius:24px;box-shadow:0 25px 70px #0f172a1f;overflow:hidden}
-.auth-top{background:linear-gradient(135deg,#071426,#0d2038);color:#fff;padding:30px;text-align:center}
-.auth-icon{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;background:#d4af3722;border:1px solid #f0d47755;display:grid;place-items:center;font-size:28px}
-.auth-top h2{font:700 27px Poppins,sans-serif;margin-bottom:8px}.auth-top p{font-size:14px;line-height:1.6;color:#cbd5e1}
-.auth-body{padding:28px}
-.tabs{display:grid;grid-template-columns:1fr 1fr;background:#f1f5f9;padding:4px;border-radius:12px;margin-bottom:24px}
-.tab{border:0;background:transparent;padding:12px;border-radius:9px;font-weight:800;color:#64748b;cursor:pointer}.tab.active{background:#fff;color:#071426;box-shadow:0 2px 8px #0f172a14}
-.form-group{margin-bottom:17px}label{display:block;margin-bottom:7px;font-size:13px;font-weight:800;color:#334155}
-.input-wrap{position:relative}.input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.6}
-input{width:100%;height:48px;border:1px solid #e5e7eb;border-radius:11px;padding:0 14px 0 42px;font-size:14px;outline:none}
-input:focus{border-color:#d4af37;box-shadow:0 0 0 3px #d4af3720}.password-input{padding-right:45px}
-.password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer;font-size:17px}
-.primary-btn,.google-btn{width:100%;height:50px;border-radius:11px;font-weight:800;font-size:14px;cursor:pointer}
-.primary-btn{border:0;background:linear-gradient(135deg,#b99225,#d4af37,#e5c55e);color:#071426;box-shadow:0 8px 20px #d4af3738}
-.primary-btn:disabled,.google-btn:disabled{opacity:.55;cursor:not-allowed}
-.google-btn{height:48px;border:1px solid #e5e7eb;background:#fff;color:#172033;display:flex;align-items:center;justify-content:center;gap:10px}
-.google-btn:hover:not(:disabled){background:#f8fafc}.google-icon{font-weight:900;font-size:18px}
-.role-box{display:grid;grid-template-columns:1fr 1fr;gap:10px}.role-option{position:relative}
-.role-option input{position:absolute;opacity:0;pointer-events:none}.role-label{height:72px;border:1px solid #e5e7eb;border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;background:#fff}
-.role-label strong{display:block;margin-bottom:3px}.role-label small{color:#64748b;font-size:11px}
-.role-option input:checked+.role-label{border-color:#d4af37;background:#d4af3712;box-shadow:0 0 0 2px #d4af3720}
-.role-note,.google-role-state{font-size:11px;line-height:1.5;text-align:center;color:#64748b;margin:9px 0 16px}.role-required{color:#b45309}
-.oauth-divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:#94a3b8;font-size:11px;font-weight:800;text-transform:uppercase}
-.oauth-divider:before,.oauth-divider:after{content:"";height:1px;flex:1;background:#e2e8f0}.forgot-row{display:flex;justify-content:flex-end;margin:-7px 0 20px}
-.forgot-btn,.resend-btn,.back-login-btn{border:0;background:none;color:#8b6d13;font-size:13px;font-weight:800;cursor:pointer}
-.back-login-wrap{text-align:center;margin-top:16px}.back-login-btn:hover,.forgot-btn:hover,.resend-btn:hover{text-decoration:underline}
-.message{display:none;margin-bottom:17px;padding:12px;border-radius:10px;font-size:13px;line-height:1.5}.message.show{display:block}
-.message.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}.message.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
-.security-note,.resend-box{margin-top:18px;padding:13px;border-radius:11px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;font-size:11px;line-height:1.6;text-align:center}
-.resend-box p{margin-bottom:10px}
-.footer{text-align:center;padding:20px;color:#64748b;font-size:12px}
-.signup-panel,.recovery-panel,.reset-panel,.google-role-panel{display:none}
-.signup-panel.show,.recovery-panel.show,.reset-panel.show,.google-role-panel.show{display:block}.login-panel.hidden{display:none}
-.loading-screen{position:fixed;inset:0;background:#071426d9;display:none;align-items:center;justify-content:center;z-index:9999;color:#fff}
-.loading-screen.show{display:flex}.loading-box{background:#0d2038;padding:28px 34px;border-radius:18px;text-align:center}
-.spinner{width:32px;height:32px;margin:0 auto 12px;border:3px solid #ffffff40;border-top-color:#f0d477;border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:520px){.auth-body{padding:22px 18px}.auth-top{padding:25px 20px}.auth-top h2{font-size:23px}.brand h1{font-size:17px}.home-btn{padding:8px 11px;font-size:12px}}
 
-.auth-card{animation:authIn .35s ease both}
-.primary-btn,.google-btn,.tab,.role-label,.home-btn{transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease}
-.primary-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 24px #d4af3738}
-.google-btn:hover:not(:disabled),.home-btn:hover{transform:translateY(-1px)}
-.message{animation:messageIn .22s ease both}
-@keyframes authIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes messageIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="mobile.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@Supabase/supabase-js@2"></script>
+
+<!-- hCaptcha -->
+<script src="https://js.hcaptcha.com/1/api.js?render=explicit" async defer></script>
+
+<script src="performance.js" defer></script>
+
+<link rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co" crossorigin>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html{
+  min-height:100%;
+}
+
+body{
+  min-height:100vh;
+  font-family:Inter,sans-serif;
+  color:#fff;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(255,0,45,.16),transparent 28%),
+    radial-gradient(circle at 80% 70%,rgba(255,0,35,.13),transparent 30%),
+    linear-gradient(135deg,#080001 0%,#210004 45%,#050000 100%);
+  display:flex;
+  flex-direction:column;
+  overflow-x:hidden;
+}
+
+body::before,
+body::after{
+  content:"";
+  position:fixed;
+  pointer-events:none;
+  z-index:0;
+}
+
+body::before{
+  inset:0;
+  opacity:.35;
+  background-image:
+    linear-gradient(90deg,transparent 96%,rgba(255,20,55,.45) 96%),
+    linear-gradient(transparent 96%,rgba(255,20,55,.25) 96%);
+  background-size:110px 110px;
+  mask-image:linear-gradient(to bottom,black,transparent 90%);
+}
+
+body::after{
+  width:360px;
+  height:360px;
+  border-radius:50%;
+  background:rgba(255,0,40,.10);
+  filter:blur(100px);
+  left:-160px;
+  top:25%;
+}
+
+a{
+  color:inherit;
+  text-decoration:none;
+}
+
+/* =========================
+   TOP NAV
+========================= */
+
+.navbar{
+  position:relative;
+  z-index:10;
+  background:rgba(10,0,2,.72);
+  border-bottom:1px solid rgba(255,50,70,.16);
+  backdrop-filter:blur(12px);
+}
+
+.nav-inner{
+  max-width:1200px;
+  margin:auto;
+  padding:13px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:11px;
+}
+
+.brand img{
+  width:43px;
+  height:43px;
+  object-fit:contain;
+  border-radius:11px;
+  background:#fff;
+  padding:3px;
+}
+
+.brand h1{
+  font:700 19px Poppins,sans-serif;
+  color:#fff;
+}
+
+.brand span{
+  display:block;
+  font-size:10px;
+  color:#c7aeb2;
+  margin-top:2px;
+}
+
+.home-btn{
+  padding:9px 15px;
+  border:1px solid rgba(255,80,95,.28);
+  border-radius:10px;
+  color:#fff;
+  font-size:13px;
+  font-weight:700;
+  background:rgba(255,255,255,.04);
+}
+
+/* =========================
+   PAGE
+========================= */
+
+.page{
+  position:relative;
+  z-index:2;
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:42px 18px;
+}
+
+.auth-wrapper{
+  width:100%;
+  max-width:940px;
+}
+
+.auth-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  min-height:570px;
+  overflow:hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(75,10,16,.88),
+      rgba(22,4,7,.94)
+    );
+
+  border:1px solid rgba(255,54,76,.30);
+  border-radius:24px;
+
+  box-shadow:
+    0 35px 100px rgba(0,0,0,.62),
+    0 0 45px rgba(255,0,35,.08);
+
+  backdrop-filter:blur(18px);
+
+  animation:authIn .45s ease both;
+}
+
+/* =========================
+   LEFT / WELCOME SIDE
+========================= */
+
+.auth-top{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:55px 45px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(75,8,14,.72),
+      rgba(25,3,6,.58)
+    );
+
+  border-right:1px solid rgba(255,80,95,.15);
+}
+
+.auth-top::before{
+  content:"";
+  position:absolute;
+  width:230px;
+  height:230px;
+  border-radius:50%;
+  background:rgba(255,0,35,.12);
+  filter:blur(60px);
+  top:-70px;
+  left:-70px;
+}
+
+.auth-top::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    120deg,
+    transparent 45%,
+    rgba(255,70,90,.10) 50%,
+    transparent 55%
+  );
+  pointer-events:none;
+}
+
+.auth-icon{
+  position:relative;
+  z-index:2;
+  width:78px;
+  height:78px;
+  margin:0 auto 22px;
+
+  border-radius:22px;
+
+  display:grid;
+  place-items:center;
+
+  background:rgba(255,0,45,.12);
+  border:1px solid rgba(255,80,95,.30);
+
+  font-size:34px;
+
+  box-shadow:
+    0 0 30px rgba(255,0,40,.14);
+}
+
+.auth-top h2{
+  position:relative;
+  z-index:2;
+
+  font:800 38px Poppins,sans-serif;
+  margin-bottom:12px;
+
+  color:#fff;
+  letter-spacing:.3px;
+}
+
+.auth-top p{
+  position:relative;
+  z-index:2;
+
+  max-width:330px;
+
+  font-size:14px;
+  line-height:1.7;
+
+  color:#d8bec2;
+}
+
+/* =========================
+   FORM SIDE
+========================= */
+
+.auth-body{
+  position:relative;
+  padding:42px 42px 35px;
+
+  background:
+    linear-gradient(
+      160deg,
+      rgba(38,7,11,.82),
+      rgba(12,1,3,.95)
+    );
+}
+
+.auth-body::before{
+  content:"";
+  position:absolute;
+  width:220px;
+  height:220px;
+  right:-100px;
+  top:-100px;
+  border-radius:50%;
+  background:rgba(255,0,40,.10);
+  filter:blur(70px);
+  pointer-events:none;
+}
+
+/* =========================
+   TABS
+========================= */
+
+.tabs{
+  position:relative;
+  z-index:2;
+
+  display:grid;
+  grid-template-columns:1fr 1fr;
+
+  background:rgba(255,255,255,.045);
+  padding:4px;
+
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;
+
+  margin-bottom:24px;
+}
+
+.tab{
+  border:0;
+  background:transparent;
+
+  padding:12px 8px;
+
+  border-radius:9px;
+
+  color:#a99095;
+  font-size:13px;
+  font-weight:800;
+
+  cursor:pointer;
+}
+
+.tab.active{
+  color:#fff;
+
+  background:linear-gradient(
+    135deg,
+    #ff2942,
+    #d90020
+  );
+
+  box-shadow:
+    0 5px 18px rgba(255,0,35,.25);
+}
+
+/* =========================
+   MESSAGE
+========================= */
+
+.message{
+  position:relative;
+  z-index:3;
+
+  display:none;
+
+  margin-bottom:17px;
+  padding:12px;
+
+  border-radius:10px;
+
+  font-size:12px;
+  line-height:1.5;
+}
+
+.message.show{
+  display:block;
+}
+
+.message.error{
+  background:rgba(255,30,50,.10);
+  color:#ffb3bc;
+  border:1px solid rgba(255,70,85,.30);
+}
+
+.message.success{
+  background:rgba(50,220,120,.08);
+  color:#a7f3c7;
+  border:1px solid rgba(50,220,120,.22);
+}
+
+/* =========================
+   FORM
+========================= */
+
+.form-group{
+  position:relative;
+  z-index:2;
+  margin-bottom:16px;
+}
+
+label{
+  display:block;
+  margin-bottom:7px;
+
+  font-size:12px;
+  font-weight:800;
+
+  color:#e3cdd0;
+}
+
+.input-wrap{
+  position:relative;
+}
+
+.input-icon{
+  position:absolute;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%);
+
+  opacity:.62;
+
+  font-size:14px;
+
+  z-index:2;
+}
+
+input{
+  width:100%;
+  height:48px;
+
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:11px;
+
+  padding:0 14px 0 42px;
+
+  color:#fff;
+  background:rgba(255,255,255,.055);
+
+  font-size:13px;
+
+  outline:none;
+
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+}
+
+input::placeholder{
+  color:#927d82;
+}
+
+input:focus{
+  border-color:#ff3148;
+  background:rgba(255,255,255,.075);
+
+  box-shadow:
+    0 0 0 3px rgba(255,35,60,.10),
+    0 0 20px rgba(255,0,35,.06);
+}
+
+.password-input{
+  padding-right:45px;
+}
+
+.password-toggle{
+  position:absolute;
+  right:11px;
+  top:50%;
+  transform:translateY(-50%);
+
+  border:0;
+  background:none;
+
+  color:#d3bfc2;
+
+  cursor:pointer;
+  font-size:16px;
+}
+
+/* =========================
+   RED PRIMARY BUTTON
+========================= */
+
+.primary-btn,
+.google-btn{
+  width:100%;
+  height:49px;
+
+  border-radius:11px;
+
+  font-weight:800;
+  font-size:13px;
+
+  cursor:pointer;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+}
+
+.primary-btn{
+  border:0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff3148,
+      #e50020 55%,
+      #b9001a
+    );
+
+  color:#fff;
+
+  box-shadow:
+    0 9px 25px rgba(255,0,35,.25);
+}
+
+.primary-btn:hover:not(:disabled){
+  transform:translateY(-1px);
+
+  box-shadow:
+    0 12px 30px rgba(255,0,35,.34);
+}
+
+.primary-btn:disabled,
+.google-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+/* =========================
+   FORGOT
+========================= */
+
+.forgot-row{
+  display:flex;
+  justify-content:flex-end;
+  margin:-4px 0 18px;
+}
+
+.forgot-btn,
+.resend-btn,
+.back-login-btn{
+  border:0;
+  background:none;
+
+  color:#ff596b;
+
+  font-size:12px;
+  font-weight:800;
+
+  cursor:pointer;
+}
+
+.forgot-btn:hover,
+.resend-btn:hover,
+.back-login-btn:hover{
+  text-decoration:underline;
+}
+
+/* =========================
+   CAPTCHA
+========================= */
+
+.captcha-box{
+  position:relative;
+  z-index:2;
+
+  min-height:78px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  margin:2px 0 17px;
+
+  overflow:hidden;
+
+  border-radius:11px;
+
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.08);
+}
+
+.captcha-label{
+  color:#907d81;
+  font-size:11px;
+}
+
+.h-captcha{
+  max-width:100%;
+}
+
+/* =========================
+   GOOGLE
+========================= */
+
+.oauth-divider{
+  position:relative;
+  z-index:2;
+
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  margin:19px 0;
+
+  color:#806e72;
+
+  font-size:10px;
+  font-weight:800;
+
+  text-transform:uppercase;
+}
+
+.oauth-divider:before,
+.oauth-divider:after{
+  content:"";
+  height:1px;
+  flex:1;
+
+  background:rgba(255,255,255,.09);
+}
+
+.google-btn{
+  border:1px solid rgba(255,255,255,.10);
+
+  background:rgba(255,255,255,.045);
+
+  color:#eee;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.google-btn:hover:not(:disabled){
+  transform:translateY(-1px);
+  background:rgba(255,255,255,.075);
+}
+
+.google-icon{
+  font-weight:900;
+  font-size:17px;
+}
+
+/* =========================
+   ROLE BOX
+========================= */
+
+.role-box{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+
+.role-option{
+  position:relative;
+}
+
+.role-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.role-label{
+  height:69px;
+
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:11px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  text-align:center;
+
+  cursor:pointer;
+
+  background:rgba(255,255,255,.035);
+
+  transition:
+    border-color .18s ease,
+    background .18s ease,
+    box-shadow .18s ease;
+}
+
+.role-label strong{
+  display:block;
+  margin-bottom:3px;
+  color:#fff;
+  font-size:12px;
+}
+
+.role-label small{
+  color:#8f7c81;
+  font-size:10px;
+}
+
+.role-option input:checked+.role-label{
+  border-color:#ff334a;
+
+  background:rgba(255,0,35,.09);
+
+  box-shadow:
+    0 0 0 2px rgba(255,30,50,.08),
+    0 0 20px rgba(255,0,35,.07);
+}
+
+.role-note,
+.google-role-state{
+  font-size:10px;
+  line-height:1.5;
+  text-align:center;
+
+  color:#887579;
+
+  margin:8px 0 14px;
+}
+
+.role-required{
+  color:#ff6878;
+}
+
+/* =========================
+   OTHER BOXES
+========================= */
+
+.security-note,
+.resend-box{
+  margin-top:16px;
+
+  padding:12px;
+
+  border-radius:10px;
+
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.08);
+
+  color:#8e7b80;
+
+  font-size:10px;
+  line-height:1.6;
+
+  text-align:center;
+}
+
+.resend-box p{
+  margin-bottom:9px;
+}
+
+.back-login-wrap{
+  text-align:center;
+  margin-top:15px;
+}
+
+/* =========================
+   PANELS
+========================= */
+
+.signup-panel,
+.recovery-panel,
+.reset-panel,
+.google-role-panel{
+  display:none;
+}
+
+.signup-panel.show,
+.recovery-panel.show,
+.reset-panel.show,
+.google-role-panel.show{
+  display:block;
+}
+
+.login-panel.hidden{
+  display:none;
+}
+
+/* =========================
+   LOADING
+========================= */
+
+.loading-screen{
+  position:fixed;
+  inset:0;
+
+  background:rgba(5,0,1,.88);
+
+  display:none;
+  align-items:center;
+  justify-content:center;
+
+  z-index:9999;
+
+  backdrop-filter:blur(8px);
+
+  color:#fff;
+}
+
+.loading-screen.show{
+  display:flex;
+}
+
+.loading-box{
+  min-width:210px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #31070d,
+      #100104
+    );
+
+  border:1px solid rgba(255,60,80,.24);
+
+  padding:28px 34px;
+
+  border-radius:17px;
+
+  text-align:center;
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.6);
+}
+
+.spinner{
+  width:32px;
+  height:32px;
+
+  margin:0 auto 12px;
+
+  border:3px solid rgba(255,255,255,.15);
+  border-top-color:#ff4055;
+
+  border-radius:50%;
+
+  animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+@keyframes authIn{
+  from{
+    opacity:0;
+    transform:translateY(18px) scale(.985);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer{
+  position:relative;
+  z-index:2;
+
+  text-align:center;
+
+  padding:16px;
+
+  color:#735f64;
+
+  font-size:10px;
+}
+
+.footer strong{
+  color:#b28f94;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:760px){
+
+  .page{
+    padding:25px 14px;
+    align-items:flex-start;
+  }
+
+  .auth-wrapper{
+    max-width:520px;
+    margin-top:8px;
+  }
+
+  .auth-card{
+    grid-template-columns:1fr;
+    min-height:auto;
+    border-radius:20px;
+  }
+
+  .auth-top{
+    min-height:205px;
+    padding:35px 25px;
+    border-right:0;
+    border-bottom:1px solid rgba(255,80,95,.14);
+  }
+
+  .auth-icon{
+    width:58px;
+    height:58px;
+    border-radius:17px;
+    font-size:27px;
+    margin-bottom:12px;
+  }
+
+  .auth-top h2{
+    font-size:27px;
+  }
+
+  .auth-top p{
+    font-size:12px;
+    max-width:300px;
+  }
+
+  .auth-body{
+    padding:26px 20px 25px;
+  }
+
+  .brand h1{
+    font-size:16px;
+  }
+
+  .brand span{
+    display:none;
+  }
+
+  .brand img{
+    width:39px;
+    height:39px;
+  }
+
+  .home-btn{
+    padding:8px 11px;
+    font-size:11px;
+  }
+}
+
+@media(max-width:430px){
+
+  .page{
+    padding:16px 10px;
+  }
+
+  .auth-top{
+    min-height:190px;
+    padding:28px 18px;
+  }
+
+  .auth-top h2{
+    font-size:24px;
+  }
+
+  .auth-body{
+    padding:22px 15px;
+  }
+
+  .role-box{
+    grid-template-columns:1fr;
+  }
+
+  .role-label{
+    height:61px;
+  }
+
+  .captcha-box{
+    overflow-x:auto;
+    justify-content:flex-start;
+  }
+}
+
 @media(prefers-reduced-motion:reduce){
-  .auth-card,.message,.primary-btn,.google-btn,.tab,.role-label,.home-btn{animation:none!important;transition:none!important}
+
+  .auth-card,
+  .primary-btn,
+  .google-btn{
+    animation:none!important;
+    transition:none!important;
+  }
+
+  .spinner{
+    animation:none!important;
+  }
 }
 </style>
-<link rel="stylesheet" href="mobile.css">
-  <script src="performance.js" defer></script>
-  <link rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co" crossorigin>
 </head>
+
 <body>
+
 <header class="navbar">
-<div class="nav-inner">
-<a href="index.html" class="brand"><img src="logo.png" alt="StudentHubHelp Logo"><div><h1>StudentHubHelp</h1><span>Student Discovery Platform</span></div></a>
-<a href="index.html" class="home-btn">← Home</a>
-</div>
+  <div class="nav-inner">
+
+    <a href="index.html" class="brand">
+      <img src="logo.png" alt="StudentHubHelp Logo">
+      <div>
+        <h1>StudentHubHelp</h1>
+        <span>Student Discovery Platform</span>
+      </div>
+    </a>
+
+    <a href="index.html" class="home-btn">← Home</a>
+
+  </div>
 </header>
 
-<main class="page"><div class="auth-wrapper"><div class="auth-card">
-<div class="auth-top"><div class="auth-icon" id="authIcon">🔐</div><h2 id="authTitle">Welcome Back</h2><p id="authSubtitle">Login securely to access your StudentHubHelp account.</p></div>
+
+<main class="page">
+
+<div class="auth-wrapper">
+
+<div class="auth-card">
+
+<!-- =========================
+     WELCOME SIDE
+========================= -->
+
+<div class="auth-top">
+
+  <div class="auth-icon" id="authIcon">🔐</div>
+
+  <h2 id="authTitle">Welcome Back!</h2>
+
+  <p id="authSubtitle">
+    To keep connected with us please login with your personal information.
+  </p>
+
+</div>
+
+
+<!-- =========================
+     FORM SIDE
+========================= -->
+
 <div class="auth-body">
-<div class="tabs" id="tabs"><button class="tab active" id="loginTab" type="button">Sign In</button><button class="tab" id="signupTab" type="button">Create Account</button></div>
+
+<div class="tabs" id="tabs">
+
+  <button
+    class="tab active"
+    id="loginTab"
+    type="button">
+    Sign In
+  </button>
+
+  <button
+    class="tab"
+    id="signupTab"
+    type="button">
+    Create Account
+  </button>
+
+</div>
+
+
 <div id="message" class="message"></div>
 
+
+<!-- =========================
+     LOGIN
+========================= -->
+
 <section id="loginPanel" class="login-panel">
+
 <form id="loginForm">
-<div class="form-group"><label>Email Address</label><div class="input-wrap"><span class="input-icon">✉️</span><input id="loginEmail" type="email" autocomplete="username" placeholder="Enter your email" required></div></div>
-<div class="form-group"><label>Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="loginPassword" class="password-input" type="password" autocomplete="current-password" placeholder="Enter your password" required><button class="password-toggle" type="button" data-target="loginPassword">👁️</button></div></div>
-<div class="forgot-row"><button id="forgotButton" class="forgot-btn" type="button">Forgot password?</button></div>
-<button id="loginButton" class="primary-btn" type="submit">Sign In</button>
+
+<div class="form-group">
+
+<label>Email Address</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">✉️</span>
+
+<input
+  id="loginEmail"
+  type="email"
+  autocomplete="username"
+  placeholder="Enter your email"
+  required>
+
+</div>
+</div>
+
+
+<div class="form-group">
+
+<label>Password</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">🔒</span>
+
+<input
+  id="loginPassword"
+  class="password-input"
+  type="password"
+  autocomplete="current-password"
+  placeholder="Enter your password"
+  required>
+
+<button
+  class="password-toggle"
+  type="button"
+  data-target="loginPassword">
+  👁️
+</button>
+
+</div>
+</div>
+
+
+<div class="forgot-row">
+
+<button
+  id="forgotButton"
+  class="forgot-btn"
+  type="button">
+  Forgot password?
+</button>
+
+</div>
+
+
+<!-- LOGIN CAPTCHA -->
+
+<div class="captcha-box">
+
+<div
+  id="loginCaptcha"
+  class="h-captcha"
+  data-sitekey="6e32065c-2ae6-4b6c-b624-30e043dc596a">
+</div>
+
+</div>
+
+
+<button
+  id="loginButton"
+  class="primary-btn"
+  type="submit">
+  Sign In
+</button>
+
 </form>
-<div class="oauth-divider"><span>or</span></div>
-<button id="googleLoginButton" class="google-btn" type="button"><span class="google-icon">G</span>Continue with Google</button>
+
+
+<div class="oauth-divider">
+  <span>or</span>
+</div>
+
+
+<button
+  id="googleLoginButton"
+  class="google-btn"
+  type="button">
+
+<span class="google-icon">G</span>
+
+Continue with Google
+
+</button>
+
 </section>
+
+
+<!-- =========================
+     SIGNUP
+========================= -->
 
 <section id="signupPanel" class="signup-panel">
+
 <form id="signupForm">
-<div class="form-group"><label>Full Name</label><div class="input-wrap"><span class="input-icon">👤</span><input id="signupName" type="text" autocomplete="name" placeholder="Enter your full name" required></div></div>
-<div class="form-group"><label>Phone</label><div class="input-wrap"><span class="input-icon">📱</span><input id="signupPhone" type="tel" inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}" placeholder="10-digit mobile number" required></div></div>
-<div class="form-group"><label>Account Type <span class="role-required">*</span></label>
-<div class="role-box">
-<div class="role-option"><input id="roleStudent" type="radio" name="signupRole" value="student"><label class="role-label" for="roleStudent"><span><strong>🎓 Student</strong><small>Find student services</small></span></label></div>
-<div class="role-option"><input id="roleOwner" type="radio" name="signupRole" value="owner"><label class="role-label" for="roleOwner"><span><strong>🏢 Owner</strong><small>Manage your listing</small></span></label></div>
-<div class="role-option"><input id="rolePartner" type="radio" name="signupRole" value="partner"><label class="role-label" for="rolePartner"><span><strong>🤝 Partner</strong><small>Approved applicants only</small></span></label></div>
+
+
+<div class="form-group">
+
+<label>Full Name</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">👤</span>
+
+<input
+  id="signupName"
+  type="text"
+  autocomplete="name"
+  placeholder="Enter your full name"
+  required>
+
 </div>
-<div class="role-note">Student, Owner ya approved Partner select karo. Partner sirf approved Partner applicants ke liye available hai.</div></div>
-<div class="form-group"><label>Email Address</label><div class="input-wrap"><span class="input-icon">✉️</span><input id="signupEmail" type="email" autocomplete="email" placeholder="Enter your email" required></div></div>
-<div class="form-group"><label>Create Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="signupPassword" class="password-input" type="password" minlength="8" autocomplete="new-password" placeholder="Create a password" required><button class="password-toggle" type="button" data-target="signupPassword">👁️</button></div></div>
-<div class="form-group"><label>Confirm Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="signupConfirmPassword" class="password-input" type="password" minlength="6" placeholder="Re-enter your password" required><button class="password-toggle" type="button" data-target="signupConfirmPassword">👁️</button></div></div>
-<button id="signupButton" class="primary-btn" type="submit">Create Account</button>
+</div>
+
+
+<div class="form-group">
+
+<label>Phone</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">📱</span>
+
+<input
+  id="signupPhone"
+  type="tel"
+  inputmode="numeric"
+  maxlength="10"
+  pattern="[6-9][0-9]{9}"
+  placeholder="10-digit mobile number"
+  required>
+
+</div>
+</div>
+
+
+<div class="form-group">
+
+<label>
+Account Type
+<span class="role-required">*</span>
+</label>
+
+<div class="role-box">
+
+
+<div class="role-option">
+
+<input
+  id="roleStudent"
+  type="radio"
+  name="signupRole"
+  value="student">
+
+<label
+  class="role-label"
+  for="roleStudent">
+
+<span>
+
+<strong>🎓 Student</strong>
+
+<small>Find student services</small>
+
+</span>
+
+</label>
+
+</div>
+
+
+<div class="role-option">
+
+<input
+  id="roleOwner"
+  type="radio"
+  name="signupRole"
+  value="owner">
+
+<label
+  class="role-label"
+  for="roleOwner">
+
+<span>
+
+<strong>🏢 Owner</strong>
+
+<small>Manage your listing</small>
+
+</span>
+
+</label>
+
+</div>
+
+
+<div class="role-option">
+
+<input
+  id="rolePartner"
+  type="radio"
+  name="signupRole"
+  value="partner">
+
+<label
+  class="role-label"
+  for="rolePartner">
+
+<span>
+
+<strong>🤝 Partner</strong>
+
+<small>Approved applicants only</small>
+
+</span>
+
+</label>
+
+</div>
+
+
+</div>
+
+
+<div class="role-note">
+
+Student, Owner ya approved Partner select karo.
+Partner sirf approved Partner applicants ke liye available hai.
+
+</div>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Email Address</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">✉️</span>
+
+<input
+  id="signupEmail"
+  type="email"
+  autocomplete="email"
+  placeholder="Enter your email"
+  required>
+
+</div>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Create Password</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">🔒</span>
+
+<input
+  id="signupPassword"
+  class="password-input"
+  type="password"
+  minlength="8"
+  autocomplete="new-password"
+  placeholder="Create a password"
+  required>
+
+<button
+  class="password-toggle"
+  type="button"
+  data-target="signupPassword">
+  👁️
+</button>
+
+</div>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Confirm Password</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">🔒</span>
+
+<input
+  id="signupConfirmPassword"
+  class="password-input"
+  type="password"
+  minlength="8"
+  placeholder="Re-enter your password"
+  required>
+
+<button
+  class="password-toggle"
+  type="button"
+  data-target="signupConfirmPassword">
+  👁️
+</button>
+
+</div>
+
+</div>
+
+
+<!-- SIGNUP CAPTCHA -->
+
+<div class="captcha-box">
+
+<div
+  id="signupCaptcha"
+  class="h-captcha"
+  data-sitekey="6e32065c-2ae6-4b6c-b624-30e043dc596a">
+</div>
+
+</div>
+
+
+<button
+  id="signupButton"
+  class="primary-btn"
+  type="submit">
+
+Create Account
+
+</button>
+
 </form>
-<div class="oauth-divider"><span>or</span></div>
-<div id="googleRoleState" class="google-role-state">Account type select karna zaroori hai.</div>
-<button id="googleSignupButton" class="google-btn" type="button" disabled><span class="google-icon">G</span><span id="googleSignupText">Select account type first</span></button>
-<div id="resendBox" class="resend-box" style="display:none"><p>Confirmation email nahi mila? Spam/Junk folder check karke dobara email bhej sakte ho.</p><button id="resendButton" class="resend-btn" type="button">Resend Confirmation Email</button></div>
-<div class="security-note">Student/Owner accounts aur approved Partner accounts yahan create ho sakte hain.</div>
-<div class="back-login-wrap"><button id="signupBackButton" class="back-login-btn" type="button">← Back to Sign In</button></div>
+
+
+<div class="oauth-divider">
+  <span>or</span>
+</div>
+
+
+<div
+  id="googleRoleState"
+  class="google-role-state">
+
+Account type select karna zaroori hai.
+
+</div>
+
+
+<button
+  id="googleSignupButton"
+  class="google-btn"
+  type="button"
+  disabled>
+
+<span class="google-icon">G</span>
+
+<span id="googleSignupText">
+Select account type first
+</span>
+
+</button>
+
+
+<div
+  id="resendBox"
+  class="resend-box"
+  style="display:none">
+
+<p>
+Confirmation email nahi mila?
+Spam/Junk folder check karke dobara email bhej sakte ho.
+</p>
+
+<button
+  id="resendButton"
+  class="resend-btn"
+  type="button">
+
+Resend Confirmation Email
+
+</button>
+
+</div>
+
+
+<div class="security-note">
+
+Student/Owner accounts aur approved Partner accounts yahan create ho sakte hain.
+
+</div>
+
+
+<div class="back-login-wrap">
+
+<button
+  id="signupBackButton"
+  class="back-login-btn"
+  type="button">
+
+← Back to Sign In
+
+</button>
+
+</div>
+
 </section>
 
-<section id="googleRolePanel" class="google-role-panel">
-<div class="security-note" style="margin:0 0 18px">Google account mil gaya. Account type select karke Continue karo.</div>
-<div class="form-group"><label>Account Type</label><div class="role-box">
-<div class="role-option"><input id="callbackRoleStudent" type="radio" name="callbackRole" value="student"><label class="role-label" for="callbackRoleStudent"><span><strong>🎓 Student</strong><small>Find student services</small></span></label></div>
-<div class="role-option"><input id="callbackRoleOwner" type="radio" name="callbackRole" value="owner"><label class="role-label" for="callbackRoleOwner"><span><strong>🏢 Owner</strong><small>Manage your listing</small></span></label></div>
-<div class="role-option"><input id="callbackRolePartner" type="radio" name="callbackRole" value="partner"><label class="role-label" for="callbackRolePartner"><span><strong>🤝 Partner</strong><small>Approved applicants only</small></span></label></div>
-</div></div>
-<button id="saveGoogleRoleButton" class="primary-btn" type="button">Continue</button>
-<div class="back-login-wrap"><button id="googleRoleBackButton" class="back-login-btn" type="button">← Cancel & Back to Sign In</button></div>
+
+<!-- =========================
+     GOOGLE ROLE
+========================= -->
+
+<section
+  id="googleRolePanel"
+  class="google-role-panel">
+
+<div
+  class="security-note"
+  style="margin:0 0 18px">
+
+Google account mil gaya.
+Account type select karke Continue karo.
+
+</div>
+
+
+<div class="form-group">
+
+<label>Account Type</label>
+
+<div class="role-box">
+
+
+<div class="role-option">
+
+<input
+  id="callbackRoleStudent"
+  type="radio"
+  name="callbackRole"
+  value="student">
+
+<label
+  class="role-label"
+  for="callbackRoleStudent">
+
+<span>
+
+<strong>🎓 Student</strong>
+
+<small>Find student services</small>
+
+</span>
+
+</label>
+
+</div>
+
+
+<div class="role-option">
+
+<input
+  id="callbackRoleOwner"
+  type="radio"
+  name="callbackRole"
+  value="owner">
+
+<label
+  class="role-label"
+  for="callbackRoleOwner">
+
+<span>
+
+<strong>🏢 Owner</strong>
+
+<small>Manage your listing</small>
+
+</span>
+
+</label>
+
+</div>
+
+
+<div class="role-option">
+
+<input
+  id="callbackRolePartner"
+  type="radio"
+  name="callbackRole"
+  value="partner">
+
+<label
+  class="role-label"
+  for="callbackRolePartner">
+
+<span>
+
+<strong>🤝 Partner</strong>
+
+<small>Approved applicants only</small>
+
+</span>
+
+</label>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+<button
+  id="saveGoogleRoleButton"
+  class="primary-btn"
+  type="button">
+
+Continue
+
+</button>
+
+
+<div class="back-login-wrap">
+
+<button
+  id="googleRoleBackButton"
+  class="back-login-btn"
+  type="button">
+
+← Cancel & Back to Sign In
+
+</button>
+
+</div>
+
 </section>
 
-<section id="recoveryPanel" class="recovery-panel">
-<form id="recoveryForm"><div class="form-group"><label>Account Email</label><div class="input-wrap"><span class="input-icon">✉️</span><input id="recoveryEmail" type="email" placeholder="Enter your account email" required></div></div><button id="recoveryButton" class="primary-btn" type="submit">Send Reset Link</button></form>
-<div class="back-login-wrap"><button id="backToLoginButton" class="back-login-btn" type="button">← Back to Sign In</button></div>
+
+<!-- =========================
+     RECOVERY
+========================= -->
+
+<section
+  id="recoveryPanel"
+  class="recovery-panel">
+
+<form id="recoveryForm">
+
+
+<div class="form-group">
+
+<label>Account Email</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">✉️</span>
+
+<input
+  id="recoveryEmail"
+  type="email"
+  placeholder="Enter your account email"
+  required>
+
+</div>
+
+</div>
+
+
+<!-- RECOVERY CAPTCHA -->
+
+<div class="captcha-box">
+
+<div
+  id="recoveryCaptcha"
+  class="h-captcha"
+  data-sitekey="6e32065c-2ae6-4b6c-b624-30e043dc596a">
+</div>
+
+</div>
+
+
+<button
+  id="recoveryButton"
+  class="primary-btn"
+  type="submit">
+
+Send Reset Link
+
+</button>
+
+</form>
+
+
+<div class="back-login-wrap">
+
+<button
+  id="backToLoginButton"
+  class="back-login-btn"
+  type="button">
+
+← Back to Sign In
+
+</button>
+
+</div>
+
 </section>
 
-<section id="resetPanel" class="reset-panel">
-<form id="resetForm"><div class="form-group"><label>New Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="resetPassword" class="password-input" type="password" minlength="8" autocomplete="new-password" required><button class="password-toggle" type="button" data-target="resetPassword">👁️</button></div></div>
-<div class="form-group"><label>Confirm New Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input id="resetConfirmPassword" class="password-input" type="password" minlength="6" required><button class="password-toggle" type="button" data-target="resetConfirmPassword">👁️</button></div></div>
-<button id="resetButton" class="primary-btn" type="submit">Update Password & Continue</button></form>
-<div class="back-login-wrap"><button id="resetBackButton" class="back-login-btn" type="button">← Cancel & Back to Sign In</button></div>
+
+<!-- =========================
+     RESET PASSWORD
+========================= -->
+
+<section
+  id="resetPanel"
+  class="reset-panel">
+
+<form id="resetForm">
+
+
+<div class="form-group">
+
+<label>New Password</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">🔒</span>
+
+<input
+  id="resetPassword"
+  class="password-input"
+  type="password"
+  minlength="8"
+  autocomplete="new-password"
+  required>
+
+<button
+  class="password-toggle"
+  type="button"
+  data-target="resetPassword">
+
+👁️
+
+</button>
+
+</div>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Confirm New Password</label>
+
+<div class="input-wrap">
+
+<span class="input-icon">🔒</span>
+
+<input
+  id="resetConfirmPassword"
+  class="password-input"
+  type="password"
+  minlength="8"
+  required>
+
+<button
+  class="password-toggle"
+  type="button"
+  data-target="resetConfirmPassword">
+
+👁️
+
+</button>
+
+</div>
+
+</div>
+
+
+<button
+  id="resetButton"
+  class="primary-btn"
+  type="submit">
+
+Update Password & Continue
+
+</button>
+
+</form>
+
+
+<div class="back-login-wrap">
+
+<button
+  id="resetBackButton"
+  class="back-login-btn"
+  type="button">
+
+← Cancel & Back to Sign In
+
+</button>
+
+</div>
+
 </section>
 
-</div></div><footer class="footer"><strong>StudentHubHelp</strong><div>Student Discovery Platform</div></footer></div></main>
-<div id="loadingScreen" class="loading-screen" aria-hidden="true"><div class="loading-box"><div class="spinner"></div><div id="loadingText">Please wait...</div></div></div>
+
+</div>
+</div>
+
+
+<footer class="footer">
+
+<strong>StudentHubHelp</strong>
+
+<div>Student Discovery Platform</div>
+
+</footer>
+
+
+</div>
+</main>
+
+
+<div
+  id="loadingScreen"
+  class="loading-screen"
+  aria-hidden="true">
+
+<div class="loading-box">
+
+<div class="spinner"></div>
+
+<div id="loadingText">
+Please wait...
+</div>
+
+</div>
+
+</div>
+
 
 <script>
 "use strict";
 
-const SUPABASE_URL="https://idurlccrarznnnqixxsd.supabase.co";
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
 
-if(!window.supabase||typeof window.supabase.createClient!=="function"){
-  document.body.innerHTML="<h2 style='padding:30px;font-family:Arial'>Supabase library load nahi hui. Hard refresh karo.</h2>";
+/* =========================================
+   SUPABASE
+========================================= */
+
+const SUPABASE_URL =
+  "https://idurlccrarznnnqixxsd.supabase.co";
+
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ucWl4eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA";
+
+
+if(
+  !window.supabase ||
+  typeof window.supabase.createClient !== "function"
+){
+
+  document.body.innerHTML =
+    "<h2 style='padding:30px;font-family:Arial;color:#fff;background:#090001'>Supabase library load nahi hui. Hard refresh karo.</h2>";
+
   throw new Error("Supabase JS unavailable");
 }
 
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
-  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
-});
 
-const $=id=>document.getElementById(id);
-const D={student:"student-dashboard.html",owner:"owner-dashboard.html",partner:"partner-dashboard.html"};
-const PUBLIC_ROLES=["student","owner","partner"];
-const GOOGLE_PENDING_TTL=10*60*1000;
-const RESEND_COOLDOWN=60*1000;
+const db =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      auth:{
+        persistSession:true,
+        autoRefreshToken:true,
+        detectSessionInUrl:true
+      }
+    }
+  );
 
-let routing=false;
-let listenerReady=false;
-let recoveryMode=false;
-let lastSignupEmail="";
-let pendingGoogleUser=null;
-let panelChanging=false;
 
-function role(v){
-  v=String(v||"").trim().toLowerCase();
-  return PUBLIC_ROLES.includes(v)?v:null;
+/* =========================================
+   CONSTANTS
+========================================= */
+
+const $ = id =>
+  document.getElementById(id);
+
+const D = {
+  student:"student-dashboard.html",
+  owner:"owner-dashboard.html",
+  partner:"partner-dashboard.html"
+};
+
+const PUBLIC_ROLES = [
+  "student",
+  "owner",
+  "partner"
+];
+
+const GOOGLE_PENDING_TTL =
+  10 * 60 * 1000;
+
+const RESEND_COOLDOWN =
+  60 * 1000;
+
+
+/* =========================================
+   STATE
+========================================= */
+
+let routing = false;
+let listenerReady = false;
+let recoveryMode = false;
+let lastSignupEmail = "";
+let pendingGoogleUser = null;
+let panelChanging = false;
+
+
+/* =========================================
+   HCAPTCHA STATE
+========================================= */
+
+const CAPTCHA_SITEKEY =
+  "6e32065c-2ae6-4b6c-b624-30e043dc596a";
+
+const captchaWidgets = {
+  login:null,
+  signup:null,
+  recovery:null
+};
+
+let captchaReady = false;
+
+
+/*
+  hCaptcha explicit rendering.
+  The Sitekey is public.
+  NEVER put the Secret key here.
+*/
+
+function initCaptcha(){
+
+  if(
+    !window.hcaptcha ||
+    typeof window.hcaptcha.render !== "function"
+  ){
+    return false;
+  }
+
+  if(captchaReady){
+    return true;
+  }
+
+  try{
+
+    const loginEl =
+      $("loginCaptcha");
+
+    const signupEl =
+      $("signupCaptcha");
+
+    const recoveryEl =
+      $("recoveryCaptcha");
+
+
+    if(loginEl){
+      captchaWidgets.login =
+        window.hcaptcha.render(
+          loginEl,
+          {
+            sitekey:CAPTCHA_SITEKEY,
+            theme:"dark",
+            callback:token =>
+              handleCaptchaToken("login",token),
+            "expired-callback":() =>
+              handleCaptchaToken("login",""),
+            "error-callback":() =>
+              handleCaptchaToken("login","")
+          }
+        );
+    }
+
+
+    if(signupEl){
+      captchaWidgets.signup =
+        window.hcaptcha.render(
+          signupEl,
+          {
+            sitekey:CAPTCHA_SITEKEY,
+            theme:"dark",
+            callback:token =>
+              handleCaptchaToken("signup",token),
+            "expired-callback":() =>
+              handleCaptchaToken("signup",""),
+            "error-callback":() =>
+              handleCaptchaToken("signup","")
+          }
+        );
+    }
+
+
+    if(recoveryEl){
+      captchaWidgets.recovery =
+        window.hcaptcha.render(
+          recoveryEl,
+          {
+            sitekey:CAPTCHA_SITEKEY,
+            theme:"dark",
+            callback:token =>
+              handleCaptchaToken("recovery",token),
+            "expired-callback":() =>
+              handleCaptchaToken("recovery",""),
+            "error-callback":() =>
+              handleCaptchaToken("recovery","")
+          }
+        );
+    }
+
+
+    captchaReady = true;
+
+    return true;
+
+  }catch(e){
+
+    console.error("CAPTCHA initialization failed");
+
+    return false;
+  }
 }
 
-function rawRole(v){
-  return String(v??"").trim().toLowerCase();
+
+function handleCaptchaToken(type,token){
+
+  if(!token){
+    return;
+  }
+
+  /*
+    Token is kept only by hCaptcha internally.
+    Supabase receives it immediately when the
+    corresponding authentication request runs.
+  */
 }
 
-function msg(t,type="error"){
-  $("message").textContent=t;
-  $("message").className="message show "+type;
+
+function getCaptchaToken(type){
+
+  if(
+    !captchaReady ||
+    !window.hcaptcha
+  ){
+    return "";
+  }
+
+  const id =
+    captchaWidgets[type];
+
+  if(
+    id === null ||
+    id === undefined
+  ){
+    return "";
+  }
+
+  try{
+    return String(
+      window.hcaptcha.getResponse(id) || ""
+    );
+  }catch(_){
+    return "";
+  }
 }
 
-function clearMsg(){
-  $("message").textContent="";
-  $("message").className="message";
+
+function resetCaptcha(type){
+
+  if(
+    !captchaReady ||
+    !window.hcaptcha
+  ){
+    return;
+  }
+
+  const id =
+    captchaWidgets[type];
+
+  if(
+    id === null ||
+    id === undefined
+  ){
+    return;
+  }
+
+  try{
+    window.hcaptcha.reset(id);
+  }catch(_){}
 }
 
-function loading(on,t="Please wait..."){
-  $("loadingText").textContent=t;
-  $("loadingScreen").classList.toggle("show",on);
-  $("loadingScreen").setAttribute("aria-hidden",String(!on));
-}
 
-function button(b,on,text){
-  b.disabled=on;
-  b.textContent=on?"Please wait...":text;
-}
+function captchaRequired(type){
 
-function validEmail(email){
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-}
+  const token =
+    getCaptchaToken(type);
 
-function validPhone(phone){
-  return /^[6-9]\d{9}$/.test(phone);
-}
+  if(!token){
 
-function strongPassword(p){
-  return p.length>=8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p);
-}
+    msg(
+      "Security verification complete karo, phir continue karo."
+    );
 
-function passwordHint(){
-  return "Password kam se kam 8 characters ka ho aur usme uppercase, lowercase aur number ho.";
-}
-
-function friendlyError(e){
-  const m=String(e?.message||e||"").toLowerCase();
-
-  if(m.includes("invalid login credentials"))return"Email ya password incorrect hai.";
-  if(m.includes("email not confirmed"))return"Email verify nahi hua hai. Pehle confirmation email se verify karo.";
-  if(m.includes("user already registered")||m.includes("already been registered"))return"Is email se account already registered hai. Sign In try karo.";
-  if(m.includes("password")&&(m.includes("weak")||m.includes("least")||m.includes("characters")))return passwordHint();
-  if(m.includes("rate limit")||m.includes("too many requests"))return"Bahut zyada attempts ho gaye. Thodi der baad try karo.";
-  if(m.includes("unsupported provider"))return"Google Sign In Supabase me enabled nahi hai.";
-  if(m.includes("redirect")&&m.includes("not allowed"))return"Auth redirect URL Supabase me allowlist nahi hai.";
-  if(m.includes("network")||m.includes("fetch"))return"Network problem hai. Internet check karke dobara try karo.";
-  if(m.includes("same password")||m.includes("different password"))return"New password purane password se different rakho.";
-  if(m.includes("token")&&m.includes("expired"))return"Reset link expire ho gaya. Naya reset link request karo.";
-  if(m.includes("invalid")&&m.includes("email"))return"Valid email address enter karo.";
-  if(m.includes("captcha"))return"Security verification complete nahi hui. Dobara try karo.";
-  if(m.includes("rate limit")||m.includes("too many"))return"Bahut zyada attempts ho gaye. Thodi der baad try karo.";
-  if(m.includes("invalid")||m.includes("incorrect")||m.includes("credentials"))return"Email ya password incorrect hai.";
-  return"Authentication failed. Please try again.";
-}
-
-function pendingRole(){
-  const r=role(localStorage.getItem("sh_google_signup_role"));
-  const started=Number(localStorage.getItem("sh_google_signup_started_at")||0);
-
-  if(!r||!started||Date.now()-started>GOOGLE_PENDING_TTL){
-    clearPending();
     return null;
   }
+
+  return token;
+}
+
+
+/* =========================================
+   HELPERS
+========================================= */
+
+function role(v){
+
+  v =
+    String(v || "")
+      .trim()
+      .toLowerCase();
+
+  return PUBLIC_ROLES.includes(v)
+    ? v
+    : null;
+}
+
+
+function rawRole(v){
+
+  return String(v ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+
+function msg(
+  t,
+  type="error"
+){
+
+  $("message").textContent =
+    String(t || "");
+
+  $("message").className =
+    "message show " + type;
+}
+
+
+function clearMsg(){
+
+  $("message").textContent = "";
+
+  $("message").className =
+    "message";
+}
+
+
+function loading(
+  on,
+  t="Please wait..."
+){
+
+  $("loadingText").textContent =
+    t;
+
+  $("loadingScreen")
+    .classList
+    .toggle("show",on);
+
+  $("loadingScreen")
+    .setAttribute(
+      "aria-hidden",
+      String(!on)
+    );
+}
+
+
+function button(
+  b,
+  on,
+  text
+){
+
+  b.disabled = on;
+
+  b.textContent =
+    on
+      ? "Please wait..."
+      : text;
+}
+
+
+function validEmail(email){
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+    .test(email);
+}
+
+
+function validPhone(phone){
+
+  return /^[6-9]\d{9}$/
+    .test(phone);
+}
+
+
+function strongPassword(p){
+
+  return(
+    p.length >= 8 &&
+    /[a-z]/.test(p) &&
+    /[A-Z]/.test(p) &&
+    /\d/.test(p)
+  );
+}
+
+
+function passwordHint(){
+
+  return(
+    "Password kam se kam 8 characters ka ho " +
+    "aur usme uppercase, lowercase aur number ho."
+  );
+}
+
+
+/* =========================================
+   SAFE ERROR HANDLING
+========================================= */
+
+function friendlyError(e){
+
+  const m =
+    String(
+      e?.message ||
+      e ||
+      ""
+    ).toLowerCase();
+
+
+  if(
+    m.includes("invalid login credentials")
+  ){
+    return "Email ya password incorrect hai.";
+  }
+
+
+  if(
+    m.includes("email not confirmed")
+  ){
+    return(
+      "Email verify nahi hua hai. " +
+      "Pehle confirmation email se verify karo."
+    );
+  }
+
+
+  if(
+    m.includes("user already registered") ||
+    m.includes("already been registered")
+  ){
+    return(
+      "Is email se account already registered hai. " +
+      "Sign In try karo."
+    );
+  }
+
+
+  if(
+    m.includes("password") &&
+    (
+      m.includes("weak") ||
+      m.includes("least") ||
+      m.includes("characters")
+    )
+  ){
+    return passwordHint();
+  }
+
+
+  if(
+    m.includes("rate limit") ||
+    m.includes("too many requests") ||
+    m.includes("too many")
+  ){
+    return(
+      "Bahut zyada attempts ho gaye. " +
+      "Thodi der baad try karo."
+    );
+  }
+
+
+  if(
+    m.includes("unsupported provider")
+  ){
+    return(
+      "Google Sign In Supabase me enabled nahi hai."
+    );
+  }
+
+
+  if(
+    m.includes("redirect") &&
+    m.includes("not allowed")
+  ){
+    return(
+      "Auth redirect URL Supabase me allowlist nahi hai."
+    );
+  }
+
+
+  if(
+    m.includes("network") ||
+    m.includes("fetch")
+  ){
+    return(
+      "Network problem hai. Internet check karke dobara try karo."
+    );
+  }
+
+
+  if(
+    m.includes("same password") ||
+    m.includes("different password")
+  ){
+    return(
+      "New password purane password se different rakho."
+    );
+  }
+
+
+  if(
+    m.includes("token") &&
+    m.includes("expired")
+  ){
+    return(
+      "Reset link expire ho gaya. Naya reset link request karo."
+    );
+  }
+
+
+  if(
+    m.includes("captcha") ||
+    m.includes("challenge")
+  ){
+    return(
+      "Security verification complete nahi hui. Dobara try karo."
+    );
+  }
+
+
+  if(
+    m.includes("invalid") &&
+    m.includes("email")
+  ){
+    return(
+      "Valid email address enter karo."
+    );
+  }
+
+
+  if(
+    m.includes("invalid") ||
+    m.includes("incorrect") ||
+    m.includes("credentials")
+  ){
+    return(
+      "Email ya password incorrect hai."
+    );
+  }
+
+
+  return(
+    "Authentication failed. Please try again."
+  );
+}
+
+
+/* =========================================
+   GOOGLE PENDING ROLE
+========================================= */
+
+function pendingRole(){
+
+  const r =
+    role(
+      localStorage.getItem(
+        "sh_google_signup_role"
+      )
+    );
+
+  const started =
+    Number(
+      localStorage.getItem(
+        "sh_google_signup_started_at"
+      ) || 0
+    );
+
+
+  if(
+    !r ||
+    !started ||
+    Date.now() - started >
+      GOOGLE_PENDING_TTL
+  ){
+
+    clearPending();
+
+    return null;
+  }
+
+
   return r;
 }
 
+
 function clearPending(){
-  localStorage.removeItem("sh_google_signup_role");
-  localStorage.removeItem("sh_google_signup_started_at");
+
+  localStorage.removeItem(
+    "sh_google_signup_role"
+  );
+
+  localStorage.removeItem(
+    "sh_google_signup_started_at"
+  );
 }
+
 
 function signupRole(){
-  return role(document.querySelector('input[name="signupRole"]:checked')?.value);
+
+  return role(
+    document.querySelector(
+      'input[name="signupRole"]:checked'
+    )?.value
+  );
 }
+
 
 function callbackRole(){
-  return role(document.querySelector('input[name="callbackRole"]:checked')?.value);
+
+  return role(
+    document.querySelector(
+      'input[name="callbackRole"]:checked'
+    )?.value
+  );
 }
 
+
+/* =========================================
+   PARTNER
+========================================= */
+
 async function isApprovedPartnerEmail(email){
-  const e=String(email||"").trim().toLowerCase();
-  if(!e)return false;
-  const {data,error}=await db.from("partner_applications").select("id,status").eq("email",e).eq("status","approved").limit(1);
-  if(error)throw new Error("Partner approval check nahi ho saka.");
+
+  const e =
+    String(email || "")
+      .trim()
+      .toLowerCase();
+
+  if(!e){
+    return false;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("partner_applications")
+      .select("id,status")
+      .eq("email",e)
+      .eq("status","approved")
+      .limit(1);
+
+
+  if(error){
+    throw new Error(
+      "Partner approval check nahi ho saka."
+    );
+  }
+
+
   return !!data?.length;
 }
 
-async function ensurePartnerProfile(user, profile){
-  if(!user?.id || !profile || role(profile.role)!=="partner") return profile;
-  const {data:existing,error:readError}=await db.from("partner_profiles").select("id").eq("user_id",user.id).maybeSingle();
-  if(readError)throw new Error("Partner profile load nahi ho saka.");
-  if(existing)return profile;
-  const email=String(profile.email||user.email||"").trim().toLowerCase();
-  const {data:apps,error:appError}=await db.from("partner_applications").select("id,full_name,phone,email,state,district,city,area,status").eq("email",email).eq("status","approved").order("created_at",{ascending:false}).limit(1);
-  if(appError)throw new Error("Approved Partner application load nahi ho saki.");
-  const app=apps?.[0];
-  if(!app)throw new Error("Approved Partner application nahi mili.");
-  const {error}=await db.from("partner_profiles").insert({user_id:user.id,application_id:app.id,full_name:app.full_name||profile.full_name||"Partner",email:app.email||email,phone:app.phone||profile.phone||"",state:app.state,district:app.district,city:app.city,areas:app.area?[app.area]:[],status:"active"});
-  if(error && !String(error.message||"").toLowerCase().includes("duplicate"))throw error;
+
+async function ensurePartnerProfile(
+  user,
+  profile
+){
+
+  if(
+    !user?.id ||
+    !profile ||
+    role(profile.role) !== "partner"
+  ){
+    return profile;
+  }
+
+
+  const {
+    data:existing,
+    error:readError
+  } =
+    await db
+      .from("partner_profiles")
+      .select("id")
+      .eq("user_id",user.id)
+      .maybeSingle();
+
+
+  if(readError){
+    throw new Error(
+      "Partner profile load nahi ho saka."
+    );
+  }
+
+
+  if(existing){
+    return profile;
+  }
+
+
+  const email =
+    String(
+      profile.email ||
+      user.email ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const {
+    data:apps,
+    error:appError
+  } =
+    await db
+      .from("partner_applications")
+      .select(
+        "id,full_name,phone,email,state,district,city,area,status"
+      )
+      .eq("email",email)
+      .eq("status","approved")
+      .order("created_at",{ascending:false})
+      .limit(1);
+
+
+  if(appError){
+    throw new Error(
+      "Approved Partner application load nahi ho saki."
+    );
+  }
+
+
+  const app =
+    apps?.[0];
+
+
+  if(!app){
+    throw new Error(
+      "Approved Partner application nahi mili."
+    );
+  }
+
+
+  const {
+    error
+  } =
+    await db
+      .from("partner_profiles")
+      .insert({
+        user_id:user.id,
+        application_id:app.id,
+        full_name:
+          app.full_name ||
+          profile.full_name ||
+          "Partner",
+        email:
+          app.email ||
+          email,
+        phone:
+          app.phone ||
+          profile.phone ||
+          "",
+        state:app.state,
+        district:app.district,
+        city:app.city,
+        areas:
+          app.area
+            ? [app.area]
+            : [],
+        status:"active"
+      });
+
+
+  if(
+    error &&
+    !String(
+      error.message || ""
+    )
+      .toLowerCase()
+      .includes("duplicate")
+  ){
+    throw error;
+  }
+
+
   return profile;
 }
 
+
+/* =========================================
+   AUTH HELPERS
+========================================= */
+
 function isGoogleUser(user){
-  return !!(user?.identities||[]).some(x=>x.provider==="google");
+
+  return !!(
+    user?.identities ||
+    []
+  ).some(
+    x => x.provider === "google"
+  );
 }
+
 
 function isEmailVerified(user){
-  return !!user?.email_confirmed_at || isGoogleUser(user);
+
+  return !!(
+    user?.email_confirmed_at ||
+    isGoogleUser(user)
+  );
 }
+
 
 function clearStoredUser(){
-  localStorage.removeItem("sh_current_user");
+
+  localStorage.removeItem(
+    "sh_current_user"
+  );
 }
 
-async function denyAccess(text="Is account ko public login system se access nahi kiya ja sakta."){
+
+async function denyAccess(
+  text=
+    "Is account ko public login system se access nahi kiya ja sakta."
+){
+
   clearStoredUser();
-  pendingGoogleUser=null;
+
+  pendingGoogleUser = null;
+
   clearPending();
+
   loading(false);
-  try{await db.auth.signOut({scope:"local"});}catch(_){}
-  showLogin({pushHistory:false});
+
+
+  try{
+
+    await db.auth.signOut({
+      scope:"local"
+    });
+
+  }catch(_){}
+
+
+  showLogin({
+    pushHistory:false
+  });
+
   msg(text);
 }
 
-function setPanel(which,pushHistory=true){
-  $("loginPanel").classList.toggle("hidden",which!=="login");
-  $("signupPanel").classList.toggle("show",which==="signup");
-  $("googleRolePanel").classList.toggle("show",which==="googleRole");
-  $("recoveryPanel").classList.toggle("show",which==="recovery");
-  $("resetPanel").classList.toggle("show",which==="reset");
-  $("tabs").style.display=["recovery","reset","googleRole"].includes(which)?"none":"grid";
 
-  if(pushHistory&&!panelChanging){
-    history.pushState({authPanel:which},"",location.href);
+/* =========================================
+   PANELS
+========================================= */
+
+function setPanel(
+  which,
+  pushHistory=true
+){
+
+  $("loginPanel")
+    .classList
+    .toggle(
+      "hidden",
+      which !== "login"
+    );
+
+
+  $("signupPanel")
+    .classList
+    .toggle(
+      "show",
+      which === "signup"
+    );
+
+
+  $("googleRolePanel")
+    .classList
+    .toggle(
+      "show",
+      which === "googleRole"
+    );
+
+
+  $("recoveryPanel")
+    .classList
+    .toggle(
+      "show",
+      which === "recovery"
+    );
+
+
+  $("resetPanel")
+    .classList
+    .toggle(
+      "show",
+      which === "reset"
+    );
+
+
+  $("tabs").style.display =
+    [
+      "recovery",
+      "reset",
+      "googleRole"
+    ].includes(which)
+      ? "none"
+      : "grid";
+
+
+  if(
+    pushHistory &&
+    !panelChanging
+  ){
+
+    history.pushState(
+      {authPanel:which},
+      "",
+      location.href
+    );
+  }
+
+
+  /*
+    hCaptcha widgets stay rendered.
+    Reset the relevant challenge when
+    entering a fresh form.
+  */
+
+  if(which === "login"){
+    resetCaptcha("login");
+  }
+
+  if(which === "signup"){
+    resetCaptcha("signup");
+  }
+
+  if(which === "recovery"){
+    resetCaptcha("recovery");
   }
 }
 
-function showLogin(opts={}){
-  const push=opts.pushHistory!==false;
-  recoveryMode=false;
+
+function showLogin(
+  opts={}
+){
+
+  const push =
+    opts.pushHistory !== false;
+
+  recoveryMode = false;
+
   clearMsg();
-  setPanel("login",push);
-  $("loginTab").classList.add("active");
-  $("signupTab").classList.remove("active");
-  $("authIcon").textContent="🔐";
-  $("authTitle").textContent="Welcome Back";
-  $("authSubtitle").textContent="Login securely to access your StudentHubHelp account.";
+
+  setPanel(
+    "login",
+    push
+  );
+
+
+  $("loginTab")
+    .classList
+    .add("active");
+
+  $("signupTab")
+    .classList
+    .remove("active");
+
+
+  $("authIcon").textContent =
+    "🔐";
+
+  $("authTitle").textContent =
+    "Welcome Back!";
+
+  $("authSubtitle").textContent =
+    "To keep connected with us please login with your personal information.";
 }
 
-function showSignup(opts={}){
-  const push=opts.pushHistory!==false;
-  recoveryMode=false;
+
+function showSignup(
+  opts={}
+){
+
+  const push =
+    opts.pushHistory !== false;
+
+  recoveryMode = false;
+
   clearMsg();
-  setPanel("signup",push);
-  $("loginTab").classList.remove("active");
-  $("signupTab").classList.add("active");
-  $("authIcon").textContent="✨";
-  $("authTitle").textContent="Create Account";
-  $("authSubtitle").textContent="Create your StudentHubHelp student, owner or approved partner account.";
+
+  setPanel(
+    "signup",
+    push
+  );
+
+
+  $("loginTab")
+    .classList
+    .remove("active");
+
+  $("signupTab")
+    .classList
+    .add("active");
+
+
+  $("authIcon").textContent =
+    "✨";
+
+  $("authTitle").textContent =
+    "Hello, Friend!";
+
+  $("authSubtitle").textContent =
+    "Enter your personal details to start your journey with StudentHubHelp.";
+
+
   updateGoogleButton();
 }
 
-function showGoogleRole(user,opts={}){
-  const push=opts.pushHistory!==false;
-  pendingGoogleUser=user;
+
+function showGoogleRole(
+  user,
+  opts={}
+){
+
+  const push =
+    opts.pushHistory !== false;
+
+  pendingGoogleUser =
+    user;
+
   loading(false);
+
   clearMsg();
-  setPanel("googleRole",push);
-  $("authIcon").textContent="👤";
-  $("authTitle").textContent="Choose Account Type";
-  $("authSubtitle").textContent="Select Student, Owner or approved Partner to continue.";
+
+  setPanel(
+    "googleRole",
+    push
+  );
+
+
+  $("authIcon").textContent =
+    "👤";
+
+  $("authTitle").textContent =
+    "Choose Account Type";
+
+  $("authSubtitle").textContent =
+    "Select Student, Owner or approved Partner to continue.";
 }
 
-function showRecovery(opts={}){
-  const push=opts.pushHistory!==false;
-  recoveryMode=false;
+
+function showRecovery(
+  opts={}
+){
+
+  const push =
+    opts.pushHistory !== false;
+
+  recoveryMode = false;
+
   clearMsg();
-  setPanel("recovery",push);
-  $("authIcon").textContent="📧";
-  $("authTitle").textContent="Reset Password";
-  $("authSubtitle").textContent="Enter your email and we'll send a password reset link.";
+
+  setPanel(
+    "recovery",
+    push
+  );
+
+
+  $("authIcon").textContent =
+    "📧";
+
+  $("authTitle").textContent =
+    "Reset Password";
+
+  $("authSubtitle").textContent =
+    "Enter your email and we'll send a password reset link.";
 }
 
-function showReset(opts={}){
-  const push=opts.pushHistory!==false;
-  recoveryMode=true;
+
+function showReset(
+  opts={}
+){
+
+  const push =
+    opts.pushHistory !== false;
+
+  recoveryMode = true;
+
   clearMsg();
-  setPanel("reset",push);
-  $("authIcon").textContent="🔑";
-  $("authTitle").textContent="Set New Password";
-  $("authSubtitle").textContent="Create a new secure password for your account.";
+
+  setPanel(
+    "reset",
+    push
+  );
+
+
+  $("authIcon").textContent =
+    "🔑";
+
+  $("authTitle").textContent =
+    "Set New Password";
+
+  $("authSubtitle").textContent =
+    "Create a new secure password for your account.";
+
   loading(false);
 }
+
+
+/* =========================================
+   GOOGLE BUTTON
+========================================= */
 
 function updateGoogleButton(){
-  const r=signupRole();
-  const b=$("googleSignupButton");
-  b.disabled=!r;
 
-  if(r==="student"){
-    $("googleRoleState").textContent="Student selected — ab Google se continue kar sakte ho.";
-    $("googleSignupText").textContent="Continue with Google as Student";
-  }else if(r==="owner"){
-    $("googleRoleState").textContent="Owner selected — ab Google se continue kar sakte ho.";
-    $("googleSignupText").textContent="Continue with Google as Owner";
-  }else if(r==="partner"){
-    $("googleRoleState").textContent="Partner selected — approved application required.";
-    $("googleSignupText").textContent="Continue with Google as Partner";
+  const r =
+    signupRole();
+
+  const b =
+    $("googleSignupButton");
+
+  b.disabled = !r;
+
+
+  if(r === "student"){
+
+    $("googleRoleState").textContent =
+      "Student selected — ab Google se continue kar sakte ho.";
+
+    $("googleSignupText").textContent =
+      "Continue with Google as Student";
+
+  }else if(r === "owner"){
+
+    $("googleRoleState").textContent =
+      "Owner selected — ab Google se continue kar sakte ho.";
+
+    $("googleSignupText").textContent =
+      "Continue with Google as Owner";
+
+  }else if(r === "partner"){
+
+    $("googleRoleState").textContent =
+      "Partner selected — approved application required.";
+
+    $("googleSignupText").textContent =
+      "Continue with Google as Partner";
+
   }else{
-    $("googleRoleState").textContent="Account type select karna zaroori hai.";
-    $("googleSignupText").textContent="Select account type first";
+
+    $("googleRoleState").textContent =
+      "Account type select karna zaroori hai.";
+
+    $("googleSignupText").textContent =
+      "Select account type first";
   }
 }
 
-function buildProfile(user,existing,metadata={}){
+
+/* =========================================
+   PROFILE
+========================================= */
+
+function buildProfile(
+  user,
+  existing,
+  metadata={}
+){
+
   return{
+
     id:user.id,
-    full_name:existing?.full_name||metadata.full_name||metadata.name||user.email?.split("@")[0]||"User",
-    phone:existing?.phone||metadata.phone||"",
-    role:role(existing?.role)||role(metadata.role),
-    email:existing?.email||user.email||""
+
+    full_name:
+      existing?.full_name ||
+      metadata.full_name ||
+      metadata.name ||
+      user.email?.split("@")[0] ||
+      "User",
+
+    phone:
+      existing?.phone ||
+      metadata.phone ||
+      "",
+
+    role:
+      role(existing?.role) ||
+      role(metadata.role),
+
+    email:
+      existing?.email ||
+      user.email ||
+      ""
   };
 }
 
-async function getProfile(user){
-  const {data,error}=await db
-    .from("profiles")
-    .select("id,role,full_name,phone,email")
-    .eq("id",user.id)
-    .maybeSingle();
 
-  if(error)throw new Error("Profile load nahi ho saka.");
+async function getProfile(user){
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("profiles")
+      .select(
+        "id,role,full_name,phone,email"
+      )
+      .eq("id",user.id)
+      .maybeSingle();
+
+
+  if(error){
+    throw new Error(
+      "Profile load nahi ho saka."
+    );
+  }
+
+
   return data;
 }
 
+
+/* =========================================
+   ROUTE
+========================================= */
+
 async function route(user){
-  if(!user?.id)throw new Error("Authenticated user was not found.");
-  if(routing)return;
-  routing=true;
+
+  if(!user?.id){
+    throw new Error(
+      "Authenticated user was not found."
+    );
+  }
+
+
+  if(routing){
+    return;
+  }
+
+  routing = true;
+
 
   try{
+
     if(!isEmailVerified(user)){
-      await denyAccess("Email verify karo, phir Sign In karo. Confirmation email dobara bhejne ke liye Resend option use karo.");
+
+      await denyAccess(
+        "Email verify karo, phir Sign In karo. Confirmation email dobara bhejne ke liye Resend option use karo."
+      );
+
       return;
     }
 
-    let p=await getProfile(user);
-    const existingRaw=rawRole(p?.role);
 
-    if(existingRaw && !PUBLIC_ROLES.includes(existingRaw)){
-      await denyAccess("Ye account Student/Owner public login ke liye eligible nahi hai. Admin/other access separate system se handle hota hai.");
+    let p =
+      await getProfile(user);
+
+    const existingRaw =
+      rawRole(p?.role);
+
+
+    if(
+      existingRaw &&
+      !PUBLIC_ROLES.includes(
+        existingRaw
+      )
+    ){
+
+      await denyAccess(
+        "Ye account public Student/Owner/Partner login ke liye eligible nahi hai."
+      );
+
       return;
     }
 
-    const google=isGoogleUser(user);
-    const pr=pendingRole();
-    let r=role(p?.role);
 
-    if(!r && google && pr){
-      const profileData=buildProfile(user,p,{role:pr});
-      const {data:up,error:uerr}=await db
-        .from("profiles")
-        .upsert(profileData,{onConflict:"id"})
-        .select("id,role,full_name,phone,email")
-        .single();
+    const google =
+      isGoogleUser(user);
 
-      if(uerr)throw new Error("Google account role save nahi ho saka.");
-      p=up;
-      r=role(p?.role);
+    const pr =
+      pendingRole();
+
+    let r =
+      role(p?.role);
+
+
+    if(
+      !r &&
+      google &&
+      pr
+    ){
+
+      const profileData =
+        buildProfile(
+          user,
+          p,
+          {role:pr}
+        );
+
+
+      const {
+        data:up,
+        error:uerr
+      } =
+        await db
+          .from("profiles")
+          .upsert(
+            profileData,
+            {onConflict:"id"}
+          )
+          .select(
+            "id,role,full_name,phone,email"
+          )
+          .single();
+
+
+      if(uerr){
+        throw new Error(
+          "Google account role save nahi ho saka."
+        );
+      }
+
+
+      p = up;
+
+      r =
+        role(p?.role);
+
       clearPending();
     }
 
-    if(!r && !p && !google){
-      const md=user.user_metadata||{};
-      const mr=role(md.role);
+
+    if(
+      !r &&
+      !p &&
+      !google
+    ){
+
+      const md =
+        user.user_metadata || {};
+
+      const mr =
+        role(md.role);
+
 
       if(mr){
-        const profileData=buildProfile(user,null,{...md,role:mr});
-        const {data:up,error:uerr}=await db
-          .from("profiles")
-          .upsert(profileData,{onConflict:"id"})
-          .select("id,role,full_name,phone,email")
-          .single();
 
-        if(uerr)throw new Error("Profile create nahi ho saka.");
-        p=up;
-        r=role(p?.role);
+        const profileData =
+          buildProfile(
+            user,
+            null,
+            {
+              ...md,
+              role:mr
+            }
+          );
+
+
+        const {
+          data:up,
+          error:uerr
+        } =
+          await db
+            .from("profiles")
+            .upsert(
+              profileData,
+              {onConflict:"id"}
+            )
+            .select(
+              "id,role,full_name,phone,email"
+            )
+            .single();
+
+
+        if(uerr){
+          throw new Error(
+            "Profile create nahi ho saka."
+          );
+        }
+
+
+        p = up;
+
+        r =
+          role(p?.role);
       }
     }
 
+
     if(!r){
+
       if(google){
+
         showGoogleRole(user);
-        msg("Google account ke liye Student ya Owner select karna zaroori hai.");
+
+        msg(
+          "Google account ke liye Student, Owner ya approved Partner select karna zaroori hai."
+        );
+
         return;
       }
 
-      await denyAccess("Student/Owner/Partner profile nahi mila. Account access continue nahi kiya gaya.");
+
+      await denyAccess(
+        "Student/Owner/Partner profile nahi mila. Account access continue nahi kiya gaya."
+      );
+
       return;
     }
 
+
     clearPending();
 
-    if(r==="partner") await ensurePartnerProfile(user,p);
 
-    const md=user.user_metadata||{};
-    localStorage.setItem("sh_current_user",JSON.stringify({
-      id:user.id,
-      email:user.email||"",
-      name:p?.full_name||md.full_name||md.name||user.email?.split("@")[0]||"User",
-      phone:p?.phone||md.phone||"",
-      role:r
-    }));
+    if(r === "partner"){
 
-    loading(true,r==="owner"?"Opening Owner Dashboard...":r==="partner"?"Opening Partner Dashboard...":"Opening Student Dashboard...");
-    location.replace(new URL(D[r],location.href).href);
+      await ensurePartnerProfile(
+        user,
+        p
+      );
+    }
+
+
+    const md =
+      user.user_metadata || {};
+
+
+    localStorage.setItem(
+      "sh_current_user",
+      JSON.stringify({
+
+        id:user.id,
+
+        email:
+          user.email || "",
+
+        name:
+          p?.full_name ||
+          md.full_name ||
+          md.name ||
+          user.email?.split("@")[0] ||
+          "User",
+
+        phone:
+          p?.phone ||
+          md.phone ||
+          "",
+
+        role:r
+      })
+    );
+
+
+    loading(
+      true,
+      r === "owner"
+        ? "Opening Owner Dashboard..."
+        : r === "partner"
+          ? "Opening Partner Dashboard..."
+          : "Opening Student Dashboard..."
+    );
+
+
+    location.replace(
+      new URL(
+        D[r],
+        location.href
+      ).href
+    );
 
   }finally{
-    routing=false;
+
+    routing = false;
   }
 }
+
+
+/* =========================================
+   GOOGLE AUTH
+========================================= */
 
 async function google(mode){
+
   clearMsg();
 
-  if(mode==="signup"){
-    const r=signupRole();
+
+  if(mode === "signup"){
+
+    const r =
+      signupRole();
+
+
     if(!r){
-      msg("Pehle Student, Owner ya approved Partner select karo.");
+
+      msg(
+        "Pehle Student, Owner ya approved Partner select karo."
+      );
+
       return;
     }
-    localStorage.setItem("sh_google_signup_role",r);
-    localStorage.setItem("sh_google_signup_started_at",String(Date.now()));
+
+
+    localStorage.setItem(
+      "sh_google_signup_role",
+      r
+    );
+
+
+    localStorage.setItem(
+      "sh_google_signup_started_at",
+      String(Date.now())
+    );
+
   }else{
+
     clearPending();
   }
 
-  loading(true,"Opening Google Sign In...");
+
+  loading(
+    true,
+    "Opening Google Sign In..."
+  );
+
 
   try{
-    const {error}=await db.auth.signInWithOAuth({
-      provider:"google",
-      options:{redirectTo:new URL("auth.html",location.href).href}
-    });
-    if(error)throw error;
+
+    const {
+      error
+    } =
+      await db.auth.signInWithOAuth({
+
+        provider:"google",
+
+        options:{
+          redirectTo:
+            new URL(
+              "auth.html",
+              location.href
+            ).href
+        }
+
+      });
+
+
+    if(error){
+      throw error;
+    }
+
   }catch(e){
+
     loading(false);
+
     clearPending();
-    msg(friendlyError(e));
+
+    msg(
+      friendlyError(e)
+    );
   }
 }
+
+
+/* =========================================
+   RESEND
+========================================= */
 
 async function resendConfirmation(email){
-  email=String(email||"").trim().toLowerCase();
+
+  email =
+    String(email || "")
+      .trim()
+      .toLowerCase();
+
 
   if(!validEmail(email)){
-    msg("Valid email address enter karo.");
+
+    msg(
+      "Valid email address enter karo."
+    );
+
     return;
   }
 
-  const last=Number(sessionStorage.getItem("sh_resend_at")||0);
-  const remaining=RESEND_COOLDOWN-(Date.now()-last);
 
-  if(remaining>0){
-    msg(`Resend email ke liye ${Math.ceil(remaining/1000)} seconds wait karo.`);
+  const last =
+    Number(
+      sessionStorage.getItem(
+        "sh_resend_at"
+      ) || 0
+    );
+
+
+  const remaining =
+    RESEND_COOLDOWN -
+    (Date.now() - last);
+
+
+  if(remaining > 0){
+
+    msg(
+      `Resend email ke liye ${Math.ceil(remaining/1000)} seconds wait karo.`
+    );
+
     return;
   }
 
-  const b=$("resendButton");
-  button(b,true,"Resend Confirmation Email");
-  loading(true,"Sending confirmation email...");
+
+  const b =
+    $("resendButton");
+
+
+  button(
+    b,
+    true,
+    "Resend Confirmation Email"
+  );
+
+
+  loading(
+    true,
+    "Sending confirmation email..."
+  );
+
 
   try{
-    const {error}=await db.auth.resend({type:"signup",email});
-    if(error)throw error;
 
-    sessionStorage.setItem("sh_resend_at",String(Date.now()));
+    const {
+      error
+    } =
+      await db.auth.resend({
+
+        type:"signup",
+
+        email
+      });
+
+
+    if(error){
+      throw error;
+    }
+
+
+    sessionStorage.setItem(
+      "sh_resend_at",
+      String(Date.now())
+    );
+
+
     loading(false);
-    button(b,false,"Resend Confirmation Email");
-    msg("Confirmation email dobara bhej diya gaya hai. Inbox/Spam check karo.","success");
+
+    button(
+      b,
+      false,
+      "Resend Confirmation Email"
+    );
+
+
+    msg(
+      "Confirmation email dobara bhej diya gaya hai. Inbox/Spam check karo.",
+      "success"
+    );
+
   }catch(e){
+
     loading(false);
-    button(b,false,"Resend Confirmation Email");
-    msg(friendlyError(e));
+
+    button(
+      b,
+      false,
+      "Resend Confirmation Email"
+    );
+
+    msg(
+      friendlyError(e)
+    );
   }
 }
 
-$("googleLoginButton").onclick=()=>google("login");
-$("googleSignupButton").onclick=()=>google("signup");
 
-$("loginForm").onsubmit=async e=>{
+/* =========================================
+   LOGIN
+========================================= */
+
+$("loginForm").onsubmit =
+async e => {
+
   e.preventDefault();
+
   clearMsg();
 
-  const email=$("loginEmail").value.trim().toLowerCase();
-  const password=$("loginPassword").value;
+
+  const email =
+    $("loginEmail")
+      .value
+      .trim()
+      .toLowerCase();
+
+  const password =
+    $("loginPassword")
+      .value;
+
 
   if(!validEmail(email)){
-    msg("Valid email address enter karo.");
-    return;
-  }
-  if(!password){
-    msg("Password enter karo.");
+
+    msg(
+      "Valid email address enter karo."
+    );
+
     return;
   }
 
-  const b=$("loginButton");
-  button(b,true,"Sign In");
-  loading(true,"Signing you in...");
+
+  if(!password){
+
+    msg(
+      "Password enter karo."
+    );
+
+    return;
+  }
+
+
+  /*
+    CAPTCHA is required before
+    sending credentials to Supabase.
+  */
+
+  const captchaToken =
+    captchaRequired("login");
+
+
+  if(!captchaToken){
+    return;
+  }
+
+
+  const b =
+    $("loginButton");
+
+
+  button(
+    b,
+    true,
+    "Sign In"
+  );
+
+
+  loading(
+    true,
+    "Signing you in..."
+  );
+
 
   try{
-    const {data,error}=await db.auth.signInWithPassword({email,password});
-    if(error)throw error;
+
+    const {
+      data,
+      error
+    } =
+      await db.auth.signInWithPassword({
+
+        email,
+
+        password,
+
+        options:{
+          captchaToken
+        }
+
+      });
+
+
+    /*
+      hCaptcha tokens are single-use.
+    */
+
+    resetCaptcha("login");
+
+
+    if(error){
+      throw error;
+    }
+
 
     if(!isEmailVerified(data.user)){
-      lastSignupEmail=email;
-      $("resendBox").style.display="block";
+
+      lastSignupEmail =
+        email;
+
+      $("resendBox").style.display =
+        "block";
+
       loading(false);
-      button(b,false,"Sign In");
-      await db.auth.signOut({scope:"local"}).catch(()=>{});
-      msg("Email verify nahi hua hai. Confirmation email check karo aur phir Sign In karo.");
+
+      button(
+        b,
+        false,
+        "Sign In"
+      );
+
+
+      await db.auth.signOut({
+        scope:"local"
+      }).catch(()=>{});
+
+
+      msg(
+        "Email verify nahi hua hai. Confirmation email check karo aur phir Sign In karo."
+      );
+
       return;
     }
 
-    await route(data.user);
+
+    await route(
+      data.user
+    );
+
   }catch(x){
+
     loading(false);
-    button(b,false,"Sign In");
-    msg(friendlyError(x));
+
+    button(
+      b,
+      false,
+      "Sign In"
+    );
+
+    resetCaptcha("login");
+
+    msg(
+      friendlyError(x)
+    );
   }
 };
 
-$("signupForm").onsubmit=async e=>{
+
+/* =========================================
+   SIGNUP
+========================================= */
+
+$("signupForm").onsubmit =
+async e => {
+
   e.preventDefault();
+
   clearMsg();
 
-  const name=$("signupName").value.trim();
-  const phone=$("signupPhone").value.replace(/\D/g,"");
-  const email=$("signupEmail").value.trim().toLowerCase();
-  const pass=$("signupPassword").value;
-  const confirm=$("signupConfirmPassword").value;
-  const r=signupRole();
 
-  $("signupPhone").value=phone;
+  const name =
+    $("signupName")
+      .value
+      .trim();
 
-  if(name.length<2){
-    msg("Full name enter karo.");
+
+  const phone =
+    $("signupPhone")
+      .value
+      .replace(/\D/g,"");
+
+
+  const email =
+    $("signupEmail")
+      .value
+      .trim()
+      .toLowerCase();
+
+
+  const pass =
+    $("signupPassword")
+      .value;
+
+
+  const confirm =
+    $("signupConfirmPassword")
+      .value;
+
+
+  const r =
+    signupRole();
+
+
+  $("signupPhone").value =
+    phone;
+
+
+  if(name.length < 2){
+
+    msg(
+      "Full name enter karo."
+    );
+
     return;
   }
+
+
   if(!validPhone(phone)){
-    msg("Valid Indian 10-digit mobile number enter karo.");
-    return;
-  }
-  if(!validEmail(email)){
-    msg("Valid email address enter karo.");
-    return;
-  }
-  if(!r){
-    msg("Student, Owner ya approved Partner select karo.");
-    return;
-  }
-  if(!strongPassword(pass)){
-    msg(passwordHint());
-    return;
-  }
-  if(pass!==confirm){
-    msg("Passwords same hone chahiye.");
+
+    msg(
+      "Valid Indian 10-digit mobile number enter karo."
+    );
+
     return;
   }
 
-  const b=$("signupButton");
-  button(b,true,"Create Account");
-  loading(true,"Creating your account...");
-  lastSignupEmail=email;
+
+  if(!validEmail(email)){
+
+    msg(
+      "Valid email address enter karo."
+    );
+
+    return;
+  }
+
+
+  if(!r){
+
+    msg(
+      "Student, Owner ya approved Partner select karo."
+    );
+
+    return;
+  }
+
+
+  if(!strongPassword(pass)){
+
+    msg(
+      passwordHint()
+    );
+
+    return;
+  }
+
+
+  if(pass !== confirm){
+
+    msg(
+      "Passwords same hone chahiye."
+    );
+
+    return;
+  }
+
+
+  /*
+    CAPTCHA verification
+  */
+
+  const captchaToken =
+    captchaRequired("signup");
+
+
+  if(!captchaToken){
+    return;
+  }
+
+
+  const b =
+    $("signupButton");
+
+
+  button(
+    b,
+    true,
+    "Create Account"
+  );
+
+
+  loading(
+    true,
+    "Creating your account..."
+  );
+
+
+  lastSignupEmail =
+    email;
+
 
   try{
-    if(r==="partner" && !(await isApprovedPartnerEmail(email))){ throw new Error("Partner account sirf approved Partner application ke baad create kiya ja sakta hai."); }
-
-      email,
-      password:pass,
-      options:{data:{full_name:name,phone,role:r}}
-    });
 
-    if(error)throw error;
-    if(!data?.user)throw new Error("Account create nahi hua.");
+    if(
+      r === "partner" &&
+      !(await isApprovedPartnerEmail(email))
+    ){
+
+      throw new Error(
+        "Partner account sirf approved Partner application ke baad create kiya ja sakta hai."
+      );
+    }
+
+
+    /*
+      Corrected Supabase signup call.
+    */
+
+    const {
+      data,
+      error
+    } =
+      await db.auth.signUp({
+
+        email,
+
+        password:pass,
+
+        options:{
+          captchaToken,
+
+          data:{
+            full_name:name,
+            phone,
+            role:r
+          }
+        }
+
+      });
+
+
+    resetCaptcha("signup");
+
+
+    if(error){
+      throw error;
+    }
+
+
+    if(!data?.user){
+
+      throw new Error(
+        "Account create nahi hua."
+      );
+    }
+
 
     if(!data.session){
+
       loading(false);
-      button(b,false,"Create Account");
-      $("loginEmail").value=email;
-      $("resendBox").style.display="block";
-      msg("Account create ho gaya. Email verify karke Sign In karo.","success");
+
+      button(
+        b,
+        false,
+        "Create Account"
+      );
+
+
+      $("loginEmail").value =
+        email;
+
+
+      $("resendBox").style.display =
+        "block";
+
+
+      msg(
+        "Account create ho gaya. Email verify karke Sign In karo.",
+        "success"
+      );
+
+
       return;
     }
 
-    const {error:pe}=await db.from("profiles").upsert({
-      id:data.user.id,
-      full_name:name,
-      phone,
-      role:r,
-      email
-    },{onConflict:"id"});
 
-    if(pe)throw pe;
-    await route(data.user);
+    const {
+      error:pe
+    } =
+      await db
+        .from("profiles")
+        .upsert({
+
+          id:data.user.id,
+
+          full_name:name,
+
+          phone,
+
+          role:r,
+
+          email
+
+        },{
+          onConflict:"id"
+        });
+
+
+    if(pe){
+      throw pe;
+    }
+
+
+    await route(
+      data.user
+    );
+
 
   }catch(x){
+
     loading(false);
-    button(b,false,"Create Account");
-    msg(friendlyError(x));
+
+    button(
+      b,
+      false,
+      "Create Account"
+    );
+
+    resetCaptcha("signup");
+
+    msg(
+      friendlyError(x)
+    );
   }
 };
 
-$("resendButton").onclick=async()=>{
-  await resendConfirmation(lastSignupEmail||$("loginEmail").value.trim());
+
+/* =========================================
+   RESEND BUTTON
+========================================= */
+
+$("resendButton").onclick =
+async () => {
+
+  await resendConfirmation(
+    lastSignupEmail ||
+    $("loginEmail").value.trim()
+  );
+
 };
 
-$("saveGoogleRoleButton").onclick=async()=>{
-  const r=callbackRole();
 
-  if(!r||!pendingGoogleUser){
-    msg("Student, Owner ya approved Partner select karo.");
+/* =========================================
+   GOOGLE ROLE SAVE
+========================================= */
+
+$("saveGoogleRoleButton").onclick =
+async () => {
+
+  const r =
+    callbackRole();
+
+
+  if(
+    !r ||
+    !pendingGoogleUser
+  ){
+
+    msg(
+      "Student, Owner ya approved Partner select karo."
+    );
+
     return;
   }
 
-  const b=$("saveGoogleRoleButton");
-  button(b,true,"Continue");
-  loading(true,"Saving account type...");
+
+  const b =
+    $("saveGoogleRoleButton");
+
+
+  button(
+    b,
+    true,
+    "Continue"
+  );
+
+
+  loading(
+    true,
+    "Saving account type..."
+  );
+
 
   try{
-    if(r==="partner" && !(await isApprovedPartnerEmail(googleUser.email||""))){ throw new Error("Is Google email ke liye approved Partner application nahi mili."); }
-
-    const p=await getProfile(googleUser);
-    const existingRaw=rawRole(p?.role);
 
-    if(existingRaw && PUBLIC_ROLES.includes(existingRaw)){
+    const googleUser =
+      pendingGoogleUser;
+
+
+    if(
+      r === "partner" &&
+      !(await isApprovedPartnerEmail(
+        googleUser.email || ""
+      ))
+    ){
+
+      throw new Error(
+        "Is Google email ke liye approved Partner application nahi mili."
+      );
+    }
+
+
+    const p =
+      await getProfile(
+        googleUser
+      );
+
+
+    const existingRaw =
+      rawRole(p?.role);
+
+
+    if(
+      existingRaw &&
+      PUBLIC_ROLES.includes(existingRaw)
+    ){
+
       clearPending();
-      pendingGoogleUser=null;
-      await route(googleUser);
+
+      pendingGoogleUser =
+        null;
+
+      await route(
+        googleUser
+      );
+
       return;
     }
 
-    if(existingRaw && !PUBLIC_ROLES.includes(existingRaw)){
-      throw new Error("Ye profile public Student/Owner signup ke liye eligible nahi hai.");
+
+    if(
+      existingRaw &&
+      !PUBLIC_ROLES.includes(existingRaw)
+    ){
+
+      throw new Error(
+        "Ye profile public Student/Owner signup ke liye eligible nahi hai."
+      );
     }
 
-    const md=googleUser.user_metadata||{};
-    const profileData={
+
+    const md =
+      googleUser.user_metadata ||
+      {};
+
+
+    const profileData = {
+
       id:googleUser.id,
-      full_name:p?.full_name||md.full_name||md.name||googleUser.email?.split("@")[0]||"User",
-      phone:p?.phone||md.phone||"",
+
+      full_name:
+        p?.full_name ||
+        md.full_name ||
+        md.name ||
+        googleUser.email?.split("@")[0] ||
+        "User",
+
+      phone:
+        p?.phone ||
+        md.phone ||
+        "",
+
       role:r,
-      email:p?.email||googleUser.email||""
+
+      email:
+        p?.email ||
+        googleUser.email ||
+        ""
     };
 
-    const {data,error}=await db
-      .from("profiles")
-      .upsert(profileData,{onConflict:"id"})
-      .select("id,role,full_name,phone,email")
-      .single();
 
-    if(error)throw error;
-    if(role(data?.role)!==r)throw new Error("Account type save nahi hua.");
+    const {
+      data,
+      error
+    } =
+      await db
+        .from("profiles")
+        .upsert(
+          profileData,
+          {onConflict:"id"}
+        )
+        .select(
+          "id,role,full_name,phone,email"
+        )
+        .single();
+
+
+    if(error){
+      throw error;
+    }
+
+
+    if(
+      role(data?.role) !== r
+    ){
+
+      throw new Error(
+        "Account type save nahi hua."
+      );
+    }
+
 
     clearPending();
-    pendingGoogleUser=null;
-    await route(googleUser);
+
+    pendingGoogleUser =
+      null;
+
+
+    await route(
+      googleUser
+    );
+
 
   }catch(x){
+
     loading(false);
-    button(b,false,"Continue");
-    msg(friendlyError(x));
+
+    button(
+      b,
+      false,
+      "Continue"
+    );
+
+    msg(
+      friendlyError(x)
+    );
   }
 };
 
+
+/* =========================================
+   CANCEL GOOGLE ROLE
+========================================= */
+
 async function cancelGoogleRole(){
-  pendingGoogleUser=null;
+
+  pendingGoogleUser =
+    null;
+
   clearPending();
+
   loading(false);
-  try{await db.auth.signOut({scope:"local"});}catch(_){}
-  showLogin({pushHistory:false});
-  history.replaceState({authPanel:"login"},"",location.href);
+
+
+  try{
+
+    await db.auth.signOut({
+      scope:"local"
+    });
+
+  }catch(_){}
+
+
+  showLogin({
+    pushHistory:false
+  });
+
+
+  history.replaceState(
+    {authPanel:"login"},
+    "",
+    location.href
+  );
 }
 
-$("googleRoleBackButton").onclick=cancelGoogleRole;
-$("signupBackButton").onclick=()=>showLogin();
 
-$("forgotButton").onclick=()=>{
-  $("recoveryEmail").value=$("loginEmail").value.trim();
+$("googleRoleBackButton").onclick =
+cancelGoogleRole;
+
+
+/* =========================================
+   BASIC BUTTONS
+========================================= */
+
+$("googleLoginButton").onclick =
+() =>
+  google("login");
+
+
+$("googleSignupButton").onclick =
+() =>
+  google("signup");
+
+
+$("signupBackButton").onclick =
+() =>
+  showLogin();
+
+
+$("forgotButton").onclick =
+() => {
+
+  $("recoveryEmail").value =
+    $("loginEmail")
+      .value
+      .trim();
+
   showRecovery();
 };
 
-$("backToLoginButton").onclick=()=>showLogin();
 
-$("resetBackButton").onclick=async()=>{
-  recoveryMode=false;
-  try{await db.auth.signOut({scope:"local"});}catch(_){}
+$("backToLoginButton").onclick =
+() =>
+  showLogin();
+
+
+$("resetBackButton").onclick =
+async () => {
+
+  recoveryMode = false;
+
+
+  try{
+
+    await db.auth.signOut({
+      scope:"local"
+    });
+
+  }catch(_){}
+
+
   showLogin();
 };
 
-$("recoveryForm").onsubmit=async e=>{
+
+/* =========================================
+   PASSWORD RECOVERY
+========================================= */
+
+$("recoveryForm").onsubmit =
+async e => {
+
   e.preventDefault();
+
   clearMsg();
 
-  const email=$("recoveryEmail").value.trim().toLowerCase();
+
+  const email =
+    $("recoveryEmail")
+      .value
+      .trim()
+      .toLowerCase();
+
 
   if(!validEmail(email)){
-    msg("Valid email address enter karo.");
+
+    msg(
+      "Valid email address enter karo."
+    );
+
     return;
   }
 
-  const b=$("recoveryButton");
-  button(b,true,"Send Reset Link");
-  loading(true,"Sending reset link...");
+
+  /*
+    CAPTCHA protects the password
+    recovery endpoint.
+  */
+
+  const captchaToken =
+    captchaRequired("recovery");
+
+
+  if(!captchaToken){
+    return;
+  }
+
+
+  const b =
+    $("recoveryButton");
+
+
+  button(
+    b,
+    true,
+    "Send Reset Link"
+  );
+
+
+  loading(
+    true,
+    "Sending reset link..."
+  );
+
 
   try{
-    const {error}=await db.auth.resetPasswordForEmail(email,{
-      redirectTo:new URL("auth.html?mode=reset",location.href).href
-    });
-    if(error)throw error;
+
+    const {
+      error
+    } =
+      await db.auth.resetPasswordForEmail(
+        email,
+        {
+          redirectTo:
+            new URL(
+              "auth.html?mode=reset",
+              location.href
+            ).href,
+
+          captchaToken
+        }
+      );
+
+
+    resetCaptcha("recovery");
+
+
+    if(error){
+      throw error;
+    }
+
 
     loading(false);
-    button(b,false,"Send Reset Link");
-    msg("Password reset link email par bhej diya gaya hai. Inbox/Spam check karo.","success");
+
+    button(
+      b,
+      false,
+      "Send Reset Link"
+    );
+
+
+    msg(
+      "Password reset link email par bhej diya gaya hai. Inbox/Spam check karo.",
+      "success"
+    );
+
+
   }catch(x){
+
     loading(false);
-    button(b,false,"Send Reset Link");
-    msg(friendlyError(x));
+
+    button(
+      b,
+      false,
+      "Send Reset Link"
+    );
+
+    resetCaptcha("recovery");
+
+    msg(
+      friendlyError(x)
+    );
   }
 };
 
-$("resetForm").onsubmit=async e=>{
+
+/* =========================================
+   PASSWORD RESET
+========================================= */
+
+$("resetForm").onsubmit =
+async e => {
+
   e.preventDefault();
+
   clearMsg();
 
-  const p=$("resetPassword").value;
-  const c=$("resetConfirmPassword").value;
-  const b=$("resetButton");
+
+  const p =
+    $("resetPassword").value;
+
+  const c =
+    $("resetConfirmPassword").value;
+
+  const b =
+    $("resetButton");
+
 
   if(!strongPassword(p)){
-    msg(passwordHint());
-    return;
-  }
-  if(p!==c){
-    msg("New passwords same hone chahiye.");
+
+    msg(
+      passwordHint()
+    );
+
     return;
   }
 
-  button(b,true,"Update Password & Continue");
-  loading(true,"Updating your password...");
+
+  if(p !== c){
+
+    msg(
+      "New passwords same hone chahiye."
+    );
+
+    return;
+  }
+
+
+  button(
+    b,
+    true,
+    "Update Password & Continue"
+  );
+
+
+  loading(
+    true,
+    "Updating your password..."
+  );
+
 
   try{
-    const {data,error}=await db.auth.updateUser({password:p});
-    if(error)throw error;
-    if(!data?.user)throw new Error("Password update nahi hua.");
+
+    const {
+      data,
+      error
+    } =
+      await db.auth.updateUser({
+        password:p
+      });
+
+
+    if(error){
+      throw error;
+    }
+
+
+    if(!data?.user){
+
+      throw new Error(
+        "Password update nahi hua."
+      );
+    }
+
 
     if(!isEmailVerified(data.user)){
-      await denyAccess("Password update ho gaya, lekin email verification required hai.");
+
+      await denyAccess(
+        "Password update ho gaya, lekin email verification required hai."
+      );
+
       return;
     }
 
-    await route(data.user);
+
+    await route(
+      data.user
+    );
+
+
   }catch(x){
+
     loading(false);
-    button(b,false,"Update Password & Continue");
-    msg(friendlyError(x));
+
+    button(
+      b,
+      false,
+      "Update Password & Continue"
+    );
+
+    msg(
+      friendlyError(x)
+    );
   }
 };
 
-$("loginTab").onclick=()=>showLogin();
-$("signupTab").onclick=()=>showSignup();
 
-document.querySelectorAll('input[name="signupRole"]').forEach(x=>x.onchange=updateGoogleButton);
+/* =========================================
+   TABS
+========================================= */
 
-$("signupPhone").addEventListener("input",e=>{
-  e.target.value=e.target.value.replace(/\D/g,"").slice(0,10);
-});
+$("loginTab").onclick =
+() =>
+  showLogin();
 
-document.querySelectorAll(".password-toggle").forEach(b=>b.onclick=()=>{
-  const i=$(b.dataset.target);
-  i.type=i.type==="text"?"password":"text";
-  b.textContent=i.type==="text"?"🙈":"👁️";
-});
 
-window.addEventListener("popstate",()=>{
-  if(panelChanging)return;
+$("signupTab").onclick =
+() =>
+  showSignup();
 
-  panelChanging=true;
-  try{
-    const panel=history.state?.authPanel||"login";
 
-    if(panel==="signup")showSignup({pushHistory:false});
-    else if(panel==="recovery")showRecovery({pushHistory:false});
-    else if(panel==="reset")showReset({pushHistory:false});
-    else if(panel==="googleRole"&&pendingGoogleUser)showGoogleRole(pendingGoogleUser,{pushHistory:false});
-    else showLogin({pushHistory:false});
-  }finally{
-    panelChanging=false;
+document
+  .querySelectorAll(
+    'input[name="signupRole"]'
+  )
+  .forEach(
+    x =>
+      x.onchange =
+        updateGoogleButton
+  );
+
+
+document
+  .querySelectorAll(
+    'input[name="callbackRole"]'
+  )
+  .forEach(
+    x =>
+      x.onchange =
+        () => {}
+  );
+
+
+/* =========================================
+   PHONE
+========================================= */
+
+$("signupPhone")
+  .addEventListener(
+    "input",
+    e => {
+
+      e.target.value =
+        e.target.value
+          .replace(/\D/g,"")
+          .slice(0,10);
+
+    }
+  );
+
+
+/* =========================================
+   PASSWORD TOGGLE
+========================================= */
+
+document
+  .querySelectorAll(
+    ".password-toggle"
+  )
+  .forEach(
+    b => {
+
+      b.onclick = () => {
+
+        const i =
+          $(b.dataset.target);
+
+
+        if(!i){
+          return;
+        }
+
+
+        i.type =
+          i.type === "text"
+            ? "password"
+            : "text";
+
+
+        b.textContent =
+          i.type === "text"
+            ? "🙈"
+            : "👁️";
+      };
+
+    }
+  );
+
+
+/* =========================================
+   HISTORY
+========================================= */
+
+window.addEventListener(
+  "popstate",
+  () => {
+
+    if(panelChanging){
+      return;
+    }
+
+
+    panelChanging = true;
+
+
+    try{
+
+      const panel =
+        history.state?.authPanel ||
+        "login";
+
+
+      if(panel === "signup"){
+
+        showSignup({
+          pushHistory:false
+        });
+
+      }else if(
+        panel === "recovery"
+      ){
+
+        showRecovery({
+          pushHistory:false
+        });
+
+      }else if(
+        panel === "reset"
+      ){
+
+        showReset({
+          pushHistory:false
+        });
+
+      }else if(
+        panel === "googleRole" &&
+        pendingGoogleUser
+      ){
+
+        showGoogleRole(
+          pendingGoogleUser,
+          {
+            pushHistory:false
+          }
+        );
+
+      }else{
+
+        showLogin({
+          pushHistory:false
+        });
+      }
+
+    }finally{
+
+      panelChanging = false;
+    }
+
   }
-});
+);
+
+
+/* =========================================
+   RESET MODE
+========================================= */
 
 function resetMode(){
-  return new URLSearchParams(location.search).get("mode")==="reset";
+
+  return(
+    new URLSearchParams(
+      location.search
+    ).get("mode") === "reset"
+  );
 }
+
+
+/* =========================================
+   AUTH LISTENER
+========================================= */
 
 function setupAuth(){
-  if(listenerReady)return;
-  listenerReady=true;
 
-  db.auth.onAuthStateChange(async(e,s)=>{
-    if(e==="PASSWORD_RECOVERY"){
-      showReset({pushHistory:false});
-      return;
-    }
-
-    if(e==="SIGNED_OUT"){
-      loading(false);
-      clearStoredUser();
-      if(!recoveryMode)showLogin({pushHistory:false});
-      return;
-    }
-
-    if(e==="SIGNED_IN"&&s?.user&&!recoveryMode&&!resetMode()){
-      try{
-        loading(true,"Checking your account...");
-        await route(s.user);
-      }catch(x){
-        loading(false);
-        clearStoredUser();
-        await db.auth.signOut({scope:"local"}).catch(()=>{});
-        msg(friendlyError(x));
-      }
-    }
-  });
-}
-
-async function existing(){
-  if(resetMode())return;
-
-  const {data,error}=await db.auth.getSession();
-
-  if(error){
-    msg(friendlyError(error));
+  if(listenerReady){
     return;
   }
 
-  if(!data?.session?.user)return;
+  listenerReady = true;
 
-  loading(true,"Checking your account...");
 
-  try{
-    await route(data.session.user);
-  }catch(x){
-    loading(false);
-    clearStoredUser();
-    await db.auth.signOut({scope:"local"}).catch(()=>{});
-    msg(friendlyError(x));
-  }
-}
+  db.auth.onAuthStateChange(
+    async (e,s) => {
 
-document.addEventListener("DOMContentLoaded",async()=>{
-  history.replaceState({authPanel:"login"},"",location.href);
-  setupAuth();
+      if(
+        e === "PASSWORD_RECOVERY"
+      ){
 
-  if(resetMode()){
-    loading(true,"Preparing password reset...");
+        showReset({
+          pushHistory:false
+        });
 
-    setTimeout(()=>{
-      if(!recoveryMode){
-        const h=location.hash||"";
-        if(h.includes("type=recovery")||h.includes("access_token=")){
-          showReset({pushHistory:false});
-        }else{
+        return;
+      }
+
+
+      if(
+        e === "SIGNED_OUT"
+      ){
+
+        loading(false);
+
+        clearStoredUser();
+
+
+        if(!recoveryMode){
+
+          showLogin({
+            pushHistory:false
+          });
+        }
+
+        return;
+      }
+
+
+      if(
+        e === "SIGNED_IN" &&
+        s?.user &&
+        !recoveryMode &&
+        !resetMode()
+      ){
+
+        try{
+
+          loading(
+            true,
+            "Checking your account..."
+          );
+
+
+          await route(
+            s.user
+          );
+
+        }catch(x){
+
           loading(false);
-          msg("Password reset link invalid ya expire ho gaya hai.");
+
+          clearStoredUser();
+
+
+          await db.auth
+            .signOut({
+              scope:"local"
+            })
+            .catch(()=>{});
+
+
+          msg(
+            friendlyError(x)
+          );
         }
       }
-    },1200);
+
+    }
+  );
+}
+
+
+/* =========================================
+   EXISTING SESSION
+========================================= */
+
+async function existing(){
+
+  if(resetMode()){
+    return;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await db.auth.getSession();
+
+
+  if(error){
+
+    msg(
+      friendlyError(error)
+    );
 
     return;
   }
 
-  await existing();
-  updateGoogleButton();
-});
+
+  if(!data?.session?.user){
+    return;
+  }
+
+
+  loading(
+    true,
+    "Checking your account..."
+  );
+
+
+  try{
+
+    await route(
+      data.session.user
+    );
+
+  }catch(x){
+
+    loading(false);
+
+    clearStoredUser();
+
+
+    await db.auth
+      .signOut({
+        scope:"local"
+      })
+      .catch(()=>{});
+
+
+    msg(
+      friendlyError(x)
+    );
+  }
+}
+
+
+/* =========================================
+   CAPTCHA WAIT
+========================================= */
+
+function waitForCaptcha(
+  attempts=0
+){
+
+  if(
+    initCaptcha()
+  ){
+    return;
+  }
+
+
+  if(attempts >= 80){
+
+    /*
+      Do not silently disable CAPTCHA.
+      If Supabase CAPTCHA is enabled but
+      frontend widget did not load, auth
+      requests remain blocked.
+    */
+
+    console.warn(
+      "hCaptcha could not be initialized."
+    );
+
+    return;
+  }
+
+
+  setTimeout(
+    () =>
+      waitForCaptcha(
+        attempts + 1
+      ),
+    250
+  );
+}
+
+
+/* =========================================
+   START
+========================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    history.replaceState(
+      {authPanel:"login"},
+      "",
+      location.href
+    );
+
+
+    /*
+      Start CAPTCHA initialization
+      immediately.
+    */
+
+    waitForCaptcha();
+
+
+    setupAuth();
+
+
+    if(resetMode()){
+
+      loading(
+        true,
+        "Preparing password reset..."
+      );
+
+
+      setTimeout(
+        () => {
+
+          if(!recoveryMode){
+
+            const h =
+              location.hash || "";
+
+
+            if(
+              h.includes(
+                "type=recovery"
+              ) ||
+              h.includes(
+                "access_token="
+              )
+            ){
+
+              showReset({
+                pushHistory:false
+              });
+
+            }else{
+
+              loading(false);
+
+              msg(
+                "Password reset link invalid ya expire ho gaya hai."
+              );
+            }
+          }
+
+        },
+        1200
+      );
+
+
+      return;
+    }
+
+
+    await existing();
+
+    updateGoogleButton();
+
+  }
+);
+
 </script>
-  <!-- StudentHubHelp AI Chatbot -->
-  <script src="/studenthubhelp/ai-chatbot/public/widget.js" defer></script>
+
+
+<!-- StudentHubHelp AI Chatbot -->
+<script
+  src="/studenthubhelp/ai-chatbot/public/widget.js"
+  defer>
+</script>
+
 </body>
 </html>
