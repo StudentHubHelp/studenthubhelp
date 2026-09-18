@@ -3418,29 +3418,38 @@ window.claimThisProperty = claimThisProperty;
 
 async function checkAuth(){
 
-  const {
-    data,
-    error
-  } = await db.auth.getSession();
+  const {data,error}=await db.auth.getSession();
 
-  if(error){
-
-    console.error(error);
-
-  }
-
-  if(!data.session){
-
-    window.location.href =
-      "auth.html";
-
+  if(error || !data.session){
+    try{await db.auth.signOut();}catch(_){}
+    window.location.href="auth.html";
     return false;
-
   }
 
-  currentUser =
-    data.session.user;
+  const {data:userData,error:userError}=await db.auth.getUser();
 
+  if(userError || !userData?.user?.id){
+    try{await db.auth.signOut();}catch(_){}
+    window.location.href="auth.html";
+    return false;
+  }
+
+  const {data:profile,error:profileError}=await db
+    .from("profiles")
+    .select("role,status")
+    .eq("id",userData.user.id)
+    .maybeSingle();
+
+  const role=String(profile?.role||"").trim().toLowerCase();
+  const status=String(profile?.status||"active").trim().toLowerCase();
+
+  if(profileError || role!=="owner" || status!=="active"){
+    try{await db.auth.signOut();}catch(_){}
+    window.location.href="auth.html";
+    return false;
+  }
+
+  currentUser=userData.user;
   return true;
 
 }
@@ -4482,7 +4491,7 @@ async function saveProperty(key){
 
   if(error){
     console.error(error);
-    showToast("Could not save property: " + error.message,"error");
+    showToast("Could not save property. Please check the form and try again.","error");
     return;
   }
 
@@ -4579,7 +4588,7 @@ async function loadGallery(key){
       <div class="empty">
         <i class="fa-solid fa-triangle-exclamation"></i>
         <h3>Gallery unavailable</h3>
-        <p>${esc(error.message)}</p>
+        <p>Unable to load this content. Please try again.</p>
       </div>`;
     return;
   }
@@ -5201,7 +5210,7 @@ async function updateBooking(id,status){
     .eq("id",id);
 
   if(error){
-    showToast(error.message,"error");
+    showToast("Request could not be completed. Please try again.","error");
     return;
   }
 
