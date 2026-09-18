@@ -38,7 +38,9 @@ function readableAuthError(error: any): string {
   if (lower.includes('cancel') || lower.includes('abort')) {
     return 'Biometric verification was cancelled. Try again.';
   }
-  return message || 'Authentication failed. Please try again.';
+  if (lower.includes('rate limit') || lower.includes('too many')) return 'Too many attempts. Please wait and try again.';
+  if (lower.includes('invalid') || lower.includes('incorrect') || lower.includes('credentials')) return 'Email or password is incorrect.';
+  return 'Authentication failed. Please try again.';
 }
 
 async function verifyAdminUser(client: typeof supabase) {
@@ -71,11 +73,91 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
+  const [mfaMode, setMfaMode] = useState<'none' | 'enroll' | 'challenge'>('none');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaFactorId, setMfaFactorId] = useState('');
+  const [mfaQr, setMfaQr] = useState('');
+  const [mfaSecret, setMfaSecret] = useState('');
+  const [mfaBusy, setMfaBusy] = useState(false);
+
+  const finishAdminLogin = async (client: typeof supabase, emailAddress?: string) => {
+    const admin = await verifyAdminUser(client);
+    setMfaMode('none');
+    setMfaCode('');
+    setMfaFactorId('');
+    setMfaQr('');
+    setMfaSecret('');
+    setInfoMsg('Authentication successful. Opening the Director Control Center…');
+    onLoginSuccess(emailAddress || admin.email);
+  };
 
   const completeLogin = async (client: typeof supabase, emailAddress?: string) => {
     const admin = await verifyAdminUser(client);
-    setInfoMsg('Authentication successful. Opening the Director Control Center…');
-    onLoginSuccess(emailAddress || admin.email);
+
+    const { data: aal, error: aalError } =
+      await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalError) throw new Error('Unable to verify the administrator security level.');
+
+    const factors = await client.auth.mfa.listFactors();
+    if (factors.error) throw new Error('Unable to verify administrator MFA status.');
+
+    const verifiedTotp = (factors.data?.totp || []).find((factor: any) => factor.status === 'verified');
+
+    if (verifiedTotp) {
+      if (aal?.currentLevel === 'aal2') {
+        await finishAdminLogin(client, emailAddress || admin.email);
+        return;
+      }
+
+      const challenge = await client.auth.mfa.challenge({ factorId: verifiedTotp.id });
+      if (challenge.error) throw new Error('Unable to start MFA verification.');
+      setMfaFactorId(verifiedTotp.id);
+      setMfaMode('challenge');
+      setMfaCode('');
+      setInfoMsg('Enter the 6-digit code from your authenticator app.');
+      return;
+    }
+
+    const enrolled = await client.auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: 'StudentHubHelp Director',
+    });
+    if (enrolled.error) throw new Error('Unable to start MFA setup. Please try again.');
+    setMfaFactorId(enrolled.data.id);
+    setMfaQr(enrolled.data.totp.qr_code);
+    setMfaSecret(enrolled.data.totp.secret);
+    setMfaMode('enroll');
+    setMfaCode('');
+    setInfoMsg('MFA is required for the Director account. Scan the QR code and enter the 6-digit code.');
+  };
+
+  const verifyMfa = async () => {
+    if (!mfaFactorId || !/^\\d{6}$/.test(mfaCode)) {
+      setErrorMsg('Enter the 6-digit authenticator code.');
+      return;
+    }
+
+    setMfaBusy(true);
+    setErrorMsg(null);
+    try {
+      const client = securityAuth;
+      const challenge = await client.auth.mfa.challenge({ factorId: mfaFactorId });
+      if (challenge.error) throw new Error('Unable to start MFA verification.');
+
+      const verified = await client.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: challenge.data.id,
+        code: mfaCode,
+      });
+      if (verified.error) throw new Error('The authenticator code is incorrect or expired.');
+
+      await client.auth.refreshSession();
+      await finishAdminLogin(client);
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'MFA verification failed. Please try again.');
+    } finally {
+      setMfaBusy(false);
+    }
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -128,6 +210,59 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
       setLoading(false);
     }
   };
+
+  if (mfaMode !== 'none') {
+    return (
+      <div className="min-h-screen bg-[#050b1a] text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+        <div className="w-full max-w-md rounded-3xl bg-[#081026] border border-slate-800 p-8 relative shadow-2xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-600 mx-auto flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <Shield className="w-8 h-8 text-slate-950" />
+            </div>
+            <h1 className="text-2xl font-serif font-extrabold text-white">Director MFA</h1>
+            <p className="text-xs text-slate-400">
+              {mfaMode === 'enroll'
+                ? 'Set up your authenticator app. MFA is required before entering the Director Control Center.'
+                : 'Enter the code from your authenticator app to continue.'}
+            </p>
+          </div>
+          {errorMsg && <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex gap-2 items-start"><AlertTriangle className="w-4 h-4 shrink-0" /><span>{errorMsg}</span></div>}
+          {infoMsg && <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex gap-2 items-start"><CheckCircle2 className="w-4 h-4 shrink-0" /><span>{infoMsg}</span></div>}
+          {mfaMode === 'enroll' && (
+            <div className="space-y-4">
+              {mfaQr && <div className="bg-white rounded-2xl p-4 flex justify-center"><img src={mfaQr} alt="Authenticator QR code" className="w-56 h-56" /></div>}
+              <p className="text-[10px] text-slate-500 break-all">Manual setup key: {mfaSecret}</p>
+            </div>
+          )}
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={mfaCode}
+            onChange={(e) => setMfaCode(e.target.value.replace(/\\D/g, '').slice(0, 6))}
+            placeholder="6-digit authenticator code"
+            className="w-full px-4 py-3 bg-[#0d1838] border border-slate-700 rounded-xl text-sm text-white tracking-[0.35em] text-center focus:outline-none focus:border-amber-400"
+          />
+          <button
+            type="button"
+            onClick={verifyMfa}
+            disabled={mfaBusy || mfaCode.length !== 6}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-extrabold text-xs disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {mfaBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
+            {mfaMode === 'enroll' ? 'Enable MFA & Continue' : 'Verify MFA & Continue'}
+          </button>
+          <button
+            type="button"
+            onClick={async () => { try { await securityAuth.auth.signOut(); await supabase.auth.signOut(); } finally { setMfaMode('none'); setMfaCode(''); setInfoMsg(null); } }}
+            className="w-full text-xs text-slate-500 hover:text-white"
+          >
+            Cancel and sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050b1a] text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
