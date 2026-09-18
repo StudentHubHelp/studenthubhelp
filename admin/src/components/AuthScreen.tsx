@@ -16,13 +16,17 @@ interface AuthScreenProps {
   onLoginSuccess: (email: string) => void;
 }
 
-const securityAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    experimental: { passkey: true },
-  },
-});
+// Keep password authentication on the single shared Supabase client.
+// The passkey client is created lazily only when the passkey button is used,
+// avoiding two Auth clients competing over the same browser session storage.
+const createPasskeyClient = () =>
+  createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      experimental: { passkey: true },
+    },
+  });
 
 const ADMIN_ROLE = 'admin';
 
@@ -168,8 +172,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
     setInfoMsg(null);
     authClientRef.current = supabase;
     try {
+      const loginEmail = email.trim().toLowerCase();
+
+      // This dashboard has exactly one permitted admin identity.
+      // Keep the existing password unchanged; only normalize the email.
+      if (loginEmail !== ADMIN_EMAIL.toLowerCase()) {
+        throw new Error('Only the configured administrator account can sign in here.');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: ADMIN_EMAIL,
         password,
       });
       if (error) throw error;
@@ -198,15 +210,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
 
     setLoading(true);
     setErrorMsg(null);
-    authClientRef.current = securityAuth;
+    const passkeyClient = createPasskeyClient();
+    authClientRef.current = passkeyClient;
     setInfoMsg('Waiting for Face ID, fingerprint, Windows Hello, device PIN, or your registered passkey…');
     try {
-      const { data, error } = await securityAuth.auth.signInWithPasskey();
+      const { data, error } = await passkeyClient.auth.signInWithPasskey();
       if (error) throw error;
       if (!data?.user?.email) throw new Error('Passkey authentication returned no user account.');
-      await completeLogin(securityAuth, data.user.email);
+      await completeLogin(passkeyClient, data.user.email);
     } catch (err: any) {
-      try { await securityAuth.auth.signOut(); } catch { /* cleanup only */ }
+      try { await passkeyClient.auth.signOut(); } catch { /* cleanup only */ }
       setInfoMsg(null);
       setErrorMsg(readableAuthError(err));
     } finally {
