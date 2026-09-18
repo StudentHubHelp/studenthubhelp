@@ -580,8 +580,7 @@ export default function App() {
       });
     } catch (err: any) {
       showToast(
-        err?.message ||
-          'Error saving property',
+        'Unable to save the property. Please check the details and try again.',
         'error'
       );
     }
@@ -1211,7 +1210,7 @@ export default function App() {
       if (data) setReviews((prev) => prev.map((r) => String(r.id) === String(id) ? { ...r, ...data } : r));
       showToast(nextStatus.toLowerCase() === 'published' ? 'Review approved and published.' : nextStatus.toLowerCase() === 'rejected' ? 'Review rejected.' : `Review status changed to ${nextStatus}.`);
     } catch (err: any) {
-      showToast(err?.message || 'Unable to update review status.', 'error');
+      showToast('Unable to update the review status. Please try again.', 'error');
     }
   };
 
@@ -1567,8 +1566,12 @@ export default function App() {
           reports:
             pendingReportCount,
         }}
-        onLogout={() => {
-          setIsAuthenticated(false);
+        onLogout={async () => {
+          try {
+            await supabase.auth.signOut();
+          } finally {
+            setIsAuthenticated(false);
+          }
         }}
         isOpenMobile={
           isMobileSidebarOpen
