@@ -176,6 +176,16 @@ jobs:
               }
               console.log('ROUND '+round+': 15/15 PASS');
             }
+            const cityRows=[{property_id:'s',name:'Sikar Allen Tiffin',category:'tiffin',city:'Sikar',area:'Piprali Road',nearby:'Allen'},{property_id:'k',name:'Kota Allen Tiffin',category:'tiffin',city:'Kota',area:'Talwandi',nearby:'Allen'}];
+            for(const q of ['Sikar me Allen ke paas tiffin','Sikar Allen ke near tiffin']){
+              const out=window.ranked(cityRows,q);
+              if(!out.length||out.some(r=>r.city!=='Sikar')) throw new Error('City leakage: '+q);
+            }
+            for(const q of ['Kota me Allen ke paas tiffin','Kota Allen ke near tiffin']){
+              const out=window.ranked(cityRows,q);
+              if(!out.length||out.some(r=>r.city!=='Kota')) throw new Error('City leakage: '+q);
+            }
+            console.log('CITY-SCOPE REGRESSION: 4/4 PASS');
             console.log('NATURAL LANGUAGE REGRESSION: 120/120 PASS');
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE
