@@ -10,6 +10,7 @@ on:
       - search-phase2-intelligence.js
       - search-phase3-location-intelligence.js
       - search-phase4-final-fusion.js
+      - search-phase5-natural-language.js
       - .github/workflows/install-search-relevance-fix.yml
 
 permissions:
@@ -25,7 +26,7 @@ jobs:
       - name: Test search intelligence JavaScript
         shell: bash
         run: |
-          for f in search-relevance-fix.js search-distance-intelligence.js search-phase1-intelligence.js search-phase2-intelligence.js search-phase3-location-intelligence.js search-phase4-final-fusion.js; do
+          for f in search-relevance-fix.js search-distance-intelligence.js search-phase1-intelligence.js search-phase2-intelligence.js search-phase3-location-intelligence.js search-phase4-final-fusion.js search-phase5-natural-language.js; do
             node --check "$f"
           done
 
@@ -117,6 +118,68 @@ jobs:
           })().catch(err=>{console.error(err);process.exit(1);});
           NODE
 
+
+      - name: Run 8 rounds of natural-language search regression (120 checks)
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const wait=ms=>new Promise(r=>setTimeout(r,ms));
+          (async()=>{
+            const rows=[
+              {property_id:'t1',name:'Allen Area Tiffin',category:'tiffin',city:'Sikar',area:'Piprali Road',nearby:'Allen Career Institute',address:'Near Allen, Piprali Road, Sikar',food_type:'pure veg'},
+              {property_id:'t2',name:'CLC Chowk Cafe',category:'cafe',city:'Sikar',area:'Piprali Road',nearby:'CLC Chowk',address:'CLC Chowk, Piprali Road, Sikar'},
+              {property_id:'t3',name:'Allen Boys Hostel',category:'hostel',city:'Sikar',area:'Piprali Road',nearby:'Allen Career Institute',gender:'boys'},
+              {property_id:'t4',name:'Kalam Girls Hostel',category:'hostel',city:'Sikar',area:'Nawalgarh Road',nearby:'Kalam',gender:'girls'},
+              {property_id:'t5',name:'Aakash Cafe',category:'cafe',city:'Sikar',area:'Piprali Road',nearby:'Aakash Institute',address:'Opposite Aakash, Piprali Road'},
+              {property_id:'t6',name:'Allen Book Depot',category:'bookstore',city:'Sikar',area:'Piprali Road',nearby:'Allen Career Institute'},
+              {property_id:'t7',name:'Talwandi Allen PG',category:'hostel',city:'Kota',area:'Talwandi',nearby:'Allen Satyarth',gender:'boys'},
+              {property_id:'t8',name:'Jawahar Allen Girls Hostel',category:'hostel',city:'Kota',area:'New Jawahar Nagar',nearby:'Allen Sammunat',gender:'girls'},
+              {property_id:'t9',name:'Talwandi Veg Tiffin',category:'tiffin',city:'Kota',area:'Talwandi',nearby:'Allen Satyarth',food_type:'pure veg'},
+              {property_id:'t10',name:'Indra Vihar Boys PG',category:'hostel',city:'Kota',area:'Indra Vihar',nearby:'Coaching Area',gender:'boys'},
+              {property_id:'t11',name:'Jagatpura Girls PG',category:'hostel',city:'Jaipur',area:'Jagatpura',nearby:'Power House',gender:'girls'},
+              {property_id:'t12',name:'Pratap Nagar Girls PG',category:'hostel',city:'Jaipur',area:'Pratap Nagar',nearby:'Pannadhay Circle',gender:'girls'},
+              {property_id:'t13',name:'Indiranagar Cafe',category:'cafe',city:'Bengaluru',area:'Indiranagar',facilities:'Wi-Fi'},
+              {property_id:'t14',name:'Basavanagudi Veg Tiffin',category:'tiffin',city:'Bengaluru',area:'Basavanagudi',food_type:'vegetarian'},
+              {property_id:'t15',name:'HSR Library',category:'library',city:'Bengaluru',area:'HSR Layout'}
+            ];
+            const cases=[
+              ['allen k pass me tiffin','t1'],['Sikar me CLC Chowk par cafe','t2'],
+              ['Sikar Piprali Road par Allen ke paas boys hostel','t3'],
+              ['Sikar Nawalgarh Road par girls hostel near Kalam','t4'],
+              ['Sikar Piprali Road par Aakash ke opposite cafe','t5'],
+              ['Sikar me Piprali Road par bookstore near Allen','t6'],
+              ['Kota Talwandi me Allen Satyarth ke paas boys PG','t7'],
+              ['Kota New Jawahar Nagar me Allen Sammunat ke paas girls hostel','t8'],
+              ['Kota Talwandi me pure veg food wala hostel','t9'],
+              ['Kota Indra Vihar me boys hostel near coaching','t10'],
+              ['Jaipur Jagatpura me girls PG near Power House','t11'],
+              ['Jaipur Pratap Nagar me girls PG near Pannadhay Circle','t12'],
+              ['Bengaluru Indiranagar me cafe with WiFi','t13'],
+              ['Bengaluru Basavanagudi me vegetarian tiffin','t14'],
+              ['Bengaluru HSR Layout me library','t15']
+            ];
+            for(let round=1;round<=8;round++){
+              global.window={};
+              window.ranked=(data,q)=>{
+                const n=String(q).toLowerCase();
+                const cat=n.includes('tiffin')||n.includes('mess')?'tiffin':n.includes('cafe')?'cafe':(n.includes('hostel')||n.includes('pg'))?'hostel':n.includes('bookstore')?'bookstore':n.includes('library')?'library':null;
+                return cat?data.filter(r=>r.category===cat).map(r=>({...r,__score:10})):[]; 
+              };
+              eval(fs.readFileSync('search-phase5-natural-language.js','utf8')); await wait(80);
+              if(!window.__studentHubPhase5) throw new Error('Phase5 did not install in round '+round);
+              for(const [q,want] of cases){
+                const out=window.ranked(rows,q);
+                if(!out.length||out[0].property_id!==want){
+                  throw new Error('Round '+round+' failed: '+q+' => '+(out[0]?.name||'NO RESULT')+' expected '+want);
+                }
+              }
+              console.log('ROUND '+round+': 15/15 PASS');
+            }
+            console.log('NATURAL LANGUAGE REGRESSION: 120/120 PASS');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+
       - name: Attach all search intelligence layers in order
         shell: bash
         run: |
@@ -124,7 +187,7 @@ jobs:
           from pathlib import Path
           import re
           p=Path('global-search.html'); s=p.read_text(encoding='utf-8')
-          files=['search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js','search-phase3-location-intelligence.js','search-phase4-final-fusion.js']
+          files=['search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js','search-phase3-location-intelligence.js','search-phase4-final-fusion.js','search-phase5-natural-language.js']
           for f in files: s=re.sub(r'\s*<script\s+src=["\']'+re.escape(f)+r'["\']\s*></script>','',s,flags=re.I)
           m=re.search(r'</body\s*>',s,re.I) or re.search(r'</html\s*>',s,re.I)
           if not m: raise SystemExit('global-search closing marker not found')
@@ -140,8 +203,8 @@ jobs:
           s=Path('global-search.html').read_text(encoding='utf-8')
           files=['search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js','search-phase3-location-intelligence.js','search-phase4-final-fusion.js']
           pos=[s.find(f'<script src="{f}"></script>') for f in files]
-          if any(x<0 for x in pos) or pos!=sorted(pos) or len(set(pos))!=6: raise SystemExit(f'Invalid search layer attachment: {pos}')
-          print('All 6 search layers attached once and in correct order:',pos)
+          if any(x<0 for x in pos) or pos!=sorted(pos) or len(set(pos))!=7: raise SystemExit(f'Invalid search layer attachment: {pos}')
+          print('All 7 search layers attached once and in correct order:',pos)
           PY
 
       - name: Commit and push
