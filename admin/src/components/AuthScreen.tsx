@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Shield,
   Lock,
@@ -79,6 +79,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
   const [mfaQr, setMfaQr] = useState('');
   const [mfaSecret, setMfaSecret] = useState('');
   const [mfaBusy, setMfaBusy] = useState(false);
+  const authClientRef = useRef<typeof supabase>(supabase);
 
   const finishAdminLogin = async (client: typeof supabase, emailAddress?: string) => {
     const admin = await verifyAdminUser(client);
@@ -140,7 +141,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
     setMfaBusy(true);
     setErrorMsg(null);
     try {
-      const client = securityAuth;
+      const client = authClientRef.current;
       const challenge = await client.auth.mfa.challenge({ factorId: mfaFactorId });
       if (challenge.error) throw new Error('Unable to start MFA verification.');
 
@@ -165,6 +166,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setErrorMsg(null);
     setInfoMsg(null);
+    authClientRef.current = supabase;
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -196,6 +198,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
 
     setLoading(true);
     setErrorMsg(null);
+    authClientRef.current = securityAuth;
     setInfoMsg('Waiting for Face ID, fingerprint, Windows Hello, device PIN, or your registered passkey…');
     try {
       const { data, error } = await securityAuth.auth.signInWithPasskey();
