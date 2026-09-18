@@ -112,8 +112,14 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     try {
       const history = messages.slice(-6).map(m => ({ role: m.sender === 'user' ? ('user' as const) : ('model' as const), text: m.text }));
       const lastPropertyMessage = [...messages].reverse().find(m => m.sender === 'bot' && Array.isArray(m.recommendedProperties) && m.recommendedProperties.length > 0);
-      const isPropertyFollowUp = /\b(iske|iska|iski|is property|this|that|details|detail|phone|number|contact)\b/i.test(text);
-      const focusedProperty = isPropertyFollowUp ? lastPropertyMessage?.recommendedProperties?.[0] : undefined;
+      const isPropertyFollowUp = /\b(iske|iska|iski|is property|this|that|details|detail|phone|number|contact|iska phone|iska number)\b/i.test(text);
+      const normalizedFollowUp = text.toLowerCase().replace(/[^a-z0-9\\u0900-\\u097f]+/gi, ' ').trim();
+      const focusedProperty = isPropertyFollowUp
+        ? lastPropertyMessage?.recommendedProperties?.find((p: any) => {
+            const name = String(p?.name || '').toLowerCase().replace(/[^a-z0-9\\u0900-\\u097f]+/gi, ' ').trim();
+            return name && normalizedFollowUp.includes(name);
+          }) || lastPropertyMessage?.recommendedProperties?.[0]
+        : undefined;
       if (!SUPABASE_ANON_KEY) throw new Error('Missing VITE_SUPABASE_ANON_KEY. Add the public Supabase anon/publishable key to the Vite build environment.');
       const controller = new AbortController(); const timeoutId = window.setTimeout(() => controller.abort(), 20000); let res: Response;
       try {
