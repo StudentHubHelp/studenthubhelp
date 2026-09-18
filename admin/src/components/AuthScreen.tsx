@@ -31,6 +31,12 @@ const createPasskeyClient = () =>
 const ADMIN_ROLE = 'admin';
 
 function readableAuthError(error: any): string {
+  console.error('[Director Auth] Supabase error:', {
+    status: error?.status,
+    code: error?.code,
+    name: error?.name,
+    message: error?.message,
+  });
   const message = String(error?.message || error || '').trim();
   const lower = message.toLowerCase();
   if (lower.includes('passkey_disabled')) {
@@ -44,7 +50,8 @@ function readableAuthError(error: any): string {
   }
   if (lower.includes('rate limit') || lower.includes('too many')) return 'Too many attempts. Please wait and try again.';
   if (lower.includes('invalid') || lower.includes('incorrect') || lower.includes('credentials')) return 'Email or password is incorrect.';
-  return 'Authentication failed. Please try again.';
+  const details = [error?.code, error?.status].filter(Boolean).join(' / ');
+  return details ? `Authentication failed (${details}). Please try again.` : 'Authentication failed. Please try again.';
 }
 
 async function verifyAdminUser(client: typeof supabase) {
@@ -271,7 +278,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
           </button>
           <button
             type="button"
-            onClick={async () => { try { await securityAuth.auth.signOut(); await supabase.auth.signOut(); } finally { setMfaMode('none'); setMfaCode(''); setInfoMsg(null); } }}
+            onClick={async () => { try { await supabase.auth.signOut(); } finally { setMfaMode('none'); setMfaCode(''); setInfoMsg(null); } }}
             className="w-full text-xs text-slate-500 hover:text-white"
           >
             Cancel and sign out
