@@ -405,19 +405,20 @@ export default function App() {
         ...prev,
       ]);
 
-      void supabase
-        .from('security_audit_log')
-        .insert({
-          actor_id: newLog.admin_email ? undefined : undefined,
-          actor_email: adminEmail,
-          action,
-          entity_type: entityType,
-          entity_id: String(entityId),
-          metadata: detail && typeof detail === 'object' ? detail : {},
-        })
-        .then(({ error }) => {
-          if (error) console.warn('Security audit log write failed');
-        });
+      void supabase.auth.getUser().then(({ data }) =>
+        supabase
+          .from('security_audit_log')
+          .insert({
+            actor_id: data.user?.id || null,
+            actor_email: adminEmail,
+            action,
+            entity_type: entityType,
+            entity_id: String(entityId),
+            metadata: detail && typeof detail === 'object' ? detail : {},
+          })
+      ).then(({ error }) => {
+        if (error) console.warn('Security audit log write failed');
+      });
     },
     [adminEmail]
   );
