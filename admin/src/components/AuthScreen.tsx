@@ -10,7 +10,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
-import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAIL } from '../lib/supabase';
 
 interface AuthScreenProps {
   onLoginSuccess: (email: string) => void;
