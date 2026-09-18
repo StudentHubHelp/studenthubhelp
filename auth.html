@@ -239,7 +239,9 @@ function friendlyError(e){
   if(m.includes("token")&&m.includes("expired"))return"Reset link expire ho gaya. Naya reset link request karo.";
   if(m.includes("invalid")&&m.includes("email"))return"Valid email address enter karo.";
   if(m.includes("captcha"))return"Security verification complete nahi hui. Dobara try karo.";
-  return e?.message||"Authentication failed. Please try again.";
+  if(m.includes("rate limit")||m.includes("too many"))return"Bahut zyada attempts ho gaye. Thodi der baad try karo.";
+  if(m.includes("invalid")||m.includes("incorrect")||m.includes("credentials"))return"Email ya password incorrect hai.";
+  return"Authentication failed. Please try again.";
 }
 
 function pendingRole(){
