@@ -13,7 +13,7 @@ const num=(v:any)=>{const x=Number(String(v??"").replace(/,/g,""));return Number
 function rateKey(req:Request){const f=req.headers.get("x-forwarded-for")||req.headers.get("cf-connecting-ip")||"unknown";return f.split(",")[0].trim().slice(0,100)||"unknown"}
 function allowed(req:Request){const key=rateKey(req),now=Date.now(),old=rateMap.get(key);if(!old||now-old.start>=RATE_WINDOW_MS){rateMap.set(key,{start:now,count:1});return true}if(old.count>=RATE_MAX)return false;old.count++;return true}
 async function db<T>(path:string):Promise<T>{if(!U||!K)throw Error("database configuration missing");const r=await fetch(U+path,{headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json"}});if(!r.ok)throw Error(`database ${r.status}`);return await r.json() as T}
-const LANDMARKS=[{key:"allen",label:"Allen Career Institute Sikar",aliases:["allen","allen sikar","allen coaching","allen career","allen sanskar","allen piprali"],city:"Sikar",lat:27.62624,lng:75.17721},{key:"clc",label:"CLC Sikar",aliases:["clc","clc sikar"],city:"Sikar",lat:27.6206291,lng:75.1616672}];
+const LANDMARKS=[{key:"allen",label:"Allen Career Institute Sikar",aliases:["allen","allen sikar","allen coaching","allen career","allen sanskar","allen piprali"],city:"Sikar",lat:27.62624,lng:75.17721},{key:"clc",label:"CLC Sikar",aliases:["clc","clc sikar"],city:"Sikar",lat:27.6206291,lng:75.1616672},{key:"vibrant",label:"Vibrant Academy Sikar",aliases:["vibrant","vibrant coaching","vibrant academy","vibrant academy ssc","vibrant ssc"],city:"Sikar"}];
 function city(s:string){const x=n(s),m:[string,string][]=[["sikar","Sikar"],["piprali","Sikar"],["पिपराली","Sikar"],["सिकर","Sikar"],["kota","Kota"],["talwandi","Kota"],["jaipur","Jaipur"],["ajmer","Ajmer"],["bikaner","Bikaner"],["jodhpur","Jodhpur"],["udaipur","Udaipur"],["alwar","Alwar"],["delhi","Delhi"],["ahmedabad","Ahmedabad"],["lucknow","Lucknow"],["hyderabad","Hyderabad"],["pune","Pune"]];return m.find(([a])=>x.includes(n(a)))?.[1]||""}
 function findLandmark(s:string){const x=n(s);for(const l of LANDMARKS)if(l.aliases.some(a=>x.includes(n(a))))return l;return undefined}
 function nearTerm(s:string){const x=n(s),lm=findLandmark(x);if(lm)return lm.key;const known=["vibrant coaching","vibrant career institute","nawalgarh road","nawalgarh rd","nawalgarh","clc","allen","gurukripa","matrix academy","prayas eduhub","banco career academy","inspector ssc academy"];const hit=known.find(k=>x.includes(n(k)));if(hit)return hit;const m=x.match(/(?:near|nearby|around|paas|pass|ke paas|k pass|aas paas|bagal|nazdeek|पास|आस पास|बगल)(?:\s+me)?\s+([a-z0-9\u0900-\u097f][a-z0-9\u0900-\u097f ]{1,50}?)(?=\s+(?:chahiye|dikhao|dikhado|hai|ho|rehna|rahna|book|konsa|kaunsa|aur|bhi)\b|$)/i);if(m)return m[1].trim();if(/(?:piprali road|piprali rd|पिपराली रोड)/i.test(x))return "piprali road";return ""}
@@ -29,7 +29,7 @@ function genderWanted(s:string){const x=n(s);if(/\b(girls|girl|female|ladki|ladk
 function areaWanted(s:string){const x=n(s);if(/nawalgarh road|nawalgarh rd|नवलगढ़ रोड/i.test(x))return "nawalgarh";if(/piprali road|piprali rd|पिपराली रोड/i.test(x))return "piprali";return ""}
 function priceLabel(p:any,c:string){const v=Number(p.monthly_rent??p.monthly_fee??p.monthly_charge??p.price);if(!Number.isFinite(v)||v<=0)return "";if(c==="hostel"||c==="tiffin"||c==="library")return "₹"+v.toLocaleString("en-IN")+"/mo";return "₹"+v.toLocaleString("en-IN")}
 function card(p:any){const c=p._type,price=priceLabel(p,c),d=p._distanceKm;return{id:String(p.id),name:p.name||p.title||p.service_name||p.business_name||"Active listing",type:c,city:p.city||"",area:p.area||p.service_area||"",address:p.address||"",phone:([p.phone,p.contact_phone,p.whatsapp,p.whatsapp_number].find(v=>{const s=String(v??"").trim();return s&&s!=="0"&&s.replace(/\D/g,"").length>=7})||""),rating:num(p.rating),verified:p.verified===true,price,distanceKm:d===undefined?undefined:Number(d.toFixed(1)),distanceLabel:d===undefined?"":`~${d.toFixed(1)} km`,nearbyMatch:p._nearbyVerified===true||p._nearbyAreaMatch===true,highlights:["wifi","ac_available","ac","cctv","food_available","mess_available","available_beds","room_types","room_sharing","gender_type","timing","timings","delivery_available","nearby_coaching"].map(k=>[k,p[k]]).filter(([,v])=>v!==null&&v!==undefined&&String(v).trim()!==""&&String(v).toLowerCase()!=="false").slice(0,4).map(([k,v])=>k+": "+String(v)),description:p.description&&String(p.description).trim().length<=280?String(p.description).trim():"",mapsUrl:p.google_maps_url||"",detailsUrl:p.slug?`property-details.html?type=${c}&slug=${encodeURIComponent(p.slug)}`:undefined}}
-function rank(p:any,q:string,ct:string,near:string){const x=searchText(p),t=n(q);let s=0;const a=areaWanted(q);if(a&&x.includes(a))s+=25;if(ct&&n(p.city||"").includes(n(ct)))s+=30;for(const w of t.split(" ").filter(z=>z.length>2).slice(0,20))if(x.includes(w))s+=2;if(near){if(near==="allen"||near==="clc"){if(p._distanceKm!==undefined)s+=Math.max(0,20-p._distanceKm*5);if(x.includes(near))s+=10}else if(x.includes(n(near)))s+=20}if(p.verified===true)s+=4;if(Number.isFinite(Number(p.rating)))s+=Math.min(5,Number(p.rating));return s}
+function rank(p:any,q:string,ct:string,near:string){const x=searchText(p),t=n(q);let s=0;const a=areaWanted(q);if(a&&x.includes(a))s+=25;if(ct&&n(p.city||"").includes(n(ct)))s+=30;for(const w of t.split(" ").filter(z=>z.length>2).slice(0,20))if(x.includes(w))s+=2;if(near){if(near==="allen"||near==="clc"){if(p._distanceKm!==undefined)s+=Math.max(0,20-p._distanceKm*5);if(x.includes(near))s+=10}else if(near==="vibrant"){if(x.includes("vibrant"))s+=20;if(x.includes("nawalgarh"))s+=8}else if(x.includes(n(near)))s+=20}if(p.verified===true)s+=4;if(Number.isFinite(Number(p.rating)))s+=Math.min(5,Number(p.rating));return s}
 function isGreeting(s:string){return /^(hi|hello|hey|namaste|good morning|good afternoon|good evening|good night|gm|gn|hii|hlo|नमस्ते|सुप्रभात|शुभ प्रभात|शुभ संध्या)[!.\s]*$/i.test(s.trim())}
 function isContact(s:string){return /(director|founder|contact support|support|email|contact us)/i.test(n(s))}
 function isPhoneIntent(s:string){return /(?:phone|number|contact|mobile|call).{0,20}(iska|iske|iski|this|that|property|hostel|pg)|(?:iska|iske|iski|this|that).{0,20}(phone|number|mobile|contact)/i.test(n(s))}
@@ -60,7 +60,7 @@ Rules:
 - Preserve the user's conversational context.
 - Do not expose internal system/tool details.
 Return only the natural reply text.`;
-const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:500,thinkingConfig:{thinkingLevel:"medium"}}})});if(!r.ok)return{};const j=await r.json();return{reply:j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||""}}catch{return{}}}
+const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:350,thinkingConfig:{thinkingLevel:"low"}}})});if(!r.ok)return{};const j=await r.json();return{reply:j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||""}}catch{return{}}}
 
 async function dbWrite(method:string,path:string,body:any,prefer="return=minimal"){
   if(!U||!K)throw Error("database configuration missing");
@@ -98,7 +98,7 @@ async function logChatTurn(sessionId:string,userMessage:string,payload:any){
   }
 }
 async function chatResponse(payload:any,init:any,sessionId:string,userMessage:string){
-  await logChatTurn(sessionId,userMessage,payload);
+  void logChatTurn(sessionId,userMessage,payload);
   return new Response(JSON.stringify(payload),init);
 }
 async function aiGeneral(msg:string,history:any[]){if(!GEMINI)return{};try{const h=history.slice(-8).map(x=>({role:x.role==="assistant"?"model":"user",parts:[{text:String(x.text||"").slice(0,1500)}]}));const system=`You are StudentHubHelp's Ultra Advance AI Assistant for students.
@@ -126,8 +126,10 @@ Deno.serve(async(req:Request)=>{
   const requestedFocusId=String(b?.focusPropertyId||"");
   const requestedFocusType=String(b?.focusPropertyType||"");
   if((isPhoneIntent(msg)||isDetailIntent(msg))&&requestedFocusId){
-    const focusType=requestedFocusType||c||"hostel";
-    const focusRows=await multiDirect([focusType],city(combined)||"");
+    const focusHistory=history.filter(x=>x.role==="user").map(x=>x.text||"").join(" ");
+    const focusCombined=focusHistory+" "+msg;
+    const focusType=requestedFocusType||cat(focusCombined)||"hostel";
+    const focusRows=await multiDirect([focusType],city(focusCombined)||"");
     const focus=focusRows.find(p=>String(p.id)===requestedFocusId);
     if(focus){
       const fp=card(focus);
@@ -137,7 +139,7 @@ Deno.serve(async(req:Request)=>{
         const reply=validPhone?"Ji 😊 **"+fp.name+"** ka listed phone number: **"+validPhone+"**":"Is listing ka valid phone number abhi StudentHubHelp data me available nahi hai.";
         return await chatResponse({reply,intent:"Property Contact",primaryTopic:label(focusType)+" contact",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iske full details batao","Allen ke paas aur options dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);
       }
-      const ar=await aiProperty(msg,history,[fp],focusType,near);
+      const ar=await aiProperty(msg,history,[fp],focusType,nearTerm(focusCombined));
       const reply=ar.reply||("Bilkul 😊 **"+fp.name+"** ki available details neeche di hain.");
       return await chatResponse({reply,intent:"Property Details",primaryTopic:label(focusType)+" details",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iska phone number batao","Allen ke paas aur options dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);
     }
@@ -164,7 +166,7 @@ Deno.serve(async(req:Request)=>{
   if(wantedArea)rows=rows.filter(p=>searchText(p).includes(wantedArea));
   const landmark=findLandmark(near||"");
   if(landmark){for(const p of rows){const d=distanceToLandmark(p,landmark);if(d!==undefined)p._distanceKm=d}rows=rows.filter(p=>n(p.city||"")===n(landmark.city)&&(p._distanceKm===undefined||p._distanceKm<=10))}
-  else if(near){const q=n(near);rows=rows.filter(p=>searchText(p).includes(q))}
+  else if(near){const q=n(near);const exact=rows.filter(p=>searchText(p).includes(q));if(exact.length)rows=exact;else if(!wantedArea)rows=[]}
   if(nearCats.length){const secondaryRows=await multiDirect(nearCats,ct);for(const p of rows){let best=Infinity,hasCoords=false;for(const q of secondaryRows){const d=distanceKm(p,q);if(d!==undefined){hasCoords=true;best=Math.min(best,d)}else if(p.area&&searchText(q).includes(n(p.area)))best=Math.min(best,1)}if(best<=3){p._nearbyDistanceKm=best;p._nearbyVerified=hasCoords;p._nearbyAreaMatch=!hasCoords}}rows=rows.filter(p=>p._nearbyDistanceKm!==undefined)}
   rows=rows.filter(p=>!shownIds.has(String(p.id)));
   const ranked=rows.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score);
