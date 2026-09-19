@@ -60,6 +60,46 @@ Rules:
 - Do not expose internal system/tool details.
 Return only the natural reply text.`;
 const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:500,temperature:0.35}})});if(!r.ok)return{};const j=await r.json();return{reply:j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||""}}catch{return{}}}
+
+async function dbWrite(method:string,path:string,body:any,prefer="return=minimal"){
+  if(!U||!K)throw Error("database configuration missing");
+  const r=await fetch(U+path,{method,headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json",Prefer:prefer},body:JSON.stringify(body)});
+  if(!r.ok)throw Error(`database write ${r.status}: ${(await r.text()).slice(0,200)}`);
+  if(r.status===204)return null;
+  return await r.json().catch(()=>null);
+}
+async function logChatTurn(sessionId:string,userMessage:string,payload:any){
+  try{
+    const intent=String(payload?.intent||"").slice(0,200)||null;
+    const primaryTopic=String(payload?.primaryTopic||"").slice(0,200)||null;
+    const targetCity=String(payload?.targetCity||"").slice(0,120)||null;
+    const recommendedCategory=String(payload?.targetCategory||"").slice(0,120)||null;
+    const recs=Array.isArray(payload?.recommendedProperties)?payload.recommendedProperties:(Array.isArray(payload?.recommendations)?payload.recommendations:[]);
+    const grounded=payload?.grounded===true;
+    const existing=await db<any[]>(`/rest/v1/chatbot_conversations?select=id,message_count,first_message_at&session_id=eq.${encodeURIComponent(sessionId)}&limit=1`);
+    let conversationId:string;
+    let oldCount=0;
+    if(existing[0]){
+      conversationId=String(existing[0].id);
+      oldCount=Number(existing[0].message_count||0);
+    }else{
+      const created=await dbWrite("POST","/rest/v1/chatbot_conversations",{session_id:sessionId,message_count:0,primary_topic:primaryTopic,intent,target_city:targetCity,recommended_category:recommendedCategory,grounded,metadata:{source:"studenthubhelp-chat"}},"return=representation");
+      conversationId=String(created?.[0]?.id||"");
+      if(!conversationId)throw Error("conversation id missing");
+    }
+    const nowCount=oldCount+2;
+    await dbWrite("POST","/rest/v1/chatbot_messages",{conversation_id:conversationId,session_id:sessionId,role:"user",message:userMessage.slice(0,1500),intent,primary_topic:primaryTopic,sentiment:null,recommended_properties:[],metadata:{source:"live_chatbot"}});
+    await dbWrite("POST","/rest/v1/chatbot_messages",{conversation_id:conversationId,session_id:sessionId,role:"assistant",message:String(payload?.reply||"").slice(0,8000),intent,primary_topic:primaryTopic,sentiment:null,recommended_properties:recs.slice(0,8),metadata:{source:"live_chatbot",webGrounded:payload?.webGrounded===true,searchMode:payload?.searchMode||null}});
+    await dbWrite("PATCH",`/rest/v1/chatbot_conversations?id=eq.${encodeURIComponent(conversationId)}`,{last_message_at:new Date().toISOString(),message_count:nowCount,primary_topic:primaryTopic,intent,target_city:targetCity,recommended_category:recommendedCategory,last_user_message:userMessage.slice(0,1500),last_bot_reply:String(payload?.reply||"").slice(0,8000),live_active_property_count:recs.length,grounded,metadata:{source:"studenthubhelp-chat",lastEvent:"chat_response",webGrounded:payload?.webGrounded===true}});
+    await dbWrite("POST","/rest/v1/chatbot_events",{conversation_id:conversationId,session_id:sessionId,event_type:"chat_response",payload:{intent,primaryTopic,targetCity,recommendedCategory,recommendedPropertyCount:recs.length,grounded}});
+  }catch(e){
+    console.error("chatbot persistence failed",e);
+  }
+}
+async function chatResponse(payload:any,init:any,sessionId:string,userMessage:string){
+  await logChatTurn(sessionId,userMessage,payload);
+  return new Response(JSON.stringify(payload),init);
+}
 async function aiGeneral(msg:string,history:any[]){if(!GEMINI)return{};try{const h=history.slice(-8).map(x=>({role:x.role==="assistant"?"model":"user",parts:[{text:String(x.text||"").slice(0,1500)}]}));const system=`You are StudentHubHelp's Ultra Advance AI Assistant for students.
 You are a natural conversational, study and general knowledge assistant.
 Match the user's language and tone: Hindi, Hinglish or English.
@@ -81,7 +121,7 @@ Deno.serve(async(req:Request)=>{
   const b=await req.json(),msg=String(b?.message||"").trim().slice(0,1500),history=Array.isArray(b?.history)?b.history.slice(-8).map((x:any)=>({role:String(x?.role||"").slice(0,20),text:String(x?.text||"").slice(0,1500)})):[];
   if(!msg)return new Response(JSON.stringify({error:"Message is required"}),{status:400,headers:H});
   const sessionId=String(b?.sessionId||crypto.randomUUID());
-  if(isGreeting(msg))return new Response(JSON.stringify({reply:greeting(),intent:"Greeting / Onboarding",primaryTopic:"StudentHubHelp AI",suggestedFollowUps:["Find a hostel","Find a tiffin service","Find a library","Contact support"],recommendations:[],recommendedProperties:[],grounded:true,sessionId}),{headers:H});
+  if(isGreeting(msg))return await chatResponse({reply:greeting(),intent:"Greeting / Onboarding",primaryTopic:"StudentHubHelp AI",suggestedFollowUps:["Find a hostel","Find a tiffin service","Find a library","Contact support"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
   const requestedFocusId=String(b?.focusPropertyId||"");
   const requestedFocusType=String(b?.focusPropertyType||"");
   if((isPhoneIntent(msg)||isDetailIntent(msg))&&requestedFocusId){
@@ -94,16 +134,16 @@ Deno.serve(async(req:Request)=>{
         const raw=String(fp.phone||"").trim();
         const validPhone=raw&&raw!=="0"&&raw.replace(/\D/g,"").length>=7?raw:"";
         const reply=validPhone?"Ji 😊 **"+fp.name+"** ka listed phone number: **"+validPhone+"**":"Is listing ka valid phone number abhi StudentHubHelp data me available nahi hai.";
-        return new Response(JSON.stringify({reply,intent:"Property Contact",primaryTopic:label(focusType)+" contact",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iske full details batao","Allen ke paas aur options dikhao"],grounded:true,sessionId}),{headers:H});
+        return await chatResponse({reply,intent:"Property Contact",primaryTopic:label(focusType)+" contact",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iske full details batao","Allen ke paas aur options dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);
       }
       const ar=await aiProperty(msg,history,[fp],focusType,near);
       const reply=ar.reply||("Bilkul 😊 **"+fp.name+"** ki available details neeche di hain.");
-      return new Response(JSON.stringify({reply,intent:"Property Details",primaryTopic:label(focusType)+" details",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iska phone number batao","Allen ke paas aur options dikhao"],grounded:true,sessionId}),{headers:H});
+      return await chatResponse({reply,intent:"Property Details",primaryTopic:label(focusType)+" details",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iska phone number batao","Allen ke paas aur options dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);
     }
   }
-  if(isContact(msg)||String(b?.action||"")==="contact_support")return new Response(JSON.stringify({reply:"Ji bilkul 😊 StudentHubHelp team se contact ke liye:\n\n📧 Email: satpalswami22742@gmail.com\n📞 Phone: +91 9929718264",intent:"Support / Contact",primaryTopic:"Contact StudentHubHelp",suggestedFollowUps:["Find a hostel","Find a library","Search by area","Back to search"],recommendations:[],recommendedProperties:[],grounded:true,sessionId}),{headers:H});
+  if(isContact(msg)||String(b?.action||"")==="contact_support")return await chatResponse({reply:"Ji bilkul 😊 StudentHubHelp team se contact ke liye:\n\n📧 Email: satpalswami22742@gmail.com\n📞 Phone: +91 9929718264",intent:"Support / Contact",primaryTopic:"Contact StudentHubHelp",suggestedFollowUps:["Find a hostel","Find a library","Search by area","Back to search"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
   const previous=history.filter(x=>x.role==="user").map(x=>x.text||"").join(" "),combined=previous+" "+msg,explicitCat=cat(msg),nearCats=secondaryCats(msg),c=explicitCat||cat(previous),propertyMode=isPropertyQuery(msg,previous),ct=city(msg)||city(combined)||"",near=nearTerm(msg)||nearTerm(combined),action=String(b?.action||""),shownIds=new Set((Array.isArray(b?.shownPropertyIds)?b.shownPropertyIds:[]).map((x:any)=>String(x)));
-  if(action==="search_area"&&!city(msg)&&!nearTerm(msg))return new Response(JSON.stringify({reply:"Bilkul 😊 Aap kis **area / locality** mein search karna chahte hain? Area ka naam bhejiye, main current requirement ke saath search refine kar dunga.",intent:"Area Refinement",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Search by city","Show more options","Contact support"],grounded:true,sessionId}),{headers:H});
+  if(action==="search_area"&&!city(msg)&&!nearTerm(msg))return await chatResponse({reply:"Bilkul 😊 Aap kis **area / locality** mein search karna chahte hain? Area ka naam bhejiye, main current requirement ke saath search refine kar dunga.",intent:"Area Refinement",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Search by city","Show more options","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(/(?:konsa|kaunsa|kaunsi|which|should i|chahiye).{0,35}(book|hostel|pg)|(?:book|hostel|pg).{0,35}(konsa|kaunsa|kaunsi|which|should)/i.test(n(msg))&&!isBookingInfoQuestion(msg)){
     const decisionRows=await multiDirect([c||"hostel"],ct);
     const decisionLandmark=findLandmark(near||"");
@@ -113,10 +153,10 @@ Deno.serve(async(req:Request)=>{
     const rankedDecision=decision.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score).slice(0,8).map(card);
     const ar=await aiProperty(msg,history,rankedDecision,c||"hostel",near);
     const reply=ar.reply||"Aapki requirement ke hisaab se live options compare kar sakte hain.";
-    return new Response(JSON.stringify({reply,intent:"Property Comparison",primaryTopic:label(c||"hostel")+" comparison",recommendedProperties:rankedDecision,recommendations:rankedDecision,suggestedFollowUps:["Boys hostel dikhao","Girls hostel dikhao","Budget ke according dikhao"],grounded:true,sessionId}),{headers:H});
+    return await chatResponse({reply,intent:"Property Comparison",primaryTopic:label(c||"hostel")+" comparison",recommendedProperties:rankedDecision,recommendations:rankedDecision,suggestedFollowUps:["Boys hostel dikhao","Girls hostel dikhao","Budget ke according dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);
   }
-  if(isBookingInfoQuestion(msg)){const ar=await aiGeneral(`The user asks how to book/reserve a hostel or PG. Explain a practical StudentHubHelp booking process: shortlist suitable live listings, open full details, check price/room type/availability, call owner, confirm terms and visit/verify before paying. Do not invent any property-specific availability or booking facility.`,history);const reply=ar.reply||"Hostel book karne ka simple process: pehle suitable listing shortlist karein, full details me price/room type check karein, owner ko Call karke availability aur terms confirm karein, aur payment se pehle property/owner verify karein.";return new Response(JSON.stringify({reply,intent:"Booking Guidance",primaryTopic:"Hostel / PG Booking",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Allen ke paas hostel dikhao","Budget ke according hostel dikhao","Boys hostel dikhao","Girls hostel dikhao"],grounded:true,sessionId}),{headers:H})}
-  if(!propertyMode){const ar=await aiGeneral(msg,history);const reply=ar.reply||"Bilkul 😊 Main yahin hoon. Aap jo poochna chahein, seedha poochiye—study, ideas, facts ya normal conversation, sab par baat kar sakte hain.";return new Response(JSON.stringify({reply,intent:"General / Study / Conversation",primaryTopic:"Student AI Assistant",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Ask a study question","Tell me something interesting","Find a property","Contact support"],grounded:true,webGrounded:ar.webGrounded||false,webSources:ar.webSources||[],sessionId}),{headers:H})}
+  if(isBookingInfoQuestion(msg)){const ar=await aiGeneral(`The user asks how to book/reserve a hostel or PG. Explain a practical StudentHubHelp booking process: shortlist suitable live listings, open full details, check price/room type/availability, call owner, confirm terms and visit/verify before paying. Do not invent any property-specific availability or booking facility.`,history);const reply=ar.reply||"Hostel book karne ka simple process: pehle suitable listing shortlist karein, full details me price/room type check karein, owner ko Call karke availability aur terms confirm karein, aur payment se pehle property/owner verify karein.";return await chatResponse({reply,intent:"Booking Guidance",primaryTopic:"Hostel / PG Booking",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Allen ke paas hostel dikhao","Budget ke according hostel dikhao","Boys hostel dikhao","Girls hostel dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);}
+  if(!propertyMode){const ar=await aiGeneral(msg,history);const reply=ar.reply||"Bilkul 😊 Main yahin hoon. Aap jo poochna chahein, seedha poochiye—study, ideas, facts ya normal conversation, sab par baat kar sakte hain.";return await chatResponse({reply,intent:"General / Study / Conversation",primaryTopic:"Student AI Assistant",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Ask a study question","Tell me something interesting","Find a property","Contact support"],grounded:true,webGrounded:ar.webGrounded||false,webSources:ar.webSources||[],sessionId},{headers:H},sessionId,msg);}
   let rows=await multiDirect(c?[c]:(nearCats.length?nearCats:["hostel"]),ct);\n  const wantedGender=genderWanted(combined),wantedArea=areaWanted(combined);\n  if(wantedGender)rows=rows.filter(p=>{const z=searchText(p);const g=n([p.gender_type,p.gender,p.hostel_type,p.name,p.title,p.description].filter(Boolean).join(" "));return wantedGender==="girls"?/girls|girl|female|women|ladki|ladkiyon|महिला|लड़क/i.test(g):/boys|boy|male|men|ladke|लड़के/i.test(g)});\n  if(wantedArea)rows=rows.filter(p=>searchText(p).includes(wantedArea));
   const landmark=findLandmark(near||"");
   if(landmark){for(const p of rows){const d=distanceToLandmark(p,landmark);if(d!==undefined)p._distanceKm=d}rows=rows.filter(p=>n(p.city||"")===n(landmark.city)&&(p._distanceKm===undefined||p._distanceKm<=10))}
@@ -127,6 +167,6 @@ Deno.serve(async(req:Request)=>{
   let recs=ranked.slice(0,8).map(card);
   if(action==="view_details"){const focusId=String(b?.focusPropertyId||""),focusType=String(b?.focusPropertyType||c||"hostel"),focusRows=await multiDirect([focusType],ct),focus=focusRows.find(p=>String(p.id)===focusId);recs=focus?[card(focus)]:recs.slice(0,1)}
   const ar=await aiProperty(msg,history,recs,c,near),reply=ar.reply||fallbackReply(c,recs,near),followups=["View full details","Search by area","Show more options","Contact support"];
-  return new Response(JSON.stringify({reply,intent:"Live Property Search",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:recs,recommendations:recs,suggestedFollowUps:followups,grounded:true,sessionId,searchMode:"ultra_advance_live_supabase_ai",targetCity:ct||undefined,targetCategory:c||undefined,nearbyTerm:near||undefined}),{headers:H});
+  return await chatResponse({reply,intent:"Live Property Search",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:recs,recommendations:recs,suggestedFollowUps:followups,grounded:true,sessionId,searchMode:"ultra_advance_live_supabase_ai",targetCity:ct||undefined,targetCategory:c||undefined,nearbyTerm:near||undefined},{headers:H},sessionId,msg);
  }catch(e){return new Response(JSON.stringify({reply:"Ji, live search me temporary issue aaya. Please same query dobara bhejiye.",grounded:false,error:"Temporary server error"}),{status:200,headers:H})}
 });
