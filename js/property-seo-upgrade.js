@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const BASE='https://studenthubhelp.github.io/studenthubhelp/';
+  const BASE='https://studenthubhelp.in/';
   const qs=new URLSearchParams(location.search);
   const typeMap={hostel:'LodgingBusiness',tiffin:'FoodEstablishment',cafe:'CafeOrCoffeeShop',library:'Library',bookstore:'BookStore'};
   const type=(qs.get('type')||'hostel').toLowerCase();
