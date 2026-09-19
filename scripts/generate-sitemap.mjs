@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFile, readdir, unlink, writeFile } from 'node:fs/promises';
 
-const BASE = (process.env.BASE_URL || 'https://studenthubhelp.github.io/studenthubhelp/').replace(/\/+$/, '') + '/';
+const BASE = (process.env.BASE_URL || 'https://studenthubhelp.in/').replace(/\/+$/, '') + '/';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 const TABLES = {
