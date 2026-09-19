@@ -98,7 +98,7 @@
             <div class="director-info">
               <a href="tel:+919929718264"><span>☎</span><span>+91 9929718264</span></a>
               <a href="mailto:satpalswami22742@gmail.com"><span>✉</span><span>satpalswami22742@gmail.com</span></a>
-              <a href="https://studenthubhelp.github.io/studenthubhelp/admin/"><span>⌘</span><span>Admin Login</span></a>
+              <a href="https://studenthubhelp.in/admin/"><span>⌘</span><span>Admin Login</span></a>
             </div>
           </section>
         </div>
@@ -132,7 +132,7 @@
 
     const shareButton = footer.querySelector('[data-share-studenthubhelp]');
     shareButton?.addEventListener('click', () => {
-      const data = {title:'StudentHubHelp',text:'Discover student-friendly hostels, PGs, tiffin, libraries, cafes and bookstores across India.',url:'https://studenthubhelp.github.io/studenthubhelp/'};
+      const data = {title:'StudentHubHelp',text:'Discover student-friendly hostels, PGs, tiffin, libraries, cafes and bookstores across India.',url:'https://studenthubhelp.in/'};
       if (navigator.share) navigator.share(data).catch(() => {});
       else window.open('https://wa.me/?text=' + encodeURIComponent(data.text + ' ' + data.url), '_blank', 'noopener,noreferrer');
     });
