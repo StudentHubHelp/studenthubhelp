@@ -2817,10 +2817,77 @@ footer h4{color:#E9D5FF!important}
   .service-image{height:95px!important}
 }
 </style>
+
+<style id="final-vibrant-clarity-fixes">
+/* Final requested fixes — visual clarity + live count + visible assistant launcher. */
+html,body{background:#F7F9FF!important;color:#172554!important}
+main,main section,.section,.hero-upgraded,.hero-banner-wrap{color:#172554!important}
+.section-title,.section h2,.section h3,.section h4,.section strong,.faq-question,
+.service-card h3,.why-card h3,.city-card h3,.hub-card h3,.article-box h3,
+.article-box h4,.blog-card h3,.step h3,.audience-card h3,.trust-card h3{
+  color:#172554!important;text-shadow:none!important;
+}
+.section-description,.section p,.section li,.service-card p,.why-card p,.city-card p,
+.hub-card p,.article-box p,.article-box li,.blog-card p,.step p,.audience-card p,
+.trust-card p,.faq-answer p{color:#52627A!important}
+.faq{
+  background:linear-gradient(135deg,#FFFFFF 0%,#F3F0FF 52%,#EEF8FF 100%)!important;
+  border:1px solid rgba(123,47,247,.15)!important;
+  box-shadow:0 18px 48px rgba(51,65,120,.10)!important;
+  overflow:hidden!important;
+}
+.faq-item{
+  background:rgba(255,255,255,.72)!important;
+  border-color:rgba(123,47,247,.13)!important;
+}
+.faq-question{
+  background:transparent!important;color:#172554!important;
+  font-weight:800!important;
+}
+.faq-plus{color:#7B2FF7!important;font-weight:900!important}
+.faq-answer{background:rgba(255,255,255,.55)!important}
+#filterShell{display:none!important}
+#live-listings .section-description{color:#52627A!important}
+.live-property-stat{
+  background:linear-gradient(135deg,#FFFFFF,#F1ECFF)!important;
+  border-color:rgba(123,47,247,.20)!important;
+}
+.live-property-stat .stat-number{
+  color:#172554!important;
+  background:linear-gradient(90deg,#7B2FF7,#2563EB);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.live-property-stat .stat-label{color:#52627A!important}
+#shh-ai-launcher{
+  position:fixed!important;right:22px!important;bottom:22px!important;
+  width:58px!important;height:58px!important;border:0!important;border-radius:50%!important;
+  display:grid!important;place-items:center!important;z-index:99999!important;
+  cursor:pointer!important;color:#fff!important;font-size:25px!important;
+  background:linear-gradient(135deg,#7B2FF7 0%,#2563EB 55%,#06B6D4 100%)!important;
+  box-shadow:0 12px 32px rgba(79,70,229,.30),0 0 0 5px rgba(123,47,247,.08)!important;
+  transition:transform .2s ease,box-shadow .2s ease!important;
+}
+#shh-ai-launcher:hover{transform:translateY(-3px) scale(1.04)!important;box-shadow:0 16px 38px rgba(79,70,229,.38),0 0 0 7px rgba(123,47,247,.10)!important}
+#shh-ai-launcher::after{
+  content:"AI";position:absolute;right:-2px;top:-3px;min-width:22px;height:22px;
+  padding:0 4px;border-radius:999px;display:grid;place-items:center;
+  background:#EC4899;color:#fff;font-size:8px;font-weight:900;letter-spacing:.4px;
+  border:2px solid #fff;
+}
+#shh-chatbot-container{z-index:99998!important}
+#shh-chatbot-container .shh-chat-launcher{z-index:99999!important;visibility:visible!important;opacity:1!important}
+@media(max-width:600px){
+  #shh-ai-launcher{right:14px!important;bottom:14px!important;width:54px!important;height:54px!important}
+}
+</style>
+
 </head>
 
 
 <body>
+  <button id="shh-ai-launcher" type="button" aria-label="StudentHubHelp AI Assistant" title="StudentHubHelp AI Assistant">🤖</button>
+
 
 
   <!-- =========================================
@@ -3008,6 +3075,16 @@ footer h4{color:#E9D5FF!important}
 
       </div>
 
+
+
+      <div class="stat-card live-property-stat">
+        <div class="stat-number" id="livePropertyCount">
+          <span aria-hidden="true">...</span>
+        </div>
+        <div class="stat-label">
+          Live Properties
+        </div>
+      </div>
 
       <div class="stat-card">
 
@@ -5258,27 +5335,33 @@ footer h4{color:#E9D5FF!important}
       ["bookstores","bookstoreCount"] 
     ]; 
 
-    async function loadSingleCount(table,elementId) { 
-      const element = $(elementId); 
-      if (!element) return 0; 
-      try { 
-        const {count,error} = await supabaseClient.from(table).select("*",{count:"exact",head:true}); 
-        if (error) throw error; 
-        element.textContent = Number.isFinite(count) ? count.toLocaleString("en-IN") : "0"; 
-        return Number.isFinite(count) ? count : 0; 
-      } catch(error) { 
-        console.error(`Count error: ${table}`,error); 
-        element.textContent = "0"; 
-        return 0; 
-      } 
-    } 
+    async function loadSingleCount(table,elementId) {
+      const element = $(elementId);
+      if (!element) return 0;
+      try {
+        const {count,error} = await supabaseClient
+          .from(table)
+          .select("*",{count:"exact",head:true})
+          .eq("status","active");
+        if (error) throw error;
+        const value = Number.isFinite(count) ? count : 0;
+        element.textContent = value.toLocaleString("en-IN");
+        return value;
+      } catch(error) {
+        console.error(`Count error: ${table}`,error);
+        element.textContent = "0";
+        return 0;
+      }
+    }
 
-    async function loadStats() { 
-      const counts = await Promise.all(statsConfig.map(([table,id]) => loadSingleCount(table,id))); 
-      const total = counts.reduce((a,b)=>a+b,0); 
-      const verifiedCount = $("verifiedCount"); 
-      if (verifiedCount) verifiedCount.textContent = total.toLocaleString("en-IN"); 
-    } 
+    async function loadStats() {
+      const counts = await Promise.all(statsConfig.map(([table,id]) => loadSingleCount(table,id)));
+      const total = counts.reduce((a,b)=>a+b,0);
+      const live = $("livePropertyCount");
+      if (live) live.textContent = total.toLocaleString("en-IN");
+      const verifiedCount = $("verifiedCount");
+      if (verifiedCount) verifiedCount.textContent = total.toLocaleString("en-IN");
+    }
     loadStats(); 
 
     /* ========================================= 
