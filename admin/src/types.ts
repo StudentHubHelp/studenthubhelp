@@ -151,6 +151,15 @@ export interface VerificationRequest {
   [key: string]: any;
 }
 
+export interface Appointment {
+  id: string | number;
+  appointment_code?: string; name?: string; phone?: string; email?: string;
+  appointment_type?: string; purpose?: string; preferred_date?: string; preferred_time?: string;
+  mode?: string; message?: string; status?: string; source?: string; admin_note?: string;
+  confirmed_date?: string; confirmed_time?: string; created_at?: string; updated_at?: string;
+  [key: string]: any;
+}
+
 export interface StudentBooking {
   id: string | number;
   student_id?: string;
@@ -281,6 +290,7 @@ export type SectionTab =
   | 'unverified-properties'
   | 'verification'
   | 'bookings'
+  | 'appointments'
   | 'reviews'
   | 'reports'
   | 'media'
