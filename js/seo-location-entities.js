@@ -11,7 +11,7 @@
   };
   if(!labels[path]) return;
 
-  const base='https://studenthubhelp.github.io/studenthubhelp/';
+  const base='https://studenthubhelp.in/';
   const type=path.replace('-finder.html','').replace('pg','hostel');
 
   function clean(v){return String(v??'').replace(/\s+/g,' ').trim()}
