@@ -7,17 +7,17 @@
   <title>Global Search | StudentHubHelp</title>
   <meta name="description" content="Search hostels, PGs, tiffin services, libraries, cafes and bookstores in one place on StudentHubHelp.">
   <meta name="robots" content="index,follow">
-  <link rel="canonical" href="https://studenthubhelp.github.io/studenthubhelp/global-search.html">
+  <link rel="canonical" href="https://studenthubhelp.in/global-search.html">
 
   <meta property="og:title" content="Global Search | StudentHubHelp">
   <meta property="og:description" content="Find student hostels, PGs, tiffin services, libraries, cafes and bookstores in one search.">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">
+  <meta property="og:image" content="https://studenthubhelp.in/logo.png">
   <meta property="og:image:alt" content="StudentHubHelp">
-  <meta property="og:url" content="https://studenthubhelp.github.io/studenthubhelp/global-search.html">
+  <meta property="og:url" content="https://studenthubhelp.in/global-search.html">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://studenthubhelp.github.io/studenthubhelp/logo.png">
+  <meta name="twitter:image" content="https://studenthubhelp.in/logo.png">
   <meta name="twitter:title" content="Global Search | StudentHubHelp">
   <meta name="twitter:description" content="One search for student services across StudentHubHelp.">
 
@@ -265,14 +265,14 @@ function facilitiesFromRecord(r){
     const v=String(image).trim();
     if(/^https?:\/\//i.test(v)||/^data:image\//i.test(v)||/^blob:/i.test(v)) return v;
     if(v.startsWith('//')) return location.protocol+v;
-    return 'https://studenthubhelp.github.io/studenthubhelp/'+v.replace(/^\.\//,'').replace(/^\//,'').split('/').map(encodeURIComponent).join('/');
+    return 'https://studenthubhelp.in/'+v.replace(/^\.\//,'').replace(/^\//,'').split('/').map(encodeURIComponent).join('/');
   }
-  return 'https://studenthubhelp.github.io/studenthubhelp/'+({hostel:'hostel-banner.png',tiffin:'tiffin-banner.png',library:'library-banner.png',cafe:'cafe-banner.png',bookstore:'bookstore-banner.png'})[r.__category]||'https://studenthubhelp.github.io/studenthubhelp/logo.png';
+  return 'https://studenthubhelp.in/'+({hostel:'hostel-banner.png',tiffin:'tiffin-banner.png',library:'library-banner.png',cafe:'cafe-banner.png',bookstore:'bookstore-banner.png'})[r.__category]||'https://studenthubhelp.in/logo.png';
 }
     function createCard(r){
   const c=document.createElement('article');c.className='result-card';
   const cat=r.__categoryConfig||CATEGORIES[r.__category],name=nameFromRecord(r)||cat.label,area=areaFromRecord(r),address=addressFromRecord(r),image=imageFromRecord(r),verified=r.verified===true||r.is_verified===true||norm(r.verification_status)==='verified';
-  c.innerHTML='<div class="card-media"><img class="shh-card-image" src="'+esc(image)+'" alt="'+esc(name)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'https://studenthubhelp.github.io/studenthubhelp/'+(cat.key==='hostel'?'hostel-banner.png':cat.key==='tiffin'?'tiffin-banner.png':cat.key==='library'?'library-banner.png':cat.key==='cafe'?'cafe-banner.png':'bookstore-banner.png')+'\';"><div class="category-badge">'+cat.icon+' '+esc(cat.label)+'</div>'+(verified?'<div class="verified" title="Verified listing">✓</div>':'')+'<div class="card-media-title">'+esc(name)+'</div></div><div class="card-body"><h3 class="card-title">'+esc(name)+'</h3><div class="card-location"><i>⌖</i><span>'+esc(area||address||'Location not available')+'</span></div><div class="card-meta"><span class="rating">'+esc(ratingText(r.rating))+'</span><span class="type-label">'+esc(cat.label)+'</span></div><div class="card-actions"><button class="btn btn-primary view-btn" type="button">◉ View Details</button><a class="btn btn-light finder-btn" href="'+esc(cat.finder)+'">Open Finder</a></div></div>';
+  c.innerHTML='<div class="card-media"><img class="shh-card-image" src="'+esc(image)+'" alt="'+esc(name)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'https://studenthubhelp.in/'+(cat.key==='hostel'?'hostel-banner.png':cat.key==='tiffin'?'tiffin-banner.png':cat.key==='library'?'library-banner.png':cat.key==='cafe'?'cafe-banner.png':'bookstore-banner.png')+'\';"><div class="category-badge">'+cat.icon+' '+esc(cat.label)+'</div>'+(verified?'<div class="verified" title="Verified listing">✓</div>':'')+'<div class="card-media-title">'+esc(name)+'</div></div><div class="card-body"><h3 class="card-title">'+esc(name)+'</h3><div class="card-location"><i>⌖</i><span>'+esc(area||address||'Location not available')+'</span></div><div class="card-meta"><span class="rating">'+esc(ratingText(r.rating))+'</span><span class="type-label">'+esc(cat.label)+'</span></div><div class="card-actions"><button class="btn btn-primary view-btn" type="button">◉ View Details</button><a class="btn btn-light finder-btn" href="'+esc(cat.finder)+'">Open Finder</a></div></div>';
   c.querySelector('.view-btn').addEventListener('click',()=>openDetails(r));return c;
 }
 function renderResults(results){grid.innerHTML='';updateSummary(results,currentQuery);if(!results.length){showEmpty(true);emptyTitle.textContent=currentQuery?'No matching listings found':'No listings available';emptyText.textContent=currentQuery?'No strong match for "'+currentQuery+'". Try a property name, area, city or service.':'No listings are currently available.';return}showEmpty(false);results.forEach(r=>grid.appendChild(createCard(r)));decorateResults(results)}
