@@ -1,6 +1,6 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 
-const BASE = (process.env.BASE_URL || 'https://studenthubhelp.github.io/studenthubhelp/').replace(/\/+$/, '') + '/';
+const BASE = (process.env.BASE_URL || 'https://studenthubhelp.in/').replace(/\/+$/, '') + '/';
 const SITE_ID = `${BASE}#website`;
 const ORG_ID = `${BASE}#organization`;
 
