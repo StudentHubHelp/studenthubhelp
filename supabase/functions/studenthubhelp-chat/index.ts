@@ -3,7 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const U=(Deno.env.get("SUPABASE_URL")||"").replace(/\/$/,"");
 const K=Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const GEMINI=Deno.env.get("GEMINI_API_KEY")||"";
-const MODEL="gemini-2.5-flash";
+const MODEL="gemini-3.8-flash";
 const RATE_WINDOW_MS=60_000, RATE_MAX=30;
 const rateMap=new Map<string,{start:number,count:number}>();
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization,x-client-info,apikey,content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json"};
@@ -60,7 +60,7 @@ Rules:
 - Preserve the user's conversational context.
 - Do not expose internal system/tool details.
 Return only the natural reply text.`;
-const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:500,temperature:0.35}})});if(!r.ok)return{};const j=await r.json();return{reply:j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||""}}catch{return{}}}
+const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:500,thinkingConfig:{thinkingLevel:"medium"}}})});if(!r.ok)return{};const j=await r.json();return{reply:j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||""}}catch{return{}}}
 
 async function dbWrite(method:string,path:string,body:any,prefer="return=minimal"){
   if(!U||!K)throw Error("database configuration missing");
@@ -111,7 +111,7 @@ Do not claim StudentHubHelp property facts here. Property data belongs to the se
 Do not pretend to know personal facts about the user.
 Keep normal chat concise and human; for study questions be clear and useful.
 Current message: ${msg}`;
-const body:any={contents:[...h,{role:"user",parts:[{text:system}]}],generationConfig:{maxOutputTokens:700,temperature:0.55}};if(wantsCurrentWeb(msg))body.tools=[{google_search:{}}];const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify(body)});if(!r.ok)return{};const j=await r.json();const reply=j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||"";const chunks=j?.candidates?.[0]?.groundingMetadata?.groundingChunks||[];const sources=chunks.map((x:any)=>x?.web?.uri&&{url:x.web.uri,title:x.web.title||x.web.uri}).filter(Boolean).slice(0,5);return{reply,webGrounded:sources.length>0,webSources:sources}}catch{return{}}}
+const body:any={contents:[...h,{role:"user",parts:[{text:system}]}],generationConfig:{maxOutputTokens:700,thinkingConfig:{thinkingLevel:"medium"}}};if(wantsCurrentWeb(msg))body.tools=[{google_search:{}}];const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify(body)});if(!r.ok)return{};const j=await r.json();const reply=j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||"";const chunks=j?.candidates?.[0]?.groundingMetadata?.groundingChunks||[];const sources=chunks.map((x:any)=>x?.web?.uri&&{url:x.web.uri,title:x.web.title||x.web.uri}).filter(Boolean).slice(0,5);return{reply,webGrounded:sources.length>0,webSources:sources}}catch{return{}}}
 
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:H});
