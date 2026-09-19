@@ -16,6 +16,7 @@ import {
   ClaimRequest,
   VerificationRequest,
   StudentBooking,
+  Appointment,
   ReviewItem,
   PropertyReport,
   OwnerPropertyImage,
@@ -51,6 +52,7 @@ import { OwnerEditModal } from './components/OwnerEditModal';
 import { AdvancedPropertyModal } from './components/AdvancedPropertyModal';
 import { Toast } from './components/Toast';
 import { AuthScreen } from './components/AuthScreen';
+import { AppointmentsView } from './components/AppointmentsView';
 
 export default function App() {
   // =========================================================
@@ -121,6 +123,9 @@ export default function App() {
 
   const [bookings, setBookings] =
     useState<StudentBooking[]>([]);
+
+  const [appointments, setAppointments] =
+    useState<Appointment[]>([]);
 
   const [reviews, setReviews] =
     useState<ReviewItem[]>([]);
@@ -286,6 +291,10 @@ export default function App() {
           ? fetched.bookings
           : []
       );
+      try {
+        const { data: appointmentRows, error: appointmentError } = await supabase.from('appointments').select('*').order('created_at', { ascending: false });
+        if (!appointmentError) setAppointments(Array.isArray(appointmentRows) ? appointmentRows as Appointment[] : []);
+      } catch { setAppointments([]); }
 
       setReviews(
         Array.isArray(fetched?.reviews)
@@ -352,6 +361,7 @@ export default function App() {
       setClaimRequests([]);
       setVerificationRequests([]);
       setBookings([]);
+      setAppointments([]);
       setReviews([]);
       setReports([]);
       setMediaImages([]);
@@ -479,6 +489,8 @@ export default function App() {
       ).length,
     [bookings]
   );
+
+  const pendingAppointmentCount = useMemo(() => appointments.filter((a) => String(a.status || 'pending').toLowerCase() === 'pending').length, [appointments]);
 
   const pendingReviewCount = useMemo(
     () =>
@@ -1575,6 +1587,9 @@ export default function App() {
           bookings:
             pendingBookingCount,
 
+          appointments:
+            pendingAppointmentCount,
+
           reviews:
             pendingReviewCount,
 
@@ -1984,6 +1999,8 @@ export default function App() {
               }
             />
           )}
+
+          {currentTab === 'appointments' && <AppointmentsView />}
 
           {/* PLATFORM CONTROLS */}
 
