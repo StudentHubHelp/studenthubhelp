@@ -6,6 +6,7 @@ import {
   ClaimRequest,
   VerificationRequest,
   StudentBooking,
+  Appointment,
   ReviewItem,
   PropertyReport,
   AdminNotification,
@@ -1368,6 +1369,18 @@ function getPropertyTable(
 /* =========================================================
    PROPERTY VERIFICATION
 ========================================================= */
+
+export async function fetchAppointments(): Promise<Appointment[]> {
+  const { data, error } = await supabase.from('appointments').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return (Array.isArray(data) ? data : []) as Appointment[];
+}
+
+export async function updateAppointment(id: string | number, patch: Partial<Appointment>): Promise<Appointment> {
+  const { data, error } = await supabase.from('appointments').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id).select('*').single();
+  if (error) throw error;
+  return data as Appointment;
+}
 
 export async function updatePropertyVerification(
   id: string | number,
