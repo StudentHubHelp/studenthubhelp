@@ -1535,8 +1535,9 @@ export default function App() {
         onLoginSuccess={(email) => {
           setAdminEmail(email);
           setIsAuthenticated(true);
+          void loadData();
 
-          showToast(
+          showToast
             `Welcome Director ${email}! Authenticated.`
           );
         }}
