@@ -4,14 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Property Details | StudentHubHelp</title>
-<meta name="description" content="View detailed student-friendly property information on StudentHubHelp.">
+<meta id="metaDescription" name="description" content="View detailed student-friendly property information on StudentHubHelp.">
 
 <!-- Phase 3 Dynamic Property SEO -->
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="author" content="StudentHubHelp">
 <meta name="theme-color" content="#071a33">
 
-<link id="canonicalLink" rel="canonical" href="https://studenthubhelp.in/property-details.html">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="StudentHubHelp">
@@ -236,14 +235,28 @@ function updatePropertySEO(r){
     'StudentHubHelp'
   ].filter(Boolean);
 
-  const seoTitle=titleParts.join(' | ');
+  const longTitle=titleParts.join(' | ');
+  const seoTitle =
+    longTitle.length <= 70
+      ? longTitle
+      : [name, locationText, 'StudentHubHelp'].filter(Boolean).join(' | ').length <= 70
+        ? [name, locationText, 'StudentHubHelp'].filter(Boolean).join(' | ')
+        : [name, city, 'StudentHubHelp'].filter(Boolean).join(' | ');
 
   const seoDescription=(
     `${name} ${typeName} in ${locationText||'India'}. `+
     `${description}`
   ).slice(0,160);
 
-  const canonicalUrl=location.href;
+  const canonicalUrl=(()=>{
+    const u=new URL('property-details.html','https://studenthubhelp.in/');
+    u.searchParams.set('type',type);
+    const propertySlug=qs.get('slug');
+    const propertyId=qs.get('id');
+    if(propertySlug) u.searchParams.set('slug',propertySlug);
+    else if(propertyId) u.searchParams.set('id',propertyId);
+    return u.href;
+  })();
 
   document.title=seoTitle;
 
@@ -252,6 +265,7 @@ function updatePropertySEO(r){
     if(el) el.setAttribute('content',content);
   };
 
+  setMeta('metaDescription',seoDescription);
   setMeta('ogTitle',seoTitle);
   setMeta('ogDescription',seoDescription);
   setMeta('ogUrl',canonicalUrl);
@@ -384,12 +398,14 @@ setMeta('twitterDescription',localSeoDescription);
         business.address.streetAddress=String(r.address);
       }
 
-      if(r.area){
-        business.address.addressLocality=String(r.area);
+      if(r.city){
+        business.address.addressLocality=String(r.city);
       }
 
-      if(r.city){
-        business.address.addressRegion=String(r.city);
+      if(r.state){
+        business.address.addressRegion=String(r.state);
+      }else{
+        business.address.addressRegion="Rajasthan";
       }
 
       if(r.pincode){
@@ -408,6 +424,36 @@ setMeta('twitterDescription',localSeoDescription);
         "latitude":lat,
         "longitude":lng
       };
+    }
+
+    if(r.area){
+      business.areaServed={
+        "@type":"Place",
+        "name":String(r.area)
+      };
+    }
+
+    const rating=Number(r.rating);
+    const reviewCount=Number(
+      r.review_count ?? r.reviewCount ?? r.rating_count ?? r.ratingCount
+    );
+    if(Number.isFinite(rating) && rating > 0 && Number.isFinite(reviewCount) && reviewCount > 0){
+      business.aggregateRating={
+        "@type":"AggregateRating",
+        "ratingValue":rating,
+        "bestRating":5,
+        "worstRating":1,
+        "reviewCount":reviewCount
+      };
+    }
+
+    const price=priceNumber(r);
+    if(Number.isFinite(price) && price > 0){
+      business.priceRange=`₹${price.toLocaleString('en-IN')}`;
+    }
+
+    if(r.google_maps_url){
+      business.hasMap=String(r.google_maps_url);
     }
 
     schema["@graph"].push(business);
@@ -540,8 +586,8 @@ async function load(){
      return fail('Property not found','This listing may have been removed or its URL is incorrect.');
    }
 
-   updatePropertySEO(data);
    render(data);
+   updatePropertySEO(data);
    app.setAttribute('aria-busy','false');
  }catch(err){
    console.error('Property load exception:',err);
@@ -1197,7 +1243,6 @@ function render(r){
   const price=priceValue(r);
   const highlights=studentHighlights(r);
   const faqs=faqItems(r);
-  document.title=`${name} | StudentHubHelp`;
   const rating=Number(r.rating);
   const ratingHtml=Number.isFinite(rating)&&rating>0
     ?`<div class="rating-box"><span class="rating-big">${rating.toFixed(1)}</span><span class="stars" aria-label="${rating.toFixed(1)} out of 5">★★★★★</span></div>`
