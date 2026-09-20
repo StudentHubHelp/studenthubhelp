@@ -243,10 +243,12 @@ function updatePropertySEO(r){
         ? [name, locationText, 'StudentHubHelp'].filter(Boolean).join(' | ')
         : [name, city, 'StudentHubHelp'].filter(Boolean).join(' | ');
 
+  const addressText=seoClean(r.address||'');
   const seoDescription=(
     `${name} ${typeName} in ${locationText||'India'}. `+
+    `${addressText ? addressText+'. ' : ''}`+
     `${description}`
-  ).slice(0,160);
+  ).replace(/\s+/g,' ').trim().slice(0,160);
 
   const canonicalUrl=(()=>{
     const u=new URL('property-details.html','https://studenthubhelp.in/');
@@ -305,6 +307,7 @@ const localSeoDescription=(
   `${description}`
 ).slice(0,160);
 
+setMeta('metaDescription',localSeoDescription);
 setMeta('ogDescription',localSeoDescription);
 setMeta('twitterDescription',localSeoDescription);
   
@@ -372,7 +375,13 @@ setMeta('twitterDescription',localSeoDescription);
 
   if(hasAddress){
     const business={
-  "@type":"LocalBusiness",
+  "@type":({
+    hostel:'LodgingBusiness',
+    tiffin:'FoodEstablishment',
+    cafe:'CafeOrCoffeeShop',
+    library:'Library',
+    bookstore:'BookStore'
+  }[type]||'LocalBusiness'),
   "@id":canonicalUrl+"#business",
   "name":name,
   "url":canonicalUrl,
@@ -457,6 +466,16 @@ setMeta('twitterDescription',localSeoDescription);
     }
 
     schema["@graph"].push(business);
+  }
+
+  const pageNode=schema["@graph"][0];
+  if(r.created_at){
+    const created=new Date(r.created_at);
+    if(!Number.isNaN(created.getTime())) pageNode.datePublished=created.toISOString();
+  }
+  if(r.updated_at){
+    const updated=new Date(r.updated_at);
+    if(!Number.isNaN(updated.getTime())) pageNode.dateModified=updated.toISOString();
   }
 
   const schemaEl=document.getElementById('propertySchema');
