@@ -47,7 +47,7 @@ async function fetchRows(table) {
   const pageSize = 1000;
   for (let offset = 0; offset < 50000; offset += pageSize) {
     const url = new URL(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${table}`);
-    url.searchParams.set('select', 'id,property_id,slug,status,updated_at,created_at');
+    url.searchParams.set('select', 'id,property_id,slug,status,updated_at,created_at,name,area,city,address');
     url.searchParams.set('status', 'eq.active');
     url.searchParams.set('offset', String(offset));
     url.searchParams.set('limit', String(pageSize));
@@ -114,12 +114,61 @@ for (const [type, table] of Object.entries(TABLES)) {
     const lastmod = validDate(row.updated_at || row.created_at);
     const current = properties.get(loc);
     if (!current || (lastmod && (!current.lastmod || lastmod > current.lastmod))) {
-      properties.set(loc, { loc, lastmod });
+      properties.set(loc, { loc, lastmod, type, name: row.name, area: row.area, city: row.city, address: row.address });
     }
   }
 }
 
 const propertyEntries = [...properties.values()].sort((a, b) => a.loc.localeCompare(b.loc));
+
+async function writePropertyIndex(entries) {
+  const groups = new Map();
+  for (const entry of entries) {
+    const list = groups.get(entry.type) || [];
+    list.push(entry);
+    groups.set(entry.type, list);
+  }
+  const labels = {
+    hostel: 'Hostels & PGs',
+    tiffin: 'Tiffin & Mess Services',
+    library: 'Libraries & Study Spaces',
+    cafe: 'Cafes',
+    bookstore: 'Bookstores & Stationery'
+  };
+  const sections = [...groups.entries()].map(([type, list]) => {
+    const links = list.map(row => {
+      const name = esc(row.name || 'Student property');
+      const location = [row.area, row.city].filter(Boolean).map(esc).join(', ');
+      return `<li><a href="${esc(row.loc)}">${name}</a>${location ? ` <span>— ${location}</span>` : ''}</li>`;
+    }).join('');
+    return `<section><h2>${labels[type] || type}</h2><ul>${links}</ul></section>`;
+  }).join('');
+  const html = `<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StudentHubHelp Property Directory | Hostels, PGs, Cafes, Libraries, Tiffins & Bookstores</title>
+<meta name="description" content="Browse active StudentHubHelp listings for hostels, PGs, tiffin services, libraries, cafes and bookstores across India.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="${BASE}property-index.html">
+<style>body{font-family:Arial,sans-serif;max-width:1100px;margin:auto;padding:24px;line-height:1.6;color:#172033}h1{line-height:1.2}section{margin:28px 0}ul{columns:2;gap:32px;padding-left:22px}li{margin:6px 0}a{color:#3158c9;text-decoration:none}a:hover{text-decoration:underline}span{color:#68758a;font-size:.92em}@media(max-width:700px){ul{columns:1}}</style>
+</head>
+<body>
+<main>
+<h1>StudentHubHelp Property Directory</h1>
+<p>Active student-focused hostels, PGs, tiffin services, libraries, cafes and bookstores listed on StudentHubHelp. Each listing links to its dedicated property details URL.</p>
+${sections}
+</main>
+</body>
+</html>
+`;
+  await writeFile('property-index.html', html, 'utf8');
+}
+
+await writePropertyIndex(propertyEntries);
+const propertyIndexLastmod = propertyEntries.reduce((latest, row) => row.lastmod && (!latest || row.lastmod > latest) ? row.lastmod : latest, null);
+
 const propertyFiles = [];
 for (let i = 0; i < propertyEntries.length; i += CHUNK_SIZE) {
   const chunk = propertyEntries.slice(i, i + CHUNK_SIZE);
@@ -137,6 +186,7 @@ for (const name of await readdir('.')) {
   if (/^sitemap-properties(?:-\d+)?\.xml$/.test(name) && !expected.has(name)) await unlink(name);
 }
 
+pages.set(pageUrl('property-index.html'), propertyIndexLastmod);
 const pageEntries = [...pages.entries()].map(([loc, lastmod]) => ({ loc, lastmod })).sort((a, b) => a.loc.localeCompare(b.loc));
 await writeUrlset('sitemap-pages.xml', pageEntries);
 
