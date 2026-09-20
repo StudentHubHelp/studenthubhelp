@@ -1537,7 +1537,7 @@ export default function App() {
           setIsAuthenticated(true);
           void loadData();
 
-          showToast
+          showToast(
             `Welcome Director ${email}! Authenticated.`
           );
         }}
