@@ -3,7 +3,7 @@ name: Sitemap sync
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 2 * * *'
+    - cron: '17 */6 * * *'
   push:
     paths:
       - '*.html'
@@ -78,6 +78,10 @@ jobs:
 
           assert BASE in all_urls, 'Canonical homepage URL is missing from sitemap'
           assert f'{BASE}index.html' not in all_urls, 'Non-canonical index.html homepage URL must not be in sitemap'
+          assert f'{BASE}property-index.html' in all_urls, 'Property discovery index is missing from sitemap'
+          index_html=Path('property-index.html').read_text(encoding='utf-8')
+          assert '<a href=' in index_html and 'property-details.html?type=' in index_html, 'Property discovery index must contain crawlable property links'
+          assert 'Sitemap: https://studenthubhelp.in/sitemap.xml' in Path('robots.txt').read_text(encoding='utf-8'), 'robots.txt sitemap declaration missing'
           assert len(all_urls)==len(set(all_urls)), 'Duplicate URL across sitemap files'
           private={'auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','admin/index.html'}
           for url in all_urls:
