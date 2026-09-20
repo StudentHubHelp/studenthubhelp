@@ -1558,14 +1558,17 @@ export async function savePropertyToSupabase(
      where applicable.
   ======================================================= */
 
-  const {
-    data,
-    error,
-  } = await supabase
-    .from(table)
-    .insert(payload)
-    .select()
-    .single();
+ const {
+  data,
+  error,
+} = await supabase
+  .from(table)
+  .insert({
+    ...payload,
+    status: "active",
+  })
+  .select()
+  .single();
 
   if (error) {
     console.error(
