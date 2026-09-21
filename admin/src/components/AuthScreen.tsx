@@ -19,6 +19,64 @@ interface AuthScreenProps {
 
 const ADMIN_ROLE = 'admin';
 
+// WebAuthn helpers used by the Director passkey flow. The lower-level
+// Supabase passkey API lets us drive navigator.credentials.get() directly,
+// avoiding the SDK's browser capability gate while keeping Supabase's
+// challenge/verification flow unchanged.
+function base64UrlToArrayBuffer(value: string): ArrayBuffer {
+  const padding = '='.repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const binary = window.atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+function parsePasskeyRequestOptions(options: any): PublicKeyCredentialRequestOptions {
+  const parser = (window.PublicKeyCredential as any)?.parseRequestOptionsFromJSON;
+  if (typeof parser === 'function') return parser(options);
+
+  const { challenge, allowCredentials, ...rest } = options || {};
+  return {
+    ...rest,
+    challenge: base64UrlToArrayBuffer(challenge),
+    allowCredentials: Array.isArray(allowCredentials)
+      ? allowCredentials.map((credential: any) => ({
+          ...credential,
+          id: base64UrlToArrayBuffer(credential.id),
+        }))
+      : undefined,
+  };
+}
+
+function serializePasskeyCredential(credential: PublicKeyCredential): any {
+  const toJSON = (credential as any).toJSON;
+  if (typeof toJSON === 'function') return toJSON.call(credential);
+
+  const response = credential.response as AuthenticatorAssertionResponse;
+  const toBase64Url = (buffer: ArrayBuffer | null) => {
+    if (!buffer) return undefined;
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return window.btoa(binary).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/g, '');
+  };
+
+  return {
+    id: credential.id,
+    rawId: toBase64Url(credential.rawId),
+    response: {
+      authenticatorData: toBase64Url(response.authenticatorData),
+      clientDataJSON: toBase64Url(response.clientDataJSON),
+      signature: toBase64Url(response.signature),
+      userHandle: toBase64Url(response.userHandle),
+    },
+    type: credential.type,
+    clientExtensionResults: credential.getClientExtensionResults(),
+    authenticatorAttachment: credential.authenticatorAttachment || undefined,
+  };
+}
+
 function readableAuthError(error: any): string {
   console.error('[Director Auth] Supabase error:', {
     status: error?.status,
@@ -211,11 +269,31 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
     authClientRef.current = supabase;
     setInfoMsg('Waiting for Face ID, fingerprint, Windows Hello, device PIN, or your registered passkey…');
     try {
-      const { data, error } = await passkeyClient.auth.signInWithPasskey();
-      if (error) throw error;
-      if (!data?.user?.email) throw new Error('Passkey authentication returned no user account.');
+      if (!navigator.credentials?.get) {
+        throw new Error('WebAuthn credential API is unavailable in this browser.');
+      }
+
+      // Use Supabase's supported two-step passkey API so the browser WebAuthn
+      // ceremony is driven directly instead of stopping at the SDK capability gate.
+      const started = await passkeyClient.auth.passkey.startAuthentication();
+      if (started.error || !started.data) throw started.error || new Error('Unable to start passkey authentication.');
+
+      const publicKey = parsePasskeyRequestOptions(started.data.options);
+      const credential = await navigator.credentials.get({ publicKey });
+      if (!(credential instanceof PublicKeyCredential)) {
+        throw new Error('No valid passkey credential was returned by the browser.');
+      }
+
+      const verified = await passkeyClient.auth.passkey.verifyAuthentication({
+        challengeId: started.data.challenge_id,
+        credential: serializePasskeyCredential(credential),
+      });
+      if (verified.error || !verified.data?.user?.email) {
+        throw verified.error || new Error('Passkey authentication returned no user account.');
+      }
+
       // A passkey is already the complete login method. Do not start TOTP/MFA after it.
-      await finishAdminLogin(passkeyClient, data.user.email);
+      await finishAdminLogin(passkeyClient, verified.data.user.email);
     } catch (err: any) {
       try { await passkeyClient.auth.signOut(); } catch { /* cleanup only */ }
       setInfoMsg(null);
