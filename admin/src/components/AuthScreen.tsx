@@ -214,7 +214,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
       const { data, error } = await passkeyClient.auth.signInWithPasskey();
       if (error) throw error;
       if (!data?.user?.email) throw new Error('Passkey authentication returned no user account.');
-      await completeLogin(passkeyClient, data.user.email);
+      // A passkey is already the complete login method. Do not start TOTP/MFA after it.
+      await finishAdminLogin(passkeyClient, data.user.email);
     } catch (err: any) {
       try { await passkeyClient.auth.signOut(); } catch { /* cleanup only */ }
       setInfoMsg(null);
