@@ -601,6 +601,34 @@ async function load(){
 
    // Legacy listings may have NULL status. Treat NULL like active, while keeping explicitly non-active listings hidden.
    const propertyStatus=String(data.status ?? '').trim().toLowerCase();
+   
+   // Keep public ownership status consistent with Admin's owner-linking rule.
+   // A listing is considered owner-linked when its owner_id matches an owner
+   // account OR its normalized phone matches an owner account's phone.
+   if(!data.owner_id && data.phone){
+     try{
+       const {data:ownerProfiles,error:ownerError}=await db
+         .from('profiles')
+         .select('id,full_name,phone')
+         .eq('role','owner')
+         .limit(1000);
+       
+       if(!ownerError && Array.isArray(ownerProfiles)){
+         const propertyPhone=String(data.phone).replace(/\D/g,'').slice(-10);
+         const matchedOwner=ownerProfiles.find(owner=>{
+           const ownerPhone=String(owner.phone||'').replace(/\D/g,'').slice(-10);
+           return propertyPhone && ownerPhone && propertyPhone===ownerPhone;
+         });
+         
+         if(matchedOwner){
+           data.owner_id=matchedOwner.id;
+           data.owner_name=data.owner_name||matchedOwner.full_name||null;
+         }
+       }
+     }catch(ownerLinkError){
+       console.warn('Owner phone-link check skipped:',ownerLinkError);
+     }
+   }
    if(propertyStatus && propertyStatus!=='active'){
      return fail('Property not found','This listing may have been removed or its URL is incorrect.');
    }
