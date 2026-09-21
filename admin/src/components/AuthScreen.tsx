@@ -9,24 +9,13 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAIL } from '../lib/supabase';
 
 interface AuthScreenProps {
   onLoginSuccess: (email: string) => void;
 }
 
-// Keep password authentication on the single shared Supabase client.
-// The passkey client is created lazily only when the passkey button is used,
-// avoiding two Auth clients competing over the same browser session storage.
-const createPasskeyClient = () =>
-  createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      experimental: { passkey: true },
-    },
-  });
+// Password and passkey authentication use the same shared Supabase client.
 
 const ADMIN_ROLE = 'admin';
 
@@ -218,8 +207,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
 
     setLoading(true);
     setErrorMsg(null);
-    const passkeyClient = createPasskeyClient();
-    authClientRef.current = passkeyClient;
+    const passkeyClient = supabase;
+    authClientRef.current = supabase;
     setInfoMsg('Waiting for Face ID, fingerprint, Windows Hello, device PIN, or your registered passkey…');
     try {
       const { data, error } = await passkeyClient.auth.signInWithPasskey();
