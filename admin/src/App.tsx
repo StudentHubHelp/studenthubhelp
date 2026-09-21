@@ -291,10 +291,14 @@ export default function App() {
           ? fetched.bookings
           : []
       );
-      try {
-        const { data: appointmentRows, error: appointmentError } = await supabase.from('appointments').select('*').order('created_at', { ascending: false });
-        if (!appointmentError) setAppointments(Array.isArray(appointmentRows) ? appointmentRows as Appointment[] : []);
-      } catch { setAppointments([]); }
+      if (isAuthenticated) {
+        try {
+          const { data: appointmentRows, error: appointmentError } = await supabase.from('appointments').select('*').order('created_at', { ascending: false });
+          if (!appointmentError) setAppointments(Array.isArray(appointmentRows) ? appointmentRows as Appointment[] : []);
+        } catch { setAppointments([]); }
+      } else {
+        setAppointments([]);
+      }
 
       setReviews(
         Array.isArray(fetched?.reviews)
@@ -372,7 +376,7 @@ export default function App() {
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // =========================================================
   // INITIAL REAL DATA LOAD
