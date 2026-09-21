@@ -572,8 +572,28 @@ function hasValue(v){
   } else if(type==='cafe'){
     out+=`<div class="card"><h2>☕ Cafe Information</h2><div class="grid">${field('Category',r.category)}${field('Cuisine',r.cuisine)}${field('Opening Time',r.opening_time)}${field('Closing Time',r.closing_time)}${field('Weekly Off',r.weekly_off)}${field('Seating Capacity',r.seating_capacity)}${field('Wi-Fi',r.wifi)}${field('AC',r.ac)}${field('Parking',r.parking)}${field('Delivery',r.delivery)}${field('Takeaway',r.takeaway)}${field('Online Order',r.online_order)}${field('UPI Payment',r.upi_payment)}</div></div>`;
     out+=`<div class="card"><h2>🍽️ Menu</h2><div class="desc">${show(r.menu)}</div></div>`;
-  } else if(type==='library'){
-    out+=`<div class="card"><h2>📚 Library Details</h2><div class="grid">${field('Library Type',r.library_type||r.category)}${field('Timing',r.timing)}${field('24 Hours Open',r.open_24_hours)}${field('Seating Capacity',r.seating_capacity)}${field('Available Seats',r.available_seats)}${field('AC',r.ac_available)}${field('Wi-Fi',r.wifi)}${field('Charging Point',r.charging_point)}${field('Locker',r.locker)}${field('Parking',r.parking)}${field('Newspaper',r.newspaper)}${field('Separate Cabin',r.separate_cabin)}${field('Girls Section',r.girls_section)}${field('Boys Section',r.boys_section)}${field('Power Backup',r.power_backup)}${field('Water',r.water)}${field('CCTV',r.cctv)}</div></div>`;
+} else if(type==='library'){
+    out+=`<div class="card"><h2>📚 Library Details</h2><div class="grid">
+      ${field('Library Type',r.library_type||r.category)}
+      ${field('Timing',r.timing)}
+      ${field('Total Seats',r.seating_capacity)}
+      ${field('Available Seats',r.available_seats)}
+      ${field('Full Time Fees', r.full_time_fee)}
+      ${field('Half Time Fees', r.half_time_fee)}
+      ${field('Parking',r.parking)}
+      ${field('24 Hours Open',r.open_24_hours)}
+      ${field('AC',r.ac_available)}
+      ${field('Wi-Fi',r.wifi)}
+      ${field('Charging Point',r.charging_point)}
+      ${field('Locker',r.locker)}
+      ${field('Newspaper',r.newspaper)}
+      ${field('Separate Cabin',r.separate_cabin)}
+      ${field('Girls Section',r.girls_section)}
+      ${field('Boys Section',r.boys_section)}
+      ${field('Power Backup',r.power_backup)}
+      ${field('Water',r.water)}
+      ${field('CCTV',r.cctv)}
+    </div></div>`;
   } else {
     out+=`<div class="card"><h2>📖 Bookstore Services</h2><div class="grid">${field('Categories',r.categories)}${field('Classes',r.classes)}${field('Competitive Books',r.competitive_books)}${field('Exam Books',r.exam_books)}${field('School Books',r.school_books)}${field('College Books',r.college_books)}${field('NCERT Books',r.ncert_books)}${field('Stationery',r.stationery)}${field('Second-hand Books',r.second_hand_books)}${field('Book Rental',r.book_rental)}${field('Online Order',r.online_order)}${field('Home Delivery',r.home_delivery)}${field('Photocopy',r.photocopy)}${field('Printing',r.printing)}${field('Lamination',r.lamination)}${field('Spiral Binding',r.spiral_binding)}${field('Notes Available',r.notes_available)}${field('Opening Time',r.opening_time)}${field('Closing Time',r.closing_time)}${field('Weekly Off',r.weekly_off)}</div></div>`;
   }
@@ -1338,7 +1358,7 @@ function render(r){
 
       ${highlights.length?`<div class="card"><div class="section-kicker">STUDENT VIEW</div><h2>🎓 Student Highlights</h2><div class="highlight-grid">${highlights.map(h=>`<div class="highlight"><div class="highlight-icon"><i class="fa-solid ${h.icon}"></i></div><div><strong>${esc(h.title)}</strong><span>${show(h.value)}</span></div></div>`).join('')}</div></div>`:''}
 
-      <div class="card"><div class="section-kicker">ROOM & VALUE</div><h2>💰 Rent / Room Options</h2><div class="grid">${field('Monthly Rent Range',(type==='library'&&/Full\s*-?\s*Time\s*:\s*₹?\s*800.*Half\s*-?\s*Time\s*:\s*₹?\s*500/i.test(String(r.facilities||'')))?'Full Time: ₹800 | Half Time: ₹500':(r.monthly_rent_range||price||null))}${field('Room Types',r.room_types)}${field('Food',r.food_available)}${field('Food Type',r.food_type)}${field('Plan Type',r.plan_type)}${field('Deposit',r.security_deposit||r.deposit)}</div><p class="small" style="margin-top:12px">Prices and availability can change. Confirm current terms directly before making a decision.</p></div>
+      <div class="card"><div class="section-kicker">${type==='library'?'FEES & SEATS':'ROOM & VALUE'}</div><h2>${type==='library'?'💳 Fees / Seat Options':'💰 Rent / Room Options'}</h2><div class="grid">${type==='library'?`${field('Full Time Fees','₹800')}${field('Half Time Fees','₹500')}${field('Total Seats',r.seating_capacity)}${field('Available Seats',r.available_seats)}${field('Parking',r.parking)}`:`${field('Monthly Rent Range',r.monthly_rent_range||price||null)}${field('Room Types',r.room_types)}${field('Food',r.food_available)}${field('Food Type',r.food_type)}${field('Plan Type',r.plan_type)}${field('Deposit',r.security_deposit||r.deposit)}`}</div><p class="small" style="margin-top:12px">Prices and availability can change. Confirm current terms directly before making a decision.</p></div>
 
       <div class="card"><div class="section-kicker">ABOUT</div><h2>🏠 About this listing</h2><div class="desc">${show(r.description)}</div></div>
 
