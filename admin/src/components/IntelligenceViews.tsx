@@ -29,15 +29,26 @@ import {
   Coffee,
   Store,
   Edit,
+  User,
+  Bot,
 } from 'lucide-react';
 
 interface IntelligenceViewsProps {
-  currentSubTab: 'areas' | 'notifications' | 'activity' | 'settings' | 'categories' | 'admin';
+  currentSubTab:
+    | 'areas'
+    | 'notifications'
+    | 'activity'
+    | 'settings'
+    | 'categories'
+    | 'admin-profile'
+    | 'chatbot-crm';
+
   areas: AreaItem[];
   notifications: AdminNotification[];
   activityLogs: AdminActivityLog[];
   settings: SystemSetting[];
   properties: PropertyItem[];
+
   onAddArea: (name: string, city: string) => Promise<void>;
   onEditArea: (id: string | number, name: string) => Promise<void>;
   onMarkNotificationRead: (id: string | number) => void;
@@ -58,167 +69,1176 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
   const [showAddAreaModal, setShowAddAreaModal] = useState(false);
   const [newAreaName, setNewAreaName] = useState('');
   const [newAreaCity, setNewAreaCity] = useState('Kota');
+
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
-  const [passMessage, setPassMessage] = useState<{ text: string; success: boolean } | null>(null);
+  const [passMessage, setPassMessage] = useState<{
+    text: string;
+    success: boolean;
+  } | null>(null);
+
   const [updatingPass, setUpdatingPass] = useState(false);
-  const [editingSetting, setEditingSetting] = useState<{ key: string; value: string } | null>(null);
+
+  const [editingSetting, setEditingSetting] = useState<{
+    key: string;
+    value: string;
+  } | null>(null);
+
   const [liveAreas, setLiveAreas] = useState<AreaItem[]>(areas);
-  const [liveNotifications, setLiveNotifications] = useState<AdminNotification[]>(notifications);
-  const [liveSettings, setLiveSettings] = useState<SystemSetting[]>(settings);
+  const [liveNotifications, setLiveNotifications] =
+    useState<AdminNotification[]>(notifications);
+  const [liveSettings, setLiveSettings] =
+    useState<SystemSetting[]>(settings);
+
   const [controlLoading, setControlLoading] = useState(false);
 
-  useEffect(() => setLiveAreas(areas), [areas]);
-  useEffect(() => setLiveNotifications(notifications), [notifications]);
-  useEffect(() => setLiveSettings(settings), [settings]);
+  useEffect(() => {
+    setLiveAreas(areas);
+  }, [areas]);
+
+  useEffect(() => {
+    setLiveNotifications(notifications);
+  }, [notifications]);
+
+  useEffect(() => {
+    setLiveSettings(settings);
+  }, [settings]);
 
   useEffect(() => {
     let cancelled = false;
+
     const loadControls = async () => {
       try {
         setControlLoading(true);
+
         if (currentSubTab === 'areas') {
-          const { data, error } = await supabase.from('areas').select('*').order('name', { ascending: true });
+          const { data, error } = await supabase
+            .from('areas')
+            .select('*')
+            .order('name', { ascending: true });
+
           if (error) throw error;
+
           if (!cancelled) {
-            setLiveAreas((data || []).map((a: any) => ({ ...a, status: a.is_active === false ? 'inactive' : 'active' })) as AreaItem[]);
+            setLiveAreas(
+              (data || []).map((a: any) => ({
+                ...a,
+                status: a.is_active === false ? 'inactive' : 'active',
+              })) as AreaItem[]
+            );
           }
         }
+
         if (currentSubTab === 'notifications') {
-          const { data, error } = await supabase.from('admin_notifications').select('*').order('created_at', { ascending: false }).range(0, 1999);
+          const { data, error } = await supabase
+            .from('admin_notifications')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .range(0, 1999);
+
           if (error) throw error;
+
           if (!cancelled) {
-            setLiveNotifications((data || []).map((n: any) => ({ ...n, status: n.is_read ? 'read' : (n.status || 'unread') })) as AdminNotification[]);
+            setLiveNotifications(
+              (data || []).map((n: any) => ({
+                ...n,
+                status: n.is_read
+                  ? 'read'
+                  : n.status || 'unread',
+              })) as AdminNotification[]
+            );
           }
         }
+
         if (currentSubTab === 'settings') {
-          const { data, error } = await supabase.from('system_settings').select('*').order('key', { ascending: true });
+          const { data, error } = await supabase
+            .from('system_settings')
+            .select('*')
+            .order('key', { ascending: true });
+
           if (error) throw error;
-          if (!cancelled) setLiveSettings((data || []) as SystemSetting[]);
+
+          if (!cancelled) {
+            setLiveSettings((data || []) as SystemSetting[]);
+          }
         }
       } catch (error) {
         console.warn('Admin control data load failed:', error);
       } finally {
-        if (!cancelled) setControlLoading(false);
+        if (!cancelled) {
+          setControlLoading(false);
+        }
       }
     };
+
     loadControls();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentSubTab]);
 
   const handleAddAreaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     const name = newAreaName.trim();
     const city = newAreaCity.trim() || 'Kota';
+
     if (!name) return;
+
     try {
-      const duplicate = liveAreas.some((a) => String(a.name || a.area_name || '').trim().toLowerCase() === name.toLowerCase() && String(a.city || '').trim().toLowerCase() === city.toLowerCase());
-      if (duplicate) throw new Error('This locality already exists for this city.');
-      const { data, error } = await supabase.from('areas').insert({ name, city, state: 'Rajasthan', is_active: true }).select().single();
+      const duplicate = liveAreas.some(
+        (a) =>
+          String(a.name || a.area_name || '')
+            .trim()
+            .toLowerCase() === name.toLowerCase() &&
+          String(a.city || '')
+            .trim()
+            .toLowerCase() === city.toLowerCase()
+      );
+
+      if (duplicate) {
+        throw new Error(
+          'This locality already exists for this city.'
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('areas')
+        .insert({
+          name,
+          city,
+          state: 'Rajasthan',
+          is_active: true,
+        })
+        .select()
+        .single();
+
       if (error) throw error;
-      setLiveAreas((prev) => [...prev, { ...(data as any), status: 'active' } as AreaItem].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''))));
+
+      setLiveAreas((prev) =>
+        [
+          ...prev,
+          {
+            ...(data as any),
+            status: 'active',
+          } as AreaItem,
+        ].sort((a, b) =>
+          String(a.name || '').localeCompare(
+            String(b.name || '')
+          )
+        )
+      );
+
       setNewAreaName('');
       setShowAddAreaModal(false);
     } catch (error: any) {
-      window.alert(error?.message || 'Unable to add locality.');
+      window.alert(
+        error?.message || 'Unable to add locality.'
+      );
     }
   };
 
-  const handleEditArea = async (id: string | number, name: string) => {
+  const handleEditArea = async (
+    id: string | number,
+    name: string
+  ) => {
     const nextName = name.trim();
+
     if (!nextName) return;
+
     try {
-      const { data, error } = await supabase.from('areas').update({ name: nextName, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+      const { data, error } = await supabase
+        .from('areas')
+        .update({
+          name: nextName,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
       if (error) throw error;
-      setLiveAreas((prev) => prev.map((a) => String(a.id) === String(id) ? ({ ...(data as any), status: data?.is_active === false ? 'inactive' : 'active' } as AreaItem) : a));
+
+      setLiveAreas((prev) =>
+        prev.map((a) =>
+          String(a.id) === String(id)
+            ? ({
+                ...(data as any),
+                status:
+                  data?.is_active === false
+                    ? 'inactive'
+                    : 'active',
+              } as AreaItem)
+            : a
+        )
+      );
     } catch (error: any) {
-      window.alert(error?.message || 'Unable to update locality.');
+      window.alert(
+        error?.message || 'Unable to update locality.'
+      );
     }
   };
 
-  const markNotificationRead = async (id: string | number) => {
+  const markNotificationRead = async (
+    id: string | number
+  ) => {
     try {
-      const { error } = await supabase.from('admin_notifications').update({ is_read: true, status: 'read' }).eq('id', id);
+      const { error } = await supabase
+        .from('admin_notifications')
+        .update({
+          is_read: true,
+          status: 'read',
+        })
+        .eq('id', id);
+
       if (error) throw error;
-      setLiveNotifications((prev) => prev.map((n) => String(n.id) === String(id) ? ({ ...n, is_read: true, status: 'read' } as any) : n));
+
+      setLiveNotifications((prev) =>
+        prev.map((n) =>
+          String(n.id) === String(id)
+            ? ({
+                ...n,
+                is_read: true,
+                status: 'read',
+              } as any)
+            : n
+        )
+      );
     } catch (error: any) {
-      window.alert(error?.message || 'Unable to mark notification as read.');
+      window.alert(
+        error?.message ||
+          'Unable to mark notification as read.'
+      );
     }
   };
 
   const markAllNotificationsRead = async () => {
     try {
-      const { error } = await supabase.from('admin_notifications').update({ is_read: true, status: 'read' }).eq('is_read', false);
+      const { error } = await supabase
+        .from('admin_notifications')
+        .update({
+          is_read: true,
+          status: 'read',
+        })
+        .eq('is_read', false);
+
       if (error) throw error;
-      setLiveNotifications((prev) => prev.map((n) => ({ ...n, is_read: true, status: 'read' } as any)));
+
+      setLiveNotifications((prev) =>
+        prev.map(
+          (n) =>
+            ({
+              ...n,
+              is_read: true,
+              status: 'read',
+            } as any)
+        )
+      );
     } catch (error: any) {
-      window.alert(error?.message || 'Unable to mark notifications as read.');
+      window.alert(
+        error?.message ||
+          'Unable to mark notifications as read.'
+      );
     }
   };
 
-  const updateSetting = async (key: string, value: string) => {
+  const updateSetting = async (
+    key: string,
+    value: string
+  ) => {
     try {
-      const { data: authData } = await supabase.auth.getUser();
-      const { data, error } = await supabase.from('system_settings').upsert({ key, value, updated_by: authData.user?.id ?? null, updated_at: new Date().toISOString() }, { onConflict: 'key' }).select().single();
+      const { data: authData } =
+        await supabase.auth.getUser();
+
+      const { data, error } = await supabase
+        .from('system_settings')
+        .upsert(
+          {
+            key,
+            value,
+            updated_by: authData.user?.id ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'key',
+          }
+        )
+        .select()
+        .single();
+
       if (error) throw error;
+
       setLiveSettings((prev) => {
-        const exists = prev.some((s) => String(s.key || s.setting_key) === key);
-        return exists ? prev.map((s) => String(s.key || s.setting_key) === key ? data as SystemSetting : s) : [...prev, data as SystemSetting];
+        const exists = prev.some(
+          (s) =>
+            String(s.key || s.setting_key) === key
+        );
+
+        return exists
+          ? prev.map((s) =>
+              String(s.key || s.setting_key) === key
+                ? (data as SystemSetting)
+                : s
+            )
+          : [
+              ...prev,
+              data as SystemSetting,
+            ];
       });
     } catch (error: any) {
-      window.alert(error?.message || 'Unable to save setting.');
+      window.alert(
+        error?.message || 'Unable to save setting.'
+      );
       throw error;
     }
   };
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault();
-    if (newPass !== confirmPass) { setPassMessage({ text: 'Passwords do not match.', success: false }); return; }
-    if (newPass.length < 8) { setPassMessage({ text: 'Password must be at least 8 characters long.', success: false }); return; }
-    try { setUpdatingPass(true); await onUpdatePassword(newPass); setPassMessage({ text: 'Password updated successfully in Supabase Auth.', success: true }); setNewPass(''); setConfirmPass(''); }
-    catch (err: any) { setPassMessage({ text: err?.message || 'Password update failed', success: false }); }
-    finally { setUpdatingPass(false); }
+
+    if (newPass !== confirmPass) {
+      setPassMessage({
+        text: 'Passwords do not match.',
+        success: false,
+      });
+      return;
+    }
+
+    if (newPass.length < 8) {
+      setPassMessage({
+        text: 'Password must be at least 8 characters long.',
+        success: false,
+      });
+      return;
+    }
+
+    try {
+      setUpdatingPass(true);
+
+      await onUpdatePassword(newPass);
+
+      setPassMessage({
+        text: 'Password updated successfully in Supabase Auth.',
+        success: true,
+      });
+
+      setNewPass('');
+      setConfirmPass('');
+    } catch (err: any) {
+      setPassMessage({
+        text:
+          err?.message ||
+          'Password update failed',
+        success: false,
+      });
+    } finally {
+      setUpdatingPass(false);
+    }
   };
+
+  /*
+   * =========================================================
+   * AREAS & LOCALITIES
+   * =========================================================
+   */
 
   if (currentSubTab === 'areas') {
     return (
       <div className="space-y-6 animate-in fade-in duration-200">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div><h2 className="text-2xl font-serif font-extrabold text-white">Areas & Localities</h2><p className="text-xs text-slate-400 mt-1">Standardized coaching and student residential areas in Kota, Jaipur, and surrounding zones.</p></div>
-          <button onClick={() => setShowAddAreaModal(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shadow-lg"><Plus className="w-4 h-4" /><span>Add Locality</span></button>
+          <div>
+            <h2 className="text-2xl font-serif font-extrabold text-white">
+              Areas & Localities
+            </h2>
+
+            <p className="text-xs text-slate-400 mt-1">
+              Standardized coaching and student residential areas in Kota, Jaipur, and surrounding zones.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowAddAreaModal(true)}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shadow-lg"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Locality</span>
+          </button>
         </div>
+
         <div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden shadow-xl">
-          <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0d1838] text-amber-300 font-bold border-b border-slate-800"><tr><th className="p-4">Locality / Area Name</th><th className="p-4">City</th><th className="p-4">State</th><th className="p-4">Live Properties</th><th className="p-4">Status</th><th className="p-4 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-800/60">
-            {controlLoading ? <tr><td colSpan={6} className="p-8 text-center text-slate-400 text-xs">Loading areas…</td></tr> : liveAreas.length ? liveAreas.map((a) => { const count = properties.filter((p) => (p.area || '').toLowerCase() === String(a.name || a.area_name || '').toLowerCase()).length; return <tr key={a.id} className="hover:bg-slate-800/40"><td className="p-4 font-bold text-white flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-amber-400" />{a.name || a.area_name}</td><td className="p-4 text-slate-300">{a.city || 'Kota'}</td><td className="p-4 text-slate-300">{a.state || 'Rajasthan'}</td><td className="p-4"><span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">{count} listings</span></td><td className="p-4"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${a.status === 'inactive' ? 'bg-slate-500/10 text-slate-400 border border-slate-500/25' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'}`}>{a.status || 'active'}</span></td><td className="p-4 text-right"><button onClick={() => { const n = window.prompt('Enter new locality name:', a.name || a.area_name || ''); if (n) handleEditArea(a.id, n); }} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-bold">Edit</button></td></tr>; }) : <tr><td colSpan={6} className="p-8 text-center text-slate-400 text-xs">No standardized areas configured.</td></tr>}
-          </tbody></table></div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#0d1838] text-amber-300 font-bold border-b border-slate-800">
+                <tr>
+                  <th className="p-4">
+                    Locality / Area Name
+                  </th>
+                  <th className="p-4">City</th>
+                  <th className="p-4">State</th>
+                  <th className="p-4">Live Properties</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-slate-800/60">
+                {controlLoading ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="p-8 text-center text-slate-400 text-xs"
+                    >
+                      Loading areas…
+                    </td>
+                  </tr>
+                ) : liveAreas.length ? (
+                  liveAreas.map((a) => {
+                    const count =
+                      properties.filter(
+                        (p) =>
+                          (p.area || '').toLowerCase() ===
+                          String(
+                            a.name || a.area_name || ''
+                          ).toLowerCase()
+                      ).length;
+
+                    return (
+                      <tr
+                        key={a.id}
+                        className="hover:bg-slate-800/40"
+                      >
+                        <td className="p-4 font-bold text-white flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                          {a.name || a.area_name}
+                        </td>
+
+                        <td className="p-4 text-slate-300">
+                          {a.city || 'Kota'}
+                        </td>
+
+                        <td className="p-4 text-slate-300">
+                          {a.state || 'Rajasthan'}
+                        </td>
+
+                        <td className="p-4">
+                          <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                            {count} listings
+                          </span>
+                        </td>
+
+                        <td className="p-4">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              a.status === 'inactive'
+                                ? 'bg-slate-500/10 text-slate-400 border border-slate-500/25'
+                                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
+                            }`}
+                          >
+                            {a.status || 'active'}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => {
+                              const n =
+                                window.prompt(
+                                  'Enter new locality name:',
+                                  a.name ||
+                                    a.area_name ||
+                                    ''
+                                );
+
+                              if (n)
+                                handleEditArea(
+                                  a.id,
+                                  n
+                                );
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-bold"
+                          >
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="p-8 text-center text-slate-400 text-xs"
+                    >
+                      No standardized areas configured.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-        {showAddAreaModal && <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/75" onClick={(e) => { if (e.target === e.currentTarget) setShowAddAreaModal(false); }}><div className="w-full max-w-md rounded-3xl bg-[#081026] border border-amber-500/30 p-6 text-white space-y-4"><h3 className="font-bold text-lg">Add New Standardized Locality</h3><form onSubmit={handleAddAreaSubmit} className="space-y-3"><input type="text" required value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} placeholder="Area / Locality Name" className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white" /><input type="text" value={newAreaCity} onChange={(e) => setNewAreaCity(e.target.value)} placeholder="City" className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white" /><div className="flex justify-end gap-2"><button type="button" onClick={() => setShowAddAreaModal(false)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">Cancel</button><button type="submit" className="px-5 py-2 rounded-xl bg-amber-400 text-slate-950 text-xs font-extrabold">Save Area</button></div></form></div></div>}
+
+        {showAddAreaModal && (
+          <div
+            className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/75"
+            onClick={(e) => {
+              if (e.target === e.currentTarget)
+                setShowAddAreaModal(false);
+            }}
+          >
+            <div className="w-full max-w-md rounded-3xl bg-[#081026] border border-amber-500/30 p-6 text-white space-y-4">
+              <h3 className="font-bold text-lg">
+                Add New Standardized Locality
+              </h3>
+
+              <form
+                onSubmit={handleAddAreaSubmit}
+                className="space-y-3"
+              >
+                <input
+                  type="text"
+                  required
+                  value={newAreaName}
+                  onChange={(e) =>
+                    setNewAreaName(e.target.value)
+                  }
+                  placeholder="Area / Locality Name"
+                  className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white"
+                />
+
+                <input
+                  type="text"
+                  value={newAreaCity}
+                  onChange={(e) =>
+                    setNewAreaCity(e.target.value)
+                  }
+                  placeholder="City"
+                  className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white"
+                />
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowAddAreaModal(false)
+                    }
+                    className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-amber-400 text-slate-950 text-xs font-extrabold"
+                  >
+                    Save Area
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
+  /*
+   * =========================================================
+   * NOTIFICATIONS
+   * =========================================================
+   */
+
   if (currentSubTab === 'notifications') {
-    const unread = liveNotifications.filter((n: any) => !n.is_read && String(n.status || 'unread').toLowerCase() !== 'read').length;
-    return <div className="space-y-6"><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-2xl font-serif font-extrabold text-white">Admin Notifications Log</h2><p className="text-xs text-slate-400 mt-1">Live notifications from Supabase. {unread} unread.</p></div><button disabled={!unread} onClick={markAllNotificationsRead} className="px-4 py-2 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 text-xs font-bold disabled:opacity-40"><CheckCircle className="w-3.5 h-3.5 inline mr-1" />Mark all read</button></div><div className="space-y-3">{controlLoading ? <div className="p-8 rounded-3xl bg-[#081026] border border-slate-800 text-center text-slate-400 text-xs">Loading notifications…</div> : liveNotifications.length ? liveNotifications.map((n: any) => <div key={n.id} onClick={() => markNotificationRead(n.id)} className={`p-4 rounded-2xl bg-[#081026] border ${n.is_read ? 'border-slate-800' : 'border-amber-500/30'} cursor-pointer`}><div className="flex items-center justify-between gap-3"><div className="font-bold text-white">{n.title || 'System Notification'}</div>{!n.is_read && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/25">Unread</span>}</div><p className="text-xs text-slate-300 mt-1.5">{n.message || n.body || ''}</p><div className="text-[10px] text-slate-500 mt-2">{fmtDate(n.created_at)}</div></div>) : <div className="p-8 rounded-3xl bg-[#081026] border border-slate-800 text-center text-slate-400 text-xs">No notifications available.</div>}</div></div>;
+    const unread = liveNotifications.filter(
+      (n: any) =>
+        !n.is_read &&
+        String(n.status || 'unread').toLowerCase() !==
+          'read'
+    ).length;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-serif font-extrabold text-white">
+              Admin Notifications Log
+            </h2>
+
+            <p className="text-xs text-slate-400 mt-1">
+              Live notifications from Supabase. {unread}{' '}
+              unread.
+            </p>
+          </div>
+
+          <button
+            disabled={!unread}
+            onClick={markAllNotificationsRead}
+            className="px-4 py-2 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 text-xs font-bold disabled:opacity-40"
+          >
+            <CheckCircle className="w-3.5 h-3.5 inline mr-1" />
+            Mark all read
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {controlLoading ? (
+            <div className="p-8 rounded-3xl bg-[#081026] border border-slate-800 text-center text-slate-400 text-xs">
+              Loading notifications…
+            </div>
+          ) : liveNotifications.length ? (
+            liveNotifications.map((n: any) => (
+              <div
+                key={n.id}
+                onClick={() =>
+                  markNotificationRead(n.id)
+                }
+                className={`p-4 rounded-2xl bg-[#081026] border ${
+                  n.is_read
+                    ? 'border-slate-800'
+                    : 'border-amber-500/30'
+                } cursor-pointer`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-bold text-white">
+                    {n.title || 'System Notification'}
+                  </div>
+
+                  {!n.is_read && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/25">
+                      Unread
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-xs text-slate-300 mt-1.5">
+                  {n.message || n.body || ''}
+                </p>
+
+                <div className="text-[10px] text-slate-500 mt-2">
+                  {fmtDate(n.created_at)}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-8 rounded-3xl bg-[#081026] border border-slate-800 text-center text-slate-400 text-xs">
+              No notifications available.
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
-  if (currentSubTab === 'activity') return <div className="space-y-6"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-serif font-extrabold text-white">Activity & Audit Trail</h2><p className="text-xs text-slate-400 mt-1">Historical Director changes and audit records.</p></div><button onClick={() => exportToCSV(activityLogs, 'activity-logs')} className="px-3.5 py-2 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5"><Download className="w-3.5 h-3.5" />Export CSV</button></div><div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0d1838] text-amber-300"><tr><th className="p-4">Action</th><th className="p-4">Entity</th><th className="p-4">ID</th><th className="p-4">Admin</th><th className="p-4">Timestamp</th><th className="p-4">Changes</th></tr></thead><tbody className="divide-y divide-slate-800/60">{activityLogs.length ? activityLogs.map((log,i) => <tr key={log.id || i}><td className="p-4 font-bold text-white">{log.action || 'update'}</td><td className="p-4 text-slate-300">{log.entity_type || '—'}</td><td className="p-4 font-mono text-slate-400">{log.entity_id || '—'}</td><td className="p-4 text-slate-300">{log.admin_email || 'Director Admin'}</td><td className="p-4 text-slate-400">{fmtDate(log.created_at)}</td><td className="p-4 max-w-xs truncate font-mono text-slate-400">{log.new_value ? JSON.stringify(log.new_value) : '—'}</td></tr>) : <tr><td colSpan={6} className="p-8 text-center text-slate-400 text-xs">No admin activity logs found.</td></tr>}</tbody></table></div></div></div>;
+  /*
+   * =========================================================
+   * ACTIVITY & AUDIT
+   * =========================================================
+   */
 
-  if (currentSubTab === 'settings') return <div className="space-y-6"><h2 className="text-2xl font-serif font-extrabold text-white">System Settings & Policies</h2><p className="text-xs text-slate-400">Live configurations stored in Supabase.</p><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{controlLoading ? <div className="p-8 text-slate-400 text-xs">Loading settings…</div> : liveSettings.map(s => <div key={s.key || s.setting_key} className="rounded-2xl bg-[#081026] border border-slate-800 p-4"><div className="flex items-center justify-between"><span className="text-xs font-bold text-amber-400 font-mono">{s.key || s.setting_key}</span><button onClick={() => setEditingSetting({ key: String(s.key || s.setting_key), value: String(s.value || '') })}><Edit className="w-3.5 h-3.5 text-slate-400" /></button></div><div className="text-sm font-bold text-white break-all">{s.value || 'Not configured'}</div></div>)}</div>{editingSetting && <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/75"><div className="w-full max-w-md rounded-3xl bg-[#081026] border border-amber-500/30 p-6 space-y-4"><h3 className="font-bold text-lg text-white">Edit Setting</h3><input value={editingSetting.value} onChange={e => setEditingSetting({...editingSetting,value:e.target.value})} className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white" /><div className="flex justify-end gap-2"><button onClick={() => setEditingSetting(null)} className="px-4 py-2 bg-slate-800 rounded-xl text-xs">Cancel</button><button onClick={async () => { await updateSetting(editingSetting.key, editingSetting.value); setEditingSetting(null); }} className="px-5 py-2 bg-amber-400 rounded-xl text-slate-950 text-xs font-bold">Save</button></div></div></div>}</div>;
+  if (currentSubTab === 'activity') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-serif font-extrabold text-white">
+              Activity & Audit Trail
+            </h2>
+
+            <p className="text-xs text-slate-400 mt-1">
+              Historical Director changes and audit records.
+            </p>
+          </div>
+
+          <button
+            onClick={() =>
+              exportToCSV(
+                activityLogs,
+                'activity-logs'
+              )
+            }
+            className="px-3.5 py-2 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
+        </div>
+
+        <div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#0d1838] text-amber-300">
+                <tr>
+                  <th className="p-4">Action</th>
+                  <th className="p-4">Entity</th>
+                  <th className="p-4">ID</th>
+                  <th className="p-4">Admin</th>
+                  <th className="p-4">Timestamp</th>
+                  <th className="p-4">Changes</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-slate-800/60">
+                {activityLogs.length ? (
+                  activityLogs.map((log, i) => (
+                    <tr key={log.id || i}>
+                      <td className="p-4 font-bold text-white">
+                        {log.action || 'update'}
+                      </td>
+
+                      <td className="p-4 text-slate-300">
+                        {log.entity_type || '—'}
+                      </td>
+
+                      <td className="p-4 font-mono text-slate-400">
+                        {log.entity_id || '—'}
+                      </td>
+
+                      <td className="p-4 text-slate-300">
+                        {log.admin_email ||
+                          'Director Admin'}
+                      </td>
+
+                      <td className="p-4 text-slate-400">
+                        {fmtDate(log.created_at)}
+                      </td>
+
+                      <td className="p-4 max-w-xs truncate font-mono text-slate-400">
+                        {log.new_value
+                          ? JSON.stringify(
+                              log.new_value
+                            )
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="p-8 text-center text-slate-400 text-xs"
+                    >
+                      No admin activity logs found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /*
+   * =========================================================
+   * SYSTEM SETTINGS
+   * =========================================================
+   */
+
+  if (currentSubTab === 'settings') {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-serif font-extrabold text-white">
+          System Settings & Policies
+        </h2>
+
+        <p className="text-xs text-slate-400">
+          Live configurations stored in Supabase.
+        </p>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {controlLoading ? (
+            <div className="p-8 text-slate-400 text-xs">
+              Loading settings…
+            </div>
+          ) : (
+            liveSettings.map((s) => (
+              <div
+                key={s.key || s.setting_key}
+                className="rounded-2xl bg-[#081026] border border-slate-800 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-400 font-mono">
+                    {s.key || s.setting_key}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      setEditingSetting({
+                        key: String(
+                          s.key || s.setting_key
+                        ),
+                        value: String(
+                          s.value || ''
+                        ),
+                      })
+                    }
+                  >
+                    <Edit className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
+                </div>
+
+                <div className="text-sm font-bold text-white break-all">
+                  {s.value || 'Not configured'}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {editingSetting && (
+          <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/75">
+            <div className="w-full max-w-md rounded-3xl bg-[#081026] border border-amber-500/30 p-6 space-y-4">
+              <h3 className="font-bold text-lg text-white">
+                Edit Setting
+              </h3>
+
+              <input
+                value={editingSetting.value}
+                onChange={(e) =>
+                  setEditingSetting({
+                    ...editingSetting,
+                    value: e.target.value,
+                  })
+                }
+                className="w-full bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-xs text-white"
+              />
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() =>
+                    setEditingSetting(null)
+                  }
+                  className="px-4 py-2 bg-slate-800 rounded-xl text-xs"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={async () => {
+                    await updateSetting(
+                      editingSetting.key,
+                      editingSetting.value
+                    );
+
+                    setEditingSetting(null);
+                  }}
+                  className="px-5 py-2 bg-amber-400 rounded-xl text-slate-950 text-xs font-bold"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /*
+   * =========================================================
+   * CATEGORY CONFIG
+   * =========================================================
+   */
 
   if (currentSubTab === 'categories') {
     const categories = [
-      { name: 'Hostels & PGs', type: 'hostels', icon: Hotel, count: properties.filter((p) => (p.category || '').toLowerCase().includes('hostel')).length, fields: 'Rent, Room Sharing, Beds, Food Included, AC/Cooler, Biometric Security' },
-      { name: 'Tiffin & Mess Services', type: 'tiffins', icon: Utensils, count: properties.filter((p) => (p.category || '').toLowerCase().includes('tiffin')).length, fields: 'Pure Veg Meals, Monthly Delivery Plans, Service Radius, Menu' },
-      { name: '24/7 Study Libraries', type: 'libraries', icon: BookOpen, count: properties.filter((p) => (p.category || '').toLowerCase().includes('library')).length, fields: 'Seating Capacity, AC, WiFi, 24 Hours Open' },
-      { name: 'Student Cafes', type: 'cafes', icon: Coffee, count: properties.filter((p) => (p.category || '').toLowerCase().includes('cafe')).length, fields: 'Cuisine, Seating, Snacks, Charging' },
-      { name: 'Bookstores & Stationery', type: 'bookstores', icon: Store, count: properties.filter((p) => (p.category || '').toLowerCase().includes('book')).length, fields: 'Books, Coaching Material, Binding, Xerox' },
+      {
+        name: 'Hostels & PGs',
+        type: 'hostels',
+        icon: Hotel,
+        count: properties.filter((p) =>
+          (p.category || '')
+            .toLowerCase()
+            .includes('hostel')
+        ).length,
+        fields:
+          'Rent, Room Sharing, Beds, Food Included, AC/Cooler, Biometric Security',
+      },
+      {
+        name: 'Tiffin & Mess Services',
+        type: 'tiffins',
+        icon: Utensils,
+        count: properties.filter((p) =>
+          (p.category || '')
+            .toLowerCase()
+            .includes('tiffin')
+        ).length,
+        fields:
+          'Pure Veg Meals, Monthly Delivery Plans, Service Radius, Menu',
+      },
+      {
+        name: '24/7 Study Libraries',
+        type: 'libraries',
+        icon: BookOpen,
+        count: properties.filter((p) =>
+          (p.category || '')
+            .toLowerCase()
+            .includes('library')
+        ).length,
+        fields:
+          'Seating Capacity, AC, WiFi, 24 Hours Open',
+      },
+      {
+        name: 'Student Cafes',
+        type: 'cafes',
+        icon: Coffee,
+        count: properties.filter((p) =>
+          (p.category || '')
+            .toLowerCase()
+            .includes('cafe')
+        ).length,
+        fields:
+          'Cuisine, Seating, Snacks, Charging',
+      },
+      {
+        name: 'Bookstores & Stationery',
+        type: 'bookstores',
+        icon: Store,
+        count: properties.filter((p) =>
+          (p.category || '')
+            .toLowerCase()
+            .includes('book')
+        ).length,
+        fields:
+          'Books, Coaching Material, Binding, Xerox',
+      },
     ];
-    return <div className="space-y-6"><div><h2 className="text-2xl font-serif font-extrabold text-white">Category Configurations</h2><p className="text-xs text-slate-400 mt-1">Category-specific fields and controls.</p></div><div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">{categories.map(c => { const I=c.icon; return <div key={c.type} className="rounded-3xl bg-[#081026] border border-slate-800 p-5"><div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center"><I className="w-5 h-5" /></div><div className="flex items-center justify-between mt-3"><h3 className="font-bold text-base text-white">{c.name}</h3><span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-800 text-amber-300">{c.count}</span></div><p className="text-xs text-slate-400 mt-2">{c.fields}</p></div>; })}</div></div>;
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-serif font-extrabold text-white">
+            Category Configurations
+          </h2>
+
+          <p className="text-xs text-slate-400 mt-1">
+            Category-specific fields and controls.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((c) => {
+            const I = c.icon;
+
+            return (
+              <div
+                key={c.type}
+                className="rounded-3xl bg-[#081026] border border-slate-800 p-5"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                  <I className="w-5 h-5" />
+                </div>
+
+                <div className="flex items-center justify-between mt-3">
+                  <h3 className="font-bold text-base text-white">
+                    {c.name}
+                  </h3>
+
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-800 text-amber-300">
+                    {c.count}
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-400 mt-2">
+                  {c.fields}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   }
 
-  if (currentSubTab === 'admin') {
-    return <div className="space-y-8 animate-in fade-in duration-200"><ChatbotAdminView /><ChatbotAdminControls /><div className="border-t border-slate-800 pt-8 max-w-3xl"><div><h2 className="text-2xl font-serif font-extrabold text-white">Director Profile & Security</h2><p className="text-xs text-slate-400 mt-1">Account controls, verified administrative credentials, and Supabase Auth encryption.</p></div><div className="rounded-3xl bg-gradient-to-br from-[#0a1838] to-[#0d224e] border border-amber-500/30 p-7 shadow-2xl space-y-4"><div className="flex flex-wrap items-center justify-between gap-4"><div className="flex items-center gap-4"><div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-serif font-extrabold text-2xl">SS</div><div><h3 className="text-2xl font-serif font-extrabold text-white">SATPAL SWAMI</h3><p className="text-xs uppercase tracking-widest text-amber-400 font-bold mt-0.5">Managing Director — StudentHubHelp</p></div></div><span className="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">SUPABASE ADMIN ROLE</span></div><div className="grid sm:grid-cols-3 gap-3 pt-4 border-t border-slate-800 text-xs"><div className="bg-[#081026] p-3 rounded-xl border border-slate-800"><div className="text-slate-400 font-bold flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-amber-400" /> Phone</div><div className="text-slate-200 font-mono mt-1">+91 99297 18264</div></div><div className="bg-[#081026] p-3 rounded-xl border border-slate-800"><div className="text-slate-400 font-bold flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-amber-400" /> Email</div><div className="text-slate-200 mt-1 truncate">satpalswami22742@gmail.com</div></div><div className="bg-[#081026] p-3 rounded-xl border border-slate-800"><div className="text-slate-400 font-bold flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-amber-400" /> Headquarters</div><div className="text-slate-200 mt-1">Kota / Jaipur Directory</div></div></div></div><div className="rounded-3xl bg-[#081026] border border-slate-800 p-7 shadow-xl space-y-4"><h3 className="font-bold text-base text-white flex items-center gap-2"><Key className="w-4 h-4 text-amber-400" /> Update Director Password</h3><p className="text-xs text-slate-400">Updates securely in Supabase Auth.</p>{passMessage && <div className={`p-3.5 rounded-2xl text-xs font-bold border ${passMessage.success ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/10 text-rose-300 border-rose-500/30'}`}>{passMessage.text}</div>}<form onSubmit={handlePasswordSubmit} className="space-y-3"><input type="password" required minLength={8} value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="New Password" className="w-full bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white" /><input type="password" required minLength={8} value={confirmPass} onChange={e => setConfirmPass(e.target.value)} placeholder="Confirm New Password" className="w-full bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white" /><button type="submit" disabled={updatingPass} className="w-full py-3 rounded-xl bg-amber-400 text-slate-950 font-extrabold text-xs">{updatingPass ? 'Updating...' : 'Update Supabase Password'}</button></form></div></div></div>;
+  /*
+   * =========================================================
+   * ADMIN PROFILE
+   *
+   * IMPORTANT:
+   * Only Admin Profile + Security lives here.
+   * Chatbot/CRM is NOT rendered here anymore.
+   * =========================================================
+   */
+
+  if (currentSubTab === 'admin-profile') {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5 text-amber-400" />
+
+            <h2 className="text-2xl font-serif font-extrabold text-white">
+              Admin Profile
+            </h2>
+          </div>
+
+          <p className="text-xs text-slate-400 mt-1">
+            Director profile, administrative credentials, and account security.
+          </p>
+        </div>
+
+        <div className="rounded-3xl bg-gradient-to-br from-[#0a1838] to-[#0d224e] border border-amber-500/30 p-7 shadow-2xl space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-serif font-extrabold text-2xl">
+                SS
+              </div>
+
+              <div>
+                <h3 className="text-2xl font-serif font-extrabold text-white">
+                  SATPAL SWAMI
+                </h3>
+
+                <p className="text-xs uppercase tracking-widest text-amber-400 font-bold mt-0.5">
+                  Managing Director — StudentHubHelp
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              SUPABASE ADMIN ROLE
+            </span>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-3 pt-4 border-t border-slate-800 text-xs">
+            <div className="bg-[#081026] p-3 rounded-xl border border-slate-800">
+              <div className="text-slate-400 font-bold flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-amber-400" />
+                Phone
+              </div>
+
+              <div className="text-slate-200 font-mono mt-1">
+                +91 99297 18264
+              </div>
+            </div>
+
+            <div className="bg-[#081026] p-3 rounded-xl border border-slate-800">
+              <div className="text-slate-400 font-bold flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-amber-400" />
+                Email
+              </div>
+
+              <div className="text-slate-200 mt-1 truncate">
+                satpalswami22742@gmail.com
+              </div>
+            </div>
+
+            <div className="bg-[#081026] p-3 rounded-xl border border-slate-800">
+              <div className="text-slate-400 font-bold flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                Headquarters
+              </div>
+
+              <div className="text-slate-200 mt-1">
+                Kota / Jaipur Directory
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl bg-[#081026] border border-slate-800 p-7 shadow-xl space-y-4">
+          <h3 className="font-bold text-base text-white flex items-center gap-2">
+            <Key className="w-4 h-4 text-amber-400" />
+            Update Director Password
+          </h3>
+
+          <p className="text-xs text-slate-400">
+            Updates securely in Supabase Auth.
+          </p>
+
+          {passMessage && (
+            <div
+              className={`p-3.5 rounded-2xl text-xs font-bold border ${
+                passMessage.success
+                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                  : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+              }`}
+            >
+              {passMessage.text}
+            </div>
+          )}
+
+          <form
+            onSubmit={handlePasswordSubmit}
+            className="space-y-3"
+          >
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={newPass}
+              onChange={(e) =>
+                setNewPass(e.target.value)
+              }
+              placeholder="New Password"
+              className="w-full bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white"
+            />
+
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={confirmPass}
+              onChange={(e) =>
+                setConfirmPass(e.target.value)
+              }
+              placeholder="Confirm New Password"
+              className="w-full bg-[#0d1838] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white"
+            />
+
+            <button
+              type="submit"
+              disabled={updatingPass}
+              className="w-full py-3 rounded-xl bg-amber-400 text-slate-950 font-extrabold text-xs"
+            >
+              {updatingPass
+                ? 'Updating...'
+                : 'Update Supabase Password'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
   }
+
+  /*
+   * =========================================================
+   * AI CHATBOT & CRM
+   *
+   * Existing ChatbotAdminView + ChatbotAdminControls
+   * remain together and are not modified.
+   * =========================================================
+   */
+
+  if (currentSubTab === 'chatbot-crm') {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <Bot className="w-5 h-5 text-amber-400" />
+
+            <h2 className="text-2xl font-serif font-extrabold text-white">
+              AI Chatbot & CRM
+            </h2>
+          </div>
+
+          <p className="text-xs text-slate-400 mt-1">
+            Existing StudentHubHelp AI chatbot, CRM, conversations, controls and diagnostics.
+          </p>
+        </div>
+
+        <ChatbotAdminView />
+
+        <ChatbotAdminControls />
+      </div>
+    );
+  }
+
   return null;
 };
