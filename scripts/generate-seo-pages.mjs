@@ -104,15 +104,15 @@ for(const c of cities.values()){
   for(const r of c.rows){if(!groups.has(r.type))groups.set(r.type,[]);groups.get(r.type).push(r);}
   const body='<section class="section"><h2>Student-focused listings in '+esc(c.name)+'</h2><div class="grid">'+[...groups.entries()].map(([type,rows])=>{const m=TABLES.find(x=>x.type===type);return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+rows.length+' verified and active listing'+(rows.length===1?'':'s')+'.</p><a href="'+esc(type+'/')+'">View '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('')+'</div></section>'+
     '<section class="section"><h2>Explore '+esc(c.name)+'</h2><div class="links">'+categoryLinks+'</div></section>'+
-    '<section class="section"><h2>Verified properties</h2><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,2)).join('')+'</div></section>';
+    '<section class="section"><h2>Verified properties</h2><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
   const cityPath=cityDir+'/index.html'; expected.add(cityPath); generated.push(cityUrl);
-  await write(cityPath,shell({title:'Student Hostels, Tiffins, Cafes, Libraries & Bookstores in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffin services, cafes, libraries and bookstores in '+c.name+'.',canonical:cityUrl,h1:'StudentHubHelp in '+c.name,crumbs:[{name:c.name,url:cityUrl}],body}));
+  await write(cityPath,shell({title:'Student Hostels, Tiffins, Cafes, Libraries & Bookstores in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffin services, cafes, libraries and bookstores in '+c.name+'.',canonical:cityUrl,h1:'StudentHubHelp in '+c.name,crumbs:[{name:c.name,url:cityUrl}],body,depth:1}));
 
   for(const meta of TABLES){
     const rows=c.rows.filter(r=>r.type===meta.type); if(!rows.length) continue;
     const dir=cityDir+'/'+meta.type; const url=new URL(cs+'/'+meta.type+'/',BASE).href;
-    const body='<section class="section"><h2>'+esc(meta.label)+' in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section>'+
-      '<section class="section"><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(3,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
+    const body='<section class="section"><h2>'+esc(meta.label)+' in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+
+      '<section class="section"><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(2,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
     await write(p,shell({title:meta.label+' in '+c.name+' | StudentHubHelp',description:'Browse verified and active '+meta.label.toLowerCase()+' in '+c.name+' on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3}));
   }
@@ -123,8 +123,8 @@ for(const c of cities.values()){
     if(a.rows.length<LOCATION_MIN_PROPERTIES) continue;
     const as=slug(a.name); if(!as) continue;
     const dir=cityDir+'/'+as; const url=new URL(cs+'/'+as+'/',BASE).href;
-    const groupLinks=[...new Set(a.rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc(rel(2,new URL(cs+'/'+type+'/',BASE).href))+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
-    const body='<section class="section"><h2>Verified student properties in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+a.rows.map(r=>card(r,3)).join('')+'</div></section>'+
+    const groupLinks=[...new Set(a.rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('../'+type+'/' )+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
+    const body='<section class="section"><h2>Verified student properties in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+a.rows.map(r=>card(r,2)).join('')+'</div></section>'+
       '<section class="section"><h2>Categories</h2><div class="links">'+groupLinks+'</div></section>'+
       '<p><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
