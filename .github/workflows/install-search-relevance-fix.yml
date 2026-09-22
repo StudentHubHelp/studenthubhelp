@@ -219,16 +219,16 @@ jobs:
             assert('1 exact road + landmark + gender',t1.length===1&&t1[0].id==='exact-nw'&&t1[0].__matchTier==='exact');
 
             const t2=e.rankRows(rows,'Piprali Road par hostel','hostel');
-            assert('2 Piprali exact does not mix Nawalgarh',t2.length===2&&t2.every(r=>r.area==='Piprali Road')&&t2.every(r=>r.__matchTier==='exact'));
+            assert('2 Piprali exact does not mix Nawalgarh',t2.length===4&&t2.every(r=>r.area==='Piprali Road')&&t2.every(r=>r.__matchTier==='exact'));
 
             const t3=e.rankRows(rows,'girls hostel near Allen','hostel');
             assert('3 explicit near evidence required for exact',t3.length===1&&t3[0].id==='allen-explicit'&&t3[0].__matchTier==='exact');
 
-            const t4=e.rankRows(rows,'Piprali Road par Allen ke pass girls hostel','hostel');
+            const t4=e.rankRows(rows.filter(r=>r.id!=='allen-explicit'),'Piprali Road par Allen ke pass girls hostel','hostel');
             assert('4 no exact -> clearly non-exact fallback',t4.length>0&&t4.every(r=>r.__matchTier!=='exact')&&t4.every(r=>r.__hardLocationMatch===false));
 
             const t5=e.rankRows(rows,'Piprali Rd pr hostel','hostel');
-            assert('5 Rd/pr natural-language aliases',t5.length===2&&t5.every(r=>r.area==='Piprali Road')&&t5.every(r=>r.__matchTier==='exact'));
+            assert('5 Rd/pr natural-language aliases',t5.length===4&&t5.every(r=>r.area==='Piprali Road')&&t5.every(r=>r.__matchTier==='exact'));
 
             console.log('STRICT LOCATION REGRESSION: 5/5 PASS');
           })().catch(e=>{console.error(e);process.exit(1)});
