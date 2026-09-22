@@ -1233,7 +1233,7 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
           </p>
         </div>
 
-        <ChatbotAdminView />
+        <ChatbotAdminView /><ChatbotAdminControls />
 
         <ChatbotAdminControls />
       </div>
