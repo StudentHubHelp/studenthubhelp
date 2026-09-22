@@ -13,5 +13,26 @@ function parseQuery(q){const n=norm(q),cat=category(n),land=keys(n,L),road=keys(
 function text(r){const ks=['name','property_name','service_name','title','category','type','area','city','address','full_address','nearby','landmark','location','locality','service_area','description','facilities','features','services','menu','food_type','meal_type','gender','timing','opening_hours'];return norm(ks.map(k=>r?.[k]).filter(v=>v!=null).map(v=>typeof v==='object'?JSON.stringify(v):String(v)).join(' '))}
 function relationEvidence(h,rel,i){for(const a of(R[rel]||[])){const p=h.indexOf(norm(a));if(p<0)continue;const w=h.slice(Math.max(0,p-100),Math.min(h.length,p+180));if(i.landmarks.some(k=>has(w,L[k]))||i.roads.some(k=>has(w,D[k])))return true}return false}
 function entityScore(r,i){const h=text(r);let s=0,m=0,req=0,e=[];if(i.cities.length){req++;const rc=norm([r?.city,r?.area,r?.address].filter(Boolean).join(' '));if(i.cities.some(c=>rc.includes(c))){s+=220;m++;e.push('city:'+i.cities[0])}else{s-=600;e.push('city-mismatch')}}if(i.category){req++;if(has(r?.category,C[i.category])||has(r?.type,C[i.category])||has(r?.name,C[i.category])||h.includes(i.category)){s+=120;m++;e.push('category:'+i.category)}else s-=120}if(i.veg){req++;if(/\b(veg|vegetarian|pure veg|shakahari)\b/i.test(h)){s+=110;m++;e.push('veg')}else s-=100}if(i.girls){req++;if(/\b(girls|girl|female|ladies|women|ladki)\b/i.test(h)){s+=110;m++;e.push('girls')}else s-=100}if(i.boys){req++;if(/\b(boys|boy|male|gents|men|ladka)\b/i.test(h)){s+=110;m++;e.push('boys')}else s-=100}for(const k of i.landmarks){req++;if(has(h,L[k])){s+=145;m++;e.push('landmark:'+k)}else s-=55}for(const k of i.roads){req++;if(has(h,D[k])){s+=130;m++;e.push('road:'+k)}else s-=45}for(const x of i.relations){if(x==='near')continue;req++;if(relationEvidence(h,x,i)){s+=70;m++;e.push('relation:'+x)}else s-=20}if(i.relations.includes('near')&&(i.landmarks.length||i.roads.length)){s+=55;e.push('near-intent')}for(const t of i.locationTokens){req++;if(h.includes(t)){s+=22;m++;e.push('token:'+t)}else s-=35}if(req&&m>=req)s+=90;return{score:s,matched:m,required:req,evidence:e}}
+function rankRows(data,q,forcedCategory){
+  const query=String(q??'').trim();
+  const forced=forcedCategory?norm(forcedCategory):'';
+  const effective=forced && !category(query) ? query+' '+forced : query;
+  const i=parseQuery(effective);
+  if(forced) i.category=forced;
+  const rows=Array.isArray(data)?data:[];
+  const out=rows.map((r,idx)=>{
+    const e=entityScore(r,i);
+    const catOk=!forced || (r.__category===forced || has(r?.category,C[forced]||[forced]) || has(r?.type,C[forced]||[forced]));
+    if(!catOk)return null;
+    const base=Number(r.__score)||0;
+    return {...r,__unifiedScore:base+e.score,__unifiedSearch:e};
+  }).filter(Boolean);
+  const exact=out.filter(r=>r.__unifiedSearch.required===0 || r.__unifiedSearch.matched>=r.__unifiedSearch.required);
+  const pool=exact.length?exact:out.filter(r=>r.__unifiedSearch.required===0 || r.__unifiedSearch.matched>=Math.max(1,r.__unifiedSearch.required-1));
+  return (pool.length?pool:out.filter(r=>r.__unifiedSearch.score>0))
+    .sort((a,b)=>b.__unifiedScore-a.__unifiedScore||(Number(b.rating)||0)-(Number(a.rating)||0)||String(a.name||a.property_name||a.title||'').localeCompare(String(b.name||b.property_name||b.title||'')));
+}
+window.StudentHubSearchEngine={normalize:norm,parseQuery,rankRows,entityScore,version:'2.0.0'};
+
 function install(){if(typeof window.ranked!=='function'||window.__studentHubPhase5Installed)return;const old=window.ranked;window.__studentHubPhase5Installed=true;window.ranked=function(data,q){const i=parseQuery(q),base=old(data,q);if(!i.category&&!i.landmarks.length&&!i.roads.length&&!i.relations.length)return base;const normal=Array.isArray(base)?base:[],cityScoped=i.cities.length?normal.filter(r=>{const h=norm([r?.city,r?.area,r?.address].filter(Boolean).join(' '));return i.cities.some(c=>h.includes(c))}):normal,broad=i.category||i.locationTokens.join(' ');let pool=cityScoped;if(broad&&(i.landmarks.length+i.roads.length+i.relations.length)){const b=old(data,broad);const bb=Array.isArray(b)?b:[];pool=cityScoped.concat(bb.filter(r=>{const h=norm([r?.city,r?.area,r?.address].filter(Boolean).join(' '));return !i.cities.length||i.cities.some(c=>h.includes(c))}))}const map=new Map;for(const r of pool){const e=entityScore(r,i),score=(Number(r.__score)||0)+e.score,key=String(r?.property_id||r?.id||r?.slug||r?.name||r?.property_name||'').toLowerCase()+'|'+String(r?.__category||r?.category||'');const p=map.get(key);if(!p||score>p.__score)map.set(key,{...r,__score:score,__phase5Natural:e,__phase5Intent:i})}return[...map.values()].filter(r=>r.__phase5Natural.score>=0||r.__score>=20).sort((a,b)=>b.__score-a.__score||String(a.name||a.property_name||'').localeCompare(String(b.name||b.property_name||'')))};window.__studentHubPhase5={normalize:norm,parseQuery,detectCategory:category,detectRelation:relations,entityScore,version:'1.0.0'}}
 const t=setInterval(()=>{if(typeof window.ranked==='function'){clearInterval(t);install()}},50);setTimeout(()=>{clearInterval(t);install()},10000)})();
