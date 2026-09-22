@@ -99,7 +99,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   }, [properties]);
 
   // Distribution for Pie Chart
-  const pieColors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6'];
+  const pieColors = ['#60a5fa', '#3b82f6', '#06b6d4', '#a78bfa', '#a78bfa'];
   const pieData = categoryData
     .filter((c) => c.count > 0)
     .map((c) => ({
@@ -183,8 +183,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-serif font-extrabold text-white">Analytics & Data Visualization</h2>
-            <span className="text-[10px] uppercase font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-400" /> LIVE DATA
+            <span className="text-[10px] uppercase font-extrabold px-2.5 py-0.5 rounded-full bg-blue-500/15 text-sky-300 border border-blue-500/30 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-cyan-400" /> LIVE DATA
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
@@ -200,7 +200,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 key={t}
                 onClick={() => setTimeframe(t)}
                 className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                  timeframe === t ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
+                  timeframe === t ? 'bg-blue-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {t === '7d' ? '7D' : t === '30d' ? '30D' : t === '90d' ? '90D' : 'All Time'}
@@ -210,7 +210,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
 
           <button
             onClick={() => exportToCSV(categoryData, 'analytics-category-data')}
-            className="px-3.5 py-2 rounded-xl bg-[#0d1838] hover:bg-[#14224d] border border-amber-500/30 text-amber-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-2 rounded-xl bg-[#0d1838] hover:bg-[#14224d] border border-blue-500/30 text-sky-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Export Metrics</span>
@@ -223,7 +223,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0d1838] to-[#12214d] border border-slate-800/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400">Total Properties</span>
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-cyan-400 flex items-center justify-center">
               <Building className="w-4 h-4" />
             </div>
           </div>
@@ -258,11 +258,11 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0d1838] to-[#12214d] border border-slate-800/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400">Average Rating</span>
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
-              <Star className="w-4 h-4 fill-amber-400" />
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-cyan-400 flex items-center justify-center">
+              <Star className="w-4 h-4 fill-cyan-400" />
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-amber-300 mt-3">{avgRating} / 5.0</div>
+          <div className="text-3xl font-extrabold text-sky-300 mt-3">{avgRating} / 5.0</div>
           <div className="flex items-center gap-1 text-[11px] text-slate-400 font-bold mt-2">
             {totalReviews} reviews in Supabase
           </div>
@@ -279,8 +279,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <p className="text-xs text-slate-400">Cumulative students, owners, and student admissions</p>
             </div>
             <div className="flex items-center gap-3 text-xs">
-              <span className="flex items-center gap-1 text-amber-400 font-bold">
-                <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Students
+              <span className="flex items-center gap-1 text-cyan-400 font-bold">
+                <span className="w-3 h-3 rounded-full bg-cyan-400 inline-block" /> Students
               </span>
               <span className="flex items-center gap-1 text-blue-400 font-bold">
                 <span className="w-3 h-3 rounded-full bg-blue-400 inline-block" /> Owners
@@ -296,16 +296,16 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <AreaChart data={growthTimelineData}>
                 <defs>
                   <linearGradient id="studentsGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#60a5fa" stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="ownersGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="bookingsGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1f316b" opacity={0.4} />
@@ -320,9 +320,9 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                     fontSize: '12px',
                   }}
                 />
-                <Area type="monotone" dataKey="Students" stroke="#f59e0b" strokeWidth={2.5} fillOpacity={1} fill="url(#studentsGrad)" />
+                <Area type="monotone" dataKey="Students" stroke="#60a5fa" strokeWidth={2.5} fillOpacity={1} fill="url(#studentsGrad)" />
                 <Area type="monotone" dataKey="Owners" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#ownersGrad)" />
-                <Area type="monotone" dataKey="Bookings" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#bookingsGrad)" />
+                <Area type="monotone" dataKey="Bookings" stroke="#06b6d4" strokeWidth={2.5} fillOpacity={1} fill="url(#bookingsGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -355,7 +355,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 <Tooltip
                   contentStyle={{
                     backgroundColor: '#0d1838',
-                    borderColor: '#f59e0b',
+                    borderColor: '#60a5fa',
                     borderRadius: '12px',
                     color: '#fff',
                     fontSize: '12px',
@@ -411,8 +411,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 <Bar dataKey="views" name="Total Views" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="bookings" name="Bookings" fill="#10b981" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="reviews" name="Reviews" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="bookings" name="Bookings" fill="#06b6d4" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="reviews" name="Reviews" fill="#60a5fa" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -433,12 +433,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-200">{item.area}</span>
                   <span className="text-slate-400 font-mono">
-                    <span className="text-amber-400 font-bold">{item.properties} listings</span> • {item.views} views
+                    <span className="text-cyan-400 font-bold">{item.properties} listings</span> • {item.views} views
                   </span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300"
+                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-sky-300"
                     style={{
                       width: `${Math.min(100, (item.properties / (areaData[0]?.properties || 1)) * 100)}%`,
                     }}
