@@ -15,6 +15,14 @@
     const btn=document.getElementById('searchBtn');
     const box=document.querySelector('.search-box');
     if(!input||!box) return;
+    if(!window.StudentHubSearchEngine){
+      const s=document.createElement('script');
+      s.src='/search-phase5-natural-language.js';
+      s.onload=()=>ready();
+      s.onerror=()=>console.warn('StudentHubHelp unified search engine could not load');
+      document.head.appendChild(s);
+      return;
+    }
 
     const style=document.createElement('style');
     style.id='finder-power-search-style';
@@ -84,7 +92,9 @@
     const originalRecords=()=>Array.isArray(allRecords)?allRecords:[];
     const render=()=>{
       const source=originalRecords();
-      const ranked=source.filter(passes).map((r,i)=>({r,i,s:score(r,input.value)})).sort((a,b)=>b.s-a.s||String(a.r.name||'').localeCompare(String(b.r.name||''))).map(x=>x.r);
+      const categoryKey=page==='pg-finder.html'?'hostel':page.replace('-finder.html','');
+      let ranked=window.StudentHubSearchEngine.rankRows(source,input.value,categoryKey);
+      ranked=ranked.filter(passes);
       const backup=allRecords; allRecords=ranked;
       try{ renderRecords(); } finally { allRecords=backup; }
       const meta=document.getElementById('resultText');
@@ -94,7 +104,8 @@
     const escapeText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
     const suggestions=()=>{
       const q=norm(input.value); if(!q){suggest.classList.remove('show');suggest.innerHTML='';return;}
-      const ranked=originalRecords().map((r,i)=>({r,i,s:score(r,q)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,8);
+      const categoryKey=page==='pg-finder.html'?'hostel':page.replace('-finder.html','');
+      const ranked=window.StudentHubSearchEngine.rankRows(originalRecords(),q,categoryKey).map((r,i)=>({r,i,s:r.__unifiedScore||0})).slice(0,8);
       suggest.innerHTML=ranked.length?ranked.map((x,i)=>{
         const r=x.r,name=String(r.name||r.title||config.label),area=String(r.area||r.city||r.address||'');
         return `<button type="button" class="finder-power-result" data-index="${i}"><i class="fa-solid ${config.icon}"></i><span><strong>${escapeText(name)}</strong><small>${escapeText(area)}${r.property_id?' • ID #'+escapeText(r.property_id):''}</small></span></button>`;
