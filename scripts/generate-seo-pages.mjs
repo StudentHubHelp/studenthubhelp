@@ -15,7 +15,7 @@ const TABLES = [
 
 if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Missing Supabase public API configuration.');
 
-const GENERATED_ROOT = 'sitemap-generated';
+const GENERATED_ROOT = '.';
 const GENERATED_MARKER = '<meta name="studenthubhelp-generated-seo" content="true">';
 
 function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -82,9 +82,6 @@ async function fetchRows(meta){
 }
 async function write(path,content){await mkdir(path.split('/').slice(0,-1).join('/')||'.',{recursive:true});await writeFile(path,content,'utf8');}
 
-for(const entry of await readdir(GENERATED_ROOT).catch(()=>[])){
-  if(entry==='index.html') continue;
-}
 await mkdir(GENERATED_ROOT,{recursive:true});
 
 const all=(await Promise.all(TABLES.map(fetchRows))).flat();
@@ -135,4 +132,5 @@ for(const c of cities.values()){
   }
 }
 
+await write('seo-generated-manifest.json', JSON.stringify({generated, expected:[...expected]}, null, 2)+'\n');
 console.log(JSON.stringify({verifiedActiveProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
