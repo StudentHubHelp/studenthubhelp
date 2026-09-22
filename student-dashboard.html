@@ -55,7 +55,9 @@
     .hero:before{width:340px;height:340px;right:-100px;top:-170px;background:rgba(75,145,255,.22);filter:blur(4px)}
     .hero:after{width:240px;height:240px;right:130px;bottom:-170px;background:rgba(0,212,255,.13)}
     .hero>*{position:relative;z-index:1}
-    .card,.stat,.service,.property,.booking,.review,.compare-card{background:rgba(255,255,255,.91);border:1px solid rgba(20,45,75,.10);border-radius:var(--radius);box-shadow:0 12px 38px rgba(10,31,58,.07)}
+    .card,.stat,.service,.property,.booking,.review,.compare-card{background:rgba(255,255,255,.96);border:1px solid rgba(20,45,75,.10);border-radius:var(--radius);box-shadow:0 12px 38px rgba(10,31,58,.07);color:#101b2d}
+    .card h1,.card h2,.card h3,.card h4,.stat h1,.stat h2,.stat h3,.service h1,.service h2,.service h3,.service .font-black,.property h1,.property h2,.property h3,.booking h1,.booking h2,.booking h3,.review h1,.review h2,.review h3,.compare-card h1,.compare-card h2,.compare-card h3{color:#101b2d!important}
+    .service,.card,.stat,.booking,.review,.compare-card{color:#101b2d!important}
     .card,.stat,.service,.booking,.review,.compare-card{backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
     .stat{transition:.22s}.stat:hover,.service:hover,.property:hover{transform:translateY(-3px);box-shadow:0 20px 48px rgba(10,31,58,.13)}
     .service{transition:.22s}
@@ -260,7 +262,7 @@
             <button class="pill" data-cat="bookstores" onclick="filterExploreCategory('bookstores')">📖 Bookstore <span id="count-bookstores">0</span></button>
           </div>
           <div class="flex flex-wrap gap-2 mt-4">
-            <button class="pill" onclick="toggleVerifiedOnly()" id="verifiedFilter">✓ Verified only</button>
+            <button class="pill active" onclick="toggleVerifiedOnly()" id="verifiedFilter">✓ Verified only</button>
             <button class="pill" onclick="clearExploreFilters()">Clear filters</button>
             <span id="resultSummary" class="pill bg-slate-50">0 results</span>
           </div>
@@ -375,7 +377,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser=null,currentProfile=null,allExploreProperties=[],exploreLoaded=false;
-let currentExploreCategory="all",currentExploreSearch="",currentExploreSort="relevance",verifiedOnly=false;
+let currentExploreCategory="all",currentExploreSearch="",currentExploreSort="relevance",verifiedOnly=true;
 let savedKeys=new Set(JSON.parse(localStorage.getItem("shh_student_saved")||"[]"));
 let compareKeys=new Set(JSON.parse(localStorage.getItem("shh_student_compare")||"[]"));
 let preferences=JSON.parse(localStorage.getItem("shh_student_preferences")||"{}");
@@ -434,18 +436,22 @@ async function loadExploreProperties(force=false){
         return(data||[]).map(r=>({...r,id:String(r.id),table}))
       }catch(e){console.error(table,e);return[]}
     }));
-    allExploreProperties=results.flat();exploreLoaded=true;updateExploreCounts();renderExploreProperties();renderRecommended();$("matchCount").textContent=allExploreProperties.length
+    allExploreProperties=results.flat();exploreLoaded=true;reconcileSavedAndCompare();updateExploreCounts();renderExploreProperties();renderRecommended();$("matchCount").textContent=getRecommendationCandidates().length
   }catch(e){console.error(e);c.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="text-3xl">⚠️</div><div class="font-black mt-3">Listings could not be loaded</div><div class="text-sm mt-1">${escapeHtml(e.message)}</div></div>`}
 }
 window.refreshExploreProperties=()=>loadExploreProperties(true);
-function updateExploreCounts(){$("count-all").textContent=allExploreProperties.length;propertyTables.forEach(t=>{const el=$("count-"+t);if(el)el.textContent=allExploreProperties.filter(p=>p.table===t).length})}
+function isVerified(p){return p?.verified===true||p?.is_verified===true||String(p?.verified).toLowerCase()==="true"||String(p?.is_verified).toLowerCase()==="true"||Number(p?.verified)===1||Number(p?.is_verified)===1}
+function normalizeCategoryType(type){const v=String(type||"").toLowerCase().trim().replace(/[-_\s]+/g,"");return({hostel:"hostels",hostels:"hostels",pg:"hostels",tiffin:"tiffins",tiffins:"tiffins",mess:"tiffins",cafe:"cafes",cafes:"cafes",library:"libraries",libraries:"libraries",bookstore:"bookstores",bookstores:"bookstores"})[v]||""}
+function getVisibleBaseProperties(){return verifiedOnly?allExploreProperties.filter(isVerified):[...allExploreProperties]}
+function updateExploreCounts(){const base=getVisibleBaseProperties();$("count-all").textContent=base.length;propertyTables.forEach(t=>{const el=$("count-"+t);if(el)el.textContent=base.filter(p=>p.table===t).length})}
+function reconcileSavedAndCompare(){const valid=new Set(allExploreProperties.map(propertyKey));let changed=false;[savedKeys,compareKeys].forEach(set=>{for(const key of [...set])if(!valid.has(key)){set.delete(key);changed=true}});if(compareKeys.size>3){compareKeys=new Set([...compareKeys].slice(0,3));changed=true}if(changed)persistSets()}
 function filterExploreCategory(c){currentExploreCategory=c;document.querySelectorAll("#explorePills .pill").forEach(b=>b.classList.toggle("active",b.dataset.cat===c));renderExploreProperties()}
 window.filterExploreCategory=filterExploreCategory;
 function handleExploreSearch(v){currentExploreSearch=String(v||"").trim().toLowerCase();renderExploreProperties()}
 window.handleExploreSearch=handleExploreSearch;
 function setExploreSort(v){currentExploreSort=v;renderExploreProperties()}
-function toggleVerifiedOnly(){verifiedOnly=!verifiedOnly;$("verifiedFilter").classList.toggle("active",verifiedOnly);renderExploreProperties()}
-function clearExploreFilters(){currentExploreCategory="all";currentExploreSearch="";currentExploreSort="relevance";verifiedOnly=false;$("exploreSearchInput").value="";$("sortSelect").value="relevance";$("verifiedFilter").classList.remove("active");filterExploreCategory("all")}
+function toggleVerifiedOnly(){verifiedOnly=!verifiedOnly;$("verifiedFilter").classList.toggle("active",verifiedOnly);updateExploreCounts();renderExploreProperties()}
+function clearExploreFilters(){currentExploreCategory="all";currentExploreSearch="";currentExploreSort="relevance";verifiedOnly=true;$("exploreSearchInput").value="";$("sortSelect").value="relevance";$("verifiedFilter").classList.add("active");updateExploreCounts();filterExploreCategory("all")}
 function filterAndShowCategory(c){showSection("explore");filterExploreCategory(c)}
 window.filterAndShowCategory=filterAndShowCategory;
 
@@ -454,14 +460,16 @@ function getPrice(p){return p.monthly_rent||p.price||p.monthly_plan||p.monthly_f
 function getImage(p){return p.image||p.banner||p.photo||getCategoryBanner(p.table)}
 function getSearchText(p){return [getPropertyName(p),p.area,p.city,p.address,p.locality,p.location,p.description].filter(Boolean).join(" ").toLowerCase()}
 
+function tokenizeQuery(q){return String(q||"").toLowerCase().split(/[^a-z0-9]+/i).map(x=>x.trim()).filter(x=>x.length>=2)}
+function propertyRelevanceScore(p,q){const query=String(q||"").trim().toLowerCase();if(!query)return 0;const tokens=tokenizeQuery(query);const fields={name:getPropertyName(p).toLowerCase(),area:String(p.area||"").toLowerCase(),city:String(p.city||"").toLowerCase(),address:String(p.address||"").toLowerCase(),locality:String(p.locality||p.location||"").toLowerCase(),description:String(p.description||"").toLowerCase(),category:formatCategory(p.table).toLowerCase()};let score=0;const weights={name:24,area:20,address:14,locality:12,city:10,category:9,description:4};for(const k of Object.keys(fields)){if(fields[k].includes(query))score+=(k==="name"?100:k==="area"?80:k==="address"?60:k==="locality"?50:k==="city"?40:k==="category"?35:15);for(const t of tokens)if(fields[k].includes(t))score+=weights[k]}return score}
 function renderExploreProperties(){
-  let arr=[...allExploreProperties];
+  let arr=getVisibleBaseProperties();
   if(currentExploreCategory!=="all")arr=arr.filter(p=>p.table===currentExploreCategory);
-  if(currentExploreSearch)arr=arr.filter(getSearchText.bind(null)).filter(p=>getSearchText(p).includes(currentExploreSearch));
-  if(verifiedOnly)arr=arr.filter(p=>p.verified===true||p.is_verified===true);
+  if(currentExploreSearch)arr=arr.filter(p=>getSearchText(p).includes(currentExploreSearch));
   if(currentExploreSort==="rating")arr.sort((a,b)=>(Number(b.rating)||0)-(Number(a.rating)||0));
   else if(currentExploreSort==="name")arr.sort((a,b)=>getPropertyName(a).localeCompare(getPropertyName(b)));
-  else if(currentExploreSort==="newest")arr.sort((a,b)=>String(b.created_at||b.id).localeCompare(String(a.created_at||a.id)));
+  else if(currentExploreSort==="newest")arr.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)||Number(b.id)-Number(a.id));
+  else if(currentExploreSearch)arr.sort((a,b)=>propertyRelevanceScore(b,currentExploreSearch)-propertyRelevanceScore(a,currentExploreSearch)||(Number(b.rating)||0)-(Number(a.rating)||0));
   $("resultSummary").textContent=`${arr.length} result${arr.length===1?"":"s"}`;
   const c=$("exploreGrid");
   if(!arr.length){c.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="text-3xl">🔎</div><div class="font-black mt-3 text-readable">No properties found</div><div class="text-sm mt-1">Try another search or filter.</div></div>';return}
@@ -469,7 +477,7 @@ function renderExploreProperties(){
 }
 
 function renderPropertyCard(p){
-  const name=getPropertyName(p),key=propertyKey(p),saved=savedKeys.has(key),comp=compareKeys.has(key),verified=p.verified===true||p.is_verified===true,price=getPrice(p);
+  const name=getPropertyName(p),key=propertyKey(p),saved=savedKeys.has(key),comp=compareKeys.has(key),verified=isVerified(p),price=getPrice(p);
   const image=getImage(p), area=p.area||p.city||p.address||"Location not specified";
   return `<article class="property">
     <div class="relative">
@@ -617,13 +625,18 @@ function renderReviews(reviews){
   const list=$("reviewsList");if(!reviews.length){list.innerHTML='<div class="card"><div class="empty"><div class="text-3xl">★</div><div class="font-black mt-3 text-readable">No reviews yet</div><div class="text-sm mt-2">Reviews you submit will appear here.</div></div></div>';return}
   list.innerHTML=reviews.map(r=>{
     const s=String(r.status||"").toLowerCase(),rating=Number((s==="pending"&&r.pending_rating!=null)?r.pending_rating:r.rating||0),txt=(s==="published"&&r.published_review_text)?r.published_review_text:(s==="pending"&&r.pending_review_text)?r.pending_review_text:(r.published_review_text||r.pending_review_text||r.review_text||"");
-    const prop=allExploreProperties.find(p=>String(p.id)===String(r.property_id)&&String(p.table)===String(r.property_type)+"s")||allExploreProperties.find(p=>String(p.id)===String(r.property_id));
+    const normalizedType=normalizeCategoryType(r.property_type);
+    const prop=allExploreProperties.find(p=>String(p.id)===String(r.property_id)&&(!normalizedType||p.table===normalizedType));
     return `<div class="review p-5"><div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4"><div><div class="rating text-lg">${"★".repeat(Math.max(0,Math.min(5,rating)))}${"☆".repeat(Math.max(0,5-rating))}</div><div class="font-black mt-2">${escapeHtml(prop?getPropertyName(prop):"Property")}</div><div class="text-xs muted-readable mt-1">${escapeHtml(String(r.property_type||"Property").replace(/[-_]/g," "))}</div></div><div class="text-right text-xs muted-readable">${formatDate(r.created_at)}<div class="mt-2">${r.status?statusBadge(r.status):""}</div></div></div><div class="mt-4 leading-7 text-readable nowrap-safe">${escapeHtml(txt)}</div></div>`
   }).join("")
 }
 
+function parseBudget(v){const n=Number(String(v||"").replace(/[^0-9.]/g,""));return Number.isFinite(n)&&n>0?n:null}
+function preferenceCategoryMatches(p){const target=normalizeCategoryType(preferences.type);return target&&p.table===target?45:0}
+function recommendationScore(p){let score=isVerified(p)?30:0;score+=preferenceCategoryMatches(p);const area=String(preferences.area||"").toLowerCase().trim();const hay=getSearchText(p);if(area&&hay.includes(area))score+=40;const budget=parseBudget(preferences.budget),price=parseBudget(getPrice(p));if(budget&&price){if(price<=budget)score+=30;else if(price<=budget*1.15)score+=12}if(savedKeys.has(propertyKey(p)))score+=25;score+=Math.min(10,Number(p.rating)||0);return score}
+function getRecommendationCandidates(){return getVisibleBaseProperties().filter(p=>recommendationScore(p)>0).sort((a,b)=>recommendationScore(b)-recommendationScore(a))}
 function renderRecommended(){
-  const c=$("recommendedMini"),arr=allExploreProperties.filter(p=>savedKeys.has(propertyKey(p))).concat(allExploreProperties.filter(p=>!savedKeys.has(propertyKey(p)))).slice(0,3);
+  const c=$("recommendedMini"),arr=getRecommendationCandidates().slice(0,3);
   c.innerHTML=arr.length?arr.map(p=>`<button class="w-full text-left rounded-2xl border border-slate-200 bg-white p-3 mb-3 hover:border-slate-300 transition" onclick="openPublicPage('${escapeHtml(propertyKey(p))}')"><div class="flex gap-3"><img class="w-16 h-16 rounded-xl object-cover bg-slate-100" src="${escapeHtml(getImage(p))}" alt="" onerror="this.src='${escapeHtml(getCategoryBanner(p.table))}'"><div class="min-w-0"><div class="font-black nowrap-safe">${escapeHtml(getPropertyName(p))}</div><div class="text-xs muted-readable mt-1">${escapeHtml(p.area||p.city||"Location not specified")}</div><div class="text-xs font-bold mt-2">⭐ ${escapeHtml(p.rating||"New")} · ${escapeHtml(getPrice(p)||"Price not listed")}</div></div></div></button>`).join(""):'<div class="empty">Explore listings to build recommendations.</div>'
 }
 function renderNotifications(){
@@ -634,9 +647,9 @@ function renderNotifications(){
   $("notificationsList").innerHTML=items.map(x=>`<div class="card p-5 flex gap-4 items-start"><div class="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-xl">${x[0]}</div><div><div class="font-black">${escapeHtml(x[1])}</div><div class="text-sm muted-readable mt-1">${escapeHtml(x[2])}</div></div></div>`).join("");
 }
 function openAIHelp(){
-  showToast("StudentHubHelp AI is available from the dashboard assistant.");
   const widget=document.querySelector("#studenthubhelp-ai-widget, #ai-chatbot, [data-ai-chatbot]");
   if(widget){widget.click();return}
+  showToast("StudentHubHelp AI could not be opened. Please refresh the page.");
 }
 window.openAIHelp=openAIHelp;
 
