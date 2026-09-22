@@ -44,8 +44,7 @@ function rankRows(data,q,forcedCategory){
     if(i.relations.includes('near') && !nearHard) hardMisses.push('proximity');
 
     const locationHits=(i.roads.filter(k=>has(text(r),D[k])).length)+
-      (i.landmarks.filter(k=>has(text(r),L[k])).length)+
-      (i.cities.filter(c=>norm([r?.city,r?.area,r?.address].filter(Boolean).join(' ')).includes(c)).length);
+      (i.landmarks.filter(k=>has(text(r),L[k])).length);
 
     let tier='broader';
     if(exactLocation && e.matched>=e.required) tier='exact';
