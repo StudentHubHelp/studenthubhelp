@@ -64,7 +64,7 @@ async function fetchRows(meta){
   const out=[]; let offset=0;
   while(true){
     const u=new URL(SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/'+meta.table);
-    u.searchParams.set('select','id,property_id,slug,name,service_name,city,area,service_area,address,status,verified,updated_at,created_at');
+    u.searchParams.set('select','id,property_id,slug,name,city,area,address,status,verified,updated_at,created_at');
     u.searchParams.set('status','eq.active'); u.searchParams.set('verified','eq.true');
     u.searchParams.set('offset',String(offset)); u.searchParams.set('limit','1000');
     const res=await fetch(u,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
