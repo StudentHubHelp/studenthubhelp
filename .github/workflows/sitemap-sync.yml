@@ -8,6 +8,8 @@ on:
     paths:
       - '*.html'
       - 'scripts/generate-sitemap.mjs'
+      - 'scripts/generate-seo-pages.mjs'
+      - 'seo-generated-manifest.json'
       - 'sitemap.xml'
       - 'sitemap-pages.xml'
       - 'sitemap-properties*.xml'
@@ -24,6 +26,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Generate automatic city, category and location SEO pages
+        env:
+          SUPABASE_URL: https://idurlccrarznnnqixxsd.supabase.co
+          SUPABASE_KEY: sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT
+          BASE_URL: https://studenthubhelp.in/
+          SEO_LOCATION_MIN_PROPERTIES: 3
+        run: node scripts/generate-seo-pages.mjs
 
       - name: Generate canonical sitemap index and child sitemaps
         env:
@@ -77,6 +87,9 @@ jobs:
                       assert params.get('type',[None])[0] in {'hostel','tiffin','library','cafe','bookstore'}, f'Invalid property type: {value}'
 
           assert BASE in all_urls, 'Canonical homepage URL is missing from sitemap'
+          import json
+          generated=json.loads(Path('seo-generated-manifest.json').read_text(encoding='utf-8')).get('generated', [])
+          assert all(u in all_urls for u in generated), 'Generated SEO URL missing from sitemap'
           assert f'{BASE}index.html' not in all_urls, 'Non-canonical index.html homepage URL must not be in sitemap'
           assert f'{BASE}property-index.html' in all_urls, 'Property discovery index is missing from sitemap'
           index_html=Path('property-index.html').read_text(encoding='utf-8')
@@ -93,7 +106,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add sitemap.xml sitemap-pages.xml sitemap-properties*.xml property-index.html
+          git add -A
           if git diff --cached --quiet; then
             echo "Sitemap already up to date."
             exit 0
