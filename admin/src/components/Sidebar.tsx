@@ -61,15 +61,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItemClass = (tab: SectionTab) => {
     const isActive = currentTab === tab;
 
-    return `w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+    return `group relative w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[12px] font-bold tracking-[0.01em] transition-all duration-200 ease-out overflow-hidden ${
       isActive
-        ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm'
-        : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent'
+        ? 'bg-gradient-to-r from-blue-500/18 via-blue-500/10 to-cyan-400/5 text-white border border-blue-400/30 shadow-[0_8px_26px_rgba(37,99,235,0.12)]'
+        : 'text-slate-300/95 hover:text-white hover:bg-blue-500/[0.055] border border-transparent'
     }`;
   };
 
   const badgeClass =
-    'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/25';
+    'text-[9px] leading-none font-extrabold px-1.5 py-1 rounded-full bg-blue-500/10 text-cyan-300 border border-cyan-400/20';
 
   const item = (
     tab: SectionTab,
@@ -84,163 +84,125 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }}
       className={navItemClass(tab)}
     >
-      <span className="flex items-center gap-2.5">
-        <Icon className="w-4 h-4 text-amber-400" />
-        <span>{label}</span>
+      <span className="flex min-w-0 items-center gap-2.5">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-500/[0.055] text-cyan-300/90 transition-all duration-200 group-hover:bg-blue-500/10 group-hover:text-cyan-200">
+          <Icon className="w-[15px] h-[15px]" strokeWidth={1.9} />
+        </span>
+        <span className="truncate">{label}</span>
       </span>
 
       {badge && badge > 0 ? (
         <span className={badgeClass}>{badge}</span>
       ) : null}
+
+      {currentTab === tab && (
+        <span className="pointer-events-none absolute left-0 top-1/2 h-5/6 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-cyan-300 via-blue-500 to-blue-600 shadow-[0_0_14px_rgba(56,189,248,0.75)]" />
+      )}
     </button>
+  );
+
+  const section = (title: string, children: React.ReactNode) => (
+    <div className="pt-3 mt-3 border-t border-blue-200/[0.07]">
+      <div className="text-[9px] uppercase tracking-[0.19em] text-slate-500 font-extrabold px-3 pb-2">
+        {title}
+      </div>
+      <div className="space-y-1">
+        {children}
+      </div>
+    </div>
   );
 
   const content = (
     <aside
-      className={`fixed inset-y-0 left-0 z-[600] w-[min(82vw,320px)] md:static md:z-auto md:w-64 h-screen max-h-screen shrink-0 bg-[#07132c] border-r border-amber-500/20 flex flex-col overflow-hidden select-none transform transition-transform duration-200 ease-out ${
+      className={`fixed inset-y-0 left-0 z-[600] w-[min(82vw,292px)] md:static md:z-auto md:w-[272px] h-screen max-h-screen shrink-0 bg-[#07132c] border border-blue-400/[0.13] flex flex-col overflow-hidden select-none transform transition-transform duration-200 ease-out ${
         isOpenMobile
           ? 'translate-x-0'
           : '-translate-x-full md:translate-x-0'
       }`}
     >
-      <div className="p-5 border-b border-slate-800/90 flex items-center gap-3 shrink-0">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 flex items-center justify-center font-serif font-black text-lg">
+      <div className="px-4 py-4 border-b border-blue-200/[0.08] flex items-center gap-3 shrink-0">
+        <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 via-blue-500 to-cyan-400 text-white flex items-center justify-center font-serif font-black text-lg shadow-[0_8px_24px_rgba(37,99,235,0.24)] ring-1 ring-cyan-200/10">
           SH
         </div>
 
-        <div>
-          <div className="font-serif font-extrabold text-sm tracking-wide bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 bg-clip-text text-transparent">
+        <div className="min-w-0">
+          <div className="font-serif font-extrabold text-[15px] tracking-wide bg-gradient-to-r from-blue-200 via-sky-200 to-cyan-300 bg-clip-text text-transparent truncate">
             StudentHubHelp
           </div>
 
-          <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 mt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+          <div className="text-[9px] text-emerald-400 font-bold tracking-wide flex items-center gap-1.5 mt-0.5">
+            <span className="relative flex w-1.5 h-1.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
+              <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            </span>
             DIRECTOR ONLINE
           </div>
         </div>
       </div>
 
-      <nav className="p-3 space-y-1 text-xs font-medium flex-1 overflow-y-auto custom-scrollbar">
-
-        {item('overview', 'Overview Dashboard', PieChart)}
-        {item('analytics', 'Analytics & Graphs', LineChart)}
-        {item('user-management', 'User Management', Users)}
-        {item('students', 'Students', GraduationCap)}
-        {item('owners', 'Owners', Briefcase)}
-        {item('partners', 'Partner Network', Handshake)}
-
-        {/* AI & Automation */}
-        <div className="pt-3 mt-3 border-t border-slate-800">
-          <div className="text-[9px] uppercase tracking-widest text-slate-400 font-extrabold px-3 py-1">
-            AI & Automation
-          </div>
-
-          {item('admin-profile', 'Admin Profile', User)}
-          {item('chatbot-crm', 'AI Chatbot & CRM', Bot)}
+      <nav className="px-3 py-3 text-xs font-medium flex-1 overflow-y-auto custom-scrollbar">
+        <div className="space-y-1">
+          {item('overview', 'Overview Dashboard', PieChart)}
+          {item('analytics', 'Analytics & Graphs', LineChart)}
+          {item('user-management', 'User Management', Users)}
+          {item('students', 'Students', GraduationCap)}
+          {item('owners', 'Owners', Briefcase)}
+          {item('partners', 'Partner Network', Handshake)}
         </div>
 
-        {/* Directory & Listings */}
-        <div className="pt-3 mt-3 border-t border-slate-800">
-          <div className="text-[9px] uppercase tracking-widest text-slate-400 font-extrabold px-3 py-1">
-            Directory & Listings
-          </div>
+        {section('AI & Automation',
+          <>
+            {item('admin-profile', 'Admin Profile', User)}
+            {item('chatbot-crm', 'AI Chatbot & CRM', Bot)}
+          </>
+        )}
 
-          {item('properties', 'All Properties', Building2)}
-          {item('suspended-properties', 'Suspended Properties', AlertTriangle)}
-          {item('hostels', 'Hostels & PGs', Hotel)}
-          {item('tiffins', 'Tiffin & Mess', Utensils)}
-          {item('libraries', '24/7 Libraries', BookOpen)}
-          {item('cafes', 'Student Cafes', Coffee)}
-          {item('bookstores', 'Bookstores', Store)}
-        </div>
+        {section('Directory & Listings',
+          <>
+            {item('properties', 'All Properties', Building2)}
+            {item('suspended-properties', 'Suspended Properties', AlertTriangle)}
+            {item('hostels', 'Hostels & PGs', Hotel)}
+            {item('tiffins', 'Tiffin & Mess', Utensils)}
+            {item('libraries', '24/7 Libraries', BookOpen)}
+            {item('cafes', 'Student Cafes', Coffee)}
+            {item('bookstores', 'Bookstores', Store)}
+          </>
+        )}
 
-        {/* Platform Operations */}
-        <div className="pt-3 mt-3 border-t border-slate-800">
-          <div className="text-[9px] uppercase tracking-widest text-slate-400 font-extrabold px-3 py-1">
-            Platform Operations
-          </div>
+        {section('Platform Operations',
+          <>
+            {item('listing-requests', 'Listing Requests', Inbox, badges.listingRequests)}
+            {item('claim-requests', 'Claim Requests', Handshake, badges.claimRequests)}
+            {item('unverified-properties', 'Unverified Queue', AlertOctagon, badges.unverifiedProperties)}
+            {item('verification', 'Verification Center', ShieldCheck, badges.verificationRequests)}
+            {item('bookings', 'Bookings / Admissions', CalendarCheck, badges.bookings)}
+            {item('appointments', 'Appointments', CalendarDays, badges.appointments)}
+            {item('reviews', 'Reviews Moderation', Star, badges.reviews)}
+            {item('reports', 'Reports & Grievance', AlertTriangle, badges.reports)}
+            {item('media', 'Media & Gallery', Images)}
+            {item('featured', 'Featured Listings', Crown)}
+          </>
+        )}
 
-          {item(
-            'listing-requests',
-            'Listing Requests',
-            Inbox,
-            badges.listingRequests
-          )}
-
-          {item(
-            'claim-requests',
-            'Claim Requests',
-            Handshake,
-            badges.claimRequests
-          )}
-
-          {item(
-            'unverified-properties',
-            'Unverified Queue',
-            AlertOctagon,
-            badges.unverifiedProperties
-          )}
-
-          {item(
-            'verification',
-            'Verification Center',
-            ShieldCheck,
-            badges.verificationRequests
-          )}
-
-          {item(
-            'bookings',
-            'Bookings / Admissions',
-            CalendarCheck,
-            badges.bookings
-          )}
-
-          {item(
-            'appointments',
-            'Appointments',
-            CalendarDays,
-            badges.appointments
-          )}
-
-          {item(
-            'reviews',
-            'Reviews Moderation',
-            Star,
-            badges.reviews
-          )}
-
-          {item(
-            'reports',
-            'Reports & Grievance',
-            AlertTriangle,
-            badges.reports
-          )}
-
-          {item('media', 'Media & Gallery', Images)}
-          {item('featured', 'Featured Listings', Crown)}
-        </div>
-
-        {/* System & Settings */}
-        <div className="pt-3 mt-3 border-t border-slate-800">
-          <div className="text-[9px] uppercase tracking-widest text-slate-400 font-extrabold px-3 py-1">
-            System & Settings
-          </div>
-
-          {item('areas', 'Areas & Locations', MapPin)}
-          {item('notifications', 'Notifications Log', Bell)}
-          {item('activity', 'Activity & Audit Trail', History)}
-          {item('settings', 'System Settings', Sliders)}
-          {item('categories', 'Category Config', Tags)}
-        </div>
-
+        {section('System & Settings',
+          <>
+            {item('areas', 'Areas & Locations', MapPin)}
+            {item('notifications', 'Notifications Log', Bell)}
+            {item('activity', 'Activity & Audit Trail', History)}
+            {item('settings', 'System Settings', Sliders)}
+            {item('categories', 'Category Config', Tags)}
+          </>
+        )}
       </nav>
 
-      <div className="p-3 border-t border-slate-800">
+      <div className="px-3 py-3 border-t border-blue-200/[0.08] shrink-0 bg-slate-950/20">
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-rose-300 hover:bg-rose-500/10"
+          className="group w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-slate-100 hover:bg-blue-500/[0.055] border border-transparent transition-all duration-200"
         >
-          <Power className="w-4 h-4" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-800/40 text-slate-400 group-hover:text-cyan-300">
+            <Power className="w-[15px] h-[15px]" strokeWidth={1.9} />
+          </span>
           <span>Logout</span>
         </button>
       </div>
