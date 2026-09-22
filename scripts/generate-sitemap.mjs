@@ -187,6 +187,16 @@ for (const name of await readdir('.')) {
 }
 
 pages.set(pageUrl('property-index.html'), propertyIndexLastmod);
+let generatedManifest = null;
+try {
+  generatedManifest = JSON.parse(await readFile('seo-generated-manifest.json', 'utf8'));
+} catch {}
+if (generatedManifest && Array.isArray(generatedManifest.generated)) {
+  for (const loc of generatedManifest.generated) {
+    if (typeof loc !== 'string' || !loc.startsWith(BASE)) continue;
+    pages.set(loc, null);
+  }
+}
 const pageEntries = [...pages.entries()].map(([loc, lastmod]) => ({ loc, lastmod })).sort((a, b) => a.loc.localeCompare(b.loc));
 await writeUrlset('sitemap-pages.xml', pageEntries);
 
