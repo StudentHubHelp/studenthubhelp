@@ -39,7 +39,11 @@ function recordUrl(type, row) {
 }
 
 function pageUrl(name) {
-  return name === 'index.html' ? BASE : new URL(name, BASE).href;
+  if (name === 'index.html') return BASE;
+  if (name.endsWith('/index.html')) {
+    return new URL(name.slice(0, -'index.html'.length), BASE).href;
+  }
+  return new URL(name, BASE).href;
 }
 
 async function fetchRows(table) {
@@ -92,10 +96,17 @@ const explicitExcluded = new Set([
   'owner-dashboard.html', 'student-dashboard.html', 'partner-dashboard.html'
 ]);
 const pages = new Map();
-const rootFiles = (await readdir('.')).filter(name => name.toLowerCase().endsWith('.html')).sort();
+const rootFiles = (await readdir('.', { recursive: true }))
+  .filter(name => name.toLowerCase().endsWith('.html'))
+  .sort();
+
+function excludedPath(name) {
+  const normalized = name.replace(/\\\\/g, '/');
+  return normalized.startsWith('admin/') || normalized.startsWith('ai-chatbot/') || normalized.startsWith('supabase/') || normalized.startsWith('.github/');
+}
 
 for (const name of rootFiles) {
-  if (explicitExcluded.has(name) || /^google[a-z0-9_-]*\.html$/i.test(name)) continue;
+  if (explicitExcluded.has(name) || excludedPath(name) || /^google[a-z0-9_-]*\.html$/i.test(name)) continue;
   const html = await readFile(name, 'utf8');
   if (hasNoindex(html)) continue;
   pages.set(pageUrl(name), gitLastModified(name));
