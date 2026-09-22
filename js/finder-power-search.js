@@ -60,6 +60,13 @@
       </div>
       <div class="finder-power-suggest" id="finderPowerSuggest" role="listbox"></div>`;
     box.parentNode.insertBefore(panel,box.nextSibling);
+    const matchNote=document.createElement('div');
+    matchNote.id='finderPowerMatchNote';
+    matchNote.hidden=true;
+    matchNote.setAttribute('role','status');
+    matchNote.style.cssText='margin:10px 0 14px;padding:10px 12px;border:1px solid #e6eaf0;border-radius:10px;background:#f8fafc;color:#667085;font-size:10px;font-weight:800;';
+    const grid=document.getElementById('listingGrid');
+    if(grid && grid.parentNode) grid.parentNode.insertBefore(matchNote,grid);
     const filters=panel.querySelector('#finderPowerFilters');
     const suggest=panel.querySelector('#finderPowerSuggest');
     filters.style.display='none';
@@ -77,8 +84,7 @@
       return s;
     };
     const passes=r=>{
-      const q=norm(input.value); const hay=norm(searchable(r));
-      if(q && score(r,q)<=0) return false;
+      const hay=norm(searchable(r));
       if(state.city && !norm(r.city).includes(norm(state.city)) && !hay.includes(norm(state.city))) return false;
       if(state.area && !norm(r.area).includes(norm(state.area)) && !hay.includes(norm(state.area))) return false;
       const price=numberFrom(r.price ?? r.monthly_price ?? r.rent ?? r.price_range);
@@ -92,13 +98,40 @@
     const originalRecords=()=>Array.isArray(allRecords)?allRecords:[];
     const render=()=>{
       const source=originalRecords();
+      const query=input.value.trim();
       const categoryKey=page==='pg-finder.html'?'hostel':page.replace('-finder.html','');
-      let ranked=window.StudentHubSearchEngine.rankRows(source,input.value,categoryKey);
+      let ranked=window.StudentHubSearchEngine.rankRows(source,query,categoryKey);
       ranked=ranked.filter(passes);
-      const backup=allRecords; allRecords=ranked;
-      try{ renderRecords(); } finally { allRecords=backup; }
+
+      const backupRecords=allRecords;
+      const backupValue=input.value;
+
+      // renderRecords() has its own legacy literal-text filter. Temporarily clear
+      // the input so it renders the already-ranked unified result set instead of
+      // applying the natural-language query a second time.
+      allRecords=ranked;
+      input.value='';
+      try{ renderRecords(); } finally {
+        input.value=backupValue;
+        allRecords=backupRecords;
+      }
+
       const meta=document.getElementById('resultText');
-      if(meta && input.value.trim()) meta.textContent=`Showing ${ranked.length} smart result${ranked.length===1?'':'s'} for "${input.value.trim()}"`;
+      const note=document.getElementById('finderPowerMatchNote');
+      const tier=ranked[0]?.__matchTier||'';
+      if(meta && query){
+        if(tier==='exact'){
+          meta.textContent=`Showing ${ranked.length} exact result${ranked.length===1?'':'s'} for "${query}"`;
+        }else if(tier==='nearby'){
+          meta.textContent=`No exact match for "${query}". Showing ${ranked.length} nearby / related option${ranked.length===1?'':'s'} — exact location not confirmed.`;
+        }else{
+          meta.textContent=`No exact match for "${query}". Showing ${ranked.length} broader option${ranked.length===1?'':'s'} — exact location not confirmed.`;
+        }
+      }
+      if(note){
+        note.hidden=true;
+        note.textContent='';
+      }
       return ranked;
     };
     const escapeText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
