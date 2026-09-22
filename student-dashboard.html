@@ -334,7 +334,7 @@
       <section id="section-support" class="hidden">
         <div class="mb-6"><h2 class="text-2xl font-black">Help & Support</h2><p class="muted-readable mt-1">Get help with bookings, listings and your student account.</p></div>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-          <button class="card p-6 text-left hover:-translate-y-1 transition" onclick="showToast('Use the booking section to review your current booking status.')"><div class="text-3xl">📅</div><div class="font-black mt-4">Booking Help</div><div class="text-sm muted-readable mt-1">Understand your booking status.</div></button>
+          <button class="card p-6 text-left hover:-translate-y-1 transition" onclick="showSection('bookings')"><div class="text-3xl">📅</div><div class="font-black mt-4">Booking Help</div><div class="text-sm muted-readable mt-1">Understand your booking status.</div></button>
           <button class="card p-6 text-left hover:-translate-y-1 transition" onclick="showToast('Please use Contact Support from the main StudentHubHelp support flow.')"><div class="text-3xl">⚑</div><div class="font-black mt-4">Report Information</div><div class="text-sm muted-readable mt-1">Report incorrect property information.</div></button>
           <a class="card p-6 text-left hover:-translate-y-1 transition" href="global-search.html"><div class="text-3xl">🔎</div><div class="font-black mt-4 text-readable">Search Help</div><div class="text-sm muted-readable mt-1">Find services across StudentHubHelp.</div></a>
           <button class="card p-6 text-left hover:-translate-y-1 transition" onclick="openAIHelp()"><div class="text-3xl">🤖</div><div class="font-black mt-4">StudentHubHelp AI</div><div class="text-sm muted-readable mt-1">Ask a study, booking or property question.</div></button>
@@ -397,7 +397,9 @@ function publicPropertyUrl(p){return `property-details.html?type=${encodeURIComp
 function showToast(message){$("toastMessage").textContent=message;$("toast").classList.remove("hidden");clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$("toast").classList.add("hidden"),3200)}
 function statusBadge(status){const s=String(status||"active").toLowerCase().trim();const map={pending:["Pending","badge-pending"],active:["✓ Confirmed","badge-active"],rejected:["Rejected","badge-rejected"],cancelled:["Cancelled","badge-cancelled"],completed:["Completed","badge-completed"]};const x=map[s]||[s,"badge-pending"];return `<span class="badge ${x[1]}">${escapeHtml(x[0])}</span>`}
 
-function persistSets(){localStorage.setItem("shh_student_saved",JSON.stringify([...savedKeys]));localStorage.setItem("shh_student_compare",JSON.stringify([...compareKeys]));updateCounters()}
+function studentStorageKey(type){return currentUser?"shh_student_"+type+"_"+currentUser.id:"shh_student_"+type}
+function persistSets(){localStorage.setItem(studentStorageKey("saved"),JSON.stringify([...savedKeys]));localStorage.setItem(studentStorageKey("compare"),JSON.stringify([...compareKeys]));updateCounters()}
+function hydrateStudentLocalState(){const legacySaved=localStorage.getItem("shh_student_saved"),legacyCompare=localStorage.getItem("shh_student_compare");const savedRaw=localStorage.getItem(studentStorageKey("saved"))||legacySaved||"[]";const compareRaw=localStorage.getItem(studentStorageKey("compare"))||legacyCompare||"[]";try{savedKeys=new Set(JSON.parse(savedRaw));compareKeys=new Set(JSON.parse(compareRaw))}catch(e){savedKeys=new Set();compareKeys=new Set()}preferences=(()=>{try{return JSON.parse(localStorage.getItem(studentStorageKey("preferences"))||localStorage.getItem("shh_student_preferences")||"{}")}catch(e){return {}}})();persistSets();localStorage.setItem(studentStorageKey("preferences"),JSON.stringify(preferences))}
 function updateCounters(){$("savedCount").textContent=savedKeys.size;$("savedNavCount").textContent=savedKeys.size;$("compareNavCount").textContent=compareKeys.size}
 
 function showSection(section){
@@ -522,12 +524,12 @@ function toggleCompare(key){
 }
 window.toggleCompare=toggleCompare;
 function renderSaved(){
-  const c=$("savedGrid"),arr=allExploreProperties.filter(p=>savedKeys.has(propertyKey(p)));
+  const c=$("savedGrid"),arr=getVisibleBaseProperties().filter(p=>savedKeys.has(propertyKey(p)));
   c.innerHTML=arr.length?arr.map(renderPropertyCard).join(""):'<div class="empty" style="grid-column:1/-1"><div class="text-3xl">♡</div><div class="font-black mt-3 text-readable">No saved properties yet</div><div class="text-sm mt-1">Tap the heart on any listing to save it.</div></div>'
 }
 function clearCompare(){compareKeys.clear();persistSets();renderCompare();renderExploreProperties()}
 function renderCompare(){
-  const c=$("compareGrid"),arr=allExploreProperties.filter(p=>compareKeys.has(propertyKey(p)));
+  const c=$("compareGrid"),arr=getVisibleBaseProperties().filter(p=>compareKeys.has(propertyKey(p)));
   if(!arr.length){c.innerHTML='<div class="empty col-span-full"><div class="text-3xl">⇄</div><div class="font-black mt-3 text-readable">Nothing to compare</div><div class="text-sm mt-1">Add up to three listings from Explore.</div></div>';return}
   c.innerHTML=arr.map(p=>`<div class="compare-card p-5"><img class="w-full h-40 object-cover rounded-2xl" src="${escapeHtml(getImage(p))}" alt="${escapeHtml(getPropertyName(p))}" onerror="this.src='${escapeHtml(getCategoryBanner(p.table))}'"><h3 class="font-black text-lg mt-4 nowrap-safe">${escapeHtml(getPropertyName(p))}</h3><div class="space-y-3 mt-4 text-sm"><div class="flex justify-between gap-3"><span class="muted-readable">Category</span><b>${escapeHtml(formatCategory(p.table))}</b></div><div class="flex justify-between gap-3"><span class="muted-readable">Rating</span><b>⭐ ${escapeHtml(p.rating||"New")}</b></div><div class="flex justify-between gap-3"><span class="muted-readable">Area</span><b class="text-right">${escapeHtml(p.area||p.city||"—")}</b></div><div class="flex justify-between gap-3"><span class="muted-readable">Price</span><b>${escapeHtml(getPrice(p)||"Not listed")}</b></div></div><div class="flex gap-2 mt-5"><button class="btn btn-primary flex-1" onclick="openPublicPage('${escapeHtml(propertyKey(p))}')">Details</button><button class="btn btn-secondary" onclick="toggleCompare('${escapeHtml(propertyKey(p))}')">Remove</button></div></div>`).join("")
 }
@@ -537,6 +539,7 @@ async function loadAccount(){
   if(sessionError)console.error(sessionError);
   if(!session?.user){window.location.href="auth.html";return false}
   currentUser=session.user;
+  hydrateStudentLocalState();
   const {data:profile,error}=await supabaseClient.from("profiles").select("id,full_name,phone,email,address,role").eq("id",currentUser.id).maybeSingle();
   if(error){console.error("Profile error:",error);showToast("Unable to load your profile.");return false}
   if(!profile?.role){document.body.innerHTML='<div class="min-h-screen flex items-center justify-center p-6 bg-slate-950 text-white"><div class="glass-dark p-8 rounded-3xl max-w-lg text-center"><div class="text-4xl">⚠️</div><h1 class="text-xl font-black mt-4">Profile role not found</h1><p class="text-white/75 mt-3">Your account role could not be verified. Please contact the administrator.</p></div></div>';return false}
@@ -569,7 +572,7 @@ $("saveProfileBtn").addEventListener("click",async()=>{
     if(error)throw error;
     currentProfile=data;
     preferences={type:$("prefType").value,area:$("prefArea").value.trim(),budget:$("prefBudget").value.trim()};
-    localStorage.setItem("shh_student_preferences",JSON.stringify(preferences));
+    localStorage.setItem(studentStorageKey("preferences"),JSON.stringify(preferences));
     renderProfile();showToast("Profile updated successfully.")
   }catch(e){console.error(e);showToast(e.message||"Profile could not be updated.")}
   finally{button.disabled=false;button.textContent="Save Profile"}
