@@ -20,19 +20,61 @@ function rankRows(data,q,forcedCategory){
   const i=parseQuery(effective);
   if(forced) i.category=forced;
   const rows=Array.isArray(data)?data:[];
+
   const out=rows.map((r,idx)=>{
     const e=entityScore(r,i);
     const catOk=!forced || (r.__category===forced || has(r?.category,C[forced]||[forced]) || has(r?.type,C[forced]||[forced]));
     if(!catOk)return null;
+
     const base=Number(r.__score)||0;
-    return {...r,__unifiedScore:base+e.score,__unifiedSearch:e};
+    const locationHard = !i.cities.length ||
+      i.cities.every(c=>norm([r?.city,r?.area,r?.address].filter(Boolean).join(' ')).includes(c));
+    const roadsHard = !i.roads.length ||
+      i.roads.every(k=>has(text(r),D[k]));
+    const landmarksHard = !i.landmarks.length ||
+      i.landmarks.every(k=>has(text(r),L[k]));
+    const nearHard = !i.relations.includes('near') || !(i.landmarks.length||i.roads.length) ||
+      e.evidence.some(x=>x.startsWith('near:'));
+    const exactLocation = locationHard && roadsHard && landmarksHard && nearHard;
+
+    const hardMisses=[];
+    if(i.cities.length && !locationHard) hardMisses.push('city');
+    if(i.roads.length && !roadsHard) hardMisses.push('road');
+    if(i.landmarks.length && !landmarksHard) hardMisses.push('landmark');
+    if(i.relations.includes('near') && !nearHard) hardMisses.push('proximity');
+
+    const locationHits=(i.roads.filter(k=>has(text(r),D[k])).length)+
+      (i.landmarks.filter(k=>has(text(r),L[k])).length)+
+      (i.cities.filter(c=>norm([r?.city,r?.area,r?.address].filter(Boolean).join(' ')).includes(c)).length);
+
+    let tier='broader';
+    if(exactLocation && e.matched>=e.required) tier='exact';
+    else if(locationHits>0) tier='nearby';
+    else if(i.cities.length && locationHard) tier='nearby';
+
+    return {...r,__unifiedScore:base+e.score,__unifiedSearch:e,__matchTier:tier,__hardLocationMatch:exactLocation,__hardMisses:hardMisses};
   }).filter(Boolean);
-  const exact=out.filter(r=>r.__unifiedSearch.required===0 || r.__unifiedSearch.matched>=r.__unifiedSearch.required);
-  const pool=exact.length?exact:out.filter(r=>r.__unifiedSearch.required===0 || r.__unifiedSearch.matched>=Math.max(1,r.__unifiedSearch.required-1));
-  return (pool.length?pool:out.filter(r=>r.__unifiedSearch.score>0))
-    .sort((a,b)=>b.__unifiedScore-a.__unifiedScore||(Number(b.rating)||0)-(Number(a.rating)||0)||String(a.name||a.property_name||a.title||'').localeCompare(String(b.name||b.property_name||b.title||'')));
+
+  const exact=out.filter(r=>r.__matchTier==='exact');
+  if(exact.length){
+    return exact
+      .sort((a,b)=>b.__unifiedScore-a.__unifiedScore||(Number(b.rating)||0)-(Number(a.rating)||0)||String(a.name||a.property_name||a.title||'').localeCompare(String(b.name||b.property_name||b.title||'')));
+  }
+
+  // No exact match: return only contextual fallbacks, never pretend them to be exact.
+  const fallback=out
+    .filter(r=>r.__unifiedSearch.score>0 && (r.__matchTier==='nearby' || r.__matchTier==='broader'))
+    .sort((a,b)=>{
+      const tierA=a.__matchTier==='nearby'?1:0;
+      const tierB=b.__matchTier==='nearby'?1:0;
+      return tierB-tierA || b.__unifiedScore-a.__unifiedScore ||
+        (Number(b.rating)||0)-(Number(a.rating)||0) ||
+        String(a.name||a.property_name||a.title||'').localeCompare(String(b.name||b.property_name||b.title||''));
+    });
+
+  return fallback;
 }
-window.StudentHubSearchEngine={normalize:norm,parseQuery,rankRows,entityScore,version:'2.0.0'};
+window.StudentHubSearchEngine={normalize:norm,parseQuery,rankRows,entityScore,version:'2.1.0'};
 
 function install(){if(typeof window.ranked!=='function'||window.__studentHubPhase5Installed)return;const old=window.ranked;window.__studentHubPhase5Installed=true;window.ranked=function(data,q){const i=parseQuery(q),base=old(data,q);if(!i.category&&!i.landmarks.length&&!i.roads.length&&!i.relations.length)return base;const unified=rankRows(data,q,i.category);if(unified.length)return unified;const normal=Array.isArray(base)?base:[],cityScoped=i.cities.length?normal.filter(r=>{const h=norm([r?.city,r?.area,r?.address].filter(Boolean).join(' '));return i.cities.some(c=>h.includes(c))}):normal,broad=i.category||i.locationTokens.join(' ');let pool=cityScoped;if(broad&&(i.landmarks.length+i.roads.length+i.relations.length)){const b=old(data,broad);const bb=Array.isArray(b)?b:[];pool=cityScoped.concat(bb.filter(r=>{const h=norm([r?.city,r?.area,r?.address].filter(Boolean).join(' '));return !i.cities.length||i.cities.some(c=>h.includes(c))}))}const map=new Map;for(const r of pool){const e=entityScore(r,i),score=(Number(r.__score)||0)+e.score,key=String(r?.property_id||r?.id||r?.slug||r?.name||r?.property_name||'').toLowerCase()+'|'+String(r?.__category||r?.category||'');const p=map.get(key);if(!p||score>p.__score)map.set(key,{...r,__score:score,__phase5Natural:e,__phase5Intent:i})}return[...map.values()].filter(r=>r.__phase5Natural.score>=0||r.__score>=20).sort((a,b)=>b.__score-a.__score||String(a.name||a.property_name||'').localeCompare(String(b.name||b.property_name||'')))};window.__studentHubPhase5={normalize:norm,parseQuery,detectCategory:category,detectRelation:relations,entityScore,version:'1.0.0'}}
 const t=setInterval(()=>{if(typeof window.ranked==='function'){clearInterval(t);install()}},50);setTimeout(()=>{clearInterval(t);install()},10000)})();
