@@ -136,7 +136,7 @@ for(const c of cities.values()){
   for(const r of c.rows){if(!r.area)continue;const ak=key(r.area);if(!areas.has(ak))areas.set(ak,{name:r.area,rows:[]});areas.get(ak).rows.push(r);}
   for(const a of areas.values()){
     if(a.rows.length<LOCATION_MIN_PROPERTIES) continue;
-    const as=slug(a.name); if(!as) continue;
+    const as=slug(a.name); if(!as || as===cs) continue;
     const dir=cityDir+'/'+as; const url=new URL(cs+'/'+as+'/',BASE).href;
     const groupLinks=[...new Set(a.rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('../'+type+'/' )+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
     const body='<section class="section"><h2>Verified student properties in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+a.rows.map(r=>card(r,2)).join('')+'</div></section>'+
