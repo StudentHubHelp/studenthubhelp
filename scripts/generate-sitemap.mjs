@@ -96,10 +96,17 @@ const explicitExcluded = new Set([
   'owner-dashboard.html', 'student-dashboard.html', 'partner-dashboard.html'
 ]);
 const pages = new Map();
-const rootFiles = (await readdir('.', { recursive: true })).filter(name => name.toLowerCase().endsWith('.html')).sort();
+const rootFiles = (await readdir('.', { recursive: true }))
+  .filter(name => name.toLowerCase().endsWith('.html'))
+  .sort();
+
+function excludedPath(name) {
+  const normalized = name.replace(/\\\\/g, '/');
+  return normalized.startsWith('admin/') || normalized.startsWith('ai-chatbot/') || normalized.startsWith('supabase/') || normalized.startsWith('.github/');
+}
 
 for (const name of rootFiles) {
-  if (explicitExcluded.has(name) || /^google[a-z0-9_-]*\.html$/i.test(name)) continue;
+  if (explicitExcluded.has(name) || excludedPath(name) || /^google[a-z0-9_-]*\.html$/i.test(name)) continue;
   const html = await readFile(name, 'utf8');
   if (hasNoindex(html)) continue;
   pages.set(pageUrl(name), gitLastModified(name));
