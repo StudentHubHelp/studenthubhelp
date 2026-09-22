@@ -572,28 +572,8 @@ function hasValue(v){
   } else if(type==='cafe'){
     out+=`<div class="card"><h2>☕ Cafe Information</h2><div class="grid">${field('Category',r.category)}${field('Cuisine',r.cuisine)}${field('Opening Time',r.opening_time)}${field('Closing Time',r.closing_time)}${field('Weekly Off',r.weekly_off)}${field('Seating Capacity',r.seating_capacity)}${field('Wi-Fi',r.wifi)}${field('AC',r.ac)}${field('Parking',r.parking)}${field('Delivery',r.delivery)}${field('Takeaway',r.takeaway)}${field('Online Order',r.online_order)}${field('UPI Payment',r.upi_payment)}</div></div>`;
     out+=`<div class="card"><h2>🍽️ Menu</h2><div class="desc">${show(r.menu)}</div></div>`;
-} else if(type==='library'){
-    out+=`<div class="card"><h2>📚 Library Details</h2><div class="grid">
-      ${field('Library Type',r.library_type||r.category)}
-      ${field('Timing',r.timing)}
-      ${field('Total Seats',r.seating_capacity)}
-      ${field('Available Seats',r.available_seats)}
-      ${field('Full Time Fees', r.full_time_fee)}
-      ${field('Half Time Fees', r.half_time_fee)}
-      ${field('Parking',r.parking)}
-      ${field('24 Hours Open',r.open_24_hours)}
-      ${field('AC',r.ac_available)}
-      ${field('Wi-Fi',r.wifi)}
-      ${field('Charging Point',r.charging_point)}
-      ${field('Locker',r.locker)}
-      ${field('Newspaper',r.newspaper)}
-      ${field('Separate Cabin',r.separate_cabin)}
-      ${field('Girls Section',r.girls_section)}
-      ${field('Boys Section',r.boys_section)}
-      ${field('Power Backup',r.power_backup)}
-      ${field('Water',r.water)}
-      ${field('CCTV',r.cctv)}
-    </div></div>`;
+  } else if(type==='library'){
+    out+=`<div class="card"><h2>📚 Library Details</h2><div class="grid">${field('Library Type',r.library_type||r.category)}${field('Timing',r.timing)}${field('24 Hours Open',r.open_24_hours)}${field('Seating Capacity',r.seating_capacity)}${field('Available Seats',r.available_seats)}${field('AC',r.ac_available)}${field('Wi-Fi',r.wifi)}${field('Charging Point',r.charging_point)}${field('Locker',r.locker)}${field('Parking',r.parking)}${field('Newspaper',r.newspaper)}${field('Separate Cabin',r.separate_cabin)}${field('Girls Section',r.girls_section)}${field('Boys Section',r.boys_section)}${field('Power Backup',r.power_backup)}${field('Water',r.water)}${field('CCTV',r.cctv)}</div></div>`;
   } else {
     out+=`<div class="card"><h2>📖 Bookstore Services</h2><div class="grid">${field('Categories',r.categories)}${field('Classes',r.classes)}${field('Competitive Books',r.competitive_books)}${field('Exam Books',r.exam_books)}${field('School Books',r.school_books)}${field('College Books',r.college_books)}${field('NCERT Books',r.ncert_books)}${field('Stationery',r.stationery)}${field('Second-hand Books',r.second_hand_books)}${field('Book Rental',r.book_rental)}${field('Online Order',r.online_order)}${field('Home Delivery',r.home_delivery)}${field('Photocopy',r.photocopy)}${field('Printing',r.printing)}${field('Lamination',r.lamination)}${field('Spiral Binding',r.spiral_binding)}${field('Notes Available',r.notes_available)}${field('Opening Time',r.opening_time)}${field('Closing Time',r.closing_time)}${field('Weekly Off',r.weekly_off)}</div></div>`;
   }
@@ -621,39 +601,11 @@ async function load(){
 
    // Legacy listings may have NULL status. Treat NULL like active, while keeping explicitly non-active listings hidden.
    const propertyStatus=String(data.status ?? '').trim().toLowerCase();
-   
-   // Keep public ownership status consistent with Admin's owner-linking rule.
-   // A listing is considered owner-linked when its owner_id matches an owner
-   // account OR its normalized phone matches an owner account's phone.
-   if(!data.owner_id && data.phone){
-     try{
-       const {data:ownerProfiles,error:ownerError}=await db
-         .from('profiles')
-         .select('id,full_name,phone')
-         .eq('role','owner')
-         .limit(1000);
-       
-       if(!ownerError && Array.isArray(ownerProfiles)){
-         const propertyPhone=String(data.phone).replace(/\D/g,'').slice(-10);
-         const matchedOwner=ownerProfiles.find(owner=>{
-           const ownerPhone=String(owner.phone||'').replace(/\D/g,'').slice(-10);
-           return propertyPhone && ownerPhone && propertyPhone===ownerPhone;
-         });
-         
-         if(matchedOwner){
-           data.owner_id=matchedOwner.id;
-           data.owner_name=data.owner_name||matchedOwner.full_name||null;
-         }
-       }
-     }catch(ownerLinkError){
-       console.warn('Owner phone-link check skipped:',ownerLinkError);
-     }
-   }
    if(propertyStatus && propertyStatus!=='active'){
      return fail('Property not found','This listing may have been removed or its URL is incorrect.');
    }
 
-   render(data);
+   await render(data);
    updatePropertySEO(data);
    app.setAttribute('aria-busy','false');
  }catch(err){
@@ -1293,9 +1245,39 @@ if(track && rows.length > 1){
     box.innerHTML='<div class="empty-state">Similar listings are unavailable right now.</div>';
   }
 }
-function render(r){
+async function loadPublicPropertyImages(r){
+  const fallback = Array.isArray(r.images)
+    ? r.images.filter(Boolean).map(String)
+    : [];
+
+  try{
+    const {data,error}=await db
+      .from("owner_property_images")
+      .select("image_url,sort_order,created_at,is_main")
+      .eq("property_id",String(r.id))
+      .eq("property_table",cfg.table)
+      .order("sort_order",{ascending:true})
+      .order("created_at",{ascending:true});
+
+    if(error) throw error;
+
+    const dbImages=(data||[])
+      .map(x=>x?.image_url)
+      .filter(Boolean)
+      .map(String);
+
+    const merged=[...dbImages,...fallback];
+    return [...new Set(merged)];
+  }catch(error){
+    console.warn("Public property gallery load failed; using property image fields.",error);
+    return [...new Set([...(r.image?[String(r.image)]:[]),...fallback])];
+  }
+}
+
+async function render(r){
   currentProperty=r;
-  const image=r.image||cfg.banner;
+  const galleryImages=await loadPublicPropertyImages(r);
+  const image=galleryImages[0]||r.image||cfg.banner;
   const verified=getVerification(r);
   const name=r.name||r.service_name||'Property';
   const location=[r.area,r.city].filter(Boolean).join(' • ');
@@ -1320,8 +1302,8 @@ function render(r){
     <div class="gallery">
       <img class="mainimg" src="${esc(image)}" alt="${esc(name)}" loading="eager" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.src='${esc(cfg.banner)}'">
       <div class="side">
-        <img src="${esc(image)}" alt="${esc(name)}" loading="lazy" decoding="async">
-        <img src="${esc(cfg.banner)}" alt="${esc(name)}" loading="lazy" decoding="async">
+        ${galleryImages.slice(1,3).map(src=>`<img src="${esc(src)}" alt="${esc(name)}" loading="lazy" decoding="async" onerror="this.style.display='none'">`).join('')}
+        ${galleryImages.length<2?`<img src="${esc(cfg.banner)}" alt="${esc(name)}" loading="lazy" decoding="async">`:''}
       </div>
     </div>
     <div class="info">
@@ -1338,7 +1320,7 @@ function render(r){
         <div><strong>${score}%</strong><span>Information coverage</span></div>
         <div><strong>${esc(freshness)}</strong><span>Information status</span></div>
       </div>
-    
+      ${price?`<div class="price-card"><div><div class="price-label">Listed price</div><div class="price-value">${esc(price)}</div><div class="price-note">Confirm current price, availability and terms directly.</div></div>${ratingHtml}</div>`:''}
       <div class="actions">
         ${contact?`<a class="btn primary" href="tel:${esc(contact)}"><i class="fa-solid fa-phone"></i> Call Now</a>`:'<span class="btn light">📞 Phone Coming Soon</span>'}
         ${(['hostel','tiffin','library'].includes(type))?`<a class="btn primary" href="${type==='hostel'?'pg-finder.html':type==='tiffin'?'tiffin-finder.html':'library-finder.html'}?book=1&slug=${encodeURIComponent(r.slug||r.id||'')}"><i class="fa-solid fa-calendar-check"></i> Book Now</a>`:''}
@@ -1358,7 +1340,7 @@ function render(r){
 
       ${highlights.length?`<div class="card"><div class="section-kicker">STUDENT VIEW</div><h2>🎓 Student Highlights</h2><div class="highlight-grid">${highlights.map(h=>`<div class="highlight"><div class="highlight-icon"><i class="fa-solid ${h.icon}"></i></div><div><strong>${esc(h.title)}</strong><span>${show(h.value)}</span></div></div>`).join('')}</div></div>`:''}
 
-      <div class="card"><div class="section-kicker">${type==='library'?'FEES & SEATS':'ROOM & VALUE'}</div><h2>${type==='library'?'💳 Fees / Seat Options':'💰 Rent / Room Options'}</h2><div class="grid">${type==='library'?`${field('Full Time Fees','₹800')}${field('Half Time Fees','₹500')}${field('Total Seats',r.seating_capacity)}${field('Available Seats',r.available_seats)}${field('Parking',r.parking)}`:`${field('Monthly Rent Range',r.monthly_rent_range||price||null)}${field('Room Types',r.room_types)}${field('Food',r.food_available)}${field('Food Type',r.food_type)}${field('Plan Type',r.plan_type)}${field('Deposit',r.security_deposit||r.deposit)}`}</div><p class="small" style="margin-top:12px">Prices and availability can change. Confirm current terms directly before making a decision.</p></div>
+      <div class="card"><div class="section-kicker">ROOM & VALUE</div><h2>💰 Rent / Room Options</h2><div class="grid">${field('Monthly Rent Range',r.monthly_rent_range||price||null)}${field('Room Types',r.room_types)}${field('Food',r.food_available)}${field('Food Type',r.food_type)}${field('Plan Type',r.plan_type)}${field('Deposit',r.security_deposit||r.deposit)}</div><p class="small" style="margin-top:12px">Prices and availability can change. Confirm current terms directly before making a decision.</p></div>
 
       <div class="card"><div class="section-kicker">ABOUT</div><h2>🏠 About this listing</h2><div class="desc">${show(r.description)}</div></div>
 
@@ -1373,7 +1355,7 @@ function render(r){
         <div class="highlight"><div class="highlight-icon"><i class="fa-solid fa-map"></i></div><div><strong>Area context</strong><span>${esc([r.area,r.city].filter(Boolean).join(', ')||'Location information available')}</span></div></div>
       </div></div>
 
-      <div class="card"><div class="section-kicker">PHOTOS</div><h2>📸 Property Photos</h2><div class="gallery" style="height:280px;border-radius:17px;overflow:hidden;grid-template-columns:2fr 1fr"><img class="mainimg" src="${esc(image)}" alt="${esc(name)} photo" loading="lazy" decoding="async"><div class="side"><img src="${esc(image)}" alt="${esc(name)} photo" loading="lazy" decoding="async"><img src="${esc(cfg.banner)}" alt="${esc(name)} photo" loading="lazy" decoding="async"></div></div><p class="small" style="margin-top:10px">Photos are shown as available in the listing data.</p></div>
+      <div class="card"><div class="section-kicker">PHOTOS</div><h2>📸 Property Photos</h2><div class="gallery" style="height:280px;border-radius:17px;overflow:hidden;grid-template-columns:2fr 1fr">${galleryImages.length>0?`<img class="mainimg" src="${esc(galleryImages[0])}" alt="${esc(name)} photo" loading="lazy" decoding="async" onerror="this.style.display='none'"><div class="side">${galleryImages.slice(1,3).map(src=>`<img src="${esc(src)}" alt="${esc(name)} photo" loading="lazy" decoding="async" onerror="this.style.display='none'">`).join('')}${galleryImages.length===1?`<img src="${esc(cfg.banner)}" alt="${esc(name)} photo" loading="lazy" decoding="async">`:''}</div>`:`<img class="mainimg" src="${esc(cfg.banner)}" alt="${esc(name)} photo" loading="lazy" decoding="async"><div class="side"><img src="${esc(cfg.banner)}" alt="${esc(name)} photo" loading="lazy" decoding="async"></div>`}</div><p class="small" style="margin-top:10px">Photos are shown from the current property gallery when available.</p></div>
 
       ${claimPropertyHTML(r)}
 
