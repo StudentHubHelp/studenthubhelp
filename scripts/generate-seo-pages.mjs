@@ -80,8 +80,23 @@ async function fetchRows(meta){
   }
   return out;
 }
+async function cleanupGeneratedPages(dir='.') {
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.name === '.git' || entry.name === 'node_modules') continue;
+    const path = dir === '.' ? entry.name : dir + '/' + entry.name;
+    if (entry.isDirectory()) {
+      await cleanupGeneratedPages(path);
+      continue;
+    }
+    if (!entry.isFile() || !entry.name.endsWith('.html')) continue;
+    const html = await readFile(path, 'utf8').catch(() => '');
+    if (html.includes(GENERATED_MARKER)) await rm(path);
+  }
+}
 async function write(path,content){await mkdir(path.split('/').slice(0,-1).join('/')||'.',{recursive:true});await writeFile(path,content,'utf8');}
 
+await cleanupGeneratedPages();
 await mkdir(GENERATED_ROOT,{recursive:true});
 
 const all=(await Promise.all(TABLES.map(fetchRows))).flat();
