@@ -2094,15 +2094,14 @@ export default function App() {
           {/* INTELLIGENCE / GOVERNANCE */}
 
           {[
-            'areas',
-            'notifications',
-            'activity',
-            'settings',
-            'categories',
-            'admin',
-          ].includes(
-            currentTab
-          ) && (
+  'areas',
+  'notifications',
+  'activity',
+  'settings',
+  'categories',
+  'admin-profile',
+  'chatbot-crm',
+].includes(currentTab) && (
             <IntelligenceViews
               currentSubTab={
                 currentTab as any
