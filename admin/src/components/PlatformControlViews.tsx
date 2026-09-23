@@ -120,7 +120,7 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = (props)
     if (!pending || !q) return pending;
     return [r.name, r.owner_name, r.phone, r.area, r.category].some((v) => String(v || '').toLowerCase().includes(q));
   });
-
+if (currentSubTab === 'listing-requests') {
 const approve = async (id: string | number) => {
   setBusyId(id);
 
