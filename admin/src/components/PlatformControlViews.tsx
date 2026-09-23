@@ -69,7 +69,7 @@ const Badge = ({ status }: { status?: string }) => <span className={`text-[10px]
 export const PlatformControlViews: React.FC<PlatformControlViewsProps> = (props) => {
   const {
     currentSubTab, listingRequests, claimRequests, verificationRequests, bookings, reviews, reports,
-    mediaImages, properties, students = [], owners = [], onRejectListing, onApproveClaim, onRejectClaim,
+    mediaImages, properties, students = [], owners = [], onApproveListing, onRejectListing, onApproveClaim, onRejectClaim,
     onApproveVerification, onRejectVerification, onToggleBookingStatus, onToggleReviewStatus,
     onResolveReport, onUnfeatureProperty,
   } = props;
@@ -121,19 +121,20 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = (props)
     return [r.name, r.owner_name, r.phone, r.area, r.category].some((v) => String(v || '').toLowerCase().includes(q));
   });
 
-  if (currentSubTab === 'listing-requests') {
-    const approve = async (id: string | number) => {
-      setBusyId(id);
-      try {
-        const { data, error } = await supabase.rpc('admin_approve_listing_request', { p_request_id: Number(id) });
-        if (error) throw error;
-        if (!data) throw new Error('Listing approval returned no result.');
-        window.location.reload();
-      } catch (e: any) {
-        alert(e?.message || 'Listing approval failed. No request was marked approved.');
-        setBusyId(null);
-      }
-    };
+const approve = async (id: string | number) => {
+  setBusyId(id);
+
+  try {
+    await onApproveListing(id);
+  } catch (e: any) {
+    alert(
+      e?.message ||
+      'Listing approval failed. No request was marked approved.'
+    );
+  } finally {
+    setBusyId(null);
+  }
+};
     const reject = async (id: string | number) => {
       setBusyId(id);
       try {
