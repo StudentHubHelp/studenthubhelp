@@ -64,16 +64,36 @@
       });
     });
 
+    const sikarRecords=records.filter(r=>clean(r.city).toLowerCase()==='sikar');
+    const sikarAreas=[...new Set(sikarRecords.map(r=>clean(r.area)).filter(Boolean))].slice(0,100);
+    const primaryCity=sikarRecords.length ? {
+      '@type':'City',
+      'name':'Sikar',
+      'containedInPlace':{'@type':'State','name':'Rajasthan'},
+      ...(sikarAreas.length?{'additionalProperty':[{'@type':'PropertyValue','name':'Student-focused areas','value':sikarAreas.join(', ')}]}:{})
+    } : null;
+
     const payload={
       '@context':'https://schema.org',
       '@type':'CollectionPage',
       '@id':new URL(path,base).href+'#locations',
       'url':new URL(path,base).href,
       'name':labels[path]+' in India',
-      'description':'Student-friendly '+labels[path].toLowerCase()+' listings organized by city and local area across India.',
+      'description':'Student-friendly '+labels[path].toLowerCase()+' listings organized by city and local area across India, with Sikar student listings and local-area relationships where available.',
+      'keywords':[
+        labels[path],
+        'student '+labels[path].toLowerCase(),
+        'Sikar',
+        'Rajasthan',
+        'local student services'
+      ],
       'inLanguage':'en-IN',
       'isPartOf':{'@type':'WebSite','name':'StudentHubHelp','url':base},
-      'about':about,
+      'about':[
+        ...(primaryCity?[primaryCity]:[]),
+        ...about.filter(x=>x.name!=='Sikar')
+      ],
+      ...(sikarRecords.length?{'mainEntityOfPage':{'@type':'WebPage','url':new URL(path,base).href,'name':labels[path]+' for students in Sikar'}}:{}),
       ...(items.length?{'mainEntity':{'@type':'ItemList','numberOfItems':items.length,'itemListElement':items}}:{})
     };
 
