@@ -186,5 +186,6 @@ for(const c of cities.values()){
   }
 }
 
-await write('seo-generated-manifest.json', JSON.stringify({generated, expected:[...expected]}, null, 2)+'\n');
+const uniqueGenerated = [...new Set(generated)];
+await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected]}, null, 2)+'\n');
 console.log(JSON.stringify({verifiedActiveProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
