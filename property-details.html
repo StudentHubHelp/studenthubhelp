@@ -478,6 +478,55 @@ setMeta('twitterDescription',localSeoDescription);
     if(!Number.isNaN(updated.getTime())) pageNode.dateModified=updated.toISOString();
   }
 
+  /* FAQ structured data mirrors the visible FAQ section on this property page. */
+  const faqData=faqItems(r)
+    .filter(([q,a])=>q&&a)
+    .slice(0,10)
+    .map(([q,a])=>({
+      "@type":"Question",
+      "name":String(q),
+      "acceptedAnswer":{"@type":"Answer","text":String(a)}
+    }));
+  if(faqData.length){
+    schema["@graph"].push({
+      "@type":"FAQPage",
+      "@id":canonicalUrl+"#faq",
+      "url":canonicalUrl,
+      "mainEntity":faqData,
+      "inLanguage":"en-IN"
+    });
+  }
+
+  /* Strengthen the local entity relationship without changing visible UI. */
+  if(hasAddress){
+    const businessNode=schema["@graph"].find(x=>x&&x["@id"]===canonicalUrl+"#business");
+    if(businessNode){
+      if(r.city){
+        businessNode.containedInPlace={
+          "@type":"City",
+          "name":String(r.city),
+          "containedInPlace":{"@type":"State","name":String(r.state||"Rajasthan")}
+        };
+      }
+      if(r.area){
+        businessNode.location={
+          "@type":"Place",
+          "name":String(r.area),
+          ...(r.city?{"address":{"@type":"PostalAddress","addressLocality":String(r.city),"addressRegion":String(r.state||"Rajasthan"),"addressCountry":"IN"}}:{})
+        };
+      }
+      const nearby=String(r.nearby_coaching||r.nearby_coaching_center||r.nearby_institute||"").trim();
+      if(nearby){
+        businessNode.additionalProperty=Array.isArray(businessNode.additionalProperty)?businessNode.additionalProperty:[];
+        businessNode.additionalProperty.push({
+          "@type":"PropertyValue",
+          "name":"Nearby coaching / institute",
+          "value":nearby
+        });
+      }
+    }
+  }
+
   const schemaEl=document.getElementById('propertySchema');
 
   if(schemaEl){
