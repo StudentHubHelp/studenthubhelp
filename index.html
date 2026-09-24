@@ -64,7 +64,7 @@
 
 
   <!-- IMPORTANT: lowercase supabase-js -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
   <script type="application/ld+json">
   {
@@ -351,6 +351,7 @@
       margin-top: 15px;
       position: relative;
       z-index: 5;
+      min-height: 108px;
     }
 
     .stats-grid {
@@ -1159,12 +1160,17 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
+      min-height: 44px;
+      padding: 7px 4px;
       color: var(--text-muted);
       font-size: 10px;
       cursor: pointer;
     }
 
     .compare-check input {
+      width: 20px;
+      height: 20px;
+      margin: 0;
       accent-color: var(--royal-navy);
     }
 
@@ -2399,7 +2405,7 @@ section{max-width:100%;overflow-x:clip}
 .eyebrow,.hub-tag,.blog-label{color:#8a671d!important}
 .hub-tag,.listing-category,.hub-links a{background:#faf7ef!important;border-color:#eadbb8!important}
 .why-number,.step-num{color:var(--ui-gold)!important}
-.step-num{background:#faf7ef!important;border-color:#eadbb8!important}
+.step-num{background:#faf7ef!important;border-color:#eadbb8!important;color:#5f4510!important}
 .city-card{background:#fff!important}
 .city-card::after{border-color:rgba(201,151,50,.16)!important}
 
@@ -3674,7 +3680,10 @@ body,button,input,textarea,select{font-synthesis:none}
             src="hostel-banner.png"
             alt="Hostel and PG"
             loading="lazy"
-          decoding="async"\n            width="686"\n            height="150"\n          />
+          decoding="async"
+            width="686"
+            height="150"
+          />
 
           <div class="service-content">
 
@@ -3709,7 +3718,10 @@ body,button,input,textarea,select{font-synthesis:none}
             src="tiffin-banner.png"
             alt="Tiffin and mess"
             loading="lazy"
-          decoding="async"\n            width="686"\n            height="150"\n          />
+          decoding="async"
+            width="686"
+            height="150"
+          />
 
           <div class="service-content">
 
@@ -3744,7 +3756,10 @@ body,button,input,textarea,select{font-synthesis:none}
             src="library-banner.png"
             alt="Library"
             loading="lazy"
-          decoding="async"\n            width="686"\n            height="150"\n          />
+          decoding="async"
+            width="686"
+            height="150"
+          />
 
           <div class="service-content">
 
@@ -3779,7 +3794,10 @@ body,button,input,textarea,select{font-synthesis:none}
             src="cafe-banner.png"
             alt="Cafe"
             loading="lazy"
-          decoding="async"\n            width="686"\n            height="150"\n          />
+          decoding="async"
+            width="686"
+            height="150"
+          />
 
           <div class="service-content">
 
@@ -3814,7 +3832,10 @@ body,button,input,textarea,select{font-synthesis:none}
             src="bookstore-banner.png"
             alt="Book Store"
             loading="lazy"
-          decoding="async"\n            width="686"\n            height="150"\n          />
+          decoding="async"
+            width="686"
+            height="150"
+          />
 
           <div class="service-content">
 
@@ -4217,7 +4238,7 @@ body,button,input,textarea,select{font-synthesis:none}
 
           <div class="hub-links">
 
-            <a href="pg-finder.html?q=Piprali%20Road">
+            <a href="pg-finder.html?q=Piprali%20Road" aria-label="Explore hostels and PGs in Piprali Road">
               Hostels
             </a>
 
@@ -4251,7 +4272,7 @@ body,button,input,textarea,select{font-synthesis:none}
 
           <div class="hub-links">
 
-            <a href="pg-finder.html?q=Talwandi">
+            <a href="pg-finder.html?q=Talwandi" aria-label="Explore hostels and PGs in Talwandi">
               Hostels
             </a>
 
@@ -4285,7 +4306,7 @@ body,button,input,textarea,select{font-synthesis:none}
 
           <div class="hub-links">
 
-            <a href="pg-finder.html?q=Mukherjee%20Nagar">
+            <a href="pg-finder.html?q=Mukherjee%20Nagar" aria-label="Explore hostels and PGs in Mukherjee Nagar">
               Hostels
             </a>
 
@@ -4319,7 +4340,7 @@ body,button,input,textarea,select{font-synthesis:none}
 
           <div class="hub-links">
 
-            <a href="pg-finder.html?q=Kalu%20Sarai">
+            <a href="pg-finder.html?q=Kalu%20Sarai" aria-label="Explore hostels and PGs in Kalu Sarai">
               Hostels
             </a>
 
@@ -5883,9 +5904,8 @@ body,button,input,textarea,select{font-synthesis:none}
     /* Defer non-critical Supabase data until the browser has a chance to paint the hero. */
     function scheduleHomepageDataLoad() {
       const start = () => {
-        loadStats();
-        loadReviews();
         loadListings();
+        loadReviews();
       };
       if ("requestIdleCallback" in window) {
         window.requestIdleCallback(start, {timeout: 1800});
@@ -5927,12 +5947,26 @@ body,button,input,textarea,select{font-synthesis:none}
       } 
     } 
 
+    function updateStatsFromLoadedListings() {
+      const counts = Object.fromEntries(sourceConfig.map(source => [
+        source.table,
+        allListings.filter(item => item.sourceTable === source.table).length
+      ]));
+      statsConfig.forEach(([table,id]) => {
+        const element = $(id);
+        if (element && Number.isFinite(counts[table])) element.textContent = counts[table].toLocaleString("en-IN");
+      });
+      const verifiedCount = $("verifiedCount");
+      if (verifiedCount) verifiedCount.textContent = allListings.length.toLocaleString("en-IN");
+    }
+
     async function loadListings() { 
       const grid = $("listingGrid"); 
       if (grid) grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>'; 
 
       const results = await Promise.all(sourceConfig.map(fetchListings)); 
-      allListings = results.flat(); 
+      allListings = results.flat();
+      updateStatsFromLoadedListings();
       applyFilters(); 
     } 
 
@@ -6059,7 +6093,7 @@ function renderListingCard(item) {
 
         <div class="listing-verification-note">  
           <span>${verify.verified ? "StudentHubHelp" : "Review pending"}</span>  
-          <button type="button" class="verification-link" data-verify="${encodeURIComponent(JSON.stringify({  
+          <button type="button" class="verification-link" aria-label="How ${escapeHTML(item.displayName)} is verified" data-verify="${encodeURIComponent(JSON.stringify({  
             name:item.displayName,  
             category:item.listingLabel,  
             verification:verify,  
@@ -6070,7 +6104,7 @@ function renderListingCard(item) {
 
         <div class="listing-card-bottom">  
           <label class="compare-check">  
-            <input type="checkbox" data-compare="${item.sourceTable}::${item.id}" ${selected ? "checked" : ""}>  
+            <input type="checkbox" aria-label="Compare ${escapeHTML(item.displayName)}" data-compare="${item.sourceTable}::${item.id}" ${selected ? "checked" : ""}>  
             Compare  
           </label>  
 
