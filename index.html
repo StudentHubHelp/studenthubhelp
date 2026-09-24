@@ -3404,9 +3404,11 @@ body,button,input,textarea,select{font-synthesis:none}
   </style>
 
 <style id="pagespeed-layout-stability-fix">
-.stat-number{min-height:1em;font-variant-numeric:tabular-nums}
+.stat-number{min-height:32px;font-variant-numeric:tabular-nums}
 .stat-number-placeholder{visibility:hidden;display:inline-block;min-width:3ch}
-@media(max-width:600px){.stats-wrap .stat-number{min-height:1em}}
+.stats-wrap{contain:layout paint}
+@media(max-width:1050px){.stats-wrap{min-height:204px}}
+@media(max-width:767px){.stats-wrap{min-height:288px}}
 </style>
 </head>
 
@@ -5858,8 +5860,8 @@ body,button,input,textarea,select{font-synthesis:none}
     function resetCarouselTimer() { 
       if (carouselTimer) clearInterval(carouselTimer); 
       if (heroSlides.length > 1) { 
-        carouselTimer = setInterval(() => { 
-          showCarousel(carouselIndex + 1); 
+        carouselTimer = setInterval(() => {
+          if (!document.hidden) showCarousel(carouselIndex + 1);
         }, 2500); 
       } 
     } 
@@ -5908,18 +5910,17 @@ body,button,input,textarea,select{font-synthesis:none}
     } 
     /* Defer non-critical Supabase data until the browser has a chance to paint the hero. */
     function scheduleHomepageDataLoad() {
-      // Exact live Supabase counts are tiny HEAD requests and are independent
-      // of the 100-row listing preview limit.
-      loadStats();
-
       const start = () => {
+        // Exact live counts stay sourced directly from Supabase; they are only
+        // moved out of the critical hero/LCP window.
+        loadStats();
         loadListings();
         loadReviews();
       };
       if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(start, {timeout: 1800});
+        window.requestIdleCallback(start, {timeout: 2600});
       } else {
-        setTimeout(start, 900);
+        window.addEventListener("load", () => setTimeout(start, 700), {once:true});
       }
     }
 
