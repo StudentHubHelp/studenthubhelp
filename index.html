@@ -2697,9 +2697,9 @@ body,button,input,textarea,select{font-synthesis:none}
 
         <div>
 
-          <div class="brand-title">
+          <h1 class="brand-title">
             StudentHubHelp
-          </div>
+          </h1>
 
           <!-- Dynamic Category Ticker under Logo/Title -->
           <div class="brand-categories" id="headerCategoryTicker" aria-label="Available services">
@@ -2759,6 +2759,8 @@ body,button,input,textarea,select{font-synthesis:none}
 
   </header>
 
+
+  <main id="main-content">
 
   <!-- =========================================
         HERO (75% Screen View on Laptop)
@@ -3841,12 +3843,12 @@ body,button,input,textarea,select{font-synthesis:none}
 
       <!-- CATEGORY TABS -->
       <div class="listing-tabs" id="listingTabs" role="tablist" aria-label="Listing category">
-        <button class="listing-tab active" data-category="all" type="button">All</button>
-        <button class="listing-tab" data-category="hostel" type="button">Hostel / PG</button>
-        <button class="listing-tab" data-category="tiffin" type="button">Tiffin</button>
-        <button class="listing-tab" data-category="library" type="button">Library</button>
-        <button class="listing-tab" data-category="cafe" type="button">Cafe</button>
-        <button class="listing-tab" data-category="bookstore" type="button">Book Store</button>
+        <button class="listing-tab active" id="tab-all" role="tab" aria-selected="true" aria-controls="listingGrid" tabindex="0" data-category="all" type="button">All</button>
+        <button class="listing-tab" id="tab-hostel" role="tab" aria-selected="false" aria-controls="listingGrid" tabindex="-1" data-category="hostel" type="button">Hostel / PG</button>
+        <button class="listing-tab" id="tab-tiffin" role="tab" aria-selected="false" aria-controls="listingGrid" tabindex="-1" data-category="tiffin" type="button">Tiffin</button>
+        <button class="listing-tab" id="tab-library" role="tab" aria-selected="false" aria-controls="listingGrid" tabindex="-1" data-category="library" type="button">Library</button>
+        <button class="listing-tab" id="tab-cafe" role="tab" aria-selected="false" aria-controls="listingGrid" tabindex="-1" data-category="cafe" type="button">Cafe</button>
+        <button class="listing-tab" id="tab-bookstore" role="tab" aria-selected="false" aria-controls="listingGrid" tabindex="-1" data-category="bookstore" type="button">Book Store</button>
       </div>
 
       <!-- POWERFUL FILTER PANEL -->
@@ -5398,10 +5400,25 @@ function renderListingCard(item) {
 
     document.querySelectorAll(".listing-tab").forEach(button => { 
       button.addEventListener("click", () => { 
-        document.querySelectorAll(".listing-tab").forEach(btn => btn.classList.remove("active")); 
+        document.querySelectorAll(".listing-tab").forEach(btn => { 
+          btn.classList.remove("active"); 
+          btn.setAttribute("aria-selected", "false"); 
+          btn.setAttribute("tabindex", "-1"); 
+        }); 
         button.classList.add("active"); 
+        button.setAttribute("aria-selected", "true"); 
+        button.setAttribute("tabindex", "0"); 
         activeCategory = button.dataset.category || "all"; 
         applyFilters(); 
+      }); 
+      button.addEventListener("keydown", event => { 
+        if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return; 
+        const tabs = Array.from(document.querySelectorAll(".listing-tab")); 
+        const current = tabs.indexOf(button); 
+        const next = event.key === "ArrowRight" ? (current + 1) % tabs.length : (current - 1 + tabs.length) % tabs.length; 
+        event.preventDefault(); 
+        tabs[next].focus(); 
+        tabs[next].click(); 
       }); 
     }); 
 
