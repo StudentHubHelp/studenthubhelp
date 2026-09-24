@@ -280,7 +280,6 @@ Deno.serve(async(req:Request)=>{
   if(wantedArea)rows=rows.filter(p=>searchText(p).includes(n(wantedArea)));
   if(wantedLocality)rows=rows.filter(p=>searchText(p).includes(wantedLocality));
   // An explicit road/locality is also a hard constraint when the user asked for it.
-  if(locationForFilter.area&&!searchText(rows[0]||{}).includes(n(locationForFilter.area))){ /* no-op: row-level filter below */ }
   if(locationForFilter.area)rows=rows.filter(p=>searchText(p).includes(n(locationForFilter.area)));
   if(u.budgetMax!==null||u.budgetMin!==null)rows=rows.filter(p=>{const v=budgetValue(p);if(v===undefined)return false;return (u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
   if(u.facilities?.length)rows=rows.filter(p=>matchesFacility(p,u.facilities));
