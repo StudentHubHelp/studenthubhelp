@@ -78,8 +78,12 @@
       return;
     }
     setRobots('index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
-    setCanonical(canonicalUrl());
-    normalizeSchema();
+    // Slug URLs are the canonical property URLs. For legacy id-only URLs,
+    // wait for property-details.html to load the record and resolve its stored slug.
+    if(slug){
+      setCanonical(canonicalUrl());
+      normalizeSchema();
+    }
   }
   apply();
   [700,1600,3000,5000].forEach(ms=>setTimeout(apply,ms));
