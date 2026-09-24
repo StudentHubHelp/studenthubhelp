@@ -5159,7 +5159,19 @@ body,button,input,textarea,select{font-synthesis:none}
       const verifiedCount = $("verifiedCount"); 
       if (verifiedCount) verifiedCount.textContent = total.toLocaleString("en-IN"); 
     } 
-    loadStats(); 
+    /* Defer non-critical Supabase data until the browser has a chance to paint the hero. */
+    function scheduleHomepageDataLoad() {
+      const start = () => {
+        loadStats();
+        loadReviews();
+        loadListings();
+      };
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(start, {timeout: 1800});
+      } else {
+        setTimeout(start, 900);
+      }
+    }
 
     /* ========================================= 
         LISTINGS + FILTER ENGINE 
@@ -5658,7 +5670,7 @@ function renderListingCard(item) {
         },3000); 
       } 
     } 
-    loadReviews(); 
+    /* Reviews are started by scheduleHomepageDataLoad() after initial paint. */
 
     /* ========================================= 
         FAQ 
@@ -5701,7 +5713,7 @@ function renderListingCard(item) {
     /* =========================================  
         HASH SCROLL + INITIAL LOAD 
     ========================================= */ 
-    loadListings(); 
+    scheduleHomepageDataLoad();
 
     if(window.location.hash === "#live-listings") { 
       setTimeout(()=>$("live-listings")?.scrollIntoView({behavior:"smooth"}),300); 
