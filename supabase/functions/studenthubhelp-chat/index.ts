@@ -78,9 +78,14 @@ function normalizeIntent(x:any){
 function deterministicLocation(s:string){
  const x=n(s);
  if(/\b(talwandi|tilwandi|तालवंडी|तलवंडी)\b/i.test(x))return{city:"Kota",locality:"Talwandi"};
- if(/nawalgarh road|nawalgarh rd|नवलगढ़ रोड/i.test(x))return{city:"Sikar",area:"Nawalgarh Road"};
- if(/piprali road|piprali rd|पिपराली रोड/i.test(x))return{city:"Sikar",area:"Piprali Road"};
+ if(/nawalgarh road|nawalgarh rd|nawalgarh|नवलगढ़ रोड|नवलगढ रोड/i.test(x))return{city:"Sikar",area:"Nawalgarh Road"};
+ if(/piprali road|piprali rd|piprali|पिपराली रोड|पिपराली/i.test(x))return{city:"Sikar",area:"Piprali Road"};
  const lm=findLandmark(x);if(lm)return{city:lm.city,landmark:lm.key};return{};
+}
+function strictLocation(s:string){
+ const d=deterministicLocation(s),x=n(s);
+ if(d.city||d.locality||d.area||d.landmark)return d;
+ const c=city(s);return c?{city:c}:{};
 }
 async function aiUnderstand(msg:string,history:any[]){
  const fallback=aiIntentDefaults();if(!GEMINI)return fallback;
@@ -109,10 +114,23 @@ ${h}`;
  }catch{return fallback}
 }
 function mergeIntent(ai:any,msg:string,history:any[]){
- const o=normalizeIntent(ai),curLoc=deterministicLocation(msg),old=history.filter(x=>x.role==="user").map(x=>x.text||" ").join(" "),oldLoc=deterministicLocation(old);
- if(curLoc.city)o.city=curLoc.city;if(curLoc.locality)o.locality=curLoc.locality;if(curLoc.area)o.area=curLoc.area;if(curLoc.landmark)o.landmark=curLoc.landmark;
- if(!o.city&&o.followUp)o.city=oldLoc.city||city(old);if(!o.area&&o.followUp)o.area=oldLoc.area||areaWanted(old);if(!o.locality&&o.followUp)o.locality=oldLoc.locality;if(!o.landmark&&o.followUp)o.landmark=oldLoc.landmark||findLandmark(old)?.key||"";
- if(!o.category&&o.followUp){const pc=cat(old);if(pc)o.category=pc;o.categories=pc?[pc]:[]}if(o.category&&!o.categories.length)o.categories=[o.category];if(o.categories.length)o.category=o.categories[0];return o;
+ const o=normalizeIntent(ai),curLoc=strictLocation(msg),old=history.filter(x=>x.role==="user").map(x=>x.text||" ").join(" "),oldLoc=strictLocation(old);
+ // Canonical location words in the CURRENT message always override model guesses.
+ if(curLoc.city)o.city=curLoc.city;
+ if(curLoc.locality)o.locality=curLoc.locality;
+ if(curLoc.area)o.area=curLoc.area;
+ if(curLoc.landmark)o.landmark=curLoc.landmark;
+ // Never inherit an old location unless AI explicitly marked this as a follow-up.
+ if(o.followUp){
+  if(!o.city)o.city=oldLoc.city||"";
+  if(!o.area)o.area=oldLoc.area||"";
+  if(!o.locality)o.locality=oldLoc.locality||"";
+  if(!o.landmark)o.landmark=oldLoc.landmark||"";
+ }
+ if(!o.category&&o.followUp){const pc=cat(old);if(pc)o.category=pc;o.categories=pc?[pc]:[]}
+ if(o.category&&!o.categories.length)o.categories=[o.category];
+ if(o.categories.length)o.category=o.categories[0];
+ return o;
 }
 function budgetValue(p:any){return num(p.monthly_rent??p.monthly_fee??p.monthly_charge??p.price)}
 function matchesFacility(p:any,wanted:string[]){if(!wanted.length)return true;const z=searchText(p);return wanted.every(f=>z.includes(n(f))||Object.entries(p).some(([k,v])=>n(k).includes(n(f))&&(v===true||String(v).toLowerCase()==="true"||n(v).includes(n(f)))))}
@@ -226,7 +244,7 @@ Deno.serve(async(req:Request)=>{
   }
   if(isAccountSupport(msg))return await chatResponse({reply:accountSupportReply(msg),intent:"Account / Login Support",primaryTopic:"Account access",suggestedFollowUps:["I forgot my password","Google login is not working","Dashboard is not opening","Contact support"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(isContact(msg)||String(b?.action||"")==="contact_support")return await chatResponse({reply:"Ji bilkul 😊 StudentHubHelp team se contact ke liye:\n\n📧 Email: satpalswami22742@gmail.com\n📞 Phone: +91 9929718264",intent:"Support / Contact",primaryTopic:"Contact StudentHubHelp",suggestedFollowUps:["Find a hostel","Find a library","Search by area","Back to search"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
-  const previous=history.filter(x=>x.role==="user").map(x=>x.text||"").join(" "),combined=previous+" "+msg,aiRaw=await aiUnderstand(msg,history),u=mergeIntent(aiRaw,msg,history),explicitCat=cat(msg),nearCats=secondaryCats(msg),aiCats=u.categories||[],c=u.category||explicitCat||(u.followUp?cat(previous):""),propertyMode=u.intent.startsWith("property_")||isPropertyQuery(msg,u.followUp?previous:""),ct=u.city||(u.followUp?city(previous):""),near=u.landmark||u.area||u.locality||(u.nearRelation?nearTerm(msg):""),action=String(b?.action||u.action||""),shownList=(Array.isArray(b?.shownPropertyIds)?b.shownPropertyIds:[]).map((x:any)=>String(x)),shownIds=new Set(shownList);
+  const previous=history.filter(x=>x.role==="user").map(x=>x.text||"").join(" "),combined=previous+" "+msg,aiRaw=await aiUnderstand(msg,history),u=mergeIntent(aiRaw,msg,history),explicitCat=cat(msg),nearCats=secondaryCats(msg),aiCats=u.categories||[],c=u.category||explicitCat||(u.followUp?cat(previous):""),propertyMode=u.intent.startsWith("property_")||isPropertyQuery(msg,u.followUp?previous:""),ct=u.city||(u.followUp?city(previous):""),near=u.landmark||u.area||u.locality||(u.nearRelation?nearTerm(msg):""),locationForFilter=strictLocation(msg),action=String(b?.action||u.action||""),shownList=(Array.isArray(b?.shownPropertyIds)?b.shownPropertyIds:[]).map((x:any)=>String(x)),shownIds=new Set(shownList);
   if(action==="search_area"&&!city(msg)&&!nearTerm(msg))return await chatResponse({reply:"Bilkul 😊 Aap kis **area / locality** mein search karna chahte hain? Area ka naam bhejiye, main current requirement ke saath search refine kar dunga.",intent:"Area Refinement",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Search by city","Show more options","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(u.needsClarification&&u.clarificationQuestion&&!u.category&&!u.categories.length&&!u.locality&&!u.area&&!u.landmark)return await chatResponse({reply:u.clarificationQuestion,intent:"Clarification",primaryTopic:"Requirement clarification",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a hostel","Find a library","Find a cafe","Find a tiffin service"],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(u.intent==="property_reference"&&u.referenceIndex){
@@ -257,8 +275,13 @@ Deno.serve(async(req:Request)=>{
   const wantedGender=u.gender||genderWanted(msg),wantedArea=u.area?(/nawalgarh/i.test(u.area)?"nawalgarh":/piprali/i.test(u.area)?"piprali":u.area.toLowerCase()):areaWanted(msg);
   const wantedLocality=n(u.locality||"");
   if(wantedGender)rows=rows.filter(p=>{const z=searchText(p);const g=n([p.gender_type,p.gender,p.hostel_type,p.name,p.title,p.description].filter(Boolean).join(" "));return wantedGender==="girls"?/girls|girl|female|women|ladki|ladkiyon|महिला|लड़क/i.test(g):/boys|boy|male|men|ladke|लड़के/i.test(g)});
+  // Explicit city is a hard boundary; never leak another city into the answer.
+  if(locationForFilter.city)rows=rows.filter(p=>n(p.city||"")===n(locationForFilter.city));
   if(wantedArea)rows=rows.filter(p=>searchText(p).includes(n(wantedArea)));
   if(wantedLocality)rows=rows.filter(p=>searchText(p).includes(wantedLocality));
+  // An explicit road/locality is also a hard constraint when the user asked for it.
+  if(locationForFilter.area&&!searchText(rows[0]||{}).includes(n(locationForFilter.area))){ /* no-op: row-level filter below */ }
+  if(locationForFilter.area)rows=rows.filter(p=>searchText(p).includes(n(locationForFilter.area)));
   if(u.budgetMax!==null||u.budgetMin!==null)rows=rows.filter(p=>{const v=budgetValue(p);if(v===undefined)return false;return (u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
   if(u.facilities?.length)rows=rows.filter(p=>matchesFacility(p,u.facilities));
   const landmark=u.landmark?findLandmark(u.landmark)||LANDMARKS.find(l=>l.key===u.landmark):findLandmark(near||"");
