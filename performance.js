@@ -167,6 +167,6 @@
     if(typeof mobileQuery.addEventListener==='function')mobileQuery.addEventListener('change',syncMobileSearch);else if(typeof mobileQuery.addListener==='function')mobileQuery.addListener(syncMobileSearch);
   };
 
-  const run=()=>{applyImageHints();upgradeFinderHeroText();upgradeFooter();upgradeHero();};
+  const run=()=>{applyImageHints();upgradeFinderHeroText();upgradeFooter();};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
 })();
