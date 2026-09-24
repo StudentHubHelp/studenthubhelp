@@ -69,7 +69,7 @@
         <div class="footer-grid footer-grid-final">
           <section class="footer-brand-panel">
             <div class="footer-brand">
-              <img src="logo.png" alt="StudentHubHelp logo" loading="lazy" decoding="async">
+              <img src="logo.png" alt="StudentHubHelp logo" loading="lazy" decoding="async" width="52" height="52">
               <div><strong>StudentHubHelp</strong><span>Student Discovery Platform · India</span></div>
             </div>
             <p class="footer-desc">A student-focused local discovery platform for exploring hostels, PGs, tiffin and mess services, libraries, cafes and bookstores across India.</p>
@@ -81,11 +81,11 @@
             </div>
           </section>
 
-          <section class="footer-column"><h4>Explore</h4><div class="footer-links">
+          <section class="footer-column"><h3>Explore</h3><div class="footer-links">
             <a href="index.html">Home</a><a href="pg-finder.html">Hostels &amp; PG</a><a href="tiffin-finder.html">Tiffin &amp; Mess</a><a href="library-finder.html">Libraries</a><a href="cafe-finder.html">Cafes</a><a href="bookstore-finder.html">Bookstores</a><a href="explore.html">Explore StudentHubHelp</a>
           </div></section>
 
-          <section class="footer-column"><h4>Student Resources</h4><div class="footer-links">
+          <section class="footer-column"><h3>Student Resources</h3><div class="footer-links">
             <a href="hostel-pg-guide.html">Hostel &amp; PG Guide</a><a href="tiffin-mess-guide.html">Tiffin &amp; Mess Guide</a><a href="library-study-guide.html">Library &amp; Study Guide</a><a href="student-cafe-guide.html">Cafe Guide</a><a href="bookstore-stationery-guide.html">Bookstore &amp; Stationery Guide</a><a href="student-questions.html">Student Questions</a><a href="verification-trust.html">Verification &amp; Trust</a>
           </div></section>
 
@@ -93,7 +93,7 @@
             <a href="about.html">About Us</a><a href="student-helplines-safety.html">Student Helplines &amp; Safety</a><a href="global-search.html">Search</a><a href="add-listing.html">Add Listing</a><a href="partner.html">Partner Program</a><a href="contact-us.html">Contact Us</a><a href="privacy-policy.html">Privacy Policy</a><a href="terms-and-conditions.html">Terms &amp; Conditions</a>
           </div></section>
 
-          <section class="footer-column footer-contact"><h4>Director &amp; Support</h4>
+          <section class="footer-column footer-contact"><h3>Director &amp; Support</h3>
             <div class="director-name">SATPAL SWAMI</div><div class="director-role">Founder · StudentHubHelp</div>
             <div class="director-info">
               <a href="tel:+919929718264"><span>☎</span><span>+91 9929718264</span></a>
@@ -119,13 +119,13 @@
       .footer-brand-panel{min-width:0}.footer-brand{display:flex;align-items:center;gap:13px}.footer-brand img{width:52px;height:52px;flex:0 0 52px;object-fit:contain;border-radius:14px;background:#fff;padding:3px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
       .footer-brand strong{display:block;color:#fff;font-size:19px;line-height:1.15}.footer-brand span{display:block;margin-top:4px;color:#91a6c0;font-size:9px;font-weight:700;letter-spacing:.2px}
       .site-footer .footer-desc{max-width:400px;margin:17px 0 15px;color:#b4c2d3;font-size:11px;line-height:1.75}.footer-trust-line{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px}.footer-trust-line span{padding:5px 9px;border:1px solid rgba(255,255,255,.1);border-radius:999px;background:rgba(255,255,255,.035);color:#a5b5c8;font-size:9px;font-weight:700}
-      .site-footer h4{margin:2px 0 14px;color:#f0d48a;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.05px}.site-footer .footer-links{display:grid;gap:4px}.site-footer .footer-links a{display:block;width:fit-content;max-width:100%;padding:5px 0;color:#b1c0d2;font-size:10.5px;line-height:1.45;transition:color .22s ease,transform .22s ease}.site-footer .footer-links a:hover{color:#fff;transform:translateX(4px)}
+      .site-footer h3{margin:2px 0 14px;color:#f0d48a;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.05px}.site-footer .footer-links{display:grid;gap:4px}.site-footer .footer-links a{display:block;width:fit-content;max-width:100%;padding:5px 0;color:#b1c0d2;font-size:10.5px;line-height:1.45;transition:color .22s ease,transform .22s ease}.site-footer .footer-links a:hover{color:#fff;transform:translateX(4px)}
       .site-footer .footer-contact{min-width:0}.site-footer .director-name{color:#fff;font-size:17px;font-weight:900;letter-spacing:.25px}.site-footer .director-role{margin-top:4px;color:#8498b2;font-size:9px;font-weight:600}.site-footer .director-info{display:grid;gap:10px;margin-top:18px}.site-footer .director-info a{display:flex;align-items:flex-start;gap:8px;color:#b1c0d2;font-size:10px;line-height:1.45}.site-footer .director-info a span:first-child{width:17px;flex:0 0 17px;color:#d6a84f;text-align:center}.site-footer .director-info a span:last-child{overflow-wrap:anywhere}.site-footer .director-info a:hover{color:#fff}
       .footer-socials{display:flex;flex-wrap:wrap;gap:8px}.footer-social{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:35px;padding:7px 11px;border:1px solid rgba(214,168,79,.23);border-radius:10px;background:rgba(255,255,255,.035);color:#d8e1ec;font-size:10px;font-weight:800;cursor:pointer;transition:transform .22s ease,border-color .22s ease,background .22s ease,box-shadow .22s ease}.footer-social:hover{transform:translateY(-2px);border-color:rgba(214,168,79,.65);background:rgba(214,168,79,.1);box-shadow:0 9px 25px rgba(0,0,0,.2);color:#fff}.footer-social .social-icon{font-size:14px;line-height:1;color:#f0d48a}
       .footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:42px;padding-top:18px;border-top:1px solid rgba(255,255,255,.08);color:#71839c;font-size:9px}
       @media(max-width:1100px){.footer-grid-final{grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 28px}.footer-brand-panel{grid-column:1/-1;max-width:760px}.footer-contact{grid-column:1/-1;max-width:420px}}
       @media(max-width:760px){.footer-shell{padding:42px 0 18px}.footer-grid-final{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 20px}.footer-brand-panel,.footer-contact{grid-column:1/-1}.footer-bottom{align-items:flex-start;flex-direction:column;gap:6px;margin-top:32px}}
-      @media(max-width:480px){.footer-shell{width:min(100% - 24px,1180px)}.footer-grid-final{grid-template-columns:1fr;gap:23px}.footer-brand-panel,.footer-contact{grid-column:auto}.site-footer h4{margin-bottom:10px}.site-footer .footer-links{gap:2px}.site-footer .footer-links a{padding:4px 0;font-size:10.5px}.footer-socials{gap:7px}.footer-social{flex:1 1 auto;min-width:0}.footer-bottom{font-size:8.5px}}
+      @media(max-width:480px){.footer-shell{width:min(100% - 24px,1180px)}.footer-grid-final{grid-template-columns:1fr;gap:23px}.footer-brand-panel,.footer-contact{grid-column:auto}.site-footer h3{margin-bottom:10px}.site-footer .footer-links{gap:2px}.site-footer .footer-links a{padding:4px 0;font-size:10.5px}.footer-socials{gap:7px}.footer-social{flex:1 1 auto;min-width:0}.footer-bottom{font-size:8.5px}}
       @media(prefers-reduced-motion:reduce){.site-footer::before{animation:none}.footer-social,.site-footer .footer-links a{transition:none}}
     `;
     document.head.appendChild(style);
