@@ -5908,6 +5908,10 @@ body,button,input,textarea,select{font-synthesis:none}
     } 
     /* Defer non-critical Supabase data until the browser has a chance to paint the hero. */
     function scheduleHomepageDataLoad() {
+      // Exact live Supabase counts are tiny HEAD requests and are independent
+      // of the 100-row listing preview limit.
+      loadStats();
+
       const start = () => {
         loadListings();
         loadReviews();
@@ -5971,7 +5975,8 @@ body,button,input,textarea,select{font-synthesis:none}
 
       const results = await Promise.all(sourceConfig.map(fetchListings)); 
       allListings = results.flat();
-      updateStatsFromLoadedListings();
+      // Do not derive homepage totals from this preview: each table fetch is
+      // intentionally capped at 100 rows. loadStats() owns the exact counts.
       applyFilters(); 
     } 
 
