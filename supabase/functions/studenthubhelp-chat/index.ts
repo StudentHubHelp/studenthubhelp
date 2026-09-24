@@ -60,6 +60,63 @@ function wantsCurrentWeb(s:string){return /(latest|today|current|recent|news|wea
 function greeting(){return "Namaste! 🙏 Main StudentHubHelp ka **Ultra Advance AI Assistant** hoon.\n\nAap jo bhi requirement batayenge—Hostel, Tiffin, Library, Cafe, Bookstore, area, nearby location, study question ya normal baat—main aapki baat samajhkar help karunga.\n\n**Aapko kis cheez ki jankari chahiye?**"}
 function label(c:string){return c==="hostel"?"hostel / PG":c==="tiffin"?"tiffin service":c==="library"?"library":c==="cafe"?"cafe":c==="bookstore"?"bookstore":"student service"}
 function fallbackReply(c:string|undefined,recs:any[],near:string){const l=label(c||"");if(recs.length)return `Bilkul 😊 ${near?(`${near==="allen"?"Allen":near==="clc"?"CLC":near} ke paas `):""}${recs.length} active ${l} listing${recs.length>1?"s":""} mili ${recs.length>1?"hain":"hai"}. Neeche live StudentHubHelp options diye hain.`;return `Abhi ${near?(`${near==="allen"?"Allen":near==="clc"?"CLC":near} ke paas `):""}koi matching **${l}** listing nahi mili. Aap area/city ya requirement thodi aur specific bhej sakte hain.`}
+function safeJson(s:string){try{return JSON.parse(s)}catch{const m=s.match(/\{[\s\S]*\}/);if(m)try{return JSON.parse(m[0])}catch{}return null}}
+function aiIntentDefaults(){return{intent:"general",confidence:0,category:"",categories:[],city:"",locality:"",area:"",landmark:"",nearRelation:"",gender:"",budgetMin:null,budgetMax:null,facilities:[],referenceIndex:null,action:"",followUp:false,correction:false,needsClarification:false,clarificationQuestion:"",searchScope:""}}
+function normalizeIntent(x:any){
+ const d=aiIntentDefaults(),o={...d,...(x&&typeof x==="object"?x:{})};
+ const cats=Array.isArray(o.categories)?o.categories.map((v:any)=>String(v||"").toLowerCase()).filter((v:string)=>["hostel","tiffin","library","cafe","bookstore"].includes(v)):[];
+ const one=String(o.category||"").toLowerCase();
+ o.categories=[...new Set([...(cats||[]),...(one&&["hostel","tiffin","library","cafe","bookstore"].includes(one)?[one]:[])])];
+ o.category=o.categories[0]||"";
+ o.city=String(o.city||"").trim();o.locality=String(o.locality||"").trim();o.area=String(o.area||"").trim();o.landmark=String(o.landmark||"").trim();o.nearRelation=String(o.nearRelation||"").trim();
+ o.gender=["girls","boys"].includes(String(o.gender||"").toLowerCase())?String(o.gender).toLowerCase():"";
+ o.budgetMin=num(o.budgetMin)??null;o.budgetMax=num(o.budgetMax)??null;
+ o.facilities=Array.isArray(o.facilities)?o.facilities.map((v:any)=>String(v||"").trim()).filter(Boolean).slice(0,12):[];
+ o.referenceIndex=Number.isInteger(Number(o.referenceIndex))?Number(o.referenceIndex):null;o.confidence=Math.max(0,Math.min(1,Number(o.confidence)||0));
+ o.followUp=!!o.followUp;o.correction=!!o.correction;o.needsClarification=!!o.needsClarification;return o;
+}
+function deterministicLocation(s:string){
+ const x=n(s);
+ if(/\b(talwandi|tilwandi|तालवंडी|तलवंडी)\b/i.test(x))return{city:"Kota",locality:"Talwandi"};
+ if(/nawalgarh road|nawalgarh rd|नवलगढ़ रोड/i.test(x))return{city:"Sikar",area:"Nawalgarh Road"};
+ if(/piprali road|piprali rd|पिपराली रोड/i.test(x))return{city:"Sikar",area:"Piprali Road"};
+ const lm=findLandmark(x);if(lm)return{city:lm.city,landmark:lm.key};return{};
+}
+async function aiUnderstand(msg:string,history:any[]){
+ const fallback=aiIntentDefaults();if(!GEMINI)return fallback;
+ try{
+  const h=history.slice(-8).map(x=>`${x.role==="user"?"USER":"ASSISTANT"}: ${String(x.text||"").slice(0,1200)}`).join("\n");
+  const prompt=`You are the intent-understanding engine for StudentHubHelp, a student local-discovery assistant.
+Understand the CURRENT user message, not just keywords. Users may write Hindi, Hinglish, English, transliteration, spelling mistakes, short follow-ups and corrections.
+Return ONLY valid JSON:
+{"intent":"property_search|property_reference|property_details|property_contact|property_compare|account_support|booking_guidance|property_advice|support_contact|general|greeting","confidence":0.0,"category":"hostel|tiffin|library|cafe|bookstore|","categories":[],"city":"","locality":"","area":"","landmark":"","nearRelation":"near|around|exact|within_city|","gender":"girls|boys|","budgetMin":null,"budgetMax":null,"facilities":[],"referenceIndex":null,"action":"search|more|details|phone|compare|clarify|","followUp":false,"correction":false,"needsClarification":false,"clarificationQuestion":"","searchScope":"exact|nearby|city|follow_up|"}
+Rules:
+- Current message has priority; older context fills missing fields only for a true follow-up.
+- "nahi cafe chahiye" / "hostel nahi library" means correction=true and the NEW category wins.
+- "Talwandi me cafe" => city="Kota", locality="Talwandi", category="cafe". Do not confuse locality with city.
+- Allen/Vibrant/CLC are landmarks when used with near/paas/around.
+- Understand meaning: "study karne ke liye quiet jagah" may mean library; if genuinely ambiguous, ask a short clarification.
+- Multi-category requests go in categories.
+- Extract gender, budget, facilities, locality, area, landmark, and references such as "second wale".
+- Account/login/password/OTP/Google sign-in/dashboard issues are account_support, never property_search.
+- Never invent property facts.
+CURRENT MESSAGE:
+${msg}
+RECENT CONVERSATION:
+${h}`;
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:700,thinkingConfig:{thinkingLevel:"medium"}}})});
+  if(!r.ok)return fallback;const j=await r.json(),txt=j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||"";return normalizeIntent(safeJson(txt));
+ }catch{return fallback}
+}
+function mergeIntent(ai:any,msg:string,history:any[]){
+ const o=normalizeIntent(ai),curLoc=deterministicLocation(msg),old=history.filter(x=>x.role==="user").map(x=>x.text||" ").join(" "),oldLoc=deterministicLocation(old);
+ if(curLoc.city)o.city=curLoc.city;if(curLoc.locality)o.locality=curLoc.locality;if(curLoc.area)o.area=curLoc.area;if(curLoc.landmark)o.landmark=curLoc.landmark;
+ if(!o.city&&o.followUp)o.city=oldLoc.city||city(old);if(!o.area&&o.followUp)o.area=oldLoc.area||areaWanted(old);if(!o.locality&&o.followUp)o.locality=oldLoc.locality;if(!o.landmark&&o.followUp)o.landmark=oldLoc.landmark||findLandmark(old)?.key||"";
+ if(!o.category&&o.followUp){const pc=cat(old);if(pc)o.category=pc;o.categories=pc?[pc]:[]}if(o.category&&!o.categories.length)o.categories=[o.category];if(o.categories.length)o.category=o.categories[0];return o;
+}
+function budgetValue(p:any){return num(p.monthly_rent??p.monthly_fee??p.monthly_charge??p.price)}
+function matchesFacility(p:any,wanted:string[]){if(!wanted.length)return true;const z=searchText(p);return wanted.every(f=>z.includes(n(f))||Object.entries(p).some(([k,v])=>n(k).includes(n(f))&&(v===true||String(v).toLowerCase()==="true"||n(v).includes(n(f)))))}
+
 async function aiProperty(msg:string,history:any[],recs:any[],c?:string,near?:string){if(!GEMINI)return{};try{const h=history.slice(-8).map(x=>`${x.role==="user"?"USER":"ASSISTANT"}: ${String(x.text||"")}`).join("\n");const prompt=`You are StudentHubHelp's Ultra Advance AI Assistant.
 Match the user's language: natural Hinglish/Hindi/English.
 Be warm, concise, clear and impressive.
@@ -169,7 +226,7 @@ Deno.serve(async(req:Request)=>{
   }
   if(isAccountSupport(msg))return await chatResponse({reply:accountSupportReply(msg),intent:"Account / Login Support",primaryTopic:"Account access",suggestedFollowUps:["I forgot my password","Google login is not working","Dashboard is not opening","Contact support"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(isContact(msg)||String(b?.action||"")==="contact_support")return await chatResponse({reply:"Ji bilkul 😊 StudentHubHelp team se contact ke liye:\n\n📧 Email: satpalswami22742@gmail.com\n📞 Phone: +91 9929718264",intent:"Support / Contact",primaryTopic:"Contact StudentHubHelp",suggestedFollowUps:["Find a hostel","Find a library","Search by area","Back to search"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
-  const previous=history.filter(x=>x.role==="user").map(x=>x.text||"").join(" "),combined=previous+" "+msg,explicitCat=cat(msg),nearCats=secondaryCats(msg),c=explicitCat||cat(previous),propertyMode=isPropertyQuery(msg,previous),ct=city(msg)||city(combined)||"",near=nearTerm(msg)||nearTerm(combined),action=String(b?.action||""),shownIds=new Set((Array.isArray(b?.shownPropertyIds)?b.shownPropertyIds:[]).map((x:any)=>String(x)));
+  const previous=history.filter(x=>x.role==="user").map(x=>x.text||"").join(" "),combined=previous+" "+msg,aiRaw=await aiUnderstand(msg,history),u=mergeIntent(aiRaw,msg,history),explicitCat=cat(msg),nearCats=secondaryCats(msg),aiCats=u.categories||[],c=u.category||explicitCat||(u.followUp?cat(previous):""),propertyMode=u.intent.startsWith("property_")||isPropertyQuery(msg,u.followUp?previous:""),ct=u.city||(u.followUp?city(previous):""),near=u.landmark||u.area||u.locality||(u.nearRelation?nearTerm(msg):""),action=String(b?.action||u.action||""),shownIds=new Set((Array.isArray(b?.shownPropertyIds)?b.shownPropertyIds:[]).map((x:any)=>String(x)));
   if(action==="search_area"&&!city(msg)&&!nearTerm(msg))return await chatResponse({reply:"Bilkul 😊 Aap kis **area / locality** mein search karna chahte hain? Area ka naam bhejiye, main current requirement ke saath search refine kar dunga.",intent:"Area Refinement",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Search by city","Show more options","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(/(?:konsa|kaunsa|kaunsi|which|should i|chahiye).{0,35}(book|hostel|pg)|(?:book|hostel|pg).{0,35}(konsa|kaunsa|kaunsi|which|should)/i.test(n(msg))&&!isBookingInfoQuestion(msg)){
     const decisionRows=await multiDirect([c||"hostel"],ct);
@@ -185,11 +242,15 @@ Deno.serve(async(req:Request)=>{
   if(isPropertyAdviceQuestion(msg)){const adviceCat=cat(msg)||cat(previous)||"hostel";return await chatResponse({reply:adviceReply(adviceCat),intent:"Property Selection Guidance",primaryTopic:label(adviceCat)+" selection guidance",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a property","Search by area","Show more options","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);}
   if(isBookingInfoQuestion(msg)){const ar=await aiGeneral(`The user asks how to book/reserve a hostel or PG. Explain a practical StudentHubHelp booking process: shortlist suitable live listings, open full details, check price/room type/availability, call owner, confirm terms and visit/verify before paying. Do not invent any property-specific availability or booking facility.`,history);const reply=ar.reply||"Hostel book karne ka simple process: pehle suitable listing shortlist karein, full details me price/room type check karein, owner ko Call karke availability aur terms confirm karein, aur payment se pehle property/owner verify karein.";return await chatResponse({reply,intent:"Booking Guidance",primaryTopic:"Hostel / PG Booking",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Allen ke paas hostel dikhao","Budget ke according hostel dikhao","Boys hostel dikhao","Girls hostel dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);}
   if(!propertyMode){const ar=await aiGeneral(msg,history);const reply=ar.reply||"Bilkul 😊 Main yahin hoon. Aap jo poochna chahein, seedha poochiye—study, ideas, facts ya normal conversation, sab par baat kar sakte hain.";return await chatResponse({reply,intent:"General / Study / Conversation",primaryTopic:"Student AI Assistant",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Ask a study question","Tell me something interesting","Find a property","Contact support"],grounded:true,webGrounded:ar.webGrounded||false,webSources:ar.webSources||[],sessionId},{headers:H},sessionId,msg);}
-  let rows=await multiDirect(c?[c]:(nearCats.length?nearCats:["hostel"]),ct);
-  const wantedGender=genderWanted(combined),wantedArea=areaWanted(combined);
+  let rows=await multiDirect(aiCats.length?aiCats:(c?[c]:(nearCats.length?nearCats:["hostel"])),ct);
+  const wantedGender=u.gender||genderWanted(msg),wantedArea=u.area?(/nawalgarh/i.test(u.area)?"nawalgarh":/piprali/i.test(u.area)?"piprali":u.area.toLowerCase()):areaWanted(msg);
+  const wantedLocality=n(u.locality||"");
   if(wantedGender)rows=rows.filter(p=>{const z=searchText(p);const g=n([p.gender_type,p.gender,p.hostel_type,p.name,p.title,p.description].filter(Boolean).join(" "));return wantedGender==="girls"?/girls|girl|female|women|ladki|ladkiyon|महिला|लड़क/i.test(g):/boys|boy|male|men|ladke|लड़के/i.test(g)});
-  if(wantedArea)rows=rows.filter(p=>searchText(p).includes(wantedArea));
-  const landmark=findLandmark(near||"");
+  if(wantedArea)rows=rows.filter(p=>searchText(p).includes(n(wantedArea)));
+  if(wantedLocality)rows=rows.filter(p=>searchText(p).includes(wantedLocality));
+  if(u.budgetMax!==null||u.budgetMin!==null)rows=rows.filter(p=>{const v=budgetValue(p);if(v===undefined)return false;return (u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
+  if(u.facilities?.length)rows=rows.filter(p=>matchesFacility(p,u.facilities));
+  const landmark=u.landmark?findLandmark(u.landmark)||LANDMARKS.find(l=>l.key===u.landmark):findLandmark(near||"");
   if(landmark){for(const p of rows){const d=distanceToLandmark(p,landmark);if(d!==undefined)p._distanceKm=d}rows=rows.filter(p=>n(p.city||"")===n(landmark.city)&&(p._distanceKm===undefined||p._distanceKm<=10))}
   else if(near){const q=n(near);const exact=rows.filter(p=>searchText(p).includes(q));if(exact.length)rows=exact;else if(!wantedArea)rows=[]}
   if(nearCats.length){const secondaryRows=await multiDirect(nearCats,ct);for(const p of rows){let best=Infinity,hasCoords=false;for(const q of secondaryRows){const d=distanceKm(p,q);if(d!==undefined){hasCoords=true;best=Math.min(best,d)}else if(p.area&&searchText(q).includes(n(p.area)))best=Math.min(best,1)}if(best<=3){p._nearbyDistanceKm=best;p._nearbyVerified=hasCoords;p._nearbyAreaMatch=!hasCoords}}rows=rows.filter(p=>p._nearbyDistanceKm!==undefined)}
@@ -198,6 +259,6 @@ Deno.serve(async(req:Request)=>{
   let recs=ranked.slice(0,8).map(card);
   if(action==="view_details"){const focusId=String(b?.focusPropertyId||""),focusType=String(b?.focusPropertyType||c||"hostel"),focusRows=await multiDirect([focusType],ct),focus=focusRows.find(p=>String(p.id)===focusId);recs=focus?[card(focus)]:recs.slice(0,1)}
   const ar=await aiProperty(msg,history,recs,c,near),reply=ar.reply||fallbackReply(c,recs,near),followups=["View full details","Search by area","Show more options","Contact support"];
-  return await chatResponse({reply,intent:"Live Property Search",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:recs,recommendations:recs,suggestedFollowUps:followups,grounded:true,sessionId,searchMode:"ultra_advance_live_supabase_ai",targetCity:ct||undefined,targetCategory:c||undefined,nearbyTerm:near||undefined},{headers:H},sessionId,msg);
+  return await chatResponse({reply,intent:"Live Property Search",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:recs,recommendations:recs,suggestedFollowUps:followups,grounded:true,sessionId,searchMode:"ultra_advance_live_supabase_ai",targetCity:ct||undefined,targetCategory:c||undefined,nearbyTerm:near||undefined,aiIntent:u.intent,aiConfidence:u.confidence,aiEntities:{category:u.category,categories:u.categories,city:u.city,locality:u.locality,area:u.area,landmark:u.landmark,gender:u.gender,budgetMin:u.budgetMin,budgetMax:u.budgetMax,facilities:u.facilities,referenceIndex:u.referenceIndex}},{headers:H},sessionId,msg);
  }catch(e){return new Response(JSON.stringify({reply:"Ji, live search me temporary issue aaya. Please same query dobara bhejiye.",grounded:false,error:"Temporary server error"}),{status:200,headers:H})}
 });
