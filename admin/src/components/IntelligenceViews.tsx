@@ -851,13 +851,51 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
           Live configurations stored in Supabase.
         </p>
 
+        {(() => {
+          const autoSetting = liveSettings.find(
+            (s) => String(s.key || s.setting_key) === 'auto_listing_approval'
+          );
+          const autoEnabled = ['true', '1', 'on', 'yes'].includes(
+            String(autoSetting?.value || 'false').toLowerCase()
+          );
+
+          return (
+            <div className="rounded-3xl bg-[#081026] border border-amber-500/25 p-5 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="text-sm font-extrabold text-white">
+                  Automatic Listing Review
+                </div>
+                <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+                  Reviews new owner listing requests against required fields, phone validity and duplicate-risk checks. Risky requests stay pending for admin review. Verification remains admin-only.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={async () =>
+                  updateSetting('auto_listing_approval', autoEnabled ? 'false' : 'true')
+                }
+                className={`px-5 py-2.5 rounded-xl text-xs font-extrabold border transition-colors ${
+                  autoEnabled
+                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    : 'bg-slate-800 text-slate-300 border-slate-700'
+                }`}
+              >
+                {autoEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          );
+        })()}
+
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {controlLoading ? (
             <div className="p-8 text-slate-400 text-xs">
               Loading settings…
             </div>
           ) : (
-            liveSettings.map((s) => (
+            liveSettings
+              .filter((s) => String(s.key || s.setting_key) !== 'auto_listing_approval')
+              .map((s) => (
               <div
                 key={s.key || s.setting_key}
                 className="rounded-2xl bg-[#081026] border border-slate-800 p-4"
