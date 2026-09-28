@@ -203,6 +203,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
             </div>
           )}
 
+          {property?.distanceLabel && (
+            <div className="text-xs font-bold text-slate-700 flex items-center gap-1 mt-1">
+              <Navigation className="w-3.5 h-3.5 shrink-0" />
+              Distance: {property.distanceLabel}
+            </div>
+          )}
+
         </div>
 
         {property?.verified && (
