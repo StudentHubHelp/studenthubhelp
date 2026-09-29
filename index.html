@@ -1541,7 +1541,36 @@
     .review-status.ok {background:#ecfdf3;color:#166534;border:1px solid #bbf7d0}
     .review-status.info {background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
     .testimonial-date {color:var(--text-muted);font-size:10.5px;margin-top:4px}
-    @media(max-width:820px){.public-review-layout{grid-template-columns:1fr}.public-review-panel{padding:20px}.testimonial-wrap{min-height:270px}}
+    /* Keep the rotating review card full-width inside its grid column. */
+    .public-review-layout .testimonial-wrap {
+      width:100%;
+      max-width:none;
+      margin:0;
+      min-width:0;
+      min-height:260px;
+    }
+    .public-review-layout .testimonial {
+      width:100%;
+      min-width:0;
+      box-sizing:border-box;
+      overflow-wrap:break-word;
+      word-break:normal;
+    }
+    .public-review-layout .testimonial-user {
+      font-size:16px;
+      color:var(--royal-navy);
+      margin-bottom:10px;
+    }
+    .public-review-layout .testimonial-text {
+      margin:12px 0 0;
+      line-height:1.65;
+    }
+    @media(max-width:820px){
+      .public-review-layout{grid-template-columns:1fr}
+      .public-review-panel{padding:20px}
+      .public-review-layout .testimonial-wrap{min-height:240px}
+      .public-review-layout .testimonial{padding:26px}
+    }
 
 
     /* =========================================
@@ -6506,11 +6535,9 @@ function renderListingCard(item) {
         const sample=String(review.review_source||"")==="sample";
         const text=String(review.review_text||"").replace(/^Sample:\\s*/i,"");
         return `<div class="testimonial ${index===0?"active":""}">  
+          <div class="testimonial-user">${escapeHTML(review.user_name)}</div>
           <div class="stars">${starsHTML(review.rating)}</div>  
           <div class="testimonial-text">“${escapeHTML(text)}”</div>  
-          <div class="testimonial-user">${escapeHTML(review.user_name)}</div>  
-          <div class="testimonial-date">${escapeHTML(formatDate(review.created_at))}</div>
-          <div class="testimonial-note">${sample?"Sample Review":"Verified Gmail Review"}</div>  
         </div>`;
       }).join(""); 
       reviewIndex=0; 
