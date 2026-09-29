@@ -11,190 +11,36 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root{
-      --navy:#071a33;
-      --navy2:#0b2344;
-      --navy3:#102d52;
-      --gold:#f4c44e;
-      --gold2:#ffd970;
-      --text:#eef4fb;
-      --muted:#9fb0c7;
-      --line:rgba(255,255,255,.10);
-      --glass:rgba(10,35,68,.72);
-      --success:#34d399;
-      --danger:#fb7185;
-    }
+    :root{--navy:#071a33;--navy2:#0b2344;--gold:#f4c44e;--gold2:#ffd970;--text:#eef4fb;--muted:#9fb0c7;--line:rgba(255,255,255,.10);--glass:rgba(10,35,68,.76);--success:#34d399;--danger:#fb7185}
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      color:var(--text);
-      background:
-        radial-gradient(circle at 10% 0%,rgba(244,196,78,.09),transparent 30%),
-        radial-gradient(circle at 90% 10%,rgba(48,112,190,.15),transparent 32%),
-        linear-gradient(180deg,#06162c 0%,#071a33 45%,#06172e 100%);
-      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      min-height:100vh;
-    }
-    a{text-decoration:none}
-    .site-nav{
-      position:sticky;top:0;z-index:50;
-      background:rgba(5,21,42,.94);
-      backdrop-filter:blur(16px);
-      border-bottom:1px solid rgba(255,255,255,.08);
-    }
-    .nav-inner{
-      max-width:1200px;margin:auto;padding:14px 20px;
-      display:flex;align-items:center;justify-content:space-between;gap:20px;
-    }
-    .brand{display:flex;align-items:center;gap:13px;color:#fff}
-    .brand img{width:58px;height:58px;border-radius:16px;object-fit:cover;border:2px solid rgba(255,255,255,.9);box-shadow:0 8px 28px rgba(0,0,0,.25)}
-    .brand-title{font-size:23px;font-weight:900;letter-spacing:-.5px}
-    .brand-sub{font-size:12px;font-weight:800;color:var(--gold);margin-top:1px}
-    .nav-links{display:flex;align-items:center;gap:7px}
-    .nav-links a{
-      color:#d8e2ef;font-weight:800;padding:11px 15px;border-radius:14px;transition:.2s;
-    }
-    .nav-links a:hover{color:#fff;background:rgba(255,255,255,.06)}
+    body{margin:0;color:var(--text);background:radial-gradient(circle at 10% 0%,rgba(244,196,78,.10),transparent 30%),radial-gradient(circle at 90% 8%,rgba(48,112,190,.18),transparent 32%),linear-gradient(180deg,#06162c 0%,#071a33 48%,#06172e 100%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+    a{text-decoration:none}.site-nav{position:sticky;top:0;z-index:50;background:rgba(5,21,42,.94);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.08)}
+    .nav-inner{max-width:1200px;margin:auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{display:flex;align-items:center;gap:13px;color:#fff}.brand img{width:58px;height:58px;border-radius:16px;object-fit:cover;border:2px solid rgba(255,255,255,.9);box-shadow:0 8px 28px rgba(0,0,0,.25)}
+    .brand-title{font-size:23px;font-weight:900;letter-spacing:-.5px}.brand-sub{font-size:12px;font-weight:800;color:var(--gold);margin-top:1px}
+    .nav-links{display:flex;align-items:center;gap:7px}.nav-links a{color:#d8e2ef;font-weight:800;padding:11px 15px;border-radius:14px;transition:.2s}.nav-links a:hover{color:#fff;background:rgba(255,255,255,.06)}
     .nav-links a.active{color:var(--gold2);border:1px solid rgba(244,196,78,.45);background:rgba(244,196,78,.05)}
-    .nav-toggle{display:none;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff;width:44px;height:44px;border-radius:12px}
-    .mobile-menu{display:none;padding:0 20px 16px}
-    .mobile-menu.open{display:grid;gap:6px}
-    .mobile-menu a{color:#dce7f4;padding:12px;border-radius:12px;font-weight:800}
-    .mobile-menu a.active{color:var(--gold);background:rgba(244,196,78,.07)}
-
-    .page{
-      max-width:1120px;margin:0 auto;padding:42px 20px 70px;
-    }
-    .hero{
-      position:relative;overflow:hidden;border:1px solid var(--line);
-      border-radius:30px;padding:34px;
-      background:
-        linear-gradient(135deg,rgba(7,26,51,.96),rgba(11,35,68,.84)),
-        radial-gradient(circle at 85% 10%,rgba(244,196,78,.15),transparent 28%);
-      box-shadow:0 24px 80px rgba(0,0,0,.22);
-    }
-    .hero:after{
-      content:"";position:absolute;width:220px;height:220px;border-radius:50%;
-      right:-80px;top:-100px;border:1px solid rgba(244,196,78,.16);
-      box-shadow:0 0 0 35px rgba(244,196,78,.025),0 0 0 70px rgba(244,196,78,.015);
-    }
-    .eyebrow{
-      display:inline-flex;align-items:center;gap:8px;
-      color:var(--gold);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;
-    }
-    .hero h1{margin:10px 0 8px;font-size:clamp(30px,5vw,50px);line-height:1.05;letter-spacing:-1.6px;font-weight:950}
-    .hero p{max-width:720px;color:var(--muted);font-size:15px;line-height:1.75;margin:0}
-    .trust-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
-    .trust{
-      display:inline-flex;align-items:center;gap:8px;padding:9px 12px;
-      border-radius:999px;background:rgba(255,255,255,.045);border:1px solid var(--line);
-      color:#d8e4f2;font-size:12px;font-weight:800;
-    }
-    .trust i{color:var(--gold)}
-
-    .layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:22px;margin-top:22px}
-    .panel{
-      background:var(--glass);border:1px solid var(--line);border-radius:26px;
-      box-shadow:0 18px 55px rgba(0,0,0,.18);
-    }
-    .form-panel{padding:26px}
-    .side-panel{padding:22px;height:max-content;position:sticky;top:105px}
-    .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:20px}
-    .section-head h2{margin:0;font-size:20px;font-weight:950}
-    .section-head p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
-    .step{
-      width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
-      background:rgba(244,196,78,.10);color:var(--gold);font-weight:950;border:1px solid rgba(244,196,78,.22)
-    }
-    .field{margin-bottom:17px}
-    .field label{display:flex;align-items:center;gap:7px;color:#dfe8f3;font-size:12px;font-weight:900;margin-bottom:7px}
-    .required{color:var(--gold)}
-    .input,.select,.textarea{
-      width:100%;border:1px solid rgba(255,255,255,.11);outline:none;
-      background:rgba(3,16,33,.56);color:#f4f8fc;border-radius:14px;
-      padding:13px 14px;font-size:14px;transition:.2s;
-    }
-    .textarea{resize:vertical;min-height:112px;line-height:1.55}
-    .input:focus,.select:focus,.textarea:focus{
-      border-color:rgba(244,196,78,.65);
-      box-shadow:0 0 0 4px rgba(244,196,78,.08);
-    }
-    .input::placeholder,.textarea::placeholder{color:#71849d}
-    .select option{background:#0b2344;color:#fff}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .hint{font-size:11px;color:#778ba5;margin-top:6px;line-height:1.5}
-    .locked{
-      background:rgba(255,255,255,.035);color:#a9bad0;
-      cursor:not-allowed;
-    }
-    .category-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:20px}
-    .category-card{
-      cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.025);
-      border-radius:14px;padding:12px 8px;text-align:center;transition:.2s;
-    }
-    .category-card i{display:block;font-size:18px;color:#9fb1c8;margin-bottom:7px}
-    .category-card span{font-size:11px;font-weight:900;color:#b9c8d9}
-    .category-card.selected{border-color:rgba(244,196,78,.65);background:rgba(244,196,78,.08)}
-    .category-card.selected i,.category-card.selected span{color:var(--gold2)}
-    .notice{
-      padding:13px 14px;border-radius:15px;border:1px solid rgba(244,196,78,.16);
-      background:rgba(244,196,78,.055);color:#d8e3ef;font-size:12px;line-height:1.6;
-    }
-    .notice i{color:var(--gold);margin-right:7px}
-    .actions{display:flex;gap:11px;margin-top:24px}
-    .btn{
-      min-height:48px;border:0;border-radius:14px;padding:0 18px;
-      font-weight:950;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:.2s;
-    }
-    .btn-primary{flex:1;background:linear-gradient(135deg,#f4c44e,#ffd970);color:#071a33;box-shadow:0 12px 30px rgba(244,196,78,.14)}
-    .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.04)}
-    .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
-    .btn-secondary{background:rgba(255,255,255,.055);color:#dce6f1;border:1px solid var(--line)}
-    .status{
-      margin-top:16px;padding:13px 14px;border-radius:14px;font-size:12px;line-height:1.55;display:none
-    }
-    .status.show{display:block}
-    .status.success{color:#9ff1ce;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.22)}
-    .status.error{color:#fecdd3;background:rgba(251,113,133,.07);border:1px solid rgba(251,113,133,.22)}
-    .status.info{color:#cbd8e7;background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.16)}
-    .side-title{font-weight:950;font-size:16px;margin-bottom:15px}
-    .side-list{display:grid;gap:11px}
-    .side-item{display:flex;gap:11px;padding:12px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
-    .side-item i{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:rgba(244,196,78,.08);color:var(--gold)}
-    .side-item b{display:block;font-size:12px}
-    .side-item span{display:block;color:#8295ad;font-size:11px;margin-top:3px;line-height:1.45}
-    .account-box{margin-top:18px;padding:14px;border-radius:16px;background:rgba(0,0,0,.14);border:1px solid var(--line)}
-    .account-box .label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#7589a2;font-weight:900}
-    .account-box .value{margin-top:5px;font-size:13px;font-weight:850;word-break:break-word}
-    .auth-state{margin-top:18px}
-    .image-preview{
-      display:none;margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid var(--line);
-      background:#071a33;height:180px;
-    }
-    .image-preview.show{display:block}
-    .image-preview img{width:100%;height:100%;object-fit:cover;display:block}
-    .footer{max-width:1120px;margin:0 auto;padding:0 20px 34px;color:#647891;text-align:center;font-size:11px}
-
-    @media(max-width:900px){
-      .layout{grid-template-columns:1fr}
-      .side-panel{position:static}
-      .category-grid{grid-template-columns:repeat(3,1fr)}
-      .nav-links{display:none}
-      .nav-toggle{display:block}
-    }
-    @media(max-width:600px){
-      .nav-inner{padding:11px 14px}
-      .brand img{width:49px;height:49px;border-radius:14px}
-      .brand-title{font-size:18px}
-      .brand-sub{font-size:10px}
-      .page{padding:24px 13px 45px}
-      .hero{padding:24px 20px;border-radius:23px}
-      .form-panel,.side-panel{padding:19px;border-radius:21px}
-      .grid2{grid-template-columns:1fr;gap:0}
-      .category-grid{grid-template-columns:repeat(2,1fr)}
-      .actions{flex-direction:column-reverse}
-      .btn{width:100%}
-    }
+    .nav-toggle{display:none;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff;width:44px;height:44px;border-radius:12px}.mobile-menu{display:none;padding:0 20px 16px}.mobile-menu.open{display:grid;gap:6px}.mobile-menu a{color:#dce7f4;padding:12px;border-radius:12px;font-weight:800}.mobile-menu a.active{color:var(--gold);background:rgba(244,196,78,.07)}
+    .page{max-width:1120px;margin:0 auto;padding:38px 20px 70px}
+    .hero{position:relative;overflow:hidden;border:1px solid rgba(244,196,78,.16);border-radius:30px;padding:38px;background:linear-gradient(135deg,rgba(7,26,51,.98),rgba(11,35,68,.88));box-shadow:0 24px 80px rgba(0,0,0,.24)}
+    .hero:after{content:"";position:absolute;width:250px;height:250px;border-radius:50%;right:-70px;top:-115px;border:1px solid rgba(244,196,78,.20);box-shadow:0 0 0 38px rgba(244,196,78,.025),0 0 0 76px rgba(244,196,78,.014)}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--gold);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px}
+    .hero h1{margin:10px 0 10px;font-size:clamp(32px,5vw,52px);line-height:1.04;letter-spacing:-1.7px;font-weight:950;max-width:760px}.hero p{max-width:760px;color:#b5c4d7;font-size:15px;line-height:1.75;margin:0}
+    .journey{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:26px;max-width:860px}.journey-step{position:relative;padding:13px 13px 13px 42px;border-radius:15px;background:rgba(255,255,255,.045);border:1px solid var(--line);font-size:11px;font-weight:850;color:#dbe6f2}.journey-step i{position:absolute;left:12px;top:11px;width:22px;height:22px;border-radius:8px;display:grid;place-items:center;background:rgba(244,196,78,.12);color:var(--gold);font-size:10px}
+    .trust-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}.trust{display:inline-flex;align-items:center;gap:7px;color:#aebed1;font-size:11px;font-weight:800}.trust i{color:var(--gold)}
+    .auth-state{margin:18px 0 0!important}.layout{display:grid;grid-template-columns:minmax(0,1fr) 315px;gap:22px;margin-top:22px}.panel{background:var(--glass);border:1px solid var(--line);border-radius:26px;box-shadow:0 18px 55px rgba(0,0,0,.18)}
+    .form-panel{padding:28px}.side-panel{padding:22px;height:max-content;position:sticky;top:105px}.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:20px}.section-head h2{margin:0;font-size:22px;font-weight:950}.section-head p{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
+    .step{padding:8px 11px;border-radius:999px;background:rgba(244,196,78,.10);color:var(--gold);font-size:10px;font-weight:950;border:1px solid rgba(244,196,78,.22);white-space:nowrap;text-transform:uppercase;letter-spacing:.7px}
+    .field{margin-bottom:17px}.field label{display:flex;align-items:center;gap:7px;color:#dfe8f3;font-size:12px;font-weight:900;margin-bottom:7px}.required{color:var(--gold)}
+    .input,.select,.textarea{width:100%;border:1px solid rgba(255,255,255,.11);outline:none;background:rgba(3,16,33,.56);color:#f4f8fc;border-radius:14px;padding:13px 14px;font-size:14px;transition:.2s}.textarea{resize:vertical;min-height:112px;line-height:1.55}.input:focus,.select:focus,.textarea:focus{border-color:rgba(244,196,78,.65);box-shadow:0 0 0 4px rgba(244,196,78,.08)}.input::placeholder,.textarea::placeholder{color:#71849d}.select option{background:#0b2344;color:#fff}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.hint{font-size:11px;color:#778ba5;margin-top:6px;line-height:1.5}
+    .category-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:23px}.category-card{cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:15px;padding:14px 8px;text-align:center;transition:.2s}.category-card:hover{transform:translateY(-1px);background:rgba(255,255,255,.045)}.category-card i{display:block;font-size:19px;color:#9fb1c8;margin-bottom:7px}.category-card span{font-size:11px;font-weight:900;color:#b9c8d9}.category-card.selected{border-color:rgba(244,196,78,.65);background:rgba(244,196,78,.09);box-shadow:0 8px 24px rgba(244,196,78,.06)}.category-card.selected i,.category-card.selected span{color:var(--gold2)}
+    .notice{padding:14px;border-radius:15px;border:1px solid rgba(244,196,78,.16);background:rgba(244,196,78,.055);color:#d8e3ef;font-size:12px;line-height:1.65}.notice i{color:var(--gold);margin-right:7px}.actions{display:flex;gap:11px;margin-top:24px}.btn{min-height:49px;border:0;border-radius:14px;padding:0 18px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:.2s}.btn-primary{flex:1;background:linear-gradient(135deg,#f4c44e,#ffd970);color:#071a33;box-shadow:0 12px 30px rgba(244,196,78,.14)}.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.04)}.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}.btn-secondary{background:rgba(255,255,255,.055);color:#dce6f1;border:1px solid var(--line)}
+    .status{margin-top:16px;padding:13px 14px;border-radius:14px;font-size:12px;line-height:1.55;display:none}.status.show{display:block}.status.success{color:#9ff1ce;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.22)}.status.error{color:#fecdd3;background:rgba(251,113,133,.07);border:1px solid rgba(251,113,133,.22)}.status.info{color:#cbd8e7;background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.16)}
+    .side-kicker{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px;font-weight:950;margin-bottom:5px}.side-title{font-weight:950;font-size:18px;margin-bottom:6px}.side-copy{color:#8396ae;font-size:11px;line-height:1.55;margin-bottom:15px}.side-list{display:grid;gap:10px}.side-item{display:flex;gap:11px;padding:12px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}.side-item i{flex:0 0 32px;width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:rgba(244,196,78,.08);color:var(--gold)}.side-item b{display:block;font-size:12px}.side-item span{display:block;color:#8295ad;font-size:11px;margin-top:3px;line-height:1.45}
+    .verification-note{margin-top:14px;padding:13px;border-radius:15px;background:rgba(52,211,153,.045);border:1px solid rgba(52,211,153,.13);font-size:11px;color:#a9bbcf;line-height:1.55}.verification-note b{display:block;color:#dce9f5;margin-bottom:4px}.verification-note i{color:var(--success);margin-right:6px}
+    .account-box{margin-top:14px;padding:14px;border-radius:16px;background:rgba(0,0,0,.14);border:1px solid var(--line)}.account-box .label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#7589a2;font-weight:900}.account-box .value{margin-top:5px;font-size:13px;font-weight:850;word-break:break-word}.image-preview{display:none;margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#071a33;height:180px}.image-preview.show{display:block}.image-preview img{width:100%;height:100%;object-fit:cover;display:block}.footer{max-width:1120px;margin:0 auto;padding:0 20px 34px;color:#647891;text-align:center;font-size:11px}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.side-panel{position:static}.category-grid{grid-template-columns:repeat(3,1fr)}.journey{grid-template-columns:1fr 1fr}.nav-links{display:none}.nav-toggle{display:block}}
+    @media(max-width:600px){.nav-inner{padding:11px 14px}.brand img{width:49px;height:49px;border-radius:14px}.brand-title{font-size:18px}.brand-sub{font-size:10px}.page{padding:24px 13px 45px}.hero{padding:26px 20px;border-radius:23px}.hero h1{font-size:34px}.journey{grid-template-columns:1fr;gap:7px}.form-panel,.side-panel{padding:19px;border-radius:21px}.grid2{grid-template-columns:1fr;gap:0}.category-grid{grid-template-columns:repeat(2,1fr)}.section-head{align-items:center}.actions{flex-direction:column-reverse}.btn{width:100%}}
   </style>
   <link rel="stylesheet" href="mobile.css">
   <script src="performance.js" defer></script>
@@ -241,16 +87,21 @@
 <main class="page">
   <section class="hero">
     <div class="eyebrow"><i class="fa-solid fa-building-circle-plus"></i> Owner Listing Center</div>
-    <h1>Add Your Listing</h1>
+    <h1>List Your Property or Student Service</h1>
     <p>
-      Add your Hostel / PG, Tiffin / Mess, Library, Cafe or Book Store to StudentHubHelp.
-      Your listing is submitted directly to your Supabase database and becomes available according to your account permissions.
+      Submit your Hostel / PG, Tiffin / Mess, Library, Cafe or Book Store to StudentHubHelp.
+      Add accurate details below and send your listing for review before it becomes available to students.
     </p>
+    <div class="journey" aria-label="Listing submission process">
+      <div class="journey-step"><i class="fa-solid fa-1"></i> Choose Category</div>
+      <div class="journey-step"><i class="fa-solid fa-2"></i> Add Details</div>
+      <div class="journey-step"><i class="fa-solid fa-3"></i> Submit for Review</div>
+      <div class="journey-step"><i class="fa-solid fa-4"></i> Approval &amp; Publish</div>
+    </div>
     <div class="trust-row">
       <div class="trust"><i class="fa-solid fa-shield-halved"></i> Secure owner access</div>
-      <div class="trust"><i class="fa-solid fa-database"></i> Supabase connected</div>
+      <div class="trust"><i class="fa-solid fa-circle-check"></i> Review-based publishing</div>
       <div class="trust"><i class="fa-solid fa-mobile-screen"></i> Mobile friendly</div>
-      <div class="trust"><i class="fa-solid fa-bolt"></i> Fast submission</div>
     </div>
   </section>
 
@@ -263,9 +114,9 @@
       <div class="section-head">
         <div>
           <h2>Listing Information</h2>
-          <p>Fill in accurate information so students can find your business easily.</p>
+          <p>Choose the right category and provide accurate information students can rely on.</p>
         </div>
-        <div class="step">01</div>
+        <div class="step">Owner submission</div>
       </div>
 
       <div class="category-grid" id="categoryGrid">
@@ -329,13 +180,13 @@
           <input id="fImage" class="input" type="url" maxlength="500" placeholder="https://...">
           <div class="hint">For Cafe listings, you can provide an image URL. If left empty, your Cafe Finder can use its default cafe banner.</div>
           <div class="image-preview" id="imagePreview">
-            <img id="previewImg" src="cafe-banner.png" alt="Cafe preview" loading="lazy decoding="async"
+            <img id="previewImg" src="cafe-banner.png" alt="Cafe preview" loading="lazy" decoding="async">
           </div>
         </div>
 
         <div class="notice">
           <i class="fa-solid fa-circle-info"></i>
-          Rating is not entered here. Student ratings/reviews should remain student-generated so the public rating stays trustworthy.
+          <strong>Before you submit:</strong> Enter accurate listing and contact information. Ratings are not entered by owners; student ratings and reviews remain student-generated.
         </div>
 
         <div class="actions">
@@ -343,7 +194,7 @@
             <i class="fa-solid fa-arrow-left"></i> Cancel
           </a>
           <button type="submit" class="btn btn-primary" id="saveBtn">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Submit Listing
+            <i class="fa-solid fa-paper-plane"></i> Submit Listing for Review
           </button>
         </div>
 
@@ -352,7 +203,9 @@
     </div>
 
     <aside class="panel side-panel">
-      <div class="side-title">How it works</div>
+      <div class="side-kicker">Owner onboarding</div>
+      <div class="side-title">Before you submit</div>
+      <div class="side-copy">A clear, accurate listing helps StudentHubHelp review your request and helps students understand your service.</div>
 
       <div class="side-list">
         <div class="side-item">
@@ -365,12 +218,17 @@
         </div>
         <div class="side-item">
           <i class="fa-solid fa-3"></i>
-          <div><b>Submit securely</b><span>Your authenticated owner account is used for the request.</span></div>
+          <div><b>Submit for review</b><span>Your authenticated owner account is used to create the listing request.</span></div>
         </div>
         <div class="side-item">
           <i class="fa-solid fa-4"></i>
-          <div><b>Manage later</b><span>Use your User Dashboard to manage your listings.</span></div>
+          <div><b>Track &amp; manage</b><span>Use your User Dashboard to follow and manage your listings.</span></div>
         </div>
+      </div>
+
+      <div class="verification-note">
+        <b><i class="fa-solid fa-shield-check"></i> Verification stays separate</b>
+        Approval or Active status does not automatically mean Verified. StudentHubHelp verification is a separate review status.
       </div>
 
       <div class="account-box">
@@ -615,7 +473,7 @@
     setStatus("info",
       '<i class="fa-solid fa-cloud-arrow-up"></i> Sending your ' +
       escapeHTML(categoryLabels[category]) +
-      " listing to Supabase…"
+      " listing request for review…"
     );
 
     try {
@@ -629,9 +487,9 @@
       }
 
       setStatus("success",
-        '<i class="fa-solid fa-circle-check"></i> <strong>Listing submitted successfully.</strong><br>' +
+        '<i class="fa-solid fa-circle-check"></i> <strong>Listing request submitted successfully.</strong><br>' +
         "Your " + escapeHTML(categoryLabels[category]) +
-        " listing has been added to Supabase."
+        " listing has been sent for review. You can track it from your dashboard."
       );
 
       const keepPhone = profile.phone || "";
@@ -651,7 +509,7 @@
       );
     } finally {
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Submit Listing';
+      saveBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Listing for Review';
     }
   });
 
@@ -659,6 +517,6 @@
 </script>
 
   <!-- StudentHubHelp AI Chatbot -->
-  <script src="/studenthubhelp/ai-chatbot/public/widget.js" defer></script>
+  <script src="/ai-chatbot/public/widget.js" defer></script>
 </body>
 </html>
