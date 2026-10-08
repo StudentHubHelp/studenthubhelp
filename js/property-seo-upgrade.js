@@ -3,13 +3,17 @@
 
   const BASE='https://studenthubhelp.in/';
   const qs=new URLSearchParams(location.search);
+  const prettyMatch=location.pathname.match(/^\/properties\/(hostel|tiffin|library|cafe|bookstore)\/([^/]+)\/?$/i);
+  const prettyType=prettyMatch?prettyMatch[1].toLowerCase():'';
+  const prettySlug=prettyMatch?decodeURIComponent(prettyMatch[2]):'';
   const typeMap={hostel:'LodgingBusiness',tiffin:'FoodEstablishment',cafe:'CafeOrCoffeeShop',library:'Library',bookstore:'BookStore'};
-  const type=(qs.get('type')||'hostel').toLowerCase();
+  const type=(prettyType||qs.get('type')||'hostel').toLowerCase();
   const id=(qs.get('id')||'').trim();
-  const slug=(qs.get('slug')||'').trim();
+  const slug=(prettySlug||qs.get('slug')||'').trim();
   const finder={hostel:'pg-finder.html',tiffin:'tiffin-finder.html',library:'library-finder.html',cafe:'cafe-finder.html',bookstore:'bookstore-finder.html'}[type]||'pg-finder.html';
 
   function canonicalUrl(){
+    if(prettySlug) return new URL('properties/'+type+'/'+encodeURIComponent(prettySlug)+'/',BASE).href;
     const u=new URL('property-details.html',BASE);
     u.searchParams.set('type',type);
     if(slug) u.searchParams.set('slug',slug); else if(id) u.searchParams.set('id',id);
@@ -72,6 +76,12 @@
     el.textContent=JSON.stringify(data,null,2);
   }
   function apply(){
+    if(prettySlug){
+      setRobots('index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+      setCanonical(canonicalUrl());
+      normalizeSchema();
+      return;
+    }
     if(!id&&!slug){
       setRobots('noindex, follow');
       setCanonical(new URL(finder,BASE).href);
