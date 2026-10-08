@@ -35,7 +35,7 @@
   "description": {{ page.description | jsonify }}
 }
 </script>
-<link rel="icon" type="image/png" href="logo.png">
+<link rel="icon" type="image/png" href="https://studenthubhelp.in/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
@@ -134,9 +134,9 @@ button{font:inherit}
 }
 @media(min-width:801px){.card{content-visibility:auto;contain-intrinsic-size:320px}}
 </style>
-  <link rel="stylesheet" href="mobile.css">
-  <script src="js/property-seo-upgrade.js" defer></script>
-  <script src="performance.js" defer></script>
+  <link rel="stylesheet" href="https://studenthubhelp.in/mobile.css">
+  <script src="https://studenthubhelp.in/js/property-seo-upgrade.js" defer></script>
+  <script src="https://studenthubhelp.in/performance.js" defer></script>
   <link rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co" crossorigin>
 </head>
 <body>
@@ -255,10 +255,11 @@ function updatePropertySEO(r){
   ).replace(/\s+/g,' ').trim().slice(0,160);
 
   const canonicalUrl=(()=>{
-    const u=new URL('property-details.html','https://studenthubhelp.in/');
-    u.searchParams.set('type',type);
     const propertySlug=String(r.slug||qs.get('slug')||staticSlug||'').trim();
     const propertyId=String(qs.get('id')||'').trim();
+    if(staticSlug && propertySlug) return new URL('properties/'+type+'/'+encodeURIComponent(propertySlug)+'/', 'https://studenthubhelp.in/').href;
+    const u=new URL('property-details.html','https://studenthubhelp.in/');
+    u.searchParams.set('type',type);
     if(propertySlug) u.searchParams.set('slug',propertySlug);
     else if(propertyId) u.searchParams.set('id',propertyId);
     return u.href;
@@ -278,10 +279,8 @@ function updatePropertySEO(r){
   setMeta('twitterTitle',seoTitle);
   setMeta('twitterDescription',seoDescription);
 
-  const imageUrl=new URL(
-    r.image||cfg.banner,
-    location.href
-  ).href;
+  const assetUrl=(value)=>{try{const v=String(value||'').trim();if(!v)return '';return new URL(v, 'https://studenthubhelp.in/').href}catch(_){return ''}};
+  const imageUrl=assetUrl(r.image||cfg.banner);
 
   setMeta('ogImage',imageUrl);
   setMeta('twitterImage',imageUrl);
@@ -974,7 +973,7 @@ function openClaimModal(){
         'Please login first. After login, return to this listing and submit your ownership claim.'
       );
 
-      location.href='auth.html';
+      location.href='https://studenthubhelp.in/auth.html';
 
       return;
     }
@@ -1259,7 +1258,7 @@ async function loadSimilarProperties(r){
               ?'Same area'
               :'Same city';
             return `<a class="similar-card" href="${esc(href)}">
-              <img class="similar-img" src="${esc(x.image||cfg.banner)}" alt="${esc(nm)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${esc(cfg.banner)}'">
+              <img class="similar-img" src="${esc(assetUrl(x.image||cfg.banner))}" alt="${esc(nm)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${esc(assetUrl(cfg.banner))}'">
               <div class="similar-body">
                 <div class="similar-name">${esc(nm)}</div>
                 <div class="similar-meta">${esc([x.area,x.city].filter(Boolean).join(' • ')||'Location available')}</div>
@@ -1316,7 +1315,7 @@ if(track && rows.length > 1){
 }
 function render(r){
   currentProperty=r;
-  const image=r.image||cfg.banner;
+  const image=assetUrl(r.image||cfg.banner);
   const verified=getVerification(r);
   const name=r.name||r.service_name||'Property';
   const location=[r.area,r.city].filter(Boolean).join(' • ');
@@ -1339,10 +1338,10 @@ function render(r){
   app.innerHTML=`
   <section class="hero">
     <div class="gallery">
-      <img class="mainimg" src="${esc(image)}" alt="${esc(name)}" loading="eager" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.src='${esc(cfg.banner)}'">
+      <img class="mainimg" src="${esc(image)}" alt="${esc(name)}" loading="eager" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.src='${esc(assetUrl(cfg.banner))}'">
       <div class="side">
         <img src="${esc(image)}" alt="${esc(name)}" loading="lazy" decoding="async">
-        <img src="${esc(cfg.banner)}" alt="${esc(name)}" loading="lazy" decoding="async">
+        <img src="${esc(assetUrl(cfg.banner))}" alt="${esc(name)}" loading="lazy" decoding="async">
       </div>
     </div>
     <div class="info">
@@ -1393,7 +1392,7 @@ function render(r){
         <div class="highlight"><div class="highlight-icon"><i class="fa-solid fa-map"></i></div><div><strong>Area context</strong><span>${esc([r.area,r.city].filter(Boolean).join(', ')||'Location information available')}</span></div></div>
       </div></div>
 
-      <div class="card"><div class="section-kicker">PHOTOS</div><h2>📸 Property Photos</h2><div class="gallery" style="height:280px;border-radius:17px;overflow:hidden;grid-template-columns:2fr 1fr"><img class="mainimg" src="${esc(image)}" alt="${esc(name)} photo" loading="lazy" decoding="async"><div class="side"><img src="${esc(image)}" alt="${esc(name)} photo" loading="lazy" decoding="async"><img src="${esc(cfg.banner)}" alt="${esc(name)} photo" loading="lazy" decoding="async"></div></div><p class="small" style="margin-top:10px">Photos are shown as available in the listing data.</p></div>
+      <div class="card"><div class="section-kicker">PHOTOS</div><h2>📸 Property Photos</h2><div class="gallery" style="height:280px;border-radius:17px;overflow:hidden;grid-template-columns:2fr 1fr"><img class="mainimg" src="${esc(image)}" alt="${esc(name)} photo" loading="lazy" decoding="async"><div class="side"><img src="${esc(image)}" alt="${esc(name)} photo" loading="lazy" decoding="async"><img src="${esc(assetUrl(cfg.banner))}" alt="${esc(name)} photo" loading="lazy" decoding="async"></div></div><p class="small" style="margin-top:10px">Photos are shown as available in the listing data.</p></div>
 
       ${claimPropertyHTML(r)}
 
@@ -1434,13 +1433,13 @@ function render(r){
 }
 
 async function share(){try{await navigator.share({title:document.title,text:'Check this property on StudentHubHelp',url:location.href})}catch(e){try{await navigator.clipboard.writeText(location.href);alert('Property link copied!')}catch(_){alert(location.href)}}}
-document.getElementById('backBtn').addEventListener('click',()=>history.length>1?history.back():(location.href='index.html'));
+document.getElementById('backBtn').addEventListener('click',()=>history.length>1?history.back():(location.href='https://studenthubhelp.in/'));
 document.getElementById('shareBtn').addEventListener('click',share);
 load();
 </script>
 
   <!-- StudentHubHelp AI Chatbot -->
-  <script src="ai-chatbot/public/widget.js" defer></script>
+  <script src="https://studenthubhelp.in/widget.js" defer></script>
 
 <script>
 (function(){
