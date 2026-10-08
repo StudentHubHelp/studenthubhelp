@@ -33,8 +33,12 @@ function recordUrl(type, row) {
   const slug = String(row.slug ?? '').trim();
   const id = String(row.id ?? '').trim() || String(row.property_id ?? '').trim();
   if (!slug && !id) return null;
-  if (!slug) return null;
-  return new URL('properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(slug) + '/', BASE).href;
+  if (slug) return new URL('properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(slug) + '/', BASE).href;
+  if (!id) return null;
+  const url = new URL('property-details.html', BASE);
+  url.searchParams.set('type', type);
+  url.searchParams.set('id', id);
+  return url.href;
 }
 
 function pageUrl(name) {
