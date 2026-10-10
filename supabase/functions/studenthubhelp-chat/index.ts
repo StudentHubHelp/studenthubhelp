@@ -321,7 +321,7 @@ Deno.serve(async(req:Request)=>{
   const ranked=rows.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score);
   let recs=ranked.slice(0,8).map(card);
   if(action==="view_details"){const focusId=String(b?.focusPropertyId||""),focusType=String(b?.focusPropertyType||c||"hostel"),focusRows=await multiDirect([focusType],ct),focus=focusRows.find(p=>String(p.id)===focusId);recs=focus?[card(focus)]:recs.slice(0,1)}
-  const ar=await aiProperty(msg,history,recs,c,near),reply=ar.reply||fallbackReply(c,recs,near),followups=["View full details","Search by area","Show more options","Contact support"];
+  const ar=await aiProperty(msg,history,recs,c,near),reply=ar.reply||fallbackReply(c,recs,near,ct),followups=["View full details","Search by area","Show more options","Contact support"];
   return await chatResponse({reply,intent:"Live Property Search",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:recs,recommendations:recs,suggestedFollowUps:followups,grounded:true,sessionId,searchMode:"ultra_advance_live_supabase_ai",targetCity:ct||undefined,targetCategory:c||undefined,nearbyTerm:near||undefined,aiIntent:u.intent,aiConfidence:u.confidence,aiEntities:{category:u.category,categories:u.categories,city:u.city,locality:u.locality,area:u.area,landmark:u.landmark,gender:u.gender,budgetMin:u.budgetMin,budgetMax:u.budgetMax,facilities:u.facilities,referenceIndex:u.referenceIndex}},{headers:H},sessionId,msg);
  }catch(e){return new Response(JSON.stringify({reply:"Ji, live search me temporary issue aaya. Please same query dobara bhejiye.",grounded:false,error:"Temporary server error"}),{status:200,headers:H})}
 });
