@@ -2383,8 +2383,11 @@
       ].map(normalize).join(" ");
 
       return allRecords.filter(record => {
-        if (requestedCity && !recordCities(record).includes(requestedCity[0])) {
-          return false;
+        if (requestedCity) {
+          const cities = recordCities(record);
+          if (!cities.includes(requestedCity[0]) || cities.some(city => city !== requestedCity[0])) {
+            return false;
+          }
         }
 
         if (!terms.length) return true;
