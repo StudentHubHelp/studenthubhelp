@@ -24,7 +24,7 @@ function distanceKm(a:any,b:any){const A=coords(a),B=coords(b);if(!A||!B)return 
 function distanceToLandmark(p:any,l:any){const A=coords(p),B=l?{latitude:l.lat,longitude:l.lng}:null;if(!A||!B)return undefined;return distanceKm(A,B)}
 function searchText(p:any){return n([p.name,p.title,p.business_name,p.service_name,p.city,p.area,p.service_area,p.address,p.landmark,p.description,p.facilities,p.amenities].filter(Boolean).join(" "))}
 async function direct(type:string,ct?:string){const table=SRC.find(x=>x[1]===type)?.[0];if(!table)return [];const rows=await db<any[]>(`/rest/v1/${table}?select=*&limit=1000`);return (Array.isArray(rows)?rows:[]).map(p=>({...p,_type:type})).filter(p=>!ct||n(p.city||"").includes(n(ct)))}
-async function multiDirect(types:string[],ct?:string){const out:any[]=[];for(const type of [...new Set(types.filter(Boolean))])out.push(...await direct(type,ct));return out}
+async function multiDirect(types:string[],ct?:string){const unique=[...new Set(types.filter(Boolean))];const groups=await Promise.all(unique.map(type=>direct(type,ct)));return groups.flat()}
 function genderWanted(s:string){const x=n(s);if(/\b(girls|girl|female|ladki|ladkiyo|ladkiyon|महिला|लड़क|लड़की|girls hostel)\b/i.test(x))return "girls";if(/\b(boys|boy|male|ladke|ladkon|लड़के|लड़का|boys hostel)\b/i.test(x))return "boys";return ""}
 function areaWanted(s:string){const x=n(s);if(/nawalgarh road|nawalgarh rd|नवलगढ़ रोड/i.test(x))return "nawalgarh";if(/piprali road|piprali rd|पिपराली रोड/i.test(x))return "piprali";return ""}
 function priceLabel(p:any,c:string){const v=Number(p.monthly_rent??p.monthly_fee??p.monthly_charge??p.price);if(!Number.isFinite(v)||v<=0)return "";if(c==="hostel"||c==="tiffin"||c==="library")return "₹"+v.toLocaleString("en-IN")+"/mo";return "₹"+v.toLocaleString("en-IN")}
@@ -62,6 +62,26 @@ function label(c:string){return c==="hostel"?"hostel / PG":c==="tiffin"?"tiffin 
 function fallbackReply(c:string|undefined,recs:any[],near:string){const l=label(c||""),place=near?(near==="allen"?"Allen ke paas":near==="clc"?"CLC ke paas":`${near} area mein`):"";if(recs.length)return `Bilkul 😊 ${place?place+" ":""}${recs.length} active ${l} listing${recs.length>1?"s":""} mili ${recs.length>1?"hain":"hai"}. Neeche live StudentHubHelp options diye hain.`;return `Abhi ${place?place+" ":""}koi matching **${l}** listing nahi mili. Aap area/city ya requirement thodi aur specific bhej sakte hain.`}
 function safeJson(s:string){try{return JSON.parse(s)}catch{const m=s.match(/\{[\s\S]*\}/);if(m)try{return JSON.parse(m[0])}catch{}return null}}
 function aiIntentDefaults(){return{intent:"general",confidence:0,category:"",categories:[],city:"",locality:"",area:"",landmark:"",nearRelation:"",gender:"",budgetMin:null,budgetMax:null,facilities:[],referenceIndex:null,action:"",followUp:false,correction:false,needsClarification:false,clarificationQuestion:"",searchScope:""}}
+function offlineIntent(msg:string,history:any[]){
+ const o=aiIntentDefaults(),x=n(msg),defs:[string,RegExp][]=[["hostel",/hostel|\bpg\b|room|stay|accommodation|girls hostel|boys hostel|हॉस्टल|पीजी/],["tiffin",/tiffin|mess|khana|food service|टिफिन|मेस/],["library",/library|reading room|study room|लाइब्रेरी/],["cafe",/cafe|coffee shop|कैफे/],["bookstore",/bookstore|book shop|bookshop|stationery|बुकस्टोर/]];
+ const cats=defs.filter(([,re])=>re.test(x)).map(([c])=>c);
+ o.categories=[...new Set(cats)];o.category=o.categories[0]||cat(msg)||"";
+ const loc=strictLocation(msg);o.city=loc.city||city(msg)||"";o.locality=loc.locality||"";o.area=loc.area||"";o.landmark=loc.landmark||"";
+ o.gender=genderWanted(msg);
+ const budget=x.match(/(?:under|below|within|budget|upto|up to|kam|less than|₹|rs\.?\s*)(\d[\d,]*)/i);
+ if(budget)o.budgetMax=num(budget[1])??null;
+ o.facilities=[...["wifi","wi fi","ac","non ac","cctv","food","mess","parking"].filter(v=>x.includes(n(v)))];
+ if(o.category||o.categories.length||loc.city||loc.area||loc.locality||loc.landmark||nearTerm(msg)){
+  o.intent="property_search";o.confidence=0.78;o.searchScope=loc.area||loc.locality||loc.landmark?"nearby":"city";
+ }
+ const prev=history.filter(v=>v.role==="user").map(v=>String(v.text||"")).join(" ");
+ if(!o.category&&/(more|another|same|aur|options|dikhao|dikhado|budget|iska|iske|iski|near|paas|haan|yes)/i.test(x)&&cat(prev)){
+  o.followUp=true;o.category=cat(prev);o.categories=[o.category];const old=strictLocation(prev);
+  if(!o.city)o.city=old.city||"";if(!o.area)o.area=old.area||"";if(!o.locality)o.locality=old.locality||"";if(!o.landmark)o.landmark=old.landmark||"";
+ }
+ if(/\b(nahi|nahin|not|instead|rather)\b/i.test(x)&&cats.length){o.correction=true;o.category=cats[cats.length-1];o.categories=[o.category]}
+ return normalizeIntent(o)
+}
 function normalizeIntent(x:any){
  const d=aiIntentDefaults(),o={...d,...(x&&typeof x==="object"?x:{})};
  const cats=Array.isArray(o.categories)?o.categories.map((v:any)=>String(v||"").toLowerCase()).filter((v:string)=>["hostel","tiffin","library","cafe","bookstore"].includes(v)):[];
@@ -88,7 +108,7 @@ function strictLocation(s:string){
  const c=city(s);return c?{city:c}:{};
 }
 async function aiUnderstand(msg:string,history:any[]){
- const fallback=aiIntentDefaults();if(!GEMINI)return fallback;
+ const fallback=offlineIntent(msg,history);if(!GEMINI)return fallback;
  try{
   const h=history.slice(-8).map(x=>`${x.role==="user"?"USER":"ASSISTANT"}: ${String(x.text||"").slice(0,1200)}`).join("\n");
   const prompt=`You are the intent-understanding engine for StudentHubHelp, a student local-discovery assistant.
@@ -199,7 +219,17 @@ async function chatResponse(payload:any,init:any,sessionId:string,userMessage:st
   void logChatTurn(sessionId,userMessage,payload);
   return new Response(JSON.stringify(payload),init);
 }
-async function aiGeneral(msg:string,history:any[]){if(!GEMINI)return{};try{const h=history.slice(-8).map(x=>({role:x.role==="assistant"?"model":"user",parts:[{text:String(x.text||"").slice(0,1500)}]}));const system=`You are StudentHubHelp's Ultra Advance AI Assistant for students.
+function offlineGeneralReply(msg:string){
+ const x=n(msg);
+ if(/(?:^|\s)(2\s*\+\s*2|2 plus 2|two plus two)(?:\s|$)/i.test(x))return "2 + 2 = **4** 😊";
+ if(/photosynthesis|प्रकाश संश्लेषण/i.test(x))return "**Photosynthesis (प्रकाश संश्लेषण)** वह प्रक्रिया है जिसमें हरे पौधे sunlight, पानी और carbon dioxide की मदद से अपना भोजन (glucose) बनाते हैं और oxygen छोड़ते हैं.\n\n**Equation:** Carbon dioxide + Water + Light → Glucose + Oxygen.";
+ if(/interesting fact|something interesting|tell me a fact|kuch interesting|रोचक तथ्य/i.test(x))return "✨ Ek interesting fact: Octopus ke **3 hearts** hote hain, aur uska blood blue hota hai.";
+ if(/tired|bored|alone|थक|बोर|अकेल|mood.*fresh|motivat/i.test(x))return "Samajh sakta hoon 😊 2 minute ka mini reset try karo: paani piyo, thoda stretch karo, 5 deep breaths lo, phir bas 10 minute ka ek chhota study target choose karo. Chaaho to hum thodi casual baat bhi kar sakte hain.";
+ if(/what is|define|meaning of|kya hota|samjhao|explain/i.test(x)&&/gravity|गुरुत्वाकर्षण/i.test(x))return "Gravity (गुरुत्वाकर्षण) woh force hai jo objects ko ek-doosre ki taraf attract karti hai. Earth ki gravity humein zameen par rakhti hai aur cheezon ko neeche girati hai.";
+ if(/hello|hi|hey|namaste|kaise ho|kya haal/i.test(x))return "Namaste 😊 Main yahin hoon—study questions, general knowledge, ideas ya StudentHubHelp listings mein help kar sakta hoon. Aaj kya karna hai?";
+ return "Main bina external AI API key ke live StudentHubHelp listings, location-based search, booking guidance aur kuch common study/general questions handle kar sakta hoon. Is sawaal ka reliable jawab dene ke liye thoda aur context ya specific question bhej dijiye 😊";
+}
+async function aiGeneral(msg:string,history:any[]){if(!GEMINI)return{reply:offlineGeneralReply(msg),webGrounded:false,webSources:[]};try{const h=history.slice(-8).map(x=>({role:x.role==="assistant"?"model":"user",parts:[{text:String(x.text||"").slice(0,1500)}]}));const system=`You are StudentHubHelp's Ultra Advance AI Assistant for students.
 You are a natural conversational, study and general knowledge assistant.
 Match the user's language and tone: Hindi, Hinglish or English.
 You can discuss normal life, boredom, tiredness, motivation, hobbies and casual topics in a friendly respectful way.
