@@ -2319,39 +2319,73 @@
     ===================================================== */
 
     function filterRecords() {
+      const normalize = value => String(value ?? "")
+        .normalize("NFKC")
+        .toLowerCase()
+        .replace(/[.,!?;:()]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 
-      const query =
-        searchInput.value
-          .trim()
-          .toLowerCase();
+      const rawQuery = normalize(searchInput.value);
+      if (!rawQuery) return [...allRecords];
 
-      if (!query) {
-        return [...allRecords];
+      // Parse a city separately from the other search words.
+      const cityAliases = [["sikar","sikar","सीकर"],["kota","kota","कोटा"],["jaipur","jaipur","जयपुर"],["delhi","delhi","new delhi","दिल्ली","नई दिल्ली"],["ahmedabad","ahmedabad","अहमदाबाद"],["lucknow","lucknow","लखनऊ"],["chennai","chennai","चेन्नई"],["mumbai","mumbai","मुंबई"],["pune","pune","पुणे"],["indore","indore","इंदौर"],["bhopal","bhopal","भोपाल"],["agra","agra","आगरा"],["dehradun","dehradun","देहरादून"],["jodhpur","jodhpur","जोधपुर"],["udaipur","udaipur","उदयपुर"],["ajmer","ajmer","अजमेर"],["bikaner","bikaner","बीकानेर"],["gurugram","gurugram","gurgaon","गुरुग्राम","गुड़गांव"],["greater noida","greater noida","ग्रेटर नोएडा"],["noida","noida","नोएडा"],["faridabad","faridabad","फरीदाबाद"],["ghaziabad","ghaziabad","गाजियाबाद"],["kolkata","kolkata","कोलकाता"],["hyderabad","hyderabad","हैदराबाद"],["bengaluru","bengaluru","bangalore","बेंगलुरु","बैंगलोर"],["patna","patna","पटना"],["ranchi","ranchi","रांची"],["varanasi","varanasi","वाराणसी"],["prayagraj","prayagraj","allahabad","प्रयागराज","इलाहाबाद"],["kanpur","kanpur","कानपुर"],["meerut","meerut","मेरठ"],["mathura","mathura","मथुरा"],["vrindavan","vrindavan","वृंदावन"],["chandigarh","chandigarh","चंडीगढ़"],["amritsar","amritsar","अमृतसर"],["ludhiana","ludhiana","लुधियाना"],["surat","surat","सूरत"],["vadodara","vadodara","baroda","वडोदरा"],["rajkot","rajkot","राजकोट"],["nagpur","nagpur","नागपुर"],["nashik","nashik","नासिक"],["kochi","kochi","कोच्चि"],["coimbatore","coimbatore","कोयंबटूर"],["visakhapatnam","visakhapatnam","vizag","विशाखापत्तनम"],["guwahati","guwahati","गुवाहाटी"],["shimla","shimla","शिमला"],["manali","manali","मनाली"]];
+      const hasPhrase = (text, phrase) =>
+        (" " + normalize(text) + " ").includes(" " + phrase + " ");
+
+      const requestedCity = [...cityAliases]
+        .sort((a, b) => Math.max(...b.slice(1).map(x => x.length)) - Math.max(...a.slice(1).map(x => x.length)))
+        .find(([city, ...aliases]) => aliases.some(alias => hasPhrase(rawQuery, alias)));
+
+      const recordLocation = record => [
+        record.city, record.city_name, record.cityName,
+        record.district, record.locality, record.area,
+        record.address, record.state, record.pincode,
+        record.postal_code, record.zip
+      ].map(normalize).filter(Boolean).join(" ");
+
+      const recordCities = record => {
+        const location = recordLocation(record);
+        return cityAliases
+          .filter(([city, ...aliases]) => aliases.some(alias => hasPhrase(location, alias)))
+          .map(([city]) => city);
+      };
+
+      let textQuery = rawQuery;
+      if (requestedCity) {
+        // "Sikar me hostel" becomes city=Sikar plus any remaining keywords.
+        requestedCity.slice(1).sort((a, b) => b.length - a.length).forEach(alias => {
+          textQuery = textQuery.split(alias).join(" ");
+        });
       }
 
-      return allRecords.filter(
-        record => {
+      const stopWords = new Set([
+        "in", "at", "near", "around", "of", "the", "me", "for", "on", "to",
+        "ka", "ki", "ke", "mein", "par", "pr", "paas", "pass", "chahiye",
+        "mujhe", "dikhao", "batao", "hai", "hain", "wala", "wali", "wale",
+        "hostel", "hostels", "pg", "tiffin", "tiffins", "cafe", "cafes",
+        "library", "libraries", "bookstore", "bookstores", "book", "shop",
+        "में", "पर", "पास", "चाहिए", "होस्टल", "हॉस्टल", "पीजी",
+        "टिफिन", "कैफे", "लाइब्रेरी", "बुकस्टोर"
+      ]);
+      const terms = normalize(textQuery).split(" ").filter(term => term && !stopWords.has(term));
 
-          const searchable = [
+      const searchable = record => [
+        record.id, record.property_id, record.name, record.category,
+        record.area, record.address, record.phone, record.timing,
+        record.facilities, record.rating
+      ].map(normalize).join(" ");
 
-            record.id,
-            record.name,
-            record.category,
-            record.area,
-            record.address,
-            record.phone,
-            record.timing,
-            record.facilities,
-            record.rating
-
-          ]
-            .map(clean)
-            .join(" ")
-            .toLowerCase();
-
-          return searchable.includes(query);
+      return allRecords.filter(record => {
+        if (requestedCity && !recordCities(record).includes(requestedCity[0])) {
+          return false;
         }
-      );
+
+        if (!terms.length) return true;
+        const haystack = searchable(record);
+        return terms.every(term => haystack.includes(term));
+      });
     }
 
 
