@@ -75,7 +75,7 @@ function offlineIntent(msg:string,history:any[]){
   o.intent="property_search";o.confidence=0.78;o.searchScope=loc.area||loc.locality||loc.landmark?"nearby":"city";
  }
  const prev=history.filter(v=>v.role==="user").map(v=>String(v.text||"")).join(" ");
- if(!o.category&&/(more|another|same|aur|options|dikhao|dikhado|budget|iska|iske|iski|near|paas|haan|yes)/i.test(x)&&cat(prev)){
+ if(!o.category&&cat(prev)&&(/^(sikar|kota|jaipur|ajmer|bikaner|jodhpur|udaipur|alwar|delhi|ahmedabad|lucknow|hyderabad|pune)$/i.test(x)||/(more|another|same|aur|options|dikhao|dikhado|budget|iska|iske|iski|near|paas|haan|yes)/i.test(x))){
   o.followUp=true;o.category=cat(prev);o.categories=[o.category];const old=strictLocation(prev);
   if(!o.city)o.city=old.city||"";if(!o.area)o.area=old.area||"";if(!o.locality)o.locality=old.locality||"";if(!o.landmark)o.landmark=old.landmark||"";
  }
@@ -229,7 +229,7 @@ function offlineGeneralReply(msg:string){
  if(/hello|hi|hey|namaste|kaise ho|kya haal/i.test(x))return "Namaste 😊 Main yahin hoon—study questions, general knowledge, ideas ya StudentHubHelp listings mein help kar sakta hoon. Aaj kya karna hai?";
  return "Main bina external AI API key ke live StudentHubHelp listings, location-based search, booking guidance aur kuch common study/general questions handle kar sakta hoon. Is sawaal ka reliable jawab dene ke liye thoda aur context ya specific question bhej dijiye 😊";
 }
-async function aiGeneral(msg:string,history:any[]){if(!GEMINI)return{reply:offlineGeneralReply(msg),webGrounded:false,webSources:[]};try{const h=history.slice(-8).map(x=>({role:x.role==="assistant"?"model":"user",parts:[{text:String(x.text||"").slice(0,1500)}]}));const system=`You are StudentHubHelp's Ultra Advance AI Assistant for students.
+async function aiGeneral(msg:string,history:any[]){const offline=offlineGeneralReply(msg);if(!GEMINI||offline!=="Main bina external AI API key ke live StudentHubHelp listings, location-based search, booking guidance aur kuch common study/general questions handle kar sakta hoon. Is sawaal ka reliable jawab dene ke liye thoda aur context ya specific question bhej dijiye 😊")return{reply:offline,webGrounded:false,webSources:[]};try{const h=history.slice(-8).map(x=>({role:x.role==="assistant"?"model":"user",parts:[{text:String(x.text||"").slice(0,1500)}]}));const system=`You are StudentHubHelp's Ultra Advance AI Assistant for students.
 You are a natural conversational, study and general knowledge assistant.
 Match the user's language and tone: Hindi, Hinglish or English.
 You can discuss normal life, boredom, tiredness, motivation, hobbies and casual topics in a friendly respectful way.
