@@ -221,7 +221,7 @@ async function chatResponse(payload:any,init:any,sessionId:string,userMessage:st
 }
 function offlineGeneralReply(msg:string){
  const x=n(msg);
- if(/(?:^|\s)(2\s*\+\s*2|2 plus 2|two plus two)(?:\s|$)/i.test(x))return "2 + 2 = **4** 😊";
+ if(/2\s*\+\s*2/i.test(msg)||/\b(2 plus 2|two plus two)\b/i.test(x))return "2 + 2 = **4** 😊";
  if(/photosynthesis|प्रकाश संश्लेषण/i.test(x))return "**Photosynthesis (प्रकाश संश्लेषण)** वह प्रक्रिया है जिसमें हरे पौधे sunlight, पानी और carbon dioxide की मदद से अपना भोजन (glucose) बनाते हैं और oxygen छोड़ते हैं.\n\n**Equation:** Carbon dioxide + Water + Light → Glucose + Oxygen.";
  if(/interesting fact|something interesting|tell me a fact|kuch interesting|रोचक तथ्य/i.test(x))return "✨ Ek interesting fact: Octopus ke **3 hearts** hote hain, aur uska blood blue hota hai.";
  if(/tired|bored|alone|थक|बोर|अकेल|mood.*fresh|motivat/i.test(x))return "Samajh sakta hoon 😊 2 minute ka mini reset try karo: paani piyo, thoda stretch karo, 5 deep breaths lo, phir bas 10 minute ka ek chhota study target choose karo. Chaaho to hum thodi casual baat bhi kar sakte hain.";
