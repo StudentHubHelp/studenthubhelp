@@ -251,11 +251,24 @@ Deno.serve(async(req:Request)=>{
   const b=await req.json(),msg=String(b?.message||"").trim().slice(0,1500),history=Array.isArray(b?.history)?b.history.slice(-8).map((x:any)=>({role:String(x?.role||"").slice(0,20),text:String(x?.text||"").slice(0,1500)})):[];
   if(!msg)return new Response(JSON.stringify({error:"Message is required"}),{status:400,headers:H});
   const sessionId=String(b?.sessionId||crypto.randomUUID());
-  const ownerAction=String(b?.action||"");
-  if(ownerAction==="owner_listing_lead"){
-    const x=b?.ownerLead||{},name=String(x.name||"").trim().slice(0,80),phone=String(x.phone||"").replace(/\D/g,"").slice(-10),category=String(x.category||"").toLowerCase(),area=String(x.area||"").trim().slice(0,120);
-    if(name.length<2||phone.length!==10||!["hostel","tiffin","library","cafe","bookstore"].includes(category)||area.length<2)return new Response(JSON.stringify({success:false,reply:"Please name, valid mobile, category aur area check karein."}),{status:400,headers:H});
-    try{await dbWrite("POST","/rest/v1/chatbot_leads",{session_id:sessionId,name,phone,city:city(msg)||null,detected_need:"owner_listing_request",status:"new",source:"chatbot_owner_form",metadata:{category,area,request_type:"listing_request",review_required:true}});return await chatResponse({success:true,reply:"Owner request submit ho gayi hai. StudentHubHelp team details review karke aapse contact karegi. Listing admin approval se pehle publish ya verified nahi hogi.",intent:"Owner Listing Lead",primaryTopic:"Owner listing request",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a hostel","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg)}catch(e){console.error("owner listing lead submit failed",e);return new Response(JSON.stringify({success:false,reply:"Request abhi save nahi ho paayi. Please thodi der baad try karein."}),{status:500,headers:H})}
+  if(String(b?.action||"")==="submit_owner_lead"){
+    const lead=b?.ownerLead||{};
+    const name=String(lead.name||"").trim().replace(/\s+/g," ").slice(0,80);
+    const phone=String(lead.phone||"").trim().slice(0,20);
+    const digits=phone.replace(/\D/g,"");
+    const category=String(lead.category||"").trim().slice(0,40);
+    const area=String(lead.area||"").trim().replace(/\s+/g," ").slice(0,120);
+    const allowedCategories=new Set(["Hostel / PG","Tiffin","Library","Cafe","Bookstore","Other"]);
+    if(name.length<2||digits.length<10||digits.length>13||!allowedCategories.has(category)||area.length<2){
+      return new Response(JSON.stringify({error:"Please provide a valid name, mobile number, category and area."}),{status:400,headers:H});
+    }
+    try{
+      await dbWrite("POST","/rest/v1/chatbot_leads",{session_id:sessionId,name,phone,city:area,detected_need:"Owner listing request: "+category,status:"new",source:"owner_listing_form",metadata:{category,area,review_required:true,publish_automatically:false,verification_required:true}});
+      return await chatResponse({reply:"Request successfully received 😊\n\n**Status:** Pending admin review\n**Category:** "+category+"\n**Area:** "+area+"\n\nTeam will review your request. This does not publish or verify the listing automatically.",intent:"Owner Listing Lead",primaryTopic:"Owner listing request",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a hostel","Find a tiffin service","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);
+    }catch(e){
+      console.error("owner listing lead save failed",e);
+      return new Response(JSON.stringify({error:"Could not save the request right now. Please try again shortly."}),{status:503,headers:H});
+    }
   }
   if(isGreeting(msg))return await chatResponse({reply:greeting(),intent:"Greeting / Onboarding",primaryTopic:"StudentHubHelp AI",suggestedFollowUps:["Find a hostel","Find a tiffin service","Find a library","Contact support"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
   const requestedFocusId=String(b?.focusPropertyId||"");
