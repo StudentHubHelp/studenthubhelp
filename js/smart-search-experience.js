@@ -15,7 +15,8 @@
     {label:'Piprali Road',query:'Piprali Road hostel'},
     {label:'Nawalgarh Road',query:'Nawalgarh Road hostel'},
     {label:'Girls Hostel',query:'girls hostel'},
-    {label:'Tiffin',query:'tiffin'},\n    {label:'Near me',query:'near me',nearby:true}
+    {label:'Tiffin',query:'tiffin'},
+    {label:'Near me',query:'near me',nearby:true}
   ];
   const norm = v => String(v ?? '').toLocaleLowerCase('en-IN').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
