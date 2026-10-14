@@ -251,6 +251,12 @@ Deno.serve(async(req:Request)=>{
   const b=await req.json(),msg=String(b?.message||"").trim().slice(0,1500),history=Array.isArray(b?.history)?b.history.slice(-8).map((x:any)=>({role:String(x?.role||"").slice(0,20),text:String(x?.text||"").slice(0,1500)})):[];
   if(!msg)return new Response(JSON.stringify({error:"Message is required"}),{status:400,headers:H});
   const sessionId=String(b?.sessionId||crypto.randomUUID());
+  const ownerAction=String(b?.action||"");
+  if(ownerAction==="owner_listing_lead"){
+    const x=b?.ownerLead||{},name=String(x.name||"").trim().slice(0,80),phone=String(x.phone||"").replace(/\D/g,"").slice(-10),category=String(x.category||"").toLowerCase(),area=String(x.area||"").trim().slice(0,120);
+    if(name.length<2||phone.length!==10||!["hostel","tiffin","library","cafe","bookstore"].includes(category)||area.length<2)return new Response(JSON.stringify({success:false,reply:"Please name, valid mobile, category aur area check karein."}),{status:400,headers:H});
+    try{await dbWrite("POST","/rest/v1/chatbot_leads",{session_id:sessionId,name,phone,city:city(msg)||null,detected_need:"owner_listing_request",status:"new",source:"chatbot_owner_form",metadata:{category,area,request_type:"listing_request",review_required:true}});return await chatResponse({success:true,reply:"Owner request submit ho gayi hai. StudentHubHelp team details review karke aapse contact karegi. Listing admin approval se pehle publish ya verified nahi hogi.",intent:"Owner Listing Lead",primaryTopic:"Owner listing request",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a hostel","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg)}catch(e){console.error("owner listing lead submit failed",e);return new Response(JSON.stringify({success:false,reply:"Request abhi save nahi ho paayi. Please thodi der baad try karein."}),{status:500,headers:H})}
+  }
   if(isGreeting(msg))return await chatResponse({reply:greeting(),intent:"Greeting / Onboarding",primaryTopic:"StudentHubHelp AI",suggestedFollowUps:["Find a hostel","Find a tiffin service","Find a library","Contact support"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
   const requestedFocusId=String(b?.focusPropertyId||"");
   const requestedFocusType=String(b?.focusPropertyType||"");
@@ -276,16 +282,6 @@ Deno.serve(async(req:Request)=>{
   if(isAccountSupport(msg))return await chatResponse({reply:accountSupportReply(msg),intent:"Account / Login Support",primaryTopic:"Account access",suggestedFollowUps:["I forgot my password","Google login is not working","Dashboard is not opening","Contact support"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(isContact(msg)||String(b?.action||"")==="contact_support")return await chatResponse({reply:"Ji bilkul 😊 StudentHubHelp team se contact ke liye:\n\n📧 Email: satpalswami22742@gmail.com\n📞 Phone: +91 9929718264",intent:"Support / Contact",primaryTopic:"Contact StudentHubHelp",suggestedFollowUps:["Find a hostel","Find a library","Search by area","Back to search"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
   const previous=history.filter(x=>x.role==="user").map(x=>x.text||"").join(" "),combined=previous+" "+msg,aiRaw=await aiUnderstand(msg,history),u=mergeIntent(aiRaw,msg,history),explicitCat=cat(msg),nearCats=secondaryCats(msg),aiCats=u.categories||[],c=u.category||explicitCat||(u.followUp?cat(previous):""),propertyMode=u.intent.startsWith("property_")||isPropertyQuery(msg,u.followUp?previous:""),ct=u.city||(u.followUp?city(previous):""),near=u.landmark||u.area||u.locality||(u.nearRelation?nearTerm(msg):""),locationForFilter=strictLocation(msg),action=String(b?.action||u.action||""),shownList=(Array.isArray(b?.shownPropertyIds)?b.shownPropertyIds:[]).map((x:any)=>String(x)),shownIds=new Set(shownList);
-  const namedOwnerMatch=msg.match(/(?:owner|malik|maalik|proprietor|manager)\\s+(?:details|detail|contact|phone|number|ki details|ka number)|(?:details|detail|contact|phone|number)\\s+(?:of\\s+)?(.+?)(?:\\s+ki)?\\s+(?:owner|malik|maalik)/i);
-  const ownerNameQuery=(()=>{const m=msg.match(/(.+?)\\s+(?:ki|ke)\\s+owner\\s+(?:details|detail|contact|phone|number)/i)||msg.match(/(.+?)\\s+(?:owner|malik|maalik)\\s+(?:details|detail|contact|phone|number)/i);return m?.[1]?.trim()||""})();
-  if(ownerNameQuery){
-    const allOwnerRows=await multiDirect(["hostel","tiffin","library","cafe","bookstore"],"");
-    const queryName=n(ownerNameQuery),matches=allOwnerRows.filter(p=>{const name=n(p.name||p.title||p.business_name||p.service_name||"");return name===queryName||name.includes(queryName)||queryName.includes(name)});
-    const exact=matches.sort((a,z)=>{const an=n(a.name||a.title||a.business_name||a.service_name||""),zn=n(z.name||z.title||z.business_name||z.service_name||"");return (an===queryName?-100:0)-(zn===queryName?-100:0)})[0];
-    if(exact){const cp=card(exact),phone=String(cp.phone||"").trim(),reply=phone?"Ji 😊 **"+cp.name+"** ki listing mein ye contact number diya hai: **"+phone+"**. Call karne se pehle owner se property aur availability confirm kar lena.":"Ji 😊 **"+cp.name+"** ki listing mil gayi, lekin uska valid owner phone number StudentHubHelp data mein available nahi hai. Listing ke **Call Owner** button ko check karein, agar enabled ho.";
-      return await chatResponse({reply,intent:"Exact Listing Owner Contact",primaryTopic:label(exact._type)+" owner contact",recommendedProperties:[cp],recommendations:[cp],suggestedFollowUps:["Is listing ke full details batao","Search by area","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);}
-    return await chatResponse({reply:"Mujhe live StudentHubHelp listings mein **"+ownerNameQuery+"** naam ki exact matching listing nahi mili. Main kisi doosri property ka number share nahi karunga. Aap naam ki spelling, city/area ya listing link bhej dein.",intent:"Exact Listing Not Found",primaryTopic:"Owner contact lookup",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Search by area","Find a hostel","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);
-  }
   if(action==="search_area"&&!city(msg)&&!nearTerm(msg))return await chatResponse({reply:"Bilkul 😊 Aap kis **area / locality** mein search karna chahte hain? Area ka naam bhejiye, main current requirement ke saath search refine kar dunga.",intent:"Area Refinement",primaryTopic:c?label(c)+" discovery":"Student Services Discovery",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Search by city","Show more options","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(u.needsClarification&&u.clarificationQuestion&&!u.category&&!u.categories.length&&!u.locality&&!u.area&&!u.landmark)return await chatResponse({reply:u.clarificationQuestion,intent:"Clarification",primaryTopic:"Requirement clarification",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a hostel","Find a library","Find a cafe","Find a tiffin service"],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(u.intent==="property_reference"&&u.referenceIndex){
@@ -309,7 +305,58 @@ Deno.serve(async(req:Request)=>{
     const reply=ar.reply||"Aapki requirement ke hisaab se live options compare kar sakte hain.";
     return await chatResponse({reply,intent:"Property Comparison",primaryTopic:label(c||"hostel")+" comparison",recommendedProperties:rankedDecision,recommendations:rankedDecision,suggestedFollowUps:["Boys hostel dikhao","Girls hostel dikhao","Budget ke according dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);
   }
-  if(isOwnerContactQuestion(msg)){const reply="Ji 😊 Owner se contact karne ke liye StudentHubHelp par us business ki listing kholiye aur **Call Owner / WhatsApp** button use kijiye, agar available ho. Maine live StudentHubHelp cafe data mein **JD Cafe** naam ki listing nahi paayi, isliye uska phone number confirm nahi kar sakta aur number guess nahi karunga. Aap JD Cafe ka city/area ya listing link bhej dein, main sahi contact details dhoondhne mein help karunga.";return await chatResponse({reply,intent:"Owner Contact Guidance",primaryTopic:"Contact a business owner",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a cafe","Search by area","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);}
+
+const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:details?|contact|phone|number|kaise|kese|kahan|how to|baat kare|baat kar|connect)|(?:details?|contact|phone|number).{0,35}(?:owner|malik|maalik|proprietor|manager)/i.test(n(msg));
+  const ownerBusinessName=(()=>{
+    const x=msg.trim();
+    const patterns=[
+      /^(.+?)\s+(?:ki|ke)\s+owner\s+(?:(?:ki|ke)\s+)?(?:details?|contact|phone|number)\b/i,
+      /^(.+?)\s+(?:ki|ke|ka|k)\s+owner\s+(?:se\s+)?(?:details?|contact|phone|number|kaise|kese|kahan|how|baat|connect)\b/i,
+      /^(.+?)\s+(?:owner|malik|maalik|proprietor|manager)\s+(?:details?|contact|phone|number)\b/i,
+      /(?:details?|contact|phone|number)\s+(?:of\s+)?(.+?)\s+(?:owner|malik|maalik|proprietor|manager)\b/i
+    ];
+    for(const re of patterns){const m=x.match(re);if(m?.[1])return m[1].replace(/\b(?:please|plz|batao|btao|kese|kaise|kre|karo|kare|krna|karna)\b/gi," ").trim()}
+    return "";
+  })();
+  if(ownerDetailsIntent && ownerBusinessName){
+    const allOwnerRows=await multiDirect(["hostel","tiffin","library","cafe","bookstore"],"");
+    const q=n(ownerBusinessName);
+    const matches=allOwnerRows.filter(p=>{
+      const name=n(p.name||p.title||p.business_name||p.service_name||"");
+      return name===q || (q.length>=4 && (name.includes(q)||q.includes(name)));
+    });
+    const exact=matches.filter(p=>n(p.name||p.title||p.business_name||p.service_name||"")===q);
+    const candidates=exact.length?exact:matches;
+    if(candidates.length===1){
+      const found=candidates[0], fp=card(found), phone=String(fp.phone||"").trim();
+      const contact=phone ? "\n\n📞 **Listed phone:** "+phone : "\n\n📞 Is listing mein valid phone number available nahi hai.";
+      const reply="Ji 😊 **"+fp.name+"** ki StudentHubHelp listing mil gayi."+contact+(fp.address?"\n\n📍 **Address:** "+fp.address:"")+(fp.city?"\n🏙️ **City:** "+fp.city:"")+"\n\nOwner se contact ke liye listing ka **Call Owner / WhatsApp** option use karein, agar available ho.";
+      return await chatResponse({reply,intent:"Owner / Listing Contact",primaryTopic:"Owner contact details",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Is listing ki full details batao","Search by area","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);
+    }
+    const reply=candidates.length>1
+      ? "Mujhe **"+ownerBusinessName+"** naam se ek se zyada possible listings mili hain. Galat owner details dene se bachne ke liye city/area ya listing link bhej dein."
+      : "Mujhe live StudentHubHelp listings mein **"+ownerBusinessName+"** ka exact/clear match nahi mila. Main phone number guess nahi karunga. City/area ya listing link bhej dein, main sahi listing identify karne mein help karunga.";
+    return await chatResponse({reply,intent:"Owner / Listing Contact",primaryTopic:"Owner contact lookup",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Search by area","Find a cafe","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);
+  }
+  if(isOwnerContactQuestion(msg)){
+  const reply = "Ji 😊 Owner se contact karne ke liye StudentHubHelp par us business ki listing kholiye aur **Call Owner / WhatsApp** button use kijiye, agar available ho. Main bina exact listing match kiye kisi business ka phone number confirm nahi karunga. Aap business ka exact naam, city/area ya listing link bhej dein, taaki sahi listing aur available contact details identify karne mein help mil sake.";
+
+  return await chatResponse({
+    reply,
+    intent: "Owner Contact Guidance",
+    primaryTopic: "Contact a business owner",
+    recommendedProperties: [],
+    recommendations: [],
+    suggestedFollowUps: [
+      "Find a cafe",
+      "Search by area",
+      "Contact support"
+    ],
+    grounded: true,
+    sessionId
+  }, {headers:H}, sessionId, msg);
+}
+
   if(isPropertyAdviceQuestion(msg)){const adviceCat=cat(msg)||cat(previous)||"hostel";return await chatResponse({reply:adviceReply(adviceCat),intent:"Property Selection Guidance",primaryTopic:label(adviceCat)+" selection guidance",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a property","Search by area","Show more options","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);}
   if(isBookingInfoQuestion(msg)){const ar=await aiGeneral(`The user asks how to book/reserve a hostel or PG. Explain a practical StudentHubHelp booking process: shortlist suitable live listings, open full details, check price/room type/availability, call owner, confirm terms and visit/verify before paying. Do not invent any property-specific availability or booking facility.`,history);const reply=ar.reply||"Hostel book karne ka simple process: pehle suitable listing shortlist karein, full details me price/room type check karein, owner ko Call karke availability aur terms confirm karein, aur payment se pehle property/owner verify karein.";return await chatResponse({reply,intent:"Booking Guidance",primaryTopic:"Hostel / PG Booking",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Allen ke paas hostel dikhao","Budget ke according hostel dikhao","Boys hostel dikhao","Girls hostel dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);}
   if(!propertyMode){const ar=await aiGeneral(msg,history);const reply=ar.reply||"Bilkul 😊 Main yahin hoon. Aap jo poochna chahein, seedha poochiye—study, ideas, facts ya normal conversation, sab par baat kar sakte hain.";return await chatResponse({reply,intent:"General / Study / Conversation",primaryTopic:"Student AI Assistant",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Ask a study question","Tell me something interesting","Find a property","Contact support"],grounded:true,webGrounded:ar.webGrounded||false,webSources:ar.webSources||[],sessionId},{headers:H},sessionId,msg);}
