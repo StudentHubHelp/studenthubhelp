@@ -15,7 +15,7 @@
     {label:'Piprali Road',query:'Piprali Road hostel'},
     {label:'Nawalgarh Road',query:'Nawalgarh Road hostel'},
     {label:'Girls Hostel',query:'girls hostel'},
-    {label:'Tiffin',query:'tiffin'}
+    {label:'Tiffin',query:'tiffin'},\n    {label:'Near me',query:'near me',nearby:true}
   ];
   const norm = v => String(v ?? '').toLocaleLowerCase('en-IN').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -43,7 +43,7 @@
     return rowsPromise;
   }
   function chipsMarkup() {
-    return '<span class="shh-home-chip-label">Try:</span>' + CHIPS.map(c=>'<button type="button" class="shh-home-chip" data-query="'+esc(c.query)+'">'+esc(c.label)+'</button>').join('');
+    return '<span class="shh-home-chip-label">Try:</span>' + CHIPS.map(c=>'<button type="button" class="shh-home-chip" data-query="'+esc(c.query)+'"'+(c.nearby?' data-nearby="1"':'')+'>'+esc(c.label)+'</button>').join('');
   }
   function attach() {
     const section = document.getElementById('homepageGlobalSearch');
@@ -88,13 +88,21 @@
     let timer = null, request = 0, activeIndex = -1, currentItems = [];
     const close = () => { dropdown.hidden = true; dropdown.innerHTML=''; currentItems=[]; activeIndex=-1; input.setAttribute('aria-expanded','false'); };
     const go = q => { const query=String(q||'').trim(); if(query) window.location.href='global-search.html?q='+encodeURIComponent(query); };
+    const goNearMe = () => {
+      if (!navigator.geolocation) { window.alert('Location is not available in this browser. Please search by city or area.'); return; }
+      navigator.geolocation.getCurrentPosition(pos => {
+        try { sessionStorage.setItem('shhSmartSearchCoords', JSON.stringify({lat:pos.coords.latitude,lng:pos.coords.longitude,at:Date.now()})); }
+        catch (e) { window.alert('Could not keep your location for this search. Please search by city or area.'); return; }
+        go('near me');
+      }, () => window.alert('Location permission was not granted. Please search by city or area instead.'), {enableHighAccuracy:false,timeout:8000,maximumAge:300000});
+    };
     function render(items) {
       currentItems = items.slice(0,7);
       activeIndex=-1;
-      dropdown.innerHTML = currentItems.map((x,i)=>'<button type="button" role="option" aria-selected="false" class="shh-home-suggestion" data-index="'+i+'"><span class="shh-home-suggestion-icon">'+esc(x.icon||'⌕')+'</span><span class="shh-home-suggestion-main"><span class="shh-home-suggestion-title">'+esc(x.title)+'</span><span class="shh-home-suggestion-sub">'+esc(x.sub||'Search matching listings')+'</span></span><span class="shh-home-suggestion-type">'+esc(x.kind||'Search')+'</span></button>').join('');
+      dropdown.innerHTML = currentItems.map((x,i)=>'<button type="button" role="option" aria-selected="false" class="shh-home-suggestion" data-index="'+i+'"'+(x.nearby?' data-nearby="1"':'')><span class="shh-home-suggestion-icon">'+esc(x.icon||'⌕')+'</span><span class="shh-home-suggestion-main"><span class="shh-home-suggestion-title">'+esc(x.title)+'</span><span class="shh-home-suggestion-sub">'+esc(x.sub||'Search matching listings')+'</span></span><span class="shh-home-suggestion-type">'+esc(x.kind||'Search')+'</span></button>').join('');
       dropdown.hidden = currentItems.length===0;
       input.setAttribute('aria-expanded',String(currentItems.length>0));
-      dropdown.querySelectorAll('.shh-home-suggestion').forEach(btn=>btn.addEventListener('click',()=>go(currentItems[Number(btn.dataset.index)]?.query)));
+      dropdown.querySelectorAll('.shh-home-suggestion').forEach(btn=>btn.addEventListener('click',()=>{const item=currentItems[Number(btn.dataset.index)];if(item?.nearby)goNearMe();else go(item?.query);}));
     }
     async function suggest(q, seq) {
       const n=norm(q);
@@ -148,7 +156,7 @@
       buttons[activeIndex]?.scrollIntoView({block:'nearest'});
     });
     form.addEventListener('submit',e=>{e.preventDefault();go(input.value);});
-    hint.addEventListener('click',e=>{const b=e.target.closest('[data-query]');if(b)go(b.dataset.query);});
+    hint.addEventListener('click',e=>{const b=e.target.closest('[data-query]');if(!b)return;if(b.dataset.nearby)goNearMe();else go(b.dataset.query);});
     document.addEventListener('click',e=>{if(!section.contains(e.target))close();});
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',attach,{once:true}); else attach();
