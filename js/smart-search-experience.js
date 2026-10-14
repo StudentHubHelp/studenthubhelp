@@ -106,10 +106,24 @@
       dropdown.querySelectorAll('.shh-home-suggestion').forEach(btn=>btn.addEventListener('click',()=>{const item=currentItems[Number(btn.dataset.index)];if(item?.nearby)goNearMe();else go(item?.query);}));
     }
     async function suggest(q, seq) {
-      const n=norm(q);
-      const items=[];
+      const n=norm(q), items=[];
       if (n.length<2) { close(); return; }
-      const add=(x)=>{ if(x?.title && !items.some(y=>norm(y.title)===norm(x.title)&&y.kind===x.kind)) items.push(x); };
+      const add=(target,x)=>{if(x?.title&&!target.some(y=>norm(y.title)===norm(x.title)&&y.kind===x.kind))target.push(x);};
+      const staticSuggestions=[
+        {match:['clc','career line'],title:'CLC coaching area',query:'CLC ke paas hostel',sub:'Search hostels and PGs near CLC',kind:'Landmark',icon:'📍'},
+        {match:['vibrant'],title:'Vibrant Coaching area',query:'Vibrant coaching ke paas hostel',sub:'Search around Vibrant Coaching',kind:'Landmark',icon:'📍'},
+        {match:['piprali'],title:'Piprali Road, Sikar',query:'Piprali Road hostel',sub:'Search listings on Piprali Road',kind:'Area',icon:'🛣️'},
+        {match:['nawalgarh'],title:'Nawalgarh Road, Sikar',query:'Nawalgarh Road hostel',sub:'Search listings on Nawalgarh Road',kind:'Area',icon:'🛣️'},
+        {match:['hostel','pg','room','single room','girls','boys','हॉस्टल','कमरा'],title:'Hostels & PGs',query:q,sub:'Search accommodation using your full query',kind:'Category',icon:'🏠'},
+        {match:['tiffin','mess','टिफिन','मेस'],title:'Tiffin & Mess',query:q,sub:'Search food services using your full query',kind:'Category',icon:'🍱'},
+        {match:['library','study room','लाइब्रेरी'],title:'Libraries',query:q,sub:'Search libraries using your full query',kind:'Category',icon:'📚'},
+        {match:['cafe','coffee','कैफे'],title:'Cafes',query:q,sub:'Search cafes using your full query',kind:'Category',icon:'☕'},
+        {match:['bookstore','book store','books','किताब'],title:'Bookstores',query:q,sub:'Search bookstores using your full query',kind:'Category',icon:'📖'},
+        {match:['near me','nearby','मेरे पास'],title:'Search near my location',query:'near me',sub:'Use device location only after permission',kind:'Nearby',icon:'📍',nearby:true}
+      ];
+      staticSuggestions.filter(x=>x.match.some(k=>n.includes(norm(k)))).forEach(x=>add(items,x));
+      add(items,{title:'Search for “'+q.trim()+'”',query:q,sub:'Use full Hindi / Hinglish query and filters',kind:'Smart Search',icon:'✦'});
+      render(items);
       try {
         const rows=await loadRows();
         if (seq!==request || norm(input.value)!==n) return;
@@ -120,23 +134,11 @@
           const hits=words.filter(w=>hay.includes(w)).length;
           return {r,name,area,city,score:(exact?100:0)+hits*12+(norm(name).startsWith(n)?18:0)};
         }).filter(x=>x.name&&x.score>0).sort((a,b)=>b.score-a.score);
-        matches.slice(0,5).forEach(x=>add({title:x.name,query:x.name,sub:[x.area,x.city].filter(Boolean).join(' · ')||'Active StudentHubHelp listing',kind:x.r.__smartCategoryLabel,icon:x.r.__smartIcon}));
-        const staticSuggestions=[
-          {match:['clc','career line'],title:'CLC coaching area',query:'CLC ke paas hostel',sub:'Search hostels and PGs near CLC',kind:'Landmark',icon:'📍'},
-          {match:['vibrant'],title:'Vibrant Coaching area',query:'Vibrant coaching ke paas hostel',sub:'Search around Vibrant Coaching',kind:'Landmark',icon:'📍'},
-          {match:['piprali'],title:'Piprali Road, Sikar',query:'Piprali Road hostel',sub:'Search listings on Piprali Road',kind:'Area',icon:'🛣️'},
-          {match:['nawalgarh'],title:'Nawalgarh Road, Sikar',query:'Nawalgarh Road hostel',sub:'Search listings on Nawalgarh Road',kind:'Area',icon:'🛣️'},
-          {match:['hostel','pg','room','single room','girls','boys','हॉस्टल','कमरा'],title:'Hostels & PGs',query:q,sub:'Search accommodation using your full query',kind:'Category',icon:'🏠'},
-          {match:['tiffin','mess','टिफिन','मेस'],title:'Tiffin & Mess',query:q,sub:'Search food services using your full query',kind:'Category',icon:'🍱'},
-          {match:['library','study room','लाइब्रेरी'],title:'Libraries',query:q,sub:'Search libraries using your full query',kind:'Category',icon:'📚'},
-          {match:['cafe','coffee','कैफे'],title:'Cafes',query:q,sub:'Search cafes using your full query',kind:'Category',icon:'☕'},
-          {match:['bookstore','book store','books','किताब'],title:'Bookstores',query:q,sub:'Search bookstores using your full query',kind:'Category',icon:'📖'}
-        ];
-        staticSuggestions.filter(x=>x.match.some(k=>n.includes(norm(k)))).forEach(x=>add(x));
-        add({title:'Search for “'+q.trim()+'”',query:q,sub:'Use full Hindi / Hinglish query and filters',kind:'Smart Search',icon:'✦'});
-        render(items);
+        const live=[];
+        matches.slice(0,5).forEach(x=>add(live,{title:x.name,query:x.name,sub:[x.area,x.city].filter(Boolean).join(' · ')||'Active StudentHubHelp listing',kind:x.r.__smartCategoryLabel,icon:x.r.__smartIcon}));
+        render([...live,...items]);
       } catch(e) {
-        if (seq===request) render([{title:'Search for “'+q.trim()+'”',query:q,sub:'Search live listings with your full query',kind:'Smart Search',icon:'✦'}]);
+        if (seq===request) render(items);
       }
     }
     input.addEventListener('input',()=>{
