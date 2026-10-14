@@ -99,7 +99,7 @@
     function render(items) {
       currentItems = items.slice(0,7);
       activeIndex=-1;
-      dropdown.innerHTML = currentItems.map((x,i)=>'<button type="button" role="option" aria-selected="false" class="shh-home-suggestion" data-index="'+i+'"'+(x.nearby?' data-nearby="1"':'')><span class="shh-home-suggestion-icon">'+esc(x.icon||'⌕')+'</span><span class="shh-home-suggestion-main"><span class="shh-home-suggestion-title">'+esc(x.title)+'</span><span class="shh-home-suggestion-sub">'+esc(x.sub||'Search matching listings')+'</span></span><span class="shh-home-suggestion-type">'+esc(x.kind||'Search')+'</span></button>').join('');
+      dropdown.innerHTML = currentItems.map((x,i)=>'<button type="button" role="option" aria-selected="false" class="shh-home-suggestion" data-index="'+i+'"'+(x.nearby?' data-nearby="1"':'')+'><span class="shh-home-suggestion-icon">'+esc(x.icon||'⌕')+'</span><span class="shh-home-suggestion-main"><span class="shh-home-suggestion-title">'+esc(x.title)+'</span><span class="shh-home-suggestion-sub">'+esc(x.sub||'Search matching listings')+'</span></span><span class="shh-home-suggestion-type">'+esc(x.kind||'Search')+'</span></button>').join('');
       dropdown.hidden = currentItems.length===0;
       input.setAttribute('aria-expanded',String(currentItems.length>0));
       dropdown.querySelectorAll('.shh-home-suggestion').forEach(btn=>btn.addEventListener('click',()=>{const item=currentItems[Number(btn.dataset.index)];if(item?.nearby)goNearMe();else go(item?.query);}));
