@@ -10,6 +10,9 @@ on:
       - 'admin/package.json'
       - 'admin/vite.config.ts'
       - 'admin/index.html'
+      - 'admin/manifest.webmanifest'
+      - 'admin/service-worker.js'
+      - 'admin/icons/**'
       - 'logo.png'
       - 'admin/src/BUILD_TRIGGER.txt'
       - 'scripts/apply-review-production-fix.py'
@@ -18,6 +21,11 @@ on:
 
 permissions:
   contents: write
+
+# Avoid simultaneous admin build commits racing to push to main.
+concurrency:
+  group: director-admin-build-main
+  cancel-in-progress: false
 
 jobs:
   build-admin:
@@ -65,10 +73,15 @@ jobs:
             <head>
               <meta charset="UTF-8" />
               <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <link rel="icon" type="image/png" href="/admin/logo.png" />
-              <link rel="apple-touch-icon" href="/admin/logo.png" />
-              <title>StudentHubHelp - Director Admin Dashboard</title>
-              <meta name="description" content="Professional Director Admin Dashboard with user management, real-time Supabase integration, comprehensive analytics charts, and property management." />
+              <link rel="icon" type="image/png" href="/admin/icons/icon-192x192.png" />
+              <link rel="apple-touch-icon" href="/admin/icons/icon-192x192.png" />
+              <link rel="manifest" href="/admin/manifest.webmanifest" />
+              <meta name="theme-color" content="#082B63" />
+              <meta name="mobile-web-app-capable" content="yes" />
+              <meta name="apple-mobile-web-app-capable" content="yes" />
+              <meta name="apple-mobile-web-app-title" content="SHH Admin" />
+              <title>StudentHubHelp Admin Dashboard</title>
+              <meta name="description" content="Secure administration dashboard for StudentHubHelp listings and operations." />
               <link rel="preconnect" href="https://fonts.googleapis.com" />
               <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
               <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -76,6 +89,20 @@ jobs:
             <body class="bg-[#040814] text-slate-100 antialiased">
               <div id="root"></div>
               <script type="module" src="/src/main.tsx"></script>
+              <script>
+                if ("serviceWorker" in navigator) {
+                  window.addEventListener("load", function () {
+                    navigator.serviceWorker.register("/admin/service-worker.js", { scope: "/admin/" })
+                      .then(function (registration) {
+                        // Background Sync is optional and browser dependent.
+                        if ("sync" in registration) registration.sync.register("studenthubhelp-admin-refresh-shell").catch(function () {});
+                      })
+                      .catch(function (error) {
+                        console.warn("StudentHubHelp Admin service worker registration failed:", error);
+                      });
+                  }, { once: true });
+                }
+              </script>
             </body>
           </html>
           EOF
@@ -103,4 +130,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add admin owner-dashboard.html
           git diff --cached --quiet || git commit -m "Build director admin with review workflow [skip ci]"
+          # Integrate commits that landed while the build was running; never force-push.
+          git pull --rebase origin main
           git push
