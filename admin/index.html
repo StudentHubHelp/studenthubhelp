@@ -24,22 +24,9 @@
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
           navigator.serviceWorker.register("/admin/service-worker.js", { scope: "/admin/" })
-            .then(async function (registration) {
-              // Background Sync is optional and is scheduled by supported browsers.
-              if ("sync" in registration) {
-                registration.sync.register("studenthubhelp-admin-refresh-shell").catch(function () {});
-              }
-              // Periodic Sync requires browser support and an already-granted permission.
-              if ("periodicSync" in registration && "permissions" in navigator) {
-                try {
-                  const permission = await navigator.permissions.query({ name: "periodic-background-sync" });
-                  if (permission.state === "granted") {
-                    await registration.periodicSync.register("studenthubhelp-admin-refresh-shell", { minInterval: 12 * 60 * 60 * 1000 });
-                  }
-                } catch (_) {
-                  // Unsupported or denied: the dashboard remains fully usable.
-                }
-              }
+            .then(function (registration) {
+              // Background Sync is optional and browser dependent.
+              if ("sync" in registration) registration.sync.register("studenthubhelp-admin-refresh-shell").catch(function () {});
             })
             .catch(function (error) {
               console.warn("StudentHubHelp Admin service worker registration failed:", error);
