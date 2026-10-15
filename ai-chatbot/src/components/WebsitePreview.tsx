@@ -262,7 +262,7 @@ export const WebsitePreview: React.FC<WebsitePreviewProps> = ({ onPromptChat }) 
           </p>
           <div className="flex items-center gap-4 text-xs sm:text-sm font-bold text-slate-800 pt-2 flex-wrap">
             <span>📞 +91 9929718264</span>
-            <span>✉️ satpalswami22742@gmail.com</span>
+            <span>✉️ studenthubhelpp@gmail.com</span>
             <span>📍 Sikar &amp; Kota, Rajasthan</span>
           </div>
         </div>
