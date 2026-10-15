@@ -141,7 +141,7 @@ export default function App() {
           StudentHubHelp — India's Premier Student Housing &amp; Educational Services Discovery Platform
         </p>
         <p>
-          Director: <strong>SATPAL SWAMI</strong> • Phone: +91 9929718264 • Email: satpalswami22742@gmail.com
+          Director: <strong>SATPAL SWAMI</strong> • Phone: +91 9929718264 • Email: studenthubhelpp@gmail.com
         </p>
         <p className="text-[11px] text-slate-500">
           Powered by Google Gemini 3.8 Flash • Strict JSON Schema • Multi-lingual NLP &amp; Real-time Lead CRM
