@@ -7,7 +7,7 @@ export const DEFAULT_BOT_CONFIG: BotConfig = {
   primaryLocation: 'Sikar, Kota, Jaipur, Delhi and other supported locations',
   directorName: 'SATPAL SWAMI',
   directorPhone: '+91 9929718264',
-  directorEmail: 'satpalswami22742@gmail.com',
+  directorEmail: 'studenthubhelpp@gmail.com',
   botTone: 'professional',
   enableTTS: true,
   enableSTT: true,
@@ -18,7 +18,7 @@ The assistant must use live StudentHubHelp data for property facts.
 Property recommendations must come only from currently active public listings.
 Never invent a property name, price, rating, phone number, address, availability, facility or verification status.
 If no active listing matches, clearly say that no matching active listing was found.
-Platform support contact: Director Satpal Swami (+91 9929718264, satpalswami22742@gmail.com).
+Platform support contact: Director Satpal Swami (+91 9929718264, studenthubhelpp@gmail.com).
 `,
   services: [
     { name: 'Hostel & PG Finder', desc: 'Find active student accommodation listings.', pricing: 'See live listings' },
