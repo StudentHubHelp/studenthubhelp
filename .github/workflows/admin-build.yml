@@ -73,8 +73,8 @@ jobs:
             <head>
               <meta charset="UTF-8" />
               <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <link rel="icon" type="image/png" href="/admin/icons/icon-192x192.png" />
-              <link rel="apple-touch-icon" href="/admin/icons/icon-192x192.png" />
+              <link rel="icon" type="image/png" href="/admin/icons/icon-192x192.png?v=director-admin-2" />
+              <link rel="apple-touch-icon" href="/admin/icons/icon-192x192.png?v=director-admin-2" />
               <link rel="manifest" href="/admin/manifest.webmanifest" />
               <meta name="theme-color" content="#082B63" />
               <meta name="mobile-web-app-capable" content="yes" />
@@ -95,6 +95,14 @@ jobs:
                     navigator.serviceWorker.register("/admin/service-worker.js", { scope: "/admin/" })
                       .then(async function (registration) {
                         if ("sync" in registration) registration.sync.register("studenthubhelp-admin-refresh-shell").catch(function () {});
+                        if ("periodicSync" in registration && "permissions" in navigator) {
+                          try {
+                            const permission = await navigator.permissions.query({ name: "periodic-background-sync" });
+                            if (permission.state === "granted") {
+                              await registration.periodicSync.register("studenthubhelp-admin-refresh-shell", { minInterval: 12 * 60 * 60 * 1000 });
+                            }
+                          } catch (_) {}
+                        }
                         if ("periodicSync" in registration && "permissions" in navigator) {
                           try {
                             const permission = await navigator.permissions.query({ name: "periodic-background-sync" });
