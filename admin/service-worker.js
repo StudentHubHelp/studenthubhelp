@@ -1,14 +1,14 @@
 /* StudentHubHelp Admin PWA service worker.
    Cache only public app-shell assets; never cache authenticated/API responses. */
-const CACHE_NAME = "studenthubhelp-admin-shell-v2";
+const CACHE_NAME = "studenthubhelp-admin-shell-v3";
 const OFFLINE_URL = "/admin/index.html";
 const STATIC_ASSETS = [
   OFFLINE_URL,
-  "/admin/logo.png",
+  "/admin/icons/icon-192x192.png",
+  "/admin/icons/icon-512x512.png",
   "/admin/assets/index-6msJztRy.js",
   "/admin/assets/index-CqaV_UpX.css",
-  "/icon-192x192.png",
-  "/icon-512x512.png"
+
 ];
 
 self.addEventListener("install", (event) => {
