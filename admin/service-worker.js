@@ -1,11 +1,11 @@
 /* StudentHubHelp Admin PWA service worker.
-   Cache only the public app shell. Never cache authenticated/API responses. */
-const CACHE_NAME = "studenthubhelp-admin-shell-v1";
+   Cache only public app-shell assets; never cache authenticated/API responses. */
+const CACHE_NAME = "studenthubhelp-admin-shell-v2";
 const OFFLINE_URL = "/admin/index.html";
 const STATIC_ASSETS = [
   OFFLINE_URL,
   "/admin/logo.png",
-  "/admin/assets/index-DmKRNsO-.js",
+  "/admin/assets/index-6msJztRy.js",
   "/admin/assets/index-CqaV_UpX.css",
   "/icon-192x192.png",
   "/icon-512x512.png"
@@ -19,7 +19,7 @@ self.addEventListener("install", (event) => {
         const response = await fetch(asset);
         if (response.ok) await cache.put(asset, response);
       } catch (_) {
-        // Skip an unavailable optional asset; don't prevent worker installation.
+        // A missing optional asset must not block installation.
       }
     }
     await self.skipWaiting();
@@ -41,7 +41,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // Do not cache API, auth, or Supabase requests, including calls from the app.
+  // Never cache Supabase, auth, REST, functions, or GraphQL traffic.
   if (/supabase|\/auth\/|\/rest\/|\/functions\/|\/graphql/i.test(url.hostname + url.pathname)) return;
 
   if (request.mode === "navigate" && url.pathname.startsWith("/admin/")) {
