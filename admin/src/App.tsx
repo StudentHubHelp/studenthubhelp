@@ -64,7 +64,7 @@ export default function App() {
 
   const [adminEmail, setAdminEmail] =
     useState<string>(
-      'satpalswami22742@gmail.com'
+      'studenthubhelpp@gmail.com'
     );
 
   // =========================================================
