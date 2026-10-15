@@ -1163,7 +1163,7 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
               </div>
 
               <div className="text-slate-200 mt-1 truncate">
-                satpalswami22742@gmail.com
+                studenthubhelpp@gmail.com
               </div>
             </div>
 
