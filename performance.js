@@ -97,7 +97,7 @@
             <div class="director-name">SATPAL SWAMI</div><div class="director-role">Founder · StudentHubHelp</div>
             <div class="director-info">
               <a href="tel:+919929718264"><span>☎</span><span>+91 9929718264</span></a>
-              <a href="mailto:satpalswami22742@gmail.com"><span>✉</span><span>satpalswami22742@gmail.com</span></a>
+              <a href="mailto:studenthubhelpp@gmail.com"><span>✉</span><span>studenthubhelpp@gmail.com</span></a>
               <a href="https://studenthubhelp.in/admin/"><span>⌘</span><span>Admin Login</span></a>
             </div>
           </section>
