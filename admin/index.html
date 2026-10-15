@@ -24,9 +24,16 @@
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
           navigator.serviceWorker.register("/admin/service-worker.js", { scope: "/admin/" })
-            .then(function (registration) {
-              // Background Sync is optional and browser dependent.
+            .then(async function (registration) {
               if ("sync" in registration) registration.sync.register("studenthubhelp-admin-refresh-shell").catch(function () {});
+              if ("periodicSync" in registration && "permissions" in navigator) {
+                try {
+                  const permission = await navigator.permissions.query({ name: "periodic-background-sync" });
+                  if (permission.state === "granted") {
+                    await registration.periodicSync.register("studenthubhelp-admin-refresh-shell", { minInterval: 12 * 60 * 60 * 1000 });
+                  }
+                } catch (_) {}
+              }
             })
             .catch(function (error) {
               console.warn("StudentHubHelp Admin service worker registration failed:", error);
