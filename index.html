@@ -6495,10 +6495,27 @@ function renderListingCard(item) {
 </script>
 
   <script>
-    // Register the lightweight PWA worker without changing listing, login, or chatbot logic.
+    // Register PWA support without changing listing, login, or chatbot logic.
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {
         navigator.serviceWorker.register("/service-worker.js", { scope: "/" })
+          .then(async function (registration) {
+            // Best-effort Background Sync registration; browser support varies.
+            if ("sync" in registration) {
+              try { await registration.sync.register("studenthubhelp-refresh-shell"); } catch (_) {}
+            }
+            // Periodic Sync is experimental and only works where browser/permission allows it.
+            if ("periodicSync" in registration) {
+              try {
+                const status = await navigator.permissions.query({ name: "periodic-background-sync" });
+                if (status.state === "granted") {
+                  await registration.periodicSync.register("studenthubhelp-refresh-shell", {
+                    minInterval: 24 * 60 * 60 * 1000
+                  });
+                }
+              } catch (_) {}
+            }
+          })
           .catch(function (error) { console.warn("StudentHubHelp PWA worker registration failed:", error); });
       }, { once: true });
     }
