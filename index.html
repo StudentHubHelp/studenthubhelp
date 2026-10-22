@@ -5994,10 +5994,16 @@ const query = state.search.trim().toLowerCase();
       const grid = $("listingGrid"); 
       if (!grid) return; 
 
-      const visible = filteredListings; 
+      const hasHomepageBanner = item => {
+        const value = firstValue(item,["image","image_url","photo","photo_url","cover_image","banner","banner_url","property_image","property_image_url","listing_image","listing_image_url","thumbnail","thumbnail_url","image_path","photo_path","images","photos","gallery","image_urls"]);
+        if (Array.isArray(value)) return value.some(entry => typeof entry === "string" ? entry.trim() : entry && typeof entry === "object" && (entry.url || entry.src || entry.path));
+        if (value && typeof value === "object") return !!(value.url || value.src || value.path);
+        return typeof value === "string" && value.trim().length > 0;
+      };
+      const visible = filteredListings.filter(hasHomepageBanner); 
 
       $("resultSummary").textContent =  
-        `${filteredListings.length} result${filteredListings.length===1?"":"s"} · ${filteredListings.filter(x=>x.verification.verified).length} verified`; 
+        `${visible.length} result${visible.length===1?"":"s"} · ${visible.filter(x=>x.verification.verified).length} verified`; 
 
       if (!visible.length) { 
         grid.innerHTML = `  
