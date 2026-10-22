@@ -5838,8 +5838,7 @@ const query = state.search.trim().toLowerCase();
       return "";
     }
 
-    // Build the homepage marquee directly from all live listing data.
-    // Cards remain visible even when a listing has no uploaded photo; those use a category banner.
+    // Homepage showcase uses the same image resolution and category banner assets as Finder cards.
     function updateStudentHubShowcase() {
       const track = document.getElementById("studenthubMarqueeTrack");
       if (!track) return;
@@ -5848,23 +5847,53 @@ const query = state.search.trim().toLowerCase();
         return;
       }
 
-      const imageKeys = ["image","image_url","photo","photo_url","cover_image","banner","banner_url","property_image","property_image_url","listing_image","listing_image_url","thumbnail","thumbnail_url","image_path","photo_path","images","photos","gallery","image_urls"];
-      const extractImage = item => {
-        const raw = firstValue(item, imageKeys);
-        const toUrl = value => {
-          if (typeof value === "string") return value.trim();
-          if (value && typeof value === "object") return String(value.url || value.src || value.path || value.image_url || "").trim();
-          return "";
-        };
-        if (Array.isArray(raw)) return raw.map(toUrl).find(Boolean) || "";
-        return toUrl(raw);
+      const bannerByCategory = {
+        hostel: "hostel-banner.png",
+        tiffin: "tiffin-banner.png",
+        library: "library-banner.png",
+        cafe: "cafe-banner.png",
+        bookstore: "bookstore-banner.png",
+        other: "logo.png"
       };
-      const prepared = allListings.map(item => ({
-        item,
-        image: extractImage(item),
-        category: String(item.listingCategory || "other").toLowerCase()
-      }));
+      const normalizeCategory = item => {
+        const raw = String(item.listingCategory || item.__category || item.category || "").toLowerCase();
+        if (raw.includes("hostel") || raw === "pg" || raw === "hostels") return "hostel";
+        if (raw.includes("tiffin") || raw.includes("mess")) return "tiffin";
+        if (raw.includes("librar")) return "library";
+        if (raw.includes("cafe") || raw.includes("café")) return "cafe";
+        if (raw.includes("book")) return "bookstore";
+        return "other";
+      };
+      const resolveImage = (item, category) => {
+        let value = item.image || item.images || item.image_url || item.photo || item.photo_url ||
+          item.cover_image || item.banner || item.banner_url || item.property_image ||
+          item.property_image_url || item.listing_image || item.listing_image_url ||
+          item.thumbnail || item.thumbnail_url || item.gallery || item.image_urls;
+        if (Array.isArray(value)) value = value.find(Boolean) || "";
+        if (typeof value === "string") {
+          const raw = value.trim();
+          if (raw.startsWith("[") || raw.startsWith("{")) {
+            try {
+              const parsed = JSON.parse(raw);
+              value = Array.isArray(parsed) ? (parsed.find(Boolean) || "") :
+                (parsed && typeof parsed === "object" ? (Object.values(parsed).find(Boolean) || "") : raw);
+            } catch (_) { value = raw; }
+          } else if (raw.includes(",") && !raw.includes("://")) {
+            value = raw.split(",").map(part => part.trim()).find(Boolean) || raw;
+          } else value = raw;
+        }
+        if (value && typeof value === "object") value = value.url || value.src || value.path || value.image_url || "";
+        value = String(value || "").trim();
+        if (!value) return "https://studenthubhelp.in/" + (bannerByCategory[category] || bannerByCategory.other);
+        if (/^(https?:\/\/|data:image\/|blob:)/i.test(value)) return value;
+        if (value.startsWith("//")) return location.protocol + value;
+        return "https://studenthubhelp.in/" + value.replace(/^\.\//, "").replace(/^\//, "").split("/").map(encodeURIComponent).join("/");
+      };
 
+      const prepared = allListings.map(item => {
+        const category = normalizeCategory(item);
+        return { item, category, image: resolveImage(item, category) };
+      });
       const categoryOrder = ["hostel", "tiffin", "library", "cafe", "bookstore", "other"];
       const buckets = new Map();
       prepared.forEach(entry => {
@@ -5875,38 +5904,24 @@ const query = state.search.trim().toLowerCase();
       while (mixed.length < 60 && Array.from(buckets.values()).some(bucket => bucket.length)) {
         categoryOrder.forEach(category => {
           const bucket = buckets.get(category);
-          if (bucket?.length && mixed.length < 60) mixed.push(bucket.shift());
+          if (bucket && bucket.length && mixed.length < 60) mixed.push(bucket.shift());
         });
-        for (const [category, bucket] of buckets) {
-          if (!categoryOrder.includes(category) && bucket.length && mixed.length < 60) mixed.push(bucket.shift());
-        }
       }
-
-      const bannerByCategory = {
-        hostel: { icon: "🛏️", label: "HOSTEL / PG" },
-        tiffin: { icon: "🍱", label: "TIFFIN / MESS" },
-        library: { icon: "📚", label: "LIBRARY" },
-        cafe: { icon: "☕", label: "CAFE" },
-        bookstore: { icon: "📖", label: "BOOK STORE" },
-        other: { icon: "🎓", label: "STUDENT PLACE" }
-      };
       const cardHTML = entry => {
-        const { item, image, category: categoryKey } = entry;
-        const title = item.displayName || "Student place";
-        const category = item.listingLabel || "Student service";
-        const location = item.displayArea || item.displayCity || "Location details available";
+        const { item, category, image } = entry;
+        const title = item.displayName || item.name || item.business_name || "Student place";
+        const categoryLabel = item.listingLabel || ({hostel:"HOSTEL / PG",tiffin:"TIFFIN / MESS",library:"LIBRARY",cafe:"CAFE",bookstore:"BOOK STORE",other:"STUDENT PLACE"})[category];
+        const locationText = item.displayArea || item.displayCity || item.area || item.city || item.address || "Location details available";
         const price = getCardPrice(item);
-        const verified = item.verification?.verified;
-        const href = "property-details.html?type=" + encodeURIComponent(item.listingCategory || "other") + "&id=" + encodeURIComponent(item.id);
+        const verified = Boolean(item.verification?.verified || item.verified || item.is_verified);
+        const type = item.listingCategory || category;
+        const href = "property-details.html?type=" + encodeURIComponent(type) + "&id=" + encodeURIComponent(item.id);
         const safe = value => escapeHTML(String(value ?? ""));
-        const banner = bannerByCategory[categoryKey] || bannerByCategory.other;
-        const imageMarkup = image
-          ? '<img class="studenthub-showcase-image" src="' + safe(image) + '" alt="' + safe(title) + '" loading="lazy" decoding="async" onerror="this.outerHTML=\'<div class=&quot;studenthub-showcase-image-placeholder&quot;><span>' + safe(banner.icon) + '</span></div>\'">'
-          : '<div class="studenthub-showcase-image-placeholder" aria-label="' + safe(category) + ' banner"><span>' + safe(banner.icon) + '</span><small>' + safe(banner.label) + '</small></div>';
+        const bannerLabel = safe(categoryLabel);
         return '<a class="studenthub-showcase-card" href="' + safe(href) + '" aria-label="View details for ' + safe(title) + '">' +
-          imageMarkup +
-          '<div class="studenthub-showcase-copy"><div class="studenthub-showcase-category">' + safe(category) + '</div>' +
-          '<h3 class="studenthub-showcase-name">' + safe(title) + '</h3><div class="studenthub-showcase-location">' + safe(location) + '</div>' +
+          '<img class="studenthub-showcase-image" src="' + safe(image) + '" alt="' + safe(title) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'https://studenthubhelp.in/' + safe(bannerByCategory[category] || bannerByCategory.other) + '\';">' +
+          '<div class="studenthub-showcase-copy"><div class="studenthub-showcase-category">' + bannerLabel + '</div>' +
+          '<h3 class="studenthub-showcase-name">' + safe(title) + '</h3><div class="studenthub-showcase-location">' + safe(locationText) + '</div>' +
           '<div class="studenthub-showcase-bottom"><span class="studenthub-showcase-price">' + safe(price) + '</span><span class="studenthub-showcase-verified">' + (verified ? '✓ Verified' : 'Listed') + '</span></div></div></a>';
       };
       if (!mixed.length) {
