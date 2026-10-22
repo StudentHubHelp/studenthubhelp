@@ -5937,7 +5937,29 @@ const query = state.search.trim().toLowerCase();
       const source = document.getElementById("listingGrid");
       const track = document.getElementById("studenthubMarqueeTrack");
       if (!source || !track) return;
-      const cards = Array.from(source.querySelectorAll(".listing-card"));
+      const allCards = Array.from(source.querySelectorAll(".listing-card"));
+      const categoryOf = card => {
+        const label = (card.querySelector(".listing-category")?.textContent || "").toLowerCase();
+        if (label.includes("hostel") || label.includes("pg")) return "hostel";
+        if (label.includes("tiffin") || label.includes("mess")) return "tiffin";
+        if (label.includes("cafe")) return "cafe";
+        if (label.includes("libr")) return "library";
+        if (label.includes("book")) return "bookstore";
+        return "other";
+      };
+      const buckets = new Map();
+      allCards.forEach(card => {
+        const key = categoryOf(card);
+        if (!buckets.has(key)) buckets.set(key, []);
+        buckets.get(key).push(card);
+      });
+      const cards = [];
+      while (cards.length < 15 && Array.from(buckets.values()).some(bucket => bucket.length)) {
+        for (const key of ["hostel", "tiffin", "library", "cafe", "bookstore", "other"]) {
+          const bucket = buckets.get(key);
+          if (bucket?.length && cards.length < 15) cards.push(bucket.shift());
+        }
+      }
       if (!cards.length) {
         if (!track.querySelector(".studenthub-showcase-card")) track.innerHTML = '<div class="studenthub-showcase-loading">Student places are loading. Please check back shortly.</div>';
         return;
