@@ -5749,6 +5749,7 @@ body > footer .footer-bottom{border-top-color:rgba(232,139,165,.25)!important;co
 
       const results = await Promise.all(sourceConfig.map(fetchListings)); 
       allListings = results.flat();
+      updateStudentHubShowcase();
       // Do not derive homepage totals from this preview: each table fetch is
       // intentionally capped at 100 rows. loadStats() owns the exact counts.
       applyFilters(); 
@@ -5837,64 +5838,64 @@ const query = state.search.trim().toLowerCase();
       return "";
     }
 
-    // Build the moving showcase from real cards produced by the existing listing renderer.
+    // Build the homepage marquee directly from live listing data.
+    // The normal listing grid is intentionally absent from the homepage, so this must not depend on it.
     function updateStudentHubShowcase() {
-      const source = document.getElementById("listingGrid");
       const track = document.getElementById("studenthubMarqueeTrack");
-      if (!source || !track) return;
-      const allCards = Array.from(source.querySelectorAll(".listing-card"));
-      const categoryOf = card => {
-        const label = (card.querySelector(".listing-category")?.textContent || "").toLowerCase();
-        if (label.includes("hostel") || label.includes("pg")) return "hostel";
-        if (label.includes("tiffin") || label.includes("mess")) return "tiffin";
-        if (label.includes("cafe")) return "cafe";
-        if (label.includes("libr")) return "library";
-        if (label.includes("book")) return "bookstore";
-        return "other";
-      };
-      const buckets = new Map();
-      allCards.forEach(card => {
-        const key = categoryOf(card);
-        if (!buckets.has(key)) buckets.set(key, []);
-        buckets.get(key).push(card);
-      });
-      const cards = [];
-      while (cards.length < 15 && Array.from(buckets.values()).some(bucket => bucket.length)) {
-        for (const key of ["hostel", "tiffin", "library", "cafe", "bookstore", "other"]) {
-          const bucket = buckets.get(key);
-          if (bucket?.length && cards.length < 15) cards.push(bucket.shift());
-        }
-      }
-      if (!cards.length) {
-        if (!track.querySelector(".studenthub-showcase-card")) track.innerHTML = '<div class="studenthub-showcase-loading">Student places are loading. Please check back shortly.</div>';
+      if (!track) return;
+      if (!Array.isArray(allListings) || !allListings.length) {
+        track.innerHTML = '<div class="studenthub-showcase-loading">Loading student places…</div>';
         return;
       }
-      const categoryIcon = card => { const c=(card.querySelector(".listing-category")?.textContent||"").toLowerCase(); return c.includes("hostel")||c.includes("pg")?"🏠":c.includes("tiffin")||c.includes("mess")?"🍱":c.includes("cafe")?"☕":c.includes("libr")?"📚":c.includes("book")?"📖":"📍"; };
-      const cardHTML = card => {
-        const clone=card.cloneNode(true);
-        const title=clone.querySelector("h3")?.textContent?.trim()||"Student place";
-        const category=clone.querySelector(".listing-category")?.textContent?.trim()||"Student service";
-        const location=clone.querySelector(".listing-area")?.textContent?.trim()||"Location details available";
-        const price=clone.querySelector(".price-chip")?.textContent?.trim()||"View details";
-        const verified=!!clone.querySelector(".verification-badge:not(.partial)");
-        const img=clone.querySelector("img");
-        const image=img?.getAttribute("src");
-        const link=clone.querySelector('a[href]');
-        const href=link?.getAttribute("href")||"#";
-        return '<a class="studenthub-showcase-card" href="'+href.replace(/&/g,"&amp;").replace(/"/g,"&quot;")+'" aria-label="View details for '+title.replace(/&/g,"&amp;").replace(/"/g,"&quot;")+'">'+(image?'<img class="studenthub-showcase-image" src="'+image.replace(/&/g,"&amp;").replace(/"/g,"&quot;")+'" alt="" loading="lazy" decoding="async">':'<div class="studenthub-showcase-image-placeholder" aria-hidden="true">'+categoryIcon(card)+'</div>')+'<div class="studenthub-showcase-copy"><div class="studenthub-showcase-category">'+category+'</div><h3 class="studenthub-showcase-name">'+title+'</h3><div class="studenthub-showcase-location">'+location+'</div><div class="studenthub-showcase-bottom"><span class="studenthub-showcase-price">'+price+'</span><span class="studenthub-showcase-verified">'+(verified?'✓ Verified':'Listed')+'</span></div></div></a>';
+      const prepared = allListings.map(item => {
+        const holder = document.createElement("div");
+        holder.innerHTML = renderListingCard(item);
+        const card = holder.querySelector(".listing-card");
+        const img = card?.querySelector("img");
+        const href = card?.querySelector("a.listing-details-link")?.getAttribute("href");
+        if (!card || !img || !img.getAttribute("src") || !href) return null;
+        return { item, card, category: item.listingCategory || "other" };
+      }).filter(Boolean);
+      const categoryOrder = ["hostel", "tiffin", "library", "cafe", "bookstore", "other"];
+      const buckets = new Map();
+      prepared.forEach(entry => {
+        if (!buckets.has(entry.category)) buckets.set(entry.category, []);
+        buckets.get(entry.category).push(entry);
+      });
+      const mixed = [];
+      while (mixed.length < 30 && Array.from(buckets.values()).some(bucket => bucket.length)) {
+        categoryOrder.forEach(category => {
+          const bucket = buckets.get(category);
+          if (bucket?.length && mixed.length < 30) mixed.push(bucket.shift());
+        });
+        for (const [category, bucket] of buckets) {
+          if (!categoryOrder.includes(category) && bucket.length && mixed.length < 30) mixed.push(bucket.shift());
+        }
+      }
+      if (!mixed.length) {
+        track.innerHTML = '<div class="studenthub-showcase-loading">Property banners are not available yet.</div>';
+        return;
+      }
+      const cardHTML = entry => {
+        const { item, card } = entry;
+        const title = item.displayName || "Student place";
+        const category = item.listingLabel || "Student service";
+        const location = item.displayArea || item.displayCity || "Location details available";
+        const price = getCardPrice(item);
+        const verified = item.verification?.verified;
+        const img = card.querySelector("img");
+        const href = card.querySelector("a.listing-details-link").getAttribute("href");
+        const safe = value => escapeHTML(String(value || ""));
+        return '<a class="studenthub-showcase-card" href="' + safe(href) + '" aria-label="View details for ' + safe(title) + '">' +
+          '<img class="studenthub-showcase-image" src="' + safe(img.getAttribute("src")) + '" alt="' + safe(title) + '" loading="lazy" decoding="async">' +
+          '<div class="studenthub-showcase-copy"><div class="studenthub-showcase-category">' + safe(category) + '</div>' +
+          '<h3 class="studenthub-showcase-name">' + safe(title) + '</h3><div class="studenthub-showcase-location">' + safe(location) + '</div>' +
+          '<div class="studenthub-showcase-bottom"><span class="studenthub-showcase-price">' + safe(price) + '</span><span class="studenthub-showcase-verified">' + (verified ? '✓ Verified' : 'Listed') + '</span></div></div></a>';
       };
-      const items=cards.map(cardHTML);
-      // Duplicate the same sequence once so the marquee can loop seamlessly.
-      track.innerHTML=items.join("")+items.join("");
-      track.style.animationDuration=Math.max(28,items.length*4.2)+"s";
+      const items = mixed.map(cardHTML);
+      track.innerHTML = items.join("") + items.join("");
+      track.style.animationDuration = Math.max(28, items.length * 4.2) + "s";
     }
-    function observeStudentHubShowcase() {
-      const source=document.getElementById("listingGrid");
-      if(!source) return;
-      updateStudentHubShowcase();
-      new MutationObserver(()=>updateStudentHubShowcase()).observe(source,{childList:true,subtree:true});
-    }
-    document.addEventListener("DOMContentLoaded",observeStudentHubShowcase,{once:true});
     function renderListings() { 
       const grid = $("listingGrid"); 
       if (!grid) return; 
