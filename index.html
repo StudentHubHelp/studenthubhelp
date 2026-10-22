@@ -5838,8 +5838,8 @@ const query = state.search.trim().toLowerCase();
       return "";
     }
 
-    // Build the homepage marquee directly from live listing data.
-    // The normal listing grid is intentionally absent from the homepage, so this must not depend on it.
+    // Build the homepage marquee directly from all live listing data.
+    // Cards remain visible even when a listing has no uploaded photo; those use a category banner.
     function updateStudentHubShowcase() {
       const track = document.getElementById("studenthubMarqueeTrack");
       if (!track) return;
@@ -5847,15 +5847,24 @@ const query = state.search.trim().toLowerCase();
         track.innerHTML = '<div class="studenthub-showcase-loading">Loading student places…</div>';
         return;
       }
-      const prepared = allListings.map(item => {
-        const holder = document.createElement("div");
-        holder.innerHTML = renderListingCard(item);
-        const card = holder.querySelector(".listing-card");
-        const img = card?.querySelector("img");
-        const href = card?.querySelector("a.listing-details-link")?.getAttribute("href");
-        if (!card || !img || !img.getAttribute("src") || !href) return null;
-        return { item, card, category: item.listingCategory || "other" };
-      }).filter(Boolean);
+
+      const imageKeys = ["image","image_url","photo","photo_url","cover_image","banner","banner_url","property_image","property_image_url","listing_image","listing_image_url","thumbnail","thumbnail_url","image_path","photo_path","images","photos","gallery","image_urls"];
+      const extractImage = item => {
+        const raw = firstValue(item, imageKeys);
+        const toUrl = value => {
+          if (typeof value === "string") return value.trim();
+          if (value && typeof value === "object") return String(value.url || value.src || value.path || value.image_url || "").trim();
+          return "";
+        };
+        if (Array.isArray(raw)) return raw.map(toUrl).find(Boolean) || "";
+        return toUrl(raw);
+      };
+      const prepared = allListings.map(item => ({
+        item,
+        image: extractImage(item),
+        category: String(item.listingCategory || "other").toLowerCase()
+      }));
+
       const categoryOrder = ["hostel", "tiffin", "library", "cafe", "bookstore", "other"];
       const buckets = new Map();
       prepared.forEach(entry => {
@@ -5863,38 +5872,50 @@ const query = state.search.trim().toLowerCase();
         buckets.get(entry.category).push(entry);
       });
       const mixed = [];
-      while (mixed.length < 30 && Array.from(buckets.values()).some(bucket => bucket.length)) {
+      while (mixed.length < 60 && Array.from(buckets.values()).some(bucket => bucket.length)) {
         categoryOrder.forEach(category => {
           const bucket = buckets.get(category);
-          if (bucket?.length && mixed.length < 30) mixed.push(bucket.shift());
+          if (bucket?.length && mixed.length < 60) mixed.push(bucket.shift());
         });
         for (const [category, bucket] of buckets) {
-          if (!categoryOrder.includes(category) && bucket.length && mixed.length < 30) mixed.push(bucket.shift());
+          if (!categoryOrder.includes(category) && bucket.length && mixed.length < 60) mixed.push(bucket.shift());
         }
       }
-      if (!mixed.length) {
-        track.innerHTML = '<div class="studenthub-showcase-loading">Property banners are not available yet.</div>';
-        return;
-      }
+
+      const bannerByCategory = {
+        hostel: { icon: "🛏️", label: "HOSTEL / PG" },
+        tiffin: { icon: "🍱", label: "TIFFIN / MESS" },
+        library: { icon: "📚", label: "LIBRARY" },
+        cafe: { icon: "☕", label: "CAFE" },
+        bookstore: { icon: "📖", label: "BOOK STORE" },
+        other: { icon: "🎓", label: "STUDENT PLACE" }
+      };
       const cardHTML = entry => {
-        const { item, card } = entry;
+        const { item, image, category: categoryKey } = entry;
         const title = item.displayName || "Student place";
         const category = item.listingLabel || "Student service";
         const location = item.displayArea || item.displayCity || "Location details available";
         const price = getCardPrice(item);
         const verified = item.verification?.verified;
-        const img = card.querySelector("img");
-        const href = card.querySelector("a.listing-details-link").getAttribute("href");
-        const safe = value => escapeHTML(String(value || ""));
+        const href = "property-details.html?type=" + encodeURIComponent(item.listingCategory || "other") + "&id=" + encodeURIComponent(item.id);
+        const safe = value => escapeHTML(String(value ?? ""));
+        const banner = bannerByCategory[categoryKey] || bannerByCategory.other;
+        const imageMarkup = image
+          ? '<img class="studenthub-showcase-image" src="' + safe(image) + '" alt="' + safe(title) + '" loading="lazy" decoding="async" onerror="this.outerHTML=\'<div class=&quot;studenthub-showcase-image-placeholder&quot;><span>' + safe(banner.icon) + '</span></div>\'">'
+          : '<div class="studenthub-showcase-image-placeholder" aria-label="' + safe(category) + ' banner"><span>' + safe(banner.icon) + '</span><small>' + safe(banner.label) + '</small></div>';
         return '<a class="studenthub-showcase-card" href="' + safe(href) + '" aria-label="View details for ' + safe(title) + '">' +
-          '<img class="studenthub-showcase-image" src="' + safe(img.getAttribute("src")) + '" alt="' + safe(title) + '" loading="lazy" decoding="async">' +
+          imageMarkup +
           '<div class="studenthub-showcase-copy"><div class="studenthub-showcase-category">' + safe(category) + '</div>' +
           '<h3 class="studenthub-showcase-name">' + safe(title) + '</h3><div class="studenthub-showcase-location">' + safe(location) + '</div>' +
           '<div class="studenthub-showcase-bottom"><span class="studenthub-showcase-price">' + safe(price) + '</span><span class="studenthub-showcase-verified">' + (verified ? '✓ Verified' : 'Listed') + '</span></div></div></a>';
       };
+      if (!mixed.length) {
+        track.innerHTML = '<div class="studenthub-showcase-loading">No student places are available yet.</div>';
+        return;
+      }
       const items = mixed.map(cardHTML);
       track.innerHTML = items.join("") + items.join("");
-      track.style.animationDuration = Math.max(28, items.length * 4.2) + "s";
+      track.style.animationDuration = Math.max(45, items.length * 3.4) + "s";
     }
     function renderListings() { 
       const grid = $("listingGrid"); 
