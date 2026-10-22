@@ -4699,10 +4699,6 @@ body > footer .footer-bottom{border-top-color:rgba(232,139,165,.25)!important;co
         <div class="skeleton"></div>
       </div>
 
-      <div class="listing-bottom-actions">
-        <button class="load-more-btn" type="button" id="loadMoreBtn" hidden>Load more</button>
-      </div>
-
     </div>
   </section>
   <section class="section compact-trust-section" id="studenthub-trust">
@@ -5976,7 +5972,7 @@ const query = state.search.trim().toLowerCase();
       const grid = $("listingGrid"); 
       if (!grid) return; 
 
-      const visible = filteredListings.slice(0,visibleCount); 
+      const visible = filteredListings; 
 
       $("resultSummary").textContent =  
         `${filteredListings.length} result${filteredListings.length===1?"":"s"} · ${filteredListings.filter(x=>x.verification.verified).length} verified`; 
@@ -5992,11 +5988,6 @@ const query = state.search.trim().toLowerCase();
         grid.innerHTML = visible.map(renderListingCard).join(""); 
       } 
 
-      const loadMore = $("loadMoreBtn"); 
-      if (loadMore) { 
-        loadMore.hidden = visibleCount >= filteredListings.length; 
-      } 
-
       updateCompareUI(); 
       updateFilterUI(); 
     } 
@@ -6010,7 +6001,8 @@ function renderListingCard(item) {
       : `<span class="verification-badge partial">○ NOT VERIFIED</span>`; 
 
     const facts = getFacts(item); 
-    const image = firstValue(item,["image","image_url","photo","photo_url","cover_image"]); 
+    const rawImage = firstValue(item,["image","image_url","photo","photo_url","cover_image","banner","banner_url","property_image","property_image_url","listing_image","listing_image_url","thumbnail","thumbnail_url","image_path","photo_path","images","photos","gallery","image_urls"]);
+    const image = Array.isArray(rawImage) ? (rawImage.find(value => typeof value === "string" && value.trim()) || "") : (rawImage && typeof rawImage === "object" ? (rawImage.url || rawImage.src || rawImage.path || "") : String(rawImage || "")); 
 
     return `  
       <article class="listing-card">  
@@ -6160,11 +6152,6 @@ function renderListingCard(item) {
       $("filterGrid")?.classList.toggle("filters-collapsed"); 
       const grid = $("filterGrid"); 
       if (grid) grid.style.display = grid.style.display === "none" ? "grid" : ""; 
-    }); 
-
-    $("loadMoreBtn")?.addEventListener("click", () => { 
-      visibleCount += PAGE_SIZE; 
-      renderListings(); 
     }); 
 
     /* ========================================= 
