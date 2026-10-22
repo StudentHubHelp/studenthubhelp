@@ -4623,72 +4623,8 @@ body > footer .footer-bottom{border-top-color:rgba(232,139,165,.25)!important;co
         <button type="button" class="city-tab" data-city="" aria-pressed="false">All Cities</button>
       </div>
 
-      <!-- POWERFUL FILTER PANEL -->
-      <div class="filter-shell" id="filterShell">
-        <div class="filter-top">
-          <div>
-            <span class="filter-kicker">Powerful filtering</span>
-            <h3>Shortlist what actually fits your needs.</h3>
-            <p id="resultSummary">Loading verified student places…</p>
-          </div>
-          <div class="filter-actions">
-            <button class="filter-btn ghost" type="button" id="clearFilters">Reset</button>
-            <button class="filter-btn primary" type="button" id="toggleFilters">Filters <span id="filterCount">0</span></button>
-          </div>
-        </div>
-
-        <div class="filter-grid" id="filterGrid">
-          <label class="filter-field">
-            <span>Search</span>
-            <input id="listingSearch" type="search" placeholder="Name, area, city or address">
-          </label>
-
-          <label class="filter-field">
-            <span>City / Area</span>
-            <input id="locationFilter" type="search" placeholder="e.g. Sikar, Kota, Piprali">
-          </label>
-<label class="filter-field">
-            <span>Sort by</span>
-            <select id="sortFilter">
-              <option value="relevance">Most relevant</option>
-              <option value="recent">Recently verified / updated</option>
-              <option value="rating">Highest rating</option>
-              <option value="complete">Most complete data</option>
-            </select>
-          </label>
-
-          <label class="filter-field">
-            <span>Verification</span>
-            <select id="verificationFilter">
-              <option value="all">All listings</option>
-              <option value="verified">Verified only</option>
-              <option value="fresh">Recently verified / updated</option>
-            </select>
-          </label>
-
-          <div class="filter-field filter-checks">
-            <span>Quick requirements</span>
-            <div class="check-row">
-              <label><input type="checkbox" value="wifi" class="facility-filter"> WiFi</label>
-              <label><input type="checkbox" value="food" class="facility-filter"> Food</label>
-              <label><input type="checkbox" value="ac" class="facility-filter"> AC</label>
-              <label><input type="checkbox" value="cctv" class="facility-filter"> CCTV</label>
-            </div>
-          </div>
-
-          <div class="filter-field filter-checks">
-            <span>Trust shortcuts</span>
-            <div class="check-row">
-              <label><input type="checkbox" id="completeOnly"> Complete data</label>
-              <label><input type="checkbox" id="hasRating"> Has rating</label>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- RESULT / COMPARE BAR -->
       <div class="result-toolbar">
-        <div id="activeFilterChips" class="active-filter-chips"></div>
         <div class="compare-status" id="compareStatus">0 selected for comparison</div>
       </div>
 
@@ -6002,8 +5938,7 @@ const query = state.search.trim().toLowerCase();
       };
       const visible = filteredListings.filter(hasHomepageBanner); 
 
-      $("resultSummary").textContent =  
-        `${visible.length} result${visible.length===1?"":"s"} · ${visible.filter(x=>x.verification.verified).length} verified`; 
+      // Filter panel removed; keep category and city listing navigation independent. 
 
       if (!visible.length) { 
         grid.innerHTML = `  
@@ -6117,7 +6052,8 @@ function renderListingCard(item) {
       if (state.completeOnly) chips.push("Complete data"); 
       if (state.hasRating) chips.push("Rated"); 
 
-      $("activeFilterChips").innerHTML = chips.map(x => `<span class="filter-chip">${escapeHTML(x)}</span>`).join(""); 
+      const chipContainer = $("activeFilterChips");
+      if (chipContainer) chipContainer.innerHTML = chips.map(x => `<span class="filter-chip">${escapeHTML(x)}</span>`).join(""); 
     } 
 
     let filterTimer; 
