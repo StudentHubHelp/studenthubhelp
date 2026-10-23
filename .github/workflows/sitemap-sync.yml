@@ -85,6 +85,71 @@ jobs:
                       parts=[p for p in parsed.path.split('/') if p]
                       assert len(parts)==3 and parts[0]=='properties', f'Invalid property URL: {value}'
                       assert parts[1] in {'hostel','tiffin','library','cafe','bookstore'} and parts[2], f'Invalid property type/slug: {value}'
+                      page=Path('/'.join(parts))/'index.html'
+                      assert page.exists(), f'Sitemap property page does not exist: {value}'
+                      source=page.read_text(encoding='utf-8')
+                      canonical=re.search(r'^canonical:\\s*["\\']?([^"\\'\\r\\n]+)["\\']?\\s*
+
+          assert BASE in all_urls, 'Canonical homepage URL is missing from sitemap'
+          import json
+          generated=json.loads(Path('seo-generated-manifest.json').read_text(encoding='utf-8')).get('generated', [])
+          assert all(u in all_urls for u in generated), 'Generated SEO URL missing from sitemap'
+          assert f'{BASE}index.html' not in all_urls, 'Non-canonical index.html homepage URL must not be in sitemap'
+          assert f'{BASE}property-index.html' in all_urls, 'Property discovery index is missing from sitemap'
+          index_html=Path('property-index.html').read_text(encoding='utf-8')
+          assert '<a href=' in index_html and '/properties/' in index_html, 'Property discovery index must contain crawlable property links'
+          assert 'Sitemap: https://studenthubhelp.in/sitemap.xml' in Path('robots.txt').read_text(encoding='utf-8'), 'robots.txt sitemap declaration missing'
+          assert len(all_urls)==len(set(all_urls)), 'Duplicate URL across sitemap files'
+          private={'auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','admin/index.html'}
+          for url in all_urls:
+              assert not any(url.endswith('/'+p) for p in private), f'Private URL in sitemap: {url}'
+          print(f'Sitemap validation passed: {len(all_urls)} unique URLs across {len(sitemap_locs)} child sitemaps.')
+          PY
+
+      - name: Commit sitemap changes only when needed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Sitemap already up to date."
+            exit 0
+          fi
+          git commit -m "chore: synchronize XML sitemap index"
+          git push
+, source, re.M)
+                      permalink=re.search(r'^permalink:\\s*["\\']?([^"\\'\\r\\n]+)["\\']?\\s*
+
+          assert BASE in all_urls, 'Canonical homepage URL is missing from sitemap'
+          import json
+          generated=json.loads(Path('seo-generated-manifest.json').read_text(encoding='utf-8')).get('generated', [])
+          assert all(u in all_urls for u in generated), 'Generated SEO URL missing from sitemap'
+          assert f'{BASE}index.html' not in all_urls, 'Non-canonical index.html homepage URL must not be in sitemap'
+          assert f'{BASE}property-index.html' in all_urls, 'Property discovery index is missing from sitemap'
+          index_html=Path('property-index.html').read_text(encoding='utf-8')
+          assert '<a href=' in index_html and '/properties/' in index_html, 'Property discovery index must contain crawlable property links'
+          assert 'Sitemap: https://studenthubhelp.in/sitemap.xml' in Path('robots.txt').read_text(encoding='utf-8'), 'robots.txt sitemap declaration missing'
+          assert len(all_urls)==len(set(all_urls)), 'Duplicate URL across sitemap files'
+          private={'auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','admin/index.html'}
+          for url in all_urls:
+              assert not any(url.endswith('/'+p) for p in private), f'Private URL in sitemap: {url}'
+          print(f'Sitemap validation passed: {len(all_urls)} unique URLs across {len(sitemap_locs)} child sitemaps.')
+          PY
+
+      - name: Commit sitemap changes only when needed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Sitemap already up to date."
+            exit 0
+          fi
+          git commit -m "chore: synchronize XML sitemap index"
+          git push
+, source, re.M)
+                      assert canonical and canonical.group(1).strip()==value, f'Sitemap/canonical mismatch: {value}'
+                      assert permalink and permalink.group(1).strip()==parsed.path, f'Sitemap/permalink mismatch: {value}'
 
           assert BASE in all_urls, 'Canonical homepage URL is missing from sitemap'
           import json
