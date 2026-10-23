@@ -553,16 +553,48 @@ setMeta('twitterDescription',localSeoDescription);
   }
 }
 function niceKey(k){return k.replace(/_/g,' ').replace(/\b\w/g,m=>m.toUpperCase())}
-function show(v){if(v===null||v===undefined||v==='')return '<span class="muted">Coming Soon</span>';if(typeof v==='boolean')return v?'<span class="yes">Yes</span>':'<span class="no">No</span>';if(Array.isArray(v))return v.length?v.map(x=>esc(x)).join(', '):'<span class="muted">Coming Soon</span>';return esc(v)}
+function show(v){
+  if(v===null||v===undefined||v==='') return '<span class="muted">Coming Soon</span>';
+  if(typeof v==='boolean') return v?'<span class="yes">Yes</span>':'<span class="no">No</span>';
+  if(Array.isArray(v)){
+    const items=v.map(x=>plainText(x)).filter(Boolean);
+    return items.length?items.map(x=>esc(x)).join(', '):'<span class="muted">Coming Soon</span>';
+  }
+  if(typeof v==='object'){
+    const text=plainText(v);
+    return text?esc(text):'<span class="muted">Coming Soon</span>';
+  }
+  return esc(v);
+}
 function field(label,v){
   if(v===null||v===undefined||v==='') return '';
   if(Array.isArray(v)&&v.length===0) return '';
+  if(typeof v==='object'&&!Array.isArray(v)&&!plainText(v)) return '';
   return `<div class="item"><div class="label">${esc(label)}</div><div class="value">${show(v)}</div></div>`;
 }
+function facilityLabel(key){
+  return String(key).replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').replace(/\\b\\w/g,m=>m.toUpperCase());
+}
+function facilityValues(v){
+  if(v===null||v===undefined||v==='') return [];
+  if(Array.isArray(v)) return v.map(item=>{
+    if(item&&typeof item==='object'){
+      const label=item.name||item.label||item.title||item.facility||item.text;
+      if(label!==undefined&&label!==null&&label!=='') return plainText(label);
+      return Object.entries(item).filter(([,value])=>value===true||value===1||String(value).toLowerCase()==='yes').map(([key])=>facilityLabel(key)).join(', ');
+    }
+    return plainText(item);
+  }).filter(Boolean);
+  if(typeof v==='object'){
+    const preferred=v.name||v.label||v.title||v.text||v.value;
+    if(preferred!==undefined&&preferred!==null&&preferred!=='') return [plainText(preferred)].filter(Boolean);
+    return Object.entries(v).filter(([,value])=>value===true||value===1||['true','yes','1','available'].includes(String(value).trim().toLowerCase())).map(([key])=>facilityLabel(key)).filter(Boolean);
+  }
+  return String(v).split(/[,;|]/).map(x=>x.trim()).filter(Boolean);
+}
 function pills(v){
-  if(v===null||v===undefined||v==='') return '';
-  let a=Array.isArray(v)?v:String(v).split(',').map(x=>x.trim()).filter(Boolean);
-  if(!a.length) return '';
+  const a=facilityValues(v);
+  if(!a.length) return '<span class="muted">Facility details not listed</span>';
   return `<div class="facilities">${a.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div>`;
 }
 function normalizeBool(v){
@@ -619,9 +651,8 @@ function freshnessLabel(r){
   return 'Information available';
 }
 function facilityItems(r){
-  const source = r.facilities || [];
-  const arr = Array.isArray(source) ? source : String(source).split(',').map(x=>x.trim()).filter(Boolean);
-  return arr;
+  const source = r.facilities ?? r.amenities ?? r.features ?? r.facility ?? [];
+  return facilityValues(source);
 }
 
 function hasValue(v){
