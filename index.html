@@ -5563,12 +5563,31 @@ body > footer .footer-bottom{border-top-color:rgba(232,139,165,.25)!important;co
 
     const $ = id => document.getElementById(id); 
 
-    function escapeHTML(value) { 
-      return String(value ?? "") 
-        .replace(/&/g,"&amp;").replace(/</g,"&lt;") 
-        .replace(/>/g,"&gt;").replace(/"/g,"&quot;") 
-        .replace(/'/g,"&#039;"); 
-    } 
+    function studentHubText(value, depth = 0) {
+      if (value === null || value === undefined) return "";
+      if (depth > 4) return "";
+      if (typeof value === "string" || typeof value === "number") return String(value);
+      if (typeof value === "boolean") return value ? "Yes" : "No";
+      if (Array.isArray(value)) return value.map(item => studentHubText(item, depth + 1)).filter(Boolean).join(", ");
+      if (typeof value === "object") {
+        const keys = ["name","label","title","text","value","address","formatted_address","area","city","locality","display_name","price","amount","url"];
+        for (const key of keys) {
+          if (value[key] !== undefined && value[key] !== null && value[key] !== "") {
+            const text = studentHubText(value[key], depth + 1);
+            if (text) return text;
+          }
+        }
+        return Object.values(value).map(item => studentHubText(item, depth + 1)).filter(Boolean).join(", ");
+      }
+      return "";
+    }
+
+    function escapeHTML(value) {
+      return studentHubText(value)
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+    }
 
     function showToast(message) { 
       const toast = $("toast"); 
