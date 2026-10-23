@@ -120,10 +120,10 @@ async function staticPropertyUrlIsCanonical(type, row, loc) {
     console.warn(`Skipping sitemap listing without a static property page: ${loc}`);
     return false;
   }
-  const canonical = html.match(/^canonical:\\s*["']?([^"'\\r\\n]+)["']?\\s*$/m)?.[1]?.trim();
-  const permalink = html.match(/^permalink:\\s*["']?([^"'\\r\\n]+)["']?\\s*$/m)?.[1]?.trim();
+  const canonical = html.match(/^canonical:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
+  const permalink = html.match(/^permalink:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
   const expectedPath = `/properties/${type}/${slug}/`;
-  const expectedUrl = new URL(expectedPath.replace(/^\\//, ''), BASE).href;
+  const expectedUrl = new URL(expectedPath.replace(/^\//, ''), BASE).href;
   if (canonical !== expectedUrl || permalink !== expectedPath || loc !== expectedUrl) {
     console.warn(`Skipping sitemap listing with canonical/permalink mismatch: ${loc}; canonical=${canonical || 'missing'}; permalink=${permalink || 'missing'}`);
     return false;
