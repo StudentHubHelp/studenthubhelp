@@ -109,15 +109,44 @@ for (const name of finderPages) {
   if (!pages.has(pageUrl(name))) pages.set(pageUrl(name), gitLastModified(name));
 }
 
+async function staticPropertyUrlIsCanonical(type, row, loc) {
+  const slug = String(row.slug ?? '').trim();
+  if (!slug) return true; // Legacy ID URLs are handled by property-details.html.
+  const path = `properties/${type}/${slug}/index.html`;
+  let html;
+  try {
+    html = await readFile(path, 'utf8');
+  } catch {
+    console.warn(`Skipping sitemap listing without a static property page: ${loc}`);
+    return false;
+  }
+  const canonical = html.match(/^canonical:\\s*["']?([^"'\\r\\n]+)["']?\\s*$/m)?.[1]?.trim();
+  const permalink = html.match(/^permalink:\\s*["']?([^"'\\r\\n]+)["']?\\s*$/m)?.[1]?.trim();
+  const expectedPath = `/properties/${type}/${slug}/`;
+  const expectedUrl = new URL(expectedPath.replace(/^\\//, ''), BASE).href;
+  if (canonical !== expectedUrl || permalink !== expectedPath || loc !== expectedUrl) {
+    console.warn(`Skipping sitemap listing with canonical/permalink mismatch: ${loc}; canonical=${canonical || 'missing'}; permalink=${permalink || 'missing'}`);
+    return false;
+  }
+  return true;
+}
+
 const properties = new Map();
+let skippedPropertyRows = 0;
 for (const [type, table] of Object.entries(TABLES)) {
   for (const row of await fetchRows(table)) {
     const loc = recordUrl(type, row);
     if (!loc) continue;
+    if (!(await staticPropertyUrlIsCanonical(type, row, loc))) {
+      skippedPropertyRows++;
+      continue;
+    }
     const lastmod = validDate(row.updated_at || row.created_at);
     const current = properties.get(loc);
     if (!current || (lastmod && (!current.lastmod || lastmod > current.lastmod))) {
       properties.set(loc, { loc, lastmod, type, name: row.name, area: row.area, city: row.city, address: row.address });
+    } else {
+      console.warn(`Duplicate listing URL maps to the same sitemap URL; retaining one canonical entry: ${loc}`);
     }
   }
 }
@@ -208,4 +237,4 @@ const indexBody = sitemapEntries.map(name => `  <sitemap><loc>${esc(new URL(name
 const indexXml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="${NS}">\n${indexBody}\n</sitemapindex>\n`;
 await writeFile('sitemap.xml', indexXml, 'utf8');
 
-console.log(`Generated sitemap index: pages=${pageEntries.length}, properties=${propertyEntries.length}, files=${sitemapEntries.length}.`);
+console.log(`Generated sitemap index: pages=${pageEntries.length}, properties=${propertyEntries.length}, skipped invalid/missing property pages=${skippedPropertyRows}, files=${sitemapEntries.length}.`);
