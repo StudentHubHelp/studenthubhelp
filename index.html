@@ -3837,6 +3837,39 @@ body > footer .footer-bottom{border-top-color:rgba(232,139,165,.25)!important;co
       #studenthubMarqueeTrack .studenthub-showcase-card, #studenthubMarqueeTrack .studenthub-showcase-favorite, #studenthubMarqueeTrack .studenthub-showcase-details { transition:none; }
     }
 </style>
+
+<style id="studenthub-live-showcase-address-timing-fix">
+  /* Scoped to the homepage section headed "Explore student life, all in one place." */
+  #live-listings #studenthubMarqueeTrack .studenthub-showcase-card {
+    display:flex; flex-direction:column; height:auto !important; min-height:100%;
+  }
+  #live-listings #studenthubMarqueeTrack .studenthub-showcase-copy {
+    display:flex; flex-direction:column; flex:1 1 auto; min-width:0; height:auto !important;
+  }
+  #live-listings #studenthubMarqueeTrack .studenthub-showcase-full-address,
+  #live-listings #studenthubMarqueeTrack .studenthub-showcase-timing {
+    display:flex; align-items:flex-start; gap:7px; min-width:0; height:auto !important;
+    margin:0 0 8px; color:#596579; font-size:12px; line-height:1.45;
+    white-space:normal; overflow-wrap:anywhere; word-break:normal;
+  }
+  #live-listings #studenthubMarqueeTrack .studenthub-showcase-full-address span:first-child,
+  #live-listings #studenthubMarqueeTrack .studenthub-showcase-timing span:first-child {
+    flex:0 0 auto;
+  }
+  #live-listings #studenthubMarqueeTrack .studenthub-showcase-bottom {
+    margin-top:auto; padding-top:12px; align-items:center;
+  }
+  #live-listings #studenthubMarqueeTrack .studenthub-showcase-price-wrap {
+    min-width:0; max-width:100%; overflow-wrap:anywhere;
+  }
+  #live-listings #studenthubMarqueeTrack .studenthub-showcase-details {
+    flex:0 0 auto; margin-left:auto;
+  }
+  @media (max-width:767px) {
+    #live-listings #studenthubMarqueeTrack .studenthub-showcase-full-address,
+    #live-listings #studenthubMarqueeTrack .studenthub-showcase-timing { font-size:12px; }
+  }
+</style>
 </head>
 
 
@@ -6068,7 +6101,33 @@ const query = state.search.trim().toLowerCase();
         const { item, category, image } = entry;
         const title = item.displayName || item.name || item.business_name || "Student place";
         const categoryLabel = item.listingLabel || ({hostel:"Hostel / PG",tiffin:"Tiffin / Mess",library:"Library",cafe:"Cafe",bookstore:"Book Store",other:"Student Place"})[category];
-        const locationText = item.displayArea || item.displayCity || item.area || item.city || item.address || "Location details available";
+        const addressParts = [
+          item.displayAddress,
+          item.address,
+          item.full_address,
+          item.property_address,
+          item.street_address,
+          item.landmark,
+          item.nearby_landmark,
+          item.displayArea,
+          item.area,
+          item.locality,
+          item.displayCity,
+          item.city,
+          item.state
+        ].map(value => value == null ? "" : String(value).trim()).filter(Boolean);
+        const locationText = addressParts.filter((value, index, values) =>
+          values.findIndex(other => other.toLowerCase() === value.toLowerCase()) === index
+        ).join(", ") || "Full address not provided";
+        const openingTime = item.opening_time || item.openingTime || item.opens_at || item.open_time || "";
+        const closingTime = item.closing_time || item.closingTime || item.closes_at || item.close_time || "";
+        const rawTiming = item.displayTiming || item.operating_hours || item.operatingHours || item.business_hours || item.timings || item.hours || "";
+        const timingText = rawTiming
+          ? String(rawTiming).trim()
+          : (openingTime && closingTime ? openingTime + " – " + closingTime
+            : openingTime ? "Opens " + openingTime
+            : closingTime ? "Closes " + closingTime : "");
+        const isAlwaysOpen = /24\\s*\\/\\s*7|24 hours|always open/i.test(timingText);
         const price = getCardPrice(item);
         const verified = Boolean(item.verification?.verified || item.verified || item.is_verified);
         const ratingValue = item.rating ?? item.average_rating ?? item.avg_rating ?? item.review_rating;
@@ -6106,7 +6165,8 @@ const query = state.search.trim().toLowerCase();
           (hasRating ? '<span class="studenthub-showcase-rating" aria-label="Rating ' + rating.toFixed(1) + ' out of 5"><span aria-hidden="true">★</span> ' + rating.toFixed(1) + '</span>' : '') +
           '<button class="studenthub-showcase-favorite" type="button" aria-label="Add ' + safe(title) + ' to favorites" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg></button></div></div>' +
           '<div class="studenthub-showcase-copy"><h3 class="studenthub-showcase-name" title="' + safe(title) + '">' + safe(title) + '</h3>' +
-          '<div class="studenthub-showcase-location"><span aria-hidden="true">⌖</span><span>' + safe(locationText) + '</span></div>' +
+          '<div class="studenthub-showcase-location studenthub-showcase-full-address"><span aria-hidden="true">📍</span><span>' + safe(locationText) + '</span></div>' +
+          '<div class="studenthub-showcase-timing"><span aria-hidden="true">🕒</span><span>' + safe(isAlwaysOpen ? "24/7 Open" : timingText ? timingText : "Operating hours not provided") + '</span></div>' +
           chips + '<div class="studenthub-showcase-bottom"><div class="studenthub-showcase-price-wrap"><span class="studenthub-showcase-price">' + safe(price || "Starts on Request") + '</span>' +
           '<span class="studenthub-showcase-price-note">' + (verified ? 'Verified listing' : 'StudentHubHelp listing') + '</span></div>' +
           '<a class="studenthub-showcase-details" href="' + safe(href) + '">View Details <span aria-hidden="true">→</span></a></div></div></article>';
