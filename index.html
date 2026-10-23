@@ -6041,13 +6041,26 @@ const query = state.search.trim().toLowerCase();
         const ratingValue = item.rating ?? item.average_rating ?? item.avg_rating ?? item.review_rating;
         const rating = Number(ratingValue);
         const hasRating = Number.isFinite(rating) && rating > 0 && rating <= 5;
-        const amenitiesRaw = item.amenities || item.facilities || item.features || [];
-        const amenities = (Array.isArray(amenitiesRaw) ? amenitiesRaw : String(amenitiesRaw || "").split(/[,;|]/))
-          .map(value => typeof value === "string" ? value.trim() : (value?.name || value?.label || ""))
-          .filter(Boolean).slice(0, 3);
+        const amenitiesRaw = item.amenities ?? item.facilities ?? item.features ?? item.facility ?? [];
+        const facilityLabel = key => String(key).replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").replace(/\\b\\w/g, char => char.toUpperCase());
+        const normalizeAmenity = value => {
+          if (value === null || value === undefined || value === "") return [];
+          if (typeof value === "string" || typeof value === "number") return String(value).split(/[,;|]/).map(text => text.trim()).filter(Boolean);
+          if (typeof value === "boolean") return [];
+          if (Array.isArray(value)) return value.flatMap(normalizeAmenity);
+          if (typeof value === "object") {
+            const label = value.name || value.label || value.title || value.facility || value.text || value.value;
+            if (label !== undefined && label !== null && label !== "") return normalizeAmenity(label);
+            return Object.entries(value)
+              .filter(([, flag]) => flag === true || flag === 1 || ["true", "yes", "1", "available"].includes(String(flag).trim().toLowerCase()))
+              .map(([key]) => facilityLabel(key));
+          }
+          return [];
+        };
+        const amenities = normalizeAmenity(amenitiesRaw).filter(Boolean).slice(0, 3);
         const type = item.listingCategory || category;
         const href = "property-details.html?type=" + encodeURIComponent(type) + "&id=" + encodeURIComponent(item.id);
-        const safe = value => escapeHTML(String(value ?? ""));
+        const safe = value => escapeHTML(value);
         const bannerLabel = safe(categoryLabel);
         const chips = amenities.length
           ? '<div class="studenthub-showcase-amenities">' + amenities.map(value => '<span class="studenthub-showcase-chip">' + safe(value) + '</span>').join("") + '</div>'
