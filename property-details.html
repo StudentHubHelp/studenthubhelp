@@ -189,7 +189,20 @@ const config={
 };
 const cfg=config[type]||config.hostel;
 const app=document.getElementById('app');
-const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function plainText(v, depth=0) {
+  if(v===null||v===undefined) return '';
+  if(depth>4) return '';
+  if(typeof v==='string'||typeof v==='number') return String(v);
+  if(typeof v==='boolean') return v?'Yes':'No';
+  if(Array.isArray(v)) return v.map(x=>plainText(x,depth+1)).filter(Boolean).join(', ');
+  if(typeof v==='object'){
+    const keys=['name','label','title','text','value','address','formatted_address','area','city','locality','display_name','price','amount','url'];
+    for(const k of keys) if(v[k]!==undefined&&v[k]!==null&&v[k]!==''){const out=plainText(v[k],depth+1);if(out)return out;}
+    return Object.values(v).map(x=>plainText(x,depth+1)).filter(Boolean).join(', ');
+  }
+  return '';
+}
+const esc=v=>plainText(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const val=v=>(v===null||v===undefined||v==='')?null:v;
   
 
