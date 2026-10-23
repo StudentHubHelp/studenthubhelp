@@ -88,7 +88,12 @@ jobs:
                       page=Path('/'.join(parts))/'index.html'
                       assert page.exists(), f'Sitemap property page does not exist: {value}'
                       source=page.read_text(encoding='utf-8')
-                      canonical=re.search(r'^canonical:\\s*["\\']?([^"\\'\\r\\n]+)["\\']?\\s*
+                      canonical_line=next((line for line in source.splitlines() if line.startswith('canonical:')), '')
+                      permalink_line=next((line for line in source.splitlines() if line.startswith('permalink:')), '')
+                      canonical=canonical_line.split(':',1)[1].strip().strip('"').strip("'") if canonical_line else ''
+                      permalink=permalink_line.split(':',1)[1].strip().strip('"').strip("'") if permalink_line else ''
+                      assert canonical==value, f'Sitemap/canonical mismatch: {value}'
+                      assert permalink==parsed.path, f'Sitemap/permalink mismatch: {value}'
 
           assert BASE in all_urls, 'Canonical homepage URL is missing from sitemap'
           import json
