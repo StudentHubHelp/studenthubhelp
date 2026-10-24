@@ -109,35 +109,46 @@ for (const name of finderPages) {
   if (!pages.has(pageUrl(name))) pages.set(pageUrl(name), gitLastModified(name));
 }
 
-async function staticPropertyUrlIsCanonical(type, row, loc) {
+async function canonicalPropertyUrl(type, row, preferredLoc) {
   const slug = String(row.slug ?? '').trim();
-  if (!slug) return true; // Legacy ID URLs are handled by property-details.html.
+  if (!slug) return preferredLoc;
+
   const path = `properties/${type}/${slug}/index.html`;
+  const expectedPath = `/properties/${type}/${slug}/`;
+  const expectedUrl = new URL(expectedPath.replace(/^\//, ''), BASE).href;
   let html;
   try {
     html = await readFile(path, 'utf8');
   } catch {
-    console.warn(`Skipping sitemap listing without a static property page: ${loc}`);
-    return false;
+    // Keep active listings discoverable when their static SEO page has not been generated.
+    // property-details.html emits a self-canonical URL for type + slug.
+    const fallback = new URL('property-details.html', BASE);
+    fallback.searchParams.set('type', type);
+    fallback.searchParams.set('slug', slug);
+    console.warn(`Using dynamic canonical URL for active listing without a static page: ${fallback.href}`);
+    return fallback.href;
   }
+
   const canonical = html.match(/^canonical:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
   const permalink = html.match(/^permalink:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
-  const expectedPath = `/properties/${type}/${slug}/`;
-  const expectedUrl = new URL(expectedPath.replace(/^\//, ''), BASE).href;
-  if (canonical !== expectedUrl || permalink !== expectedPath || loc !== expectedUrl) {
-    console.warn(`Skipping sitemap listing with canonical/permalink mismatch: ${loc}; canonical=${canonical || 'missing'}; permalink=${permalink || 'missing'}`);
-    return false;
+  if (canonical !== expectedUrl || permalink !== expectedPath || preferredLoc !== expectedUrl) {
+    const fallback = new URL('property-details.html', BASE);
+    fallback.searchParams.set('type', type);
+    fallback.searchParams.set('slug', slug);
+    console.warn(`Using dynamic canonical URL because static page canonical/permalink does not match: ${fallback.href}; canonical=${canonical || 'missing'}; permalink=${permalink || 'missing'}`);
+    return fallback.href;
   }
-  return true;
+  return expectedUrl;
 }
 
 const properties = new Map();
 let skippedPropertyRows = 0;
 for (const [type, table] of Object.entries(TABLES)) {
   for (const row of await fetchRows(table)) {
-    const loc = recordUrl(type, row);
-    if (!loc) continue;
-    if (!(await staticPropertyUrlIsCanonical(type, row, loc))) {
+    const preferredLoc = recordUrl(type, row);
+    if (!preferredLoc) continue;
+    const loc = await canonicalPropertyUrl(type, row, preferredLoc);
+    if (!loc) {
       skippedPropertyRows++;
       continue;
     }
