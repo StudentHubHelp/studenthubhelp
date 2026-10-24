@@ -4942,7 +4942,6 @@ body,button,input,textarea,select{font-synthesis:none}
       </div>
       <div class="shh-map-shell">
         <div class="shh-map-toolbar">
-          <div class="shh-map-count"><span class="shh-map-pulse" aria-hidden="true"></span><span id="shhMapCount">Loading mapped listings…</span></div>
           <label class="shh-map-select-label" for="shhMapCategory">Category
             <select id="shhMapCategory" aria-label="Filter map by property category">
               <option value="all">All categories</option>
@@ -6144,20 +6143,17 @@ body,button,input,textarea,select{font-synthesis:none}
     }
 
     function shhRenderIndiaMap(items) {
-      const countEl = document.getElementById("shhMapCount");
       const citiesEl = document.getElementById("shhMapCities");
       const categoryEl = document.getElementById("shhMapCategory");
-      if (!countEl || !citiesEl || !categoryEl) return;
+      if (!citiesEl || !categoryEl) return;
       shhMapInit();
       if (!shhIndiaLeafletMap || !shhIndiaMarkerLayer) {
-        countEl.textContent = "Map is temporarily unavailable";
         citiesEl.innerHTML = '<div class="shh-map-empty">The interactive map could not load. Please check your connection and try again.</div>';
         return;
       }
       const selectedCategory = categoryEl.value;
       const mapped = (items || []).map(item => ({item,coords:shhMapCoordinates(item)})).filter(entry => entry.coords && (selectedCategory === "all" || entry.item.listingCategory === selectedCategory));
       shhIndiaMapItems = mapped;
-      countEl.textContent = mapped.length.toLocaleString("en-IN") + (mapped.length === 1 ? " mapped listing" : " mapped listings");
       shhIndiaMarkerLayer.clearLayers();
       const cityGroups = new Map();
       mapped.forEach(({item,coords}) => {
