@@ -115,7 +115,7 @@ async function canonicalPropertyUrl(type, row, preferredLoc) {
 
   const path = `properties/${type}/${slug}/index.html`;
   const expectedPath = `/properties/${type}/${slug}/`;
-  const expectedUrl = new URL(expectedPath.replace(/^\\//, ''), BASE).href;
+  const expectedUrl = new URL(expectedPath.replace(/^\//, ''), BASE).href;
   let html;
   try {
     html = await readFile(path, 'utf8');
@@ -129,8 +129,8 @@ async function canonicalPropertyUrl(type, row, preferredLoc) {
     return fallback.href;
   }
 
-  const canonical = html.match(/^canonical:\\s*["']?([^"'\\r\\n]+)["']?\\s*$/m)?.[1]?.trim();
-  const permalink = html.match(/^permalink:\\s*["']?([^"'\\r\\n]+)["']?\\s*$/m)?.[1]?.trim();
+  const canonical = html.match(/^canonical:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
+  const permalink = html.match(/^permalink:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
   if (canonical !== expectedUrl || permalink !== expectedPath || preferredLoc !== expectedUrl) {
     const fallback = new URL('property-details.html', BASE);
     fallback.searchParams.set('type', type);
