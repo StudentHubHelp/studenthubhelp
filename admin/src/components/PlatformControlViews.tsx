@@ -73,7 +73,7 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = (props)
     currentSubTab, listingRequests, claimRequests, verificationRequests, bookings, reviews, reports,
     mediaImages, properties, students = [], owners = [], onApproveListing, onRejectListing, onApproveClaim, onRejectClaim,
     onApproveVerification, onRejectVerification, onToggleBookingStatus, onToggleReviewStatus,
-    onResolveReport, onUnfeatureProperty, onListingRequestUpdated,
+    onResolveReport, onUnfeatureProperty, onListingRequestUpdated, onEditListingRequest,
   } = props;
 
   const [searchQuery, setSearchQuery] = useState('');
