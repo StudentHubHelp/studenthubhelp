@@ -64,6 +64,7 @@
   <link rel="apple-touch-icon" href="/logo.png" />
 
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co" crossorigin />
 <!-- Phase 1 performance: prioritize the first visible LCP hero image. -->
   <link rel="preload" as="image" href="hostelherobanner.jpg" fetchpriority="high" />
@@ -2509,7 +2510,63 @@
   @media (max-width:1050px) { .studenthub-showcase-card { flex-basis:calc((100vw - 32px - 56px) / 5); width:calc((100vw - 32px - 56px) / 5); } .studenthub-showcase-image,.studenthub-showcase-image-placeholder { height:125px; } }
   @media (max-width:700px) { .studenthub-marquee-track { gap:12px; animation-duration:42s; } .studenthub-showcase-card { flex-basis:calc((100vw - 32px - 24px) / 3); width:calc((100vw - 32px - 24px) / 3); border-radius:14px; } .studenthub-showcase-image,.studenthub-showcase-image-placeholder { height:105px; } .studenthub-showcase-copy { padding:10px; } .studenthub-showcase-name { font-size:13px; } .studenthub-showcase-location { font-size:11px; } .studenthub-showcase-price { font-size:10px; padding:5px 6px; } .studenthub-showcase-verified { font-size:9px; } .studenthub-showcase-footnote { font-size:11px; padding-inline:8px; } }
   @media (prefers-reduced-motion: reduce) { .studenthub-marquee-track { animation:none; transform:none; } }
-</style>
+
+    /* India property map — scoped styles only */
+    .shh-india-map-section { padding: 64px 0 72px; background: linear-gradient(180deg,#fff 0%,#fff7f9 100%); }
+    .shh-map-heading { margin-bottom: 30px; }
+    .shh-map-shell { overflow: hidden; border: 1px solid rgba(232,139,165,.34); border-radius: 24px; background: #fff; box-shadow: 0 18px 50px rgba(35,20,28,.08); }
+    .shh-map-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; border-bottom:1px solid #f3e3e8; }
+    .shh-map-count { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:800; color:#191217; }
+    .shh-map-pulse { width:9px; height:9px; flex:0 0 9px; border-radius:50%; background:#df6c91; box-shadow:0 0 0 5px rgba(223,108,145,.13); }
+    .shh-map-select-label { display:flex; align-items:center; gap:9px; color:#62545a; font-size:12px; font-weight:800; }
+    .shh-map-select-label select { min-width:155px; border:1px solid #ead6de; border-radius:12px; background:#fff; color:#20151a; padding:10px 34px 10px 12px; font-size:13px; font-weight:700; outline-offset:3px; }
+    .shh-map-layout { display:grid; grid-template-columns:minmax(0,1fr) 285px; min-height:490px; }
+    .shh-map-canvas-wrap { position:relative; min-width:0; background:#f4f7f8; }
+    #shhIndiaMap { width:100%; height:490px; z-index:1; background:#edf3f4; }
+    .shh-map-legend { position:absolute; z-index:500; left:14px; bottom:14px; display:flex; flex-wrap:wrap; gap:7px 12px; max-width:calc(100% - 28px); padding:10px 12px; border:1px solid rgba(255,255,255,.85); border-radius:13px; background:rgba(255,255,255,.94); box-shadow:0 5px 20px rgba(20,30,35,.12); font-size:10px; font-weight:800; color:#40353a; }
+    .shh-map-legend span { display:flex; align-items:center; gap:5px; white-space:nowrap; }
+    .shh-legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+    .shh-legend-dot.hostel { background:#d94f7c; } .shh-legend-dot.tiffin { background:#e69a34; } .shh-legend-dot.library { background:#3977d5; } .shh-legend-dot.cafe { background:#239b77; } .shh-legend-dot.bookstore { background:#8b5ac7; }
+    .shh-map-sidebar { padding:22px 18px; border-left:1px solid #f1e4e8; background:linear-gradient(180deg,#fff 0%,#fffafb 100%); }
+    .shh-map-sidebar-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .shh-map-kicker { display:block; margin-bottom:3px; color:#a34c6b; font-size:10px; font-weight:900; letter-spacing:1.2px; text-transform:uppercase; }
+    .shh-map-sidebar-heading h3 { margin:0; font-size:19px; letter-spacing:-.4px; color:#191217; }
+    .shh-map-pin-icon { display:grid; place-items:center; width:38px; height:38px; border-radius:12px; background:#fff0f4; font-size:19px; }
+    .shh-map-sidebar-note { margin:9px 0 16px; color:#76666d; font-size:12px; line-height:1.5; }
+    .shh-map-cities { display:grid; gap:8px; }
+    .shh-map-city { width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 12px; border:1px solid #f0e3e7; border-radius:12px; background:#fff; color:#24171d; text-align:left; cursor:pointer; transition:transform .18s ease,border-color .18s ease,background .18s ease; }
+    .shh-map-city:hover,.shh-map-city:focus-visible { transform:translateY(-1px); border-color:#e88ba5; background:#fff5f8; outline:none; }
+    .shh-map-city-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:800; }
+    .shh-map-city-count { flex:0 0 auto; padding:4px 7px; border-radius:8px; background:#fff0f4; color:#a43d61; font-size:10px; font-weight:900; }
+    .shh-map-loading,.shh-map-empty { padding:14px; border:1px dashed #ead5de; border-radius:12px; color:#796a70; font-size:12px; line-height:1.5; }
+    .shh-map-all-link { display:flex; justify-content:space-between; align-items:center; margin-top:15px; padding:12px 13px; border-radius:12px; background:#171116; color:#fff!important; font-size:12px; font-weight:800; }
+    .shh-map-all-link:hover { background:#a94365; }
+    .shh-map-attribution-note { margin:12px 18px 0; color:#85777d; font-size:10px; }
+    .shh-map-popup { min-width:190px; max-width:250px; color:#21161b; }
+    .shh-map-popup-category { display:inline-block; margin-bottom:6px; padding:3px 7px; border-radius:6px; background:#fff0f4; color:#9d3f60; font-size:10px; font-weight:900; }
+    .shh-map-popup h3 { margin:0 0 5px; font-size:14px; line-height:1.35; }
+    .shh-map-popup p { margin:0 0 9px; color:#6f6066; font-size:11px; line-height:1.45; }
+    .shh-map-popup a { display:inline-block; padding:7px 10px; border-radius:8px; background:#171116; color:#fff!important; font-size:11px; font-weight:800; }
+    @media(max-width:800px) {
+      .shh-india-map-section { padding:45px 0 50px; }
+      .shh-map-layout { grid-template-columns:1fr; }
+      #shhIndiaMap { height:390px; }
+      .shh-map-sidebar { border-left:0; border-top:1px solid #f1e4e8; padding:18px; }
+      .shh-map-cities { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .shh-map-city { padding:10px; }
+    }
+    @media(max-width:520px) {
+      .shh-map-toolbar { align-items:flex-start; flex-direction:column; padding:15px; }
+      .shh-map-select-label { width:100%; justify-content:space-between; }
+      .shh-map-select-label select { flex:1; min-width:0; max-width:68%; }
+      #shhIndiaMap { height:330px; }
+      .shh-map-legend { left:8px; bottom:8px; gap:6px 9px; max-width:calc(100% - 16px); padding:8px; font-size:9px; }
+      .shh-map-cities { grid-template-columns:1fr 1fr; gap:7px; }
+      .shh-map-city-name { font-size:11px; }
+      .shh-map-attribution-note { margin-inline:12px; }
+    }
+
+  </style>
 
   <style id="studenthubhelp-mobile-css-inline">
 /* StudentHubHelp — global responsive + professional light UI layer.
@@ -4874,6 +4931,52 @@ body,button,input,textarea,select{font-synthesis:none}
   ========================================= -->
 
   
+
+  <!-- StudentHubHelp India property map: isolated homepage section -->
+  <section class="section shh-india-map-section" id="india-property-map" aria-labelledby="india-map-title">
+    <div class="container">
+      <div class="section-head shh-map-heading">
+        <span class="eyebrow">Explore Across India</span>
+        <h2 class="section-title" id="india-map-title">Find Student-Friendly Places Across India</h2>
+        <p class="section-description">Explore active StudentHubHelp listings by location. Pins appear only where a listing has valid coordinates.</p>
+      </div>
+      <div class="shh-map-shell">
+        <div class="shh-map-toolbar">
+          <div class="shh-map-count"><span class="shh-map-pulse" aria-hidden="true"></span><span id="shhMapCount">Loading mapped listings…</span></div>
+          <label class="shh-map-select-label" for="shhMapCategory">Category
+            <select id="shhMapCategory" aria-label="Filter map by property category">
+              <option value="all">All categories</option>
+              <option value="hostel">Hostel / PG</option>
+              <option value="tiffin">Tiffin / Mess</option>
+              <option value="library">Library</option>
+              <option value="cafe">Cafe</option>
+              <option value="bookstore">Book Store</option>
+            </select>
+          </label>
+        </div>
+        <div class="shh-map-layout">
+          <div class="shh-map-canvas-wrap">
+            <div id="shhIndiaMap" role="application" aria-label="Interactive map of StudentHubHelp property listings across India"></div>
+            <div class="shh-map-legend" aria-label="Map category legend">
+              <span><i class="shh-legend-dot hostel"></i>Hostel / PG</span>
+              <span><i class="shh-legend-dot tiffin"></i>Tiffin</span>
+              <span><i class="shh-legend-dot library"></i>Library</span>
+              <span><i class="shh-legend-dot cafe"></i>Cafe</span>
+              <span><i class="shh-legend-dot bookstore"></i>Book Store</span>
+            </div>
+          </div>
+          <aside class="shh-map-sidebar" aria-label="Cities with mapped listings">
+            <div class="shh-map-sidebar-heading"><div><span class="shh-map-kicker">Discover by city</span><h3>Popular locations</h3></div><span class="shh-map-pin-icon" aria-hidden="true">📍</span></div>
+            <p class="shh-map-sidebar-note">Select a city to zoom in and explore its mapped listings.</p>
+            <div id="shhMapCities" class="shh-map-cities"><div class="shh-map-loading">Preparing city list…</div></div>
+            <a class="shh-map-all-link" href="global-search.html">Explore all listings <span aria-hidden="true">→</span></a>
+          </aside>
+        </div>
+        <p class="shh-map-attribution-note">Map data © OpenStreetMap contributors. Listing pins use coordinates saved with each listing.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="section compact-trust-section" id="studenthub-trust">
     <div class="container">
       <div class="section-head"><span class="eyebrow">Why StudentHubHelp</span><h2 class="section-title">Discover clearly. Verify carefully. Decide confidently.</h2><p class="section-description">Five student services in one place, with transparent listing status and practical safety reminders.</p></div>
@@ -5676,6 +5779,7 @@ body,button,input,textarea,select{font-synthesis:none}
   ></div>
 
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -6011,12 +6115,109 @@ body,button,input,textarea,select{font-synthesis:none}
       if (verifiedCount) verifiedCount.textContent = allListings.length.toLocaleString("en-IN");
     }
 
+
+    /* =========================================
+       INDIA PROPERTY MAP — reuses homepage listing data
+    ========================================= */
+    let shhIndiaLeafletMap = null;
+    let shhIndiaMarkerLayer = null;
+    let shhIndiaMapItems = [];
+    const shhMapCategoryColors = {hostel:"#d94f7c",tiffin:"#e69a34",library:"#3977d5",cafe:"#239b77",bookstore:"#8b5ac7"};
+    const shhMapCategoryLabels = {hostel:"Hostel / PG",tiffin:"Tiffin / Mess",library:"Library",cafe:"Cafe",bookstore:"Book Store"};
+
+    function shhMapCoordinates(item) {
+      const lat = Number(firstValue(item, ["latitude","lat","location_lat","geo_lat","location_latitude","latitude_deg"]));
+      const lng = Number(firstValue(item, ["longitude","lng","lon","long","location_lng","geo_lng","location_longitude","longitude_deg"]));
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 6 || lat > 38.8 || lng < 68 || lng > 98.5) return null;
+      return {lat,lng};
+    }
+
+    function shhMapInit() {
+      if (shhIndiaLeafletMap || !window.L || !document.getElementById("shhIndiaMap")) return;
+      shhIndiaLeafletMap = L.map("shhIndiaMap", {scrollWheelZoom:false}).setView([22.8,79.2], 4.4);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+      }).addTo(shhIndiaLeafletMap);
+      shhIndiaMarkerLayer = L.layerGroup().addTo(shhIndiaLeafletMap);
+      setTimeout(() => shhIndiaLeafletMap && shhIndiaLeafletMap.invalidateSize(), 150);
+    }
+
+    function shhRenderIndiaMap(items) {
+      const countEl = document.getElementById("shhMapCount");
+      const citiesEl = document.getElementById("shhMapCities");
+      const categoryEl = document.getElementById("shhMapCategory");
+      if (!countEl || !citiesEl || !categoryEl) return;
+      shhMapInit();
+      if (!shhIndiaLeafletMap || !shhIndiaMarkerLayer) {
+        countEl.textContent = "Map is temporarily unavailable";
+        citiesEl.innerHTML = '<div class="shh-map-empty">The interactive map could not load. Please check your connection and try again.</div>';
+        return;
+      }
+      const selectedCategory = categoryEl.value;
+      const mapped = (items || []).map(item => ({item,coords:shhMapCoordinates(item)})).filter(entry => entry.coords && (selectedCategory === "all" || entry.item.listingCategory === selectedCategory));
+      shhIndiaMapItems = mapped;
+      countEl.textContent = mapped.length.toLocaleString("en-IN") + (mapped.length === 1 ? " mapped listing" : " mapped listings");
+      shhIndiaMarkerLayer.clearLayers();
+      const cityGroups = new Map();
+      mapped.forEach(({item,coords}) => {
+        const city = String(item.displayCity || item.city || item.displayArea || "Other location").trim();
+        const groupKey = city.toLocaleLowerCase();
+        if (!cityGroups.has(groupKey)) cityGroups.set(groupKey,{name:city,count:0,items:[]});
+        const group = cityGroups.get(groupKey);
+        group.count++;
+        group.items.push({item,coords});
+        const category = item.listingCategory || "hostel";
+        const popupName = escapeHTML(item.displayName || item.name || "Student listing");
+        const popupLocation = escapeHTML([item.displayArea,item.displayCity].filter(Boolean).join(", ") || item.displayAddress || "Location listed on StudentHubHelp");
+        const popupLabel = escapeHTML(shhMapCategoryLabels[category] || item.listingLabel || "Student service");
+        const detailType = encodeURIComponent(category);
+        const detailId = encodeURIComponent(item.id == null ? "" : item.id);
+        const detailHref = "property-details.html?type=" + detailType + "&id=" + detailId;
+        const popup = '<div class="shh-map-popup"><span class="shh-map-popup-category">' + popupLabel + '</span><h3>' + popupName + '</h3><p>📍 ' + popupLocation + '</p><a href="' + detailHref + '">View property details →</a></div>';
+        const marker = L.circleMarker([coords.lat,coords.lng], {
+          radius:7, color:"#ffffff", weight:2, fillColor:shhMapCategoryColors[category] || "#d94f7c", fillOpacity:.96
+        });
+        marker.bindPopup(popup,{maxWidth:270});
+        marker.addTo(shhIndiaMarkerLayer);
+      });
+      const cities = [...cityGroups.values()].sort((a,b)=>b.count-a.count || a.name.localeCompare(b.name));
+      citiesEl.innerHTML = cities.length ? cities.slice(0,10).map(city =>
+        '<button type="button" class="shh-map-city" data-city="' + escapeHTML(city.name) + '" aria-label="Zoom to ' + escapeHTML(city.name) + ', ' + city.count + ' mapped listings"><span class="shh-map-city-name">' + escapeHTML(city.name) + '</span><span class="shh-map-city-count">' + city.count.toLocaleString("en-IN") + '</span></button>'
+      ).join("") : '<div class="shh-map-empty">No listings with valid map coordinates match this category yet. Try another category.</div>';
+      if (mapped.length) {
+        const bounds = L.latLngBounds(mapped.map(entry => [entry.coords.lat,entry.coords.lng]));
+        if (bounds.isValid()) shhIndiaLeafletMap.fitBounds(bounds.pad(.12), {maxZoom:6});
+        if (mapped.length === 1) shhIndiaLeafletMap.setZoom(11);
+      } else {
+        shhIndiaLeafletMap.setView([22.8,79.2],4.4);
+      }
+      citiesEl.querySelectorAll("[data-city]").forEach(button => button.addEventListener("click",() => {
+        const selectedCity = button.getAttribute("data-city");
+        const entries = shhIndiaMapItems.filter(entry => String(entry.item.displayCity || entry.item.city || entry.item.displayArea || "Other location").trim().toLocaleLowerCase() === selectedCity.toLocaleLowerCase());
+        if (!entries.length) return;
+        const bounds = L.latLngBounds(entries.map(entry => [entry.coords.lat,entry.coords.lng]));
+        shhIndiaLeafletMap.fitBounds(bounds.pad(.25),{maxZoom:11});
+        const first = entries[0];
+        shhIndiaLeafletMap.eachLayer(layer => {
+          if (layer instanceof L.CircleMarker) {
+            const ll = layer.getLatLng();
+            if (Math.abs(ll.lat-first.coords.lat)<0.000001 && Math.abs(ll.lng-first.coords.lng)<0.000001) layer.openPopup();
+          }
+        });
+      }));
+    }
+
+    document.getElementById("shhMapCategory")?.addEventListener("change", () => shhRenderIndiaMap(allListings));
+
+
     async function loadListings() { 
       const grid = $("listingGrid"); 
       if (grid) grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>'; 
 
       const results = await Promise.all(sourceConfig.map(fetchListings)); 
       allListings = results.flat();
+      shhRenderIndiaMap(allListings);
       updateStudentHubShowcase();
       // Do not derive homepage totals from this preview: each table fetch is
       // intentionally capped at 100 rows. loadStats() owns the exact counts.
