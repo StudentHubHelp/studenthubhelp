@@ -6108,6 +6108,34 @@ const query = state.search.trim().toLowerCase();
     }
 
     // Homepage showcase uses the same image resolution and category banner assets as Finder cards.
+    // Dedicated paginated read for the showcase; the existing homepage listing grid stays capped as before.
+    let studentLifeShowcaseListings = null;
+    async function loadStudentLifeShowcase() {
+      try {
+        const pageSize = 500;
+        const results = await Promise.all(sourceConfig.map(async source => {
+          const rows = [];
+          for (let from = 0; ; from += pageSize) {
+            const {data,error} = await supabaseClient.from(source.table)
+              .select("*")
+              .in("status", ["active", "published", "approved", "live"])
+              .order("created_at", {ascending:false})
+              .range(from, from + pageSize - 1);
+            if (error) throw error;
+            const batch = (data || []).filter(isPubliclyActive);
+            rows.push(...batch.map(row => normalizeListing(row, source)));
+            if (!data || data.length < pageSize) break;
+          }
+          return rows;
+        }));
+        studentLifeShowcaseListings = results.flat();
+      } catch (error) {
+        console.error("Student life showcase live listings error:", error);
+        studentLifeShowcaseListings = null;
+      }
+      updateStudentHubShowcase();
+    }
+
     function updateStudentHubShowcase() {
       const section = document.getElementById("student-life-showcase");
       if (!section) return;
@@ -6155,7 +6183,8 @@ const query = state.search.trim().toLowerCase();
         if (value.startsWith("//")) return location.protocol + value;
         return "https://studenthubhelp.in/" + value.replace(/^\.\//, "").replace(/^\//, "").split("/").map(encodeURIComponent).join("/");
       };
-      const prepared = allListings.map(item => ({item, category:normalizeCategory(item)}));
+      const liveItems = Array.isArray(studentLifeShowcaseListings) ? studentLifeShowcaseListings : allListings;
+      const prepared = liveItems.map(item => ({item, category:normalizeCategory(item)}));
       const order = ["hostel","tiffin","library","cafe","bookstore","other"];
       const buckets = new Map(order.map(category => [category, []]));
       prepared.forEach(entry => (buckets.get(entry.category) || buckets.get("other")).push(entry));
@@ -6765,6 +6794,7 @@ function renderListingCard(item) {
         HASH SCROLL + INITIAL LOAD 
     ========================================= */ 
     scheduleHomepageDataLoad();
+    loadStudentLifeShowcase();
 
     if(window.location.hash === "#live-listings") { 
       setTimeout(()=>$("live-listings")?.scrollIntoView({behavior:"smooth"}),300); 
