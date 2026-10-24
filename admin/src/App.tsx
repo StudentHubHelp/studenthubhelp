@@ -2088,6 +2088,7 @@ export default function App() {
               onPreviewProperty={
                 handleOpenPropertyPreview
               }
+              onListingRequestUpdated={(updated) => setListingRequests((prev) => prev.map((item) => String(item.id) === String(updated.id) ? updated : item))}
             />
           )}
 
