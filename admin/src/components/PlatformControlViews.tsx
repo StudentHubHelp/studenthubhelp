@@ -46,6 +46,7 @@ interface PlatformControlViewsProps {
   onUploadMedia: (propertyId: string, file: File, category: string) => Promise<void>;
   onDeleteMedia: (id: string | number) => void;
   onPreviewProperty: (property: PropertyItem) => void;
+  onListingRequestUpdated: (request: ListingRequest) => void;
 }
 
 const tableFor = (value?: string) => {
@@ -71,11 +72,14 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = (props)
     currentSubTab, listingRequests, claimRequests, verificationRequests, bookings, reviews, reports,
     mediaImages, properties, students = [], owners = [], onApproveListing, onRejectListing, onApproveClaim, onRejectClaim,
     onApproveVerification, onRejectVerification, onToggleBookingStatus, onToggleReviewStatus,
-    onResolveReport, onUnfeatureProperty,
+    onResolveReport, onUnfeatureProperty, onListingRequestUpdated,
   } = props;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [busyId, setBusyId] = useState<string | number | null>(null);
+  const [editingListingRequest, setEditingListingRequest] = useState<ListingRequest | null>(null);
+  const [listingRequestDraft, setListingRequestDraft] = useState<Record<string, string>>({});
+  const [savingListingRequest, setSavingListingRequest] = useState(false);
   const [media, setMedia] = useState<OwnerPropertyImage[]>(mediaImages);
   const [mediaPropId, setMediaPropId] = useState('');
   const [mediaCategory, setMediaCategory] = useState('Room');
@@ -114,6 +118,16 @@ export const PlatformControlViews: React.FC<PlatformControlViewsProps> = (props)
   const studentById = useMemo(() => new Map(profileRows.filter(p => String(p.role || '').toLowerCase() === 'student').map((s) => [String(s.id), s])), [profileRows]);
   const ownerById = useMemo(() => new Map(profileRows.filter(p => String(p.role || '').toLowerCase() === 'owner').map((o) => [String(o.id), o])), [profileRows]);
 
+  const openListingRequestEditor = (r: ListingRequest) => {
+    setEditingListingRequest(r);
+    setListingRequestDraft({
+      name:r.name||r.property_name||'', category:r.category||r.property_type||'Hostel',
+      owner_name:r.owner_name||'', owner_phone:r.owner_phone||'', phone:r.phone||'',
+      area:r.area||'', address:r.address||'', timing:r.timing||'', facilities:r.facilities||'',
+      image:r.image||'', rating:r.rating==null?'':String(r.rating), admin_note:r.admin_note||''
+    });
+  };
+
   const pendingListings = listingRequests.filter((r) => {
     const q = searchQuery.trim().toLowerCase();
     const pending = String(r.status || 'pending').toLowerCase() === 'pending';
@@ -146,7 +160,59 @@ const approve = async (id: string | number) => {
     };
     return <div className="space-y-6 animate-in fade-in duration-200">
       <div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-2xl font-serif font-extrabold text-white">Listing Requests Management</h2><p className="text-xs text-slate-400 mt-1">Only pending requests appear here. Approved listings move to their real property table; rejected requests leave this queue.</p></div><div className="flex gap-2 items-center"><div className="relative"><Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500"/><input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search request..." className="pl-9 pr-3 py-2 rounded-xl bg-[#0d1838] border border-slate-700 text-xs text-white outline-none"/></div><button onClick={()=>exportToCSV(pendingListings,'listing-requests-pending')} className="px-3 py-2 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5"><Download className="w-3.5 h-3.5"/>CSV</button></div></div>
-      <div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden shadow-xl"><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0d1838] text-amber-300 font-bold"><tr>{['Request','Property','Category','Owner','Phone','Area','Submitted','Status','Actions'].map(h=><th key={h} className="p-4">{h}</th>)}</tr></thead><tbody className="divide-y divide-slate-800/60">{pendingListings.length ? pendingListings.map(r=><tr key={r.id} className="hover:bg-slate-800/40"><td className="p-4 font-mono text-slate-400">#{r.id}</td><td className="p-4 font-bold text-white">{r.name || r.property_name || '—'}</td><td className="p-4 text-slate-300">{r.category || r.property_type || 'Hostel'}</td><td className="p-4 text-slate-300">{r.owner_name || '—'}</td><td className="p-4 text-slate-300">{r.phone || r.owner_phone || '—'}</td><td className="p-4 text-slate-300">{r.area || '—'}</td><td className="p-4 text-slate-400">{shortDate(r.created_at || r.submitted_at)}</td><td className="p-4"><Badge status="pending"/></td><td className="p-4 whitespace-nowrap"><div className="flex gap-1.5"><button disabled={busyId===r.id} onClick={()=>approve(r.id)} className="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1"><Check className="w-3.5 h-3.5"/>Approve & Publish</button><button disabled={busyId===r.id} onClick={()=>reject(r.id)} className="px-3 py-1.5 rounded-lg bg-rose-500/15 text-rose-300 border border-rose-500/30 font-bold flex items-center gap-1"><X className="w-3.5 h-3.5"/>Reject</button></div></td></tr>) : <tr><td colSpan={9} className="p-10 text-center text-slate-400">No pending listing requests.</td></tr>}</tbody></table></div></div>
+      <div className="rounded-3xl bg-[#081026] border border-slate-800 overflow-hidden shadow-xl"><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0d1838] text-amber-300 font-bold"><tr>{['Request','Property','Category','Owner','Phone','Area','Submitted','Status','Actions'].map(h=><th key={h} className="p-4">{h}</th>)}</tr></thead><tbody className="divide-y divide-slate-800/60">{pendingListings.length ? pendingListings.map(r=><tr key={r.id} role="button" tabIndex={0} title="Click to open Master Editor" onClick={()=>openListingRequestEditor(r)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openListingRequestEditor(r);}}} className="hover:bg-slate-800/60 cursor-pointer focus:outline-none focus:ring-1 focus:ring-inset focus:ring-cyan-400"><td className="p-4 font-mono text-slate-400">#{r.id}</td><td className="p-4 font-bold text-white"><button type="button" onClick={e=>{e.stopPropagation();openListingRequestEditor(r)}} className="text-left hover:text-cyan-300 underline decoration-dotted underline-offset-4">{r.name || r.property_name || '—'}<span className="block text-[10px] text-cyan-400/80 font-semibold mt-1">Click to edit · Master Editor</span></button></td><td className="p-4 text-slate-300">{r.category || r.property_type || 'Hostel'}</td><td className="p-4 text-slate-300">{r.owner_name || '—'}</td><td className="p-4 text-slate-300">{r.phone || r.owner_phone || '—'}</td><td className="p-4 text-slate-300">{r.area || '—'}</td><td className="p-4 text-slate-400">{shortDate(r.created_at || r.submitted_at)}</td><td className="p-4"><Badge status="pending"/></td><td className="p-4 whitespace-nowrap"><div className="flex gap-1.5"><button disabled={busyId===r.id} onClick={e=>{e.stopPropagation();approve(r.id)}} className="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1"><Check className="w-3.5 h-3.5"/>Approve & Publish</button><button disabled={busyId===r.id} onClick={e=>{e.stopPropagation();reject(r.id)}} className="px-3 py-1.5 rounded-lg bg-rose-500/15 text-rose-300 border border-rose-500/30 font-bold flex items-center gap-1"><X className="w-3.5 h-3.5"/>Reject</button></div></td></tr>) : <tr><td colSpan={9} className="p-10 text-center text-slate-400">No pending listing requests.</td></tr>}</tbody></table></div></div>
+
+      {editingListingRequest && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-3 sm:p-6" onMouseDown={e=>{if(e.target===e.currentTarget&&!savingListingRequest)setEditingListingRequest(null);}}>
+          <form onSubmit={async e=>{
+            e.preventDefault();
+            if(!editingListingRequest||savingListingRequest)return;
+            if(!listingRequestDraft.name?.trim()){alert('Property name is required.');return;}
+            const payload={
+              name:listingRequestDraft.name.trim(), category:listingRequestDraft.category.trim()||'Hostel',
+              owner_name:listingRequestDraft.owner_name.trim()||null, owner_phone:listingRequestDraft.owner_phone.trim()||null,
+              phone:listingRequestDraft.phone.trim()||null, area:listingRequestDraft.area.trim()||null,
+              address:listingRequestDraft.address.trim()||null, timing:listingRequestDraft.timing.trim()||null,
+              facilities:listingRequestDraft.facilities.trim()||null, image:listingRequestDraft.image.trim()||null,
+              rating:listingRequestDraft.rating.trim()||null, admin_note:listingRequestDraft.admin_note.trim()||null,
+              updated_at:new Date().toISOString()
+            };
+            setSavingListingRequest(true);
+            try{
+              const {data,error}=await supabase.from('listing_requests').update(payload).eq('id',editingListingRequest.id).eq('status','pending').select('*').maybeSingle();
+              if(error)throw error;
+              if(!data)throw new Error('Request was not updated. It may no longer be pending or permission may be missing.');
+              onListingRequestUpdated(data as ListingRequest);
+              setEditingListingRequest(data as ListingRequest);
+              setListingRequestDraft({name:data.name||'',category:data.category||'Hostel',owner_name:data.owner_name||'',owner_phone:data.owner_phone||'',phone:data.phone||'',area:data.area||'',address:data.address||'',timing:data.timing||'',facilities:data.facilities||'',image:data.image||'',rating:data.rating==null?'':String(data.rating),admin_note:data.admin_note||''});
+              alert('Changes saved to Supabase. Request remains Pending. Use Approve & Publish to make it live.');
+            }catch(err:any){alert(err?.message||'Unable to save listing request.');}
+            finally{setSavingListingRequest(false);}
+          }} className="w-full max-w-5xl max-h-[94vh] overflow-hidden rounded-3xl border border-cyan-400/25 bg-[#081226] shadow-[0_30px_100px_rgba(0,0,0,.7)] flex flex-col">
+            <div className="flex items-center justify-between gap-4 px-5 sm:px-7 py-5 border-b border-white/10 bg-gradient-to-r from-[#102446] to-[#0b1429]">
+              <div><div className="text-[10px] uppercase tracking-[.22em] font-extrabold text-cyan-300">StudentHubHelp · Listing Requests</div><h2 className="text-xl sm:text-2xl font-black text-white mt-1">Master Editor <span className="text-cyan-300">#{editingListingRequest.id}</span></h2><p className="text-xs text-slate-400 mt-1">Edit request data. Save keeps it pending; publishing happens only after approval.</p></div>
+              <button type="button" disabled={savingListingRequest} onClick={()=>setEditingListingRequest(null)} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-slate-200 hover:bg-white/10">✕ Close</button>
+            </div>
+            <div className="overflow-y-auto p-5 sm:p-7"><div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                {key:'name',label:'Property Name',type:'text',required:true},
+                {key:'category',label:'Category',type:'select'},
+                {key:'owner_name',label:'Owner Name',type:'text'},
+                {key:'owner_phone',label:'Owner Phone',type:'tel'},
+                {key:'phone',label:'Public Contact Phone',type:'tel'},
+                {key:'area',label:'City / Area',type:'text'},
+                {key:'address',label:'Full Address',type:'text',wide:true},
+                {key:'timing',label:'Opening / Service Timing',type:'text'},
+                {key:'rating',label:'Rating (optional)',type:'text'},
+                {key:'image',label:'Main Image URL',type:'url',wide:true},
+                {key:'facilities',label:'Facilities / Amenities',type:'textarea',wide:true},
+                {key:'admin_note',label:'Admin Notes (internal)',type:'textarea',wide:true}
+              ].map(field=><label key={field.key} className={'block '+(field.wide?'md:col-span-2':'')}><span className="block text-xs font-bold text-slate-300 mb-2">{field.label}</span>{field.type==='select'?<select value={listingRequestDraft[field.key]||'Hostel'} onChange={e=>setListingRequestDraft(s=>({...s,[field.key]:e.target.value}))} className="w-full rounded-xl border border-slate-700 bg-[#0d1838] px-3 py-3 text-sm text-white outline-none focus:border-cyan-400">{['Hostel','PG','Tiffin','Library','Cafe','Bookstore','Student Accommodation / Hostel','PG / Hostel'].map(v=><option key={v} value={v}>{v}</option>)}</select>:field.type==='textarea'?<textarea rows={field.key==='facilities'?3:2} value={listingRequestDraft[field.key]||''} onChange={e=>setListingRequestDraft(s=>({...s,[field.key]:e.target.value}))} className="w-full rounded-xl border border-slate-700 bg-[#0d1838] px-3 py-3 text-sm text-white outline-none focus:border-cyan-400"/>:<input required={Boolean(field.required)} type={field.type} value={listingRequestDraft[field.key]||''} onChange={e=>setListingRequestDraft(s=>({...s,[field.key]:e.target.value}))} className="w-full rounded-xl border border-slate-700 bg-[#0d1838] px-3 py-3 text-sm text-white outline-none focus:border-cyan-400"/>}</label>)}
+            </div>{listingRequestDraft.image && <div className="mt-5 rounded-2xl border border-white/10 p-3"><div className="text-xs text-slate-400 mb-2">Image preview</div><img src={listingRequestDraft.image} alt="Property preview" className="max-h-48 max-w-full rounded-xl object-contain" onError={e=>{e.currentTarget.style.display='none'}} /></div>}</div>
+            <div className="flex flex-wrap justify-end gap-3 px-5 sm:px-7 py-4 border-t border-white/10 bg-[#070f20]"><div className="mr-auto self-center text-xs text-amber-300">Status: Pending · Verification remains admin-controlled</div><button type="button" disabled={savingListingRequest} onClick={()=>setEditingListingRequest(null)} className="rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-bold text-slate-200">Cancel</button><button type="submit" disabled={savingListingRequest} className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-5 py-2.5 text-sm font-extrabold text-slate-950 disabled:opacity-50">{savingListingRequest?'Saving…':'Save Changes to Supabase'}</button></div>
+          </form>
+        </div>
+      )}
     </div>;
   }
 
