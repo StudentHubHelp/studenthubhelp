@@ -161,6 +161,8 @@ export default function App() {
   const [ownerEditModal, setOwnerEditModal] =
     useState<UserProfile | null>(null);
 
+  const [listingRequestToEdit, setListingRequestToEdit] = useState<ListingRequest | null>(null);
+
   const [propertyEditor, setPropertyEditor] = useState<{
     isOpen: boolean;
     property: PropertyItem | null;
@@ -2090,6 +2092,7 @@ export default function App() {
                 handleOpenPropertyPreview
               }
               onListingRequestUpdated={(updated) => setListingRequests((prev) => prev.map((item) => String(item.id) === String(updated.id) ? updated : item))}
+              onEditListingRequest={(request) => setListingRequestToEdit(request)}
             />
           )}
 
@@ -2280,6 +2283,64 @@ export default function App() {
           onSave={
             handleSaveProperty
           }
+        />
+      )}
+
+      {listingRequestToEdit && (
+        <AdvancedPropertyModal
+          property={{
+            ...listingRequestToEdit,
+            id: String(listingRequestToEdit.id),
+            name: listingRequestToEdit.name || listingRequestToEdit.property_name || listingRequestToEdit.title || '',
+            category: listingRequestToEdit.category || listingRequestToEdit.property_type || 'Hostel',
+            phone: listingRequestToEdit.phone || listingRequestToEdit.owner_phone || '',
+            owner_phone: listingRequestToEdit.owner_phone || listingRequestToEdit.phone || '',
+            area: listingRequestToEdit.area || listingRequestToEdit.city || '',
+            address: listingRequestToEdit.address || '',
+            _source_table: 'listing_requests',
+          } as PropertyItem}
+          initialType={(() => {
+            const category = String(listingRequestToEdit.category || listingRequestToEdit.property_type || '').toLowerCase();
+            if (category.includes('tiffin') || category.includes('mess')) return 'tiffins';
+            if (category.includes('librar')) return 'libraries';
+            if (category.includes('cafe')) return 'cafes';
+            if (category.includes('book')) return 'bookstores';
+            return 'hostels';
+          })()}
+          onClose={() => setListingRequestToEdit(null)}
+          allowIncompleteContact={true}
+          onSave={async (edited) => {
+            const payload = {
+              name: edited.name || edited.title || '',
+              category: edited.category || listingRequestToEdit.category || 'Hostel',
+              owner_name: edited.owner_name || null,
+              owner_phone: edited.owner_phone || null,
+              phone: edited.phone || null,
+              email: edited.email || null,
+              area: edited.area || edited.city || null,
+              address: edited.address || edited.full_address || null,
+              timing: edited.timing || edited.opening_time || null,
+              facilities: edited.facilities || null,
+              description: edited.description || null,
+              rating: edited.rating ?? null,
+              price: edited.price ?? edited.monthly_rent ?? edited.rent ?? null,
+              image: edited.image || edited.image_url || null,
+              admin_note: listingRequestToEdit.admin_note || null,
+              updated_at: new Date().toISOString(),
+            };
+            const { data, error } = await supabase
+              .from('listing_requests')
+              .update(payload)
+              .eq('id', listingRequestToEdit.id)
+              .eq('status', 'pending')
+              .select('*')
+              .maybeSingle();
+            if (error) throw new Error(error.message);
+            if (!data) throw new Error('Request was not updated. It may no longer be pending.');
+            setListingRequests((prev) => prev.map((item) => String(item.id) === String(data.id) ? data as ListingRequest : item));
+            setListingRequestToEdit(null);
+            showToast(`Listing request "${data.name}" saved. Status remains Pending.`);
+          }}
         />
       )}
     </div>
