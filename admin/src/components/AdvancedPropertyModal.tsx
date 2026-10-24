@@ -8,6 +8,7 @@ interface AdvancedPropertyModalProps {
   initialType: PropertyType;
   onClose: () => void;
   onSave: (property: PropertyItem) => Promise<void>;
+  allowIncompleteContact?: boolean;
 }
 
 const BOOLEAN_COLUMNS = new Set([
@@ -138,7 +139,7 @@ async function makeBookstorePropertyId() {
   return Math.max(currentMax + 1, 1);
 }
 
-export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ property, initialType, onClose, onSave }) => {
+export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ property, initialType, onClose, onSave, allowIncompleteContact = false }) => {
   const selectedType = initialType;
   const columns = PROPERTY_TABLE_COLUMNS[selectedType] || PROPERTY_TABLE_COLUMNS.hostels;
   const config = propertyConfig[selectedType];
@@ -171,8 +172,8 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-    if (!formData.name || !formData.phone || !formData.area || !formData.address) {
-      setError('Required: name, phone, area and address.');
+    if (!formData.name || (!allowIncompleteContact && (!formData.phone || !formData.area || !formData.address))) {
+      setError(allowIncompleteContact ? 'Property name is required.' : 'Required: name, phone, area and address.');
       return;
     }
     try {
