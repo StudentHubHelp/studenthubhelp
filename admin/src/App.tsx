@@ -961,6 +961,7 @@ export default function App() {
         area: req.area,
         address: req.address,
         phone: req.phone,
+        whatsapp: req.owner_phone ?? req.phone ?? null,
         timing: req.timing ?? null,
         facilities: req.facilities ?? null,
         rating: req.rating ?? null,
