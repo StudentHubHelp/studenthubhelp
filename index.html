@@ -3932,9 +3932,9 @@ body,button,input,textarea,select{font-synthesis:none}
     .student-life-marquee:before,.student-life-marquee:after{content:"";position:absolute;top:0;bottom:0;width:clamp(22px,5vw,76px);z-index:3;pointer-events:none}
     .student-life-marquee:before{left:0;background:linear-gradient(90deg,#fff7f9,rgba(255,247,249,0))}
     .student-life-marquee:after{right:0;background:linear-gradient(270deg,#fff7f9,rgba(255,247,249,0))}
-    .student-life-marquee-track{display:flex;align-items:stretch;gap:18px;width:max-content;animation:studentLifeMarquee 58s linear infinite;will-change:transform;padding:0 10px}
-    .student-life-marquee-track-2{animation-duration:72s}
-    .student-life-marquee-track-3{animation-duration:64s}
+    .student-life-marquee-track{display:flex;align-items:stretch;gap:18px;width:max-content;animation:studentLifeMarquee 120s linear infinite;will-change:transform;padding:0 10px}
+    .student-life-marquee-track-2{animation-duration:150s}
+    .student-life-marquee-track-3{animation-duration:135s}
     .student-life-marquees:hover .student-life-marquee-track{animation-play-state:paused}
     .student-life-showcase .studenthub-showcase-card{flex:0 0 350px;width:350px;min-width:0;height:465px;overflow:hidden;border:1px solid #e4e9f0;border-radius:18px;background:#fff;box-shadow:0 8px 24px rgba(7,26,51,.08);display:flex;flex-direction:column;transition:box-shadow .2s,transform .2s}
     .student-life-showcase .studenthub-showcase-card:hover{box-shadow:0 16px 34px rgba(7,26,51,.14);transform:translateY(-3px)}
@@ -6210,7 +6210,7 @@ const query = state.search.trim().toLowerCase();
         const closing = firstValue(item, ["closing_time","closingTime","closes_at","close_time"]);
         const timing = rawTiming || (opening && closing ? opening + " – " + closing : opening ? "Opens " + opening : closing ? "Closes " + closing : "");
         const rawPrice = getCardPrice(item);
-        const price = rawPrice && !/^price\s+not\s+listed$/i.test(String(rawPrice).trim()) ? String(rawPrice).trim() : "Price not listed";
+        const price = rawPrice && !/^price\s+not\s+listed$/i.test(String(rawPrice).trim()) ? String(rawPrice).trim() : "";
         const ratingRaw = firstValue(item, ["displayRating","rating","average_rating","avg_rating","review_rating"]);
         const rating = Number(ratingRaw);
         const hasRating = ratingRaw !== null && Number.isFinite(rating) && rating > 0 && rating <= 5;
@@ -6240,7 +6240,7 @@ const query = state.search.trim().toLowerCase();
           '<div class="studenthub-showcase-location studenthub-showcase-full-address"><span aria-hidden="true">📍</span><span>' + safe(locationText) + '</span></div>' +
           (timing ? '<div class="studenthub-showcase-timing"><span aria-hidden="true">🕒</span><span>' + safe(/24\s*\/\s*7|24 hours|always open/i.test(timing) ? "24/7 Open" : timing) + '</span></div>' : '') +
           '<div class="studenthub-showcase-amenities">' + (facilities.length ? facilities.map(value => '<span class="studenthub-showcase-chip">' + safe(value) + '</span>').join('') : '<span class="studenthub-showcase-no-amenities">Facilities not listed</span>') + '</div>' +
-          '<div class="studenthub-showcase-bottom"><div class="studenthub-showcase-price-wrap"><span class="studenthub-showcase-price">' + safe(price) + '</span></div>' +
+          '<div class="studenthub-showcase-bottom">' + (price ? '<div class="studenthub-showcase-price-wrap"><span class="studenthub-showcase-price">' + safe(price) + '</span></div>' : '') +
           '<div class="studenthub-showcase-actions"><a class="studenthub-showcase-details" href="' + safe(href) + '">View Details →</a>' +
           '<a class="studenthub-showcase-directions" href="' + safe(directionsHref) + '" target="_blank" rel="noopener noreferrer">⌖ Directions</a></div></div></div></article>';
       };
