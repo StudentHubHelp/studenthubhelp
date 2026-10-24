@@ -4062,6 +4062,26 @@ body,button,input,textarea,select{font-synthesis:none}
 @media(max-width:370px){#live-listings #studenthubMarqueeTrack .studenthub-showcase-title-row{align-items:flex-start;flex-direction:column;gap:4px}#live-listings #studenthubMarqueeTrack .studenthub-showcase-checked{max-width:100%}#live-listings #studenthubMarqueeTrack .studenthub-showcase-bottom{align-items:flex-start;flex-direction:column}#live-listings #studenthubMarqueeTrack .studenthub-showcase-actions{width:100%}#live-listings #studenthubMarqueeTrack .studenthub-showcase-actions a{flex:1}}
 </style>
 
+
+<style id="studenthub-homepage-showcase-correction">
+/* Scoped correction for homepage showcase only. */
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-card{flex-basis:calc((min(1320px,100vw - 48px) - 40px)/3);width:calc((min(1320px,100vw - 48px) - 40px)/3);min-width:300px;height:500px!important;min-height:500px!important;max-height:500px!important}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-media{flex:0 0 55%;height:55%;background:#f1f5f9}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-no-photo{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#eef3fa,#e5edf7);color:#52627a}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-no-photo span{display:grid;place-items:center;width:74px;height:74px;border-radius:22px;background:#fff;font-size:36px;box-shadow:0 6px 20px rgba(7,26,51,.08)}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-no-photo small{font-size:12px;font-weight:700}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-media.has-no-photo{background:linear-gradient(135deg,#eef3fa,#e5edf7)}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-category{top:12px;bottom:auto;left:12px;max-width:calc(100% - 112px);background:rgba(255,255,255,.95);color:#24364f;border:1px solid #e3e9f2;border-radius:999px;padding:6px 10px;font-size:10px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-price-wrap{flex:1 1 120px;min-width:0;overflow:visible}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-price{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;font-size:15px}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-price-note{white-space:normal;overflow:visible;text-overflow:clip}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-actions{flex-wrap:wrap}
+#live-listings #studenthubMarqueeTrack .studenthub-showcase-details,#live-listings #studenthubMarqueeTrack .studenthub-showcase-directions{font-size:11px;padding:9px 10px}
+@media(max-width:1100px){#live-listings #studenthubMarqueeTrack .studenthub-showcase-card{flex-basis:360px;width:360px;min-width:300px}}
+@media(max-width:767px){#live-listings #studenthubMarqueeTrack .studenthub-showcase-card{flex-basis:calc(100vw - 36px);width:calc(100vw - 36px);min-width:0;max-width:420px;height:490px!important;min-height:490px!important;max-height:490px!important}#live-listings #studenthubMarqueeTrack .studenthub-showcase-media{flex-basis:52%;height:52%}#live-listings #studenthubMarqueeTrack .studenthub-showcase-actions{flex-wrap:nowrap;width:auto}#live-listings #studenthubMarqueeTrack .studenthub-showcase-bottom{align-items:center}}
+@media(max-width:370px){#live-listings #studenthubMarqueeTrack .studenthub-showcase-bottom{align-items:flex-start;flex-direction:column}#live-listings #studenthubMarqueeTrack .studenthub-showcase-actions{width:100%}#live-listings #studenthubMarqueeTrack .studenthub-showcase-actions a{flex:1}}
+</style>
+
 </head>
 
 
@@ -6238,7 +6258,7 @@ const query = state.search.trim().toLowerCase();
             try {
               const parsed = JSON.parse(raw);
               value = Array.isArray(parsed) ? (parsed.find(Boolean) || "") :
-                (parsed && typeof parsed === "object" ? (Object.values(parsed).find(Boolean) || "") : raw);
+                (parsed && typeof parsed === "object" ? (parsed.url || parsed.src || parsed.path || "") : "");
             } catch (_) { value = raw; }
           } else if (raw.includes(",") && !raw.includes("://")) {
             value = raw.split(",").map(part => part.trim()).find(Boolean) || raw;
@@ -6246,7 +6266,7 @@ const query = state.search.trim().toLowerCase();
         }
         if (value && typeof value === "object") value = value.url || value.src || value.path || value.image_url || "";
         value = String(value || "").trim();
-        if (!value) return "https://studenthubhelp.in/" + (bannerByCategory[category] || bannerByCategory.other);
+        if (!value) return "";
         if (/^(https?:\/\/|data:image\/|blob:)/i.test(value)) return value;
         if (value.startsWith("//")) return location.protocol + value;
         return "https://studenthubhelp.in/" + value.replace(/^\.\//, "").replace(/^\//, "").split("/").map(encodeURIComponent).join("/");
@@ -6351,7 +6371,7 @@ const query = state.search.trim().toLowerCase();
         const bannerLabel = safe(categoryLabel);
         return '<article class="studenthub-showcase-card">' +
           '<div class="studenthub-showcase-media"><a class="studenthub-showcase-image-link" href="' + safe(href) + '" aria-label="View details for ' + safe(title) + '">' +
-          '<img class="studenthub-showcase-image" src="' + safe(image) + '" alt="' + safe(title) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'https://studenthubhelp.in/' + safe(bannerByCategory[category] || bannerByCategory.other) + '\';">' +
+          (image ? '<img class="studenthub-showcase-image" src="' + safe(image) + '" alt="' + safe(title) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.hidden=true;this.parentElement.classList.add(\\'has-no-photo\\');">' : '<div class="studenthub-showcase-no-photo" role="img" aria-label="No property photo available"><span aria-hidden="true">' + ({hostel:'🏠',tiffin:'🍱',library:'📚',cafe:'☕',bookstore:'📖',other:'📍'})[category] + '</span><small>Property photo not available</small></div>') +
           '</a><span class="studenthub-showcase-category">' + bannerLabel + '</span>' +
           '<div class="studenthub-showcase-media-actions">' +
           (hasRating ? '<span class="studenthub-showcase-rating" aria-label="Rating ' + rating.toFixed(1) + ' out of 5"><span aria-hidden="true">★</span> ' + rating.toFixed(1) + '</span>' : '') +
