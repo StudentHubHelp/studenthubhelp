@@ -17,6 +17,7 @@ if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Missing Supabase public API
 
 const GENERATED_ROOT = '.';
 const GENERATED_MARKER = '<meta name="studenthubhelp-generated-seo" content="true">';
+const LEGACY_REDIRECTS = JSON.parse(await readFile('property-url-redirects.json', 'utf8'));
 
 function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function slug(v){
@@ -46,7 +47,9 @@ function matchedCoachings(row){
 }
 function coachingBySlug(slug){return COACHINGS.find(c=>c.slug===slug);}
 function propUrl(row){
-  const propertySlug=String(row.slug||slug([row.name,row.area,row.city].filter(Boolean).join(' '))).trim();
+  const savedSlug=String(row.slug||slug([row.name,row.area,row.city].filter(Boolean).join(' '))).trim();
+  const mapped=LEGACY_REDIRECTS['/properties/'+row.type+'/'+savedSlug+'/'];
+  const propertySlug=String(mapped?.slug||savedSlug).trim();
   if(!propertySlug) return BASE;
   return new URL('properties/'+encodeURIComponent(row.type)+'/'+encodeURIComponent(propertySlug)+'/',BASE).href;
 }
