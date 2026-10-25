@@ -692,6 +692,7 @@ async function load(){
  const legacyId=qs.get('id');
  const lookupField=legacyId ? 'id' : 'slug';
  const lookupValue=legacyId || qs.get('slug') || slug;
+ let mappedCanonicalSlug = null;
 
  try{
    let {data,error}=await db
@@ -735,7 +736,10 @@ async function load(){
            const oldSlug = parts[2];
            if (oldSlug) {
              const legacyLookup = await db.from(cfg.table).select('*').eq('slug', oldSlug).maybeSingle();
-             if (!legacyLookup.error && legacyLookup.data) data = legacyLookup.data;
+             if (!legacyLookup.error && legacyLookup.data) {
+               data = legacyLookup.data;
+               mappedCanonicalSlug = lookupValue;
+             }
            }
          }
        }
@@ -759,7 +763,8 @@ async function load(){
 
    // Keep old shared/bookmarked URLs working and show the current clean canonical path.
    if (lookupField === 'slug' && data.slug) {
-     const canonicalPath = '/properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(data.slug) + '/';
+     const canonicalSlug = mappedCanonicalSlug || data.slug;
+     const canonicalPath = '/properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(canonicalSlug) + '/';
      if (location.pathname !== canonicalPath || location.search) {
        history.replaceState({}, '', canonicalPath + location.hash);
      }
