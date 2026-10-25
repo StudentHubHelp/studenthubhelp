@@ -2,15 +2,13 @@
    Only cache the public admin shell. Never cache authenticated/API responses.
    Background/periodic sync refresh only shell assets. Push display requires a configured
    push subscription and server-side VAPID sender. */
-const CACHE_NAME = "studenthubhelp-admin-shell-v4";
+const CACHE_NAME = "studenthubhelp-admin-shell-v5";
 const OFFLINE_URL = "/admin/index.html";
 const SYNC_TAG = "studenthubhelp-admin-refresh-shell";
 const STATIC_ASSETS = [
   OFFLINE_URL,
   "/admin/icons/icon-192x192.png",
   "/admin/icons/icon-512x512.png",
-  "/admin/assets/index-6msJztRy.js",
-  "/admin/assets/index-CqaV_UpX.css"
 ];
 
 async function refreshAdminShell() {
@@ -59,8 +57,20 @@ self.addEventListener("fetch", (event) => {
     }));
     return;
   }
+  // Hashed Vite bundles and lazy-loaded chunks must always be fetched from the
+  // current deployment. Caching these filenames can pin the app to an obsolete build.
+  if (url.pathname.startsWith("/admin/assets/")) {
+    event.respondWith(fetch(request, { cache: "no-store" }));
+    return;
+  }
   if (STATIC_ASSETS.includes(url.pathname)) {
-    event.respondWith(caches.match(request).then((cached) => cached || fetch(request)));
+    event.respondWith(fetch(request, { cache: "no-cache" }).then(async (response) => {
+      if (response.ok && response.type === "basic") {
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(request, response.clone());
+      }
+      return response;
+    }).catch(async () => (await caches.match(request)) || Response.error()));
   }
 });
 
