@@ -719,6 +719,31 @@ async function load(){
      }
    }
 
+   // If the requested canonical slug is not yet stored in Supabase, resolve it through
+   // the checked legacy-slug map. This keeps the new URL usable without weakening DB security.
+   if (!data && lookupField === 'slug' && lookupValue) {
+     try {
+       const mapResponse = await fetch('/property-url-redirects.json', { cache: 'no-cache' });
+       if (mapResponse.ok) {
+         const redirectMap = await mapResponse.json();
+         const mappedOldPath = Object.keys(redirectMap).find(path => {
+           const item = redirectMap[path];
+           return item && item.type === type && item.slug === lookupValue;
+         });
+         if (mappedOldPath) {
+           const parts = mappedOldPath.split('/').filter(Boolean);
+           const oldSlug = parts[2];
+           if (oldSlug) {
+             const legacyLookup = await db.from(cfg.table).select('*').eq('slug', oldSlug).maybeSingle();
+             if (!legacyLookup.error && legacyLookup.data) data = legacyLookup.data;
+           }
+         }
+       }
+     } catch (mapError) {
+       console.warn('Legacy property URL map unavailable:', mapError);
+     }
+   }
+
    if(!data) return fail('Property not found','This listing may have been removed or its URL is incorrect.');
 
    // Legacy ID URLs are accepted only to resolve the record, then immediately redirected to its clean slug URL.
