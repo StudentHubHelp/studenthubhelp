@@ -344,7 +344,9 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           name: req.name,
           category: table === 'bookstores' ? 'bookstore' : table === 'cafes' ? 'cafe' : table === 'libraries' ? 'library' : table === 'tiffins' ? 'tiffin' : 'hostel',
           area: req.area,
+          city: req.city ?? null,
           address: req.address,
+          // Leave slug empty so the Supabase trigger generates name-area-city.
           phone: req.phone,
           timing: req.timing ?? null,
           facilities: req.facilities ?? null,
@@ -354,6 +356,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           verified: false,
           status: 'active',
           property_id: req.id,
+          slug: null,
           created_at: req.created_at ?? new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
