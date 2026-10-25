@@ -134,13 +134,13 @@ function parsePropertyImages(image: any, images: any): string[] {
         else if (typeof parsed === 'string') add(parsed);
         else result.push(raw);
       } catch {
-        raw.split(/\\s*,\\s*/).forEach((part) => { if (part && !result.includes(part)) result.push(part); });
+        raw.split(/\s*,\s*/).forEach((part) => { if (part && !result.includes(part)) result.push(part); });
       }
     }
   };
   add(image);
   add(images);
-  return result.filter((url, index) => /^https?:\\/\\//i.test(url) && result.indexOf(url) === index).slice(0, 5);
+  return result.filter((url, index) => /^https?:\/\//i.test(url) && result.indexOf(url) === index).slice(0, 5);
 }
 function normalizeInputValue(field: string, value: string) {
   if (BOOLEAN_COLUMNS.has(field)) return value === '' ? null : value === 'true';
