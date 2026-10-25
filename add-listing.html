@@ -397,6 +397,11 @@
     const category = $("fCategory").value;
     const area = clean($("fArea").value);
     const address = clean($("fAddress").value);
+    // Prefer an explicitly entered "City, State" area; otherwise infer city
+    // only from a full address ending in a recognized Indian state.
+    const areaParts = area.split(",").map(clean).filter(Boolean);
+    const addressCityMatch = address.match(/,\s*([^,]+),\s*(Rajasthan|Haryana|Delhi|Uttar Pradesh|Madhya Pradesh|Maharashtra|Gujarat|Punjab|Himachal Pradesh|Uttarakhand|Bihar|Jharkhand|West Bengal|Odisha|Chhattisgarh|Goa|Karnataka|Kerala|Tamil Nadu|Telangana|Andhra Pradesh|Assam|Tripura|Meghalaya|Manipur|Mizoram|Nagaland|Arunachal Pradesh|Sikkim|Jammu and Kashmir|Ladakh)(?:\s+\d{6})?\s*$/i);
+    const city = areaParts.length > 1 ? areaParts[0] : clean(addressCityMatch?.[1] || "");
     const phone = normalizePhone($("fPhone").value);
     const timing = clean($("fTiming").value);
     const facilities = clean($("fFacilities").value);
@@ -422,6 +427,7 @@
       name,
       category: categoryLabels[category],
       area,
+      city: city || null,
       address,
       phone,
       timing: timing || null,
