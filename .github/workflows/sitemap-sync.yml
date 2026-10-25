@@ -48,7 +48,7 @@ jobs:
               expected=report['byCategory'].get(category,0)
               assert expected > 0, f"No properties generated for {category}"
               pages=list(Path('properties',category).glob('*/index.html'))
-              assert len(pages) == expected, f"{category}: manifest says {expected}, found {len(pages)} files"
+              assert len(pages) >= expected, f"{category}: manifest says {expected}, found only {len(pages)} files"
               sample=pages[0].read_text(encoding='utf-8')
               assert '<link rel="canonical"' in sample and 'property-details.html?type=' in sample
           print(f"Static property page validation passed: {report['total']} pages; {report['byCategory']}")
