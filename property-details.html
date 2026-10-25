@@ -267,8 +267,14 @@ function updatePropertySEO(r){
     const u=new URL('property-details.html','https://studenthubhelp.in/');
     u.searchParams.set('type',type);
     const propertySlug=String(r.slug||qs.get('slug')||'').trim();
-    const propertyId=String(qs.get('id')||'').trim();
-    if(propertySlug) u.searchParams.set('slug',propertySlug);
+    const propertyId=String(r.id||qs.get('id')||'').trim();
+    const addressLower=String(r.address||'').toLowerCase();
+    const cityLower=String(r.city||'').trim().toLowerCase();
+    const cityContradictsAddress=cityLower==='sikar' &&
+      (addressLower.includes('gurugram')||addressLower.includes('gurgaon')) &&
+      addressLower.includes('haryana');
+    if(propertyId && cityContradictsAddress) u.searchParams.set('id',propertyId);
+    else if(propertySlug) u.searchParams.set('slug',propertySlug);
     else if(propertyId) u.searchParams.set('id',propertyId);
     return u.href;
   })();
@@ -712,6 +718,23 @@ async function load(){
      }
    } catch (galleryError) {
      console.warn('Property gallery records could not be loaded:', galleryError);
+   }
+
+   // Correct the visible location when the saved city contradicts the full address.
+   // For this listing, the address clearly identifies Gurugram, Haryana, not Sikar.
+   const addressTextForCity = String(data.address || '').toLowerCase();
+   const savedCity = String(data.city || '').trim().toLowerCase();
+   const addressCityMismatch =
+     savedCity === 'sikar' &&
+     (addressTextForCity.includes('gurugram') || addressTextForCity.includes('gurgaon')) &&
+     addressTextForCity.includes('haryana');
+   if (addressCityMismatch) {
+     data.city = 'Gurugram';
+     const cleanUrl = new URL(location.href);
+     cleanUrl.searchParams.delete('slug');
+     cleanUrl.searchParams.set('id', String(data.id));
+     history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+     console.warn('Property city/slug mismatch: using address-verified city and ID URL until the listing record is corrected.');
    }
 
    // Legacy listings may have NULL status. Treat NULL like active, while keeping explicitly non-active listings hidden.
