@@ -14,6 +14,7 @@ const TABLES = {
 };
 const NS = 'http://www.sitemaps.org/schemas/sitemap/0.9';
 const CHUNK_SIZE = 45000;
+const LEGACY_REDIRECTS = JSON.parse(await readFile('property-url-redirects.json', 'utf8'));
 
 if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Missing Supabase public API configuration.');
 
@@ -30,7 +31,9 @@ function validDate(value) {
 }
 
 function recordUrl(type, row) {
-  const slug = String(row.slug ?? '').trim();
+  const savedSlug = String(row.slug ?? '').trim();
+  const mapped = savedSlug ? LEGACY_REDIRECTS[`/properties/${type}/${savedSlug}/`] : null;
+  const slug = String(mapped?.slug || savedSlug).trim();
   const id = String(row.id ?? '').trim() || String(row.property_id ?? '').trim();
   if (!slug && !id) return null;
   if (slug) return new URL('properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(slug) + '/', BASE).href;
@@ -110,7 +113,9 @@ for (const name of finderPages) {
 }
 
 async function canonicalPropertyUrl(type, row, preferredLoc) {
-  const slug = String(row.slug ?? '').trim();
+  const savedSlug = String(row.slug ?? '').trim();
+  const mapped = savedSlug ? LEGACY_REDIRECTS[`/properties/${type}/${savedSlug}/`] : null;
+  const slug = String(mapped?.slug || savedSlug).trim();
   if (!slug) return preferredLoc;
 
   const path = `properties/${type}/${slug}/index.html`;
