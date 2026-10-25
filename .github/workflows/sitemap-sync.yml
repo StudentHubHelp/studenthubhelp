@@ -9,6 +9,8 @@ on:
       - '*.html'
       - 'scripts/generate-sitemap.mjs'
       - 'scripts/generate-seo-pages.mjs'
+      - 'scripts/generate-property-pages.mjs'
+      - 'property-pages-manifest.json'
       - 'seo-generated-manifest.json'
       - 'sitemap.xml'
       - 'sitemap-pages.xml'
@@ -26,6 +28,32 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Generate static pages for every live property
+        env:
+          SUPABASE_URL: https://idurlccrarznnnqixxsd.supabase.co
+          SUPABASE_KEY: sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT
+          BASE_URL: https://studenthubhelp.in
+        run: node scripts/generate-property-pages.mjs
+
+      - name: Verify generated static property pages
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          report=json.loads(Path('property-pages-manifest.json').read_text(encoding='utf-8'))
+          expected={'hostel':208,'tiffin':96,'library':163,'cafe':96,'bookstore':62}
+          assert report['total'] >= 600, f"Too few property pages: {report['total']}"
+          for category, minimum in expected.items():
+              actual=report['byCategory'].get(category,0)
+              assert actual >= minimum, f"{category}: expected at least {minimum}, got {actual}"
+          for category in expected:
+              pages=list(Path('properties',category).glob('*/index.html'))
+              assert len(pages) >= expected[category], f"{category}: generated files missing"
+              sample=pages[0].read_text(encoding='utf-8')
+              assert '<link rel="canonical"' in sample and 'property-details.html?type=' in sample
+          print(f"Static property page validation passed: {report['total']} pages; {report['byCategory']}")
+          PY
 
       - name: Generate automatic city, category and location SEO pages
         env:
