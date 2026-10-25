@@ -172,14 +172,11 @@
        - Publishes ItemList structured data from the live records.
     ===================================================== */
     const seoEscape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-    const stableId=r=>String(r?.id ?? r?.property_id ?? '').trim();
+    const slugify=v=>String(v||'').normalize('NFKD').toLowerCase().trim().replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9\\s-]/g,'').replace(/\\s+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
     const propertyUrl=r=>{
-      const type=page.replace('-finder.html','').replace('pg','hostel').replace('tiffin','tiffin').replace('library','library').replace('cafe','cafe').replace('bookstore','bookstore');
-      const slug=String(r?.slug||'').trim();
-      const id=stableId(r);
-      if(slug) return `property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`;
-      if(id) return `property-details.html?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`;
-      return '';
+      const type=page==='pg-finder.html'?'hostel':page.replace('-finder.html','');
+      const slug=String(r?.slug||'').trim()||slugify([r?.name||r?.property_name||r?.service_name,r?.area||r?.locality,r?.city||r?.district].filter(Boolean).join(' '));
+      return slug ? `/properties/${encodeURIComponent(type)}/${encodeURIComponent(slug)}/` : '';
     };
     const upsertJSONLD=(id,data)=>{
       let el=document.getElementById(id);
@@ -200,13 +197,14 @@
       document.querySelectorAll('.details-btn').forEach((node)=>{
         if(node.tagName==='A') return;
         const card=node.closest('.card'); if(!card) return;
-        const idText=card.querySelector('.property-id-badge')?.textContent||card.querySelector('.property-id')?.textContent||'';
-        const idMatch=idText.match(/(?:ID\s*#|Property\s*ID:\s*#)\s*([A-Za-z0-9_-]+)/i);
-        if(!idMatch) return;
-        const id=idMatch[1];
+        const cardName=card.querySelector('h3')?.textContent||'';
+        const row=originalRecords().find(r=>String(r.name||r.property_name||r.service_name||'').trim()===cardName.trim());
+        if(!row) return;
+        const href=propertyUrl(row);
+        if(!href) return;
         const a=document.createElement('a');
         a.className=node.className;
-        a.href=`property-details.html?type=${encodeURIComponent(page==='pg-finder.html'?'hostel':page.replace('-finder.html',''))}&id=${encodeURIComponent(id)}`;
+        a.href=href;
         a.innerHTML=node.innerHTML;
         a.setAttribute('aria-label','View details for '+String(card.querySelector('h3')?.textContent||config.label).trim());
         node.replaceWith(a);
