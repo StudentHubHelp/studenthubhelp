@@ -732,11 +732,12 @@ async function load(){
      return fail('Clean URL unavailable','This listing does not have a saved slug yet. Please contact support.');
    }
 
-   // Keep old shared/bookmarked URLs working while replacing them with the current canonical slug.
-   if (lookupField === 'slug' && data.slug && data.slug !== lookupValue) {
-     const canonicalLocation = new URL(location.href);
-     canonicalLocation.searchParams.set('slug', data.slug);
-     history.replaceState({}, '', canonicalLocation.pathname + canonicalLocation.search + canonicalLocation.hash);
+   // Keep old shared/bookmarked URLs working and show the current clean canonical path.
+   if (lookupField === 'slug' && data.slug) {
+     const canonicalPath = '/properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(data.slug) + '/';
+     if (location.pathname !== canonicalPath || location.search) {
+       history.replaceState({}, '', canonicalPath + location.hash);
+     }
    }
 
    // Load the property-specific gallery records as well as the primary image fields.
