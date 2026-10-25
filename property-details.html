@@ -264,18 +264,19 @@ function updatePropertySEO(r){
   ).replace(/\s+/g,' ').trim().slice(0,160);
 
   const canonicalUrl=(()=>{
-    const u=new URL('property-details.html','https://studenthubhelp.in/');
-    u.searchParams.set('type',type);
-    const propertySlug=String(r.slug||qs.get('slug')||'').trim();
+    const propertySlug=String(qs.get('slug')||r.slug||'').trim();
     const propertyId=String(r.id||qs.get('id')||'').trim();
     const addressLower=String(r.address||'').toLowerCase();
     const cityLower=String(r.city||'').trim().toLowerCase();
     const cityContradictsAddress=cityLower==='sikar' &&
       (addressLower.includes('gurugram')||addressLower.includes('gurgaon')) &&
       addressLower.includes('haryana');
-    if(propertyId && cityContradictsAddress) u.searchParams.set('id',propertyId);
-    else if(propertySlug) u.searchParams.set('slug',propertySlug);
-    else if(propertyId) u.searchParams.set('id',propertyId);
+    if(propertySlug && !cityContradictsAddress){
+      return 'https://studenthubhelp.in/properties/'+encodeURIComponent(type)+'/'+encodeURIComponent(propertySlug)+'/';
+    }
+    const u=new URL('property-details.html','https://studenthubhelp.in/');
+    u.searchParams.set('type',type);
+    if(propertyId) u.searchParams.set('id',propertyId);
     return u.href;
   })();
 
