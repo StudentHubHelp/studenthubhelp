@@ -47,7 +47,7 @@ function buildHtml({ type, slug, name, city, address, description }) {
   const canonical = `${BASE_URL}/properties/${type}/${encodeURIComponent(slug)}/`;
   const title = `${name || 'Property Details'} | StudentHubHelp`;
   const desc = String(description || [name, address, city].filter(Boolean).join(' — ') || 'View property details on StudentHubHelp.')
-    .replace(/\\s+/g, ' ').trim().slice(0, 155);
+    .replace(/\s+/g, ' ').trim().slice(0, 155);
   const target = `${BASE_URL}/property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`;
   return `<!doctype html>
 <html lang="en-IN">
