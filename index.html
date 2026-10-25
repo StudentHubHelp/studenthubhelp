@@ -6182,7 +6182,7 @@ body,button,input,textarea,select{font-synthesis:none}
         const popupLabel = escapeHTML(shhMapCategoryLabels[category] || item.listingLabel || "Student service");
         const detailType = encodeURIComponent(category);
         const detailId = encodeURIComponent(item.id == null ? "" : item.id);
-        const detailHref = "property-details.html?type=" + detailType + "&id=" + detailId;
+        const detailHref = propertyDetailUrl(item, category);
         const popup = '<div class="shh-map-popup"><span class="shh-map-popup-category">' + popupLabel + '</span><h3>' + popupName + '</h3><p>📍 ' + popupLocation + '</p><a href="' + detailHref + '">View property details →</a></div>';
         const marker = L.circleMarker([coords.lat,coords.lng], {
           radius:7, color:"#ffffff", weight:2, fillColor:shhMapCategoryColors[category] || "#d94f7c", fillOpacity:.96
@@ -6431,7 +6431,7 @@ const query = state.search.trim().toLowerCase();
           .map(value => typeof value === "string" ? value.trim() : value && typeof value === "object" ? (value.name || value.label || value.title || value.text || "") : "")
           .filter(Boolean).slice(0,3);
         const type = item.listingCategory || category;
-        const href = "property-details.html?type=" + encodeURIComponent(type) + "&id=" + encodeURIComponent(item.id);
+        const href = propertyDetailUrl(item, type);
         const lat = item.latitude ?? item.lat ?? item.location_lat ?? item.geo_lat;
         const lng = item.longitude ?? item.lng ?? item.lon ?? item.location_lng ?? item.geo_lng;
         const mapQuery = lat !== undefined && lng !== undefined && lat !== "" && lng !== "" && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng)) ? Number(lat)+","+Number(lng) : locationText;
@@ -6568,13 +6568,37 @@ function renderListingCard(item) {
             </label>  
 
             <a class="listing-details-link"  
-              href="property-details.html?type=${encodeURIComponent(item.listingCategory)}&id=${encodeURIComponent(item.id)}">  
+              href="${safe(propertyDetailUrl(item, item.listingCategory))}">  
               View full details →  
             </a>  
           </div>
         </div>
       </article>`; 
 } 
+
+    function createPropertySlug(value) {
+      return String(value || "")
+        .normalize("NFKD")
+        .toLowerCase()
+        .trim()
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+    }
+    function propertyDetailUrl(item, fallbackCategory) {
+      const category = String(item?.listingCategory || fallbackCategory || "hostel").toLowerCase();
+      const existingSlug = String(item?.slug || "").trim();
+      const propertySlug = existingSlug || createPropertySlug([
+        item?.name || item?.displayName || item?.property_name || item?.service_name,
+        item?.area || item?.displayArea || item?.locality,
+        item?.city || item?.displayCity
+      ].filter(Boolean).join(" "));
+      return propertySlug
+        ? "/properties/" + encodeURIComponent(category) + "/" + encodeURIComponent(propertySlug) + "/"
+        : "#";
+    }
 
     function applyFilters() { 
       filteredListings = sortListings(allListings.filter(listingMatches)); 
