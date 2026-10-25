@@ -56,7 +56,7 @@ button{font:inherit}
 .hero{background:#fff;border:1px solid var(--line);border-radius:30px;overflow:hidden;box-shadow:var(--shadow)}
 .gallery{display:grid;grid-template-columns:2fr 1fr;gap:6px;height:500px;background:#e9edf4}
 .mainimg,.side img{width:100%;height:100%;object-fit:cover;background:#e9edf4}
-.mainimg{min-width:0}.side{display:grid;grid-template-rows:1fr 1fr;gap:6px;min-width:0}
+.mainimg{min-width:0}.side{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:6px;min-width:0}
 .info{padding:30px 34px 32px}
 .eyebrow,.section-kicker{font-size:10px;font-weight:950;letter-spacing:.14em;text-transform:uppercase;color:var(--brand)}
 .title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:22px}
@@ -125,10 +125,10 @@ button{font:inherit}
  .wrap{padding:15px}.content{grid-template-columns:minmax(0,1fr) 300px}.gallery{height:420px}.title{font-size:36px}.quality-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:800px){
- .wrap{padding:11px}.content{grid-template-columns:1fr}.sticky{position:static}.gallery{height:340px;grid-template-columns:1fr}.side{display:none}.title-row{display:block}.title{font-size:31px}.info{padding:23px}.grid{grid-template-columns:1fr}.trust-strip,.verification-grid,.highlight-grid{grid-template-columns:1fr}.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.actions .btn{width:100%;padding:12px 10px}.card{padding:20px;margin-bottom:15px}.similar-card{flex-basis:245px}
+ .wrap{padding:11px}.content{grid-template-columns:1fr}.sticky{position:static}.gallery{height:auto;grid-template-columns:1fr}.mainimg{height:340px}.side{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:80px;gap:5px}.title-row{display:block}.title{font-size:31px}.info{padding:23px}.grid{grid-template-columns:1fr}.trust-strip,.verification-grid,.highlight-grid{grid-template-columns:1fr}.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.actions .btn{width:100%;padding:12px 10px}.card{padding:20px;margin-bottom:15px}.similar-card{flex-basis:245px}
 }
 @media(max-width:520px){
- .wrap{padding:7px}.top{margin-bottom:9px}.hero{border-radius:19px}.gallery{height:245px}.info{padding:16px}.title{font-size:26px}.price-card{align-items:flex-start;flex-direction:column}.actions{grid-template-columns:1fr}.card{border-radius:16px;padding:15px}.item{padding:11px}.pill{font-size:12px;padding:8px 10px}.top .back,.top .share{font-size:12px;padding:10px 12px}.owner-claim-box{flex-direction:column;align-items:stretch}.owner-claim-btn{width:100%}.progress-head{display:block}.progress-head span{display:block;text-align:left;margin-top:3px}.similar-card{flex-basis:82vw}.similar-img{height:165px}
+ .wrap{padding:7px}.top{margin-bottom:9px}.hero{border-radius:19px}.gallery{height:auto}.mainimg{height:245px}.side{grid-template-rows:64px;grid-template-columns:repeat(4,minmax(0,1fr))}.info{padding:16px}.title{font-size:26px}.price-card{align-items:flex-start;flex-direction:column}.actions{grid-template-columns:1fr}.card{border-radius:16px;padding:15px}.item{padding:11px}.pill{font-size:12px;padding:8px 10px}.top .back,.top .share{font-size:12px;padding:10px 12px}.owner-claim-box{flex-direction:column;align-items:stretch}.owner-claim-btn{width:100%}.progress-head{display:block}.progress-head span{display:block;text-align:left;margin-top:3px}.similar-card{flex-basis:82vw}.similar-img{height:165px}
 }
 @media(min-width:801px){.card{content-visibility:auto;contain-intrinsic-size:320px}}
 </style>
@@ -695,6 +695,24 @@ async function load(){
 
    if(error) return fail('Unable to load property',error.message);
    if(!data) return fail('Property not found','This listing may have been removed or its URL is incorrect.');
+
+   // Load the property-specific gallery records as well as the primary image fields.
+   // This supports images saved in the dedicated property_images table.
+   try {
+     const { data: galleryRows, error: galleryError } = await db
+       .from('property_images')
+       .select('image_url, sort_order')
+       .eq('property_id', String(data.id))
+       .eq('property_table', cfg.table)
+       .order('sort_order', { ascending: true });
+     if (!galleryError && Array.isArray(galleryRows) && galleryRows.length) {
+       data.images = [...propertyImageUrls(data), ...galleryRows.map(row => row.image_url)]
+         .filter((url, index, arr) => /^https?:\\/\\//i.test(String(url||'')) && arr.indexOf(url) === index)
+         .slice(0, 5);
+     }
+   } catch (galleryError) {
+     console.warn('Property gallery records could not be loaded:', galleryError);
+   }
 
    // Legacy listings may have NULL status. Treat NULL like active, while keeping explicitly non-active listings hidden.
    const propertyStatus=String(data.status ?? '').trim().toLowerCase();
@@ -1358,9 +1376,32 @@ if(track && rows.length > 1){
     box.innerHTML='<div class="empty-state">Similar listings are unavailable right now.</div>';
   }
 }
+
+function propertyImageUrls(r){
+  const out=[];
+  const add=(v)=>{
+    if(Array.isArray(v)){v.forEach(add);return;}
+    if(v&&typeof v==='object'){add(v.url||v.image_url||v.src||v.path);return;}
+    if(typeof v!=='string'||!v.trim())return;
+    const raw=v.trim();
+    try{
+      const parsed=JSON.parse(raw);
+      if(Array.isArray(parsed)){parsed.forEach(add);return;}
+      if(parsed&&typeof parsed==='object'){add(parsed);return;}
+      if(typeof parsed==='string'){add(parsed);return;}
+    }catch(_){}
+    raw.split(/\s*,\s*/).forEach(url=>{
+      const value=url.trim();
+      if(/^https?:\/\//i.test(value)&&!out.includes(value))out.push(value);
+    });
+  };
+  add(r.images);add(r.image_urls);add(r.gallery);add(r.photos);add(r.image);
+  return out.slice(0,5);
+}
+
 function render(r){
   currentProperty=r;
-  const image=r.image||cfg.banner;
+  const propertyImages=propertyImageUrls(r);\n  const image=propertyImages[0]||cfg.banner;
   const verified=getVerification(r);
   const name=r.name||r.service_name||'Property';
   const location=[r.area,r.city].filter(Boolean).join(' • ');
@@ -1383,11 +1424,8 @@ function render(r){
   app.innerHTML=`
   <section class="hero">
     <div class="gallery">
-      <img class="mainimg" src="${esc(image)}" alt="${esc(name)}" loading="eager" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.src='${esc(cfg.banner)}'">
-      <div class="side">
-        <img src="${esc(image)}" alt="${esc(name)}" loading="lazy" decoding="async">
-        <img src="${esc(cfg.banner)}" alt="${esc(name)}" loading="lazy" decoding="async">
-      </div>
+      <img class="mainimg" src="${esc(image)}" alt="${esc(name)} — Image 1" loading="eager" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.src='${esc(cfg.banner)}'">
+      <div class="side">${propertyImages.slice(1,5).map((url,index)=>`<img src="${esc(url)}" alt="${esc(name)} — Image ${index+2}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'">`).join('')}</div>
     </div>
     <div class="info">
       <div class="title-row">
