@@ -3,9 +3,9 @@
    Supabase/API/auth data is never cached.
    Background/periodic sync refresh only the public shell.
    Push events display notifications when a configured push service sends them. */
-const CACHE_NAME = "studenthubhelp-static-v3";
+const CACHE_NAME = "studenthubhelp-static-v4";
 const OFFLINE_URL = "/index.html";
-const STATIC_ASSETS = [OFFLINE_URL, "/logo.png"];
+const STATIC_ASSETS = [OFFLINE_URL, "/logo.png", "/hostel-banner.png", "/tiffin-banner.png", "/cafe-banner.png", "/library-banner.png", "/bookstore-banner.png"];
 const SYNC_TAG = "studenthubhelp-refresh-shell";
 
 async function refreshPublicShell() {
