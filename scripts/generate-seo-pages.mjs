@@ -46,10 +46,9 @@ function matchedCoachings(row){
 }
 function coachingBySlug(slug){return COACHINGS.find(c=>c.slug===slug);}
 function propUrl(row){
-  const u=new URL('property-details.html',BASE);
-  u.searchParams.set('type',row.type);
-  if(row.slug) u.searchParams.set('slug',row.slug); else u.searchParams.set('id',row.id);
-  return u.href;
+  const propertySlug=String(row.slug||slug([row.name,row.area,row.city].filter(Boolean).join(' '))).trim();
+  if(!propertySlug) return BASE;
+  return new URL('properties/'+encodeURIComponent(row.type)+'/'+encodeURIComponent(propertySlug)+'/',BASE).href;
 }
 function rel(fromDepth,url){
   const target=new URL(url);
