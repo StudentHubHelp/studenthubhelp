@@ -1025,31 +1025,30 @@ export default function App() {
     }
   };
 
-  const handleRejectListing = (
+  const handleRejectListing = async (
     id: string | number
   ) => {
-    setListingRequests((prev) =>
-      prev.map((r) =>
-        String(r.id) ===
-        String(id)
-          ? {
-              ...r,
-              status: 'rejected',
-            }
-          : r
-      )
-    );
+    try {
+      const { error } = await supabase
+        .from('listing_requests')
+        .update({
+          status: 'rejected',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .eq('status', 'pending');
 
-    logActivity(
-      'reject_listing',
-      'listing_request',
-      id,
-      {}
-    );
+      if (error) throw error;
 
-    showToast(
-      'Listing request marked as rejected in the current admin session.'
-    );
+      // Processed requests are removed by the database trigger.
+      await loadData();
+
+      logActivity('reject_listing', 'listing_request', id, { status: 'rejected' });
+      showToast('Listing request rejected and removed from pending requests.');
+    } catch (err: any) {
+      console.error('Listing rejection failed:', err);
+      showToast(err?.message || 'Listing rejection failed. Please try again.', 'error');
+    }
   };
 
   // =========================================================
