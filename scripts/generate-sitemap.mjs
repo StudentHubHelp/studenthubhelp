@@ -134,13 +134,12 @@ async function canonicalPropertyUrl(type, row, preferredLoc) {
     return fallback.href;
   }
 
-  const canonical = html.match(/^canonical:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
-  const permalink = html.match(/^permalink:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
-  if (canonical !== expectedUrl || permalink !== expectedPath || preferredLoc !== expectedUrl) {
+  const canonical = html.match(/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i)?.[1]?.trim();
+  if (canonical !== expectedUrl || preferredLoc !== expectedUrl) {
     const fallback = new URL('property-details.html', BASE);
     fallback.searchParams.set('type', type);
     fallback.searchParams.set('slug', slug);
-    console.warn(`Using dynamic canonical URL because static page canonical/permalink does not match: ${fallback.href}; canonical=${canonical || 'missing'}; permalink=${permalink || 'missing'}`);
+    console.warn(`Using dynamic canonical URL because static page canonical does not match: ${fallback.href}; canonical=${canonical || 'missing'}`);
     return fallback.href;
   }
   return expectedUrl;
