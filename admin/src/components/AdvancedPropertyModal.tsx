@@ -243,7 +243,12 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
                   return (
                     <div key={field} className={`property-editor-field ${isTextarea ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
                       <label className="text-xs font-bold text-slate-300">{labelFor(field)}{isGeneratedId ? ' (auto-generated)' : isGeneratedPublicId ? ' (auto-generated)' : required ? ' *' : ''}</label>
-                      {isBoolean ? (
+                      {field === 'status' ? (
+                        <select value={String(value ?? 'inactive').toLowerCase()} disabled={isReadonly} onChange={(e) => handleChange(field, e.target.value)} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-sm text-white">
+                          <option value="active">Active — visible on live website</option>
+                          <option value="inactive">Deactive — hidden from live website</option>
+                        </select>
+                      ) : isBoolean ? (
                         <select value={value === true ? 'true' : value === false ? 'false' : ''} disabled={isReadonly} onChange={(e) => handleChange(field, normalizeInputValue(field, e.target.value))} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-sm text-white"><option value="">NULL / Not set</option><option value="true">TRUE</option><option value="false">FALSE</option></select>
                       ) : isTextarea ? (
                         <textarea rows={3} value={valueForInput} readOnly={isReadonly} onChange={(e) => handleChange(field, normalizeInputValue(field, e.target.value))} className="w-full mt-1 bg-[#0d1838] border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400" />
