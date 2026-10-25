@@ -2667,10 +2667,11 @@
               () => {
                 const propertyType = "bookstore";
                 const propertySlug = clean(record.slug);
-                const propertyId = clean(record.id);
-                const target = propertySlug
-                  ? "/properties/" + encodeURIComponent(propertyType) + "/" + encodeURIComponent(propertySlug) + "/"
-                  : "property-details.html?type=" + encodeURIComponent(propertyType) + "&id=" + encodeURIComponent(propertyId);
+                if (!propertySlug) {
+                  console.warn("Property has no slug; refusing to open an ID-based URL.", record.id);
+                  return;
+                }
+                const target = "/properties/" + encodeURIComponent(propertyType) + "/" + encodeURIComponent(propertySlug) + "/";
                 window.location.href = target;
               }
             );
@@ -2852,11 +2853,9 @@
 
       } else if (fullDetailsBtn) {
 
-        fullDetailsBtn.href =
-          "property-details.html?type=bookstore&id=" +
-          encodeURIComponent(id);
-
-        fullDetailsBtn.classList.remove("disabled");
+        fullDetailsBtn.href = "#";
+        fullDetailsBtn.classList.add("disabled");
+        fullDetailsBtn.setAttribute("aria-disabled", "true");
 
       }
 
