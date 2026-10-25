@@ -49,8 +49,8 @@ jobs:
               assert expected > 0, f"No properties generated for {category}"
               pages=list(Path('properties',category).glob('*/index.html'))
               assert len(pages) >= expected, f"{category}: manifest says {expected}, found only {len(pages)} files"
-              sample=pages[0].read_text(encoding='utf-8')
-              assert '<link rel="canonical"' in sample and 'property-details.html?type=' in sample
+              valid=sum(1 for page in pages if '<link rel="canonical"' in page.read_text(encoding='utf-8') and 'property-details.html?type=' in page.read_text(encoding='utf-8'))
+              assert valid >= expected, f"{category}: expected at least {expected} generated pages with canonical/redirect metadata, found {valid}"
           print(f"Static property page validation passed: {report['total']} pages; {report['byCategory']}")
           PY
 
