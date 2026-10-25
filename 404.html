@@ -37,22 +37,34 @@
 <footer><div class="wrap">© 2026 StudentHubHelp · Discover locally, study confidently.</div></footer>
   <!-- StudentHubHelp AI Chatbot -->
   <script>
-  // GitHub Pages serves 404.html for pretty property URLs whose static page is absent.
-  // Recover the listing through the existing dynamic details page without changing the URL scheme.
+  // GitHub Pages uses this fallback for pretty property URLs.
+  // Old slugs are mapped to their current canonical slugs; then the dynamic details
+  // page loads the Supabase record and restores the clean URL in the address bar.
   (function () {
     var parts = location.pathname.split('/').filter(Boolean);
-    if (parts.length >= 3 && parts[0] === 'properties') {
-      var type = parts[1].toLowerCase();
-      var slug = decodeURIComponent(parts.slice(2).join('/'));
-      var allowed = ['hostel', 'tiffin', 'library', 'cafe', 'bookstore'];
-      if (allowed.indexOf(type) !== -1 && slug) {
-        var target = new URL('/property-details.html', location.origin);
-        target.searchParams.set('type', type);
-        target.searchParams.set('slug', slug);
-        location.replace(target.href);
-        return;
-      }
+    if (parts.length < 3 || parts[0] !== 'properties') return;
+    var type = parts[1].toLowerCase();
+    var slug;
+    try { slug = decodeURIComponent(parts.slice(2).join('/')); } catch (_) { return; }
+    var allowed = ['hostel', 'tiffin', 'library', 'cafe', 'bookstore'];
+    if (allowed.indexOf(type) === -1 || !slug) return;
+
+    function openDetails(targetType, targetSlug) {
+      var target = new URL('/property-details.html', location.origin);
+      target.searchParams.set('type', targetType);
+      target.searchParams.set('slug', targetSlug);
+      location.replace(target.href);
     }
+
+    fetch('/property-url-redirects.json', { cache: 'no-cache' })
+      .then(function (response) { if (!response.ok) throw new Error('Redirect map unavailable'); return response.json(); })
+      .then(function (map) {
+        var oldPath = '/properties/' + type + '/' + slug + '/';
+        var redirect = map[oldPath];
+        if (redirect && redirect.type && redirect.slug) openDetails(redirect.type, redirect.slug);
+        else openDetails(type, slug);
+      })
+      .catch(function () { openDetails(type, slug); });
   })();
   </script>
   <script src="/ai-chatbot/public/widget.js" defer></script>
