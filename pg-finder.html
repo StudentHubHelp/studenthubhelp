@@ -2411,12 +2411,12 @@ function ownerClaimButton(record){
     `;
   }
 
-  const propertyId = record.id ?? record.property_id ?? '';
+  if (!propertySlug) return '';
 
   return `
     <a
       class="claim-card-btn"
-      href="${propertySlug ? "/properties/hostel/"+encodeURIComponent(propertySlug)+"/" : "property-details.html?type=hostel&id="+encodeURIComponent(propertyId)}"
+      href="/properties/hostel/${encodeURIComponent(propertySlug)}/"
     >
       <i class="fa-solid fa-hand"></i>
       Are you the owner? Claim
@@ -2668,10 +2668,11 @@ ${ownerClaimButton(record)}
               () => {
                 const propertyType = "hostel";
                 const propertySlug = clean(record.slug);
-                const propertyId = clean(record.id);
-                const target = propertySlug
-                  ? "/properties/" + encodeURIComponent(propertyType) + "/" + encodeURIComponent(propertySlug) + "/"
-                  : "property-details.html?type=" + encodeURIComponent(propertyType) + "&id=" + encodeURIComponent(propertyId);
+                if (!propertySlug) {
+                  console.warn("Property has no slug; refusing to open an ID-based URL.", record.id);
+                  return;
+                }
+                const target = "/properties/" + encodeURIComponent(propertyType) + "/" + encodeURIComponent(propertySlug) + "/";
                 window.location.href = target;
               }
             );
@@ -2865,11 +2866,9 @@ ${ownerClaimButton(record)}
 
       } else if (fullDetailsBtn) {
 
-        fullDetailsBtn.href =
-          "property-details.html?type=hostel&id=" +
-          encodeURIComponent(id);
-
-        fullDetailsBtn.classList.remove("disabled");
+        fullDetailsBtn.href = "#";
+        fullDetailsBtn.classList.add("disabled");
+        fullDetailsBtn.setAttribute("aria-disabled", "true");
 
       }
 
