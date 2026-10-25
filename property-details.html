@@ -693,14 +693,39 @@ async function load(){
  const lookupValue=qs.get(lookupField);
 
  try{
-   const {data,error}=await db
+   let {data,error}=await db
      .from(cfg.table)
      .select('*')
      .eq(lookupField,lookupValue)
      .maybeSingle();
 
    if(error) return fail('Unable to load property',error.message);
+
+   // Backward compatibility: if a city correction changed the stored slug,
+   // resolve an old slug only when its name-based prefix matches exactly one row.
+   if (!data && lookupField === 'slug' && lookupValue) {
+     const lastDash = lookupValue.lastIndexOf('-');
+     const legacyBase = lastDash > 0 ? lookupValue.slice(0, lastDash) : '';
+     if (legacyBase) {
+       const fallback = await db
+         .from(cfg.table)
+         .select('*')
+         .like('slug', legacyBase + '-%')
+         .limit(2);
+       if (!fallback.error && Array.isArray(fallback.data) && fallback.data.length === 1) {
+         data = fallback.data[0];
+       }
+     }
+   }
+
    if(!data) return fail('Property not found','This listing may have been removed or its URL is incorrect.');
+
+   // Keep old shared/bookmarked URLs working while replacing them with the current canonical slug.
+   if (lookupField === 'slug' && data.slug && data.slug !== lookupValue) {
+     const canonicalLocation = new URL(location.href);
+     canonicalLocation.searchParams.set('slug', data.slug);
+     history.replaceState({}, '', canonicalLocation.pathname + canonicalLocation.search + canonicalLocation.hash);
+   }
 
    // Load the property-specific gallery records as well as the primary image fields.
    // This supports images saved in the dedicated property_images table.
