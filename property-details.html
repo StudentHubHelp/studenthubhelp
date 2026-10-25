@@ -689,8 +689,9 @@ async function load(){
  }
 
  app.setAttribute('aria-busy','true');
- const lookupField='slug';
- const lookupValue=qs.get('slug') || slug;
+ const legacyId=qs.get('id');
+ const lookupField=legacyId ? 'id' : 'slug';
+ const lookupValue=legacyId || qs.get('slug') || slug;
 
  try{
    let {data,error}=await db
@@ -719,6 +720,17 @@ async function load(){
    }
 
    if(!data) return fail('Property not found','This listing may have been removed or its URL is incorrect.');
+
+   // Legacy ID URLs are accepted only to resolve the record, then immediately redirected to its clean slug URL.
+   if (legacyId) {
+     const legacySlug=String(data.slug||'').trim();
+     if (legacySlug) {
+       const cleanPath='/properties/'+encodeURIComponent(type)+'/'+encodeURIComponent(legacySlug)+'/';
+       location.replace(cleanPath);
+       return;
+     }
+     return fail('Clean URL unavailable','This listing does not have a saved slug yet. Please contact support.');
+   }
 
    // Keep old shared/bookmarked URLs working while replacing them with the current canonical slug.
    if (lookupField === 'slug' && data.slug && data.slug !== lookupValue) {
