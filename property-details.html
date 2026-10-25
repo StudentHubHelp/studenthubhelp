@@ -294,7 +294,7 @@ function updatePropertySEO(r){
   setMeta('twitterDescription',seoDescription);
 
   const imageUrl=new URL(
-    r.image||cfg.banner,
+    propertyImageUrls(r)[0]||cfg.banner,
     location.href
   ).href;
 
@@ -713,7 +713,7 @@ async function load(){
        .order('sort_order', { ascending: true });
      if (!galleryError && Array.isArray(galleryRows) && galleryRows.length) {
        data.images = [...propertyImageUrls(data), ...galleryRows.map(row => row.image_url)]
-         .filter((url, index, arr) => /^https?:\\/\\//i.test(String(url||'')) && arr.indexOf(url) === index)
+         .filter((url, index, arr) => /^https?:\/\//i.test(String(url || '')) && arr.indexOf(url) === index)
          .slice(0, 5);
      }
    } catch (galleryError) {
