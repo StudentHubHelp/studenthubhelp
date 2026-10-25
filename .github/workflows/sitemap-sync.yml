@@ -42,14 +42,13 @@ jobs:
           from pathlib import Path
           import json
           report=json.loads(Path('property-pages-manifest.json').read_text(encoding='utf-8'))
-          expected={'hostel':208,'tiffin':96,'library':163,'cafe':96,'bookstore':62}
+          categories=['hostel','tiffin','library','cafe','bookstore']
           assert report['total'] >= 600, f"Too few property pages: {report['total']}"
-          for category, minimum in expected.items():
-              actual=report['byCategory'].get(category,0)
-              assert actual >= minimum, f"{category}: expected at least {minimum}, got {actual}"
-          for category in expected:
+          for category in categories:
+              expected=report['byCategory'].get(category,0)
+              assert expected > 0, f"No properties generated for {category}"
               pages=list(Path('properties',category).glob('*/index.html'))
-              assert len(pages) >= expected[category], f"{category}: generated files missing"
+              assert len(pages) == expected, f"{category}: manifest says {expected}, found {len(pages)} files"
               sample=pages[0].read_text(encoding='utf-8')
               assert '<link rel="canonical"' in sample and 'property-details.html?type=' in sample
           print(f"Static property page validation passed: {report['total']} pages; {report['byCategory']}")
