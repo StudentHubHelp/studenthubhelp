@@ -763,7 +763,8 @@ async function load(){
    }
 
    // Keep old shared/bookmarked URLs working and show the current clean canonical path.
-   if (lookupField === 'slug' && data.slug) {
+   // ID-based legacy links are also normalized to the stored canonical slug, stripping ?id=.
+   if (data.slug && (lookupField === 'slug' || lookupField === 'id')) {
      const canonicalSlug = mappedCanonicalSlug || data.slug;
      const canonicalPath = '/properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(canonicalSlug) + '/';
      if (location.pathname !== canonicalPath || location.search) {
