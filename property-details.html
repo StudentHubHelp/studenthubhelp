@@ -64,6 +64,14 @@ button{font:inherit}
 .gallery-fallback{position:relative;display:block;width:100%;height:100%;overflow:hidden;background:#e9edf4}
 .gallery-fallback img{width:100%;height:100%;object-fit:cover}
 .gallery-fallback span{position:absolute;left:10px;bottom:10px;padding:5px 8px;border-radius:8px;background:rgba(7,26,51,.78);color:#fff;font-size:10px;font-weight:800}
+.property-photos-grid{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:150px 150px;gap:7px;border-radius:17px;overflow:hidden}
+.property-photo-cell{position:relative;min-width:0;min-height:0;background:#e9edf4;overflow:hidden}
+.property-photo-cell img{display:block;width:100%;height:100%;object-fit:cover}
+.property-photo-cell.photo-primary{grid-row:span 2}
+.photo-badge{position:absolute;left:8px;bottom:8px;padding:5px 8px;border-radius:8px;background:rgba(7,26,51,.78);color:#fff;font-size:10px;font-weight:800}
+.photo-fallback-logo{object-fit:contain!important;padding:24px;box-sizing:border-box}
+@media(max-width:800px){.property-photos-grid{grid-template-columns:1fr 1fr;grid-template-rows:220px 110px 110px}.property-photo-cell.photo-primary{grid-column:span 2;grid-row:auto}}
+@media(max-width:520px){.property-photos-grid{grid-template-columns:1fr 1fr;grid-template-rows:190px 90px 90px;gap:5px}.property-photo-cell.photo-primary{grid-column:span 2}}
 /* Keep gallery and property information in separate, non-overlapping sections on every property URL. */
 .hero{display:flex;flex-direction:column;align-items:stretch}
 .hero>.gallery{position:relative!important;inset:auto!important;float:none!important;flex:none;order:0;width:100%;margin:0!important;transform:none!important}
@@ -1570,7 +1578,7 @@ function render(r){
 
       <div class="card"><div class="section-kicker">ROOM & VALUE</div><h2>💰 Rent / Room Options</h2><div class="grid">${field('Monthly Rent Range',r.monthly_rent_range||price||null)}${field('Room Types',r.room_types)}${field('Food',r.food_available)}${field('Food Type',r.food_type)}${field('Plan Type',r.plan_type)}${field('Deposit',r.security_deposit||r.deposit)}</div><p class="small" style="margin-top:12px">Prices and availability can change. Confirm current terms directly before making a decision.</p></div>
 
-      <div class="card"><div class="section-kicker">ABOUT</div><h2>🏠 About this listing</h2><div class="desc">${show(r.description)}</div></div>
+      <div class="card"><div class="section-kicker">ABOUT</div><h2>🏠 About this listing</h2><div class="desc">${(r.description&&String(r.description).trim())?show(r.description):`<p>${esc(name)} is listed on StudentHubHelp under ${esc(r.category||cfg.label||'student services')} in ${esc([r.area,r.city].filter(Boolean).join(', ')||'the listed location')}.</p><p>${esc([r.property_type||r.type,r.room_types,r.food_available===true?'Food available':r.food_available===false?'Food not available':'',r.food_type,r.monthly_rent_range||price?'Rent: '+(r.monthly_rent_range||price):'',r.timing||r.opening_hours?'Timings: '+(r.timing||r.opening_hours):''].filter(Boolean).join(' • ')||'Please contact the property to confirm its facilities, availability, pricing and other details.')}</p>`}</div></div>
 
       ${categorySections(r)}
 
@@ -1583,7 +1591,7 @@ function render(r){
         <div class="highlight"><div class="highlight-icon"><i class="fa-solid fa-map"></i></div><div><strong>Area context</strong><span>${esc([r.area,r.city].filter(Boolean).join(', ')||'Location information available')}</span></div></div>
       </div></div>
 
-      <div class="card"><div class="section-kicker">PHOTOS</div><h2>📸 Property Photos</h2><div class="gallery" style="height:280px;border-radius:17px;overflow:hidden;grid-template-columns:2fr 1fr"><img class="mainimg" src="${esc(image)}" alt="${esc(name)} photo" loading="lazy" decoding="async"><div class="side"><img src="${esc(image)}" alt="${esc(name)} photo" loading="lazy" decoding="async"><img src="${esc(cfg.banner)}" alt="${esc(name)} photo" loading="lazy" decoding="async"></div></div><p class="small" style="margin-top:10px">Photos are shown as available in the listing data.</p></div>
+      <div class="card property-photos-card"><div class="section-kicker">PHOTOS</div><h2>📸 Property Photos</h2><div class="property-photos-grid">${Array.from({length:5},(_,index)=>{const actual=propertyImages[index];const src=actual||cfg.banner;return `<div class="property-photo-cell ${index===0?'photo-primary':''}"><img src="${esc(src)}" alt="${esc(name)} — ${actual?'Property photo '+(index+1):((cfg.label||'Property')+' category banner')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/logo.png';this.classList.add('photo-fallback-logo')">${actual?'':`<span class="photo-badge">${esc(cfg.label||'Category')} banner</span>`}</div>`}).join('')}</div><p class="small" style="margin-top:10px">Available property photos are shown first. Missing photos use a clearly labelled category banner; no other property's photos are substituted.</p></div>
 
       ${claimPropertyHTML(r)}
 
