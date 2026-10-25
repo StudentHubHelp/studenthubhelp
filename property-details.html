@@ -177,37 +177,37 @@ const config={
   hostel:{
     table:'hostels',
     label:'Hostel / PG',
-    banner:location.origin+'/hostel-banner.png'
+    banner:new URL('/hostel-banner.png',location.origin).href
   },
 
   pg:{
     table:'hostels',
     label:'Hostel / PG',
-    banner:location.origin+'/hostel-banner.png'
+    banner:new URL('/hostel-banner.png',location.origin).href
   },
 
   tiffin:{
     table:'tiffins',
     label:'Tiffin Service',
-    banner:location.origin+'/tiffin-banner.png'
+    banner:new URL('/tiffin-banner.png',location.origin).href
   },
 
   cafe:{
     table:'cafes',
     label:'Cafe',
-    banner:location.origin+'/cafe-banner.png'
+    banner:new URL('/cafe-banner.png',location.origin).href
   },
 
   library:{
     table:'libraries',
     label:'Library',
-    banner:location.origin+'/library-banner.png'
+    banner:new URL('/library-banner.png',location.origin).href
   },
 
   bookstore:{
     table:'bookstores',
     label:'Bookstore',
-    banner:location.origin+'/bookstore-banner.png'
+    banner:new URL('/bookstore-banner.png',location.origin).href
   }
 };
 const cfg=config[type]||config.hostel;
@@ -1437,7 +1437,7 @@ async function loadSimilarProperties(r){
               ?'Same area'
               :'Same city';
             return `<a class="similar-card" href="${esc(href)}">
-              <img class="similar-img" src="${esc(x.image||cfg.banner)}" alt="${esc(nm)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${esc(cfg.banner)}'">
+              <img class="similar-img" src="${esc(x.image||cfg.banner)}" alt="${esc(nm)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=new URL('${esc(cfg.banner)}',location.origin).href">
               <div class="similar-body">
                 <div class="similar-name">${esc(nm)}</div>
                 <div class="similar-meta">${esc([x.area,x.city].filter(Boolean).join(' • ')||'Location available')}</div>
@@ -1541,8 +1541,8 @@ function render(r){
   app.innerHTML=`
   <section class="hero">
     <div class="gallery" aria-label="Property photo gallery">
-      <img class="mainimg" src="${esc(image)}" alt="${esc(name)} — ${propertyImages.length?'Property photo 1':'Category banner'}" loading="eager" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.src='${esc(cfg.banner)}'">
-      <div class="side">${Array.from({length:4},(_,index)=>{const url=propertyImages[index+1];return url?`<img src="${esc(url)}" alt="${esc(name)} — Property photo ${index+2}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${esc(cfg.banner)}'">`:`<div class="gallery-fallback"><img src="${esc(cfg.banner)}" alt="${esc(cfg.label)} category banner" loading="lazy" decoding="async"><span>${esc(cfg.label)} banner</span></div>`}).join('')}</div>
+      <img class="mainimg" src="${esc(image)}" alt="${esc(name)} — ${propertyImages.length?'Property photo 1':'Category banner'}" loading="eager" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.src=new URL('${esc(cfg.banner)}',location.origin).href">
+      <div class="side">${Array.from({length:4},(_,index)=>{const url=propertyImages[index+1];return url?`<img src="${esc(url)}" alt="${esc(name)} — Property photo ${index+2}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=new URL('${esc(cfg.banner)}',location.origin).href">`:`<div class="gallery-fallback"><img src="${esc(cfg.banner)}" alt="${esc(cfg.label)} category banner" loading="lazy" decoding="async"><span>${esc(cfg.label)} banner</span></div>`}).join('')}</div>
     </div>
     <div class="info">
       <div class="title-row">
@@ -1592,7 +1592,7 @@ function render(r){
         <div class="highlight"><div class="highlight-icon"><i class="fa-solid fa-map"></i></div><div><strong>Area context</strong><span>${esc([r.area,r.city].filter(Boolean).join(', ')||'Location information available')}</span></div></div>
       </div></div>
 
-      <div class="card property-photos-card"><div class="section-kicker">PHOTOS</div><h2>📸 Property Photos</h2><div class="property-photos-grid">${Array.from({length:5},(_,index)=>{const actual=propertyImages[index];const src=actual||cfg.banner;return `<div class="property-photo-cell ${index===0?'photo-primary':''}"><img src="${esc(src)}" alt="${esc(name)} — ${actual?'Property photo '+(index+1):((cfg.label||'Property')+' category banner')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/logo.png';this.classList.add('photo-fallback-logo')">${actual?'':`<span class="photo-badge">${esc(cfg.label||'Category')} banner</span>`}</div>`}).join('')}</div><p class="small" style="margin-top:10px">Available property photos are shown first. Missing photos use a clearly labelled category banner; no other property's photos are substituted.</p></div>
+      <div class="card property-photos-card"><div class="section-kicker">PHOTOS</div><h2>📸 Property Photos</h2><div class="property-photos-grid">${Array.from({length:5},(_,index)=>{const actual=propertyImages[index];const src=actual||new URL(cfg.banner,location.origin).href;return `<div class="property-photo-cell ${index===0?'photo-primary':''}"><img src="${esc(src)}" alt="${esc(name)} — ${actual?'Property photo '+(index+1):((cfg.label||'Property')+' category banner')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/logo.png';this.classList.add('photo-fallback-logo')">${actual?'':`<span class="photo-badge">${esc(cfg.label||'Category')} banner</span>`}</div>`}).join('')}</div><p class="small" style="margin-top:10px">Available property photos are shown first. Missing photos use a clearly labelled category banner; no other property's photos are substituted.</p></div>
 
       ${claimPropertyHTML(r)}
 
