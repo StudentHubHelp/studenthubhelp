@@ -122,6 +122,26 @@ const SPATIAL_EDITOR_STYLES = `
 
 function labelFor(field: string) { return field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()); }
 function displayValue(value: any) { if (Array.isArray(value)) return value.join(', '); if (value === null || value === undefined) return ''; return String(value); }
+function parsePropertyImages(image: any, images: any): string[] {
+  const result: string[] = [];
+  const add = (value: any) => {
+    if (Array.isArray(value)) value.forEach(add);
+    else if (typeof value === 'string' && value.trim()) {
+      const raw = value.trim();
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) parsed.forEach(add);
+        else if (typeof parsed === 'string') add(parsed);
+        else result.push(raw);
+      } catch {
+        raw.split(/\\s*,\\s*/).forEach((part) => { if (part && !result.includes(part)) result.push(part); });
+      }
+    }
+  };
+  add(image);
+  add(images);
+  return result.filter((url, index) => /^https?:\\/\\//i.test(url) && result.indexOf(url) === index).slice(0, 5);
+}
 function normalizeInputValue(field: string, value: string) {
   if (BOOLEAN_COLUMNS.has(field)) return value === '' ? null : value === 'true';
   if (NUMBER_COLUMNS.has(field)) return value === '' ? null : Number(value);
@@ -146,6 +166,7 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
   const isNew = !property || property.id === undefined || property.id === null || property.id === '';
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -168,6 +189,61 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
   }, [columns]);
 
   const handleChange = (field: string, value: any) => setFormData((prev) => ({ ...prev, [field]: value }));
+
+  const propertyImages = parsePropertyImages(formData.image, formData.images);
+  const uploadPropertyImages = async (files: FileList | null) => {
+    if (!files?.length) return;
+    if (isNew) {
+      setError('Pehle property ko Save Property Live se save karein, phir images upload karein.');
+      return;
+    }
+    const selectedFiles = Array.from(files);
+    if (propertyImages.length + selectedFiles.length > 5) {
+      setError(`Maximum 5 images allowed. Abhi ${propertyImages.length} image(s) hain.`);
+      return;
+    }
+    const validFiles = selectedFiles.filter((file) => file.type.startsWith('image/'));
+    if (!validFiles.length) {
+      setError('Please select image files only.');
+      return;
+    }
+    setError(null);
+    setMediaUploading(true);
+    const uploadedPaths: string[] = [];
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error('Admin session not found. Please sign in again.');
+      const propertyId = String((property as any)?.id ?? formData.id);
+      const ownerId = String((property as any)?.owner_id || auth.user.id);
+      const uploadedUrls: string[] = [];
+      for (const file of validFiles) {
+        const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+        const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
+        const path = `${auth.user.id}/admin/${selectedType}/${propertyId}/${safeName}`;
+        const { error: storageError } = await supabase.storage.from('property-images').upload(path, file, {
+          upsert: false,
+          contentType: file.type || undefined,
+        });
+        if (storageError) throw storageError;
+        uploadedPaths.push(path);
+        const { data: publicData } = supabase.storage.from('property-images').getPublicUrl(path);
+        if (!publicData?.publicUrl) throw new Error('Supabase did not return a public image URL.');
+        uploadedUrls.push(publicData.publicUrl);
+      }
+      const nextImages = [...propertyImages, ...uploadedUrls].slice(0, 5);
+      setFormData((prev) => ({ ...prev, image: nextImages[0] || '', images: JSON.stringify(nextImages) }));
+    } catch (uploadError: any) {
+      if (uploadedPaths.length) await supabase.storage.from('property-images').remove(uploadedPaths);
+      setError(uploadError?.message || 'Image upload failed.');
+    } finally {
+      setMediaUploading(false);
+    }
+  };
+
+  const removePropertyImage = (url: string) => {
+    const nextImages = propertyImages.filter((item) => item !== url).slice(0, 5);
+    setFormData((prev) => ({ ...prev, image: nextImages[0] || '', images: JSON.stringify(nextImages) }));
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -229,6 +305,27 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
           {groups.map((group) => (
             <section key={group.key} className="property-editor-spatial-section rounded-2xl border border-slate-800 bg-[#0a1430]/70 p-4 sm:p-5">
               <div className="mb-4"><h3 className="text-sm sm:text-base font-extrabold text-white">{group.title}</h3><p className="text-[11px] text-slate-500 mt-1">{group.description}</p></div>
+              {group.key === 'media' && <div className="space-y-4">
+                <div className="rounded-2xl border border-dashed border-amber-400/40 bg-amber-400/5 p-5 text-center">
+                  <div className="text-sm font-bold text-white">Property Image Gallery</div>
+                  <p className="text-xs text-slate-400 mt-1">Upload up to 5 images. Files are stored in the existing Supabase <span className="text-amber-300">property-images</span> bucket.</p>
+                  <p className="text-[11px] text-slate-500 mt-1">{propertyImages.length}/5 images · Supported image formats</p>
+                  <label className={`inline-flex mt-4 cursor-pointer items-center justify-center rounded-xl px-5 py-3 text-xs font-extrabold text-slate-950 bg-gradient-to-r from-amber-300 to-amber-500 ${mediaUploading || propertyImages.length >= 5 || isNew ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {mediaUploading ? 'Uploading images…' : isNew ? 'Save property first to upload' : '＋ Choose property images'}
+                    <input type="file" accept="image/*" multiple className="hidden" disabled={mediaUploading || propertyImages.length >= 5 || isNew} onChange={(e) => { void uploadPropertyImages(e.target.files); e.currentTarget.value = ''; }} />
+                  </label>
+                  {isNew && <p className="text-[11px] text-amber-300/80 mt-2">New properties: save once first, then reopen the editor to upload images.</p>}
+                </div>
+                {propertyImages.length > 0 ? <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                  {propertyImages.map((url, index) => <div key={url} className="overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                    <div className="relative aspect-[4/3]"><img src={url} alt={`Property image ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
+                      {index === 0 && <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2 py-1 text-[9px] font-extrabold text-slate-950">MAIN IMAGE</span>}
+                    </div>
+                    <div className="flex items-center justify-between gap-2 p-2"><span className="truncate text-[10px] text-slate-300">Image {index + 1}</span><button type="button" onClick={() => removePropertyImage(url)} className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-2 py-1 text-[10px] font-bold text-rose-300">Remove</button></div>
+                  </div>)}
+                </div> : <div className="rounded-xl border border-white/10 p-6 text-center text-xs text-slate-500">No property images uploaded yet.</div>}
+                <p className="text-[10px] text-slate-500">Image changes are written to the property record when you click “Save Property Live”. The first image is used as the primary image.</p>
+              </div>}
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {group.fields.map((field) => {
                   const value = formData[field];
