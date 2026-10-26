@@ -43,48 +43,33 @@ async function fetchAll(table) {
   return rows;
 }
 
-function buildHtml({ type, slug, name, city, address, description }) {
+function buildHtml({ type, slug, name, city, address, description, detailsTemplate }) {
   const canonical = `${BASE_URL}/properties/${type}/${encodeURIComponent(slug)}/`;
   const title = `${name || 'Property Details'} | StudentHubHelp`;
   const desc = String(description || [name, address, city].filter(Boolean).join(' — ') || 'View property details on StudentHubHelp.')
     .replace(/\s+/g, ' ').trim().slice(0, 155);
-  const target = `${BASE_URL}/property-details.html?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`;
-  return `<!doctype html>
-<html lang="en-IN">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapeHtml(title)}</title>
-<meta name="description" content="${escapeHtml(desc)}">
-<meta name="robots" content="index,follow,max-image-preview:large">
-<link rel="canonical" href="${escapeHtml(canonical)}">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="StudentHubHelp">
-<meta property="og:title" content="${escapeHtml(title)}">
-<meta property="og:description" content="${escapeHtml(desc)}">
-<meta property="og:url" content="${escapeHtml(canonical)}">
-<meta name="twitter:card" content="summary">
-<base href="/">
-<script>
-(function(){
-  // Keep the clean /properties/<type>/<slug>/ URL in the address bar.
-  // Load the shared details app in-place rather than redirecting through a query URL.
-  var canonical = ${JSON.stringify(canonical)};
-  history.replaceState({}, '', canonical + location.hash);
-  fetch('/property-details.html', {cache:'no-cache'})
-    .then(function(response){ if(!response.ok) throw new Error('Details app unavailable'); return response.text(); })
-    .then(function(html){ document.open(); document.write(html); document.close(); })
-    .catch(function(){ document.body.innerHTML = '<main><h1>Property Details</h1><p>Property details are temporarily unavailable.</p><a href="/">Return to StudentHubHelp</a></main>'; });
-})();
-</script>
-</head>
-<body>
-<main><h1>${escapeHtml(name || 'Property Details')}</h1><p>${escapeHtml(address || [city, type].filter(Boolean).join(' · '))}</p><p>Opening full property details… <a href="${escapeHtml(target)}">Continue</a></p></main>
-</body>
-</html>
-`;
-}
 
+  // Render the real property-details app at the clean URL. property-details.html
+  // already resolves category + slug from the pathname, so an intermediate redirect
+  // shell is unnecessary and was the source of the visible flash.
+  const schema = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    url: canonical
+  }).replace(/</g, '\\u003c');
+
+  return detailsTemplate
+    .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
+    .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
+    .replace(/<meta id="ogTitle" property="og:title" content="[^"]*">/i, `<meta id="ogTitle" property="og:title" content="${escapeHtml(title)}">`)
+    .replace(/<meta id="ogDescription" property="og:description" content="[^"]*">/i, `<meta id="ogDescription" property="og:description" content="${escapeHtml(desc)}">`)
+    .replace(/<meta id="ogUrl" property="og:url" content="[^"]*">/i, `<meta id="ogUrl" property="og:url" content="${escapeHtml(canonical)}">`)
+    .replace(/<meta id="twitterTitle" name="twitter:title" content="[^"]*">/i, `<meta id="twitterTitle" name="twitter:title" content="${escapeHtml(title)}">`)
+    .replace(/<meta id="twitterDescription" name="twitter:description" content="[^"]*">/i, `<meta id="twitterDescription" name="twitter:description" content="${escapeHtml(desc)}">`)
+    .replace(/<script id="propertySchema" type="application\/ld\+json">[\s\S]*?<\/script>/i, `<script id="propertySchema" type="application/ld+json">\n${schema}\n</script>`)
+    .replace(/<title>[^<]*<\/title>/i, (tag) => tag + `\n<link id="canonicalLink" rel="canonical" href="${escapeHtml(canonical)}">`);
+}
 function buildLegacyRedirectHtml(oldPath, targetType, targetSlug) {
   const canonical = `${BASE_URL}/properties/${targetType}/${encodeURIComponent(targetSlug)}/`;
   return `<!doctype html>
@@ -114,6 +99,7 @@ async function main() {
   const seen = new Set();
   const counts = {};
   let generated = 0;
+  const detailsTemplate = await readFile(path.join(ROOT, 'property-details.html'), 'utf8');
 
   for (const { table, type } of CATEGORIES) {
     const records = await fetchAll(table);
@@ -132,7 +118,8 @@ async function main() {
         type, slug, name,
         city: row.city,
         address: row.address,
-        description: row.description || row.about || row.details
+        description: row.description || row.about || row.details,
+        detailsTemplate
       });
       await writeFile(path.join(dir, 'index.html'), html, 'utf8');
       generated++;
