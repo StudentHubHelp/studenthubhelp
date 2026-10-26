@@ -60,7 +60,10 @@ function buildHtml({ type, slug, name, city, address, description, detailsTempla
     url: canonical
   }).replace(/</g, '\\u003c');
 
-  return detailsTemplate
+  const renderedTemplate = detailsTemplate
+    .replace(/<head([^>]*)>/i, '<head$1>\\n<link rel="icon" type="image/png" href="/logo.png?v=site-icon-20261026">\\n<link rel="shortcut icon" type="image/png" href="/logo.png?v=site-icon-20261026">\\n<link rel="apple-touch-icon" href="/logo.png?v=site-icon-20261026">');
+
+  return renderedTemplate
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
     .replace(/<meta id="ogTitle" property="og:title" content="[^"]*">/i, `<meta id="ogTitle" property="og:title" content="${escapeHtml(title)}">`)
