@@ -248,8 +248,8 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-    if (!formData.name || (!allowIncompleteContact && (!formData.phone || !formData.area || !formData.address))) {
-      setError(allowIncompleteContact ? 'Property name is required.' : 'Required: name, phone, area and address.');
+    if (!formData.name || !String(formData.city ?? '').trim() || (!allowIncompleteContact && (!formData.phone || !formData.area || !formData.address))) {
+      setError(allowIncompleteContact ? 'Property name and city are required.' : 'Required: name, city, phone, area and address.');
       return;
     }
     try {
@@ -333,7 +333,7 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
                   const isNumber = NUMBER_COLUMNS.has(field);
                   const isReadonly = READONLY_COLUMNS.has(field);
                   const isTextarea = TEXTAREA_COLUMNS.has(field);
-                  const required = ['name','phone','area','address'].includes(field);
+                  const required = ['name','city','phone','area','address'].includes(field);
                   const valueForInput = displayValue(value);
                   const isGeneratedId = field === 'id' && isNew;
                   const isGeneratedPublicId = field === 'property_id' && isNew;
