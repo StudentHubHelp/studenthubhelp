@@ -167,6 +167,8 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [mediaUploading, setMediaUploading] = useState(false);
+  // Stable temporary folder key lets a new property's images upload before its first DB save.
+  const [draftMediaId] = useState(() => makeTextPropertyId());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -193,10 +195,6 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
   const propertyImages = parsePropertyImages(formData.image, formData.images);
   const uploadPropertyImages = async (files: FileList | null) => {
     if (!files?.length) return;
-    if (isNew) {
-      setError('Pehle property ko Save Property Live se save karein, phir images upload karein.');
-      return;
-    }
     const selectedFiles = Array.from(files);
     if (propertyImages.length + selectedFiles.length > 5) {
       setError(`Maximum 5 images allowed. Abhi ${propertyImages.length} image(s) hain.`);
@@ -213,7 +211,7 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
     try {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) throw new Error('Admin session not found. Please sign in again.');
-      const propertyId = String((property as any)?.id ?? formData.id);
+      const propertyId = String((property as any)?.id ?? formData.id ?? draftMediaId);
       const ownerId = String((property as any)?.owner_id || auth.user.id);
       const uploadedUrls: string[] = [];
       for (const file of validFiles) {
@@ -310,11 +308,11 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
                   <div className="text-sm font-bold text-white">Property Image Gallery</div>
                   <p className="text-xs text-slate-400 mt-1">Upload up to 5 images. Files are stored in the existing Supabase <span className="text-amber-300">property-images</span> bucket.</p>
                   <p className="text-[11px] text-slate-500 mt-1">{propertyImages.length}/5 images · Supported image formats</p>
-                  <label className={`inline-flex mt-4 cursor-pointer items-center justify-center rounded-xl px-5 py-3 text-xs font-extrabold text-slate-950 bg-gradient-to-r from-amber-300 to-amber-500 ${mediaUploading || propertyImages.length >= 5 || isNew ? 'opacity-50 pointer-events-none' : ''}`}>
-                    {mediaUploading ? 'Uploading images…' : isNew ? 'Save property first to upload' : '＋ Choose property images'}
-                    <input type="file" accept="image/*" multiple className="hidden" disabled={mediaUploading || propertyImages.length >= 5 || isNew} onChange={(e) => { void uploadPropertyImages(e.target.files); e.currentTarget.value = ''; }} />
+                  <label className={`inline-flex mt-4 cursor-pointer items-center justify-center rounded-xl px-5 py-3 text-xs font-extrabold text-slate-950 bg-gradient-to-r from-amber-300 to-amber-500 ${mediaUploading || propertyImages.length >= 5 ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {mediaUploading ? 'Uploading images…' : '＋ Choose property images'}
+                    <input type="file" accept="image/*" multiple className="hidden" disabled={mediaUploading || propertyImages.length >= 5} onChange={(e) => { void uploadPropertyImages(e.target.files); e.currentTarget.value = ''; }} />
                   </label>
-                  {isNew && <p className="text-[11px] text-amber-300/80 mt-2">New properties: save once first, then reopen the editor to upload images.</p>}
+                  {isNew && <p className="text-[11px] text-amber-300/80 mt-2">You can upload images before the first save. Uploaded images will be linked to this property when you click “Save Property Live”.</p>}
                 </div>
                 {propertyImages.length > 0 ? <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                   {propertyImages.map((url, index) => <div key={url} className="overflow-hidden rounded-xl border border-white/10 bg-black/20">
