@@ -78,6 +78,8 @@ function buildLegacyRedirectHtml(oldPath, targetType, targetSlug) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,follow">
+<link rel="icon" type="image/png" href="/logo.png?v=site-icon-20261026">
+<link rel="apple-touch-icon" href="/logo.png?v=site-icon-20261026">
 <link rel="canonical" href="${escapeHtml(canonical)}">
 <title>Property moved | StudentHubHelp</title>
 <script>
