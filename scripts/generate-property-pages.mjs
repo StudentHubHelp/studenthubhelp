@@ -43,6 +43,7 @@ async function fetchAll(table) {
   return rows;
 }
 
+// Always regenerate canonical property pages from the shared details app; do not retain legacy redirect shells.
 function buildHtml({ type, slug, name, city, address, description, detailsTemplate }) {
   const canonical = `${BASE_URL}/properties/${type}/${encodeURIComponent(slug)}/`;
   const title = `${name || 'Property Details'} | StudentHubHelp`;
