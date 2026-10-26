@@ -129,7 +129,11 @@ async function canonicalPropertyUrl(type, row, preferredLoc) {
   } catch {
     throw new Error(`Missing generated static property page for sitemap URL: ${expectedUrl}`);
   }
-  const canonical = html.match(/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i)?.[1]?.trim();
+  const canonicalTag = (html.match(/<link\b[^>]*>/gi) || []).find(tag => {
+    const rel = tag.match(/\brel\s*=\s*["']([^"']+)["']/i)?.[1];
+    return rel?.split(/\s+/).some(value => value.toLowerCase() === 'canonical');
+  });
+  const canonical = canonicalTag?.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
   if (canonical !== expectedUrl) {
     throw new Error(`Property page canonical mismatch for ${expectedUrl}; found ${canonical || 'missing'}`);
   }
