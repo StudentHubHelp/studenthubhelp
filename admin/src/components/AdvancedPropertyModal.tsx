@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PropertyItem, PropertyType } from '../types';
 import { PROPERTY_TABLE_COLUMNS, propertyConfig, supabase } from '../lib/supabase';
-import { AlertCircle, Building2, Save, X } from 'lucide-react';
+import { AlertCircle, Building2, Save, Trash2, X } from 'lucide-react';
 
 interface AdvancedPropertyModalProps {
   property: PropertyItem | null;
@@ -167,6 +167,8 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [mediaUploading, setMediaUploading] = useState(false);
+  const originalPropertyImages = useRef<string[]>([]);
+  const [uploadedImagePaths, setUploadedImagePaths] = useState<Record<string, string>>({});
   // Stable temporary folder key lets a new property's images upload before its first DB save.
   const [draftMediaId] = useState(() => makeTextPropertyId());
   const [error, setError] = useState<string | null>(null);
@@ -176,6 +178,8 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
     for (const field of columns) next[field] = property ? (property as any)[field] ?? null : null;
     if (!property) next.category = config.category;
     setFormData(next);
+    originalPropertyImages.current = parsePropertyImages(property?.image, property?.images);
+    setUploadedImagePaths({});
     setError(null);
   }, [property, selectedType]);
 
@@ -229,6 +233,7 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
         uploadedUrls.push(publicData.publicUrl);
       }
       const nextImages = [...propertyImages, ...uploadedUrls].slice(0, 5);
+      setUploadedImagePaths((prev) => ({ ...prev, ...Object.fromEntries(uploadedUrls.map((url, index) => [url, uploadedPaths[index]])) }));
       setFormData((prev) => ({ ...prev, image: nextImages[0] || '', images: JSON.stringify(nextImages) }));
     } catch (uploadError: any) {
       if (uploadedPaths.length) await supabase.storage.from('property-images').remove(uploadedPaths);
@@ -241,6 +246,51 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
   const removePropertyImage = (url: string) => {
     const nextImages = propertyImages.filter((item) => item !== url).slice(0, 5);
     setFormData((prev) => ({ ...prev, image: nextImages[0] || '', images: JSON.stringify(nextImages) }));
+  };
+
+  const storagePathFromPublicUrl = (url: string): string | null => {
+    try {
+      const parsed = new URL(url);
+      const marker = '/storage/v1/object/public/property-images/';
+      const index = parsed.pathname.indexOf(marker);
+      return index >= 0 ? decodeURIComponent(parsed.pathname.slice(index + marker.length)) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const cleanupUnusedRemovedImages = async (currentImages: string[]) => {
+    const removed = [...new Set([
+      ...originalPropertyImages.current,
+      ...Object.keys(uploadedImagePaths),
+    ])].filter((url) => !currentImages.includes(url));
+    if (!removed.length) return;
+
+    // Fail safe: if any property table cannot be checked, keep files rather than risk deleting a shared image.
+    const tables = ['hostels', 'tiffins', 'libraries', 'cafes', 'bookstores'];
+    const referenceResults = await Promise.all(tables.map((table) =>
+      supabase.from(table).select('image,images')
+    ));
+    if (referenceResults.some((result) => result.error)) {
+      console.warn('Image cleanup skipped because not all property tables could be checked.');
+      return;
+    }
+
+    const stillReferenced = new Set<string>();
+    for (const result of referenceResults) {
+      for (const row of result.data || []) {
+        for (const url of parsePropertyImages(row.image, row.images)) stillReferenced.add(url);
+      }
+    }
+
+    const safePaths = removed
+      .filter((url) => !stillReferenced.has(url))
+      .map((url) => uploadedImagePaths[url] || storagePathFromPublicUrl(url))
+      .filter((path): path is string => Boolean(path));
+    if (safePaths.length) {
+      const { error: removeError } = await supabase.storage.from('property-images').remove(safePaths);
+      if (removeError) console.warn('Some unused property images could not be deleted from Storage:', removeError.message);
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -270,6 +320,7 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
       } else {
         await onSave({ ...payload, _source_table: selectedType } as PropertyItem);
       }
+      await cleanupUnusedRemovedImages(parsePropertyImages(formData.image, formData.images));
       onClose();
     } catch (err: any) {
       setError(err?.message || 'Failed to save property.');
@@ -319,7 +370,7 @@ export const AdvancedPropertyModal: React.FC<AdvancedPropertyModalProps> = ({ pr
                     <div className="relative aspect-[4/3]"><img src={url} alt={`Property image ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />
                       {index === 0 && <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2 py-1 text-[9px] font-extrabold text-slate-950">MAIN IMAGE</span>}
                     </div>
-                    <div className="flex items-center justify-between gap-2 p-2"><span className="truncate text-[10px] text-slate-300">Image {index + 1}</span><button type="button" onClick={() => removePropertyImage(url)} className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-2 py-1 text-[10px] font-bold text-rose-300">Remove</button></div>
+                    <div className="flex items-center justify-between gap-2 p-2"><span className="truncate text-[10px] text-slate-300">Image {index + 1}</span><button type="button" onClick={() => removePropertyImage(url)} aria-label={`Remove image ${index + 1}`} title="Remove image; saved changes will update Supabase and clean up unused Storage files" className="inline-flex items-center gap-1 rounded-lg border border-rose-400/20 bg-rose-500/10 px-2 py-1 text-[10px] font-bold text-rose-300"><Trash2 className="h-3 w-3" /> Remove</button></div>
                   </div>)}
                 </div> : <div className="rounded-xl border border-white/10 p-6 text-center text-xs text-slate-500">No property images uploaded yet.</div>}
                 <p className="text-[10px] text-slate-500">Image changes are written to the property record when you click “Save Property Live”. The first image is used as the primary image.</p>
