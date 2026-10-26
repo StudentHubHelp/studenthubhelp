@@ -112,6 +112,9 @@ jobs:
                       parts=[p for p in parsed.path.split('/') if p]
                       assert len(parts)==3 and parts[0]=='properties', f'Invalid property URL: {value}'
                       assert parts[1] in {'hostel','tiffin','library','cafe','bookstore'} and parts[2], f'Invalid property type/slug: {value}'
+                      assert not parsed.query and not parsed.fragment, f'Property URL must be clean and query-free: {value}'
+                  if parsed.path.endswith('/property-details.html') or parsed.path.endswith('/property-details'):
+                      assert not parse_qs(parsed.query).get('type'), f'Query-based property URL must not be in sitemap: {value}'
 
           assert BASE in all_urls, 'Canonical homepage URL is missing from sitemap'
           import json
@@ -122,6 +125,18 @@ jobs:
           index_html=Path('property-index.html').read_text(encoding='utf-8')
           assert '<a href=' in index_html and '/properties/' in index_html, 'Property discovery index must contain crawlable property links'
           assert 'Sitemap: https://studenthubhelp.in/sitemap.xml' in Path('robots.txt').read_text(encoding='utf-8'), 'robots.txt sitemap declaration missing'
+          property_sitemap_urls=[]
+          for loc in sitemap_locs:
+              name=Path(urlparse(loc).path).name
+              if name.startswith('sitemap-properties'):
+                  child=ET.parse(name).getroot()
+                  for entry in child.findall(f'{{{NS}}}url'):
+                      value=entry.find(f'{{{NS}}}loc').text.strip()
+                      parsed=urlparse(value)
+                      assert '/properties/' in parsed.path, f'Non-property URL in property sitemap: {value}'
+                      assert not parsed.query and not parsed.fragment, f'Non-clean URL in property sitemap: {value}'
+                      property_sitemap_urls.append(value)
+          assert len(property_sitemap_urls)==len(set(property_sitemap_urls)), 'Duplicate clean property URL in property sitemap'
           assert len(all_urls)==len(set(all_urls)), 'Duplicate URL across sitemap files'
           private={'auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','admin/index.html'}
           for url in all_urls:
