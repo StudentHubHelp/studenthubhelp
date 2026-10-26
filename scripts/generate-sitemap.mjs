@@ -34,14 +34,10 @@ function recordUrl(type, row) {
   const savedSlug = String(row.slug ?? '').trim();
   const mapped = savedSlug ? LEGACY_REDIRECTS[`/properties/${type}/${savedSlug}/`] : null;
   const slug = String(mapped?.slug || savedSlug).trim();
-  const id = String(row.id ?? '').trim() || String(row.property_id ?? '').trim();
-  if (!slug && !id) return null;
-  if (slug) return new URL('properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(slug) + '/', BASE).href;
-  if (!id) return null;
-  const url = new URL('property-details.html', BASE);
-  url.searchParams.set('type', type);
-  url.searchParams.set('id', id);
-  return url.href;
+  // Never publish query-string property URLs. Missing slugs must be fixed in the
+  // source listing data; silently skipping is safer than indexing duplicate URLs.
+  if (!slug) return null;
+  return new URL('properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(slug) + '/', BASE).href;
 }
 
 function pageUrl(name) {
@@ -116,31 +112,26 @@ async function canonicalPropertyUrl(type, row, preferredLoc) {
   const savedSlug = String(row.slug ?? '').trim();
   const mapped = savedSlug ? LEGACY_REDIRECTS[`/properties/${type}/${savedSlug}/`] : null;
   const slug = String(mapped?.slug || savedSlug).trim();
-  if (!slug) return preferredLoc;
+  if (!slug) return null;
 
+  const expectedUrl = new URL('properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(slug) + '/', BASE).href;
+  if (preferredLoc !== expectedUrl) {
+    throw new Error(`Property sitemap URL is not its clean canonical URL: expected ${expectedUrl}, got ${preferredLoc}`);
+  }
+
+  // A generated static page is preferred and its canonical must agree. Do not
+  // fall back to query-string URLs if a page is missing: the page-generation
+  // step runs before this script in the sitemap workflow.
   const path = `properties/${type}/${slug}/index.html`;
-  const expectedPath = `/properties/${type}/${slug}/`;
-  const expectedUrl = new URL(expectedPath.replace(/^\//, ''), BASE).href;
   let html;
   try {
     html = await readFile(path, 'utf8');
   } catch {
-    // Keep active listings discoverable when their static SEO page has not been generated.
-    // property-details.html emits a self-canonical URL for type + slug.
-    const fallback = new URL('property-details.html', BASE);
-    fallback.searchParams.set('type', type);
-    fallback.searchParams.set('slug', slug);
-    console.warn(`Using dynamic canonical URL for active listing without a static page: ${fallback.href}`);
-    return fallback.href;
+    throw new Error(`Missing generated static property page for sitemap URL: ${expectedUrl}`);
   }
-
-  const canonical = html.match(/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i)?.[1]?.trim();
-  if (canonical !== expectedUrl || preferredLoc !== expectedUrl) {
-    const fallback = new URL('property-details.html', BASE);
-    fallback.searchParams.set('type', type);
-    fallback.searchParams.set('slug', slug);
-    console.warn(`Using dynamic canonical URL because static page canonical does not match: ${fallback.href}; canonical=${canonical || 'missing'}`);
-    return fallback.href;
+  const canonical = html.match(/<link\\s+rel=["']canonical["']\\s+href=["']([^"']+)["']/i)?.[1]?.trim();
+  if (canonical !== expectedUrl) {
+    throw new Error(`Property page canonical mismatch for ${expectedUrl}; found ${canonical || 'missing'}`);
   }
   return expectedUrl;
 }
@@ -150,12 +141,12 @@ let skippedPropertyRows = 0;
 for (const [type, table] of Object.entries(TABLES)) {
   for (const row of await fetchRows(table)) {
     const preferredLoc = recordUrl(type, row);
-    if (!preferredLoc) continue;
-    const loc = await canonicalPropertyUrl(type, row, preferredLoc);
-    if (!loc) {
+    if (!preferredLoc) {
       skippedPropertyRows++;
+      console.warn(`Skipping active ${type} listing with missing slug (id=${row.id ?? row.property_id ?? 'unknown'}); add a stable slug before it can enter the sitemap.`);
       continue;
     }
+    const loc = await canonicalPropertyUrl(type, row, preferredLoc);
     const lastmod = validDate(row.updated_at || row.created_at);
     const current = properties.get(loc);
     if (!current || (lastmod && (!current.lastmod || lastmod > current.lastmod))) {
@@ -252,4 +243,4 @@ const indexBody = sitemapEntries.map(name => `  <sitemap><loc>${esc(new URL(name
 const indexXml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="${NS}">\n${indexBody}\n</sitemapindex>\n`;
 await writeFile('sitemap.xml', indexXml, 'utf8');
 
-console.log(`Generated sitemap index: pages=${pageEntries.length}, properties=${propertyEntries.length}, skipped invalid/missing property pages=${skippedPropertyRows}, files=${sitemapEntries.length}.`);
+console.log(`Generated sitemap index: pages=${pageEntries.length}, clean properties=${propertyEntries.length}, skipped active listings without slugs=${skippedPropertyRows}, files=${sitemapEntries.length}.`);
