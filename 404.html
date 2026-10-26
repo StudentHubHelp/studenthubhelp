@@ -29,7 +29,6 @@
     @media(max-width:600px){.wrap{width:min(100% - 22px,1120px)}.nav{min-height:64px}.brand small{display:none}.home-link{padding:8px 11px}.panel{padding:36px 19px;border-radius:23px}.code{letter-spacing:-4px}.panel p{font-size:13px}.actions{flex-direction:column}.btn{width:100%}.quick{gap:6px}main{padding:30px 0 45px}}
   </style>
   <link rel="stylesheet" href="/mobile.css">
-  <link rel="stylesheet" href="mobile.css">
 </head>
 <body>
 <header><div class="wrap nav"><a class="brand" href="/" aria-label="StudentHubHelp home"><img src="/logo.png" alt="StudentHubHelp logo"><span><strong>StudentHubHelp</strong><small>Student Discovery Platform · India</small></span></a><a class="home-link" href="/">← Back Home</a></div></header>
@@ -37,23 +36,38 @@
 <footer><div class="wrap">© 2026 StudentHubHelp · Discover locally, study confidently.</div></footer>
   <!-- StudentHubHelp AI Chatbot -->
   <script>
-  // GitHub Pages uses this fallback for pretty property URLs.
-  // Old slugs are mapped to their current canonical slugs; then the dynamic details
-  // page loads the Supabase record and restores the clean URL in the address bar.
+  // GitHub Pages serves this file when a clean property page has not been generated yet.
+  // Redirect historical slugs when mapped; otherwise load the shared details app in-place
+  // so the clean URL stays in the address bar and the redirect cannot loop.
   (function () {
     var parts = location.pathname.split('/').filter(Boolean);
-    if (parts.length < 3 || parts[0] !== 'properties') return;
+    if (parts.length !== 3 || parts[0] !== 'properties') return;
     var type = parts[1].toLowerCase();
     var slug;
-    try { slug = decodeURIComponent(parts.slice(2).join('/')); } catch (_) { return; }
+    try { slug = decodeURIComponent(parts[2]); } catch (_) { return; }
     var allowed = ['hostel', 'tiffin', 'library', 'cafe', 'bookstore'];
     if (allowed.indexOf(type) === -1 || !slug) return;
 
-    function openDetails(targetType, targetSlug) {
-      // Consolidate legacy/unknown pretty paths directly onto the clean URL.
-      // Generated clean pages resolve normally; this fallback handles old slugs.
-      var target = '/properties/' + encodeURIComponent(targetType) + '/' + encodeURIComponent(targetSlug) + '/';
-      if (location.pathname !== target || location.search) location.replace(target);
+    function loadDetails(targetType, targetSlug) {
+      var target = '/properties/' + targetType + '/' + encodeURIComponent(targetSlug) + '/';
+      if (targetType !== type || targetSlug !== slug) {
+        location.replace(target);
+        return;
+      }
+      fetch('/property-details.html', { cache: 'no-cache' })
+        .then(function (response) {
+          if (!response.ok) throw new Error('Property details app unavailable');
+          return response.text();
+        })
+        .then(function (html) {
+          document.open();
+          document.write(html);
+          document.close();
+        })
+        .catch(function () {
+          var panel = document.querySelector('.panel');
+          if (panel) panel.innerHTML = '<h1>Property details temporarily unavailable</h1><p>Please refresh this page in a moment.</p><a href="/">Return to StudentHubHelp</a>';
+        });
     }
 
     fetch('/property-url-redirects.json', { cache: 'no-cache' })
@@ -61,12 +75,12 @@
       .then(function (map) {
         var oldPath = '/properties/' + type + '/' + slug + '/';
         var redirect = map[oldPath];
-        if (redirect && redirect.type && redirect.slug) openDetails(redirect.type, redirect.slug);
-        else openDetails(type, slug);
+        if (redirect && redirect.type && redirect.slug) loadDetails(redirect.type, redirect.slug);
+        else loadDetails(type, slug);
       })
-      .catch(function () { openDetails(type, slug); });
+      .catch(function () { loadDetails(type, slug); });
   })();
-  </script>
+
   <script src="/ai-chatbot/public/widget.js" defer></script>
 </body>
 </html>
