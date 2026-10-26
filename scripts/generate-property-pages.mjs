@@ -85,6 +85,28 @@ function buildHtml({ type, slug, name, city, address, description }) {
 `;
 }
 
+function buildLegacyRedirectHtml(oldPath, targetType, targetSlug) {
+  const canonical = `${BASE_URL}/properties/${targetType}/${encodeURIComponent(targetSlug)}/`;
+  return `<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="${escapeHtml(canonical)}">
+<title>Property moved | StudentHubHelp</title>
+<script>
+(function(){
+  var target = ${JSON.stringify(canonical)};
+  location.replace(target);
+})();
+</script>
+</head>
+<body><p>This property has moved. <a href="${escapeHtml(canonical)}">Open the current property page</a>.</p></body>
+</html>
+`;
+}
+
 async function main() {
   const redirectsPath = path.join(ROOT, 'property-url-redirects.json');
   let redirects = {};
@@ -116,6 +138,31 @@ async function main() {
       generated++;
     }
   }
+
+  // Publish real static redirect pages for legacy clean URLs. This avoids sending old
+  // property links through the site's 404.html fallback and preserves the new canonical URL.
+  let legacyRedirectPages = 0;
+  for (const [oldPath, redirect] of Object.entries(redirects)) {
+    if (!redirect || !redirect.type || !redirect.slug) continue;
+    const parts = String(oldPath).split('/').filter(Boolean);
+    if (parts.length !== 3 || parts[0] !== 'properties') continue;
+    const oldType = parts[1];
+    const oldSlug = parts[2];
+    const targetKey = `${redirect.type}/${redirect.slug}`;
+    if (!CATEGORIES.some((category) => category.type === redirect.type)) continue;
+    if (oldType === redirect.type && oldSlug === redirect.slug) continue;
+    // Never overwrite a currently valid canonical property page.
+    if (seen.has(`${oldType}/${oldSlug}`)) continue;
+    const oldDir = path.join(ROOT, 'properties', oldType, oldSlug);
+    await mkdir(oldDir, { recursive: true });
+    await writeFile(
+      path.join(oldDir, 'index.html'),
+      buildLegacyRedirectHtml(oldPath, redirect.type, redirect.slug),
+      'utf8'
+    );
+    legacyRedirectPages++;
+  }
+  console.log(`Generated ${legacyRedirectPages} legacy property redirect pages.`);
 
   // Keep the historical redirect map intact; only verify it can still be parsed.
   if (!redirects || typeof redirects !== 'object' || Array.isArray(redirects)) {
