@@ -137,7 +137,7 @@ function normalizeLiveProperty(row: LivePropertyRow, type: PropertyRecommendatio
     phone: row.phone || row.whatsapp ? String(row.phone || row.whatsapp) : undefined,
     image: firstImage(row),
     highlights: textFields.slice(0, 6),
-    link: `property-details.html?type=${encodeURIComponent(detailsType)}&slug=${encodeURIComponent(slug)}`,
+    link: `/properties/${encodeURIComponent(detailsType)}/${encodeURIComponent(slug)}/`,
     mapsUrl: row.google_maps_url ? String(row.google_maps_url) : undefined,
     landmark: row.address ? String(row.address) : undefined,
     matchReason: `Live active listing from ${table}.`
