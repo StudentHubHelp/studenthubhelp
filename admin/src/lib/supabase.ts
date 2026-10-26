@@ -179,7 +179,8 @@ export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
     'images',
     'updated_at',
     'property_id',
-    'monthly_fee'
+    'monthly_fee',
+    'nearby_coaching'
   ],
 
   libraries: [
@@ -228,7 +229,8 @@ export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
     'pincode',
     'updated_at',
     'property_id',
-    'price'
+    'price',
+    'nearby_coaching'
   ],
 
   cafes: [
@@ -274,7 +276,8 @@ export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
     'updated_at',
     'property_id',
     'price',
-    'monthly_fee'
+    'monthly_fee',
+    'nearby_coaching'
   ],
 
   bookstores: [
@@ -326,7 +329,8 @@ export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
     'updated_at',
     'property_id',
     'price',
-    'monthly_fee'
+    'monthly_fee',
+    'nearby_coaching'
   ],
 };
 
