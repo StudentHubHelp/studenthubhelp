@@ -60,7 +60,16 @@ function buildHtml({ type, slug, name, city, address, description, detailsTempla
     url: canonical
   }).replace(/</g, '\\u003c');
 
-  const renderedTemplate = detailsTemplate;
+  // Remove inherited favicon tags (including the old purple-N SVG) before rendering.
+  const cleanTemplate = detailsTemplate
+    .replace(/<link\b(?=[^>]*\brel\s*=\s*["'](?:icon|shortcut icon|alternate icon)["'])[^>]*>\s*/gi, '')
+    .replace(/<link\b(?=[^>]*\brel\s*=\s*["']apple-touch-icon["'])[^>]*>\s*/gi, '');
+  const renderedTemplate = cleanTemplate.replace(/<head([^>]*)>/i, (_match, attributes) =>
+    '<head' + attributes + '>\n' +
+    '<link rel="icon" type="image/png" href="/logo.png">\n' +
+    '<link rel="shortcut icon" type="image/png" href="/logo.png">\n' +
+    '<link rel="apple-touch-icon" href="/logo.png">\n' +
+    '<meta property="og:image" content="https://studenthubhelp.in/logo.png">');
   return renderedTemplate
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
