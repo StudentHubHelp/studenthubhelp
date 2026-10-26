@@ -467,7 +467,7 @@ function formatDate(v){if(!v)return"—";const d=new Date(v);return Number.isNaN
 function getCategoryIcon(c){const v=String(c||"").toLowerCase();if(v.includes("hostel")||v.includes("pg"))return"🏠";if(v.includes("tiffin")||v.includes("mess"))return"🍱";if(v.includes("library"))return"📚";if(v.includes("cafe"))return"☕";if(v.includes("book"))return"📖";return"▣"}
 function formatCategory(t){return({hostels:"🎓 Hostel / PG",tiffins:"🍱 Tiffin / Mess",cafes:"☕ Cafe",libraries:"📚 Library",bookstores:"📖 Bookstore"})[t]||"Service"}
 function propertyKey(p){return `${p.table}_${p.id}`}
-function publicPropertyUrl(p){return `property-details.html?type=${encodeURIComponent(p.table.replace(/s$/,""))}&slug=${encodeURIComponent(p.slug||p.id)}`}
+function publicPropertyUrl(p){const type=p.table.replace(/s$/,"");const slug=String(p.slug||"").trim();return slug?`/properties/${encodeURIComponent(type)}/${encodeURIComponent(slug)}/`:""}
 function showToast(message){$("toastMessage").textContent=message;$("toast").classList.remove("hidden");clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$("toast").classList.add("hidden"),3200)}
 function statusBadge(status){const s=String(status||"active").toLowerCase().trim();const map={pending:["Pending","badge-pending"],active:["✓ Confirmed","badge-active"],rejected:["Rejected","badge-rejected"],cancelled:["Cancelled","badge-cancelled"],completed:["Completed","badge-completed"]};const x=map[s]||[s,"badge-pending"];return `<span class="badge ${x[1]}">${escapeHtml(x[0])}</span>`}
 
