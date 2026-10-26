@@ -127,6 +127,9 @@ async function main() {
         description: row.description || row.about || row.details,
         detailsTemplate
       });
+      if (/document\\s*\\.\\s*(?:write|open)\\s*\\(/i.test(html)) {
+        throw new Error(`Unsafe document.write/document.open found in generated page: ${key}`);
+      }
       await writeFile(path.join(dir, 'index.html'), html, 'utf8');
       generated++;
     }
