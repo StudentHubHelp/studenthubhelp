@@ -181,6 +181,7 @@ export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
     'updated_at',
     'property_id',
     'monthly_fee',
+    'landmark',
     'nearby_coaching'
   ],
 
@@ -231,6 +232,7 @@ export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
     'updated_at',
     'property_id',
     'price',
+    'landmark',
     'nearby_coaching'
   ],
 
@@ -278,6 +280,7 @@ export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
     'property_id',
     'price',
     'monthly_fee',
+    'landmark',
     'nearby_coaching'
   ],
 
@@ -331,6 +334,7 @@ export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
     'property_id',
     'price',
     'monthly_fee',
+    'landmark',
     'nearby_coaching'
   ],
 };
