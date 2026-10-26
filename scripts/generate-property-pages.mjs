@@ -61,7 +61,7 @@ function buildHtml({ type, slug, name, city, address, description, detailsTempla
   }).replace(/</g, '\\u003c');
 
   const renderedTemplate = detailsTemplate
-    .replace(/<head([^>]*)>/i, '<head$1>\n<link rel="icon" type="image/png" href="/logo.png">\n<link rel="alternate icon" type="image/svg+xml" href="/favicon.svg">\n<link rel="apple-touch-icon" href="/logo.png">');
+    .replace(/<head([^>]*)>/i, (_match, attributes) => `<head${attributes}>\n<link rel="icon" type="image/png" href="/logo.png">\n<link rel="alternate icon" type="image/svg+xml" href="/favicon.svg">\n<link rel="apple-touch-icon" href="/logo.png">`);
 
   return renderedTemplate
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
