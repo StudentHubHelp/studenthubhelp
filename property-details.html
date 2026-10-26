@@ -174,6 +174,17 @@ const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const qs=new URLSearchParams(location.search);
 const rawType=(qs.get('type')||'hostel').toLowerCase();  const allowedTypes=[   'hostel',   'tiffin',   'library',   'cafe',   'bookstore' ];  const type=allowedTypes.includes(rawType)   ? rawType   : 'hostel';
 const slug=qs.get('slug')||qs.get('id');
+
+// Canonicalize slug-based URLs immediately, before the Supabase request starts.
+// This avoids leaving new property links on the query-string URL while data loads.
+// Legacy ID URLs are intentionally excluded and keep their existing resolution flow.
+const requestedSlug=qs.get('slug');
+if (requestedSlug && !qs.get('id')) {
+  const requestedPath='/properties/' + encodeURIComponent(type) + '/' + encodeURIComponent(requestedSlug) + '/';
+  if (location.pathname !== requestedPath || location.search) {
+    history.replaceState({}, '', requestedPath + location.hash);
+  }
+}
 const config={
   hostel:{
     table:'hostels',
