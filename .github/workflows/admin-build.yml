@@ -134,8 +134,10 @@ jobs:
           rm -rf /tmp/admin-build
           mkdir -p /tmp/admin-build
           cp -r admin/dist/. /tmp/admin-build/
-          rm -rf admin/assets
-          cp -r /tmp/admin-build/assets admin/
+          # Keep previous hashed chunks so already-open tabs and cached HTML
+          # can still load lazy imports while the new index rolls out.
+          mkdir -p admin/assets
+          cp -r /tmp/admin-build/assets/. admin/assets/
           cp /tmp/admin-build/index.html admin/
           cp logo.png admin/logo.png
 
