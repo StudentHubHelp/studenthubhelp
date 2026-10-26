@@ -124,6 +124,7 @@ export const PROPERTY_TABLE_COLUMNS: Record<PropertyType, string[]> = {
     'mess_available',
     'mess_charge',
     'rules',
+    'landmark',
     'nearby_coaching',
     'google_maps_url',
     'last_verified',
