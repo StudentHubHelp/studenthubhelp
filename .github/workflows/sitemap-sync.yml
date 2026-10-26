@@ -23,6 +23,9 @@ permissions:
 
 jobs:
   sync:
+    concurrency:
+      group: studenthubhelp-sitemap-sync
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -154,5 +157,7 @@ jobs:
             echo "Sitemap already up to date."
             exit 0
           fi
-          git commit -m "chore: synchronize XML sitemap index"
-          git push
+          git commit -m "chore: synchronize XML sitemap index [skip ci]"
+          # Bring the local commit up to date with main before pushing.
+          git pull --rebase origin main
+          git push origin main
