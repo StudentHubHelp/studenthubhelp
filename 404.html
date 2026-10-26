@@ -50,10 +50,10 @@
     if (allowed.indexOf(type) === -1 || !slug) return;
 
     function openDetails(targetType, targetSlug) {
-      var target = new URL('/property-details.html', location.origin);
-      target.searchParams.set('type', targetType);
-      target.searchParams.set('slug', targetSlug);
-      location.replace(target.href);
+      // Consolidate legacy/unknown pretty paths directly onto the clean URL.
+      // Generated clean pages resolve normally; this fallback handles old slugs.
+      var target = '/properties/' + encodeURIComponent(targetType) + '/' + encodeURIComponent(targetSlug) + '/';
+      if (location.pathname !== target || location.search) location.replace(target);
     }
 
     fetch('/property-url-redirects.json', { cache: 'no-cache' })
