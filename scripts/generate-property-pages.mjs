@@ -51,7 +51,7 @@ function buildHtml({ type, slug, name, city, address, description, detailsTempla
 
   // Render the real property-details app at the clean URL. property-details.html
   // already resolves category + slug from the pathname, so an intermediate redirect
-  // shell is unnecessary and was the source of the visible flash.
+  // shell is unnecessary. Generated pages should render this app directly, without document.write.
   const schema = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'WebPage',
