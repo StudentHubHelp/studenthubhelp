@@ -288,9 +288,9 @@
       function imageMarkup(row) {
         const image = firstImage(row);
         const meta = CATEGORIES.find(c => c.key === row.category) || CATEGORIES[0];
-        const fallback = '<div class="image-fallback"><i class="fa-solid ' + meta.icon + '"></i><span>' + esc(meta.label) + '</span></div>';
-        if (!image) return fallback;
-        return '<img src="' + esc(image) + '" alt="' + esc(row.name || meta.label) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove();this.parentElement.insertAdjacentHTML(\'beforeend\', ' + JSON.stringify(fallback) + ')">';
+        const fallback = '<div class="image-fallback" hidden><i class="fa-solid ' + meta.icon + '"></i><span>' + esc(meta.label) + '</span></div>';
+        if (!image) return fallback.replace(' hidden', '');
+        return '<img src="' + esc(image) + '" alt="' + esc(row.name || meta.label) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' + fallback;
       }
       function card(row) {
         const meta = CATEGORIES.find(c => c.key === row.category) || CATEGORIES[0];
@@ -368,8 +368,9 @@
             {table:'cafes',category:'cafe'},
             {table:'bookstores',category:'bookstore'}
           ];
-          const columns = 'id,name,category,city,area,address,price,monthly_fee,image,images,verified,slug,created_at,status,featured,rating';
+          const commonColumns = 'id,name,category,city,area,address,price,monthly_fee,image,images,verified,slug,created_at,status,featured,rating';
           const results = await Promise.all(configs.map(async config => {
+            const columns = config.table === 'hostels' ? commonColumns + ',monthly_rent' : commonColumns;
             const {data,error} = await supabase.from(config.table).select(columns).eq('status','active').order('featured',{ascending:false}).order('created_at',{ascending:false}).limit(1000);
             if (error) throw new Error(config.table + ': ' + error.message);
             return (data || []).map(row => ({...row, category:config.category, sourceTable:config.table}));
