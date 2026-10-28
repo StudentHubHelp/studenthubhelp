@@ -69,13 +69,18 @@ function buildHtml({ type, slug, name, city, address, description, detailsTempla
     '<link rel="icon" type="image/png" href="/logo.png">\n' +
     '<link rel="shortcut icon" type="image/png" href="/logo.png">\n' +
     '<link rel="apple-touch-icon" href="/logo.png">\n' +
-    '<meta property="og:image" content="https://studenthubhelp.in/logo.png">');
+    '<meta property="og:image:secure_url" content="https://studenthubhelp.in/logo.png">\n' +
+    '<meta property="og:image:alt" content="StudentHubHelp logo">');
   return renderedTemplate
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
     .replace(/<meta id="ogTitle" property="og:title" content="[^"]*">/i, `<meta id="ogTitle" property="og:title" content="${escapeHtml(title)}">`)
     .replace(/<meta id="ogDescription" property="og:description" content="[^"]*">/i, `<meta id="ogDescription" property="og:description" content="${escapeHtml(desc)}">`)
     .replace(/<meta id="ogUrl" property="og:url" content="[^"]*">/i, `<meta id="ogUrl" property="og:url" content="${escapeHtml(canonical)}">`)
+    // Keep the public site logo as the server-rendered social preview image. Social
+    // crawlers often do not execute JavaScript, so these tags must be correct in HTML.
+    .replace(/<meta id="ogImage" property="og:image" content="[^"]*">/i, '<meta id="ogImage" property="og:image" content="https://studenthubhelp.in/logo.png">')
+    .replace(/<meta id="twitterImage" name="twitter:image" content="[^"]*">/i, '<meta id="twitterImage" name="twitter:image" content="https://studenthubhelp.in/logo.png">')
     .replace(/<meta id="twitterTitle" name="twitter:title" content="[^"]*">/i, `<meta id="twitterTitle" name="twitter:title" content="${escapeHtml(title)}">`)
     .replace(/<meta id="twitterDescription" name="twitter:description" content="[^"]*">/i, `<meta id="twitterDescription" name="twitter:description" content="${escapeHtml(desc)}">`)
     .replace(/<script id="propertySchema" type="application\/ld\+json">[\s\S]*?<\/script>/i, `<script id="propertySchema" type="application/ld+json">\n${schema}\n</script>`)
