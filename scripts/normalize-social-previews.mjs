@@ -19,74 +19,39 @@ async function walk(dir) {
   return files;
 }
 
-function setMeta(html, matcher, attribute, value) {
+function ensureMeta(html, matcher, key, value) {
   let found = false;
   html = html.replace(/<meta\b[^>]*>/gi, tag => {
     if (!matcher.test(tag)) return tag;
     found = true;
-    const attrPattern = new RegExp('\\b' + attribute + '\\s*=\\s*(["\\\\']).*?\\1', 'i');
-    if (attrPattern.test(tag)) return tag.replace(attrPattern, `${attribute}="${value}"`);
-    return tag.replace(/>$/, ` ${attribute}="${value}">`);
+    const contentPattern = /\bcontent\s*=\s*(["'])[\s\S]*?\1/i;
+    if (contentPattern.test(tag)) return tag.replace(contentPattern, `content="${String(value).replace(/"/g, '&quot;')}"`);
+    return tag.replace(/>$/, ` content="${String(value).replace(/"/g, '&quot;')}">`);
   });
-  return { html, found };
+  if (found) return html;
+  const tag = `<meta ${key} content="${String(value).replace(/"/g, '&quot;')}">\n`;
+  return /<head\b[^>]*>/i.test(html)
+    ? html.replace(/<head\b[^>]*>/i, match => match + '\n' + tag)
+    : html;
 }
 
-function addMetaIfMissing(html, key, attrs) {
-  const matcher = new RegExp('\\b' + key.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '\\s*=', 'i');
-  if (matcher.test(html)) return html;
-  const tag = `<meta ${attrs}>\n`;
-  if (/<head\b[^>]*>/i.test(html)) return html.replace(/<head\b[^>]*>/i, match => match + '\\n' + tag);
-  return html;
-}
+function normalize(html) {
+  const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [,'StudentHubHelp | Student Services Across India'])[1].replace(/<[^>]+>/g, '').trim();
+  const description = (html.match(/<meta\b(?=[^>]*\bname=["']description["'])[^>]*\bcontent=["']([^"']*)["'][^>]*>/i) || [,'Discover hostels, PGs, tiffin services, libraries, cafes and bookstores with StudentHubHelp.'])[1];
 
-function normalize(html, filePath) {
-  const title = (html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i) || [,'StudentHubHelp | Student Services Across India'])[1].replace(/<[^>]+>/g, '').trim();
-  const description = (html.match(/<meta\\b(?=[^>]*\\bname=["']description["'])[^>]*\\bcontent=["']([^"']*)["'][^>]*>/i) || [,'Discover hostels, PGs, tiffin services, libraries, cafes and bookstores with StudentHubHelp.'])[1];
-
-  const ogImage = /\\bproperty=["']og:image["']/i;
-  const twImage = /\\bname=["']twitter:image["']/i;
-  const ogSecure = /\\bproperty=["']og:image:secure_url["']/i;
-  const ogAlt = /\\bproperty=["']og:image:alt["']/i;
-  const ogWidth = /\\bproperty=["']og:image:width["']/i;
-  const ogHeight = /\\bproperty=["']og:image:height["']/i;
-  const twCard = /\\bname=["']twitter:card["']/i;
-  const ogTitle = /\\bproperty=["']og:title["']/i;
-  const ogDesc = /\\bproperty=["']og:description["']/i;
-  const ogType = /\\bproperty=["']og:type["']/i;
-
-  let result;
-  for (const [matcher, attr, value] of [
-    [ogImage, 'content', SHARE_IMAGE],
-    [twImage, 'content', SHARE_IMAGE],
-    [ogSecure, 'content', SHARE_IMAGE],
-    [ogAlt, 'content', 'StudentHubHelp logo and student services'],
-    [ogWidth, 'content', '1200'],
-    [ogHeight, 'content', '630'],
-    [twCard, 'content', 'summary_large_image'],
-  ]) {
-    result = setMeta(html, matcher, attr, value);
-    html = result.html;
-    if (!result.found) {
-      const key = matcher === ogImage ? 'property="og:image"' :
-        matcher === twImage ? 'name="twitter:image"' :
-        matcher === ogSecure ? 'property="og:image:secure_url"' :
-        matcher === ogAlt ? 'property="og:image:alt"' :
-        matcher === ogWidth ? 'property="og:image:width"' :
-        matcher === ogHeight ? 'property="og:image:height"' : 'name="twitter:card"';
-      html = addMetaIfMissing(html, key, `${key} content="${value}"`);
-    }
-  }
-
-  for (const [matcher, key, value] of [
-    [ogTitle, 'property="og:title"', title],
-    [ogDesc, 'property="og:description"', description],
-    [ogType, 'property="og:type"', 'website'],
-  ]) {
-    result = setMeta(html, matcher, 'content', value);
-    html = result.html;
-    if (!result.found) html = addMetaIfMissing(html, key, `${key} content="${String(value).replace(/"/g, '&quot;')}"`);
-  }
-
+  const metas = [
+    [/\bproperty=["']og:image["']/i, 'property="og:image"', SHARE_IMAGE],
+    [/\bname=["']twitter:image["']/i, 'name="twitter:image"', SHARE_IMAGE],
+    [/\bproperty=["']og:image:secure_url["']/i, 'property="og:image:secure_url"', SHARE_IMAGE],
+    [/\bproperty=["']og:image:alt["']/i, 'property="og:image:alt"', 'StudentHubHelp logo and student services'],
+    [/\bproperty=["']og:image:width["']/i, 'property="og:image:width"', '1200'],
+    [/\bproperty=["']og:image:height["']/i, 'property="og:image:height"', '630'],
+    [/\bname=["']twitter:card["']/i, 'name="twitter:card"', 'summary_large_image'],
+    [/\bproperty=["']og:title["']/i, 'property="og:title"', title],
+    [/\bproperty=["']og:description["']/i, 'property="og:description"', description],
+    [/\bproperty=["']og:type["']/i, 'property="og:type"', 'website'],
+  ];
+  for (const [matcher, key, value] of metas) html = ensureMeta(html, matcher, key, value);
   return html;
 }
 
@@ -94,7 +59,7 @@ const files = await walk(ROOT);
 let changed = 0;
 for (const file of files) {
   const original = await readFile(file, 'utf8');
-  const updated = normalize(original, file);
+  const updated = normalize(original);
   if (updated !== original) {
     await writeFile(file, updated, 'utf8');
     changed++;
