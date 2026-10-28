@@ -37,14 +37,14 @@ function ensureMeta(html, matcher, key, value) {
 
 function dedupeSocialMeta(html) {
   const seen = new Set();
-  return html.replace(/<meta\\b[^>]*>/gi, tag => {
-    const match = tag.match(/\\b(?:property|name)=["'](og:image(?::(?:secure_url|alt|width|height))?|twitter:image|twitter:card|og:title|og:description|og:type)["']/i);
+  return html.replace(/<meta\b[^>]*>/gi, tag => {
+    const match = tag.match(/\b(?:property|name)=["'](og:image(?::(?:secure_url|alt|width|height))?|twitter:image|twitter:card|og:title|og:description|og:type)["']/i);
     if (!match) return tag;
     const key = match[1].toLowerCase();
     if (seen.has(key)) return '';
     seen.add(key);
     return tag;
-  }).replace(/\\n[ \\t]*\\n{2,}/g, '\\n\\n');
+  }).replace(/\n[ \t]*\n{2,}/g, '\n\n');
 }
 
 function normalize(html) {
@@ -64,7 +64,7 @@ function normalize(html) {
     [/\bproperty=["']og:type["']/i, 'property="og:type"', 'website'],
   ];
   for (const [matcher, key, value] of metas) html = ensureMeta(html, matcher, key, value);
-  return html;
+  return dedupeSocialMeta(html);
 }
 
 const files = await walk(ROOT);
