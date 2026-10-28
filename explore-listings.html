@@ -72,9 +72,26 @@
     .card-media{position:relative;aspect-ratio:1.52/1;overflow:hidden;background:linear-gradient(135deg,#f2e4ed,#e4d8e9)}
     .card-media img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
     .property-card:hover .card-media img{transform:scale(1.035)}
-    .image-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;background:linear-gradient(135deg,#f7eaf2 0%,#e5d9ec 100%);color:#75536f}
-    .image-fallback i{display:grid;place-items:center;width:62px;height:62px;border-radius:20px;background:rgba(255,255,255,.8);box-shadow:0 7px 20px rgba(63,31,60,.08);font-size:27px}
-    .image-fallback span{font-size:11px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+    .image-fallback{position:absolute;inset:0;display:flex;overflow:hidden;flex-direction:column;justify-content:space-between;padding:clamp(16px,2vw,26px);color:#fff;background:linear-gradient(135deg,#4a2948 0%,#8e567b 52%,#d19ab2 100%)}
+    .image-fallback:before,.image-fallback:after{content:"";position:absolute;pointer-events:none;border:1px solid rgba(255,255,255,.25);border-radius:50%}
+    .image-fallback:before{width:230px;height:230px;right:-65px;top:-115px;box-shadow:0 0 0 24px rgba(255,255,255,.055),0 0 0 50px rgba(255,255,255,.04)}
+    .image-fallback:after{width:130px;height:130px;right:18%;bottom:-92px;background:rgba(255,255,255,.06)}
+    .property-banner-top,.property-banner-bottom,.property-banner-copy{position:relative;z-index:1;min-width:0}
+    .property-banner-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .property-banner-kicker{display:inline-flex;align-items:center;gap:7px;max-width:75%;padding:7px 10px;border:1px solid rgba(255,255,255,.32);border-radius:999px;background:rgba(255,255,255,.13);backdrop-filter:blur(8px);font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+    .property-banner-icon{display:grid;place-items:center;flex:0 0 auto;width:48px;height:48px;border:1px solid rgba(255,255,255,.35);border-radius:16px;background:rgba(255,255,255,.15);box-shadow:0 8px 24px rgba(30,12,32,.12);font-size:21px}
+    .property-banner-copy{max-width:90%;margin-top:auto;margin-bottom:auto;padding:12px 0}
+    .property-banner-overline{display:block;margin-bottom:7px;color:rgba(255,255,255,.78);font-size:9px;font-weight:850;letter-spacing:.2em;text-transform:uppercase}
+    .property-banner-name{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin:0;color:#fff;font-family:"Playfair Display",Georgia,serif;font-size:clamp(20px,2.1vw,30px);font-weight:700;line-height:1.12;letter-spacing:-.025em;text-shadow:0 2px 14px rgba(34,12,34,.15);overflow-wrap:anywhere}
+    .property-banner-location{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:1;margin:9px 0 0;color:rgba(255,255,255,.88);font-size:11px;font-weight:650}
+    .property-banner-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.26)}
+    .property-banner-brand{font-size:10px;font-weight:900;letter-spacing:.04em}
+    .property-banner-tagline{font-size:9px;font-weight:700;color:rgba(255,255,255,.78)}
+    .property-banner.hostel{background:linear-gradient(135deg,#3a284e 0%,#73517f 52%,#c18cae 100%)}
+    .property-banner.tiffin{background:linear-gradient(135deg,#603a35 0%,#b56e6c 54%,#e6b69d 100%)}
+    .property-banner.library{background:linear-gradient(135deg,#173d50 0%,#467e88 54%,#a4c6c4 100%)}
+    .property-banner.cafe{background:linear-gradient(135deg,#49302a 0%,#97634e 54%,#d9b28a 100%)}
+    .property-banner.bookstore{background:linear-gradient(135deg,#26354e 0%,#586e99 54%,#b4b9dc 100%)}
     .card-category{position:absolute;left:13px;top:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.8);border-radius:999px;background:rgba(255,255,255,.94);color:#513a52;font-size:10px;font-weight:900;letter-spacing:.045em;text-transform:uppercase}
     .verified-badge{position:absolute;right:12px;top:12px;display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border-radius:999px;background:#e7f7ed;color:#147849;font-size:10px;font-weight:900}
     .details-badge{position:absolute;right:12px;top:12px;padding:7px 9px;border-radius:999px;background:#eaf1ff;color:#31599a;font-size:10px;font-weight:900}
@@ -289,9 +306,15 @@
       function imageMarkup(row) {
         const image = firstImage(row);
         const meta = CATEGORIES.find(c => c.key === row.category) || CATEGORIES[0];
-        const fallback = '<div class="image-fallback" hidden><i class="fa-solid ' + meta.icon + '"></i><span>' + esc(meta.label) + '</span></div>';
+        const category = CATEGORIES.some(c => c.key === row.category) ? row.category : 'hostel';
+        const propertyName = String(row.name || meta.label).trim();
+        const place = [row.area, row.city].filter(Boolean).join(' · ') || row.address || 'Explore on StudentHubHelp';
+        const fallback = '<div class="image-fallback property-banner ' + category + '" role="img" aria-label="' + esc(propertyName + ', ' + meta.label + ', ' + place) + '" hidden>' +
+          '<div class="property-banner-top"><span class="property-banner-kicker"><i class="fa-solid fa-sparkles"></i> ' + esc(meta.label) + '</span><span class="property-banner-icon"><i class="fa-solid ' + meta.icon + '"></i></span></div>' +
+          '<div class="property-banner-copy"><span class="property-banner-overline">A place to study, stay & grow</span><h3 class="property-banner-name">' + esc(propertyName) + '</h3><p class="property-banner-location"><i class="fa-solid fa-location-dot"></i> ' + esc(place) + '</p></div>' +
+          '<div class="property-banner-bottom"><span class="property-banner-brand">StudentHubHelp</span><span class="property-banner-tagline">LOCAL · STUDENT FOCUSED</span></div></div>';
         if (!image) return fallback.replace(' hidden', '');
-        return '<img src="' + esc(image) + '" alt="' + esc(row.name || meta.label) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' + fallback;
+        return '<img src="' + esc(image) + '" alt="' + esc(propertyName) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' + fallback;
       }
       function card(row) {
         const meta = CATEGORIES.find(c => c.key === row.category) || CATEGORIES[0];
