@@ -63,7 +63,9 @@ function buildHtml({ type, slug, name, city, address, description, detailsTempla
   // Remove inherited favicon tags (including the old purple-N SVG) before rendering.
   const cleanTemplate = detailsTemplate
     .replace(/<link\b(?=[^>]*\brel\s*=\s*["'](?:icon|shortcut icon|alternate icon)["'])[^>]*>\s*/gi, '')
-    .replace(/<link\b(?=[^>]*\brel\s*=\s*["']apple-touch-icon["'])[^>]*>\s*/gi, '');
+    .replace(/<link\b(?=[^>]*\brel\s*=\s*["']apple-touch-icon["'])[^>]*>\s*/gi, '')
+    .replace(/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:image:secure_url["'])[^>]*>\s*/gi, '')
+    .replace(/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:image:alt["'])[^>]*>\s*/gi, '');
   const renderedTemplate = cleanTemplate.replace(/<head([^>]*)>/i, (_match, attributes) =>
     '<head' + attributes + '>\n' +
     '<link rel="icon" type="image/png" href="/logo.png">\n' +
