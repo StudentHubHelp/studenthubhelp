@@ -11,6 +11,8 @@ on:
       - 'scripts/generate-sitemap.mjs'
       - 'scripts/generate-seo-pages.mjs'
       - 'scripts/generate-property-pages.mjs'
+      - 'scripts/generate-share-preview.py'
+      - 'scripts/normalize-social-previews.mjs'
       - 'property-pages-manifest.json'
       - 'seo-generated-manifest.json'
       - 'sitemap.xml'
@@ -65,6 +67,16 @@ jobs:
           BASE_URL: https://studenthubhelp.in/
           SEO_LOCATION_MIN_PROPERTIES: 3
         run: node scripts/generate-seo-pages.mjs
+
+      - name: Generate premium social share image from the site logo
+        run: |
+          python -m pip install --quiet Pillow
+          python scripts/generate-share-preview.py
+
+      - name: Normalize social previews across every HTML page
+        env:
+          BASE_URL: https://studenthubhelp.in
+        run: node scripts/normalize-social-previews.mjs
 
       - name: Generate canonical sitemap index and child sitemaps
         env:
