@@ -28,7 +28,7 @@ draw.rounded_rectangle((88, 88, 246, 246), radius=34, fill="#ffffff", outline="#
 
 logo = Image.open(LOGO_PATH).convert("RGBA")
 # Keep the full original logo visible; the white tile provides a clean premium contrast.
-logo.thumbnail((122, 122), Image.Resampling.LANCZOS)
+scale = min(122 / logo.width, 122 / logo.height)\nlogo = logo.resize((max(1, round(logo.width * scale)), max(1, round(logo.height * scale))), Image.Resampling.LANCZOS)
 lx = 167 - logo.width // 2
 ly = 167 - logo.height // 2
 base_rgba = base.convert("RGBA")
