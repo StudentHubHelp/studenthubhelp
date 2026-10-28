@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const BASE_URL = (process.env.BASE_URL || 'https://studenthubhelp.in').replace(/\/+$/, '');
-const SHARE_IMAGE = `${BASE_URL}/share-preview.png?v=20261028`;
+const SHARE_IMAGE = `${BASE_URL}/logo.png`;
 const SKIP_DIRS = new Set(['.git', 'node_modules', '.github', '.next', 'dist', 'build']);
 
 async function walk(dir) {
@@ -38,7 +38,7 @@ function ensureMeta(html, matcher, key, value) {
 function dedupeSocialMeta(html) {
   const seen = new Set();
   return html.replace(/<meta\b[^>]*>/gi, tag => {
-    const match = tag.match(/\b(?:property|name)=["'](og:image(?::(?:secure_url|alt|width|height))?|twitter:image|twitter:card|og:title|og:description|og:type)["']/i);
+    const match = tag.match(/\b(?:property|name)=["'](og:image(?::(?:secure_url|alt))?|twitter:image|twitter:card|og:title|og:description|og:type)["']/i);
     if (!match) return tag;
     const key = match[1].toLowerCase();
     if (seen.has(key)) return '';
