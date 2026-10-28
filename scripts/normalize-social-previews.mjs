@@ -35,6 +35,18 @@ function ensureMeta(html, matcher, key, value) {
     : html;
 }
 
+function dedupeSocialMeta(html) {
+  const seen = new Set();
+  return html.replace(/<meta\\b[^>]*>/gi, tag => {
+    const match = tag.match(/\\b(?:property|name)=["'](og:image(?::(?:secure_url|alt|width|height))?|twitter:image|twitter:card|og:title|og:description|og:type)["']/i);
+    if (!match) return tag;
+    const key = match[1].toLowerCase();
+    if (seen.has(key)) return '';
+    seen.add(key);
+    return tag;
+  }).replace(/\\n[ \\t]*\\n{2,}/g, '\\n\\n');
+}
+
 function normalize(html) {
   const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [,'StudentHubHelp | Student Services Across India'])[1].replace(/<[^>]+>/g, '').trim();
   const description = (html.match(/<meta\b(?=[^>]*\bname=["']description["'])[^>]*\bcontent=["']([^"']*)["'][^>]*>/i) || [,'Discover hostels, PGs, tiffin services, libraries, cafes and bookstores with StudentHubHelp.'])[1];
