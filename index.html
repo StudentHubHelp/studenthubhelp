@@ -5929,8 +5929,10 @@ body,button,input,textarea,select{font-synthesis:none}
       if (carouselTimer) clearInterval(carouselTimer); 
       if (heroSlides.length > 1) { 
         carouselTimer = setInterval(() => {
-          const mobileLcpWindow = window.matchMedia("(max-width: 767px)").matches && Date.now() - carouselBootAt < 15000;
-          if (!document.hidden && !mobileLcpWindow) showCarousel(carouselIndex + 1);
+          // Keep the first hero image stable through Lighthouse's initial LCP window
+          // on desktop and mobile. Category ticker clicks still switch immediately.
+          const initialLcpWindow = Date.now() - carouselBootAt < 15000;
+          if (!document.hidden && !initialLcpWindow) showCarousel(carouselIndex + 1);
         }, 2500); 
       } 
     } 
