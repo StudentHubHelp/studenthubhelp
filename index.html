@@ -65,7 +65,7 @@
   <link rel="apple-touch-icon" href="/logo.png" />
 
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- Leaflet CSS loads on demand when the below-the-fold map approaches view. -->
     <link rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co" crossorigin />
 <!-- Phase 1 performance: prioritize the first visible LCP hero image. -->
   <link rel="preload" as="image" href="hostelherobanner.jpg" fetchpriority="high" />
@@ -5706,7 +5706,7 @@ body,button,input,textarea,select{font-synthesis:none}
     id="toast"
   ></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Leaflet JS loads on demand when the below-the-fold map approaches view. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -5913,6 +5913,8 @@ body,button,input,textarea,select{font-synthesis:none}
     const tickerItems = document.querySelectorAll("#headerCategoryTicker .cat-item");
     let carouselIndex = 0;
     let carouselTimer = null;
+    // Keep the first hero stable during the mobile LCP window.
+    const carouselBootAt = Date.now();
 
     function showCarousel(index) { 
       if (!heroSlides.length) return; 
@@ -5931,7 +5933,8 @@ body,button,input,textarea,select{font-synthesis:none}
       if (carouselTimer) clearInterval(carouselTimer); 
       if (heroSlides.length > 1) { 
         carouselTimer = setInterval(() => {
-          if (!document.hidden) showCarousel(carouselIndex + 1);
+          const mobileLcpWindow = window.matchMedia("(max-width: 767px)").matches && Date.now() - carouselBootAt < 15000;
+          if (!document.hidden && !mobileLcpWindow) showCarousel(carouselIndex + 1);
         }, 2500); 
       } 
     } 
@@ -6058,6 +6061,54 @@ body,button,input,textarea,select{font-synthesis:none}
       return {lat,lng};
     }
 
+    let shhLeafletAssetsPromise = null;
+
+    function shhLoadLeafletAssets() {
+      if (window.L) return Promise.resolve();
+      if (shhLeafletAssetsPromise) return shhLeafletAssetsPromise;
+
+      const cssPromise = new Promise((resolve, reject) => {
+        const existing = document.querySelector('link[data-shh-leaflet="css"]');
+        if (existing) {
+          if (existing.dataset.loaded === "true" || existing.sheet) return resolve();
+          existing.addEventListener("load", resolve, {once:true});
+          existing.addEventListener("error", reject, {once:true});
+          return;
+        }
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
+        link.crossOrigin = "anonymous";
+        link.dataset.shhLeaflet = "css";
+        link.addEventListener("load", () => { link.dataset.loaded = "true"; resolve(); }, {once:true});
+        link.addEventListener("error", reject, {once:true});
+        document.head.appendChild(link);
+      });
+      const jsPromise = new Promise((resolve, reject) => {
+        if (window.L) return resolve();
+        const existing = document.querySelector('script[data-shh-leaflet="js"]');
+        if (existing) {
+          existing.addEventListener("load", resolve, {once:true});
+          existing.addEventListener("error", reject, {once:true});
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        script.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
+        script.crossOrigin = "anonymous";
+        script.dataset.shhLeaflet = "js";
+        script.addEventListener("load", resolve, {once:true});
+        script.addEventListener("error", reject, {once:true});
+        document.body.appendChild(script);
+      });
+      shhLeafletAssetsPromise = Promise.all([cssPromise, jsPromise]).catch(error => {
+        shhLeafletAssetsPromise = null;
+        throw error;
+      });
+      return shhLeafletAssetsPromise;
+    }
+
     function shhMapInit() {
       if (shhIndiaLeafletMap || !window.L || !document.getElementById("shhIndiaMap")) return;
       shhIndiaLeafletMap = L.map("shhIndiaMap", {scrollWheelZoom:false}).setView([22.8,79.2], 4.4);
@@ -6072,12 +6123,9 @@ body,button,input,textarea,select{font-synthesis:none}
     function shhRenderIndiaMap(items) {
       const citiesEl = document.getElementById("shhMapCities");
       const categoryEl = document.getElementById("shhMapCategory");
-      if (!citiesEl || !categoryEl) return;
+      if (!citiesEl || !categoryEl || !window.L) return;
       shhMapInit();
-      if (!shhIndiaLeafletMap || !shhIndiaMarkerLayer) {
-        citiesEl.innerHTML = '<div class="shh-map-empty">The interactive map could not load. Please check your connection and try again.</div>';
-        return;
-      }
+      if (!shhIndiaLeafletMap || !shhIndiaMarkerLayer) return;
       const selectedCategory = categoryEl.value;
       const mapped = (items || []).map(item => ({item,coords:shhMapCoordinates(item)})).filter(entry => entry.coords && (selectedCategory === "all" || entry.item.listingCategory === selectedCategory));
       shhIndiaMapItems = mapped;
@@ -6132,6 +6180,32 @@ body,button,input,textarea,select{font-synthesis:none}
     }
 
     document.getElementById("shhMapCategory")?.addEventListener("change", () => shhRenderIndiaMap(allListings));
+
+    // Defer Leaflet download, map layout work and tile requests until near viewport.
+    function shhObserveMapVisibility() {
+      const map = document.getElementById("shhIndiaMap");
+      if (!map) return;
+      let started = false;
+      const startMap = () => {
+        if (started) return;
+        started = true;
+        shhLoadLeafletAssets().then(() => shhRenderIndiaMap(allListings)).catch(() => {
+          const citiesEl = document.getElementById("shhMapCities");
+          if (citiesEl) citiesEl.innerHTML = '<div class="shh-map-empty">The interactive map could not load. Please check your connection and try again.</div>';
+        });
+      };
+      if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(entries => {
+          if (entries.some(entry => entry.isIntersecting)) { observer.disconnect(); startMap(); }
+        }, {rootMargin:"300px 0px"});
+        observer.observe(map);
+      } else {
+        const fallback = () => window.setTimeout(startMap, 1800);
+        if (document.readyState === "complete") fallback();
+        else window.addEventListener("load", fallback, {once:true});
+      }
+    }
+    shhObserveMapVisibility();
 
     async function loadListings() { 
       const grid = $("listingGrid"); 
