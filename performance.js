@@ -2,8 +2,7 @@
   'use strict';
 
   const applyImageHints = () => {
-    // Keep the visible homepage hero out of the generic index-based lazy-load rule.
-    // Otherwise the first hero banner can be changed back to lazy after HTML parsing.
+    // Set the first visible hero image priority immediately to protect LCP.
     const hero = document.getElementById('heroCarousel');
     const heroImages = hero ? Array.from(hero.querySelectorAll('img')) : [];
     const activeHeroImage =
@@ -20,18 +19,28 @@
       }
     });
 
-    document.querySelectorAll('img').forEach((img, index) => {
-      if (hero && hero.contains(img)) return;
+    // Defer the page-wide image scan until the browser has time for non-critical work.
+    // This leaves the logo, markup, dimensions and visual layout untouched.
+    const applyNonCriticalHints = () => {
+      document.querySelectorAll('img').forEach((img, index) => {
+        if (hero && hero.contains(img)) return;
 
-      const src = img.getAttribute('src') || '';
-      const isBranding =
-        /(^|\/)(logo|favicon)/i.test(src) ||
-        Boolean(img.closest('header,nav,.navbar'));
+        const src = img.getAttribute('src') || '';
+        const fileName = src.split(/[?#]/, 1)[0].split('/').pop() || '';
+        const isBranding =
+          /^(logo|favicon)/i.test(fileName) ||
+          Boolean(img.closest('header,nav,.navbar'));
 
-      // Preserve branding and existing image dimensions; defer only non-critical images.
-      if (!isBranding && index > 1) img.loading = 'lazy';
-      img.decoding = 'async';
-    });
+        if (!isBranding && index > 1) img.loading = 'lazy';
+        img.decoding = 'async';
+      });
+    };
+
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(applyNonCriticalHints, { timeout: 1200 });
+    } else {
+      window.setTimeout(applyNonCriticalHints, 250);
+    }
   };
 
   const repairHomepageHero = () => {
