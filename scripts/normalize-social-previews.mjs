@@ -38,9 +38,10 @@ function ensureMeta(html, matcher, key, value) {
 function dedupeSocialMeta(html) {
   const seen = new Set();
   return html.replace(/<meta\b[^>]*>/gi, tag => {
-    const match = tag.match(/\b(?:property|name)=["'](og:image(?::(?:secure_url|alt))?|twitter:image|twitter:card|og:title|og:description|og:type)["']/i);
+    const match = tag.match(/\b(?:property|name)=["'](og:image(?::(?:secure_url|alt|width|height))?|twitter:image|twitter:card|og:title|og:description|og:type)["']/i);
     if (!match) return tag;
     const key = match[1].toLowerCase();
+    if (key === 'og:image:width' || key === 'og:image:height') return '';
     if (seen.has(key)) return '';
     seen.add(key);
     return tag;
