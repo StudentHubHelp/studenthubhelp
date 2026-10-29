@@ -56,8 +56,6 @@ function normalize(html) {
     [/\bname=["']twitter:image["']/i, 'name="twitter:image"', SHARE_IMAGE],
     [/\bproperty=["']og:image:secure_url["']/i, 'property="og:image:secure_url"', SHARE_IMAGE],
     [/\bproperty=["']og:image:alt["']/i, 'property="og:image:alt"', 'StudentHubHelp logo and student services'],
-    [/\bproperty=["']og:image:width["']/i, 'property="og:image:width"', '1200'],
-    [/\bproperty=["']og:image:height["']/i, 'property="og:image:height"', '630'],
     [/\bname=["']twitter:card["']/i, 'name="twitter:card"', 'summary_large_image'],
     [/\bproperty=["']og:title["']/i, 'property="og:title"', title],
     [/\bproperty=["']og:description["']/i, 'property="og:description"', description],
