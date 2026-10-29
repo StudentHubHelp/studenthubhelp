@@ -2,9 +2,33 @@
   'use strict';
 
   const applyImageHints = () => {
+    // Keep the visible homepage hero out of the generic index-based lazy-load rule.
+    // Otherwise the first hero banner can be changed back to lazy after HTML parsing.
+    const hero = document.getElementById('heroCarousel');
+    const heroImages = hero ? Array.from(hero.querySelectorAll('img')) : [];
+    const activeHeroImage =
+      (hero && hero.querySelector('.hero-slide.active img')) || heroImages[0];
+
+    heroImages.forEach((img) => {
+      img.decoding = 'async';
+      if (img === activeHeroImage) {
+        img.loading = 'eager';
+        img.setAttribute('fetchpriority', 'high');
+      } else {
+        img.loading = 'lazy';
+        img.setAttribute('fetchpriority', 'low');
+      }
+    });
+
     document.querySelectorAll('img').forEach((img, index) => {
+      if (hero && hero.contains(img)) return;
+
       const src = img.getAttribute('src') || '';
-      const isBranding = /(^|\/)(logo|favicon)/i.test(src) || img.closest('header,nav,.navbar');
+      const isBranding =
+        /(^|\\/)(logo|favicon)/i.test(src) ||
+        Boolean(img.closest('header,nav,.navbar'));
+
+      // Preserve branding and existing image dimensions; defer only non-critical images.
       if (!isBranding && index > 1) img.loading = 'lazy';
       img.decoding = 'async';
     });
