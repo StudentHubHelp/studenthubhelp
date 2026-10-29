@@ -25,7 +25,7 @@
 
       const src = img.getAttribute('src') || '';
       const isBranding =
-        /(^|\\/)(logo|favicon)/i.test(src) ||
+        /(^|\/)(logo|favicon)/i.test(src) ||
         Boolean(img.closest('header,nav,.navbar'));
 
       // Preserve branding and existing image dimensions; defer only non-critical images.
