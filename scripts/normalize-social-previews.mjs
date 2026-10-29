@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const BASE_URL = (process.env.BASE_URL || 'https://studenthubhelp.in').replace(/\/+$/, '');
-const SHARE_IMAGE = `${BASE_URL}/logo.png`;
+const SHARE_IMAGE = `${BASE_URL}/logo.png?v=logo-hd-20261029`;
 const SKIP_DIRS = new Set(['.git', 'node_modules', '.github', '.next', 'dist', 'build']);
 
 async function walk(dir) {
