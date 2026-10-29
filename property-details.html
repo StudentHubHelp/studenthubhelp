@@ -336,10 +336,7 @@ function updatePropertySEO(r){
   setMeta('twitterTitle',seoTitle);
   setMeta('twitterDescription',seoDescription);
 
-  const imageUrl=new URL(
-    propertyImageUrls(r)[0]||cfg.banner,
-    location.href
-  ).href;
+  const imageUrl='https://studenthubhelp.in/logo.png';
 
   setMeta('ogImage',imageUrl);
   setMeta('twitterImage',imageUrl);
@@ -1642,7 +1639,7 @@ function render(r){
   loadSimilarProperties(r);
 }
 
-async function share(){try{await navigator.share({title:document.title,text:'Check this property on StudentHubHelp',url:location.href})}catch(e){try{await navigator.clipboard.writeText(location.href);alert('Property link copied!')}catch(_){alert(location.href)}}}
+async function share(){const canonicalUrl=document.getElementById('canonicalLink')?.href||location.href;try{await navigator.share({title:document.title,text:'Check this property on StudentHubHelp',url:canonicalUrl})}catch(e){try{await navigator.clipboard.writeText(canonicalUrl);alert('Property link copied!')}catch(_){alert(canonicalUrl)}}}
 document.getElementById('backBtn').addEventListener('click',()=>history.length>1?history.back():(location.href='index.html'));
 document.getElementById('shareBtn').addEventListener('click',share);
 load();
