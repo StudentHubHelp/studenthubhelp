@@ -6021,6 +6021,7 @@ body,button,input,textarea,select{font-synthesis:none}
           .from(source.table)
           .select("*")
           .in("status", ["active", "published", "approved", "live"])
+          .order("created_at", {ascending:false})
           .limit(100);
         if (error) throw error;
         return (data || []).filter(isPubliclyActive).map(row => normalizeListing(row,source)); 
@@ -6205,17 +6206,22 @@ body,button,input,textarea,select{font-synthesis:none}
     }
     shhObserveMapVisibility();
 
-    async function loadListings() { 
-      const grid = $("listingGrid"); 
-      if (grid) grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>'; 
+    let homepageListingsPromise = null;
+    function loadListings() {
+      if (homepageListingsPromise) return homepageListingsPromise;
+      homepageListingsPromise = (async () => {
+        const grid = $("listingGrid"); 
+        if (grid) grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>'; 
 
-      const results = await Promise.all(sourceConfig.map(fetchListings)); 
-      allListings = results.flat();
-      shhRenderIndiaMap(allListings);
-      updateStudentHubShowcase();
-      // Do not derive homepage totals from this preview: each table fetch is
-      // intentionally capped at 100 rows. loadStats() owns the exact counts.
-      applyFilters(); 
+        const results = await Promise.all(sourceConfig.map(fetchListings)); 
+        allListings = results.flat();
+        shhRenderIndiaMap(allListings);
+        updateStudentHubShowcase();
+        // Do not derive homepage totals from this preview: each table fetch is
+        // intentionally capped at 100 rows. loadStats() owns the exact counts.
+        applyFilters(); 
+      })();
+      return homepageListingsPromise;
     } 
 
     function listingMatches(item) { 
@@ -6306,10 +6312,14 @@ const query = state.search.trim().toLowerCase();
     let studentLifeShowcaseListings = null;
     async function loadStudentLifeShowcase() {
       try {
+        // Reuse the initial category preview instead of downloading those same
+        // rows again. Keep the complete paginated query for every remaining row.
+        await loadListings();
         const pageSize = 500;
         const results = await Promise.all(sourceConfig.map(async source => {
-          const rows = [];
-          for (let from = 0; ; from += pageSize) {
+          const previewRows = allListings.filter(item => item.sourceTable === source.table);
+          const rows = [...previewRows];
+          for (let from = previewRows.length; ; from += pageSize) {
             const {data,error} = await supabaseClient.from(source.table)
               .select("*")
               .in("status", ["active", "published", "approved", "live"])
