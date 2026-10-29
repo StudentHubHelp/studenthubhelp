@@ -6984,7 +6984,27 @@ function renderListingCard(item) {
         HASH SCROLL + INITIAL LOAD 
     ========================================= */ 
     scheduleHomepageDataLoad();
-    loadStudentLifeShowcase();
+
+    /* Load the full below-the-fold showcase after the initial page load,
+       keeping its paginated Supabase reads out of the first-render window. */
+    function scheduleStudentLifeShowcaseLoad() {
+      const scheduleWhenIdle = () => {
+        const start = () => loadStudentLifeShowcase();
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(start, {timeout: 1800});
+        } else {
+          window.setTimeout(start, 900);
+        }
+      };
+      if (document.readyState === "complete") {
+        window.setTimeout(scheduleWhenIdle, 900);
+      } else {
+        window.addEventListener("load", () => {
+          window.setTimeout(scheduleWhenIdle, 900);
+        }, {once:true});
+      }
+    }
+    scheduleStudentLifeShowcaseLoad();
 
     if(window.location.hash === "#live-listings") { 
       setTimeout(()=>$("live-listings")?.scrollIntoView({behavior:"smooth"}),300); 
