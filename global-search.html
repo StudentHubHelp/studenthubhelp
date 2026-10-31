@@ -365,11 +365,23 @@ function facilitiesFromRecord(r){
   }
   return 'https://studenthubhelp.in/'+({hostel:'hostel-banner.png',tiffin:'tiffin-banner.png',library:'library-banner.png',cafe:'cafe-banner.png',bookstore:'bookstore-banner.png'})[r.__category]||'https://studenthubhelp.in/logo.png';
 }
-    function createCard(r){
+    function propertyDetailsHref(r,cat){
+  const type=String(cat?.key||r?.__category||'hostel').toLowerCase();
+  const allowed=['hostel','tiffin','library','cafe','bookstore'];
+  const safeType=allowed.includes(type)?type:'hostel';
+  const slug=String(r?.slug||r?.property_slug||'').trim();
+  if(slug) return '/properties/'+encodeURIComponent(safeType)+'/'+encodeURIComponent(slug)+'/';
+  const id=r?.id??r?.property_id;
+  const url=new URL('/property-details.html',location.origin);
+  url.searchParams.set('type',safeType);
+  if(id!==undefined&&id!==null&&String(id).trim()) url.searchParams.set('id',String(id));
+  return url.pathname+url.search;
+}
+function createCard(r){
   const c=document.createElement('article');c.className='result-card';
   const cat=r.__categoryConfig||CATEGORIES[r.__category],name=nameFromRecord(r)||cat.label,area=areaFromRecord(r),address=addressFromRecord(r),image=imageFromRecord(r),verified=r.verified===true||r.is_verified===true||norm(r.verification_status)==='verified';
-  c.innerHTML='<div class="card-media"><img class="shh-card-image" src="'+esc(image)+'" alt="'+esc(name)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'https://studenthubhelp.in/'+(cat.key==='hostel'?'hostel-banner.png':cat.key==='tiffin'?'tiffin-banner.png':cat.key==='library'?'library-banner.png':cat.key==='cafe'?'cafe-banner.png':'bookstore-banner.png')+'\';"><div class="category-badge">'+cat.icon+' '+esc(cat.label)+'</div>'+(verified?'<div class="verified" title="Verified listing">✓</div>':'')+'<div class="card-media-title">'+esc(name)+'</div></div><div class="card-body"><h3 class="card-title">'+esc(name)+'</h3><div class="card-location"><i>⌖</i><span>'+esc(area||address||'Location not available')+'</span></div><div class="card-meta"><span class="rating">'+esc(ratingText(r.rating))+'</span><span class="type-label">'+esc(cat.label)+'</span></div><div class="card-actions"><button class="btn btn-primary view-btn" type="button">◉ View Details</button><a class="btn btn-light finder-btn" href="'+esc(cat.finder)+'">Open Finder</a></div></div>';
-  c.querySelector('.view-btn').addEventListener('click',()=>openDetails(r));return c;
+  c.innerHTML='<div class="card-media"><img class="shh-card-image" src="'+esc(image)+'" alt="'+esc(name)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'https://studenthubhelp.in/'+(cat.key==='hostel'?'hostel-banner.png':cat.key==='tiffin'?'tiffin-banner.png':cat.key==='library'?'library-banner.png':cat.key==='cafe'?'cafe-banner.png':'bookstore-banner.png')+'\';"><div class="category-badge">'+cat.icon+' '+esc(cat.label)+'</div>'+(verified?'<div class="verified" title="Verified listing">✓</div>':'')+'<div class="card-media-title">'+esc(name)+'</div></div><div class="card-body"><h3 class="card-title">'+esc(name)+'</h3><div class="card-location"><i>⌖</i><span>'+esc(area||address||'Location not available')+'</span></div><div class="card-meta"><span class="rating">'+esc(ratingText(r.rating))+'</span><span class="type-label">'+esc(cat.label)+'</span></div><div class="card-actions"><a class="btn btn-primary view-btn" href="'+esc(propertyDetailsHref(r,cat))+'">◉ View Details</a><a class="btn btn-light finder-btn" href="'+esc(cat.finder)+'">Open Finder</a></div></div>';
+  return c;
 }
 function renderResults(results){grid.innerHTML='';updateSummary(results,currentQuery);if(!results.length){showEmpty(true);emptyTitle.textContent=currentQuery?'No matching listings found':'No listings available';emptyText.textContent=currentQuery?'No strong match for "'+currentQuery+'". Try a property name, area, city or service.':'No listings are currently available.';return}showEmpty(false);results.forEach(r=>grid.appendChild(createCard(r)));decorateResults(results)}
     function decorateResults(results){grid.querySelectorAll('.shh-smart-badge').forEach(x=>x.remove());[...grid.querySelectorAll('.result-card')].forEach((c,i)=>{const r=results[i],body=c.querySelector('.card-body'),actions=body?.querySelector('.card-actions');if(!body||!actions||!r.__score)return;const b=document.createElement('span');b.className='shh-smart-badge';b.textContent='✦ Smart match '+Math.min(99,Math.max(60,Math.round(r.__score/5)))+'%';body.insertBefore(b,actions)})}
