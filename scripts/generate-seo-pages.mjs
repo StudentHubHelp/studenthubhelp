@@ -70,7 +70,7 @@ function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[]}){
   const canonicalAbs=canonical;
   const premiumLocationPaths = new Set([
     '/sikar/','/sikar/piprali-road/','/sikar/nawalgarh-road/','/sikar/anand-nagar/','/sikar/new-indira-colony/','/sikar/vasant-vihar/',
-    '/kota/','/kota/indra-vihar-talwandi/','/kota/new-jawahar-nagar-talwandi-kota/','/kota/hostel/','/kota/tiffin/',
+    '/kota/','/kota/talwandi-kota/','/kota/indra-vihar-talwandi/','/kota/new-jawahar-nagar-talwandi-kota/','/kota/hostel/','/kota/tiffin/',
     '/sikar/hostel/','/sikar/cafe/','/sikar/tiffin/','/sikar/coaching/allen/','/sikar/coaching/matrix/',
     '/gurugram-gurgaon/','/gurugram-gurgaon/hostel/','/gurugram-gurgaon/tiffin/'
   ]);
