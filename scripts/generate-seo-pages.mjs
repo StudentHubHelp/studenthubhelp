@@ -73,7 +73,8 @@ function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[]}){
     '/kota/','/kota/talwandi-kota/','/kota/indra-vihar-talwandi/','/kota/new-jawahar-nagar-talwandi-kota/','/kota/hostel/','/kota/tiffin/',
     '/sikar/hostel/','/sikar/cafe/','/sikar/tiffin/','/sikar/coaching/allen/','/sikar/coaching/matrix/',
   ]);
-  const premiumLocation = premiumLocationPaths.has(new URL(canonicalAbs).pathname);
+  const canonicalPath = new URL(canonicalAbs).pathname;
+  const premiumLocation = premiumLocationPaths.has(canonicalPath) || canonicalPath.startsWith('/sikar/') || canonicalPath.startsWith('/kota/');
   const home=rel(depth,BASE);
   const breadcrumb=crumbs.map((c,i)=>i===crumbs.length-1?'<span>'+esc(c.name)+'</span>':'<a href="'+esc(rel(depth,c.url))+'">'+esc(c.name)+'</a>').join(' <span>›</span> ');
   const schema={'@context':'https://schema.org','@type':'CollectionPage','@id':canonicalAbs+'#page','name':h1,'url':canonicalAbs,'description':description,'inLanguage':'en-IN','isPartOf':{'@type':'WebSite','name':'StudentHubHelp','url':BASE},'breadcrumb':{'@type':'BreadcrumbList','itemListElement':crumbs.map((c,i)=>({'@type':'ListItem','position':i+1,'name':c.name,'item':c.url}))},...(about.length?{'about':about}:{})};
