@@ -11,9 +11,10 @@ function fuzzyAliasKeys(q,m){const n=norm(q),ts=toks(n),out=[];for(const[k,a]of 
 function fuzzyKnownLocationToken(token,m){const t=norm(token);if(!t||t.length<5)return false;for(const a of Object.values(m).flat()){const an=norm(a),at=toks(an);if(at.length!==1||at[0].length<5)continue;const maxEd=at[0].length>=8?2:1;if(Math.abs(t.length-at[0].length)<=maxEd&&lev(t,at[0])<=maxEd)return true}return false}
 function category(q){q=norm(q);for(const[k,a]of Object.entries(C))if(a.some(x=>q.includes(norm(x))))return k;if(/\b(single|private room|room|rooms|1 sharing|single occupancy)\b/i.test(q)||/सिंगल\s*(रूम|कमरा)|एकल\s*कमरा|कमरा/i.test(q))return'hostel';return null}
 function relations(q){q=norm(q);return Object.entries(R).filter(([,a])=>a.some(x=>q.includes(norm(x)))).map(([k])=>k)}
+const TOWN_LOCATIONS=['udaipurwati','nawalgarh','chirawa','chiruwa','khetri','fatehpur','laxmangarh','neem ka thana'];
 function cityTokensFromQuery(n,data){
-  const base=['jhunjhunu','sikar','kota','jaipur','delhi','new delhi','bengaluru','bangalore','gurugram','gurgaon','udaipur','jodhpur','bikaner','ajmer','alwar','churu','chandigarh','mumbai','pune','indore','ahmedabad','chennai','hyderabad','lucknow','patna'];
-  const fromData=(Array.isArray(data)?data:[]).map(r=>String(r?.city??'').trim()).filter(Boolean);
+  const base=['jhunjhunu','sikar','kota','jaipur','delhi','new delhi','bengaluru','bangalore','gurugram','gurgaon','udaipur','jodhpur','bikaner','ajmer','alwar','churu','chandigarh','mumbai','pune','indore','ahmedabad','chennai','hyderabad','lucknow','patna',...TOWN_LOCATIONS];
+  const fromData=(Array.isArray(data)?data:[]).flatMap(r=>[r?.city,r?.area,r?.locality].map(v=>String(v??'').trim())).filter(Boolean);
   const canonical=v=>{const x=norm(v);return ({bangalore:'bengaluru',gurgaon:'gurugram'}[x]||x)};
   const cities=[...new Set([...base,...fromData].map(canonical).filter(Boolean))].sort((a,b)=>b.length-a.length);
   const padded=' '+norm(n)+' ';
@@ -21,8 +22,14 @@ function cityTokensFromQuery(n,data){
 }
 function cityMatchesRecord(r,city){
   const canonical=v=>{const x=norm(v);return ({bangalore:'bengaluru',gurgaon:'gurugram'}[x]||x)};
-  const wanted=canonical(city),actual=canonical(r?.city??'');
-  // An explicit city column is authoritative: never let text in a description/address override it.
+  const wanted=canonical(city);
+  // Town/tehsil searches may be stored in area/address while city remains the district.
+  if(TOWN_LOCATIONS.includes(wanted)){
+    const location=norm([r?.city,r?.area,r?.address,r?.full_address,r?.locality,r?.landmark].filter(Boolean).join(' '));
+    return (' '+location+' ').includes(' '+wanted+' ');
+  }
+  const actual=canonical(r?.city??'');
+  // For actual city searches, the explicit city column is authoritative.
   if(actual)return actual===wanted;
   const fallback=norm([r?.area,r?.address,r?.full_address,r?.locality].filter(Boolean).join(' '));
   return (' '+fallback+' ').includes(' '+wanted+' ');
