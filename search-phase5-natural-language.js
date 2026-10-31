@@ -14,7 +14,7 @@ function relations(q){q=norm(q);return Object.entries(R).filter(([,a])=>a.some(x
 const TOWN_LOCATIONS=['udaipurwati','nawalgarh','chirawa','chiruwa','khetri','fatehpur','laxmangarh','neem ka thana'];
 function cityTokensFromQuery(n,data){
   const base=['jhunjhunu','sikar','kota','jaipur','delhi','new delhi','bengaluru','bangalore','gurugram','gurgaon','udaipur','jodhpur','bikaner','ajmer','alwar','churu','chandigarh','mumbai','pune','indore','ahmedabad','chennai','hyderabad','lucknow','patna',...TOWN_LOCATIONS];
-  const fromData=(Array.isArray(data)?data:[]).flatMap(r=>[r?.city,r?.area,r?.locality].map(v=>String(v??'').trim())).filter(Boolean);
+  const fromData=(Array.isArray(data)?data:[]).map(r=>String(r?.city??'').trim()).filter(Boolean);
   const canonical=v=>{const x=norm(v);return ({bangalore:'bengaluru',gurgaon:'gurugram'}[x]||x)};
   const cities=[...new Set([...base,...fromData].map(canonical).filter(Boolean))].sort((a,b)=>b.length-a.length);
   const padded=' '+norm(n)+' ';
