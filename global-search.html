@@ -429,9 +429,16 @@ function renderResults(results){grid.innerHTML='';updateSummary(results,currentQ
       const queryTokens=info.location.map(norm).filter(t=>t&&!STOP.has(t));
       if(!queryTokens.length)return null;
       const locationText=r=>norm([r.city,r.area,r.address,r.full_address,r.locality,r.location,r.landmark,r.service_area].filter(Boolean).join(' '));
+      // Road/area queries are explicit location constraints: match the whole
+      // location phrase (including common Road/Rd spelling), never fuzzy-match
+      // an isolated token against unrelated cities.
+      const roadQuery=norm(q).replace(/\\brd\\b/g,'road').replace(/\\s+/g,' ').trim();
+      const isRoadQuery=/(?:\\broad\\b|\\brd\\b)/.test(roadQuery);
+      const roadVariants=uniq([roadQuery,roadQuery.replace(/\\broad\\b/g,'rd'),roadQuery.replace(/\\brd\\b/g,'road')].map(norm));
       const matched=data.filter(r=>{
         if(activeFilter!=='all'&&r.__category!==activeFilter)return false;
-        const hay=locationText(r);
+        const hay=locationText(r).replace(/\\brd\\b/g,'road').replace(/\\s+/g,' ').trim();
+        if(isRoadQuery)return roadVariants.some(phrase=>(' '+hay+' ').includes(' '+phrase+' '));
         return queryTokens.every(t=>hay.includes(t)||toks(hay).some(x=>sim(t,x)>=0.88));
       });
       if(!matched.length)return [];
