@@ -44,6 +44,29 @@
       .finder-power-badge.gold{background:#fff7df;color:#9a6a00}.finder-power-badge.green{background:#eaf8f0;color:#16834b}
       @media(max-width:720px){.finder-power-filters{display:grid;grid-template-columns:1fr 1fr}.finder-power-filters input,.finder-power-filters select,.finder-power-toggle,.finder-power-clear{width:100%}.finder-power-panel{width:100%}}
     `;
+    style.textContent += `
+      /* Premium, Dribbble-inspired search polish shared by all finder pages */
+      .search-box{position:relative!important;isolation:isolate!important;display:flex!important;align-items:center!important;gap:12px!important;width:min(100%,900px)!important;min-height:76px!important;padding:9px!important;border:1px solid rgba(255,255,255,.78)!important;border-radius:24px!important;background:rgba(255,255,255,.97)!important;box-shadow:0 22px 65px rgba(5,20,45,.22),0 2px 8px rgba(5,20,45,.06)!important;backdrop-filter:blur(18px)!important;transition:box-shadow .22s ease,border-color .22s ease!important}
+      .search-box:focus-within{border-color:#e5bd65!important;box-shadow:0 24px 70px rgba(5,20,45,.25),0 0 0 4px rgba(229,189,101,.18)!important}
+      .search-box .search-icon{flex:0 0 48px!important;width:48px!important;height:48px!important;display:grid!important;place-items:center!important;border-radius:16px!important;background:linear-gradient(145deg,#f7e8c2,#fff8e9)!important;color:#8c641a!important;font-size:18px!important}
+      .search-box #searchInput{min-width:0!important;flex:1!important;height:54px!important;border:0!important;outline:0!important;background:transparent!important;color:#12243c!important;font-size:15px!important;font-weight:600!important;box-shadow:none!important}
+      .search-box #searchInput::placeholder{color:#8995a7!important;font-weight:500!important}
+      .search-box .search-btn{min-height:54px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;padding:0 24px!important;border:0!important;border-radius:17px!important;background:linear-gradient(135deg,#102b4b,#071a33)!important;color:#fff!important;font-size:13px!important;font-weight:800!important;box-shadow:0 8px 20px rgba(7,26,51,.2)!important;transition:transform .2s ease,box-shadow .2s ease!important}
+      .search-box .search-btn:hover{transform:translateY(-1px)!important;box-shadow:0 12px 26px rgba(7,26,51,.28)!important}
+      .finder-power-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:15px 0 2px;width:min(100%,900px);color:rgba(255,255,255,.8)}
+      .finder-power-chips-label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.76);margin-right:3px}
+      .finder-power-chip{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:7px 12px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.10);color:#fff;font-size:11px;font-weight:700;cursor:pointer;backdrop-filter:blur(8px);transition:all .18s ease}
+      .finder-power-chip:hover,.finder-power-chip:focus-visible{background:#fff;color:#102a43;border-color:#fff;transform:translateY(-1px);outline:none}
+      .finder-power-panel{margin-top:12px!important}
+      .finder-power-filters{border-radius:18px!important;padding:12px!important;box-shadow:0 18px 44px rgba(7,26,51,.12)!important}
+      .finder-power-filters input,.finder-power-filters select{min-height:42px!important;border-radius:12px!important;font-size:12px!important}
+      .finder-power-toggle,.finder-power-clear{min-height:42px!important;border-radius:12px!important;font-size:11px!important}
+      .finder-power-suggest{border-radius:18px!important;padding:8px!important}
+      .finder-power-result{min-height:60px!important;padding:12px!important;border-radius:13px!important}
+      .finder-power-result strong{font-size:12px!important}.finder-power-result small{font-size:10px!important}
+      @media(max-width:720px){.search-box{min-height:62px!important;padding:6px!important;gap:6px!important;border-radius:18px!important}.search-box .search-icon{flex-basis:38px!important;width:38px!important;height:38px!important;border-radius:12px!important;font-size:15px!important}.search-box #searchInput{height:44px!important;font-size:13px!important;padding:0 2px!important}.search-box .search-btn{min-height:44px!important;width:46px!important;min-width:46px!important;padding:0!important;border-radius:13px!important;font-size:0!important;gap:0!important}.search-box .search-btn i{font-size:16px!important}.finder-power-chips{gap:6px!important;margin-top:12px!important}.finder-power-chips-label{width:100%;font-size:10px}.finder-power-chip{min-height:32px;padding:7px 10px;font-size:10px}}
+      @media(prefers-reduced-motion:reduce){.finder-power-chip,.search-box,.search-box .search-btn{transition:none!important}}
+    `;
     document.head.appendChild(style);
 
     const panel=document.createElement('div'); panel.className='finder-power-panel';
@@ -60,6 +83,35 @@
       </div>
       <div class="finder-power-suggest" id="finderPowerSuggest" role="listbox"></div>`;
     box.parentNode.insertBefore(panel,box.nextSibling);
+
+    const popularByPage={
+      'pg-finder.html':['Boys hostel in Sikar','Girls PG in Kota','Hostel near Allen'],
+      'tiffin-finder.html':['Veg tiffin in Sikar','Monthly tiffin in Kota','Home-style food'],
+      'library-finder.html':['Library in Jaipur','WiFi study library','Reading room near college'],
+      'cafe-finder.html':['Cafe in Jaipur','Cafe with WiFi','Cafe near college'],
+      'bookstore-finder.html':['Bookstore in Sikar','Competitive exam books','Stationery shop in Kota']
+    };
+    const chips=document.createElement('div');
+    chips.className='finder-power-chips';
+    chips.setAttribute('aria-label','Popular search suggestions');
+    const chipsLabel=document.createElement('span');
+    chipsLabel.className='finder-power-chips-label';
+    chipsLabel.textContent='Try searching';
+    chips.appendChild(chipsLabel);
+    (popularByPage[page]||[]).forEach(query=>{
+      const chip=document.createElement('button');
+      chip.type='button'; chip.className='finder-power-chip';
+      chip.innerHTML='<i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i> ';
+      chip.appendChild(document.createTextNode(query));
+      chip.addEventListener('click',()=>{
+        input.value=query;
+        suggest.classList.remove('show');
+        render();
+        input.focus();
+      });
+      chips.appendChild(chip);
+    });
+    box.parentNode.insertBefore(chips,panel);
     const matchNote=document.createElement('div');
     matchNote.id='finderPowerMatchNote';
     matchNote.hidden=true;
