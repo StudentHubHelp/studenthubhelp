@@ -34,10 +34,10 @@ function entityScore(r,i){const h=text(r);let s=0,m=0,req=0,e=[];if(i.cities.len
 function rankRows(data,q,forcedCategory){
   const query=String(q??'').trim();
   const forced=forcedCategory?norm(forcedCategory):'';
+  const rows=Array.isArray(data)?data:[];
   const effective=forced && !category(query) ? query+' '+forced : query;
   const i=parseQuery(effective,rows);
   if(forced) i.category=forced;
-  const rows=Array.isArray(data)?data:[];
 
   const rankedRows=rows.map((r,idx)=>{
     const e=entityScore(r,i);
