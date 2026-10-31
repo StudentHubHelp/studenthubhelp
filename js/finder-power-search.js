@@ -45,6 +45,14 @@
       @media(max-width:720px){.finder-power-filters{display:grid;grid-template-columns:1fr 1fr}.finder-power-filters input,.finder-power-filters select,.finder-power-toggle,.finder-power-clear{width:100%}.finder-power-panel{width:100%}}
     `;
     style.textContent += `
+      /* Keep autocomplete dropdown above the hero and prevent parent clipping */
+      .hero-banner-wrap{position:relative!important;z-index:30!important;overflow:visible!important}
+      .hero-banner-box{overflow:visible!important}
+      .hero-content{position:relative!important;z-index:31!important;overflow:visible!important}
+      .search-box{z-index:33!important}
+      .finder-power-panel{position:relative!important;z-index:35!important;overflow:visible!important}
+      .finder-power-suggest{position:absolute!important;z-index:9999!important;left:0!important;right:0!important;top:calc(100% + 8px)!important;max-height:min(360px,55vh)!important;overflow-y:auto!important;overscroll-behavior:contain!important}
+      .finder-power-chips{position:relative;z-index:32}
       /* Premium, Dribbble-inspired search polish shared by all finder pages */
       .search-box{position:relative!important;isolation:isolate!important;display:flex!important;align-items:center!important;gap:12px!important;width:min(100%,900px)!important;min-height:76px!important;padding:9px!important;border:1px solid rgba(255,255,255,.78)!important;border-radius:24px!important;background:rgba(255,255,255,.97)!important;box-shadow:0 22px 65px rgba(5,20,45,.22),0 2px 8px rgba(5,20,45,.06)!important;backdrop-filter:blur(18px)!important;transition:box-shadow .22s ease,border-color .22s ease!important}
       .search-box:focus-within{border-color:#e5bd65!important;box-shadow:0 24px 70px rgba(5,20,45,.25),0 0 0 4px rgba(229,189,101,.18)!important}
