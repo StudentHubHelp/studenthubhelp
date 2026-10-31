@@ -34,7 +34,15 @@
   }
   function dedupe(rows){
     const seen=new Set(),out=[];
-    for(const r of rows){const key=norm(r?.property_id||r?.id||nameOf(r));if(!key||seen.has(key))continue;seen.add(key);out.push(r);}return out;
+    for(const r of rows){
+      // IDs are only unique inside a category table. Keep same numeric IDs from other categories.
+      const category=norm(r?.__category||r?.category||r?.type||'uncategorized');
+      const id=norm(r?.property_id??r?.id??r?.slug??nameOf(r));
+      const key=category+'|'+id;
+      if(!id||seen.has(key))continue;
+      seen.add(key);out.push(r);
+    }
+    return out;
   }
   function install(){
     if(typeof window.ranked!=='function'||window.__studentHubPhase4Installed)return;
