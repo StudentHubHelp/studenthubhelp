@@ -414,6 +414,37 @@
       letter-spacing: .5px;
     }
 
+    /* Compact, data-backed seat summary for the hostel stat only. */
+    .hostel-capacity {
+      margin: 10px auto 0;
+      padding-top: 9px;
+      border-top: 1px solid rgba(185, 135, 165, .24);
+      max-width: 240px;
+      line-height: 1.4;
+    }
+
+    .hostel-capacity[hidden] { display: none !important; }
+
+    .hostel-capacity-total {
+      color: var(--royal-navy);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .1px;
+    }
+
+    .hostel-capacity-split {
+      margin-top: 3px;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 767px) {
+      .hostel-capacity { margin-top: 8px; padding-top: 7px; }
+      .hostel-capacity-total { font-size: 11px; }
+      .hostel-capacity-split { font-size: 9px; }
+    }
+
     /* =========================================
         SECTIONS
     ========================================= */
@@ -4161,6 +4192,11 @@ body,button,input,textarea,select{font-synthesis:none}
           Hostels / PGs
         </div>
 
+        <div class="hostel-capacity" id="hostelCapacity" hidden aria-live="polite">
+          <div class="hostel-capacity-total" id="hostelCapacityTotal"></div>
+          <div class="hostel-capacity-split" id="hostelCapacitySplit"></div>
+        </div>
+
       </div>
 
       <div class="stat-card">
@@ -5973,11 +6009,76 @@ body,button,input,textarea,select{font-synthesis:none}
       } 
     } 
 
+    function roundSeatsDownTo50(value) {
+      return Math.floor(Math.max(0, Number(value) || 0) / 50) * 50;
+    }
+
+    async function loadHostelCapacity() {
+      const box = $("hostelCapacity");
+      const totalEl = $("hostelCapacityTotal");
+      const splitEl = $("hostelCapacitySplit");
+      if (!box || !totalEl || !splitEl) return;
+
+      try {
+        const { data, error } = await supabaseClient
+          .from("hostels")
+          .select("total_beds,type,category,status");
+
+        if (error) throw error;
+        const rows = Array.isArray(data) ? data : [];
+        let totalBeds = 0;
+        let girlsBeds = 0;
+        let boysBeds = 0;
+
+        rows.forEach(row => {
+          const status = String(row?.status ?? "").trim().toLowerCase();
+          if (status && !["active", "published", "approved", "live"].includes(status)) return;
+
+          const beds = Number(row?.total_beds);
+          if (!Number.isFinite(beds) || beds <= 0) return;
+          totalBeds += beds;
+
+          const type = String(row?.type ?? "").trim().toLowerCase();
+          const category = String(row?.category ?? "").trim().toLowerCase();
+          const genderText = type + " " + category;
+          const saysGirls = /girl|women|female/.test(genderText);
+          const saysBoys = /boy|men|male/.test(genderText);
+          const saysMixed = /co[ -]?ed|mixed|boys\s*\/\s*girls|girls\s*\/\s*boys/.test(genderText);
+
+          // Only assign a gender total when the record is explicitly and
+          // unambiguously gender-specific; co-ed/unclear records stay total-only.
+          if (!saysMixed && saysGirls && !saysBoys) girlsBeds += beds;
+          else if (!saysMixed && saysBoys && !saysGirls) boysBeds += beds;
+        });
+
+        const knownTotal = roundSeatsDownTo50(totalBeds);
+        if (!knownTotal) {
+          box.hidden = true;
+          return;
+        }
+
+        totalEl.textContent = knownTotal.toLocaleString("en-IN") + "+ Known Seats";
+        const split = [];
+        const girls = roundSeatsDownTo50(girlsBeds);
+        const boys = roundSeatsDownTo50(boysBeds);
+        if (girls > 0) split.push("👩 Girls " + girls.toLocaleString("en-IN") + "+");
+        if (boys > 0) split.push("👨 Boys " + boys.toLocaleString("en-IN") + "+");
+        splitEl.textContent = split.length ? split.join(" · ") : "Gender-wise capacity not fully available";
+        box.hidden = false;
+      } catch (error) {
+        // Capacity is supplementary: if data cannot be read, keep the existing
+        // hostel count visible and hide only this new line.
+        console.error("Hostel capacity load error:", error);
+        box.hidden = true;
+      }
+    }
+
     async function loadStats() { 
       const counts = await Promise.all(statsConfig.map(([table,id]) => loadSingleCount(table,id))); 
       const total = counts.reduce((a,b)=>a+b,0); 
       const verifiedCount = $("verifiedCount"); 
       if (verifiedCount) verifiedCount.textContent = total.toLocaleString("en-IN"); 
+      loadHostelCapacity();
     } 
     /* Defer non-critical Supabase data until the browser has a chance to paint the hero. */
     function scheduleHomepageDataLoad() {
