@@ -4277,7 +4277,7 @@ body,button,input,textarea,select{font-synthesis:none}
         <div class="stat-label">
           Tiffin / Mess
         </div>
-        <div class="stat-card-detail">🍱 Meal &amp; tiffin options</div>
+        <div class="stat-card-detail" id="tiffinStatsDetail" aria-live="polite">Loading meal details…</div>
         <a class="stat-card-action" href="global-search.html?q=tiffin">Explore meals <span aria-hidden="true">→</span></a>
 
       </div>
@@ -4294,7 +4294,7 @@ body,button,input,textarea,select{font-synthesis:none}
         <div class="stat-label">
           Libraries
         </div>
-        <div class="stat-card-detail">📚 Reading &amp; study spaces</div>
+        <div class="stat-card-detail" id="libraryStatsDetail" aria-live="polite">Loading reading facilities…</div>
         <a class="stat-card-action" href="global-search.html?q=library">Find study spaces <span aria-hidden="true">→</span></a>
 
       </div>
@@ -4311,7 +4311,7 @@ body,button,input,textarea,select{font-synthesis:none}
         <div class="stat-label">
           Cafes
         </div>
-        <div class="stat-card-detail">☕ Cafes around student areas</div>
+        <div class="stat-card-detail" id="cafeStatsDetail" aria-live="polite">Loading cafe facilities…</div>
         <a class="stat-card-action" href="global-search.html?q=cafe">Explore cafes <span aria-hidden="true">→</span></a>
 
       </div>
@@ -4328,7 +4328,7 @@ body,button,input,textarea,select{font-synthesis:none}
         <div class="stat-label">
           Book Stores
         </div>
-        <div class="stat-card-detail">📖 Books &amp; study essentials</div>
+        <div class="stat-card-detail" id="bookstoreStatsDetail" aria-live="polite">Loading bookstore services…</div>
         <a class="stat-card-action" href="global-search.html?q=bookstore">Find bookstores <span aria-hidden="true">→</span></a>
 
       </div>
@@ -6147,12 +6147,84 @@ body,button,input,textarea,select{font-synthesis:none}
       }
     }
 
+    async function loadCategoryHighlights() {
+      const specs = [
+        { table: "tiffins", columns: "verified,food_type,meal_type,delivery_available,home_delivery,breakfast_available,lunch_available,dinner_available,status", target: "tiffinStatsDetail", build(rows) {
+          const verified = rows.filter(r => r.verified === true).length;
+          const meals = rows.filter(r => r.breakfast_available === true || r.lunch_available === true || r.dinner_available === true || Boolean(r.meal_type));
+          const delivery = rows.filter(r => r.delivery_available === true || r.home_delivery === true).length;
+          const bits = [];
+          if (verified) bits.push(verified + " verified");
+          if (meals.length) bits.push(meals.length + " meal options");
+          if (delivery) bits.push(delivery + " delivery");
+          return bits.length ? "🍱 " + bits.join(" · ") : "🍱 Meal & tiffin services";
+        }},
+        { table: "libraries", columns: "verified,ac_available,wifi,open_24_hours,seating_capacity,status", target: "libraryStatsDetail", build(rows) {
+          const verified = rows.filter(r => r.verified === true).length;
+          const wifi = rows.filter(r => r.wifi === true).length;
+          const ac = rows.filter(r => r.ac_available === true).length;
+          const allDay = rows.filter(r => r.open_24_hours === true).length;
+          const bits = [];
+          if (verified) bits.push(verified + " verified");
+          if (wifi) bits.push(wifi + " Wi-Fi");
+          if (ac) bits.push(ac + " AC");
+          if (allDay) bits.push(allDay + " open 24h");
+          return bits.length ? "📚 " + bits.join(" · ") : "📚 Reading & study spaces";
+        }},
+        { table: "cafes", columns: "verified,wifi,ac,parking,seating_capacity,status", target: "cafeStatsDetail", build(rows) {
+          const verified = rows.filter(r => r.verified === true).length;
+          const wifi = rows.filter(r => r.wifi === true).length;
+          const parking = rows.filter(r => r.parking === true).length;
+          const ac = rows.filter(r => r.ac === true).length;
+          const bits = [];
+          if (verified) bits.push(verified + " verified");
+          if (wifi) bits.push(wifi + " Wi-Fi");
+          if (ac) bits.push(ac + " AC");
+          if (parking) bits.push(parking + " parking");
+          return bits.length ? "☕ " + bits.join(" · ") : "☕ Cafes around student areas";
+        }},
+        { table: "bookstores", columns: "verified,stationery,competitive_books,exam_books,second_hand_books,book_rental,photocopy,status", target: "bookstoreStatsDetail", build(rows) {
+          const verified = rows.filter(r => r.verified === true).length;
+          const stationery = rows.filter(r => r.stationery === true).length;
+          const examBooks = rows.filter(r => r.exam_books === true || r.competitive_books === true).length;
+          const rental = rows.filter(r => r.book_rental === true || r.second_hand_books === true).length;
+          const bits = [];
+          if (verified) bits.push(verified + " verified");
+          if (stationery) bits.push(stationery + " stationery");
+          if (examBooks) bits.push(examBooks + " exam books");
+          if (rental) bits.push(rental + " rental / used books");
+          return bits.length ? "📖 " + bits.join(" · ") : "📖 Books & study essentials";
+        }}
+      ];
+      await Promise.all(specs.map(async spec => {
+        const el = $(spec.target);
+        if (!el) return;
+        try {
+          const { data, error } = await supabaseClient
+            .from(spec.table)
+            .select(spec.columns)
+            .in("status", ["active", "published", "approved", "live"])
+            .limit(1000);
+          if (error) throw error;
+          const rows = (data || []).filter(isPubliclyActive);
+          el.textContent = spec.build(rows);
+        } catch (error) {
+          console.error("Category highlight error: " + spec.table, error);
+          el.textContent = spec.table === "tiffins" ? "🍱 Meal & tiffin services"
+            : spec.table === "libraries" ? "📚 Reading & study spaces"
+            : spec.table === "cafes" ? "☕ Cafes around student areas"
+            : "📖 Books & study essentials";
+        }
+      }));
+    }
+
     async function loadStats() { 
       const counts = await Promise.all(statsConfig.map(([table,id]) => loadSingleCount(table,id))); 
       const total = counts.reduce((a,b)=>a+b,0); 
       const verifiedCount = $("verifiedCount"); 
       if (verifiedCount) verifiedCount.textContent = total.toLocaleString("en-IN"); 
       loadHostelCapacity();
+      loadCategoryHighlights();
     } 
     /* Defer non-critical Supabase data until the browser has a chance to paint the hero. */
     function scheduleHomepageDataLoad() {
