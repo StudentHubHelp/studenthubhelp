@@ -2579,7 +2579,73 @@
       .shh-map-attribution-note { margin-inline:12px; }
     }
 
-  </style>
+  
+  /* Homepage category stat cards: balanced content and responsive layout. */
+  .stat-card-detail {
+    min-height: 32px;
+    margin: 10px 0 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+  .stat-card-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 6px 11px;
+    border: 1px solid var(--border-royal);
+    border-radius: 999px;
+    color: #9B3F5D;
+    background: #FFF7F9;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.3;
+    position: relative;
+    z-index: 1;
+    transition: background .2s ease, color .2s ease, border-color .2s ease;
+  }
+  .stat-card-action:hover,
+  .stat-card-action:focus-visible {
+    background: var(--royal-navy);
+    color: #FFFFFF;
+    border-color: var(--royal-navy);
+    outline-offset: 3px;
+  }
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .stat-card { padding: 18px 12px; }
+  }
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .stat-card { min-width: 0; min-height: 170px; padding: 17px 10px; border-radius: 17px; }
+    .stat-number { font-size: clamp(24px, 7vw, 28px); }
+    .stat-label { font-size: 10px; letter-spacing: .35px; }
+    .stat-card-detail { min-height: 34px; margin: 8px 0; font-size: 10px; }
+    .stat-card-action { max-width: 100%; padding: 6px 9px; font-size: 9px; }
+    .hostel-capacity { max-width: 100%; }
+  }
+  @media (max-width: 360px) {
+    .stats-grid { grid-template-columns: minmax(0, 1fr); }
+    .stat-card { min-height: 0; }
+  }
+  /* Entire city tile responds to touch, not just the small CTA text. */
+  .city-card { cursor: pointer; -webkit-tap-highlight-color: rgba(185, 135, 165, .18); }
+  .city-card:focus-visible { outline: 3px solid #9B3F5D; outline-offset: 4px; }
+  @media (max-width: 767px) {
+    .city-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .city-card { min-height: 155px; padding: 17px 14px; border-radius: 17px; }
+    .city-card h3 { font-size: clamp(17px, 4.7vw, 21px); overflow-wrap: anywhere; }
+    .city-card p { font-size: 11px; line-height: 1.5; margin-bottom: 12px; }
+    .city-card > a { display: inline-block; position: relative; z-index: 1; min-height: 28px; padding-top: 5px; }
+  }
+  @media (max-width: 360px) {
+    .city-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+
+</style>
 
   <style id="studenthubhelp-mobile-css-inline">
 /* StudentHubHelp — global responsive + professional light UI layer.
@@ -4211,6 +4277,8 @@ body,button,input,textarea,select{font-synthesis:none}
         <div class="stat-label">
           Tiffin / Mess
         </div>
+        <div class="stat-card-detail">🍱 Meal &amp; tiffin options</div>
+        <a class="stat-card-action" href="global-search.html?q=tiffin">Explore meals <span aria-hidden="true">→</span></a>
 
       </div>
 
@@ -4226,6 +4294,8 @@ body,button,input,textarea,select{font-synthesis:none}
         <div class="stat-label">
           Libraries
         </div>
+        <div class="stat-card-detail">📚 Reading &amp; study spaces</div>
+        <a class="stat-card-action" href="global-search.html?q=library">Find study spaces <span aria-hidden="true">→</span></a>
 
       </div>
 
@@ -4241,6 +4311,8 @@ body,button,input,textarea,select{font-synthesis:none}
         <div class="stat-label">
           Cafes
         </div>
+        <div class="stat-card-detail">☕ Cafes around student areas</div>
+        <a class="stat-card-action" href="global-search.html?q=cafe">Explore cafes <span aria-hidden="true">→</span></a>
 
       </div>
 
@@ -4256,6 +4328,8 @@ body,button,input,textarea,select{font-synthesis:none}
         <div class="stat-label">
           Book Stores
         </div>
+        <div class="stat-card-detail">📖 Books &amp; study essentials</div>
+        <a class="stat-card-action" href="global-search.html?q=bookstore">Find bookstores <span aria-hidden="true">→</span></a>
 
       </div>
 
@@ -8863,6 +8937,28 @@ function renderListingCard(item) {
   }
 
 </style>
+
+
+<script>
+  /* Make the full Student Cities tile tappable while preserving its visible link. */
+  document.querySelectorAll(".city-grid .city-card").forEach((card) => {
+    const link = card.querySelector("a[href]");
+    if (!link) return;
+    card.setAttribute("role", "link");
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("aria-label", "Explore " + (card.querySelector("h3")?.textContent || "student city").trim());
+    card.addEventListener("click", (event) => {
+      if (event.target.closest("a")) return;
+      window.location.href = link.href;
+    });
+    card.addEventListener("keydown", (event) => {
+      if (event.target === card && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        window.location.href = link.href;
+      }
+    });
+  });
+</script>
 
 </body> 
 </html>
