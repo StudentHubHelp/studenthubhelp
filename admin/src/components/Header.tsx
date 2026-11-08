@@ -9,6 +9,7 @@ interface HeaderProps {
   onRefresh: () => void;
   isRefreshing: boolean;
   unreadNotifications: number;
+  onNotificationsChange: (notifications: AdminNotification[]) => void;
   properties: PropertyItem[];
   students: UserProfile[];
   owners: UserProfile[];
@@ -90,7 +91,7 @@ const notificationTime = (value?: string) => {
 };
 
 export const Header: React.FC<HeaderProps> = ({
-  onSelectTab, onRefresh, isRefreshing, unreadNotifications, properties, students, owners, listingRequests,
+  onSelectTab, onRefresh, isRefreshing, unreadNotifications, onNotificationsChange, properties, students, owners, listingRequests,
   onOpenPropertyPreview, onOpenUserProfile, onToggleMobileSidebar,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,6 +105,12 @@ export const Header: React.FC<HeaderProps> = ({
 
   const [liveNotifications, setLiveNotifications] = useState<AdminNotification[]>([]);
   const [notificationOpen, setNotificationOpen] = useState(false);
+
+  // Keep the App-level notification badge and Notifications view in sync
+  // with the same Supabase-backed collection used by this header.
+  useEffect(() => {
+    onNotificationsChange(liveNotifications);
+  }, [liveNotifications, onNotificationsChange]);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
