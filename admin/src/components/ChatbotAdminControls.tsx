@@ -111,10 +111,11 @@ export const ChatbotAdminControls: React.FC<ChatbotAdminControlsProps> = ({
       const { data: userData } = await supabase.auth.getUser();
       const updatedBy = userData.user?.email || 'admin';
       const payload = { ...config, updated_by: updatedBy, updated_at: new Date().toISOString() };
-      const { error } = await supabase.from('chatbot_admin_config').update(payload).eq('id', 1);
+      const { data, error } = await supabase.from('chatbot_admin_config').upsert(payload, { onConflict: 'id' }).select('id, updated_at').single();
       if (error) throw error;
-      setConfig(payload);
-      setMessage('AI control settings saved to Supabase.');
+      if (!data || Number(data.id) !== 1) throw new Error('Settings save verify nahi ho payi.');
+      setConfig({ ...payload, updated_at: data.updated_at || payload.updated_at });
+      setMessage('AI control settings saved and verified in Supabase.');
     } catch (e: any) {
       setMessage(e?.message || 'Unable to save AI controls.');
     } finally {
