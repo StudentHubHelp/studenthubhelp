@@ -54,6 +54,23 @@ const QUICK_TOPICS = [
   { label: 'Search by Area', query: 'Mere area ke active listings dikhao', topic: 'Area Discovery' },
 ];
 
+async function getUserDeviceLocation(): Promise<{ lat: number; lng: number } | null> {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) return null;
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
+      () => resolve(null),
+      { timeout: 5000, maximumAge: 60000, enableHighAccuracy: false }
+    );
+  });
+}
+
+function asksForNearbyLocation(text: string): boolean {
+  return /(?:\bnear me\b|\bnearby\b|\bnearest\b|mere paas|mere pass|mere aas paas|aas paas|पास में|मेरे पास)/i.test(text)
+    && !/(allen|clc|vibrant|matrix|gurukripa|piprali road|piprali rd|nawalgarh road)/i.test(text);
+}
+
+
 export const ChatWidget: React.FC<ChatWidgetProps> = ({
   onDiagnosisUpdate,
   onLeadCaptured,
@@ -99,7 +116,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   }, []);
 
   const toggleSpeechRecognition = () => {
-    if (!recognitionRef.current) return;
+    if (!recognitionRef.current) {
+      setMessages(prev => [...prev, { id: `voice-unsupported-${Date.now()}`, sender: 'bot', text: 'Aapke browser mein voice input support nahi hai. Kripya apna sawaal type karein.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      return;
+    }
     if (isListening) { recognitionRef.current.stop(); setIsListening(false); } else { try { recognitionRef.current.start(); setIsListening(true); } catch { setIsListening(false); } }
   };
   const speakText = (text: string) => {
@@ -124,6 +144,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
           }) || lastPropertyMessage?.recommendedProperties?.[0]
         : undefined;
       if (!SUPABASE_ANON_KEY) throw new Error('Missing VITE_SUPABASE_ANON_KEY. Add the public Supabase anon/publishable key to the Vite build environment.');
+      const clientCoords = asksForNearbyLocation(text) ? await getUserDeviceLocation() : null;
       const controller = new AbortController(); const timeoutId = window.setTimeout(() => controller.abort(), 15000); let res: Response;
       try {
         res = await fetch(CHAT_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, body: JSON.stringify({
@@ -131,6 +152,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
           history,
           preferredTopic: topicToPrioritize,
           sessionId,
+          clientCoords,
           focusPropertyId: focusedProperty?.id ? String(focusedProperty.id) : undefined,
           focusPropertyType: focusedProperty?.type ? String(focusedProperty.type) : undefined
         }), signal: controller.signal });
