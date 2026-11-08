@@ -320,13 +320,13 @@ Deno.serve(async(req:Request)=>{
       const ar=await aiProperty(msg,history,[fp],fp._type,near,cfg),reply=ar.reply||("Bilkul 😊 **"+fp.name+"** ki available details neeche di hain.");return await chatResponse({reply,intent:"Property Reference",primaryTopic:"Referenced property",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iska phone number batao","Aur options dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg)
     }
   }
-  if(/(?:konsa|kaunsa|kaunsi|which|should i|chahiye).{0,35}(book|hostel|pg)|(?:book|hostel|pg).{0,35}(konsa|kaunsa|kaunsi|which|should)/i.test(n(msg))&&!isBookingInfoQuestion(msg)){
+  if(cfg.comparison_enabled&&/(?:konsa|kaunsa|kaunsi|which|should i|chahiye).{0,35}(book|hostel|pg)|(?:book|hostel|pg).{0,35}(konsa|kaunsa|kaunsi|which|should)/i.test(n(msg))&&!isBookingInfoQuestion(msg)){
     const decisionRows=await multiDirect([c||"hostel"],ct);
     const decisionLandmark=findLandmark(near||"");
     if(decisionLandmark){for(const p of decisionRows){const d=distanceToLandmark(p,decisionLandmark);if(d!==undefined)p._distanceKm=d}}
     let decision=decisionRows.filter(p=>!shownIds.has(String(p.id)));
-    if(decisionLandmark)decision=decision.filter(p=>n(p.city||"")===n(decisionLandmark.city)&&(p._distanceKm===undefined||p._distanceKm<=10));
-    const rankedDecision=decision.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score).slice(0,8).map(card);
+    if(decisionLandmark)decision=decision.filter(p=>n(p.city||"")===n(decisionLandmark.city)&&((p._distanceKm!==undefined&&p._distanceKm<=10)||searchText(p).includes(n(decisionLandmark.key))));
+    const rankedDecision=decision.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score).slice(0,cfg.max_results).map(card);
     const ar=await aiProperty(msg,history,rankedDecision,c||"hostel",near,cfg);
     const reply=ar.reply||"Aapki requirement ke hisaab se live options compare kar sakte hain.";
     return await chatResponse({reply,intent:"Property Comparison",primaryTopic:label(c||"hostel")+" comparison",recommendedProperties:rankedDecision,recommendations:rankedDecision,suggestedFollowUps:["Boys hostel dikhao","Girls hostel dikhao","Budget ke according dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);
@@ -403,7 +403,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
   else if(near){const q=n(near);const exact=rows.filter(p=>searchText(p).includes(q));if(exact.length)rows=exact;else if(!wantedArea)rows=[]}
   if(nearCats.length){const secondaryRows=await multiDirect(nearCats,ct);for(const p of rows){let best=Infinity,hasCoords=false;for(const q of secondaryRows){const d=distanceKm(p,q);if(d!==undefined){hasCoords=true;best=Math.min(best,d)}else if(p.area&&searchText(q).includes(n(p.area)))best=Math.min(best,1)}if(best<=3){p._nearbyDistanceKm=best;p._nearbyVerified=hasCoords;p._nearbyAreaMatch=!hasCoords}}rows=rows.filter(p=>p._nearbyDistanceKm!==undefined)}
   rows=rows.filter(p=>!shownIds.has(String(p.id)));
-  const ranked=rows.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score);
+  const ranked=rows.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score).slice(0,cfg.max_candidates);
   let recs=ranked.slice(0,cfg.max_results).map(card);
   if(action==="view_details"){const focusId=String(b?.focusPropertyId||""),focusType=String(b?.focusPropertyType||c||"hostel"),focusRows=await multiDirect([focusType],ct),focus=focusRows.find(p=>String(p.id)===focusId);recs=focus?[card(focus)]:recs.slice(0,1)}
   const ar=await aiProperty(msg,history,recs,c,near,cfg),reply=ar.reply||fallbackReply(c,recs,near,ct),followups=["View full details","Search by area","Show more options","Contact support"];
