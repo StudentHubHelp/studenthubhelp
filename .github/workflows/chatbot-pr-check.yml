@@ -87,8 +87,10 @@ jobs:
             }));
           }
           NODE
-      - name: Validate regression test script syntax
-        run: node --check tests/chatbot-regression.mjs
+      - name: Validate regression and public widget scripts
+        run: |
+          node --check tests/chatbot-regression.mjs
+          node --check ../widget.js
       - name: Type-check React chatbot component
         run: npx tsc --noEmit --skipLibCheck --jsx react-jsx --target ES2020 --module ESNext --moduleResolution bundler --allowImportingTsExtensions --types vite/client src/components/ChatWidget.tsx
       - name: Restore Vite source entry for validation
