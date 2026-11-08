@@ -38,7 +38,7 @@ async function direct(type:string,ct?:string,maxBudget?:number,locationTerm?:str
   const budget=String(Math.floor(maxBudget));
   orGroups.push(type==="hostel"
    ? `monthly_rent.lte.${budget},and(monthly_rent.is.null,monthly_fee.lte.${budget}),and(monthly_rent.is.null,monthly_fee.is.null,price.lte.${budget})`
-   : type==="tiffin" ? `monthly_plan.lte.${budget},and(monthly_plan.is.null,monthly_fee.lte.${budget}),and(monthly_plan.is.null,monthly_fee.is.null,price.lte.${budget})` : `monthly_fee.lte.${budget},and(monthly_fee.is.null,price.lte.${budget})`);
+   : type==="tiffin" ? `monthly_plan.lte.${budget},and(monthly_plan.is.null,monthly_fee.lte.${budget})` : `monthly_fee.lte.${budget},and(monthly_fee.is.null,price.lte.${budget})`);
  }
  const term=String(locationTerm||"").replace(/[^a-zA-Z0-9\u0900-\u097f -]/g," ").replace(/\s+/g," ").trim();
  if(term)orGroups.push(["name","area","address","landmark","nearby_coaching","description"].map(col=>`${col}.ilike.*${term}*`).join(","));
@@ -57,7 +57,7 @@ async function multiDirect(types:string[],ct?:string,maxBudget?:number,locationT
  const groups=await Promise.all(unique.map(type=>direct(type,ct,maxBudget,locationTerm,genderFilter)));
  return groups.flat();
 }
-function monthlyAmount(p:any,type:string){const value=Number(type==="hostel"?(p.monthly_rent??p.monthly_fee??p.price):(p.monthly_plan??p.monthly_fee??p.price));return Number.isFinite(value)&&value>0?value:undefined}
+function monthlyAmount(p:any,type:string){const value=Number(type==="hostel"?(p.monthly_rent??p.monthly_fee??p.price):(p.monthly_plan??p.monthly_fee));return Number.isFinite(value)&&value>0?value:undefined}
 async function planComboBudget(cityName:string,totalBudget:number,genderFilter?:string){
  const hostelCap=Math.floor(totalBudget*0.70),tiffinCap=Math.floor(totalBudget*0.35);
  const [hostelRows,tiffinRows]=await Promise.all([direct("hostel",cityName,hostelCap,undefined,genderFilter),direct("tiffin",cityName,tiffinCap)]);
@@ -70,7 +70,7 @@ async function planComboBudget(cityName:string,totalBudget:number,genderFilter?:
 }
 function genderWanted(s:string){const x=n(normalizeSearchTerms(s));if(/\b(girls|girl|female|ladki|ladkiyo|ladkiyon|महिला|लड़क|लड़की|girls hostel)\b/i.test(x))return "girls";if(/\b(boys|boy|male|ladke|ladkon|लड़के|लड़का|boys hostel)\b/i.test(x))return "boys";return ""}
 function areaWanted(s:string){const x=n(normalizeSearchTerms(s));if(/nawalgarh road|nawalgarh rd|नवलगढ़ रोड/i.test(x))return "nawalgarh";if(/piprali road|piprali rd|पिपराली रोड/i.test(x))return "piprali";return ""}
-function priceLabel(p:any,c:string){const v=Number(p.monthly_rent??(c==="tiffin"?p.monthly_plan:undefined)??p.monthly_fee??p.monthly_charge??p.price);if(!Number.isFinite(v)||v<=0)return "";if(c==="hostel"||c==="tiffin"||c==="library")return "₹"+v.toLocaleString("en-IN")+"/mo";return "₹"+v.toLocaleString("en-IN")}
+function priceLabel(p:any,c:string){const v=Number(c==="tiffin"?(p.monthly_plan??p.monthly_fee):(p.monthly_rent??p.monthly_fee??p.monthly_charge??p.price));if(!Number.isFinite(v)||v<=0)return "";if(c==="hostel"||c==="tiffin"||c==="library")return "₹"+v.toLocaleString("en-IN")+"/mo";return "₹"+v.toLocaleString("en-IN")}
 function card(p:any){const c=p._type,price=priceLabel(p,c),d=p._distanceKm;return{id:String(p.id),name:p.name||p.title||p.service_name||p.business_name||"Active listing",type:c,city:p.city||"",area:p.area||p.service_area||"",address:p.address||"",phone:([p.phone,p.contact_phone,p.whatsapp,p.whatsapp_number].find(v=>{const s=String(v??"").trim();return s&&s!=="0"&&s.replace(/\D/g,"").length>=7})||""),rating:num(p.rating),verified:p.verified===true,price,distanceKm:d===undefined?null:Number(d.toFixed(1)),distanceVerified:d!==undefined,distanceLabel:d===undefined?(p._nearbyAreaMatch?`${p.area||p.service_area||p.city||"Area"} area match · exact distance unavailable`:""):`~${d.toFixed(1)} km (GPS straight-line)`,nearbyMatch:p._nearbyVerified===true||p._nearbyAreaMatch===true,highlights:["wifi","ac_available","ac","cctv","food_available","mess_available","available_beds","room_types","room_sharing","gender_type","timing","timings","delivery_available","nearby_coaching"].map(k=>[k,p[k]]).filter(([,v])=>v!==null&&v!==undefined&&String(v).trim()!==""&&String(v).toLowerCase()!=="false").slice(0,4).map(([k,v])=>k+": "+String(v)),description:p.description&&String(p.description).trim().length<=280?String(p.description).trim():"",mapsUrl:p.google_maps_url||"",detailsUrl:p.slug?`property-details.html?type=${c}&slug=${encodeURIComponent(p.slug)}`:undefined}}
 function rank(p:any,q:string,ct:string,near:string){const x=searchText(p),t=n(q);let s=0;if(p._distanceKm!==undefined)s+=Math.max(0,25-p._distanceKm*5);const a=areaWanted(q);if(a&&x.includes(a))s+=25;if(ct&&n(p.city||"").includes(n(ct)))s+=30;for(const w of t.split(" ").filter(z=>z.length>2).slice(0,20))if(x.includes(w))s+=2;if(near){if(near==="allen"||near==="clc"){if(p._distanceKm!==undefined)s+=Math.max(0,20-p._distanceKm*5);if(x.includes(near))s+=10}else if(near==="vibrant"){if(x.includes("vibrant"))s+=20;if(x.includes("nawalgarh"))s+=8}else if(near==="matrix"||near==="gurukripa"){if(x.includes(near))s+=30;else s-=3}else if(x.includes(n(near)))s+=20}if(p.verified===true)s+=4;if(Number.isFinite(Number(p.rating)))s+=Math.min(5,Number(p.rating));return s}
 function isGreeting(s:string){return /^(hi|hello|hey|namaste|good morning|good afternoon|good evening|good night|gm|gn|hii|hlo|नमस्ते|सुप्रभात|शुभ प्रभात|शुभ संध्या)[!.\s]*$/i.test(s.trim())}
@@ -201,7 +201,7 @@ function mergeIntent(ai:any,msg:string,history:any[]){
  if(o.categories.length)o.category=o.categories[0];
  return o;
 }
-function budgetValue(p:any){return num(p.monthly_rent??p.monthly_plan??p.monthly_fee??p.monthly_charge??p.price)}
+function budgetValue(p:any,type?:string){return num(type==="tiffin"?(p.monthly_plan??p.monthly_fee):(p.monthly_rent??p.monthly_fee??p.monthly_charge??p.price))}
 function matchesFacility(p:any,wanted:string[]){if(!wanted.length)return true;const z=searchText(p);return wanted.every(f=>z.includes(n(f))||Object.entries(p).some(([k,v])=>n(k).includes(n(f))&&(v===true||String(v).toLowerCase()==="true"||n(v).includes(n(f)))))}
 
 async function aiProperty(msg:string,history:any[],recs:any[],c?:string,near?:string,cfg:ChatbotRuntimeConfig=DEFAULT_RUNTIME_CONFIG,deadlineAt?:number){if(!GEMINI||!cfg.ai_rerank_enabled)return{};try{const h=history.slice(-8).map(x=>`${x.role==="user"?"USER":"ASSISTANT"}: ${String(x.text||"")}`).join("\n");const prompt=`You are StudentHubHelp's Ultra Advance AI Assistant.
@@ -371,7 +371,7 @@ Deno.serve(async(req:Request)=>{
     if(decisionLandmark){for(const p of decisionRows){const d=distanceToLandmark(p,decisionLandmark);if(d!==undefined)p._distanceKm=d;else if(searchText(p).includes(n(decisionLandmark.key)))p._nearbyAreaMatch=true}}
     let decision=decisionRows.filter(p=>!shownIds.has(String(p.id)));
     if(decisionLandmark)decision=decision.filter(p=>n(p.city||"")===n(decisionLandmark.city)&&((p._distanceKm!==undefined&&p._distanceKm<=10)||p._nearbyAreaMatch===true));
-    if(u.budgetMax!==null||u.budgetMin!==null)decision=decision.filter(p=>{const v=budgetValue(p);return v!==undefined&&(u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
+    if(u.budgetMax!==null||u.budgetMin!==null)decision=decision.filter(p=>{const v=budgetValue(p,p._type||c);return v!==undefined&&(u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
     const rankedDecision=decision.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score).slice(0,cfg.max_results).map(card);
     const ar=await aiProperty(msg,history,rankedDecision,c||"hostel",near,cfg,requestDeadlineAt);
     const reply=ar.reply||"Aapki requirement ke hisaab se live options compare kar sakte hain.";
@@ -454,7 +454,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
   if(wantedLocality)rows=rows.filter(p=>searchText(p).includes(wantedLocality));
   // An explicit road/locality is also a hard constraint when the user asked for it.
   if(locationForFilter.area)rows=rows.filter(p=>searchText(p).includes(n(locationForFilter.area)));
-  if(u.budgetMax!==null||u.budgetMin!==null)rows=rows.filter(p=>{const v=budgetValue(p);if(v===undefined)return false;return (u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
+  if(u.budgetMax!==null||u.budgetMin!==null)rows=rows.filter(p=>{const v=budgetValue(p,p._type||c);if(v===undefined)return false;return (u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
   if(u.facilities?.length)rows=rows.filter(p=>matchesFacility(p,u.facilities));
   const landmark=u.landmark?findLandmark(u.landmark)||LANDMARKS.find(l=>l.key===u.landmark):findLandmark(near||"");
   if(landmark){for(const p of rows){const d=distanceToLandmark(p,landmark);if(d!==undefined)p._distanceKm=d;else if(searchText(p).includes(n(landmark.key)))p._nearbyAreaMatch=true}rows=rows.filter(p=>n(p.city||"")===n(landmark.city)&&((p._distanceKm!==undefined&&p._distanceKm<=10)||p._nearbyAreaMatch===true))}
