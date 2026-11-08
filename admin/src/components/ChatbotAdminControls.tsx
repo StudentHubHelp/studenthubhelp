@@ -241,7 +241,7 @@ export const ChatbotAdminControls: React.FC<ChatbotAdminControlsProps> = ({
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             ['enabled', 'AI assistant enabled', ShieldCheck],
-            ['ai_rerank_enabled', 'Gemini AI reranking', Brain],
+            ['ai_rerank_enabled', 'Gemini AI response enhancement', Brain],
             ['lead_capture_enabled', 'Lead capture', SlidersHorizontal],
             ['comparison_enabled', 'Live comparison mode', SlidersHorizontal],
             ['budget_planner_enabled', 'Live budget planner', SlidersHorizontal],
