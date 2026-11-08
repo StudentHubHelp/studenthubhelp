@@ -1565,7 +1565,7 @@ export default function App() {
   // =========================================================
 
   return (
-    <div className="min-h-screen bg-[#050b1a] text-slate-100 flex overflow-hidden font-sans antialiased selection:bg-amber-400 selection:text-slate-950">
+    <div className="min-h-screen bg-[#07090E] text-slate-100 flex overflow-hidden font-sans antialiased selection:bg-amber-400 selection:text-slate-950">
 
       {/* TOAST */}
 
@@ -1627,7 +1627,7 @@ export default function App() {
 
       {/* MAIN WORKSPACE */}
 
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto bg-gradient-to-b from-[#060e22] via-[#050b1a] to-[#040814]">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto bg-[#07090E]">
 
         {/* HEADER */}
 
