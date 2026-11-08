@@ -11,6 +11,7 @@ const cases = [
   { query: 'Kota Talwandi mein budget tiffin', city: 'Kota', category: 'tiffin', forbiddenCategory: 'hostel' },
   { query: 'Jhunjhunu me cafe', city: 'Jhunjhunu', category: 'cafe' },
   { query: 'Piprali Road hostel under 5000', city: 'Sikar', category: 'hostel', maxBudget: 5000 },
+  { query: 'Kota mein ₹15000 me hostel aur tiffin', city: 'Kota', combo: true, maxBudget: 15000 },
   { query: 'Mere paas hostel dikhao', expectLocationPrompt: true },
 ];
 
@@ -49,6 +50,17 @@ async function runCase(testCase, index) {
     if (data.intent !== 'Location Required' || listings.length !== 0 || !String(data.reply || data.message || '').toLowerCase().includes('location')) failures.push('nearby query without GPS did not request device location/area');
     if (failures.length) throw new Error(failures.join('; '));
     return testCase.query + ' (GPS prompt returned)';
+  }
+  if (testCase.combo) {
+    const plan = data.budgetPlan;
+    const types = listings.map(item => String(item.type || '').toLowerCase());
+    if (data.intent !== 'Combined Budget Plan' || !plan) failures.push('combined budget planner did not return a budgetPlan');
+    if (!types.some(type => type.includes('hostel')) || !types.some(type => type.includes('tiffin'))) failures.push('combo must contain both a hostel and a tiffin listing');
+    if (Number(plan?.totalEstimated) > testCase.maxBudget) failures.push('combined monthly total exceeds budget');
+    if (Number(plan?.totalEstimated) <= 0) failures.push('combined monthly total is missing/invalid');
+    if (listings.some(item => String(item.city || '').toLowerCase() !== testCase.city.toLowerCase())) failures.push('combo contains a listing from another city');
+    if (failures.length) throw new Error(failures.join('; '));
+    return testCase.query + ' (combo total ₹' + Number(plan.totalEstimated).toLocaleString('en-IN') + ')';
   }
 
   if (!city.includes(testCase.city.toLowerCase())) failures.push('expected target city ' + testCase.city + ', received ' + (city || 'none'));
