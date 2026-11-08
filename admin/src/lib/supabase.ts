@@ -934,6 +934,8 @@ export async function fetchAllDataFromSupabase() {
       [] as AdminActivityLog[],
     settings:
       [] as SystemSetting[],
+    loadErrors: [] as string[],
+    connectionOk: true,
   };
 
   if (!supabase) {
@@ -1125,12 +1127,18 @@ export async function fetchAllDataFromSupabase() {
     response,
   ] of responses) {
     if (response?.error) {
+      const message = String(response.error.message || "Unknown Supabase error");
+      result.loadErrors.push(`${table}: ${message}`);
       console.warn(
         `Supabase ${table} query failed:`,
-        response.error.message
+        message
       );
     }
   }
+
+  // A partial result is still useful to render, but must never be
+  // reported as a fully healthy database connection.
+  result.connectionOk = result.loadErrors.length === 0;
 
   /* =======================================================
      REAL PROPERTIES
