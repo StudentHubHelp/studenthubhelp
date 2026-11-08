@@ -11,6 +11,7 @@ const cases = [
   { query: 'Kota Talwandi mein budget tiffin', city: 'Kota', category: 'tiffin', forbiddenCategory: 'hostel' },
   { query: 'Jhunjhunu me cafe', city: 'Jhunjhunu', category: 'cafe' },
   { query: 'Piprali Road hostel under 5000', city: 'Sikar', category: 'hostel', maxBudget: 5000 },
+  { query: 'Mere paas hostel dikhao', expectLocationPrompt: true },
 ];
 
 function numericPrice(value) {
@@ -44,13 +45,19 @@ async function runCase(testCase, index) {
   const city = String(data.targetCity || data.aiEntities?.city || '').toLowerCase();
   const category = String(data.targetCategory || data.aiEntities?.category || '').toLowerCase();
   const failures = [];
+  if (testCase.expectLocationPrompt) {
+    if (data.intent !== 'Location Required' || listings.length !== 0 || !String(data.reply || data.message || '').toLowerCase().includes('location')) failures.push('nearby query without GPS did not request device location/area');
+    if (failures.length) throw new Error(failures.join('; '));
+    return testCase.query + ' (GPS prompt returned)';
+  }
 
   if (!city.includes(testCase.city.toLowerCase())) failures.push('expected target city ' + testCase.city + ', received ' + (city || 'none'));
-  if (testCase.category && category && !category.includes(testCase.category)) failures.push('expected category ' + testCase.category + ', received ' + category);
+  if (testCase.category && !category.includes(testCase.category)) failures.push('expected category ' + testCase.category + ', received ' + (category || 'none'));
   if (!Array.isArray(listings) || listings.length === 0) failures.push('no live listing returned');
   for (const listing of listings) {
     const listingCity = String(listing.city || '').toLowerCase();
     const listingCategory = String(listing.type || listing.category || '').toLowerCase();
+    if (!listingCity) failures.push('listing city missing: ' + (listing.name || listing.id));
     if (listingCity && listingCity !== testCase.city.toLowerCase()) failures.push('cross-city listing leaked: ' + listing.city);
     if (testCase.forbiddenCity && listingCity.includes(testCase.forbiddenCity.toLowerCase())) failures.push('forbidden city leaked: ' + listing.city);
     if (testCase.forbiddenCategory && listingCategory.includes(testCase.forbiddenCategory)) failures.push('forbidden category leaked: ' + listingCategory);
