@@ -146,8 +146,8 @@ function normalizeIntent(x:any){
 function deterministicLocation(s:string):StrictLocation{
  const x=n(s);
  if(/\b(talwandi|tilwandi|तालवंडी|तलवंडी)\b/i.test(x))return{city:"Kota",locality:"Talwandi"};
- if(/\\b(udaipurwati|उदयपुरवाटी)\\b/i.test(x))return{city:"Udaipurwati"};
- if(/\\b(jhunjhunu|झुंझुनूं|झुंझुनू)\\b/i.test(x))return{city:"Jhunjhunu"};
+ if(/\b(udaipurwati|उदयपुरवाटी)\b/i.test(x))return{city:"Udaipurwati"};
+ if(/\b(jhunjhunu|झुंझुनूं|झुंझुनू)\b/i.test(x))return{city:"Jhunjhunu"};
  if(/nawalgarh road|nawalgarh rd|nawalgarh|नवलगढ़ रोड|नवलगढ रोड/i.test(x))return{city:"Sikar",area:"Nawalgarh Road"};
  if(/piprali road|piprali rd|piprali|पिपराली रोड|पिपराली/i.test(x))return{city:"Sikar",area:"Piprali Road"};
  const lm=findLandmark(x);if(lm)return{city:lm.city,landmark:lm.key};return{};
