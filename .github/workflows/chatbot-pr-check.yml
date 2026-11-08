@@ -46,6 +46,28 @@ jobs:
           cache-dependency-path: ai-chatbot/package-lock.json
       - name: Install dependencies
         run: npm install
+      - name: Audit dependency tree (non-blocking report)
+        run: |
+          npm audit --json > /tmp/studenthubhelp-npm-audit.json || true
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('/tmp/studenthubhelp-npm-audit.json', 'utf8'));
+          const vulnerabilities = report.vulnerabilities || {};
+          const entries = Object.entries(vulnerabilities);
+          console.log('npm audit summary:', JSON.stringify(report.metadata?.vulnerabilities || {}));
+          for (const [name, item] of entries) {
+            console.log(JSON.stringify({
+              name,
+              severity: item.severity,
+              range: item.range,
+              direct: item.isDirect,
+              fixAvailable: item.fixAvailable,
+              via: item.via
+            }));
+          }
+          NODE
+      - name: Validate regression test script syntax
+        run: node --check tests/chatbot-regression.mjs
       - name: Type-check React chatbot component
         run: npx tsc --noEmit --skipLibCheck --jsx react-jsx --target ES2020 --module ESNext --moduleResolution bundler --allowImportingTsExtensions --types vite/client src/components/ChatWidget.tsx
       - name: Restore Vite source entry for validation
