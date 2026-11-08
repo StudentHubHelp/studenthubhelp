@@ -29,8 +29,35 @@ function coords(p:any){const lat=Number(p.latitude??p.lat??p.location_latitude??
 function distanceKm(a:any,b:any){const A=coords(a),B=coords(b);if(!A||!B)return undefined;const r=(v:number)=>v*Math.PI/180,dLat=r(B.lat-A.lat),dLon=r(B.lng-A.lng),h=Math.sin(dLat/2)**2+Math.cos(r(A.lat))*Math.cos(r(B.lat))*Math.sin(dLon/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h))}
 function distanceToLandmark(p:any,l:any){const A=coords(p),B=l?{latitude:l.lat,longitude:l.lng}:null;if(!A||!B)return undefined;return distanceKm(A,B)}
 function searchText(p:any){return n([p.name,p.title,p.business_name,p.service_name,p.city,p.area,p.service_area,p.address,p.landmark,p.description,p.facilities,p.amenities].filter(Boolean).join(" "))}
-async function direct(type:string,ct?:string,maxBudget?:number){const table=SRC.find(x=>x[1]===type)?.[0];if(!table)return [];const all:any[]=[];let offset=0;const pageSize=500;while(true){const params=new URLSearchParams({select:"*",status:"eq.active",limit:String(pageSize),offset:String(offset)});if(ct)params.set("city",`ilike.*${ct.replace(/[%,()]/g,"")}*`);if(maxBudget!==undefined&&Number.isFinite(maxBudget)&&maxBudget>0){const budget=String(Math.floor(maxBudget));const priceFilter=type==="hostel"?`(monthly_rent.lte.${budget},and(monthly_rent.is.null,monthly_fee.lte.${budget}),and(monthly_rent.is.null,monthly_fee.is.null,price.lte.${budget}))`:`(monthly_fee.lte.${budget},and(monthly_fee.is.null,price.lte.${budget}))`;params.set("or",priceFilter)}const rows=await db<any[]>(`/rest/v1/${table}?${params.toString()}`);const page=Array.isArray(rows)?rows:[];all.push(...page.map(p=>({...p,_type:type})));if(page.length<pageSize)break;offset+=pageSize;if(offset>=10000)break}return all.filter(p=>!ct||n(p.city||"").includes(n(ct)))}
-async function multiDirect(types:string[],ct?:string,maxBudget?:number){const unique=[...new Set(types.filter(Boolean))];const groups=await Promise.all(unique.map(type=>direct(type,ct,maxBudget)));return groups.flat()}
+async function direct(type:string,ct?:string,maxBudget?:number,locationTerm?:string,genderFilter?:string){
+ const table=SRC.find(x=>x[1]===type)?.[0];if(!table)return [];
+ const params=new URLSearchParams({select:"*",status:"eq.active",limit:"500",offset:"0"});
+ if(ct)params.set("city",`ilike.*${ct.replace(/[%,()]/g,"")}*`);
+ const orGroups:string[]=[];
+ if(maxBudget!==undefined&&Number.isFinite(maxBudget)&&maxBudget>0){
+  const budget=String(Math.floor(maxBudget));
+  orGroups.push(type==="hostel"
+   ? `monthly_rent.lte.${budget},and(monthly_rent.is.null,monthly_fee.lte.${budget}),and(monthly_rent.is.null,monthly_fee.is.null,price.lte.${budget})`
+   : `monthly_fee.lte.${budget},and(monthly_fee.is.null,price.lte.${budget})`);
+ }
+ const term=String(locationTerm||"").replace(/[^a-zA-Z0-9\\u0900-\\u097f -]/g," ").replace(/\\s+/g," ").trim();
+ if(term)orGroups.push(["name","area","address","landmark","nearby_coaching","description"].map(col=>`${col}.ilike.*${term}*`).join(","));
+ if(type==="hostel"&&(genderFilter==="girls"||genderFilter==="boys")){
+  const variants=genderFilter==="girls"?["girls","girl","female","women","ladies","ladki","महिला","लड़क"]:["boys","boy","male","men","ladke","लड़के"];
+  orGroups.push(variants.flatMap(v=>["name","description","type"].map(col=>`${col}.ilike.*${v}*`)).join(","));
+ }
+ if(orGroups.length===1)params.set("or",`(${orGroups[0]})`);
+ else if(orGroups.length>1)params.set("and",`(${orGroups.map(group=>`or(${group})`).join(",")})`);
+ const rows=await db<any[]>(`/rest/v1/${table}?${params.toString()}`);
+ const page=Array.isArray(rows)?rows:[];
+ // Current category tables contain fewer than 500 rows each; keep the Edge Function candidate set bounded.
+ return page.map(p=>({...p,_type:type})).filter(p=>!ct||n(p.city||"").includes(n(ct)));
+}
+async function multiDirect(types:string[],ct?:string,maxBudget?:number,locationTerm?:string,genderFilter?:string){
+ const unique=[...new Set(types.filter(Boolean))];
+ const groups=await Promise.all(unique.map(type=>direct(type,ct,maxBudget,locationTerm,genderFilter)));
+ return groups.flat();
+}
 function genderWanted(s:string){const x=n(normalizeSearchTerms(s));if(/\b(girls|girl|female|ladki|ladkiyo|ladkiyon|महिला|लड़क|लड़की|girls hostel)\b/i.test(x))return "girls";if(/\b(boys|boy|male|ladke|ladkon|लड़के|लड़का|boys hostel)\b/i.test(x))return "boys";return ""}
 function areaWanted(s:string){const x=n(normalizeSearchTerms(s));if(/nawalgarh road|nawalgarh rd|नवलगढ़ रोड/i.test(x))return "nawalgarh";if(/piprali road|piprali rd|पिपराली रोड/i.test(x))return "piprali";return ""}
 function priceLabel(p:any,c:string){const v=Number(p.monthly_rent??p.monthly_fee??p.monthly_charge??p.price);if(!Number.isFinite(v)||v<=0)return "";if(c==="hostel"||c==="tiffin"||c==="library")return "₹"+v.toLocaleString("en-IN")+"/mo";return "₹"+v.toLocaleString("en-IN")}
@@ -324,7 +351,7 @@ Deno.serve(async(req:Request)=>{
     }
   }
   if(cfg.comparison_enabled&&(/(?:konsa|kaunsa|kaunsi|which|should i|chahiye).{0,35}(book|hostel|pg)|(?:book|hostel|pg).{0,35}(konsa|kaunsa|kaunsi|which|should)/i.test(n(msg)))&&!isBookingInfoQuestion(msg)){
-    const decisionRows=await multiDirect([c||"hostel"],ct,u.budgetMax??undefined);
+    const decisionRows=await multiDirect([c||"hostel"],ct,u.budgetMax??undefined,u.area||u.locality||undefined,u.gender||genderWanted(msg));
     const decisionLandmark=findLandmark(near||"");
     if(decisionLandmark){for(const p of decisionRows){const d=distanceToLandmark(p,decisionLandmark);if(d!==undefined)p._distanceKm=d;else if(searchText(p).includes(n(decisionLandmark.key)))p._nearbyAreaMatch=true}}
     let decision=decisionRows.filter(p=>!shownIds.has(String(p.id)));
@@ -390,7 +417,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
   if(isPropertyAdviceQuestion(msg)){const adviceCat=cat(msg)||cat(previous)||"hostel";return await chatResponse({reply:adviceReply(adviceCat),intent:"Property Selection Guidance",primaryTopic:label(adviceCat)+" selection guidance",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a property","Search by area","Show more options","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);}
   if(isBookingInfoQuestion(msg)){const ar=await aiGeneral(`The user asks how to book/reserve a hostel or PG. Explain a practical StudentHubHelp booking process: shortlist suitable live listings, open full details, check price/room type/availability, call owner, confirm terms and visit/verify before paying. Do not invent any property-specific availability or booking facility.`,history,cfg,requestDeadlineAt);const reply=ar.reply||"Hostel book karne ka simple process: pehle suitable listing shortlist karein, full details me price/room type check karein, owner ko Call karke availability aur terms confirm karein, aur payment se pehle property/owner verify karein.";return await chatResponse({reply,intent:"Booking Guidance",primaryTopic:"Hostel / PG Booking",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Allen ke paas hostel dikhao","Budget ke according hostel dikhao","Boys hostel dikhao","Girls hostel dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);}
   if(!propertyMode){const ar=await aiGeneral(msg,history,cfg,requestDeadlineAt);const reply=ar.reply||"Bilkul 😊 Main yahin hoon. Aap jo poochna chahein, seedha poochiye—study, ideas, facts ya normal conversation, sab par baat kar sakte hain.";return await chatResponse({reply,intent:"General / Study / Conversation",primaryTopic:"Student AI Assistant",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Ask a study question","Tell me something interesting","Find a property","Contact support"],grounded:true,webGrounded:ar.webGrounded||false,webSources:ar.webSources||[],sessionId},{headers:H},sessionId,msg);}
-  let rows=await multiDirect(aiCats.length?aiCats:(c?[c]:(nearCats.length?nearCats:["hostel"])),ct,u.budgetMax??undefined);
+  let rows=await multiDirect(aiCats.length?aiCats:(c?[c]:(nearCats.length?nearCats:["hostel"])),ct,u.budgetMax??undefined,u.area||u.locality||undefined,u.gender||genderWanted(msg));
   const wantedGender=u.gender||genderWanted(msg),wantedArea=u.area?(/nawalgarh/i.test(u.area)?"nawalgarh":/piprali/i.test(u.area)?"piprali":u.area.toLowerCase()):areaWanted(msg);
   const wantedLocality=n(u.locality||"");
   if(wantedGender)rows=rows.filter(p=>{const z=searchText(p);const g=n([p.gender_type,p.gender,p.hostel_type,p.name,p.title,p.description].filter(Boolean).join(" "));return wantedGender==="girls"?/girls|girl|female|women|ladki|ladkiyon|महिला|लड़क/i.test(g):/boys|boy|male|men|ladke|लड़के/i.test(g)});
