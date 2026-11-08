@@ -1,3 +1,4 @@
+// LEGACY LOCAL PREVIEW ONLY. Not imported by the React client and excluded from the production Vite build.
 import express, { Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
