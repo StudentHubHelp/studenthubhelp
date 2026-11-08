@@ -36,9 +36,6 @@
 <!-- IMPORTANT: lowercase @supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- hCaptcha -->
-<script src="https://js.hcaptcha.com/1/api.js" async defer></script>
-
 <style>
 *{
   box-sizing:border-box;
@@ -661,15 +658,6 @@ input:focus{
 .loading-text{
   color:#e8d9db;
   font-size:11px;
-}
-
-.hcaptcha-holder{
-  position:absolute;
-  width:1px;
-  height:1px;
-  overflow:hidden;
-  opacity:0;
-  pointer-events:none;
 }
 
 .hidden{
@@ -1491,13 +1479,6 @@ input:focus{
 
 </main>
 
-<!-- Invisible hCaptcha -->
-<div
-  id="hcaptchaHolder"
-  class="hcaptcha-holder"
-  aria-hidden="true"
-></div>
-
 <!-- Loading -->
 <div
   id="loadingScreen"
@@ -1570,158 +1551,6 @@ const db =
       }
     }
   );
-
-/* =========================================================
-   hCAPTCHA
-   Sitekey is public. Secret key is NEVER placed here.
-========================================================= */
-
-const HCAPTCHA_SITEKEY =
-  "6e32065c-2ae6-4b6c-b624-30e043dc596a";
-
-let captchaWidgetId = null;
-let captchaResolve = null;
-let captchaReject = null;
-
-function initCaptcha(){
-
-  if(
-    captchaWidgetId !== null ||
-    !window.hcaptcha
-  ){
-    return;
-  }
-
-  try{
-
-    captchaWidgetId =
-      window.hcaptcha.render(
-        "hcaptchaHolder",
-        {
-          sitekey:HCAPTCHA_SITEKEY,
-          size:"invisible",
-
-          callback:function(token){
-
-            if(captchaResolve){
-              const resolve = captchaResolve;
-              captchaResolve = null;
-              captchaReject = null;
-              resolve(token);
-            }
-
-          },
-
-          "expired-callback":function(){
-
-            captchaResolve = null;
-            captchaReject = null;
-
-          },
-
-          "error-callback":function(){
-
-            if(captchaReject){
-              const reject = captchaReject;
-              captchaResolve = null;
-              captchaReject = null;
-
-              reject(
-                new Error(
-                  "Security verification complete nahi hui."
-                )
-              );
-            }
-
-          }
-        }
-      );
-
-  }catch(_){
-
-    captchaWidgetId = null;
-
-  }
-
-}
-
-function waitForCaptcha(){
-
-  return new Promise((resolve,reject)=>{
-
-    const start = Date.now();
-
-    const timer = setInterval(()=>{
-
-      if(window.hcaptcha){
-
-        clearInterval(timer);
-
-        try{
-          initCaptcha();
-
-          if(captchaWidgetId === null){
-            reject(
-              new Error(
-                "Security verification temporarily unavailable."
-              )
-            );
-            return;
-          }
-
-          captchaResolve = resolve;
-          captchaReject = reject;
-
-          window.hcaptcha.execute(
-            captchaWidgetId
-          );
-
-        }catch(e){
-
-          captchaResolve = null;
-          captchaReject = null;
-
-          reject(e);
-        }
-
-        return;
-      }
-
-      if(Date.now()-start>10000){
-
-        clearInterval(timer);
-
-        reject(
-          new Error(
-            "Security verification temporarily unavailable."
-          )
-        );
-
-      }
-
-    },100);
-
-  });
-
-}
-
-function resetCaptcha(){
-
-  if(
-    captchaWidgetId !== null &&
-    window.hcaptcha
-  ){
-
-    try{
-      window.hcaptcha.reset(captchaWidgetId);
-    }catch(_){}
-
-  }
-
-  captchaResolve = null;
-  captchaReject = null;
-
-}
 
 /* =========================================================
    APP
@@ -1866,14 +1695,7 @@ function friendlyError(error){
       ""
     ).toLowerCase();
 
-  if(
-    m.includes("captcha") ||
-    m.includes("security verification")
-  ){
-    return "Security verification complete nahi hui. Dobara try karo.";
-  }
-
-  if(
+if(
     m.includes("invalid login credentials")
   ){
     return "Email ya password incorrect hai.";
@@ -2925,14 +2747,8 @@ async function resendConfirmation(email){
     "Sending confirmation email..."
   );
 
-  let token = null;
-
   try{
-
-    token =
-      await waitForCaptcha();
-
-    const {
+const {
       error
     } =
       await db.auth.resend({
@@ -2941,11 +2757,7 @@ async function resendConfirmation(email){
 
         email,
 
-        options:{
-          captchaToken:token
-        }
-
-      });
+        });
 
     if(error)throw error;
 
@@ -2968,8 +2780,6 @@ async function resendConfirmation(email){
     );
 
   }catch(e){
-
-    resetCaptcha();
 
     loading(false);
 
@@ -3088,8 +2898,6 @@ $("loginForm").onsubmit =
       await route(data.user);
 
     }catch(error){
-
-      resetCaptcha();
 
       loading(false);
 
@@ -3218,9 +3026,6 @@ $("signupForm").onsubmit =
 
       }
 
-      const captchaToken =
-        await waitForCaptcha();
-
       const {
         data,
         error
@@ -3232,8 +3037,6 @@ $("signupForm").onsubmit =
           password,
 
           options:{
-
-            captchaToken,
 
             data:{
               full_name:name,
@@ -3249,8 +3052,6 @@ $("signupForm").onsubmit =
           }
 
         });
-
-      resetCaptcha();
 
       if(error)throw error;
 
@@ -3315,8 +3116,6 @@ $("signupForm").onsubmit =
       await route(data.user);
 
     }catch(error){
-
-      resetCaptcha();
 
       loading(false);
 
@@ -3611,9 +3410,6 @@ $("recoveryForm").onsubmit =
 
     try{
 
-      const captchaToken =
-        await waitForCaptcha();
-
       const {
         error
       } =
@@ -3627,12 +3423,8 @@ $("recoveryForm").onsubmit =
                 location.href
               ).href,
 
-            captchaToken
-
           }
         );
-
-      resetCaptcha();
 
       if(error)throw error;
 
@@ -3650,8 +3442,6 @@ $("recoveryForm").onsubmit =
       );
 
     }catch(error){
-
-      resetCaptcha();
 
       loading(false);
 
@@ -4013,26 +3803,6 @@ document.addEventListener(
     showLogin();
 
     setupAuth();
-
-    /*
-      Preload hCaptcha.
-      It remains invisible until an auth action
-      actually requires verification.
-    */
-    const captchaPreloader =
-      setInterval(()=>{
-
-        if(window.hcaptcha){
-
-          clearInterval(
-            captchaPreloader
-          );
-
-          initCaptcha();
-
-        }
-
-      },250);
 
     if(resetMode()){
 
