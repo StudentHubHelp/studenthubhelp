@@ -1,5 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
+
 const U=(Deno.env.get("SUPABASE_URL")||"").replace(/\/$/,"");
 const K=Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const GEMINI=Deno.env.get("GEMINI_API_KEY")||"";
@@ -14,6 +16,7 @@ async function consumeRateLimit(scope:string,key:string,limit:number,windowSecon
 async function db<T>(path:string):Promise<T>{if(!U||!K)throw Error("database configuration missing");const r=await fetch(U+path,{headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json"}});if(!r.ok)throw Error(`database ${r.status}`);return await r.json() as T}
 type ChatbotRuntimeConfig={enabled:boolean;ai_rerank_enabled:boolean;lead_capture_enabled:boolean;comparison_enabled:boolean;budget_planner_enabled:boolean;max_candidates:number;max_results:number;max_output_tokens:number;temperature:number;maintenance_message:string};
 const SAFE_FALLBACK_CONFIG:ChatbotRuntimeConfig={enabled:false,ai_rerank_enabled:false,lead_capture_enabled:false,comparison_enabled:false,budget_planner_enabled:false,max_candidates:10,max_results:1,max_output_tokens:200,temperature:0,maintenance_message:"Chatbot system maintenance par hai. Kripya thodi der baad koshish karein ya seedhe support par sampark karein."};
+const DEFAULT_RUNTIME_CONFIG:ChatbotRuntimeConfig=SAFE_FALLBACK_CONFIG;
 let runtimeConfigCache:{value:ChatbotRuntimeConfig;expiresAt:number}|null=null;
 async function getRuntimeConfig():Promise<ChatbotRuntimeConfig>{if(runtimeConfigCache&&runtimeConfigCache.expiresAt>Date.now())return runtimeConfigCache.value;try{const rows=await db<any[]>("/rest/v1/chatbot_admin_config?select=*&id=eq.1&limit=1");const row=rows?.[0];if(!row){console.error("[CRITICAL] chatbot_admin_config row id=1 is missing; disabling chatbot");runtimeConfigCache={value:SAFE_FALLBACK_CONFIG,expiresAt:Date.now()+2000};return SAFE_FALLBACK_CONFIG}const value:ChatbotRuntimeConfig={enabled:row.enabled===true,ai_rerank_enabled:row.ai_rerank_enabled===true,lead_capture_enabled:row.lead_capture_enabled===true,comparison_enabled:row.comparison_enabled===true,budget_planner_enabled:row.budget_planner_enabled===true,max_candidates:Math.max(10,Math.min(100,Number(row.max_candidates)||40)),max_results:Math.max(1,Math.min(20,Number(row.max_results)||8)),max_output_tokens:Math.max(200,Math.min(3000,Number(row.max_output_tokens)||900)),temperature:Math.max(0,Math.min(1,Number.isFinite(Number(row.temperature))?Number(row.temperature):0.2)),maintenance_message:String(row.maintenance_message||"").slice(0,500)};runtimeConfigCache={value,expiresAt:Date.now()+2000};return value}catch(e){console.error("[CRITICAL] chatbot admin config fetch failed; disabling chatbot",e);runtimeConfigCache={value:SAFE_FALLBACK_CONFIG,expiresAt:Date.now()+2000};return SAFE_FALLBACK_CONFIG}}
 const LANDMARKS=[{key:"allen",label:"Allen Career Institute Sikar",aliases:["allen","allen sikar","allen coaching","allen career","allen sanskar","allen piprali"],city:"Sikar",lat:27.62624,lng:75.17721},{key:"clc",label:"CLC Sikar",aliases:["clc","clc sikar"],city:"Sikar",lat:27.6206291,lng:75.1616672},{key:"vibrant",label:"Vibrant Academy Sikar",aliases:["vibrant","vibrant coaching","vibrant academy","vibrant academy ssc","vibrant ssc"],city:"Sikar"},{key:"matrix",label:"Matrix Coaching Sikar",aliases:["matrix","matrix academy","matrix coaching","matrix sikar"],city:"Sikar"},{key:"gurukripa",label:"Gurukripa Coaching Sikar",aliases:["gurukripa","guru kripa","gurukripa coaching","gurukripa sikar"],city:"Sikar"}];
@@ -67,7 +70,9 @@ function fallbackReply(c:string|undefined,recs:any[],near:string,cityName:string
 function safeJson(s:string){try{return JSON.parse(s)}catch{const m=s.match(/\{[\s\S]*\}/);if(m)try{return JSON.parse(m[0])}catch{}return null}}
 const SEARCH_ALIASES:[RegExp,string][]=[[/\b(?:piparli\s+rd|piprali\s+rd|pipli\s+road|piprali)\b/gi,"piprali road"],[/\b(?:allun|allan|allen\s+institute|allen\s+career)\b/gi,"allen"],[/\b(?:sasta|saste|kam\s+budget)\b/gi,"budget"],[/\b(?:ladko\s+ka|ladkon\s+ka)\b/gi,"boys"],[/\b(?:ladkiyo\s+ka|ladkiyon\s+ka)\b/gi,"girls"]];
 function normalizeSearchTerms(input:string){let value=String(input||"").normalize("NFKC");for(const [pattern,replacement] of SEARCH_ALIASES)value=value.replace(pattern,replacement);return value}
-function aiIntentDefaults(){return{intent:"general",confidence:0,category:"",categories:[],city:"",locality:"",area:"",landmark:"",nearRelation:"",gender:"",budgetMin:null,budgetMax:null,facilities:[],referenceIndex:null,action:"",followUp:false,correction:false,needsClarification:false,clarificationQuestion:"",searchScope:""}}
+type ChatIntent={intent:string;confidence:number;category:string;categories:string[];city:string;locality:string;area:string;landmark:string;nearRelation:string;gender:string;budgetMin:number|null;budgetMax:number|null;facilities:string[];referenceIndex:number|null;action:string;followUp:boolean;correction:boolean;needsClarification:boolean;clarificationQuestion:string;searchScope:string};
+type StrictLocation={city?:string;locality?:string;area?:string;landmark?:string};
+function aiIntentDefaults():ChatIntent{return{intent:"general",confidence:0,category:"",categories:[],city:"",locality:"",area:"",landmark:"",nearRelation:"",gender:"",budgetMin:null,budgetMax:null,facilities:[],referenceIndex:null,action:"",followUp:false,correction:false,needsClarification:false,clarificationQuestion:"",searchScope:""}}
 function offlineIntent(msg:string,history:any[]){
  const o=aiIntentDefaults(),x=n(normalizeSearchTerms(msg)),defs:[string,RegExp][]=[["hostel",/hostel|\bpg\b|room|stay|accommodation|girls hostel|boys hostel|हॉस्टल|पीजी/],["tiffin",/tiffin|mess|khana|food service|टिफिन|मेस/],["library",/library|reading room|study room|लाइब्रेरी/],["cafe",/cafe|coffee shop|कैफे/],["bookstore",/bookstore|book shop|bookshop|stationery|बुकस्टोर/]];
  const cats=defs.filter(([,re])=>re.test(x)).map(([c])=>c);
@@ -101,14 +106,14 @@ function normalizeIntent(x:any){
  o.referenceIndex=Number.isInteger(Number(o.referenceIndex))?Number(o.referenceIndex):null;o.confidence=Math.max(0,Math.min(1,Number(o.confidence)||0));
  o.followUp=!!o.followUp;o.correction=!!o.correction;o.needsClarification=!!o.needsClarification;return o;
 }
-function deterministicLocation(s:string){
+function deterministicLocation(s:string):StrictLocation{
  const x=n(s);
  if(/\b(talwandi|tilwandi|तालवंडी|तलवंडी)\b/i.test(x))return{city:"Kota",locality:"Talwandi"};
  if(/nawalgarh road|nawalgarh rd|nawalgarh|नवलगढ़ रोड|नवलगढ रोड/i.test(x))return{city:"Sikar",area:"Nawalgarh Road"};
  if(/piprali road|piprali rd|piprali|पिपराली रोड|पिपराली/i.test(x))return{city:"Sikar",area:"Piprali Road"};
  const lm=findLandmark(x);if(lm)return{city:lm.city,landmark:lm.key};return{};
 }
-function strictLocation(s:string){
+function strictLocation(s:string):StrictLocation{
  const normalized=normalizeSearchTerms(s),d=deterministicLocation(normalized),x=n(normalized);
  if(d.city||d.locality||d.area||d.landmark)return d;
  const c=city(normalized);return c?{city:c}:{};
@@ -254,7 +259,7 @@ Deno.serve(async(req:Request)=>{
   const contentLength=Number(req.headers.get("content-length")||0);if(contentLength>32768)return new Response(JSON.stringify({error:"Request is too large."}),{status:413,headers:H});
   const rawBody=await req.text();if(new TextEncoder().encode(rawBody).byteLength>32768)return new Response(JSON.stringify({error:"Request is too large."}),{status:413,headers:H});
   let b:any;try{b=JSON.parse(rawBody)}catch{return new Response(JSON.stringify({error:"Invalid JSON request."}),{status:400,headers:H})}
-  const msg=String(b?.message||"").trim().slice(0,1500),history=Array.isArray(b?.history)?b.history.slice(-8).map((x:any)=>({role:String(x?.role||"").slice(0,20),text:String(x?.text||"").slice(0,1500)})):[];
+  const msg:string=String(b?.message||"").trim().slice(0,1500),history:{role:string;text:string}[]=Array.isArray(b?.history)?b.history.slice(-8).map((x:any)=>({role:String(x?.role||"").slice(0,20),text:String(x?.text||"").slice(0,1500)})):[];
   if(!msg)return new Response(JSON.stringify({error:"Message is required"}),{status:400,headers:H});
   const sessionId=String(b?.sessionId||crypto.randomUUID()).slice(0,160);
   try{if(!await consumeDualRateLimit("chat",req,sessionId,30,60))return new Response(JSON.stringify({error:"Too many requests. Please try again shortly."}),{status:429,headers:{...H,"Retry-After":"60"}})}catch(e){console.error(e);return new Response(JSON.stringify({error:"Chat service temporarily unavailable."}),{status:503,headers:H})}
@@ -285,7 +290,7 @@ Deno.serve(async(req:Request)=>{
   const requestedFocusId=String(b?.focusPropertyId||"");
   const requestedFocusType=String(b?.focusPropertyType||"");
   if((isPhoneIntent(msg)||isDetailIntent(msg))&&requestedFocusId){
-    const focusHistory=history.filter(x=>x.role==="user").map(x=>x.text||"").join(" ");
+    const focusHistory=history.filter((x:{role:string;text:string})=>x.role==="user").map((x:{role:string;text:string})=>x.text||"").join(" ");
     const focusCombined=focusHistory+" "+msg;
     const focusType=requestedFocusType||cat(focusCombined)||"hostel";
     const focusRows=await multiDirect([focusType],city(focusCombined)||"");
@@ -310,12 +315,12 @@ Deno.serve(async(req:Request)=>{
   if(u.needsClarification&&u.clarificationQuestion&&!u.category&&!u.categories.length&&!u.locality&&!u.area&&!u.landmark)return await chatResponse({reply:u.clarificationQuestion,intent:"Clarification",primaryTopic:"Requirement clarification",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a hostel","Find a library","Find a cafe","Find a tiffin service"],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(u.intent==="property_reference"&&u.referenceIndex){
     const all=await multiDirect(["hostel","tiffin","library","cafe","bookstore"],ct);
-    const ordered=shownList.length?shownList.map(id=>all.find(p=>String(p.id)===id)).filter(Boolean):[];
+    const ordered=shownList.length?shownList.map((id:string)=>all.find(p=>String(p.id)===id)).filter(Boolean):[];
     const target=ordered[u.referenceIndex-1]||all.find(p=>String(p.id)===shownList[u.referenceIndex-1]);
     if(target){
       const fp=card(target),wantPhone=u.action==="phone"||isPhoneIntent(msg);
       if(wantPhone){const ph=String(fp.phone||"").trim();const reply=ph&&ph.replace(/\\D/g,"").length>=7?"Ji 😊 **"+fp.name+"** ka listed phone number: **"+ph+"**":"Is listing ka valid phone number abhi StudentHubHelp data me available nahi hai.";return await chatResponse({reply,intent:"Property Contact",primaryTopic:"Referenced property contact",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iske full details batao","Aur options dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg)}
-      const ar=await aiProperty(msg,history,[fp],fp._type,near,cfg,requestDeadlineAt),reply=ar.reply||("Bilkul 😊 **"+fp.name+"** ki available details neeche di hain.");return await chatResponse({reply,intent:"Property Reference",primaryTopic:"Referenced property",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iska phone number batao","Aur options dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg)
+      const ar=await aiProperty(msg,history,[fp],fp.type,near,cfg,requestDeadlineAt),reply=ar.reply||("Bilkul 😊 **"+fp.name+"** ki available details neeche di hain.");return await chatResponse({reply,intent:"Property Reference",primaryTopic:"Referenced property",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iska phone number batao","Aur options dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg)
     }
   }
   if(cfg.comparison_enabled&&(/(?:konsa|kaunsa|kaunsi|which|should i|chahiye).{0,35}(book|hostel|pg)|(?:book|hostel|pg).{0,35}(konsa|kaunsa|kaunsi|which|should)/i.test(n(msg)))&&!isBookingInfoQuestion(msg)){
