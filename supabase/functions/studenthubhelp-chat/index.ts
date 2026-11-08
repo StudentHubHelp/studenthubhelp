@@ -58,7 +58,7 @@ async function multiDirect(types:string[],ct?:string,maxBudget?:number,locationT
  return groups.flat();
 }
 function monthlyAmount(p:any,type:string){const value=Number(type==="hostel"?(p.monthly_rent??p.monthly_fee??p.price):(p.monthly_plan??p.monthly_fee??p.price));return Number.isFinite(value)&&value>0?value:undefined}
-async async function planComboBudget(cityName:string,totalBudget:number,genderFilter?:string){
+async function planComboBudget(cityName:string,totalBudget:number,genderFilter?:string){
  const hostelCap=Math.floor(totalBudget*0.70),tiffinCap=Math.floor(totalBudget*0.35);
  const [hostelRows,tiffinRows]=await Promise.all([direct("hostel",cityName,hostelCap,undefined,genderFilter),direct("tiffin",cityName,tiffinCap)]);
  const hostels=hostelRows.filter(p=>n(p.city||"")===n(cityName));const tiffins=tiffinRows.filter(p=>n(p.city||"")===n(cityName));
