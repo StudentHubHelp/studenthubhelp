@@ -13,8 +13,8 @@ const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"autho
 const SRC=[["hostels","hostel"],["tiffins","tiffin"],["libraries","library"],["cafes","cafe"],["bookstores","bookstore"]] as const;
 const n=(v:any)=>String(v??"").toLowerCase().normalize("NFKC").replace(/[^a-z0-9\u0900-\u097f]+/gi," ").replace(/\s+/g," ").trim();
 const num=(v:any)=>{const x=Number(String(v??"").replace(/,/g,""));return Number.isFinite(x)?x:undefined};
-function rateKey(req:Request){const f=req.headers.get("x-forwarded-for")||req.headers.get("cf-connecting-ip")||"unknown";return f.split(",")[0].trim().slice(0,100)||"unknown"}
-function allowed(req:Request){const key=rateKey(req),now=Date.now(),old=rateMap.get(key);if(!old||now-old.start>=RATE_WINDOW_MS){rateMap.set(key,{start:now,count:1});return true}if(old.count>=RATE_MAX)return false;old.count++;return true}
+function rateKey(req:Request){const f=req.headers.get("cf-connecting-ip")||req.headers.get("x-real-ip")||"unknown";return f.trim().slice(0,100)||"unknown"}
+function pruneRateMap(map:Map<string,{start:number,count:number}>,now:number){if(map.size<5000)return;for(const [key,value] of map){if(now-value.start>Math.max(RATE_WINDOW_MS,OWNER_LEAD_WINDOW_MS))map.delete(key);if(map.size<4000)break}}\nfunction allowed(req:Request){const key=rateKey(req),now=Date.now(),old=rateMap.get(key);pruneRateMap(rateMap,now);if(!old||now-old.start>=RATE_WINDOW_MS){rateMap.set(key,{start:now,count:1});return true}if(old.count>=RATE_MAX)return false;old.count++;return true}
 async function db<T>(path:string):Promise<T>{if(!U||!K)throw Error("database configuration missing");const r=await fetch(U+path,{headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json"}});if(!r.ok)throw Error(`database ${r.status}`);return await r.json() as T}
 const LANDMARKS=[{key:"allen",label:"Allen Career Institute Sikar",aliases:["allen","allen sikar","allen coaching","allen career","allen sanskar","allen piprali"],city:"Sikar",lat:27.62624,lng:75.17721},{key:"clc",label:"CLC Sikar",aliases:["clc","clc sikar"],city:"Sikar",lat:27.6206291,lng:75.1616672},{key:"vibrant",label:"Vibrant Academy Sikar",aliases:["vibrant","vibrant coaching","vibrant academy","vibrant academy ssc","vibrant ssc"],city:"Sikar"},{key:"matrix",label:"Matrix Coaching Sikar",aliases:["matrix","matrix academy","matrix coaching","matrix sikar"],city:"Sikar"},{key:"gurukripa",label:"Gurukripa Coaching Sikar",aliases:["gurukripa","guru kripa","gurukripa coaching","gurukripa sikar"],city:"Sikar"}];
 function city(s:string){const x=n(s),m:[string,string][]=[["sikar","Sikar"],["piprali","Sikar"],["पिपराली","Sikar"],["सिकर","Sikar"],["kota","Kota"],["talwandi","Kota"],["jaipur","Jaipur"],["ajmer","Ajmer"],["bikaner","Bikaner"],["jodhpur","Jodhpur"],["udaipur","Udaipur"],["alwar","Alwar"],["delhi","Delhi"],["ahmedabad","Ahmedabad"],["lucknow","Lucknow"],["hyderabad","Hyderabad"],["pune","Pune"]];return m.find(([a])=>x.includes(n(a)))?.[1]||""}
@@ -26,7 +26,7 @@ function coords(p:any){const lat=Number(p.latitude??p.lat??p.location_latitude??
 function distanceKm(a:any,b:any){const A=coords(a),B=coords(b);if(!A||!B)return undefined;const r=(v:number)=>v*Math.PI/180,dLat=r(B.lat-A.lat),dLon=r(B.lng-A.lng),h=Math.sin(dLat/2)**2+Math.cos(r(A.lat))*Math.cos(r(B.lat))*Math.sin(dLon/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h))}
 function distanceToLandmark(p:any,l:any){const A=coords(p),B=l?{latitude:l.lat,longitude:l.lng}:null;if(!A||!B)return undefined;return distanceKm(A,B)}
 function searchText(p:any){return n([p.name,p.title,p.business_name,p.service_name,p.city,p.area,p.service_area,p.address,p.landmark,p.description,p.facilities,p.amenities].filter(Boolean).join(" "))}
-async function direct(type:string,ct?:string){const table=SRC.find(x=>x[1]===type)?.[0];if(!table)return [];const rows=await db<any[]>(`/rest/v1/${table}?select=*&limit=1000`);return (Array.isArray(rows)?rows:[]).map(p=>({...p,_type:type})).filter(p=>!ct||n(p.city||"").includes(n(ct)))}
+async function direct(type:string,ct?:string){const table=SRC.find(x=>x[1]===type)?.[0];if(!table)return [];const all:any[]=[];let offset=0;const pageSize=500;while(true){const params=new URLSearchParams({select:"*",status:"eq.active",limit:String(pageSize),offset:String(offset)});if(ct)params.set("city",`ilike.*${ct.replace(/[%,()]/g,"")}*`);const rows=await db<any[]>(`/rest/v1/${table}?${params.toString()}`);const page=Array.isArray(rows)?rows:[];all.push(...page.map(p=>({...p,_type:type})));if(page.length<pageSize)break;offset+=pageSize;if(offset>=10000)break}return all.filter(p=>!ct||n(p.city||"").includes(n(ct)))}
 async function multiDirect(types:string[],ct?:string){const unique=[...new Set(types.filter(Boolean))];const groups=await Promise.all(unique.map(type=>direct(type,ct)));return groups.flat()}
 function genderWanted(s:string){const x=n(s);if(/\b(girls|girl|female|ladki|ladkiyo|ladkiyon|महिला|लड़क|लड़की|girls hostel)\b/i.test(x))return "girls";if(/\b(boys|boy|male|ladke|ladkon|लड़के|लड़का|boys hostel)\b/i.test(x))return "boys";return ""}
 function areaWanted(s:string){const x=n(s);if(/nawalgarh road|nawalgarh rd|नवलगढ़ रोड/i.test(x))return "nawalgarh";if(/piprali road|piprali rd|पिपराली रोड/i.test(x))return "piprali";return ""}
@@ -251,10 +251,13 @@ Deno.serve(async(req:Request)=>{
  try{
   if(!allowed(req))return new Response(JSON.stringify({error:"Too many requests. Please try again shortly."}),{status:429,headers:{...H,"Retry-After":"60"}});
   const contentLength=Number(req.headers.get("content-length")||0);if(contentLength>32768)return new Response(JSON.stringify({error:"Request is too large."}),{status:413,headers:H});
-  const b=await req.json(),msg=String(b?.message||"").trim().slice(0,1500),history=Array.isArray(b?.history)?b.history.slice(-8).map((x:any)=>({role:String(x?.role||"").slice(0,20),text:String(x?.text||"").slice(0,1500)})):[];
+  const rawBody=await req.text();if(new TextEncoder().encode(rawBody).byteLength>32768)return new Response(JSON.stringify({error:"Request is too large."}),{status:413,headers:H});
+  let b:any;try{b=JSON.parse(rawBody)}catch{return new Response(JSON.stringify({error:"Invalid JSON request."}),{status:400,headers:H})}
+  const msg=String(b?.message||"").trim().slice(0,1500),history=Array.isArray(b?.history)?b.history.slice(-8).map((x:any)=>({role:String(x?.role||"").slice(0,20),text:String(x?.text||"").slice(0,1500)})):[];
   if(!msg)return new Response(JSON.stringify({error:"Message is required"}),{status:400,headers:H});
   const sessionId=String(b?.sessionId||crypto.randomUUID());
   if(String(b?.action||"")==="submit_owner_lead"){
+    if(!ownerLeadAllowed(req))return new Response(JSON.stringify({error:"Too many owner requests. Please try again later."}),{status:429,headers:{...H,"Retry-After":"600"}});
     const lead=b?.ownerLead||{};
     const name=String(lead.name||"").trim().replace(/\s+/g," ").slice(0,80);
     const phone=String(lead.phone||"").trim().slice(0,20);
@@ -389,7 +392,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
   if(u.budgetMax!==null||u.budgetMin!==null)rows=rows.filter(p=>{const v=budgetValue(p);if(v===undefined)return false;return (u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
   if(u.facilities?.length)rows=rows.filter(p=>matchesFacility(p,u.facilities));
   const landmark=u.landmark?findLandmark(u.landmark)||LANDMARKS.find(l=>l.key===u.landmark):findLandmark(near||"");
-  if(landmark){for(const p of rows){const d=distanceToLandmark(p,landmark);if(d!==undefined)p._distanceKm=d}rows=rows.filter(p=>n(p.city||"")===n(landmark.city)&&(p._distanceKm===undefined||p._distanceKm<=10))}
+  if(landmark){for(const p of rows){const d=distanceToLandmark(p,landmark);if(d!==undefined)p._distanceKm=d}rows=rows.filter(p=>n(p.city||"")===n(landmark.city)&&((p._distanceKm!==undefined&&p._distanceKm<=10)||searchText(p).includes(n(landmark.key))))}
   else if(near){const q=n(near);const exact=rows.filter(p=>searchText(p).includes(q));if(exact.length)rows=exact;else if(!wantedArea)rows=[]}
   if(nearCats.length){const secondaryRows=await multiDirect(nearCats,ct);for(const p of rows){let best=Infinity,hasCoords=false;for(const q of secondaryRows){const d=distanceKm(p,q);if(d!==undefined){hasCoords=true;best=Math.min(best,d)}else if(p.area&&searchText(q).includes(n(p.area)))best=Math.min(best,1)}if(best<=3){p._nearbyDistanceKm=best;p._nearbyVerified=hasCoords;p._nearbyAreaMatch=!hasCoords}}rows=rows.filter(p=>p._nearbyDistanceKm!==undefined)}
   rows=rows.filter(p=>!shownIds.has(String(p.id)));
