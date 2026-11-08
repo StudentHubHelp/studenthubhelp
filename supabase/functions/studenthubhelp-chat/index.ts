@@ -224,7 +224,7 @@ async function logChatTurn(sessionId:string,userMessage:string,payload:any){
   }
 }
 async function chatResponse(payload:any,init:any,sessionId:string,userMessage:string){
-  void logChatTurn(sessionId,userMessage,payload);
+  EdgeRuntime.waitUntil(logChatTurn(sessionId,userMessage,payload));
   return new Response(JSON.stringify(payload),init);
 }
 function offlineGeneralReply(msg:string){
@@ -320,7 +320,7 @@ Deno.serve(async(req:Request)=>{
       const ar=await aiProperty(msg,history,[fp],fp._type,near,cfg),reply=ar.reply||("Bilkul 😊 **"+fp.name+"** ki available details neeche di hain.");return await chatResponse({reply,intent:"Property Reference",primaryTopic:"Referenced property",recommendedProperties:[fp],recommendations:[fp],suggestedFollowUps:["Iska phone number batao","Aur options dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg)
     }
   }
-  if(cfg.comparison_enabled&&/(?:konsa|kaunsa|kaunsi|which|should i|chahiye).{0,35}(book|hostel|pg)|(?:book|hostel|pg).{0,35}(konsa|kaunsa|kaunsi|which|should)/i.test(n(msg))&&!isBookingInfoQuestion(msg)){
+  if(cfg.comparison_enabled&&(/(?:konsa|kaunsa|kaunsi|which|should i|chahiye).{0,35}(book|hostel|pg)|(?:book|hostel|pg).{0,35}(konsa|kaunsa|kaunsi|which|should)/i.test(n(msg)))&&!isBookingInfoQuestion(msg)){
     const decisionRows=await multiDirect([c||"hostel"],ct);
     const decisionLandmark=findLandmark(near||"");
     if(decisionLandmark){for(const p of decisionRows){const d=distanceToLandmark(p,decisionLandmark);if(d!==undefined)p._distanceKm=d}}
@@ -384,7 +384,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
 }
 
   if(isPropertyAdviceQuestion(msg)){const adviceCat=cat(msg)||cat(previous)||"hostel";return await chatResponse({reply:adviceReply(adviceCat),intent:"Property Selection Guidance",primaryTopic:label(adviceCat)+" selection guidance",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Find a property","Search by area","Show more options","Contact support"],grounded:true,sessionId},{headers:H},sessionId,msg);}
-  if(isBookingInfoQuestion(msg)){const ar=await aiGeneral(`The user asks how to book/reserve a hostel or PG. Explain a practical StudentHubHelp booking process: shortlist suitable live listings, open full details, check price/room type/availability, call owner, confirm terms and visit/verify before paying. Do not invent any property-specific availability or booking facility.`,history);const reply=ar.reply||"Hostel book karne ka simple process: pehle suitable listing shortlist karein, full details me price/room type check karein, owner ko Call karke availability aur terms confirm karein, aur payment se pehle property/owner verify karein.";return await chatResponse({reply,intent:"Booking Guidance",primaryTopic:"Hostel / PG Booking",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Allen ke paas hostel dikhao","Budget ke according hostel dikhao","Boys hostel dikhao","Girls hostel dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);}
+  if(isBookingInfoQuestion(msg)){const ar=await aiGeneral(`The user asks how to book/reserve a hostel or PG. Explain a practical StudentHubHelp booking process: shortlist suitable live listings, open full details, check price/room type/availability, call owner, confirm terms and visit/verify before paying. Do not invent any property-specific availability or booking facility.`,history,cfg);const reply=ar.reply||"Hostel book karne ka simple process: pehle suitable listing shortlist karein, full details me price/room type check karein, owner ko Call karke availability aur terms confirm karein, aur payment se pehle property/owner verify karein.";return await chatResponse({reply,intent:"Booking Guidance",primaryTopic:"Hostel / PG Booking",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Allen ke paas hostel dikhao","Budget ke according hostel dikhao","Boys hostel dikhao","Girls hostel dikhao"],grounded:true,sessionId},{headers:H},sessionId,msg);}
   if(!propertyMode){const ar=await aiGeneral(msg,history,cfg);const reply=ar.reply||"Bilkul 😊 Main yahin hoon. Aap jo poochna chahein, seedha poochiye—study, ideas, facts ya normal conversation, sab par baat kar sakte hain.";return await chatResponse({reply,intent:"General / Study / Conversation",primaryTopic:"Student AI Assistant",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Ask a study question","Tell me something interesting","Find a property","Contact support"],grounded:true,webGrounded:ar.webGrounded||false,webSources:ar.webSources||[],sessionId},{headers:H},sessionId,msg);}
   let rows=await multiDirect(aiCats.length?aiCats:(c?[c]:(nearCats.length?nearCats:["hostel"])),ct);
   const wantedGender=u.gender||genderWanted(msg),wantedArea=u.area?(/nawalgarh/i.test(u.area)?"nawalgarh":/piprali/i.test(u.area)?"piprali":u.area.toLowerCase()):areaWanted(msg);
