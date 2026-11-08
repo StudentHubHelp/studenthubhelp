@@ -6,7 +6,7 @@ const U=(Deno.env.get("SUPABASE_URL")||"").replace(/\/$/,"");
 const K=Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const GEMINI=Deno.env.get("GEMINI_API_KEY")||"";
 const MODEL="gemini-3.8-flash";
-const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization,x-client-info,apikey,content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json"};
+const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization,x-client-info,apikey,content-type,x-session-id","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json"};
 const SRC=[["hostels","hostel"],["tiffins","tiffin"],["libraries","library"],["cafes","cafe"],["bookstores","bookstore"]] as const;
 const n=(v:any)=>String(v??"").toLowerCase().normalize("NFKC").replace(/[^a-z0-9\u0900-\u097f]+/gi," ").replace(/\s+/g," ").trim();
 const num=(v:any)=>{const x=Number(String(v??"").replace(/,/g,""));return Number.isFinite(x)?x:undefined};
