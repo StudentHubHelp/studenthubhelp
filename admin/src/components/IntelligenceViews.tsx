@@ -1241,6 +1241,7 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
             </button>
           </form>
         </div>
+        <ChatbotAdminControls showProfile showAiControls={false} />
       </div>
     );
   }
@@ -1271,9 +1272,8 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
           </p>
         </div>
 
-        <ChatbotAdminView /><ChatbotAdminControls />
-
-        <ChatbotAdminControls />
+        <ChatbotAdminView />
+        <ChatbotAdminControls showAiControls />
       </div>
     );
   }
