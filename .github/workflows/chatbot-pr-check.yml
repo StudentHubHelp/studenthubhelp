@@ -1,0 +1,117 @@
+name: Chatbot PR validation
+
+on:
+  push:
+    branches:
+      - fix/chatbot-reliability-security
+    paths:
+      - 'supabase/functions/studenthubhelp-chat/**'
+      - 'supabase/migrations/*chatbot*'
+      - 'ai-chatbot/**'
+      - 'widget.js'
+      - '.github/workflows/chatbot-pr-check.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/studenthubhelp-chat/**'
+      - 'supabase/migrations/*chatbot*'
+      - 'ai-chatbot/**'
+      - 'widget.js'
+      - '.github/workflows/chatbot-pr-check.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  edge-function-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Supabase Edge Function
+        run: deno check supabase/functions/studenthubhelp-chat/index.ts
+
+  react-chatbot-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-chatbot
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ai-chatbot/package-lock.json
+      - name: Install dependencies
+        run: npm install --no-audit
+      - name: Update only audited vulnerable packages
+        run: npm update vite body-parser proxy-addr qs source-map-js --no-audit
+      - name: Persist patched dependency lockfile
+        env:
+          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+        run: |
+          if [ "$HEAD_REPOSITORY" = "$GITHUB_REPOSITORY" ] && [ -n "$TARGET_BRANCH" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json
+            if ! git diff --cached --quiet; then
+              git commit -m "chore(chatbot): patch audited dependencies [skip ci]"
+              git push origin "HEAD:$TARGET_BRANCH"
+            fi
+          fi
+      - name: Audit dependency tree
+        run: npm audit
+      - name: Report dependency advisories
+        if: always()
+        run: |
+          npm audit --json > /tmp/studenthubhelp-npm-audit.json || true
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('/tmp/studenthubhelp-npm-audit.json', 'utf8'));
+          const vulnerabilities = report.vulnerabilities || {};
+          const entries = Object.entries(vulnerabilities);
+          console.log('npm audit summary:', JSON.stringify(report.metadata?.vulnerabilities || {}));
+          for (const [name, item] of entries) {
+            console.log(JSON.stringify({
+              name,
+              severity: item.severity,
+              range: item.range,
+              direct: item.isDirect,
+              fixAvailable: item.fixAvailable,
+              via: item.via
+            }));
+          }
+          NODE
+      - name: Validate regression scripts and production API references
+        run: |
+          node --check tests/chatbot-regression.mjs
+          node --check ../widget.js
+          node --check public/widget.js
+          if grep -R -nE 'https?://(localhost|127\.0\.0\.1):3000' src; then echo 'Local Express API reference found in client source'; exit 1; fi
+      - name: Type-check React chatbot component
+        run: npx tsc --noEmit --skipLibCheck --jsx react-jsx --target ES2020 --module ESNext --moduleResolution bundler --allowImportingTsExtensions --types vite/client src/components/ChatWidget.tsx
+      - name: Restore Vite source entry for validation
+        run: |
+          cat > index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>StudentHubHelp AI Chatbot</title>
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="module" src="/src/main.tsx"></script>
+            </body>
+          </html>
+          EOF
+      - name: Build chatbot
+        run: |
+          npm run build
+          test ! -f dist/server.cjs

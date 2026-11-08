@@ -285,7 +285,7 @@ export const BudgetPlannerCard: React.FC<BudgetPlannerCardProps> = ({
           type="button"
           onClick={() => {
             if (onSendQuery) {
-              onSendQuery(`Mera monthly budget ₹${sliderBudget} hai, isme best verified hostel aur tiffin combo suggest karo`);
+              onSendQuery(`Mera monthly budget ₹${sliderBudget} hai, ${initialPlan.city ? initialPlan.city + " mein " : ""}best verified hostel aur tiffin combo suggest karo`);
             }
           }}
           className="flex-1 min-w-[140px] bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-[11px] py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md"
