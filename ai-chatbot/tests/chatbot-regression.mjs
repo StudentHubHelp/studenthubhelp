@@ -69,6 +69,7 @@ async function runCase(testCase, index) {
   for (const listing of listings) {
     const listingCity = String(listing.city || '').toLowerCase();
     const listingCategory = String(listing.type || listing.category || '').toLowerCase();
+    if (!listingCategory) failures.push('listing category missing: ' + (listing.name || listing.id));
     if (!listingCity) failures.push('listing city missing: ' + (listing.name || listing.id));
     if (listingCity && listingCity !== testCase.city.toLowerCase()) failures.push('cross-city listing leaked: ' + listing.city);
     if (testCase.forbiddenCity && listingCity.includes(testCase.forbiddenCity.toLowerCase())) failures.push('forbidden city leaked: ' + listing.city);
