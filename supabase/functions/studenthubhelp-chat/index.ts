@@ -201,7 +201,7 @@ function mergeIntent(ai:any,msg:string,history:any[]){
  if(o.categories.length)o.category=o.categories[0];
  return o;
 }
-function budgetValue(p:any,type?:string){return num(type==="tiffin"?(p.monthly_plan??p.monthly_fee):(p.monthly_rent??p.monthly_fee??p.monthly_charge??p.price))}
+function budgetValue(p:any,type?:string){const value=num(type==="tiffin"?(p.monthly_plan??p.monthly_fee):(p.monthly_rent??p.monthly_fee??p.monthly_charge??p.price));return value!==undefined&&value>0?value:undefined}
 function matchesFacility(p:any,wanted:string[]){if(!wanted.length)return true;const z=searchText(p);return wanted.every(f=>z.includes(n(f))||Object.entries(p).some(([k,v])=>n(k).includes(n(f))&&(v===true||String(v).toLowerCase()==="true"||n(v).includes(n(f)))))}
 
 async function aiProperty(msg:string,history:any[],recs:any[],c?:string,near?:string,cfg:ChatbotRuntimeConfig=DEFAULT_RUNTIME_CONFIG,deadlineAt?:number){if(!GEMINI||!cfg.ai_rerank_enabled)return{};try{const h=history.slice(-8).map(x=>`${x.role==="user"?"USER":"ASSISTANT"}: ${String(x.text||"")}`).join("\n");const prompt=`You are StudentHubHelp's Ultra Advance AI Assistant.
