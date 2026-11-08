@@ -1,0 +1,43 @@
+name: Chatbot PR validation
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/functions/studenthubhelp-chat/**'
+      - 'supabase/migrations/*chatbot*'
+      - 'ai-chatbot/**'
+      - 'widget.js'
+      - '.github/workflows/chatbot-pr-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  edge-function-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Supabase Edge Function
+        run: deno check supabase/functions/studenthubhelp-chat/index.ts
+
+  react-chatbot-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-chatbot
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ai-chatbot/package-lock.json
+      - name: Install dependencies
+        run: npm install
+      - name: Type-check React chatbot
+        run: npm run lint
+      - name: Build chatbot
+        run: npm run build
