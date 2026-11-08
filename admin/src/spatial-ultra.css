@@ -1,53 +1,326 @@
-/* StudentHubHelp Admin — Spatial Ultra reference finish
-   Additive visual layer only. No data, routing, CRUD or Supabase logic. */
+/* StudentHubHelp Admin — Stage 1: Visual Foundation
+   Reference direction: futuristic dark glass + cyan/emerald edge lighting.
+   Visual-only stylesheet. Do not add data, routing, Supabase or CRUD behavior here.
+*/
 
-:root{--sp-gold:#f5b942;--sp-glass:rgba(13,22,43,.52)}
+/* ---- Design tokens ---- */
+:root {
+  color-scheme: dark;
+  --shh-bg: #070b13;
+  --shh-panel: rgba(12, 20, 33, .76);
+  --shh-panel-soft: rgba(18, 30, 46, .58);
+  --shh-border: rgba(148, 190, 214, .14);
+  --shh-border-bright: rgba(45, 212, 191, .34);
+  --shh-cyan: #38d9f5;
+  --shh-emerald: #34e6a2;
+  --shh-text: #edf7fb;
+  --shh-muted: #91a4b6;
+}
 
-/* Photoreal office environment + holographic grid like the reference */
-#root>div.min-h-screen{overflow-x:hidden;perspective:1400px;background-image:linear-gradient(rgba(2,7,18,.48),rgba(2,7,18,.68)),url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2400&q=86'),linear-gradient(rgba(111,190,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(111,190,255,.035) 1px,transparent 1px)!important;background-position:center;background-size:cover,cover,54px 54px,54px 54px;background-attachment:fixed}
-#root>div.min-h-screen::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:linear-gradient(rgba(55,150,210,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(55,150,210,.035) 1px,transparent 1px),radial-gradient(circle at 50% 45%,transparent 0 30%,rgba(0,4,12,.30) 100%);background-size:42px 42px,42px 42px,auto;mix-blend-mode:screen}
-#root>div.min-h-screen::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.46) 100%),linear-gradient(115deg,transparent 0 40%,rgba(255,255,255,.035) 49%,transparent 56%);mix-blend-mode:normal}
-#root aside,#root main{z-index:1}
-#root header{z-index:100!important;position:sticky!important}
+html, body, #root { min-height: 100%; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--shh-text);
+  background:
+    radial-gradient(ellipse at 76% 5%, rgba(8, 145, 178, .17), transparent 34rem),
+    radial-gradient(ellipse at 8% 76%, rgba(16, 185, 129, .11), transparent 36rem),
+    linear-gradient(145deg, #070b13 0%, #091321 52%, #050a12 100%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+#root { isolation: isolate; }
 
-/* Floating glass sidebar */
-#root aside{width:276px!important;border-radius:28px!important;background:linear-gradient(180deg,rgba(20,31,53,.70),rgba(4,10,23,.72) 55%,rgba(3,7,17,.82)),rgba(7,19,44,.60)!important;border:1px solid rgba(255,255,255,.18)!important;box-shadow:0 34px 90px rgba(0,0,0,.52),18px 0 45px rgba(0,0,0,.22),inset 1px 1px 0 rgba(255,255,255,.10),inset -1px -1px 0 rgba(0,0,0,.30)!important;backdrop-filter:blur(24px) saturate(125%);-webkit-backdrop-filter:blur(24px) saturate(125%)}
-#root aside::before{content:"";position:absolute;inset:0;border-radius:28px;background:linear-gradient(135deg,rgba(255,255,255,.075),transparent 24%,transparent 72%,rgba(245,185,66,.045));pointer-events:none}
-#root aside::after{content:"";position:absolute;inset:10px;border:1px solid rgba(255,255,255,.045);border-radius:21px;pointer-events:none}
-#root aside nav button{border-radius:14px!important;min-height:42px;background:rgba(255,255,255,.028)!important}
-#root aside nav button:hover{transform:translate3d(5px,-1px,12px)!important;background:linear-gradient(105deg,rgba(255,255,255,.10),rgba(245,185,66,.055))!important;box-shadow:0 12px 30px rgba(0,0,0,.30),inset 1px 1px rgba(255,255,255,.09)!important}
-#root aside nav button[class*="bg-amber-500/15"]{transform:translate3d(4px,-1px,18px);background:linear-gradient(105deg,rgba(245,185,66,.26),rgba(245,185,66,.075))!important;border-color:rgba(245,185,66,.62)!important;box-shadow:0 16px 38px rgba(0,0,0,.34),0 0 30px rgba(245,185,66,.09),inset 1px 1px rgba(255,255,255,.13)!important}
+/* ---- Ambient technical canvas ---- */
+#root > div.min-h-screen {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  background:
+    linear-gradient(rgba(105, 180, 204, .026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(105, 180, 204, .026) 1px, transparent 1px),
+    radial-gradient(circle at 78% 4%, rgba(8, 145, 178, .13), transparent 31rem),
+    radial-gradient(circle at 12% 82%, rgba(16, 185, 129, .075), transparent 34rem),
+    #070b13 !important;
+  background-size: 44px 44px, 44px 44px, auto, auto;
+}
+#root > div.min-h-screen::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 0 38%, rgba(56, 217, 245, .025) 49%, transparent 60%);
+  animation: shhAmbient 18s ease-in-out infinite alternate;
+}
+#root > div.min-h-screen::after {
+  content: "";
+  position: fixed;
+  width: 520px;
+  height: 520px;
+  top: 12%;
+  right: -260px;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(52, 230, 162, .09), transparent 68%);
+  filter: blur(14px);
+  animation: shhGlow 14s ease-in-out infinite alternate;
+}
+@keyframes shhAmbient {
+  from { transform: translate3d(-1%, 0, 0); opacity: .55; }
+  to { transform: translate3d(1%, 1%, 0); opacity: 1; }
+}
+@keyframes shhGlow {
+  from { transform: translate3d(0, -3%, 0); opacity: .45; }
+  to { transform: translate3d(-5%, 5%, 0); opacity: .9; }
+}
+@keyframes shhEnter {
+  from { opacity: 0; transform: translateY(9px) scale(.992); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes shhPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(56, 217, 245, 0); }
+  50% { box-shadow: 0 0 24px rgba(56, 217, 245, .10); }
+}
 
-/* Detached command bar */
-#root header{margin:14px 20px 0!important;min-height:70px;border-radius:24px!important;background:linear-gradient(135deg,rgba(31,43,68,.56),rgba(6,13,29,.58)),rgba(7,14,31,.50)!important;border:1px solid rgba(255,255,255,.16)!important;box-shadow:0 26px 65px rgba(0,0,0,.38),0 0 0 1px rgba(245,185,66,.035),inset 1px 1px rgba(255,255,255,.085)!important;backdrop-filter:blur(24px) saturate(130%);-webkit-backdrop-filter:blur(24px) saturate(130%)}
-#root header input{min-height:50px!important;border-radius:17px!important;background:linear-gradient(135deg,rgba(255,255,255,.075),rgba(8,17,37,.54))!important;border-color:rgba(255,255,255,.19)!important;box-shadow:0 14px 36px rgba(0,0,0,.25),inset 1px 1px rgba(255,255,255,.075)!important}
-#root header input:hover{border-color:rgba(245,185,66,.40)!important}
+/* ---- Sidebar: floating translucent command rail ---- */
+#root aside {
+  position: relative;
+  margin: 12px 0 12px 12px;
+  height: calc(100vh - 24px) !important;
+  border: 1px solid rgba(100, 220, 224, .20) !important;
+  border-right-color: rgba(52, 230, 162, .34) !important;
+  border-radius: 25px !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(180deg, rgba(15, 31, 46, .91), rgba(5, 13, 24, .96)),
+    rgba(6, 15, 27, .92) !important;
+  backdrop-filter: blur(28px) saturate(145%);
+  -webkit-backdrop-filter: blur(28px) saturate(145%);
+  box-shadow: 0 28px 82px rgba(0,0,0,.44), 12px 0 42px rgba(0,0,0,.20),
+    inset 1px 1px 0 rgba(255,255,255,.065), inset -1px 0 0 rgba(52,230,162,.07);
+}
+#root aside::before {
+  content: "";
+  position: absolute;
+  left: -100px;
+  top: -125px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56,217,245,.15), transparent 68%);
+  pointer-events: none;
+}
+#root aside::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(145deg, rgba(56,217,245,.035), transparent 28%, transparent 76%, rgba(52,230,162,.035));
+}
+#root aside > div:first-child,
+#root aside nav,
+#root aside > div:last-child { position: relative; z-index: 1; }
+#root aside > div:first-child {
+  background: linear-gradient(135deg, rgba(56,217,245,.075), transparent 65%), rgba(255,255,255,.015) !important;
+  border-bottom-color: rgba(148,190,214,.12) !important;
+}
+#root aside nav { padding: 14px !important; }
+#root aside nav > div > div:first-child {
+  color: rgba(145,164,182,.72) !important;
+  letter-spacing: .17em;
+}
+#root aside nav button {
+  min-height: 41px;
+  border: 1px solid transparent !important;
+  border-radius: 13px !important;
+  backdrop-filter: blur(10px);
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), background .22s ease, border-color .22s ease, box-shadow .22s ease !important;
+}
+#root aside nav button:hover {
+  transform: translateX(3px);
+  background: rgba(56,217,245,.07) !important;
+  border-color: rgba(56,217,245,.16) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.20), inset 0 1px rgba(255,255,255,.04);
+}
+#root aside nav button[class*="bg-gradient-to-r"] {
+  background: linear-gradient(105deg, rgba(56,217,245,.17), rgba(52,230,162,.075)) !important;
+  border-color: rgba(56,217,245,.32) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.22), 0 0 26px rgba(56,217,245,.07), inset 1px 1px rgba(255,255,255,.06) !important;
+}
+#root aside > div:last-child { border-top-color: rgba(148,190,214,.12) !important; }
 
-/* Central holographic command stage */
-#root main{margin:0 20px!important;padding:24px 30px 90px!important;transform-style:preserve-3d}
-#root main::after{content:"";position:absolute;left:8%;right:8%;top:18px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),rgba(245,185,66,.18),transparent);pointer-events:none}
-#root main>.space-y-6{max-width:1080px;margin:12px auto 0;padding:26px;border:1px solid rgba(255,255,255,.18);border-radius:32px;background:linear-gradient(135deg,rgba(255,255,255,.075),rgba(9,18,38,.30) 42%,rgba(245,185,66,.025)),rgba(5,11,24,.40);box-shadow:0 34px 90px rgba(0,0,0,.34),inset 1px 1px rgba(255,255,255,.085),inset -1px -1px rgba(0,0,0,.25);backdrop-filter:blur(30px) saturate(125%);-webkit-backdrop-filter:blur(30px) saturate(125%)}
+/* ---- Header: translucent command bar ---- */
+#root header {
+  position: sticky !important;
+  top: 0;
+  z-index: 100 !important;
+  margin: 12px 14px 0 !important;
+  min-height: 66px;
+  border: 1px solid rgba(100,220,224,.18) !important;
+  border-bottom-color: rgba(52,230,162,.25) !important;
+  border-radius: 21px !important;
+  background: rgba(5, 14, 26, .78) !important;
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  box-shadow: 0 20px 58px rgba(0,0,0,.32), inset 1px 1px rgba(255,255,255,.05);
+}
+#root header > div { max-width: none !important; }
+#root header input {
+  min-height: 46px !important;
+  border: 1px solid rgba(148,190,214,.17) !important;
+  border-radius: 14px !important;
+  background: linear-gradient(110deg, rgba(255,255,255,.045), rgba(12,29,43,.78)) !important;
+  box-shadow: inset 1px 1px rgba(255,255,255,.04), 0 10px 28px rgba(0,0,0,.18);
+}
+#root header input:focus {
+  border-color: rgba(56,217,245,.58) !important;
+  box-shadow: 0 0 0 4px rgba(56,217,245,.07), 0 0 24px rgba(56,217,245,.08), inset 1px 1px rgba(255,255,255,.05) !important;
+}
+#root header button { transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease; }
+#root header button:hover { border-color: rgba(56,217,245,.30) !important; }
+#root header .absolute[class*="bg-"] {
+  backdrop-filter: blur(28px) saturate(145%);
+  -webkit-backdrop-filter: blur(28px) saturate(145%);
+}
 
-/* Existing cards become inner spatial layers instead of separate flat boxes */
-#root main>.space-y-6>.rounded-3xl,#root main>.space-y-6>.rounded-2xl,#root main>.space-y-6>div>.rounded-3xl,#root main>.space-y-6>div>.rounded-2xl{border-radius:23px!important;background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.014) 48%,rgba(245,185,66,.018)),rgba(9,18,38,.48)!important;border-color:rgba(255,255,255,.12)!important;box-shadow:0 18px 45px rgba(0,0,0,.24),inset 1px 1px rgba(255,255,255,.06)!important}
-#root main .rounded-3xl,#root main .rounded-2xl{border-radius:23px!important;border-color:rgba(255,255,255,.11)!important}
+/* ---- Main workspace and typography ---- */
+#root main {
+  position: relative;
+  z-index: 1;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 14px !important;
+  padding: 26px 24px 76px !important;
+}
+#root main h1, #root main h2, #root main h3 {
+  color: #f2f9fc;
+  letter-spacing: -.025em;
+  text-shadow: 0 2px 18px rgba(0,0,0,.32);
+}
+#root main p, #root main label { text-wrap: pretty; }
+#root main > .space-y-6 > div:first-child {
+  border: 1px solid rgba(100,220,224,.13);
+  border-radius: 23px;
+  background: linear-gradient(120deg, rgba(56,217,245,.055), rgba(255,255,255,.012) 52%, rgba(52,230,162,.03)), rgba(5,14,26,.50);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow: 0 22px 56px rgba(0,0,0,.23), inset 1px 1px rgba(255,255,255,.045);
+}
 
-/* KPI tiles — compact translucent reference style */
-#root main .grid>.rounded-2xl[class*="p-4"]{min-height:96px;border-radius:19px!important;background:radial-gradient(circle at 85% 15%,rgba(245,185,66,.12),transparent 45%),linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.018)),rgba(16,27,49,.46)!important;box-shadow:0 16px 36px rgba(0,0,0,.28),inset 1px 1px rgba(255,255,255,.10),inset -1px -1px rgba(0,0,0,.20)!important}
-#root main .grid>.rounded-2xl[class*="p-4"]:hover{transform:translate3d(0,-5px,20px) scale(1.012);border-color:rgba(245,185,66,.40)!important}
+/* ---- Universal glass cards ---- */
+#root main .rounded-3xl,
+#root main .rounded-2xl {
+  border-color: var(--shh-border) !important;
+  background: linear-gradient(135deg, rgba(56,217,245,.045), rgba(255,255,255,.008) 52%, rgba(52,230,162,.022)), var(--shh-panel) !important;
+  backdrop-filter: blur(21px) saturate(138%);
+  -webkit-backdrop-filter: blur(21px) saturate(138%);
+  box-shadow: 0 17px 48px rgba(0,0,0,.25), inset 1px 1px rgba(255,255,255,.035), inset -1px -1px rgba(0,0,0,.18);
+  transition: transform .23s cubic-bezier(.2,.8,.2,1), border-color .23s ease, box-shadow .23s ease, background .23s ease;
+}
+#root main .rounded-3xl:hover,
+#root main .rounded-2xl:hover {
+  border-color: rgba(56,217,245,.23) !important;
+  box-shadow: 0 23px 58px rgba(0,0,0,.29), 0 0 30px rgba(56,217,245,.045), inset 1px 1px rgba(255,255,255,.045);
+}
+#root main .rounded-3xl .rounded-xl,
+#root main .rounded-3xl .rounded-2xl,
+#root main .rounded-2xl .rounded-xl {
+  background: linear-gradient(135deg, rgba(56,217,245,.035), rgba(255,255,255,.006)), rgba(8,20,32,.62) !important;
+  border-color: rgba(148,190,214,.09) !important;
+  box-shadow: inset 1px 1px rgba(255,255,255,.025), 0 9px 26px rgba(0,0,0,.14);
+}
 
-/* Physical gold controls */
-#root main button[class*="bg-gradient-to-r"]{border:1px solid rgba(255,238,181,.48)!important;border-radius:15px!important;background:linear-gradient(145deg,#ffe29a 0%,#f7bd4b 48%,#d98509 100%)!important;box-shadow:0 16px 36px rgba(245,158,11,.22),inset 1px 1px rgba(255,255,255,.55),inset -1px -2px rgba(107,53,4,.22)!important}
-#root main button.rounded-2xl,#root main button.rounded-xl{transition:transform .20s cubic-bezier(.2,.8,.2,1),box-shadow .20s ease,border-color .20s ease!important}
-#root main button.rounded-2xl:hover,#root main button.rounded-xl:hover{transform:translate3d(0,-3px,16px);border-color:rgba(245,185,66,.30)!important;box-shadow:0 18px 38px rgba(0,0,0,.28),inset 1px 1px rgba(255,255,255,.075)!important}
+/* KPI tiles */
+#root main .grid > .rounded-2xl[class*="p-4"],
+#root main .grid > .rounded-2xl[class*="p-5"] {
+  min-height: 102px;
+  overflow: hidden;
+  background: radial-gradient(130px 80px at 94% 0%, rgba(52,230,162,.11), transparent 72%), linear-gradient(135deg, rgba(56,217,245,.06), rgba(255,255,255,.008)), rgba(8,20,32,.68) !important;
+  border-color: rgba(100,220,224,.15) !important;
+}
+#root main .grid > .rounded-2xl[class*="p-4"]:hover,
+#root main .grid > .rounded-2xl[class*="p-5"]:hover {
+  transform: translateY(-5px);
+  border-color: rgba(52,230,162,.34) !important;
+  box-shadow: 0 20px 46px rgba(0,0,0,.30), 0 0 26px rgba(52,230,162,.07);
+}
 
-#root main h2,#root main h3{text-shadow:0 2px 18px rgba(0,0,0,.40)}
-#root main [class*="bg-emerald-500/15"],#root header [class*="bg-emerald-500/15"]{box-shadow:0 0 22px rgba(16,185,129,.06),inset 1px 1px rgba(255,255,255,.045)}
-#root main table{border-radius:18px;overflow:hidden;box-shadow:0 18px 48px rgba(0,0,0,.22)}
-#root main thead tr{background:linear-gradient(90deg,rgba(245,185,66,.065),rgba(255,255,255,.025))!important}
-#root main tbody tr:hover{background:linear-gradient(90deg,rgba(245,185,66,.055),rgba(255,255,255,.018))!important}
-#root main .recharts-wrapper,#root main .recharts-responsive-container{filter:drop-shadow(0 12px 24px rgba(0,0,0,.18))}
+/* ---- Buttons, badges and controls ---- */
+#root main button[class*="rounded-xl"],
+#root main button[class*="rounded-2xl"] {
+  border-radius: 12px;
+  transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease, border-color .2s ease, background .2s ease;
+}
+#root main button[class*="bg-gradient-to-r"] {
+  color: #f4fffd !important;
+  border: 1px solid rgba(56,217,245,.32) !important;
+  background: linear-gradient(120deg, #0ea5b7, #0891b2 52%, #059669) !important;
+  box-shadow: 0 12px 30px rgba(8,145,178,.20), inset 1px 1px rgba(255,255,255,.22) !important;
+}
+#root main button[class*="bg-gradient-to-r"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 38px rgba(8,145,178,.26), 0 0 24px rgba(52,230,162,.08), inset 1px 1px rgba(255,255,255,.25) !important;
+}
+#root main span[class*="rounded-full"], #root header span[class*="rounded"] {
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
 
-@media(max-width:1100px){#root main>.space-y-6{max-width:none}}
-@media(max-width:767px){#root header{margin:8px!important;min-height:62px}#root main{margin:0 8px!important;padding:18px 8px 65px!important}#root main>.space-y-6{margin-top:8px;padding:14px;border-radius:24px}#root main .grid>.rounded-2xl[class*="p-4"]{min-height:90px}}
-@media(prefers-reduced-motion:reduce){#root aside nav button,#root main button.rounded-2xl,#root main button.rounded-xl{transform:none!important}}
+/* Existing amber utility classes are recolored at presentation level only. */
+#root .text-amber-200, #root .text-amber-300, #root .text-amber-400,
+#root .text-amber-500, #root .text-amber-600, #root .text-yellow-300,
+#root .text-yellow-400 { color: #5eead4 !important; }
+#root [class*="border-amber-"] { border-color: rgba(56,217,245,.25) !important; }
+#root [class*="bg-amber-500/10"] { background-color: rgba(56,217,245,.09) !important; }
+#root [class*="bg-amber-500/15"] { background-color: rgba(56,217,245,.13) !important; }
+#root [class*="bg-amber-500/20"] { background-color: rgba(56,217,245,.17) !important; }
+
+/* Tables and charts retain their existing structure/data. */
+#root main table { border-collapse: separate; border-spacing: 0; }
+#root main thead tr { background: rgba(56,217,245,.035) !important; }
+#root main tbody tr { transition: background-color .16s ease; }
+#root main tbody tr:hover { background: rgba(56,217,245,.045) !important; }
+#root main input, #root main select, #root main textarea {
+  border-color: rgba(148,190,214,.16);
+  background-color: rgba(7,18,31,.72);
+}
+#root main input:focus, #root main select:focus, #root main textarea:focus {
+  border-color: rgba(56,217,245,.52) !important;
+  box-shadow: 0 0 0 3px rgba(56,217,245,.055);
+}
+#root main .recharts-cartesian-grid line { stroke: rgba(148,190,214,.12) !important; }
+
+/* Entrance motion */
+#root main > .space-y-6 > * { animation: shhEnter .48s cubic-bezier(.2,.8,.2,1) both; }
+#root main > .space-y-6 > *:nth-child(2) { animation-delay: 35ms; }
+#root main > .space-y-6 > *:nth-child(3) { animation-delay: 70ms; }
+#root main > .space-y-6 > *:nth-child(4) { animation-delay: 105ms; }
+#root main > .space-y-6 > *:nth-child(5) { animation-delay: 140ms; }
+#root main > .space-y-6 > *:nth-child(6) { animation-delay: 175ms; }
+
+/* Focus visibility */
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid rgba(56,217,245,.78);
+  outline-offset: 2px;
+}
+
+/* Responsive spacing; existing mobile drawer behavior remains in mobile-responsive.css. */
+@media (max-width: 767px) {
+  #root > div.min-h-screen { background-size: 34px 34px, 34px 34px, auto, auto; }
+  #root aside { margin: 8px !important; height: calc(100vh - 16px) !important; border-radius: 20px !important; }
+  #root header { margin: 8px !important; min-height: 60px; border-radius: 17px !important; }
+  #root main { margin: 0 8px !important; padding: 17px 8px 60px !important; }
+  #root main > .space-y-6 > div:first-child { padding: 17px; border-radius: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
