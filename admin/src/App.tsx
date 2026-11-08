@@ -2099,7 +2099,19 @@ export default function App() {
                 handleOpenPropertyPreview
               }
               onListingRequestUpdated={(updated) => setListingRequests((prev) => prev.map((item) => String(item.id) === String(updated.id) ? updated : item))}
-              onEditListingRequest={(request) => setListingRequestToEdit(request)}
+              onEditListingRequest={(request) => setListingRequestToEdit(request)},
+              onPreviewListingRequest={(request) => handleOpenPropertyPreview({
+                ...request,
+                id: String(request.id),
+                name: request.name || request.property_name || request.title || '',
+                title: request.title || request.name || request.property_name || '',
+                category: request.category || request.property_type || 'Hostel',
+                property_type: request.property_type || request.category || 'Hostel',
+                phone: request.phone || request.owner_phone || '',
+                owner_phone: request.owner_phone || request.phone || '',
+                area: request.area || request.city || '',
+                _source_table: 'listing_requests',
+              } as PropertyItem)}
             />
           )}
 
@@ -2173,14 +2185,13 @@ export default function App() {
             )
           }
           onEdit={(p) => {
-            setPreviewProperty(
-              null
-            );
-
-            handleOpenPropertyEditor(
-              p,
-              getPropertyType(p)
-            );
+            setPreviewProperty(null);
+            if ((p as any)._source_table === 'listing_requests') {
+              const request = listingRequests.find((item) => String(item.id) === String(p.id));
+              if (request) setListingRequestToEdit(request);
+              return;
+            }
+            handleOpenPropertyEditor(p, getPropertyType(p));
           }}
           onToggleVerification={(
             p,
