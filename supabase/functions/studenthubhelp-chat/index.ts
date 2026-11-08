@@ -31,7 +31,7 @@ function distanceToLandmark(p:any,l:any){const A=coords(p),B=l?{latitude:l.lat,l
 function searchText(p:any){return n([p.name,p.title,p.business_name,p.service_name,p.type,p.gender_type,p.gender,p.city,p.area,p.service_area,p.address,p.landmark,p.nearby_coaching,p.description,p.facilities,p.amenities].filter(Boolean).join(" "))}
 async function direct(type:string,ct?:string,maxBudget?:number,locationTerm?:string,genderFilter?:string){
  const table=SRC.find(x=>x[1]===type)?.[0];if(!table)return [];
- const pageSize=250,maxRows=5000;const params=new URLSearchParams({select:"*",status:"eq.active",limit:String(pageSize),offset:"0"});
+ const pageSize=250,maxRows=5000;const params=new URLSearchParams({select:"*",status:"eq.active",limit:String(pageSize),order:"id.asc"});
  if(ct)params.set("city",`ilike.*${ct.replace(/[%,()]/g,"")}*`);
  const orGroups:string[]=[];
  if(maxBudget!==undefined&&Number.isFinite(maxBudget)&&maxBudget>0){
@@ -48,8 +48,8 @@ async function direct(type:string,ct?:string,maxBudget?:number,locationTerm?:str
  }
  if(orGroups.length===1)params.set("or",`(${orGroups[0]})`);
  else if(orGroups.length>1)params.set("and",`(${orGroups.map(group=>`or(${group})`).join(",")})`);
- const page:any[]=[];let offset=0;while(offset<maxRows){params.set("offset",String(offset));const rows=await db<any[]>(`/rest/v1/${table}?${params.toString()}`);const batch=Array.isArray(rows)?rows:[];page.push(...batch);if(batch.length<pageSize)break;offset+=pageSize}
- // Database filters run before paging; cap runaway scans while supporting categories larger than the old 500-row window.
+ const page:any[]=[];let cursor:string|number|undefined;while(page.length<maxRows){if(cursor!==undefined)params.set("id",`gt.${cursor}`);const rows=await db<any[]>(`/rest/v1/${table}?${params.toString()}`);const batch=Array.isArray(rows)?rows:[];if(!batch.length)break;page.push(...batch);const lastId=batch[batch.length-1]?.id;if(lastId===undefined||batch.length<pageSize)break;cursor=lastId}
+ // Keyset pagination on the category primary key; filters run in Postgres before each bounded page.
  return page.map(p=>({...p,_type:type})).filter(p=>!ct||n(p.city||"").includes(n(ct)));
 }
 async function multiDirect(types:string[],ct?:string,maxBudget?:number,locationTerm?:string,genderFilter?:string){
