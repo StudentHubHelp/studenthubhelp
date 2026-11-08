@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SectionTab, PropertyItem, UserProfile, ListingRequest, AdminNotification } from '../types';
 import { supabase } from '../lib/supabase';
-import { Search, SlidersHorizontal, RefreshCw, Bell, Globe, CheckCircle2, Star, Hotel, Utensils, BookOpen, Coffee, Store, User, Inbox, X, Command, Check, CheckCheck } from 'lucide-react';
+import { Search, SlidersHorizontal, RefreshCw, Bell, Globe, CheckCircle2, Star, Hotel, Utensils, BookOpen, Coffee, Store, User, Inbox, X, Command, Check, CheckCheck, Sun, Moon } from 'lucide-react';
 
 interface HeaderProps {
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
   currentTab: SectionTab;
   onSelectTab: (tab: SectionTab) => void;
   onRefresh: () => void;
@@ -91,7 +93,7 @@ const notificationTime = (value?: string) => {
 };
 
 export const Header: React.FC<HeaderProps> = ({
-  onSelectTab, onRefresh, isRefreshing, unreadNotifications, onNotificationsChange, properties, students, owners, listingRequests,
+  theme, onToggleTheme, onSelectTab, onRefresh, isRefreshing, unreadNotifications, onNotificationsChange, properties, students, owners, listingRequests,
   onOpenPropertyPreview, onOpenUserProfile, onToggleMobileSidebar,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -245,6 +247,7 @@ export const Header: React.FC<HeaderProps> = ({
           {isOpenResults && (searchQuery.trim() || showFilters) && <div className="absolute left-0 right-0 top-12 mt-2 max-h-[70vh] overflow-y-auto rounded-2xl bg-[#081026] border border-amber-500/30 shadow-2xl z-50 p-2 space-y-1 animate-in fade-in duration-150"><div className="px-2 py-1.5 flex items-center justify-between text-[10px] text-slate-500 uppercase font-bold"><span>{results.length} result{results.length === 1 ? '' : 's'}</span><span>Global search</span></div>{results.length ? results.map((r, i) => <button key={`${r.type}-${r.id}-${i}`} onClick={() => openResult(r)} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-800/80 text-left transition-colors border border-transparent hover:border-slate-700 cursor-pointer"><div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-300 flex items-center justify-center shrink-0">{iconFor(r)}</div><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="font-bold text-xs text-white truncate">{r.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700">{r.category}</span>{r.verified && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}{r.rating ? <span className="text-[10px] text-amber-300 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-300" />{r.rating}</span> : null}</div><p className="text-[11px] text-slate-400 truncate mt-0.5">{r.subtitle}</p>{r.matches.length > 0 && <p className="text-[10px] text-slate-500 truncate mt-0.5">Match: {r.matches.join(' • ')}</p>}</div></button>) : <div className="p-7 text-center"><Search className="w-6 h-6 text-slate-600 mx-auto mb-2" /><p className="text-slate-400 text-xs">No matching record found</p><p className="text-slate-600 text-[10px] mt-1">Try a name, ID, phone, owner, city, address or any stored detail</p></div>}</div>}
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <button type="button" onClick={onToggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`} className="w-10 h-10 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 hover:text-white hover:bg-[#14224d] flex items-center justify-center transition-all cursor-pointer"><span className="sr-only">{theme === 'dark' ? 'Enable light mode' : 'Enable dark mode'}</span>{theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}</button>
           <button onClick={onRefresh} disabled={isRefreshing} className="w-10 h-10 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 hover:text-white hover:bg-[#14224d] flex items-center justify-center transition-all cursor-pointer" title="Refresh from Supabase"><RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-amber-400' : ''}`} /></button>
           <div ref={notificationRef} className="relative">
             <button onClick={() => setNotificationOpen(v => !v)} className="relative w-10 h-10 rounded-xl bg-[#0d1838] border border-amber-500/30 text-amber-300 hover:text-white hover:bg-[#14224d] flex items-center justify-center transition-all cursor-pointer" title="Notifications"><Bell className="w-4 h-4" />{displayUnreadCount > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[9px] font-extrabold flex items-center justify-center shadow-md animate-pulse">{displayUnreadCount > 99 ? '99+' : displayUnreadCount}</span>}</button>
