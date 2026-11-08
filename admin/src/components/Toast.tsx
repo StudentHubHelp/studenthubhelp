@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CheckCircle2, AlertCircle, X } from 'lucide-react';
 
 interface ToastProps {
@@ -8,6 +8,11 @@ interface ToastProps {
 }
 
 export const Toast: React.FC<ToastProps> = ({ message, type = 'success', onClose }) => {
+  useEffect(() => {
+    const timeoutId = window.setTimeout(onClose, 4000);
+    return () => window.clearTimeout(timeoutId);
+  }, [message, onClose]);
+
   return (
     <div
       id="toast"
