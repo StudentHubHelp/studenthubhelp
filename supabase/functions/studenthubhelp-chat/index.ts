@@ -106,7 +106,7 @@ function offlineIntent(msg:string,history:any[]){
  o.categories=[...new Set(cats)];o.category=o.categories[0]||cat(msg)||"";
  const loc=strictLocation(msg);o.city=loc.city||city(msg)||"";o.locality=loc.locality||"";o.area=loc.area||"";o.landmark=loc.landmark||"";
  o.gender=genderWanted(msg);
- const budget=x.match(/(?:under|below|within|budget|upto|up to|kam|less than|₹|rs\.?\s*)(\d[\d,]*)/i);
+ const budget=x.match(/(?:under|below|within|budget|upto|up to|kam|less than|₹|rs\.?\s*)(\d[\d,]*)/i)||x.match(/(\d[\d,]*)\s*(?:se\s*)?(?:kam|ke andar|under|below)/i);
  if(budget)o.budgetMax=num(budget[1])??null;
  o.facilities=[...["wifi","wi fi","ac","non ac","cctv","food","mess","parking"].filter(v=>x.includes(n(v)))];
  if(o.category||o.categories.length||loc.city||loc.area||loc.locality||loc.landmark||nearTerm(msg)){
