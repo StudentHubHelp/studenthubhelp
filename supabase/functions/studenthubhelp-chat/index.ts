@@ -391,7 +391,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
   if(wantedLocality)rows=rows.filter(p=>searchText(p).includes(wantedLocality));
   // An explicit road/locality is also a hard constraint when the user asked for it.
   if(locationForFilter.area)rows=rows.filter(p=>searchText(p).includes(n(locationForFilter.area)));
-  if(u.budgetMax!==null||u.budgetMin!==null)rows=rows.filter(p=>{const v=budgetValue(p);if(v===undefined)return false;return (u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
+  if(cfg.budget_planner_enabled&&(u.budgetMax!==null||u.budgetMin!==null))rows=rows.filter(p=>{const v=budgetValue(p);if(v===undefined)return false;return (u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
   if(u.facilities?.length)rows=rows.filter(p=>matchesFacility(p,u.facilities));
   const landmark=u.landmark?findLandmark(u.landmark)||LANDMARKS.find(l=>l.key===u.landmark):findLandmark(near||"");
   if(landmark){for(const p of rows){const d=distanceToLandmark(p,landmark);if(d!==undefined)p._distanceKm=d}rows=rows.filter(p=>n(p.city||"")===n(landmark.city)&&((p._distanceKm!==undefined&&p._distanceKm<=10)||searchText(p).includes(n(landmark.key))))}
