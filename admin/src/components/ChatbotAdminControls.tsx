@@ -111,9 +111,9 @@ export const ChatbotAdminControls: React.FC<ChatbotAdminControlsProps> = ({
       const { data: userData } = await supabase.auth.getUser();
       const updatedBy = userData.user?.email || 'admin';
       const payload = { ...config, updated_by: updatedBy, updated_at: new Date().toISOString() };
-      const { data, error } = await supabase.from('chatbot_admin_config').upsert(payload, { onConflict: 'id' }).select('id, updated_at').single();
+      const { data, error } = await supabase.from('chatbot_admin_config').update(payload).eq('id', 1).select('id, updated_at').single();
       if (error) throw error;
-      if (!data || Number(data.id) !== 1) throw new Error('Settings save verify nahi ho payi.');
+      if (!data || Number(data.id) !== 1) throw new Error('Settings save verify nahi ho payi. Config row id=1 missing ya access denied ho sakta hai.');
       setConfig({ ...payload, updated_at: data.updated_at || payload.updated_at });
       setMessage('AI control settings saved and verified in Supabase.');
     } catch (e: any) {
