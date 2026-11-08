@@ -5,7 +5,7 @@ import { chromium } from "playwright";
 
 const ROOT = process.cwd();
 const ORIGIN = "http://127.0.0.1:4173";
-const IGNORE_DIRS = new Set([".git", ".github", "node_modules", "properties"]);
+const IGNORE_DIRS = new Set([".git", ".github", "node_modules", "properties", "_layouts"]);
 const failures = [];
 const warnings = [];
 const pages = [];
@@ -29,6 +29,8 @@ function localPath(value, pagePath) {
   try { url = new URL(raw, `${ORIGIN}/${pagePath}`); } catch { return null; }
   if (url.origin !== ORIGIN) return null;
   let pathname = decodeURIComponent(url.pathname);
+  // Older chatbot embeds retain the repository subpath; map it to the checked-out asset tree.
+  if (pathname.startsWith("/studenthubhelp/")) pathname = pathname.slice("/studenthubhelp".length);
   if (pathname.startsWith("/properties/")) return null; // handled by the site's generated-property fallback in 404.html
   if (pathname.endsWith("/")) pathname += "index.html";
   return pathname.replace(/^\//, "");
@@ -58,8 +60,11 @@ await collectImages();
 
 for (const pagePath of pages) {
   const source = await fs.promises.readFile(path.join(ROOT, pagePath), "utf8");
+  if (pagePath.startsWith("_layouts/")) continue;
   const refs = [...source.matchAll(/\b(?:href|src)\s*=\s*["']([^"'<>]+)["']/gi)].map(m => m[1]);
   for (const ref of refs) {
+    // Liquid and JavaScript template expressions are generated at runtime/build time, not literal files.
+    if (ref.includes("${") || ref.includes("{{") || ref.includes("}}")) continue;
     const relative = localPath(ref, pagePath);
     if (relative === null) continue;
     const target = path.resolve(ROOT, relative);
@@ -79,6 +84,7 @@ for (const pagePath of pages) {
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
 for (const pagePath of pages) {
+  if (pagePath.startsWith("_layouts/")) continue; // Jekyll templates are not directly served HTML pages.
   const pageErrors = [];
   page.removeAllListeners("pageerror");
   page.on("pageerror", error => pageErrors.push(error.message));
