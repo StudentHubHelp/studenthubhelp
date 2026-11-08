@@ -420,7 +420,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
   let rows=await multiDirect(aiCats.length?aiCats:(c?[c]:(nearCats.length?nearCats:["hostel"])),ct,u.budgetMax??undefined,u.area||u.locality||undefined,u.gender||genderWanted(msg));
   const wantedGender=u.gender||genderWanted(msg),wantedArea=u.area?(/nawalgarh/i.test(u.area)?"nawalgarh":/piprali/i.test(u.area)?"piprali":u.area.toLowerCase()):areaWanted(msg);
   const wantedLocality=n(u.locality||"");
-  if(wantedGender)rows=rows.filter(p=>{const z=searchText(p);const g=n([p.gender_type,p.gender,p.hostel_type,p.name,p.title,p.description].filter(Boolean).join(" "));return wantedGender==="girls"?/girls|girl|female|women|ladki|ladkiyon|महिला|लड़क/i.test(g):/boys|boy|male|men|ladke|लड़के/i.test(g)});
+  if(wantedGender)rows=rows.filter(p=>{const z=searchText(p);const g=n([p.gender_type,p.gender,p.hostel_type,p.type,p.name,p.title,p.description].filter(Boolean).join(" "));return wantedGender==="girls"?/girls|girl|female|women|ladki|ladkiyon|महिला|लड़क/i.test(g):/boys|boy|male|men|ladke|लड़के/i.test(g)});
   // Explicit city is a hard boundary; never leak another city into the answer.
   if(locationForFilter.city)rows=rows.filter(p=>n(p.city||"")===n(locationForFilter.city));
   if(wantedArea)rows=rows.filter(p=>searchText(p).includes(n(wantedArea)));
