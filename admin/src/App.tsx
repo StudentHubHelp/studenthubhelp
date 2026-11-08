@@ -385,7 +385,7 @@ export default function App() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, showToast]);
 
   // =========================================================
   // INITIAL REAL DATA LOAD
