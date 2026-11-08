@@ -48,5 +48,21 @@ jobs:
         run: npm install
       - name: Type-check React chatbot component
         run: npx tsc --noEmit --skipLibCheck --jsx react-jsx --target ES2020 --module ESNext --moduleResolution bundler --allowImportingTsExtensions --types vite/client src/components/ChatWidget.tsx
+      - name: Restore Vite source entry for validation
+        run: |
+          cat > index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>StudentHubHelp AI Chatbot</title>
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="module" src="/src/main.tsx"></script>
+            </body>
+          </html>
+          EOF
       - name: Build chatbot
         run: npm run build
