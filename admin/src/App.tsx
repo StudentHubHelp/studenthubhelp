@@ -190,6 +190,8 @@ export default function App() {
     []
   );
 
+  const closeToast = useCallback(() => setToast(null), []);
+
   // =========================================================
   // PROPERTY CATEGORY HELPER
   // =========================================================
@@ -1571,9 +1573,7 @@ export default function App() {
         <Toast
           message={toast.message}
           type={toast.type}
-          onClose={() =>
-            setToast(null)
-          }
+          onClose={closeToast}
         />
       )}
 
