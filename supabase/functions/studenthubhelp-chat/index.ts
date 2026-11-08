@@ -48,7 +48,7 @@ async function direct(type:string,ct?:string,maxBudget?:number,locationTerm?:str
  }
  if(orGroups.length===1)params.set("or",`(${orGroups[0]})`);
  else if(orGroups.length>1)params.set("and",`(${orGroups.map(group=>`or(${group})`).join(",")})`);
- const page:any[]=[];let cursor:string|number|undefined;while(page.length<maxRows){if(cursor!==undefined)params.set("id",`gt.${cursor}`);const rows=await db<any[]>(`/rest/v1/${table}?${params.toString()}`);const batch=Array.isArray(rows)?rows:[];if(!batch.length)break;page.push(...batch);const lastId=batch[batch.length-1]?.id;if(lastId===undefined||batch.length<pageSize)break;cursor=lastId}
+ const page:any[]=[];let cursor:string|number|undefined;const pagingDeadline=Date.now()+8000;while(page.length<maxRows&&Date.now()<pagingDeadline){if(cursor!==undefined)params.set("id",`gt.${cursor}`);const rows=await db<any[]>(`/rest/v1/${table}?${params.toString()}`);const batch=Array.isArray(rows)?rows:[];if(!batch.length)break;page.push(...batch);const lastId=batch[batch.length-1]?.id;if(lastId===undefined||batch.length<pageSize)break;cursor=lastId}if(Date.now()>=pagingDeadline)console.warn(`[SEARCH] ${type} cursor pagination reached its 8s budget; returning bounded partial results`);
  // Keyset pagination on the category primary key; filters run in Postgres before each bounded page.
  return page.map(p=>({...p,_type:type})).filter(p=>!ct||n(p.city||"").includes(n(ct)));
 }
