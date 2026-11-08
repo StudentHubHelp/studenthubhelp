@@ -65,7 +65,7 @@ export const UnverifiedPropertiesView: React.FC<UnverifiedPropertiesViewProps> =
             <tbody className="divide-y divide-slate-800/60">
               {unverifiedList.length ? (
                 unverifiedList.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
+                  <tr key={item.id} role="button" tabIndex={0} aria-label={`Open details for ${item.name || 'property'}`} onClick={(e) => { e.stopPropagation(); onOpenPreview(item); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenPreview(item); } }} className="cursor-pointer outline-none hover:bg-cyan-400/[.07] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-400/60 transition-colors">
                     <td className="p-4 font-bold text-white">
                       {item.name || 'Unnamed Property'}
                       <div className="text-[10px] text-slate-400 font-mono mt-0.5">#{item.id}</div>
@@ -79,7 +79,7 @@ export const UnverifiedPropertiesView: React.FC<UnverifiedPropertiesViewProps> =
                     <td className="p-4 text-slate-300">{item.area || 'Kota'}</td>
                     <td className="p-4 font-mono text-slate-300">
                       {item.phone ? (
-                        <a href={`tel:${item.phone}`} className="hover:text-amber-300 flex items-center gap-1">
+                        <a href={`tel:${item.phone}`} onClick={(e) => e.stopPropagation()} className="hover:text-amber-300 flex items-center gap-1">
                           <Phone className="w-3 h-3 text-slate-400" />
                           <span>{item.phone}</span>
                         </a>
@@ -118,7 +118,7 @@ export const UnverifiedPropertiesView: React.FC<UnverifiedPropertiesViewProps> =
                           <span>Inspect</span>
                         </button>
                         <button
-                          onClick={() => onVerifyProperty(item)}
+                          onClick={(e) => { e.stopPropagation(); onVerifyProperty(item); }}
                           className="px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
