@@ -57,11 +57,15 @@ const QUICK_TOPICS = [
 async function getUserDeviceLocation(): Promise<{ lat: number; lng: number } | null> {
   if (typeof navigator === 'undefined' || !navigator.geolocation) return null;
   return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
-      () => resolve(null),
-      { timeout: 5000, maximumAge: 60000, enableHighAccuracy: false }
-    );
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
+        () => resolve(null),
+        { timeout: 5000, maximumAge: 60000, enableHighAccuracy: false }
+      );
+    } catch {
+      resolve(null);
+    }
   });
 }
 
