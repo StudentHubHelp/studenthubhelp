@@ -1,0 +1,57 @@
+name: Phase 5 - site verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**.html"
+      - "**.css"
+      - "**.js"
+      - "**.png"
+      - "**.jpg"
+      - "**.jpeg"
+      - "**.webp"
+      - "scripts/phase5-site-verification.mjs"
+      - ".github/workflows/phase5-site-verification.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase5-site-verification-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Links, assets and responsive layouts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install browser test runtime
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Start local static site
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/studenthubhelp-http.log 2>&1 &
+          for attempt in $(seq 1 20); do
+            if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/studenthubhelp-http.log
+          exit 1
+
+      - name: Verify links, assets and mobile/tablet layouts
+        run: node scripts/phase5-site-verification.mjs
