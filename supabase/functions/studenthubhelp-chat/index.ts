@@ -319,11 +319,12 @@ Deno.serve(async(req:Request)=>{
     }
   }
   if(cfg.comparison_enabled&&(/(?:konsa|kaunsa|kaunsi|which|should i|chahiye).{0,35}(book|hostel|pg)|(?:book|hostel|pg).{0,35}(konsa|kaunsa|kaunsi|which|should)/i.test(n(msg)))&&!isBookingInfoQuestion(msg)){
-    const decisionRows=await multiDirect([c||"hostel"],ct);
+    const decisionRows=await multiDirect([c||"hostel"],ct,u.budgetMax??undefined);
     const decisionLandmark=findLandmark(near||"");
-    if(decisionLandmark){for(const p of decisionRows){const d=distanceToLandmark(p,decisionLandmark);if(d!==undefined)p._distanceKm=d}}
+    if(decisionLandmark){for(const p of decisionRows){const d=distanceToLandmark(p,decisionLandmark);if(d!==undefined)p._distanceKm=d;else if(searchText(p).includes(n(decisionLandmark.key)))p._nearbyAreaMatch=true}}
     let decision=decisionRows.filter(p=>!shownIds.has(String(p.id)));
-    if(decisionLandmark)decision=decision.filter(p=>n(p.city||"")===n(decisionLandmark.city)&&((p._distanceKm!==undefined&&p._distanceKm<=10)||searchText(p).includes(n(decisionLandmark.key))));
+    if(decisionLandmark)decision=decision.filter(p=>n(p.city||"")===n(decisionLandmark.city)&&((p._distanceKm!==undefined&&p._distanceKm<=10)||p._nearbyAreaMatch===true));
+    if(u.budgetMax!==null||u.budgetMin!==null)decision=decision.filter(p=>{const v=budgetValue(p);return v!==undefined&&(u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
     const rankedDecision=decision.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score).slice(0,cfg.max_results).map(card);
     const ar=await aiProperty(msg,history,rankedDecision,c||"hostel",near,cfg,requestDeadlineAt);
     const reply=ar.reply||"Aapki requirement ke hisaab se live options compare kar sakte hain.";
