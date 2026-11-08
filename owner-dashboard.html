@@ -3190,31 +3190,55 @@ document
 
 async function checkAuth(){
 
-  const {
-    data,
-    error
-  } = await db.auth.getSession();
+  const {data,error} = await db.auth.getSession();
 
   if(error){
-
-    console.error(error);
-
+    console.error("Owner session check:",error);
+    showToast("Unable to verify your session. Please sign in again.","error");
   }
 
-  if(!data.session){
-
-    window.location.href =
-      "auth.html";
-
+  if(!data?.session){
+    window.location.href = "auth.html";
     return false;
-
   }
 
-  currentUser =
-    data.session.user;
+  currentUser = data.session.user;
 
+  const {data:profile,error:profileError} = await db
+    .from("profiles")
+    .select("id,role,status,full_name,email,phone,address,property")
+    .eq("id",currentUser.id)
+    .maybeSingle();
+
+  if(profileError){
+    console.error("Owner role check:",profileError);
+    showToast("Unable to verify owner access. Please try again.","error");
+    await db.auth.signOut();
+    window.location.href = "auth.html";
+    return false;
+  }
+
+  const role = String(profile?.role || "").trim().toLowerCase();
+  const status = String(profile?.status || "active").trim().toLowerCase();
+
+  if(role === "admin" && status === "active"){
+    window.location.href = "director.html";
+    return false;
+  }
+
+  if(role === "student" && status === "active"){
+    window.location.href = "student-dashboard.html";
+    return false;
+  }
+
+  if(role !== "owner" || status !== "active"){
+    await db.auth.signOut();
+    window.location.href = "auth.html";
+    return false;
+  }
+
+  currentProfile = profile;
   return true;
-
 }
 
 /* =========================================================
@@ -4342,14 +4366,13 @@ window.loadGallery =
 
 async function uploadGalleryFiles(){
 
-  if(!selectedProperty){
+  if(!selectedProperty || !currentUser){
     showToast("Select a property first.","error");
     return;
   }
 
   const input = document.getElementById("galleryFiles");
   const files = Array.from(input?.files || []);
-
   if(!files.length){
     showToast("Please select at least one image.","error");
     return;
@@ -4358,20 +4381,17 @@ async function uploadGalleryFiles(){
   let uploaded = 0;
 
   for(const file of files){
-
     if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
       showToast(`${file.name}: JPG, PNG or WEBP only.`,"error");
       continue;
     }
-
     if(file.size > 10 * 1024 * 1024){
       showToast(`${file.name} is larger than 10MB.`,"error");
       continue;
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,"-");
-    const path =
-      `${currentUser.id}/${selectedProperty.table}/${selectedProperty.id}/` +
+    const path = `${currentUser.id}/${selectedProperty.table}/${selectedProperty.id}/` +
       `${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
 
     const {error:uploadError} = await db.storage
@@ -4389,11 +4409,10 @@ async function uploadGalleryFiles(){
       .getPublicUrl(path);
 
     const isFirst = galleryImages.length === 0;
-    const sortOrder = isFirst ? 0 : (
-      Math.max(-1,...galleryImages.map(x => Number(x.sort_order) || 0)) + 1
-    );
+    const sortOrder = isFirst ? 0 :
+      Math.max(-1,...galleryImages.map(x => Number(x.sort_order) || 0)) + 1;
 
-    const {error:insertError} = await db
+    const {data:record,error:insertError} = await db
       .from("owner_property_images")
       .insert({
         property_id:String(selectedProperty.id),
@@ -4404,37 +4423,41 @@ async function uploadGalleryFiles(){
         image_type:isFirst ? "main" : "other",
         sort_order:sortOrder,
         is_main:isFirst
-      });
+      })
+      .select("id")
+      .single();
 
-    if(insertError){
+    if(insertError || !record){
       console.error(insertError);
       await db.storage.from("property-images").remove([path]);
-      showToast("Photo record failed: " + insertError.message,"error");
+      showToast("Photo record failed: " + (insertError?.message || "No gallery record returned."),"error");
+      continue;
+    }
+
+    const urls = [...galleryImages.map(x => x.image_url),urlData.publicUrl];
+    const propertyPatch = isFirst
+      ? {image:urlData.publicUrl,images:JSON.stringify(urls)}
+      : {images:JSON.stringify(urls)};
+
+    const {data:updatedProperty,error:propertyError} = await db
+      .from(selectedProperty.table)
+      .update(propertyPatch)
+      .eq("id",selectedProperty.id)
+      .eq("owner_id",currentUser.id)
+      .select("id")
+      .maybeSingle();
+
+    if(propertyError || !updatedProperty){
+      console.error("Property image sync failed:",propertyError);
+      await db.from("owner_property_images").delete().eq("id",record.id).eq("owner_id",currentUser.id);
+      await db.storage.from("property-images").remove([path]);
+      showToast("Photo uploaded but property sync failed. The upload was rolled back.","error");
       continue;
     }
 
     uploaded++;
-
-    if(isFirst){
-      await db.from(selectedProperty.table)
-        .update({
-          image:urlData.publicUrl,
-          images:JSON.stringify([urlData.publicUrl])
-        })
-        .eq("id",selectedProperty.id)
-        .eq("owner_id",currentUser.id);
-    }else{
-      const urls = [
-        ...galleryImages.map(x => x.image_url),
-        urlData.publicUrl
-      ];
-      await db.from(selectedProperty.table)
-        .update({images:JSON.stringify(urls)})
-        .eq("id",selectedProperty.id)
-        .eq("owner_id",currentUser.id);
-    }
-
     galleryImages.push({
+      id:record.id,
       property_id:String(selectedProperty.id),
       property_table:selectedProperty.table,
       owner_id:currentUser.id,
@@ -4448,8 +4471,9 @@ async function uploadGalleryFiles(){
 
   if(uploaded) showToast(`${uploaded} photo(s) uploaded successfully.`);
   await loadProperties(false);
-  selectedProperty = findProperty(propertyKey(selectedProperty));
-  await loadGallery(propertyKey(selectedProperty));
+  const key = propertyKey(selectedProperty);
+  selectedProperty = findProperty(key);
+  await loadGallery(key);
 }
 
 window.uploadGalleryFiles =
@@ -4462,7 +4486,6 @@ window.uploadGalleryFiles =
 async function setMainPhoto(id){
 
   if(!selectedProperty) return;
-
   const image = galleryImages.find(x => String(x.id) === String(id));
   if(!image) return;
 
@@ -4486,37 +4509,41 @@ async function setMainPhoto(id){
 
   if(mainError){
     showToast("Could not set main photo: " + mainError.message,"error");
+    await loadGallery(propertyKey(selectedProperty));
     return;
   }
 
-  const reordered = [
-    image,
-    ...galleryImages.filter(x => String(x.id) !== String(image.id))
-  ];
-
-  for(let i=0;i<reordered.length;i++){
-    await db.from("owner_property_images")
-      .update({
-        sort_order:i,
-        image_type:i===0 ? "main" : "other",
-        is_main:i===0
-      })
+  const reordered = [image,...galleryImages.filter(x => String(x.id) !== String(image.id))];
+  for(let i=1;i<reordered.length;i++){
+    const {error} = await db.from("owner_property_images")
+      .update({sort_order:i,image_type:"other",is_main:false})
       .eq("id",reordered[i].id)
       .eq("owner_id",currentUser.id);
+    if(error){
+      showToast("Gallery order update failed: " + error.message,"error");
+      await loadGallery(propertyKey(selectedProperty));
+      return;
+    }
   }
 
-  await db.from(selectedProperty.table)
-    .update({
-      image:image.image_url,
-      images:JSON.stringify(reordered.map(x => x.image_url))
-    })
+  const {data:updated,error:propertyError} = await db.from(selectedProperty.table)
+    .update({image:image.image_url,images:JSON.stringify(reordered.map(x => x.image_url))})
     .eq("id",selectedProperty.id)
-    .eq("owner_id",currentUser.id);
+    .eq("owner_id",currentUser.id)
+    .select("id")
+    .maybeSingle();
+
+  if(propertyError || !updated){
+    showToast("Main photo could not be synced to the listing.","error");
+    await loadGallery(propertyKey(selectedProperty));
+    return;
+  }
 
   showToast("Main photo updated.");
+  const key = propertyKey(selectedProperty);
   await loadProperties(false);
-  selectedProperty = findProperty(propertyKey(selectedProperty));
-  await loadGallery(propertyKey(selectedProperty));
+  selectedProperty = findProperty(key);
+  await loadGallery(key);
 }
 
 window.setMainPhoto =
@@ -4530,8 +4557,27 @@ async function deleteGalleryImage(id){
 
   const image = galleryImages.find(x => String(x.id) === String(id));
   if(!image) return;
-
   if(!confirm("Delete this property photo?")) return;
+
+  const remaining = galleryImages
+    .filter(x => String(x.id) !== String(image.id))
+    .sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
+
+  const {data:updated,error:propertyError} = await db
+    .from(selectedProperty.table)
+    .update({
+      image:remaining[0]?.image_url || null,
+      images:JSON.stringify(remaining.map(x => x.image_url))
+    })
+    .eq("id",selectedProperty.id)
+    .eq("owner_id",currentUser.id)
+    .select("id")
+    .maybeSingle();
+
+  if(propertyError || !updated){
+    showToast("Could not update the listing photo references.","error");
+    return;
+  }
 
   const {error:deleteError} = await db
     .from("owner_property_images")
@@ -4540,7 +4586,7 @@ async function deleteGalleryImage(id){
     .eq("owner_id",currentUser.id);
 
   if(deleteError){
-    showToast(deleteError.message,"error");
+    showToast("Could not delete photo record: " + deleteError.message,"error");
     return;
   }
 
@@ -4548,38 +4594,28 @@ async function deleteGalleryImage(id){
     const {error:storageError} = await db.storage
       .from("property-images")
       .remove([image.storage_path]);
-    if(storageError) console.warn("Storage delete:",storageError.message);
+    if(storageError){
+      console.warn("Storage cleanup:",storageError.message);
+      showToast("Photo removed from listing; storage cleanup needs retry.","error");
+    }
   }
-
-  const remaining = galleryImages
-    .filter(x => String(x.id) !== String(image.id))
-    .sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
 
   for(let i=0;i<remaining.length;i++){
-    await db.from("owner_property_images")
-      .update({
-        sort_order:i,
-        image_type:i===0 ? "main" : "other",
-        is_main:i===0
-      })
+    const {error} = await db.from("owner_property_images")
+      .update({sort_order:i,image_type:i===0 ? "main" : "other",is_main:i===0})
       .eq("id",remaining[i].id)
       .eq("owner_id",currentUser.id);
+    if(error){
+      showToast("Photo removed, but gallery ordering needs refresh.","error");
+      break;
+    }
   }
 
-  const urls = remaining.map(x => x.image_url);
-
-  await db.from(selectedProperty.table)
-    .update({
-      image:remaining[0]?.image_url || null,
-      images:JSON.stringify(urls)
-    })
-    .eq("id",selectedProperty.id)
-    .eq("owner_id",currentUser.id);
-
-  showToast("Photo deleted.");
+  const key = propertyKey(selectedProperty);
   await loadProperties(false);
-  selectedProperty = findProperty(propertyKey(selectedProperty));
-  await loadGallery(propertyKey(selectedProperty));
+  selectedProperty = findProperty(key);
+  await loadGallery(key);
+  showToast("Photo deleted.");
 }
 
 window.deleteGalleryImage =
@@ -4804,16 +4840,39 @@ window.renderBookings =
 
 async function updateBooking(id,status){
 
+  const booking = bookings.find(b => String(b.id) === String(id));
+  if(!booking || booking.status !== "pending"){
+    showToast("This booking is no longer pending. Refreshing the list.","error");
+    await loadBookings();
+    return;
+  }
+
+  if(!["active","rejected"].includes(status)){
+    showToast("Invalid booking action.","error");
+    return;
+  }
+
   const patch = {status};
   if(status === "active") patch.joined_date = new Date().toISOString();
 
-  const {error} = await db
+  const {data,error} = await db
     .from("student_bookings")
     .update(patch)
-    .eq("id",id);
+    .eq("id",id)
+    .eq("property_id",booking.property_id)
+    .eq("property_table",booking.property_table)
+    .eq("status","pending")
+    .select("id")
+    .maybeSingle();
 
   if(error){
     showToast(error.message,"error");
+    return;
+  }
+
+  if(!data){
+    showToast("Booking was already changed or is not accessible.","error");
+    await loadBookings();
     return;
   }
 
@@ -5846,81 +5905,78 @@ window.renderAvailability =
 
 async function saveAvailability(key,button){
 
-  const p =
-    findProperty(key);
+  const p = findProperty(key);
+  if(!p) return;
 
-  if(!p)
-    return;
-
-  const container =
-    button?.closest("div[style*='border']")
-    || document;
-
-  const inputs =
-    container.querySelectorAll(
-      "[data-field]"
-    );
-
+  const container = button?.closest("div[style*='border']") || document;
+  const inputs = container.querySelectorAll("[data-field]");
   const payload = {};
+  const numericFields = [
+    "total_beds","available_beds","seating_capacity","available_seats",
+    "monthly_plan","weekly_plan","daily_plan"
+  ];
 
-  inputs.forEach(el => {
+  for(const el of inputs){
+    const field = el.dataset.field;
+    let value = el.value.trim();
 
-    let value =
-      el.value;
-
-    const field =
-      el.dataset.field;
-
-    if(
-      [
-        "total_beds",
-        "available_beds",
-        "seating_capacity",
-        "available_seats"
-      ].includes(field)
-    ){
-
-      value =
-        value === ""
-        ? null
-        : Number(value);
-
+    if(numericFields.includes(field)){
+      if(value === ""){
+        value = null;
+      }else{
+        value = Number(value);
+        if(!Number.isFinite(value) || value < 0){
+          showToast("Availability and plan amounts must be valid non-negative numbers.","error");
+          el.focus();
+          return;
+        }
+      }
+    }else if(value === ""){
+      value = null;
     }
 
-    payload[field] =
-      value === ""
-      ? null
-      : value;
+    payload[field] = value;
+  }
 
-  });
+  if(p.table === "hostels"){
+    const total = payload.total_beds;
+    const available = payload.available_beds;
+    if(total !== null && available !== null && available > total){
+      showToast("Available beds cannot exceed total beds.","error");
+      return;
+    }
+  }
 
-  const {
-    error
-  } = await db
+  if(p.table === "libraries"){
+    const capacity = payload.seating_capacity;
+    const available = payload.available_seats;
+    if(capacity !== null && available !== null && available > capacity){
+      showToast("Available seats cannot exceed seating capacity.","error");
+      return;
+    }
+  }
+
+  const {data,error} = await db
     .from(p.table)
     .update(payload)
     .eq("id",p.id)
-    .eq("owner_id",currentUser.id);
+    .eq("owner_id",currentUser.id)
+    .select("id")
+    .maybeSingle();
 
   if(error){
-
-    showToast(
-      error.message,
-      "error"
-    );
-
+    showToast(error.message,"error");
     return;
-
   }
 
-  showToast(
-    "Availability updated."
-  );
+  if(!data){
+    showToast("Property could not be updated. Check owner access and try again.","error");
+    return;
+  }
 
+  showToast("Availability updated.");
   await loadProperties();
-
   renderAvailability();
-
 }
 
 window.saveAvailability =
