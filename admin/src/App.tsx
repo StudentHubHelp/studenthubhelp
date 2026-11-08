@@ -2099,7 +2099,7 @@ export default function App() {
                 handleOpenPropertyPreview
               }
               onListingRequestUpdated={(updated) => setListingRequests((prev) => prev.map((item) => String(item.id) === String(updated.id) ? updated : item))}
-              onEditListingRequest={(request) => setListingRequestToEdit(request)},
+              onEditListingRequest={(request) => setListingRequestToEdit(request)}
               onPreviewListingRequest={(request) => handleOpenPropertyPreview({
                 ...request,
                 id: String(request.id),
