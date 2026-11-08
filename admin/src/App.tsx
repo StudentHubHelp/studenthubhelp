@@ -55,6 +55,17 @@ import { AuthScreen } from './components/AuthScreen';
 import { AppointmentsView } from './components/AppointmentsView';
 
 export default function App() {
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try { return window.localStorage.getItem('shh-admin-theme') === 'light' ? 'light' : 'dark'; }
+    catch { return 'dark'; }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('shh-admin-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+    } catch { /* Theme still works for this session if storage is unavailable. */ }
+  }, [theme]);
   // =========================================================
   // AUTHENTICATION
   // =========================================================
@@ -1565,7 +1576,7 @@ export default function App() {
   // =========================================================
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-slate-100 flex overflow-hidden font-sans antialiased selection:bg-amber-400 selection:text-slate-950">
+    <div data-theme={theme} className="min-h-screen bg-[#07090E] text-slate-100 flex overflow-hidden font-sans antialiased selection:bg-amber-400 selection:text-slate-950">
 
       {/* TOAST */}
 
@@ -1632,6 +1643,8 @@ export default function App() {
         {/* HEADER */}
 
         <Header
+          theme={theme}
+          onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
           currentTab={currentTab}
           onSelectTab={setCurrentTab}
           onRefresh={loadData}
