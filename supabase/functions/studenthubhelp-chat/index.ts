@@ -4,17 +4,12 @@ const U=(Deno.env.get("SUPABASE_URL")||"").replace(/\/$/,"");
 const K=Deno.env.get("SUPABASE_SECRET_KEY")||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const GEMINI=Deno.env.get("GEMINI_API_KEY")||"";
 const MODEL="gemini-3.8-flash";
-const RATE_WINDOW_MS=60_000, RATE_MAX=30;
-const rateMap=new Map<string,{start:number,count:number}>();
-const ownerLeadRateMap=new Map<string,{start:number,count:number}>();
-const OWNER_LEAD_WINDOW_MS=10*60_000, OWNER_LEAD_MAX=3;
-function ownerLeadAllowed(req:Request){const key=rateKey(req),now=Date.now(),old=ownerLeadRateMap.get(key);pruneRateMap(ownerLeadRateMap,now);if(!old||now-old.start>=OWNER_LEAD_WINDOW_MS){ownerLeadRateMap.set(key,{start:now,count:1});return true}if(old.count>=OWNER_LEAD_MAX)return false;old.count++;return true}
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization,x-client-info,apikey,content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json"};
 const SRC=[["hostels","hostel"],["tiffins","tiffin"],["libraries","library"],["cafes","cafe"],["bookstores","bookstore"]] as const;
 const n=(v:any)=>String(v??"").toLowerCase().normalize("NFKC").replace(/[^a-z0-9\u0900-\u097f]+/gi," ").replace(/\s+/g," ").trim();
 const num=(v:any)=>{const x=Number(String(v??"").replace(/,/g,""));return Number.isFinite(x)?x:undefined};
-function rateKey(req:Request){const f=req.headers.get("cf-connecting-ip")||"unknown";return f.trim().slice(0,100)||"unknown"}
-function pruneRateMap(map:Map<string,{start:number,count:number}>,now:number){if(map.size<5000)return;for(const [key,value] of map){if(now-value.start>Math.max(RATE_WINDOW_MS,OWNER_LEAD_WINDOW_MS))map.delete(key);if(map.size<4000)break}}\nfunction allowed(req:Request){const key=rateKey(req),now=Date.now(),old=rateMap.get(key);pruneRateMap(rateMap,now);if(!old||now-old.start>=RATE_WINDOW_MS){rateMap.set(key,{start:now,count:1});return true}if(old.count>=RATE_MAX)return false;old.count++;return true}
+function rateKey(req:Request,sessionId:string){const ip=req.headers.get("cf-connecting-ip")||req.headers.get("x-real-ip");if(ip?.trim())return ip.trim().slice(0,100);const ua=req.headers.get("user-agent")||"unknown";return ("session:"+sessionId+":"+ua).slice(0,220)}
+async function consumeRateLimit(scope:string,key:string,limit:number,windowSeconds:number){if(!U||!K)throw Error("rate limiter database configuration missing");const r=await fetch(U+"/rest/v1/rpc/consume_chatbot_rate_limit",{method:"POST",headers:{apikey:K,Authorization:"Bearer "+K,"Content-Type":"application/json"},body:JSON.stringify({p_scope:scope,p_key:key,p_limit:limit,p_window_seconds:windowSeconds})});if(!r.ok)throw Error("distributed rate limiter unavailable: "+r.status);return await r.json()===true}
 async function db<T>(path:string):Promise<T>{if(!U||!K)throw Error("database configuration missing");const r=await fetch(U+path,{headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json"}});if(!r.ok)throw Error(`database ${r.status}`);return await r.json() as T}
 type ChatbotRuntimeConfig={enabled:boolean;ai_rerank_enabled:boolean;lead_capture_enabled:boolean;comparison_enabled:boolean;budget_planner_enabled:boolean;max_candidates:number;max_results:number;max_output_tokens:number;temperature:number;maintenance_message:string};
 const DEFAULT_RUNTIME_CONFIG:ChatbotRuntimeConfig={enabled:true,ai_rerank_enabled:true,lead_capture_enabled:true,comparison_enabled:true,budget_planner_enabled:true,max_candidates:40,max_results:8,max_output_tokens:900,temperature:0.2,maintenance_message:""};
@@ -253,18 +248,18 @@ Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:H});
  if(req.method!=="POST")return new Response(JSON.stringify({error:"POST required"}),{status:405,headers:H});
  try{
-  if(!allowed(req))return new Response(JSON.stringify({error:"Too many requests. Please try again shortly."}),{status:429,headers:{...H,"Retry-After":"60"}});
   const contentLength=Number(req.headers.get("content-length")||0);if(contentLength>32768)return new Response(JSON.stringify({error:"Request is too large."}),{status:413,headers:H});
   const rawBody=await req.text();if(new TextEncoder().encode(rawBody).byteLength>32768)return new Response(JSON.stringify({error:"Request is too large."}),{status:413,headers:H});
   let b:any;try{b=JSON.parse(rawBody)}catch{return new Response(JSON.stringify({error:"Invalid JSON request."}),{status:400,headers:H})}
   const msg=String(b?.message||"").trim().slice(0,1500),history=Array.isArray(b?.history)?b.history.slice(-8).map((x:any)=>({role:String(x?.role||"").slice(0,20),text:String(x?.text||"").slice(0,1500)})):[];
   if(!msg)return new Response(JSON.stringify({error:"Message is required"}),{status:400,headers:H});
   const sessionId=String(b?.sessionId||crypto.randomUUID());
+  try{if(!await consumeRateLimit("chat",rateKey(req,sessionId),30,60))return new Response(JSON.stringify({error:"Too many requests. Please try again shortly."}),{status:429,headers:{...H,"Retry-After":"60"}})}catch(e){console.error(e);return new Response(JSON.stringify({error:"Chat service temporarily unavailable."}),{status:503,headers:H})}
   const cfg=await getRuntimeConfig();
   if(!cfg.enabled)return new Response(JSON.stringify({reply:cfg.maintenance_message||"StudentHubHelp AI assistant is temporarily unavailable. Please try again shortly.",grounded:false,maintenance:true}),{status:503,headers:H});
   if(String(b?.action||"")==="submit_owner_lead"){
     if(!cfg.lead_capture_enabled)return new Response(JSON.stringify({error:"Owner listing requests are temporarily disabled."}),{status:403,headers:H});
-    if(!ownerLeadAllowed(req))return new Response(JSON.stringify({error:"Too many owner requests. Please try again later."}),{status:429,headers:{...H,"Retry-After":"600"}});
+    try{if(!await consumeRateLimit("owner_lead",rateKey(req,sessionId),3,600))return new Response(JSON.stringify({error:"Too many owner requests. Please try again later."}),{status:429,headers:{...H,"Retry-After":"600"}})}catch(e){console.error(e);return new Response(JSON.stringify({error:"Owner request service temporarily unavailable."}),{status:503,headers:H})}
     const lead=b?.ownerLead||{};
     const name=String(lead.name||"").trim().replace(/\s+/g," ").slice(0,80);
     const phone=String(lead.phone||"").trim().slice(0,20);
