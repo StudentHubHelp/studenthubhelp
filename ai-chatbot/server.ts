@@ -623,8 +623,9 @@ CRITICAL DATA SAFETY:
       parts: [{ text: preferredTopic ? `[Priority Focus: ${preferredTopic}] ${message}` : message }]
     });
 
+    let timeoutId: ReturnType<typeof setTimeout>;
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Gemini API timeout after 6 seconds')), 6000);
+      timeoutId = setTimeout(() => reject(new Error('Gemini API timeout after 8 seconds')), 8000);
     });
 
     const apiPromise = ai.models.generateContent({
@@ -699,7 +700,9 @@ CRITICAL DATA SAFETY:
       }
     });
 
-    const response = (await Promise.race([apiPromise, timeoutPromise])) as any;
+    let response: any;
+    try { response = await Promise.race([apiPromise, timeoutPromise]); }
+    finally { clearTimeout(timeoutId!); }
     const latencyMs = Date.now() - startTime;
 
     const parsed = JSON.parse(response.text?.trim() || '{}');
