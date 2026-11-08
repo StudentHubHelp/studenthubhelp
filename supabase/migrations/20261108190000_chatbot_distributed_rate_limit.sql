@@ -6,6 +6,7 @@ create table if not exists private.chatbot_rate_limits (
   hit_count integer not null default 0,
   primary key (scope, key_hash)
 );
+alter table private.chatbot_rate_limits enable row level security;
 revoke all on table private.chatbot_rate_limits from public, anon, authenticated;
 grant all on table private.chatbot_rate_limits to service_role;
 
