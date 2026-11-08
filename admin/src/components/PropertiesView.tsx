@@ -103,6 +103,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFilter);
   const [areaFilter, setAreaFilter] = useState('');
+  const [nameFilter, setNameFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [verifiedFilter, setVerifiedFilter] = useState('');
   const [featuredFilter, setFeaturedFilter] = useState('');
@@ -126,7 +127,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
   // The parent App already loads the complete paginated Supabase property dataset.
   // Re-fetching all five property tables here caused a second, sequential network load.
 
-  useEffect(() => setSelectedIds([]), [categoryFilter, selectedCategory, statusFilter, verifiedFilter, featuredFilter, areaFilter, ownerFilter]);
+  useEffect(() => setSelectedIds([]), [categoryFilter, selectedCategory, statusFilter, verifiedFilter, featuredFilter, areaFilter, nameFilter, ownerFilter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -170,6 +171,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
     const sourceProperties = isPendingRequestView ? pendingListingProperties : liveProperties;
     const categoryQuery = normalizeCompact(selectedCategory);
     const areaQuery = normalizeText(areaFilter);
+    const nameQuery = normalizeText(nameFilter);
     const ownerQuery = normalizeText(ownerFilter);
     const ownerPhoneQuery = digitsOnly(ownerFilter);
     const requestedStatus = normalizeText(statusFilter);
@@ -202,6 +204,25 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           (p as any).location,
         ];
         const matchesArea = !areaQuery || locationValues.some((value) => valueMatches(value, areaQuery));
+
+        // Dedicated property-name search covers category-specific naming columns
+        // used by older and newer Supabase records.
+        const propertyNameValues = [
+          (p as any).name,
+          (p as any).title,
+          (p as any).property_name,
+          (p as any).hostel_name,
+          (p as any).pg_name,
+          (p as any).tiffin_name,
+          (p as any).mess_name,
+          (p as any).library_name,
+          (p as any).cafe_name,
+          (p as any).business_name,
+          (p as any).bookstore_name,
+          (p as any).shop_name,
+        ];
+        const searchablePropertyNames = propertyNameValues.filter((value) => value !== null && value !== undefined && String(value).trim() !== '');
+        const matchesName = !nameQuery || searchablePropertyNames.some((value) => valueMatches(value, nameQuery));
 
         const currentStatus = normalizeText(propStatus(p));
         const matchesStatus = !requestedStatus || currentStatus === requestedStatus;
@@ -236,7 +257,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
           valueMatches(whatsapp, ownerQuery) ||
           (!!ownerPhoneQuery && (digitsOnly(phone).includes(ownerPhoneQuery) || digitsOnly(whatsapp).includes(ownerPhoneQuery)));
 
-        return matchesCat && matchesArea && matchesStatus && matchesVerified && matchesFeatured && matchesOwner;
+        return matchesCat && matchesArea && matchesName && matchesStatus && matchesVerified && matchesFeatured && matchesOwner;
       })
       .sort((a, b) => {
         if (sortBy === 'rating-high') return propRating(b) - propRating(a);
@@ -247,7 +268,7 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
         if (sortBy === 'oldest') return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
         return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
       });
-  }, [liveProperties, pendingListingProperties, isPendingRequestView, selectedCategory, areaFilter, statusFilter, verifiedFilter, featuredFilter, ownerFilter, sortBy]);
+  }, [liveProperties, pendingListingProperties, isPendingRequestView, selectedCategory, areaFilter, nameFilter, statusFilter, verifiedFilter, featuredFilter, ownerFilter, sortBy]);
 
   const toggleSelectAll = () => setSelectedIds(selectedIds.length === filteredProperties.length ? [] : filteredProperties.map((p) => `${propertySourceTable(p)}:${String(p.id)}`));
   const toggleSelectOne = (p: PropertyItem) => {
@@ -404,11 +425,12 @@ export const PropertiesView: React.FC<PropertiesViewProps> = ({
       <div className="rounded-3xl bg-[#081026] border border-slate-800 p-4 space-y-3 shadow-xl">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 text-xs">
           {categoryFilter === 'all' && <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="all">All Categories</option>{MASTER_TYPES.map((t) => <option key={t} value={t}>{propertyConfig[t].category}</option>)}</select>}
-          <input type="text" value={areaFilter} onChange={(e) => setAreaFilter(e.target.value)} placeholder="City / Locality / Area" className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white placeholder-slate-400" />
+          <input type="text" value={areaFilter} onChange={(e) => setAreaFilter(e.target.value)} placeholder="City / Locality / Area" aria-label="Filter by city locality or area" className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white placeholder-slate-400" />
+          <input type="search" value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} placeholder="Search Property Name" aria-label="Search properties by name" className="bg-[#0d1838] border border-cyan-500/30 rounded-xl p-2.5 text-white placeholder-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20" />
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="">Any Status</option><option value="active">Active Only</option><option value="pending">Pending Only</option><option value="suspended">Suspended Only</option></select>
           <select value={verifiedFilter} onChange={(e) => setVerifiedFilter(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="">Verification: Any</option><option value="true">Verified Badge</option><option value="false">Unverified</option></select>
           <select value={featuredFilter} onChange={(e) => setFeaturedFilter(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="">Featured: Any</option><option value="true">Featured Only</option><option value="false">Non-Featured</option></select>
-          <input type="text" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} placeholder="Owner / Title / Phone" className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white placeholder-slate-400" />
+          <input type="text" value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} placeholder="Owner / Phone / ID" className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white placeholder-slate-400" />
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-[#0d1838] border border-slate-700 rounded-xl p-2.5 text-white"><option value="newest">Sort: Newest</option><option value="oldest">Sort: Oldest</option><option value="rating-high">Rating (High to Low)</option><option value="views">Most Viewed</option><option value="bookings">Most Booked</option><option value="az">A-Z Name</option></select>
         </div>
         {selectedIds.length > 0 && <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-[#0d1838] border border-amber-500/30 text-xs animate-in fade-in duration-150"><span className="font-bold text-amber-300">{selectedIds.length} {isPendingRequestView ? 'listing requests' : 'properties'} selected</span><div className="flex flex-wrap items-center justify-end gap-1.5 flex-1 min-w-0">{isPendingRequestView ? <button disabled={bulkBusy} onClick={handleBulkApprove} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold disabled:opacity-50">{bulkBusy ? 'Approving…' : 'Bulk Approve'}</button> : <><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('verify')} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 font-bold disabled:opacity-50">{bulkBusy ? 'Working…' : 'Bulk Verify'}</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('activate')} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 font-bold disabled:opacity-50">Bulk Activate</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('suspend')} className="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 font-bold disabled:opacity-50">Bulk Suspend</button><button disabled={bulkBusy} onClick={() => handlePersistedBulkAction('feature')} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 font-bold disabled:opacity-50">Bulk Feature</button><button disabled={bulkBusy || categoryFilter !== 'all'} onClick={handleBulkDeleteProperties} className="px-3 py-1.5 rounded-lg bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 font-bold whitespace-nowrap shrink-0 disabled:opacity-50">{bulkBusy ? 'Working…' : 'Bulk Delete'}</button></>}</div></div>}
