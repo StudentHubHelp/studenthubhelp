@@ -328,8 +328,8 @@ export default function App() {
           : []
       );
 
-      // No confirmed notifications table/source in the live schema. Never fabricate notifications.
-      setNotifications([]);
+      // Notifications are loaded by Header from the existing admin_notifications
+      // table and synchronized back through onNotificationsChange.
 
       setActivityLogs(
         Array.isArray(
@@ -345,7 +345,14 @@ export default function App() {
           : []
       );
 
-      setDbConnected(true);
+      setDbConnected(fetched?.connectionOk === true);
+
+      if (Array.isArray(fetched?.loadErrors) && fetched.loadErrors.length > 0) {
+        showToast(
+          `Supabase partially loaded: ${fetched.loadErrors.length} table(s) failed. Check the connection details before relying on dashboard totals.`,
+          'error'
+        );
+      }
 
       setLastSync(
         new Date().toLocaleTimeString()
@@ -1632,6 +1639,7 @@ export default function App() {
           unreadNotifications={
             unreadNotificationCount
           }
+          onNotificationsChange={setNotifications}
           properties={properties}
           students={students}
           owners={owners}
