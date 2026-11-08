@@ -60,7 +60,8 @@ async function multiDirect(types:string[],ct?:string,maxBudget?:number,locationT
 function monthlyAmount(p:any,type:string){const value=Number(type==="hostel"?(p.monthly_rent??p.monthly_fee??p.price):(p.monthly_plan??p.monthly_fee??p.price));return Number.isFinite(value)&&value>0?value:undefined}
 async async function planComboBudget(cityName:string,totalBudget:number,genderFilter?:string){
  const hostelCap=Math.floor(totalBudget*0.70),tiffinCap=Math.floor(totalBudget*0.35);
- const [hostels,tiffins]=await Promise.all([direct("hostel",cityName,hostelCap,undefined,genderFilter),direct("tiffin",cityName,tiffinCap)]);
+ const [hostelRows,tiffinRows]=await Promise.all([direct("hostel",cityName,hostelCap,undefined,genderFilter),direct("tiffin",cityName,tiffinCap)]);
+ const hostels=hostelRows.filter(p=>n(p.city||"")===n(cityName));const tiffins=tiffinRows.filter(p=>n(p.city||"")===n(cityName));
  const pricedHostels=hostels.map(p=>({p,cost:monthlyAmount(p,"hostel")})).filter(x=>x.cost!==undefined) as Array<{p:any;cost:number}>;
  const pricedTiffins=tiffins.map(p=>({p,cost:monthlyAmount(p,"tiffin")})).filter(x=>x.cost!==undefined) as Array<{p:any;cost:number}>;
  let best:{hostel:any;tiffin:any;hostelCost:number;tiffinCost:number;total:number;score:number}|undefined;
