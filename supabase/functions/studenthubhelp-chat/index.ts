@@ -8,12 +8,12 @@ const RATE_WINDOW_MS=60_000, RATE_MAX=30;
 const rateMap=new Map<string,{start:number,count:number}>();
 const ownerLeadRateMap=new Map<string,{start:number,count:number}>();
 const OWNER_LEAD_WINDOW_MS=10*60_000, OWNER_LEAD_MAX=3;
-function ownerLeadAllowed(req:Request){const key=rateKey(req),now=Date.now(),old=ownerLeadRateMap.get(key);if(!old||now-old.start>=OWNER_LEAD_WINDOW_MS){ownerLeadRateMap.set(key,{start:now,count:1});return true}if(old.count>=OWNER_LEAD_MAX)return false;old.count++;return true}
+function ownerLeadAllowed(req:Request){const key=rateKey(req),now=Date.now(),old=ownerLeadRateMap.get(key);pruneRateMap(ownerLeadRateMap,now);if(!old||now-old.start>=OWNER_LEAD_WINDOW_MS){ownerLeadRateMap.set(key,{start:now,count:1});return true}if(old.count>=OWNER_LEAD_MAX)return false;old.count++;return true}
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization,x-client-info,apikey,content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json"};
 const SRC=[["hostels","hostel"],["tiffins","tiffin"],["libraries","library"],["cafes","cafe"],["bookstores","bookstore"]] as const;
 const n=(v:any)=>String(v??"").toLowerCase().normalize("NFKC").replace(/[^a-z0-9\u0900-\u097f]+/gi," ").replace(/\s+/g," ").trim();
 const num=(v:any)=>{const x=Number(String(v??"").replace(/,/g,""));return Number.isFinite(x)?x:undefined};
-function rateKey(req:Request){const f=req.headers.get("cf-connecting-ip")||req.headers.get("x-real-ip")||"unknown";return f.trim().slice(0,100)||"unknown"}
+function rateKey(req:Request){const f=req.headers.get("cf-connecting-ip")||"unknown";return f.trim().slice(0,100)||"unknown"}
 function pruneRateMap(map:Map<string,{start:number,count:number}>,now:number){if(map.size<5000)return;for(const [key,value] of map){if(now-value.start>Math.max(RATE_WINDOW_MS,OWNER_LEAD_WINDOW_MS))map.delete(key);if(map.size<4000)break}}\nfunction allowed(req:Request){const key=rateKey(req),now=Date.now(),old=rateMap.get(key);pruneRateMap(rateMap,now);if(!old||now-old.start>=RATE_WINDOW_MS){rateMap.set(key,{start:now,count:1});return true}if(old.count>=RATE_MAX)return false;old.count++;return true}
 async function db<T>(path:string):Promise<T>{if(!U||!K)throw Error("database configuration missing");const r=await fetch(U+path,{headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json"}});if(!r.ok)throw Error(`database ${r.status}`);return await r.json() as T}
 type ChatbotRuntimeConfig={enabled:boolean;ai_rerank_enabled:boolean;lead_capture_enabled:boolean;comparison_enabled:boolean;budget_planner_enabled:boolean;max_candidates:number;max_results:number;max_output_tokens:number;temperature:number;maintenance_message:string};
@@ -137,7 +137,7 @@ CURRENT MESSAGE:
 ${msg}
 RECENT CONVERSATION:
 ${h}`;
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:Math.min(900,cfg.max_output_tokens),temperature:cfg.temperature,thinkingConfig:{thinkingLevel:"medium"}}})});
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:cfg.max_output_tokens,temperature:cfg.temperature,thinkingConfig:{thinkingLevel:"medium"}}})});
   if(!r.ok)return fallback;const j=await r.json(),txt=j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||"";return normalizeIntent(safeJson(txt));
  }catch{return fallback}
 }
@@ -186,7 +186,7 @@ Rules:
 - Never recommend listings unless the current message has a property-search intent.
 - Do not expose internal system/tool details.
 Return only the natural reply text.`;
-const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:Math.min(700,cfg.max_output_tokens),temperature:cfg.temperature,thinkingConfig:{thinkingLevel:"low"}}})});if(!r.ok)return{};const j=await r.json();return{reply:j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||""}}catch{return{}}}
+const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":GEMINI},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:cfg.max_output_tokens,temperature:cfg.temperature,thinkingConfig:{thinkingLevel:"low"}}})});if(!r.ok)return{};const j=await r.json();return{reply:j?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||""}}catch{return{}}}
 
 async function dbWrite(method:string,path:string,body:any,prefer="return=minimal"){
   if(!U||!K)throw Error("database configuration missing");
