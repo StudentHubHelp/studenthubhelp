@@ -22,6 +22,11 @@ on:
 permissions:
   contents: write
 
+# Serialize all workflows that write generated files or commits to main.
+concurrency:
+  group: studenthubhelp-main-write-queue
+  cancel-in-progress: false
+
 jobs:
   seo-upgrade:
     if: "github.event_name != 'push' || !contains(github.event.head_commit.message, '[seo-optimized]')"
@@ -165,6 +170,7 @@ jobs:
           git config user.email 'actions@github.com'
           git add '*.html' scripts/seo-aeo-build.mjs js/property-seo-upgrade.js js/seo-location-entities.js robots.txt .github/workflows/seo-indexing-upgrade.yml
           git diff --cached --quiet || git commit -m 'feat: complete SEO GEO AEO upgrade [seo-optimized]'
-          git push
+          git pull --rebase -X ours origin main
+          git push origin HEAD:main
 
 # SEO/GEO/AEO automation is intentionally UI-neutral: no layout, theme, search controls or DB schema changes.
