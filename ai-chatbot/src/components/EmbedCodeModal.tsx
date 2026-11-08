@@ -25,8 +25,9 @@ export const EmbedCodeModal: React.FC<EmbedCodeModalProps> = ({ isOpen, onClose 
 
   if (!isOpen) return null;
 
-  const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://studenthubhelp.github.io';
-  const embedScript = `<script src="${currentHost}/widget.js" data-api-url="${currentHost}" data-color="${primaryColor}" data-accent="${accentColor}" data-position="${position}" async></script>`;
+  const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://studenthubhelp.in';
+  const chatApiUrl = 'https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat';
+  const embedScript = `<script src="${currentHost}/widget.js" data-api-url="${chatApiUrl}" data-color="${primaryColor}" data-accent="${accentColor}" data-position="${position}" async></script>`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(embedScript);
