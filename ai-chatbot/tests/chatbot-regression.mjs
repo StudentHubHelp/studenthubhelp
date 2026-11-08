@@ -58,6 +58,8 @@ async function runCase(testCase, index) {
     if (!types.some(type => type.includes('hostel')) || !types.some(type => type.includes('tiffin'))) failures.push('combo must contain both a hostel and a tiffin listing');
     if (Number(plan?.totalEstimated) > testCase.maxBudget) failures.push('combined monthly total exceeds budget');
     if (Number(plan?.totalEstimated) <= 0) failures.push('combined monthly total is missing/invalid');
+    const itemTotal = Array.isArray(plan?.items) ? plan.items.reduce((sum, item) => sum + Number(item.amount || 0), 0) : 0;
+    if (Math.abs(itemTotal - Number(plan?.totalEstimated)) > 0.01) failures.push('budget breakdown items do not add up to totalEstimated');
     if (listings.some(item => String(item.city || '').toLowerCase() !== testCase.city.toLowerCase())) failures.push('combo contains a listing from another city');
     if (failures.length) throw new Error(failures.join('; '));
     return testCase.query + ' (combo total ₹' + Number(plan.totalEstimated).toLocaleString('en-IN') + ')';
