@@ -29,9 +29,9 @@ import { ChatMessage, ChatApiResponse, SentimentType } from '../types';
 import { BudgetPlannerCard } from './BudgetPlannerCard';
 import { ComparisonMatrixCard } from './ComparisonMatrixCard';
 
-const CHAT_API_URL =
-  (import.meta as any).env?.VITE_CHAT_API_URL ||
-  'https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat';
+const PRODUCTION_CHAT_API = 'https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat';
+const configuredChatApi = (import.meta as any).env?.VITE_CHAT_API_URL || PRODUCTION_CHAT_API;
+const CHAT_API_URL = (import.meta as any).env?.PROD ? PRODUCTION_CHAT_API : configuredChatApi;
 const SUPABASE_ANON_KEY =
   (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
 
