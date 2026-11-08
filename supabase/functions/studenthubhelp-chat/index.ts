@@ -40,7 +40,7 @@ async function direct(type:string,ct?:string,maxBudget?:number,locationTerm?:str
    ? `monthly_rent.lte.${budget},and(monthly_rent.is.null,monthly_fee.lte.${budget}),and(monthly_rent.is.null,monthly_fee.is.null,price.lte.${budget})`
    : `monthly_fee.lte.${budget},and(monthly_fee.is.null,price.lte.${budget})`);
  }
- const term=String(locationTerm||"").replace(/[^a-zA-Z0-9\\u0900-\\u097f -]/g," ").replace(/\\s+/g," ").trim();
+ const term=String(locationTerm||"").replace(/[^a-zA-Z0-9\u0900-\u097f -]/g," ").replace(/\s+/g," ").trim();
  if(term)orGroups.push(["name","area","address","landmark","nearby_coaching","description"].map(col=>`${col}.ilike.*${term}*`).join(","));
  if(type==="hostel"&&(genderFilter==="girls"||genderFilter==="boys")){
   const variants=genderFilter==="girls"?["girls","girl","female","women","ladies","ladki","महिला","लड़क"]:["boys","boy","male","men","ladke","लड़के"];
