@@ -28,7 +28,7 @@ function secondaryCats(s:string){const x=n(s),out:string[]=[];const defs:[string
 function coords(p:any){const lat=Number(p.latitude??p.lat??p.location_latitude??p.latitude_deg),lng=Number(p.longitude??p.lng??p.lon??p.location_longitude??p.longitude_deg);return Number.isFinite(lat)&&Number.isFinite(lng)?{lat,lng}:null}
 function distanceKm(a:any,b:any){const A=coords(a),B=coords(b);if(!A||!B)return undefined;const r=(v:number)=>v*Math.PI/180,dLat=r(B.lat-A.lat),dLon=r(B.lng-A.lng),h=Math.sin(dLat/2)**2+Math.cos(r(A.lat))*Math.cos(r(B.lat))*Math.sin(dLon/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h))}
 function distanceToLandmark(p:any,l:any){const A=coords(p),B=l?{latitude:l.lat,longitude:l.lng}:null;if(!A||!B)return undefined;return distanceKm(A,B)}
-function searchText(p:any){return n([p.name,p.title,p.business_name,p.service_name,p.city,p.area,p.service_area,p.address,p.landmark,p.description,p.facilities,p.amenities].filter(Boolean).join(" "))}
+function searchText(p:any){return n([p.name,p.title,p.business_name,p.service_name,p.type,p.gender_type,p.gender,p.city,p.area,p.service_area,p.address,p.landmark,p.nearby_coaching,p.description,p.facilities,p.amenities].filter(Boolean).join(" "))}
 async function direct(type:string,ct?:string,maxBudget?:number,locationTerm?:string,genderFilter?:string){
  const table=SRC.find(x=>x[1]===type)?.[0];if(!table)return [];
  const params=new URLSearchParams({select:"*",status:"eq.active",limit:"500",offset:"0"});
