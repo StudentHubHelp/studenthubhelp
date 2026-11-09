@@ -210,17 +210,32 @@ function galleryImage(r,gallery){
 function rowPrice(r){
   return numberPrice(r,r.__category);
 }
+function editDistance(a,b){
+  const x=norm(a),y=norm(b);
+  if(!x||!y)return 99;
+  const dp=Array.from({length:x.length+1},(_,i)=>Array.from({length:y.length+1},(_,j)=>i===0?j:j===0?i:0));
+  for(let i=1;i<=x.length;i++)for(let j=1;j<=y.length;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(x[i-1]===y[j-1]?0:1));
+  return dp[x.length][y.length];
+}
 function matchSearch(rows,query,category,previous){
   const n=norm(query);
   const cityCandidates=[...new Set(rows.map(r=>String(r.city||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
   const explicitCity=cityCandidates.find(x=>x.length>1&&n.includes(norm(x)))||null;
-  const unknownCityMatch=n.match(/\b(?:in|mein|me)\s+([a-z][a-z-]*)/i)||n.match(/^([a-z][a-z-]*)\s+mein\b/i);
-  const cityBase=explicitCity||(unknownCityMatch?unknownCityMatch[1]:null)||null;
+  // "Jhunjhnu me cafe" / "cafe in Jhunjhnu": extract the location phrase,
+  // never the word following "me/in" (which is usually the category).
+  const cityPhraseMatch=n.match(/^([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})\s+(?:mein|me)\b/)
+    ||n.match(/\b(?:in|mein|me)\s+([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})$/i);
+  const cityPhrase=cityPhraseMatch?.[1]?.trim()||null;
+  const fuzzyCity=cityPhrase?cityCandidates
+    .map(name=>({name,distance:editDistance(cityPhrase,name),length:norm(name).length}))
+    .filter(x=>x.length>=5&&x.distance<=Math.max(1,Math.floor(x.length*0.22)))
+    .sort((a,b)=>a.distance-b.distance||b.length-a.length)[0]?.name:null;
+  const cityBase=explicitCity||fuzzyCity||null;
   const areaFields=r=>[r.area,r.landmark,r.nearby_coaching,r.address].filter(Boolean).map(String);
   const areaCandidates=[...new Set(rows.flatMap(areaFields))].sort((a,b)=>b.length-a.length);
   const explicitArea=areaCandidates.find(x=>x.length>2&&n.includes(norm(x)))||null;
   const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\s+([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})/i)
-    ||n.match(/([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})\s+(?:par|pr|pe|mein|me)\b/i);
+    ||(!cityPhrase? n.match(/([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})\s+(?:par|pr|pe|mein|me)\b/i):null);
   const area=explicitArea||(unknownAreaMatch?unknownAreaMatch[1].trim():null)||previous?.areaName||null;
   const areaCityMatches=area?[...new Map(rows.filter(r=>areaFields(r).some(v=>norm(v).includes(norm(area)))).map(r=>[norm(r.city),String(r.city||'').trim()]).filter(([key,value])=>key&&value)).values()]:[];
   const areaCity=areaCityMatches.length===1?areaCityMatches[0]:null;
