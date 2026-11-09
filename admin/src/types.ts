@@ -274,6 +274,7 @@ export interface OwnerPropertyImage {
 
 export type SectionTab =
   | 'overview'
+  | 'chatbot'
   | 'analytics'
   | 'user-management'
   | 'students'
