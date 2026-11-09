@@ -21,7 +21,7 @@ const $ = (s,root=document)=>root.querySelector(s);
 const esc = v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = v=>String(v==null?'':v).toLocaleLowerCase('en-IN').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
 const words = s=>norm(s).split(' ').filter(Boolean);
-let db=null,sessionUser=null,profile=null,cacheRows=null,cacheGallery=null,activeSearch=null,history=[];
+let chatbotDb=null,sessionUser=null,profile=null,cacheRows=null,cacheGallery=null,activeSearch=null,history=[];
 let sdkPromise=null;
 
 function getExistingClient(){
@@ -43,13 +43,13 @@ function loadSdk(){
   return sdkPromise;
 }
 async function getDb(){
-  if(db)return db;
+  if(chatbotDb)return chatbotDb;
   const existing=getExistingClient();
-  if(existing){db=existing;return db;}
+  if(existing){chatbotDb=existing;return chatbotDb;}
   await loadSdk();
   if(!window.supabase?.createClient)throw new Error('Supabase client unavailable');
-  db=window.__SHH_CHATBOT_DB__||(window.__SHH_CHATBOT_DB__=window.supabase.createClient(CFG.url,CFG.anon,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}));
-  return db;
+  chatbotDb=window.__SHH_CHATBOT_DB__||(window.__SHH_CHATBOT_DB__=window.supabase.createClient(CFG.url,CFG.anon,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}));
+  return chatbotDb;
 }
 async function getUser(){
   const client=await getDb();
@@ -172,12 +172,20 @@ function galleryImage(r,gallery){
 function rowPrice(r){
   return numberPrice(r,r.__category);
 }
-function matchSearch(rows,query,category){
-  const n=norm(query),gender=genderOf(query),budget=budgetOf(query),facilities=requestedFacilities(query);
+function matchSearch(rows,query,category,previous){
+  const n=norm(query);
   const cityCandidates=[...new Set(rows.map(r=>String(r.city||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
-  const city=cityCandidates.find(x=>x.length>1&&n.includes(norm(x)))||null;
+  const explicitCity=cityCandidates.find(x=>x.length>1&&n.includes(norm(x)))||null;
+  const unknownCityMatch=n.match(/\\b(?:in|mein|me)\\s+([a-z][a-z-]*)/i)||n.match(/^([a-z][a-z-]*)\\s+mein\\b/i);
+  const city=explicitCity||(unknownCityMatch?unknownCityMatch[1]:null)||previous?.cityName||null;
   const areaCandidates=[...new Set(rows.flatMap(r=>[r.area,r.landmark,r.nearby_coaching].filter(Boolean).map(String)))].sort((a,b)=>b.length-a.length);
-  const area=areaCandidates.find(x=>x.length>2&&n.includes(norm(x)))||null;
+  const explicitArea=areaCandidates.find(x=>x.length>2&&n.includes(norm(x)))||null;
+  const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\\s+([a-z][a-z-]*)/i);
+  const area=explicitArea||(unknownAreaMatch?unknownAreaMatch[1]:null)||previous?.areaName||null;
+  const gender=genderOf(query)||previous?.gender||null;
+  const budget=budgetOf(query)??previous?.budget??null;
+  const requested=requestedFacilities(query);
+  const facilities=requested.length?requested:(previous?.facilities||[]);
   let out=rows.filter(r=>r.__category===category);
   if(city)out=out.filter(r=>norm(r.city)===norm(city));
   if(gender)out=out.filter(r=>genderMatch(r)===gender);
@@ -187,12 +195,14 @@ function matchSearch(rows,query,category){
   }
   if(budget!==null)out=out.filter(r=>{const p=rowPrice(r);return p&&p.value!==null&&p.value<=budget;});
   if(facilities.length)out=out.filter(r=>facilities.every(f=>facilityValue(r,f)));
-  const tokens=words(query).filter(w=>w.length>2&&!['hostel','hostals','girls','boys','dikhao','show','please','chahiye','mujhe','mein','me','ka','ki','ke','near','paas','budget','under','upto','tak','only'].includes(w));
-  if(!city&&!area&&tokens.length){
+  const tokens=words(query).filter(w=>w.length>2&&!['hostel','hostals','girls','boys','dikhao','show','please','chahiye','mujhe','mein','me','ka','ki','ke','near','nearby','paas','budget','under','upto','tak','only','kar','do','badlo','change','more','aur','listings','next'].includes(w));
+  const explicitLocation=/\\b(?:near|nearby|around|road|area)\\b|ke paas|paas/.test(n);
+  if(explicitLocation&&!explicitArea&&!unknownAreaMatch&&!previous?.areaName)out=[];
+  else if(!city&&!area&&tokens.length){
     const filtered=out.filter(r=>{const h=rowSearchText(r);return tokens.some(t=>h.includes(t));});
     if(filtered.length)out=filtered;
   }
-  return {rows:out,city,area,gender,budget,facilities};
+  return {rows:out,city,area,gender,budget,facilities,cityName:city,areaName:area};
 }
 function detailsUrl(r){
   const type=r.__category,slug=String(r.slug||'').trim(),id=r.id;
@@ -292,15 +302,27 @@ async function processMessage(q,container){
   }
   const support=supportAnswer(q);
   if(support)return support;
+  if(/more|aur listings|next results|aur dikhao/.test(n)&&activeSearch?.results?.length){
+    const next=activeSearch.offset+4,shown=activeSearch.results.slice(next,next+4);
+    if(!shown.length)return 'Is search ke saare matching results dikhaye ja chuke hain. Aap filters badal kar nayi search kar sakte hain.';
+    activeSearch.offset=next;
+    const gallery=await loadGallery();
+    return shown.map(r=>cardHtml(r,gallery)).join('')+(activeSearch.results.length>next+4?quickMarkup(['Aur listings dikhao']):'');
+  }
+  if(/budget badlo|change budget/.test(n))return 'Aapka naya maximum budget kitna hai? Example: 5000 tak.';
+  if(/area badlo|change area/.test(n))return 'Kaunsa area, road ya coaching landmark chahiye? Example: Allen ke paas.';
+  if(/facilities filter/.test(n))return 'Kaunsi facility zaroori hai? Example: Wi-Fi, AC, food ya parking.';
   let cat=categoryOf(q);
-  if(!cat&&activeSearch?.category&&/more|aur|next|dikhao|show|same|inme|isme/.test(n))cat=activeSearch.category;
+  if(!cat&&activeSearch?.category)cat=activeSearch.category;
   if(cat){
     const rows=await loadRows();
-    const result=matchSearch(rows,q,cat);
-    activeSearch={category:cat,query:q,city:result.city,area:result.area,gender:result.gender,budget:result.budget,facilities:result.facilities};
+    const previous=activeSearch&&activeSearch.category===cat?activeSearch:null;
+    const result=matchSearch(rows,q,cat,previous);
+    activeSearch={category:cat,query:q,city:result.city,area:result.area,cityName:result.cityName,areaName:result.areaName,gender:result.gender,budget:result.budget,facilities:result.facilities,results:result.rows,offset:0};
     if(!result.rows.length){
       const city=result.city?' in '+esc(result.city):'';
-      return 'Is exact criteria'+city+' mein matching active '+esc(CFG.categories[cat].label.toLowerCase())+' listing nahi mili. Main doosre city ki listing mix nahi karunga. Aap budget ya area badal kar try kar sakte hain.'+quickMarkup(['Budget badlo','Area badlo','All '+CFG.categories[cat].label+' search']);
+      const area=result.area?' near '+esc(result.area):'';
+      return 'Is exact criteria'+city+area+' mein matching active '+esc(CFG.categories[cat].label.toLowerCase())+' listing nahi mili. Main doosre city ya area ki listing mix nahi karunga. Aap budget ya area badal kar try kar sakte hain.'+quickMarkup(['Budget badlo','Area badlo','Facilities filter karo']);
     }
     const gallery=await loadGallery();
     const shown=result.rows.slice(0,4);
