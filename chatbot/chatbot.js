@@ -59,6 +59,11 @@ function saveHistory(role,content){
 function restoreHistory(){
   try{const saved=JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY)||'[]');if(Array.isArray(saved))history=saved.filter(x=>x&&Date.now()-Number(x.at||0)<86400000).slice(-20);}catch(e){history=[];}
 }
+function isContextFollowUp(q){
+  const n=norm(q);
+  return /^(aur|and|also|same|waha|wahaan|there|it|usme|isme|what about|how much|kitna|kitne|price|fees?|timing|hours|menu|delivery|seats?|rent|deposit|wifi|ac|food|facility|facilities|boys|girls|under|budget|\\d{3,})\\b/.test(n)
+    || /\\b(what about|how much|aur batao|same area|usi area|wahi)\\b/.test(n);
+}
 function lastConversationCategory(){
   for(let i=history.length-1;i>=0;i--){if(history[i].role==='user'){const cat=categoryOf(history[i].content);if(cat)return cat;}}
   return null;
@@ -449,7 +454,7 @@ function supportAnswer(q){
     return 'Hostel / PG book karne ka tarika:<br>1. <a href="/pg-finder.html">Hostel / PG Finder</a> kholen aur apni pasand ka hostel select karein.<br>2. Hostel ke details page par <b>Book Now</b> par click karein.<br>3. Booking form mein <b>Joining Date</b> aur <b>Duration</b> select karein.<br>4. Login karein (agar pehle se login nahi hain), phir <b>Confirm Booking Request</b> dabayein.<br>5. Request <b>Pending</b> status mein save hogi. Owner/admin ke response ke baad status update hoga; request submit hona confirmed room ya payment ki guarantee nahi hai.<br><br><a href="/pg-finder.html">Hostel Finder kholen</a>.';
   }
   // Category-wise everyday help: answer guidance questions without hijacking listing searches.
-  const helpCategory=categoryOf(q)||activeSearch?.category||lastConversationCategory();
+  const helpCategory=categoryOf(q)||activeSearch?.category||(isContextFollowUp(q)?lastConversationCategory():null);
   const asksHow=/\b(how|kaise|kese|kes[e]?|kya|what|which|where|when|kitna|kitne|kab|kahan|kaun|can i|do you|does|is there|available|milta|milti|milega|milengi|chahiye|batao|samjhao)\b/.test(n);
   const asksInfo=/\b(price|rate|fees?|charges?|cost|timing|time|hours|open|close|menu|food|meal|delivery|seating|seat|books?|stationery|photocopy|xerox|printing|rental|rent|facilit|feature|detail|contact|number|location|address|payment|refund|cancel|plan|monthly|daily|weekly|veg|non.?veg|jain|wifi|ac|parking|washroom|bathroom|security|rules?)\b/.test(n);
   const isSearchRequest=/\b(show|dikhao|find|search|listings?|options?|suggest|recommend|near|nearby)\b|ke paas|\bpaas\b/.test(n);
@@ -592,7 +597,7 @@ async function processMessage(q,container){
   if(/facilities filter/.test(n))return 'Kaunsi facility zaroori hai? Example: Wi-Fi, AC, food ya parking.';
   let cat=categoryOf(q);
   if(!cat&&activeSearch?.category)cat=activeSearch.category;
-  if(!cat)cat=lastConversationCategory();
+  if(!cat&&isContextFollowUp(q))cat=lastConversationCategory();
   if(cat){
     const rows=await loadRows();
     if(cacheErrors[cat])throw new Error('Unable to read '+CFG.categories[cat].table);
