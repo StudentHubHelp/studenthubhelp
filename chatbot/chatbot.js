@@ -21,7 +21,7 @@ const $ = (s,root=document)=>root.querySelector(s);
 const esc = v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = v=>String(v==null?'':v).toLocaleLowerCase('en-IN').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
 const words = s=>norm(s).split(' ').filter(Boolean);
-let chatbotDb=null,sessionUser=null,profile=null,cacheRows=null,cacheGallery=null,activeSearch=null,history=[];
+let chatbotDb=null,sessionUser=null,profile=null,cacheRows=null,cacheGallery=null,cacheErrors={},activeSearch=null,history=[];
 let sdkPromise=null;
 
 function getExistingClient(){
@@ -186,10 +186,12 @@ async function loadRows(){
   const entries=Object.entries(CFG.categories);
   const results=await Promise.all(entries.map(async([key,c])=>{
     const {data,error}=await client.from(c.table).select('*').eq('status','active').limit(500);
-    if(error){console.warn('[SHH chatbot] '+c.table+':',error.message);return [];}
+    if(error){cacheErrors[key]=error.message;console.warn('[SHH chatbot] '+c.table+':',error.message);return [];}
+    cacheErrors[key]=null;
     return (data||[]).map(r=>({...r,__category:key,__table:c.table}));
   }));
   cacheRows=results.flat();
+  if(entries.every(([key])=>cacheErrors[key]))throw new Error('No public listing tables could be loaded');
   return cacheRows;
 }
 async function loadGallery(){
@@ -315,6 +317,12 @@ function supportAnswer(q){
   if(/contact|email|phone|instagram|director|sampark|संपर्क/.test(n)){
     return 'Aap StudentHubHelp support se yahan contact kar sakte hain:<br><b>Email:</b> <a href="mailto:'+CFG.contactEmail+'">'+CFG.contactEmail+'</a><br><b>Instagram:</b> <a href="'+CFG.instagram+'" target="_blank" rel="noopener">studenthubhelp</a><br><a href="'+CFG.supportUrl+'">Contact Us page kholen</a>.';
   }
+  if(/appointment|consultation|meeting|schedule a call|समय लेना/.test(n)){
+    return 'Aap StudentHubHelp team ke saath discussion ke liye <a href="/appointment.html">Appointment Request page</a> use kar sakte hain. Request submit hone ke baad team review karke confirmation degi.';
+  }
+  if(/feedback|suggestion|idea|sujhav|प्रतिक्रिया/.test(n)){
+    return 'Aapka feedback welcome hai. Apna suggestion <a href="/contact-us.html">Contact Us</a> page ya support email ke through share karein.';
+  }
   if(/add listing|listing add|property add|list kar|register property|अपनी प्रॉपर्टी/.test(n)){
     return 'Apni property ya service submit karne ke liye <a href="/add-listing.html">Add Listing page</a> kholen. Form submit hone ke baad listing admin review ke liye jaati hai.';
   }
@@ -404,6 +412,7 @@ async function processMessage(q,container){
   if(!cat&&activeSearch?.category)cat=activeSearch.category;
   if(cat){
     const rows=await loadRows();
+    if(cacheErrors[cat])throw new Error('Unable to read '+CFG.categories[cat].table);
     const previous=activeSearch&&activeSearch.category===cat?activeSearch:null;
     const result=matchSearch(rows,q,cat,previous);
     activeSearch={category:cat,query:q,city:result.city,area:result.area,cityName:result.cityName,areaName:result.areaName,gender:result.gender,budget:result.budget,facilities:result.facilities,results:result.rows,offset:0};
@@ -429,7 +438,7 @@ function buildUI(){
   if($('#shh-chat-launcher'))return;
   const launcher=document.createElement('button');launcher.id='shh-chat-launcher';launcher.type='button';launcher.setAttribute('aria-label','Open StudentHubHelp Assistant');launcher.setAttribute('aria-expanded','false');launcher.innerHTML='✦<span class="shh-launcher-dot"></span>';
   const panel=document.createElement('section');panel.id='shh-chat-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','StudentHubHelp Assistant');
-  panel.innerHTML='<header class="shh-chat-head"><div class="shh-chat-avatar">✦</div><div class="shh-chat-brand"><strong>Ultra Advance AI Assistant</strong><span>StudentHubHelp · Your Student Support Partner</span></div><span class="shh-chat-status">Online</span><button type="button" data-shh-close aria-label="Close assistant">×</button></header><div class="shh-chat-messages" aria-live="polite"></div><div class="shh-chat-compose"><form><input type="text" name="message" maxlength="500" autocomplete="off" placeholder="Ask me anything..." aria-label="Type your message"><button type="submit" aria-label="Send message">➤</button></form><div class="shh-chat-footnote">StudentHubHelp · No external AI API</div></div>';
+  panel.innerHTML='<header class="shh-chat-head"><div class="shh-chat-avatar">✦</div><div class="shh-chat-brand"><strong>Ultra Advance AI Assistant</strong><span>StudentHubHelp · Your Student Support Partner</span></div><span class="shh-chat-status">Ready</span><button type="button" data-shh-close aria-label="Close assistant">×</button></header><div class="shh-chat-messages" aria-live="polite"></div><div class="shh-chat-compose"><form><input type="text" name="message" maxlength="500" autocomplete="off" placeholder="Ask me anything..." aria-label="Type your message"><button type="submit" aria-label="Send message">➤</button></form><div class="shh-chat-footnote">StudentHubHelp · No external AI API</div></div>';
   document.body.append(launcher,panel);
   const messages=$('.shh-chat-messages',panel),form=$('form',panel),input=$('input',panel);
   async function open(){panel.classList.add('shh-open');launcher.setAttribute('aria-expanded','true');input.focus();if(!messages.dataset.greeted){messages.dataset.greeted='1';addMessage(messages,'Namaste! 👋 Main StudentHubHelp ka smart support assistant hoon. Aap hostel search, booking issue, listing status, website help ya contact details pooch sakte hain.'+quickMarkup(['Hostel dikhao','Booking help','Meri listing status','Contact support']));try{const user=await getUser();if(user){const name=profile?.full_name||user.email?.split('@')[0]||'Student';addMessage(messages,'Welcome back, <b>'+esc(name)+'</b>! Main aapki apni booking, listing request aur account se related help kar sakta hoon.');}}catch(e){console.warn('[SHH chatbot] personal greeting unavailable');}}}
