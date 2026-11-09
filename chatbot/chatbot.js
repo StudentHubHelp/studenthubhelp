@@ -83,15 +83,15 @@ function classifyIntent(q){
 }
 function plainChatText(value){
   return String(value||'')
-    .replace(/<br\\s*\\/?\\s*>/gi,'\\n')
-    .replace(/<\\/(?:p|div|li)>/gi,'\\n')
-    .replace(/<a[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)<\\/a>/gi,'$2 ($1)')
+    .replace(/<br\s*\/?\s*>/gi,'\n')
+    .replace(/<\/(?:p|div|li)>/gi,'\n')
+    .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi,'$2 ($1)')
     .replace(/<[^>]*>/g,' ')
     .replace(/&nbsp;/g,' ')
     .replace(/&amp;/g,'&')
     .replace(/&lt;/g,'<')
     .replace(/&gt;/g,'>')
-    .replace(/\\n[ \\t]+/g,'\\n')
+    .replace(/\n[ \t]+/g,'\n')
     .trim();
 }
 async function logChatMessage(role,content,extra={}){
