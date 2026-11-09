@@ -122,6 +122,8 @@ test('stores and restores search context between page visits', () => {
 });
 
 test('asks for clarification instead of reusing stale category for unrelated questions', async () => {
+  api.setActiveSearch(null);
+  api.clearHistory();
   const answer = await api.processMessage('what is photosynthesis?');
   assert.match(answer, /Apna sawal Hindi|detail mein batayein|clarification/i);
 });
