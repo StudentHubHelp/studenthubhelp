@@ -29,7 +29,6 @@ import {
   Store,
   Edit,
   User,
-  Bot,
 } from 'lucide-react';
 
 interface IntelligenceViewsProps {
