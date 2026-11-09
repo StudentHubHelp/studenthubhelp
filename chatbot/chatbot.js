@@ -342,7 +342,7 @@ function supportAnswer(q){
   const helpCategory=categoryOf(q);
   const asksHow=/\\b(how|kaise|kese|kes[e]?|kya|what|which|where|when|kitna|kitne|kab|kahan|kaun|can i|do you|does|is there|available|milta|milti|milega|milengi|chahiye|batao|samjhao)\\b/.test(n);
   const asksInfo=/\\b(price|rate|fees?|charges?|cost|timing|time|hours|open|close|menu|food|meal|delivery|seating|seat|books?|stationery|photocopy|xerox|printing|rental|rent|facilit|feature|detail|contact|number|location|address|payment|refund|cancel|plan|monthly|daily|weekly|veg|non.?veg|jain|wifi|ac|parking|washroom|bathroom|security|rules?)\\b/.test(n);
-  const isSearchRequest=/\\b(show|dikhao|dikhाओ|find|search|listings?|options?|suggest|recommend|near|nearby|ke paas|paas|in|mein|me|par|pr)\\b/.test(n);
+  const isSearchRequest=/\\b(show|dikhao|find|search|listings?|options?|suggest|recommend|near|nearby)\\b|ke paas|\\bpaas\\b/.test(n);
   if(helpCategory && (asksHow || asksInfo) && !isSearchRequest){
     const label=CFG.categories[helpCategory].label;
     const common='Aap chatbot se city/area ke saath category ka naam likhkar active listings search kar sakte hain, jaise <b>"Sikar mein '+label+' dikhao"</b>. Listing card par jo price, address, facilities aur contact details available hongi, wahi dikhengi. Jis detail ka record nahi hai, main uska guess nahi karunga.';
