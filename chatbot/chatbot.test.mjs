@@ -147,7 +147,7 @@ test('answers named hostel detail questions with the active Supabase listing car
   assert.match(answer, /Sangam Girls Hostel/);
   assert.match(answer, /Veer Hanuman/);
   assert.match(answer, /View Details/);
-  assert.doesNotMatch(answer, /Aap chatbot se city\\/area/);
+  assert.doesNotMatch(answer, /Aap chatbot se city/);
 });
 
 test('finds a named hostel when the user asks for its details', () => {
