@@ -81,6 +81,19 @@ function classifyIntent(q){
   if(/\b(complaint|complain|feedback|suggestion|contact|help|support)\b/.test(n))return 'general_support';
   return 'general_question';
 }
+function plainChatText(value){
+  return String(value||'')
+    .replace(/<br\\s*\\/?\\s*>/gi,'\\n')
+    .replace(/<\\/(?:p|div|li)>/gi,'\\n')
+    .replace(/<a[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)<\\/a>/gi,'$2 ($1)')
+    .replace(/<[^>]*>/g,' ')
+    .replace(/&nbsp;/g,' ')
+    .replace(/&amp;/g,'&')
+    .replace(/&lt;/g,'<')
+    .replace(/&gt;/g,'>')
+    .replace(/\\n[ \\t]+/g,'\\n')
+    .trim();
+}
 async function logChatMessage(role,content,extra={}){
   try{
     const client=await getDb();
@@ -99,7 +112,7 @@ async function logChatMessage(role,content,extra={}){
     };
     const {error}=await client.from('chatbot_messages').insert({
       conversation_id:session.conversationId,visitor_id:session.visitorId,user_id:user?.id||null,
-      role,content:String(content||'').slice(0,12000),intent:role==='user'?classifyIntent(content):null,
+      role,content:(role==='assistant'?plainChatText(content):String(content||'')).slice(0,12000),intent:role==='user'?classifyIntent(content):null,
       category:categoryOf(content)||context.category||null,metadata
     });
     if(error)console.warn('[SHH chatbot] transcript save failed:',error.message);
