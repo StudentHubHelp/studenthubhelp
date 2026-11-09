@@ -216,7 +216,7 @@ function matchSearch(rows,query,category,previous){
   const facilities=requested.length?requested:(previous?.facilities||[]);
   let out=rows.filter(r=>r.__category===category);
   if(city)out=out.filter(r=>norm(r.city)===norm(city));
-  if(gender)out=out.filter(r=>genderMatch(r)===gender);
+  if(gender)out=out.filter(r=>r.__category==='library'?(r[gender+'_section']===true||genderMatch(r)===gender):genderMatch(r)===gender);
   if(area){
     const a=norm(area);
     out=out.filter(r=>norm([r.area,r.landmark,r.nearby_coaching,r.address].filter(Boolean).join(' ')).includes(a));
