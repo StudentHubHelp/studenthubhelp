@@ -46,6 +46,7 @@ const UnverifiedPropertiesView = lazy(() => import('./components/UnverifiedPrope
 const PartnerManagementView = lazy(() => import('./components/PartnerManagementView').then((m) => ({ default: m.PartnerManagementView })));
 const PlatformControlViews = lazy(() => import('./components/PlatformControlViews').then((m) => ({ default: m.PlatformControlViews })));
 const IntelligenceViews = lazy(() => import('./components/IntelligenceViews').then((m) => ({ default: m.IntelligenceViews })));
+const ChatbotView = lazy(() => import('./components/ChatbotView').then((m) => ({ default: m.ChatbotView })));
 import { PropertyPreviewModal } from './components/PropertyPreviewModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { OwnerEditModal } from './components/OwnerEditModal';
@@ -1676,6 +1677,8 @@ export default function App() {
 
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto pb-20">
           <Suspense fallback={<div className="min-h-[240px] flex items-center justify-center text-xs text-slate-400">Loading section…</div>}>
+
+          {currentTab === 'chatbot' && <ChatbotView />}
 
           {currentTab === 'partners' && (
             <PartnerManagementView />
