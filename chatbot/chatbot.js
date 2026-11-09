@@ -604,7 +604,7 @@ async function processMessage(q,container){
   }
   // Resolve named property questions from active Supabase rows before generic FAQ replies.
   const namedCategory=categoryOf(q);
-  const asksNamedProperty=/(?:\\b(?:bare|baare|about|details?|info|information)\\b|ke\\s+bare)/.test(n);
+  const asksNamedProperty=/(?:\b(?:bare|baare|about|details?|info|information)\b|ke\s+bare)/.test(n);
   if(namedCategory&&asksNamedProperty){
     const liveRows=await loadRows();
     if(cacheErrors[namedCategory])throw new Error('Unable to read '+CFG.categories[namedCategory].table);
