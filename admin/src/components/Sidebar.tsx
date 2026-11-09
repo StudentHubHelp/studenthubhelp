@@ -28,7 +28,6 @@ import {
   Sliders,
   Tags,
   Power,
-  Bot,
   User
 } from 'lucide-react';
 
