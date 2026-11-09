@@ -217,21 +217,48 @@ function detailsUrl(r){
 }
 function facilitiesForCard(r){
   const list=[];
-  const map={wifi:'Wi-Fi',ac_available:'AC',food_available:'Food',mess_available:'Mess',attached_bathroom:'Attached Bathroom',parking:'Parking',laundry:'Laundry',security:'Security',cctv:'CCTV',geyser:'Hot Water',power_backup:'Power Backup',charging_point:'Charging',locker:'Locker',delivery_available:'Delivery',home_delivery:'Home Delivery'};
+  const map={wifi:'Wi-Fi',ac_available:'AC',food_available:'Food',mess_available:'Mess',attached_bathroom:'Attached Bathroom',parking:'Parking',laundry:'Laundry',security:'Security',cctv:'CCTV',geyser:'Hot Water',power_backup:'Power Backup',charging_point:'Charging',locker:'Locker',delivery_available:'Delivery',home_delivery:'Home Delivery',takeaway:'Takeaway',open_24_hours:'24 Hours',stationery:'Stationery',photocopy:'Photocopy'};
   for(const [k,label] of Object.entries(map))if(r?.[k]===true&&!list.includes(label))list.push(label);
   if(!list.length&&r?.facilities){
-    const parts=String(r.facilities).split(/[,;|\n]/).map(x=>x.trim()).filter(Boolean);
+    const parts=String(r.facilities).split(/[,;|\\n]/).map(x=>x.trim()).filter(Boolean);
     list.push(...parts.slice(0,4));
   }
   return list.slice(0,4);
 }
+function categoryDetails(r){
+  const c=r.__category,items=[];
+  const add=(label,value)=>{if(value!==undefined&&value!==null&&String(value).trim()!==''&&String(value).toLowerCase()!=='false')items.push(label+': '+String(value));};
+  if(c==='hostel'){
+    add('Room',r.room_sharing||(Array.isArray(r.room_types)?r.room_types.join(', '):r.room_types));
+    if(Number(r.available_beds)>0)add('Seats',Number(r.available_beds)+' available');
+    if(r.food_available===true||r.mess_available===true)add('Food',r.food_type||'Available');
+  }else if(c==='tiffin'){
+    add('Meals',r.meal_type||[r.breakfast_available?'Breakfast':'',r.lunch_available?'Lunch':'',r.dinner_available?'Dinner':''].filter(Boolean).join(', '));
+    add('Plan',r.plan_type);
+    if(r.delivery_available===true||r.home_delivery===true)add('Delivery','Available');
+  }else if(c==='library'){
+    add('Type',r.library_type);
+    if(r.open_24_hours===true)add('Hours','24 hours');
+    if(Number(r.available_seats)>0)add('Seats',Number(r.available_seats)+' available');
+  }else if(c==='cafe'){
+    add('Cuisine',r.cuisine);
+    add('Hours',[r.opening_time,r.closing_time].filter(Boolean).join(' – '));
+    if(r.delivery===true)add('Delivery','Available');
+  }else if(c==='bookstore'){
+    add('Books',r.categories||r.classes);
+    if(r.stationery===true)add('Service','Stationery');
+    if(r.photocopy===true)add('Service','Photocopy');
+  }
+  return items.slice(0,3);
+}
 function cardHtml(r,gallery){
   const cfg=CFG.categories[r.__category],name=String(r.name||r.property_name||cfg.label),address=[r.address,r.area,r.city].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(', ')||'Location details not provided';
   const p=rowPrice(r),verified=r.verified===true,gender=genderMatch(r),image=galleryImage(r,gallery)||cfg.banner;
-  const phone=String(r.phone||'').replace(/[^\d+]/g,'');
-  const chips=facilitiesForCard(r);
+  const phone=String(r.phone||'').replace(/[^\\d+]/g,''),whatsapp=String(r.whatsapp||'').replace(/[^\\d]/g,'');
+  const chips=facilitiesForCard(r),details=categoryDetails(r);
   const price=p?(p.value!==null?'₹'+Math.round(p.value).toLocaleString('en-IN'):''):'';
-  return '<article class="shh-chat-card"><img loading="lazy" decoding="async" src="'+esc(image)+'" alt="'+esc(name)+'" onerror="this.onerror=null;this.src=\''+esc(cfg.banner)+'\'"><div class="shh-card-body"><div class="shh-card-top"><div class="shh-card-title">'+esc(name)+'</div><span class="shh-card-verified '+(verified?'':'shh-card-provided')+'">'+(verified?'✓ Verified':'Details Provided')+'</span></div>'+(price?'<div class="shh-card-price">'+esc(price)+' <small>'+esc(p.label)+'</small></div>':p?'<div class="shh-card-price">'+esc(p.label)+'</div>':'')+'<div class="shh-card-meta">📍 '+esc(address)+'</div>'+(gender?'<div class="shh-card-meta">👥 '+(gender==='girls'?'Girls':gender==='boys'?'Boys':'Co-ed')+'</div>':'')+(chips.length?'<div class="shh-card-chips">'+chips.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':'')+'<div class="shh-card-actions"><a href="'+esc(detailsUrl(r))+'">View Details</a>'+(phone?'<a class="secondary" href="tel:'+esc(phone)+'">Call Owner</a>':'<a class="secondary" href="'+esc(detailsUrl(r))+'">Contact Info</a>')+'</div></div></article>';
+  const rating=String(r.rating||'').trim();
+  return '<article class="shh-chat-card"><img loading="lazy" decoding="async" src="'+esc(image)+'" alt="'+esc(name)+'" onerror="this.onerror=null;this.src=\\''+esc(cfg.banner)+'\\'"><div class="shh-card-body"><div class="shh-card-top"><div class="shh-card-title">'+esc(name)+'</div><span class="shh-card-verified '+(verified?'':'shh-card-provided')+'">'+(verified?'✓ Verified':'Details Provided')+'</span></div>'+(price?'<div class="shh-card-price">'+esc(price)+' <small>'+esc(p.label)+'</small></div>':p?'<div class="shh-card-price">'+esc(p.label)+'</div>':'')+'<div class="shh-card-meta">📍 '+esc(address)+'</div>'+(gender?'<div class="shh-card-meta">👥 '+(gender==='girls'?'Girls':gender==='boys'?'Boys':'Co-ed')+'</div>':'')+(rating?'<div class="shh-card-meta">★ Rating: '+esc(rating)+'</div>':'')+(details.length?'<div class="shh-card-meta">'+details.map(esc).join(' · ')+'</div>':'')+(chips.length?'<div class="shh-card-chips">'+chips.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':'')+'<div class="shh-card-actions"><a href="'+esc(detailsUrl(r))+'">View Details</a>'+(phone?'<a class="secondary" href="tel:'+esc(phone)+'">Call Owner</a>':whatsapp?'<a class="secondary" href="https://wa.me/'+esc(whatsapp)+'" target="_blank" rel="noopener">WhatsApp</a>':'<a class="secondary" href="'+esc(detailsUrl(r))+'">Contact Info</a>')+'</div></div></article>';
 }
 function addMessage(container,text,who='bot',extra=''){
   const wrap=document.createElement('div');wrap.className='shh-chat-message '+(who==='user'?'shh-user':'');
