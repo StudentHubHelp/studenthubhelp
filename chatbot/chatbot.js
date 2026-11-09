@@ -64,7 +64,8 @@ async function getUser(){
   sessionUser=data?.session?.user||null;
   profile=null;
   if(sessionUser){
-    const p=await client.from('profiles').select('id,full_name,email,role,status').eq('id',sessionUser.id).maybeSingle();
+    const activeClient=chatbotDb||client;
+    const p=await activeClient.from('profiles').select('id,full_name,email,role,status').eq('id',sessionUser.id).maybeSingle();
     if(!p.error)profile=p.data||null;
   }
   return sessionUser;
@@ -85,9 +86,17 @@ function genderOf(q){
 function budgetOf(q){
   const n=norm(q);
   const m=n.match(/(?:under|below|less than|upto|up to|within|budget|tak|maximum|max|₹|rs)\s*(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)?|(?:₹|rs\.?\s*)(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)?/i);
-  if(!m){const before=n.match(/(\\d[\\d,]*(?:\\.\\d+)?)\\s*(k|thousand)?\\s*(?:tak|under|below|max|maximum)/i);if(!before)return null;let v=Number(before[1].replace(/,/g,''));if(!Number.isFinite(v))return null;if(before[2])v*=1000;return v>0?v:null;}
+  if(!m){
+    const before=n.match(/(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)?\s*(?:tak|under|below|max|maximum)/i);
+    if(!before)return null;
+    let v=Number(before[1].replace(/,/g,''));
+    if(!Number.isFinite(v))return null;
+    if(before[2])v*=1000;
+    return v>0?v:null;
+  }
   const raw=(m[1]||m[3]||'').replace(/,/g,'');
-  let value=Number(raw);if(!Number.isFinite(value))return null;
+  let value=Number(raw);
+  if(!Number.isFinite(value))return null;
   if((m[2]||m[4]||'').toLowerCase()==='k'||(m[2]||m[4]||'').toLowerCase()==='thousand')value*=1000;
   return value>0?value:null;
 }
