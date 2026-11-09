@@ -28,7 +28,6 @@ function getExistingClient(){
   try{if(typeof dbClient!=='undefined'&&dbClient&&typeof dbClient.from==='function')return dbClient;}catch(e){}
   try{if(typeof supabaseClient!=='undefined'&&supabaseClient&&typeof supabaseClient.from==='function')return supabaseClient;}catch(e){}
   try{if(typeof db!=='undefined'&&db&&typeof db.from==='function')return db;}catch(e){}
-  try{if(window.__SHH_SMART_SEARCH_DB__&&typeof window.__SHH_SMART_SEARCH_DB__.from==='function')return window.__SHH_SMART_SEARCH_DB__;}catch(e){}
   return null;
 }
 function loadSdk(){
@@ -53,8 +52,15 @@ async function getDb(){
 }
 async function getUser(){
   const client=await getDb();
-  const {data,error}=await client.auth.getSession();
+  let {data,error}=await client.auth.getSession();
   if(error)throw error;
+  if(!data?.session && window.supabase?.createClient && client!==window.__SHH_CHATBOT_DB__){
+    try{
+      const authClient=window.__SHH_CHATBOT_AUTH_DB__||(window.__SHH_CHATBOT_AUTH_DB__=window.supabase.createClient(CFG.url,CFG.anon,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}));
+      const authResult=await authClient.auth.getSession();
+      if(authResult.data?.session){chatbotDb=authClient;data=authResult.data;error=authResult.error;}
+    }catch(e){}
+  }
   sessionUser=data?.session?.user||null;
   profile=null;
   if(sessionUser){
@@ -79,7 +85,7 @@ function genderOf(q){
 function budgetOf(q){
   const n=norm(q);
   const m=n.match(/(?:under|below|less than|upto|up to|within|budget|tak|maximum|max|₹|rs)\s*(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)?|(?:₹|rs\.?\s*)(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)?/i);
-  if(!m)return null;
+  if(!m){const before=n.match(/(\\d[\\d,]*(?:\\.\\d+)?)\\s*(k|thousand)?\\s*(?:tak|under|below|max|maximum)/i);if(!before)return null;let v=Number(before[1].replace(/,/g,''));if(!Number.isFinite(v))return null;if(before[2])v*=1000;return v>0?v:null;}
   const raw=(m[1]||m[3]||'').replace(/,/g,'');
   let value=Number(raw);if(!Number.isFinite(value))return null;
   if((m[2]||m[4]||'').toLowerCase()==='k'||(m[2]||m[4]||'').toLowerCase()==='thousand')value*=1000;
@@ -107,7 +113,7 @@ function requestedFacilities(q){
 }
 function numberPrice(r,cat){
   const keys=cat==='hostel'?['monthly_rent','monthly_fee','price']:cat==='tiffin'?['monthly_plan','monthly_fee','price','weekly_plan','daily_plan']:cat==='library'?['monthly_fee','daily_fee','price']:['price','monthly_fee'];
-  for(const k of keys){const v=Number(r?.[k]);if(Number.isFinite(v)&&v>0)return {value:v,label:k.includes('daily')?'per day':k.includes('weekly')?'per week':cat==='hostel'||k.includes('monthly')?'per month':'listed price'};}
+  for(const k of keys){const v=Number(r?.[k]);if(Number.isFinite(v)&&v>0)return {value:v,label:k.includes('daily')?'per day':k.includes('weekly')?'per week':k.includes('monthly')?'per month':'listed price'};}
   const range=String(r?.monthly_rent_range||r?.price_range||'').trim();
   return range?{value:null,label:range}:null;
 }
@@ -240,6 +246,9 @@ function typing(container){
 }
 function supportAnswer(q){
   const n=norm(q);
+  if(/complaint|complain|report issue|report a problem|shikayat|शिकायत/.test(n)){
+    return 'Main aapki problem samajh sakta hoon. Abhi chatbot ke liye dedicated complaint-submission table/workflow verify nahi hua hai, isliye main fake ticket create nahi karunga. Aap <a href="/contact-us.html">Contact Us</a> page se issue bhej sakte hain ya <a href="mailto:'+CFG.contactEmail+'?subject=StudentHubHelp%20Support%20Issue">support email</a> par details bhej sakte hain.';
+  }
   if(/contact|email|phone|instagram|director|sampark|संपर्क/.test(n)){
     return 'Aap StudentHubHelp support se yahan contact kar sakte hain:<br><b>Email:</b> <a href="mailto:'+CFG.contactEmail+'">'+CFG.contactEmail+'</a><br><b>Instagram:</b> <a href="'+CFG.instagram+'" target="_blank" rel="noopener">studenthubhelp</a><br><a href="'+CFG.supportUrl+'">Contact Us page kholen</a>.';
   }
@@ -262,6 +271,10 @@ function supportAnswer(q){
     return 'Main aapko listings search, property details, Add Listing, login, student support aur contact options mein guide kar sakta hoon. Aap apna sawal natural Hindi, Hinglish ya English mein pooch sakte hain.';
   }
   return null;
+}
+async function myProfile(){
+  const user=await getUser();if(!user)return {login:true};
+  return {user,profile};
 }
 async function myBookings(){
   const user=await getUser();if(!user)return {login:true};
@@ -288,6 +301,12 @@ function statusText(s){
 }
 async function processMessage(q,container){
   const n=norm(q);
+  if(/my profile|my account|meri profile|mera account|profile details|मेरा अकाउंट|मेरी प्रोफाइल/.test(n)){
+    const result=await myProfile();
+    if(result.login)return 'Aapki personal profile details dekhne ke liye pehle <a href="/auth.html">login</a> karein.';
+    const p=result.profile||{};
+    return 'Aap login hain. 👋<br><b>Name:</b> '+esc(p.full_name||'Name not added')+'<br><b>Email:</b> '+esc(p.email||result.user.email||'Not available')+'<br><b>Account role:</b> '+esc(p.role||'Not available')+'<br><a href="/student-dashboard.html">Open your dashboard</a>.';
+  }
   if(/my booking|my bookings|meri booking|meri booking ka|booking status|booking kaha|बुकिंग स्टेटस/.test(n)){
     const result=await myBookings();
     if(result.login)return 'Aapki private booking details dikhane ke liye pehle <a href="/auth.html">login</a> karein.';
@@ -344,7 +363,7 @@ function buildUI(){
   panel.innerHTML='<header class="shh-chat-head"><div class="shh-chat-avatar">✦</div><div class="shh-chat-brand"><strong>StudentHubHelp Assistant</strong><span>Your Student Support Partner</span></div><span class="shh-chat-status">Online</span><button type="button" data-shh-close aria-label="Close assistant">×</button></header><div class="shh-chat-messages" aria-live="polite"></div><div class="shh-chat-compose"><form><input type="text" name="message" maxlength="500" autocomplete="off" placeholder="Ask me anything..." aria-label="Type your message"><button type="submit" aria-label="Send message">➤</button></form><div class="shh-chat-footnote">StudentHubHelp · No external AI API</div></div>';
   document.body.append(launcher,panel);
   const messages=$('.shh-chat-messages',panel),form=$('form',panel),input=$('input',panel);
-  function open(){panel.classList.add('shh-open');launcher.setAttribute('aria-expanded','true');input.focus();if(!messages.dataset.greeted){messages.dataset.greeted='1';addMessage(messages,'Namaste! 👋 Main StudentHubHelp ka smart support assistant hoon. Aap hostel search, booking issue, listing status, website help ya contact details pooch sakte hain.'+quickMarkup(['Hostel dikhao','Booking help','Meri listing status','Contact support']));}}
+  async function open(){panel.classList.add('shh-open');launcher.setAttribute('aria-expanded','true');input.focus();if(!messages.dataset.greeted){messages.dataset.greeted='1';addMessage(messages,'Namaste! 👋 Main StudentHubHelp ka smart support assistant hoon. Aap hostel search, booking issue, listing status, website help ya contact details pooch sakte hain.'+quickMarkup(['Hostel dikhao','Booking help','Meri listing status','Contact support']));try{const user=await getUser();if(user){const name=profile?.full_name||user.email?.split('@')[0]||'Student';addMessage(messages,'Welcome back, <b>'+esc(name)+'</b>! Main aapki apni booking, listing request aur account se related help kar sakta hoon.');}}catch(e){console.warn('[SHH chatbot] personal greeting unavailable');}}}
   function close(){panel.classList.remove('shh-open');launcher.setAttribute('aria-expanded','false');launcher.focus();}
   launcher.addEventListener('click',()=>panel.classList.contains('shh-open')?close():open());
   $('[data-shh-close]',panel).addEventListener('click',close);
