@@ -411,7 +411,8 @@ async function processMessage(q,container){
     return shown.map(r=>cardHtml(r,gallery)).join('')+(activeSearch.results.length>next+4?quickMarkup(['Aur listings dikhao']):'');
   }
   if(/budget badlo|change budget/.test(n))return 'Aapka naya maximum budget kitna hai? Example: 5000 tak.';
-  if(/area badlo|change area/.test(n))return 'Kaunsa area, road ya coaching landmark chahiye? Example: Allen ke paas.';
+  if(/area badlo|change area/.test(n))return 'Kaunsa area, road ya coaching landmark chahiye? Example: Piprali Road par.';
+  if(/city batao|city badlo|change city/.test(n)){if(activeSearch){activeSearch.areaName=null;activeSearch.area=null;}return 'Kaunsa city chahiye? Example: Sikar, Jaipur ya Kota.';}
   if(/facilities filter/.test(n))return 'Kaunsi facility zaroori hai? Example: Wi-Fi, AC, food ya parking.';
   let cat=categoryOf(q);
   if(!cat&&activeSearch?.category)cat=activeSearch.category;
@@ -422,8 +423,6 @@ async function processMessage(q,container){
     const result=matchSearch(rows,q,cat,previous);
     activeSearch={category:cat,query:q,city:result.city,area:result.area,cityName:result.cityName,areaName:result.areaName,gender:result.gender,budget:result.budget,facilities:result.facilities,results:result.rows,offset:0};
     if(!result.rows.length){
-      const city=result.city?' in '+esc(result.city):'';
-      const area=result.area?' near '+esc(result.area):'';
       let nextSteps;
       if(result.area&&result.city){
         const cityLabel=String(result.city).trim();
@@ -431,12 +430,13 @@ async function processMessage(q,container){
       }else if(result.area){
         nextSteps=['City batao','Area badlo'];
       }else if(result.city){
-        nextSteps=['Area badlo','City badlo'];
+        nextSteps=['Area badlo'];
       }else{
         nextSteps=['City batao','Area batao'];
       }
       if(result.budget!==null)nextSteps.push('Budget badlo');
-      return 'Aapne '+(result.area?'<b>'+esc(result.area)+'</b> area':'is location')+(result.city?' ('+esc(result.city)+')':'')+' mein '+esc(CFG.categories[cat].label.toLowerCase())+' maange hain. Is exact location par abhi koi matching active listing nahi mili. Main doosre area ki listings bina aapki permission ke nahi dikhaunga. Kya aap city ke doosre areas ke '+(cat==='cafe'?'cafes':CFG.categories[cat].label.toLowerCase())+' dekhna chahenge, ya location change karni hai?'+quickMarkup(nextSteps);
+      const widerText=result.city?'Agar aap chahen, main '+esc(result.city)+' ke doosre areas ke '+(cat==='cafe'?'cafes':CFG.categories[cat].label.toLowerCase())+' dikha sakta hoon.':'City bata dein, phir main usi city mein exact active listings check karunga.';
+      return 'Aapne '+(result.area?'<b>'+esc(result.area)+'</b> area':'is location')+(result.city?' ('+esc(result.city)+')':'')+' mein '+esc(CFG.categories[cat].label.toLowerCase())+' maange hain. Is exact location par abhi koi matching active listing nahi mili. Main doosre area ki listings bina aapki permission ke nahi dikhaunga. '+widerText+quickMarkup(nextSteps);
     }
     const gallery=await loadGallery();
     const shown=result.rows.slice(0,4);
