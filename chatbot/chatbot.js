@@ -481,8 +481,8 @@ function supportAnswer(q){
       return 'Cafe ke liye aap cuisine/menu, price range, seating, opening hours, delivery aur takeaway ke baare mein pooch sakte hain. Main wahi detail confirm karunga jo listing mein saved hai. '+common;
     }
     if(helpCategory==='bookstore'){
-      if(/book|books|textbook|exam|competitive|class|school|college|availability/.test(n))return 'Bookstore mein kaunsi books ya exam material available hai, ye listing ke categories/details par depend karta hai. Har title ka live stock chatbot verify nahi karta; specific book ke liye store ke listed contact par availability confirm karein. '+common;
       if(/stationery|photocopy|xerox|printing|print/.test(n))return 'Bookstore ki stationery, photocopy/Xerox aur printing services listing mein available dikhayi gayi hon tabhi confirm mani jayengi. Aap <b>"Kota mein stationery wali bookstore dikhao"</b> likhkar search karein. '+common;
+      if(/book|books|textbook|exam|competitive|class|school|college|availability/.test(n))return 'Bookstore mein kaunsi books ya exam material available hai, ye listing ke categories/details par depend karta hai. Har title ka live stock chatbot verify nahi karta; specific book ke liye store ke listed contact par availability confirm karein. '+common;
       if(/price|rate|fees?|charges?|cost|kitna|kitne/.test(n))return 'Books aur stationery ke prices item, edition aur stock ke hisaab se alag hote hain. Chatbot kisi specific book ka live price/stock assume nahi karta; listing ke contact se confirm karein. '+common;
       return 'Bookstore ke liye aap textbooks, competitive exam books, stationery, photocopy/Xerox, printing aur book rental ke baare mein pooch sakte hain. Exact availability store se confirm karni hogi. '+common;
     }
