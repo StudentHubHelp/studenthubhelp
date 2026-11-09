@@ -232,7 +232,7 @@ function matchSearch(rows,query,category,previous){
     .sort((a,b)=>a.distance-b.distance||b.length-a.length)[0]?.name:null;
   const cityBase=explicitCity||fuzzyCity||null;
   const areaFields=r=>[r.area,r.landmark,r.nearby_coaching,r.address].filter(Boolean).map(String);
-  const areaCandidates=[...new Set(rows.flatMap(areaFields))].sort((a,b)=>b.length-a.length);
+  const areaCandidates=[...new Set(rows.flatMap(areaFields).flatMap(v=>String(v).split(/[,;|/]/).map(x=>x.trim()).filter(Boolean)))].sort((a,b)=>b.length-a.length);
   const explicitArea=areaCandidates.find(x=>x.length>2&&n.includes(norm(x)))||null;
   const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\s+([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})/i)
     ||(!cityBase?n.match(/([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})\s+(?:par|pr|pe|mein|me)\b/i):null);
