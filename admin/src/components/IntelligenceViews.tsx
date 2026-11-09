@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChatbotAdminView } from './ChatbotAdminView';
-import { ChatbotAdminControls } from './ChatbotAdminControls';
+import { AdminProfileControls } from './AdminProfileControls';
 import {
   AreaItem,
   AdminNotification,
@@ -30,7 +29,6 @@ import {
   Store,
   Edit,
   User,
-  Bot,
 } from 'lucide-react';
 
 interface IntelligenceViewsProps {
@@ -40,8 +38,7 @@ interface IntelligenceViewsProps {
     | 'activity'
     | 'settings'
     | 'categories'
-    | 'admin-profile'
-    | 'chatbot-crm';
+    | 'admin-profile';
 
   areas: AreaItem[];
   notifications: AdminNotification[];
@@ -1100,7 +1097,7 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
    *
    * IMPORTANT:
    * Only Admin Profile + Security lives here.
-   * Chatbot/CRM is NOT rendered here anymore.
+   * Only Admin Profile + Security is rendered here.
    * =========================================================
    */
 
@@ -1241,42 +1238,11 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
             </button>
           </form>
         </div>
-        <ChatbotAdminControls showProfile showAiControls={false} />
+        <AdminProfileControls />
       </div>
     );
   }
 
-  /*
-   * =========================================================
-   * AI CHATBOT & CRM
-   *
-   * Existing ChatbotAdminView + ChatbotAdminControls
-   * remain together and are not modified.
-   * =========================================================
-   */
-
-  if (currentSubTab === 'chatbot-crm') {
-    return (
-      <div className="space-y-8 animate-in fade-in duration-200">
-        <div>
-          <div className="flex items-center gap-2">
-            <Bot className="w-5 h-5 text-amber-400" />
-
-            <h2 className="text-2xl font-serif font-extrabold text-white">
-              AI Chatbot & CRM
-            </h2>
-          </div>
-
-          <p className="text-xs text-slate-400 mt-1">
-            Existing StudentHubHelp AI chatbot, CRM, conversations, controls and diagnostics.
-          </p>
-        </div>
-
-        <ChatbotAdminView /><ChatbotAdminControls />
-        <ChatbotAdminControls showAiControls />
-      </div>
-    );
-  }
 
   return null;
 };

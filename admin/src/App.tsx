@@ -2137,7 +2137,6 @@ export default function App() {
   'settings',
   'categories',
   'admin-profile',
-  'chatbot-crm',
 ].includes(currentTab) && (
             <IntelligenceViews
               currentSubTab={

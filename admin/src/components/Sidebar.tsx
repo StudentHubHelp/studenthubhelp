@@ -28,7 +28,6 @@ import {
   Sliders,
   Tags,
   Power,
-  Bot,
   User
 } from 'lucide-react';
 
@@ -150,10 +149,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {item('partners', 'Partner Network', Handshake)}
         </div>
 
-        {section('AI & Automation',
+        {section('Account & Security',
           <>
             {item('admin-profile', 'Admin Profile', User)}
-            {item('chatbot-crm', 'AI Chatbot & CRM', Bot)}
           </>
         )}
 
