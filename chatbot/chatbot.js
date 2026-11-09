@@ -21,7 +21,7 @@ const $ = (s,root=document)=>root.querySelector(s);
 const esc = v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = v=>String(v==null?'':v).toLocaleLowerCase('en-IN').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\brd\b/g,'road').replace(/\s+/g,' ').trim();
 const words = s=>norm(s).split(' ').filter(Boolean);
-let chatbotDb=null,sessionUser=null,profile=null,cacheRows=null,cacheGallery=null,cacheErrors={},activeSearch=null,history=[];
+let chatbotDb=null,sessionUser=null,profile=null,cacheRows=null,cacheRowsAt=0,cacheGallery=null,cacheErrors={},activeSearch=null,history=[];
 let sdkPromise=null;
 let chatSession=null;
 const CHAT_SESSION_KEY='shh-chat-session-v2';
@@ -317,7 +317,8 @@ function isNonLocationPhrase(value){
   return !parts.length||parts.some(x=>stop.has(x));
 }
 async function loadRows(){
-  if(cacheRows)return cacheRows;
+  // Refresh the active-only listing snapshot periodically so deactivated properties disappear promptly.
+  if(cacheRows&&Date.now()-cacheRowsAt<30000)return cacheRows;
   const client=await getDb();
   const entries=Object.entries(CFG.categories);
   const results=await Promise.all(entries.map(async([key,c])=>{
@@ -327,6 +328,7 @@ async function loadRows(){
     return (data||[]).map(r=>({...r,__category:key,__table:c.table}));
   }));
   cacheRows=results.flat();
+  cacheRowsAt=Date.now();
   if(entries.every(([key])=>cacheErrors[key]))throw new Error('No public listing tables could be loaded');
   return cacheRows;
 }
