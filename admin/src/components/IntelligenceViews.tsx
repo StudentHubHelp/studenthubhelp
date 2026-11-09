@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AdminProfileControls } from './AdminProfileControls';
 import {
   AreaItem,
   AdminNotification,
@@ -1237,38 +1238,7 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
             </button>
           </form>
         </div>
-      </div>
-    );
-  }
-
-  /*
-   * =========================================================
-   * AI CHATBOT & CRM
-   *
-   * Existing ChatbotAdminView + ChatbotAdminControls
-   * remain together and are not modified.
-   * =========================================================
-   */
-
-  if (currentSubTab === 'chatbot-crm') {
-    return (
-      <div className="space-y-8 animate-in fade-in duration-200">
-        <div>
-          <div className="flex items-center gap-2">
-            <Bot className="w-5 h-5 text-amber-400" />
-
-            <h2 className="text-2xl font-serif font-extrabold text-white">
-              AI Chatbot & CRM
-            </h2>
-          </div>
-
-          <p className="text-xs text-slate-400 mt-1">
-            Existing StudentHubHelp AI chatbot, CRM, conversations, controls and diagnostics.
-          </p>
-        </div>
-
-        <ChatbotAdminView /><ChatbotAdminControls />
-        <ChatbotAdminControls showAiControls />
+        <AdminProfileControls />
       </div>
     );
   }
