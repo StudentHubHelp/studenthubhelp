@@ -307,6 +307,12 @@ async function processMessage(q,container){
     const p=result.profile||{};
     return 'Aap login hain. 👋<br><b>Name:</b> '+esc(p.full_name||'Name not added')+'<br><b>Email:</b> '+esc(p.email||result.user.email||'Not available')+'<br><b>Account role:</b> '+esc(p.role||'Not available')+'<br><a href="/student-dashboard.html">Open your dashboard</a>.';
   }
+  if(/booking issue|booking problem|booking confirm|owner not responding|owner call|payment issue|refund|cancel my booking|booking cancel/.test(n)){
+    const result=await myBookings();
+    if(result.login)return 'Booking issue ko account ke saath check karne ke liye pehle <a href="/auth.html">login</a> karein. Login ke baad main aapki apni booking ka current status dekh sakta hoon.';
+    if(!result.rows.length)return 'Aapke account mein abhi koi booking record nahi mila. Agar aapne request bheji hai, confirm karein ki aap usi account se login hain. Zarurat ho toh <a href="/contact-us.html">support team</a> se sampark karein.';
+    return 'Main aapki latest booking records check kar raha hoon. <br>'+result.rows.slice(0,5).map(r=>'• <b>'+esc(r.property_name)+'</b> — '+esc(statusText(r.status))+' <small>(#'+esc(r.id)+')</small>').join('<br>')+'<br><br>Chatbot booking/payment ko khud confirm, cancel ya refund nahi karta. Status update ke liye property owner ya <a href="/contact-us.html">StudentHubHelp support</a> se contact karein. OTP, UPI PIN ya password share na karein.';
+  }
   if(/my booking|my bookings|meri booking|meri booking ka|booking status|booking kaha|बुकिंग स्टेटस/.test(n)){
     const result=await myBookings();
     if(result.login)return 'Aapki private booking details dikhane ke liye pehle <a href="/auth.html">login</a> karein.';
