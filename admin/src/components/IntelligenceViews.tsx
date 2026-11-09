@@ -1272,7 +1272,7 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
           </p>
         </div>
 
-        <ChatbotAdminView /><ChatbotAdminControls />
+        <ChatbotAdminView />
         <ChatbotAdminControls showAiControls />
       </div>
     );
