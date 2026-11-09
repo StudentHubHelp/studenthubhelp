@@ -215,11 +215,16 @@ function matchSearch(rows,query,category,previous){
   const cityCandidates=[...new Set(rows.map(r=>String(r.city||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
   const explicitCity=cityCandidates.find(x=>x.length>1&&n.includes(norm(x)))||null;
   const unknownCityMatch=n.match(/\b(?:in|mein|me)\s+([a-z][a-z-]*)/i)||n.match(/^([a-z][a-z-]*)\s+mein\b/i);
-  const city=explicitCity||(unknownCityMatch?unknownCityMatch[1]:null)||previous?.cityName||null;
-  const areaCandidates=[...new Set(rows.flatMap(r=>[r.area,r.landmark,r.nearby_coaching].filter(Boolean).map(String)))].sort((a,b)=>b.length-a.length);
+  const cityBase=explicitCity||(unknownCityMatch?unknownCityMatch[1]:null)||null;
+  const areaFields=r=>[r.area,r.landmark,r.nearby_coaching,r.address].filter(Boolean).map(String);
+  const areaCandidates=[...new Set(rows.flatMap(areaFields))].sort((a,b)=>b.length-a.length);
   const explicitArea=areaCandidates.find(x=>x.length>2&&n.includes(norm(x)))||null;
-  const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\s+([a-z][a-z-]*)/i);
-  const area=explicitArea||(unknownAreaMatch?unknownAreaMatch[1]:null)||previous?.areaName||null;
+  const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\s+([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})/i)
+    ||n.match(/([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})\s+(?:par|pr|pe|mein|me)\b/i);
+  const area=explicitArea||(unknownAreaMatch?unknownAreaMatch[1].trim():null)||previous?.areaName||null;
+  const areaCityMatches=area?[...new Set(rows.filter(r=>areaFields(r).some(v=>norm(v).includes(norm(area)))).map(r=>String(r.city||'').trim()).filter(Boolean))]:[];
+  const areaCity=areaCityMatches.length===1?areaCityMatches[0]:null;
+  const city=cityBase||areaCity||previous?.cityName||null;
   const gender=genderOf(query)||previous?.gender||null;
   const budget=budgetOf(query)??previous?.budget??null;
   const requested=requestedFacilities(query);
@@ -234,7 +239,7 @@ function matchSearch(rows,query,category,previous){
   if(budget!==null)out=out.filter(r=>{const p=rowPrice(r,query);return p&&p.value!==null&&p.value<=budget;});
   if(facilities.length)out=out.filter(r=>facilities.every(f=>facilityValue(r,f)));
   const tokens=words(query).filter(w=>w.length>2&&!/^\d+$/.test(w)&&!['hostel','hostals','girls','boys','dikhao','show','please','chahiye','mujhe','mein','me','ka','ki','ke','near','nearby','paas','budget','under','upto','tak','only','kar','do','badlo','change','more','aur','listings','next','with','and','for','the','from','in','all','want','need'].includes(w));
-  const explicitLocation=/\b(?:near|nearby|around|road|area)\b|ke paas|paas/.test(n);
+  const explicitLocation=/\b(?:near|nearby|around|road|area|par|pr|pe|mein|me)\b|ke paas|paas/.test(n);
   if(explicitLocation&&!explicitArea&&!unknownAreaMatch&&!previous?.areaName)out=[];
   else if(!city&&!area&&!gender&&!facilities.length&&tokens.length)out=out.filter(r=>{const h=rowSearchText(r);return tokens.some(t=>h.includes(t));});
   return {rows:out,city,area,gender,budget,facilities,cityName:city,areaName:area};
@@ -406,7 +411,8 @@ async function processMessage(q,container){
     return shown.map(r=>cardHtml(r,gallery)).join('')+(activeSearch.results.length>next+4?quickMarkup(['Aur listings dikhao']):'');
   }
   if(/budget badlo|change budget/.test(n))return 'Aapka naya maximum budget kitna hai? Example: 5000 tak.';
-  if(/area badlo|change area/.test(n))return 'Kaunsa area, road ya coaching landmark chahiye? Example: Allen ke paas.';
+  if(/area badlo|change area/.test(n))return 'Kaunsa area, road ya coaching landmark chahiye? Example: Piprali Road par.';
+  if(/city batao|city badlo|change city/.test(n)){if(activeSearch){activeSearch.areaName=null;activeSearch.area=null;}return 'Kaunsa city chahiye? Example: Sikar, Jaipur ya Kota.';}
   if(/facilities filter/.test(n))return 'Kaunsi facility zaroori hai? Example: Wi-Fi, AC, food ya parking.';
   let cat=categoryOf(q);
   if(!cat&&activeSearch?.category)cat=activeSearch.category;
@@ -417,9 +423,20 @@ async function processMessage(q,container){
     const result=matchSearch(rows,q,cat,previous);
     activeSearch={category:cat,query:q,city:result.city,area:result.area,cityName:result.cityName,areaName:result.areaName,gender:result.gender,budget:result.budget,facilities:result.facilities,results:result.rows,offset:0};
     if(!result.rows.length){
-      const city=result.city?' in '+esc(result.city):'';
-      const area=result.area?' near '+esc(result.area):'';
-      return 'Is exact criteria'+city+area+' mein matching active '+esc(CFG.categories[cat].label.toLowerCase())+' listing nahi mili. Main doosre city ya area ki listing mix nahi karunga. Aap budget ya area badal kar try kar sakte hain.'+quickMarkup(['Budget badlo','Area badlo','Facilities filter karo']);
+      let nextSteps;
+      if(result.area&&result.city){
+        const cityLabel=String(result.city).trim();
+        nextSteps=[cityLabel+' mein '+(cat==='cafe'?'cafes':CFG.categories[cat].label.toLowerCase())+' dikhao','Area badlo'];
+      }else if(result.area){
+        nextSteps=['City batao','Area badlo'];
+      }else if(result.city){
+        nextSteps=['Area badlo'];
+      }else{
+        nextSteps=['City batao','Area batao'];
+      }
+      if(result.budget!==null)nextSteps.push('Budget badlo');
+      const widerText=result.city?'Agar aap chahen, main '+esc(result.city)+' ke doosre areas ke '+(cat==='cafe'?'cafes':CFG.categories[cat].label.toLowerCase())+' dikha sakta hoon.':'City bata dein, phir main usi city mein exact active listings check karunga.';
+      return 'Aapne '+(result.area?'<b>'+esc(result.area)+'</b> area':'is location')+(result.city?' ('+esc(result.city)+')':'')+' mein '+esc(CFG.categories[cat].label.toLowerCase())+' maange hain. Is exact location par abhi koi matching active listing nahi mili. Main doosre area ki listings bina aapki permission ke nahi dikhaunga. '+widerText+quickMarkup(nextSteps);
     }
     const gallery=await loadGallery();
     const shown=result.rows.slice(0,4);
