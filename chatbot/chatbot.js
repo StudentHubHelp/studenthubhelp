@@ -131,11 +131,19 @@ function requestedFacilities(q){
   for(const [key,terms] of Object.entries(FACILITY_TERMS))if(terms.some(t=>n.includes(norm(t))))out.push(key);
   return out;
 }
-function numberPrice(r,cat){
-  const keys=cat==='hostel'?['monthly_rent','monthly_fee','price']:cat==='tiffin'?['monthly_plan','monthly_fee','price','weekly_plan','daily_plan']:cat==='library'?['monthly_fee','daily_fee','price']:['price','monthly_fee'];
+function numberPrice(r,cat,query){
+  const q=norm(query||'');
+  let keys;
+  if(cat==='hostel')keys=['monthly_rent','monthly_fee','price'];
+  else if(cat==='tiffin')keys=/\bdaily\b|per day|roz|daily plan/.test(q)?['daily_plan','price','monthly_fee','monthly_plan']: /\bweekly\b|per week|hafta/.test(q)?['weekly_plan','price','monthly_fee','monthly_plan']:['monthly_plan','monthly_fee','price','weekly_plan','daily_plan'];
+  else if(cat==='library')keys=/\bdaily\b|per day/.test(q)?['daily_fee','monthly_fee','price']:['monthly_fee','daily_fee','price'];
+  else keys=['price','monthly_fee'];
   for(const k of keys){const v=Number(r?.[k]);if(Number.isFinite(v)&&v>0)return {value:v,label:k.includes('daily')?'per day':k.includes('weekly')?'per week':k.includes('monthly')?'per month':'listed price'};}
   const range=String(r?.monthly_rent_range||r?.price_range||'').trim();
   return range?{value:null,label:range}:null;
+}
+function rowPrice(r,query){
+  return numberPrice(r,r.__category,query);
 }
 function genderMatch(r){
   const text=norm([r.type,r.category,r.name,r.description,r.rules].filter(Boolean).join(' '));
@@ -221,7 +229,7 @@ function matchSearch(rows,query,category,previous){
     const a=norm(area);
     out=out.filter(r=>norm([r.area,r.landmark,r.nearby_coaching,r.address].filter(Boolean).join(' ')).includes(a));
   }
-  if(budget!==null)out=out.filter(r=>{const p=rowPrice(r);return p&&p.value!==null&&p.value<=budget;});
+  if(budget!==null)out=out.filter(r=>{const p=rowPrice(r,query);return p&&p.value!==null&&p.value<=budget;});
   if(facilities.length)out=out.filter(r=>facilities.every(f=>facilityValue(r,f)));
   const tokens=words(query).filter(w=>w.length>2&&!/^\d+$/.test(w)&&!['hostel','hostals','girls','boys','dikhao','show','please','chahiye','mujhe','mein','me','ka','ki','ke','near','nearby','paas','budget','under','upto','tak','only','kar','do','badlo','change','more','aur','listings','next','with','and','for','the','from','in','all','want','need'].includes(w));
   const explicitLocation=/\b(?:near|nearby|around|road|area)\b|ke paas|paas/.test(n);
@@ -421,7 +429,7 @@ function buildUI(){
   if($('#shh-chat-launcher'))return;
   const launcher=document.createElement('button');launcher.id='shh-chat-launcher';launcher.type='button';launcher.setAttribute('aria-label','Open StudentHubHelp Assistant');launcher.setAttribute('aria-expanded','false');launcher.innerHTML='✦<span class="shh-launcher-dot"></span>';
   const panel=document.createElement('section');panel.id='shh-chat-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','StudentHubHelp Assistant');
-  panel.innerHTML='<header class="shh-chat-head"><div class="shh-chat-avatar">✦</div><div class="shh-chat-brand"><strong>StudentHubHelp Assistant</strong><span>Your Student Support Partner</span></div><span class="shh-chat-status">Online</span><button type="button" data-shh-close aria-label="Close assistant">×</button></header><div class="shh-chat-messages" aria-live="polite"></div><div class="shh-chat-compose"><form><input type="text" name="message" maxlength="500" autocomplete="off" placeholder="Ask me anything..." aria-label="Type your message"><button type="submit" aria-label="Send message">➤</button></form><div class="shh-chat-footnote">StudentHubHelp · No external AI API</div></div>';
+  panel.innerHTML='<header class="shh-chat-head"><div class="shh-chat-avatar">✦</div><div class="shh-chat-brand"><strong>Ultra Advance AI Assistant</strong><span>StudentHubHelp · Your Student Support Partner</span></div><span class="shh-chat-status">Online</span><button type="button" data-shh-close aria-label="Close assistant">×</button></header><div class="shh-chat-messages" aria-live="polite"></div><div class="shh-chat-compose"><form><input type="text" name="message" maxlength="500" autocomplete="off" placeholder="Ask me anything..." aria-label="Type your message"><button type="submit" aria-label="Send message">➤</button></form><div class="shh-chat-footnote">StudentHubHelp · No external AI API</div></div>';
   document.body.append(launcher,panel);
   const messages=$('.shh-chat-messages',panel),form=$('form',panel),input=$('input',panel);
   async function open(){panel.classList.add('shh-open');launcher.setAttribute('aria-expanded','true');input.focus();if(!messages.dataset.greeted){messages.dataset.greeted='1';addMessage(messages,'Namaste! 👋 Main StudentHubHelp ka smart support assistant hoon. Aap hostel search, booking issue, listing status, website help ya contact details pooch sakte hain.'+quickMarkup(['Hostel dikhao','Booking help','Meri listing status','Contact support']));try{const user=await getUser();if(user){const name=profile?.full_name||user.email?.split('@')[0]||'Student';addMessage(messages,'Welcome back, <b>'+esc(name)+'</b>! Main aapki apni booking, listing request aur account se related help kar sakta hoon.');}}catch(e){console.warn('[SHH chatbot] personal greeting unavailable');}}}
