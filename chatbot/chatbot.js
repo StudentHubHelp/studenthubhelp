@@ -215,7 +215,7 @@ function matchSearch(rows,query,category,previous){
   const cityCandidates=[...new Set(rows.map(r=>String(r.city||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
   const explicitCity=cityCandidates.find(x=>x.length>1&&n.includes(norm(x)))||null;
   const unknownCityMatch=n.match(/\b(?:in|mein|me)\s+([a-z][a-z-]*)/i)||n.match(/^([a-z][a-z-]*)\s+mein\b/i);
-  const city=explicitCity||(unknownCityMatch?unknownCityMatch[1]:null)||previous?.cityName||null;
+  const cityBase=explicitCity||(unknownCityMatch?unknownCityMatch[1]:null)||null;
   const areaFields=r=>[r.area,r.landmark,r.nearby_coaching,r.address].filter(Boolean).map(String);
   const areaCandidates=[...new Set(rows.flatMap(areaFields))].sort((a,b)=>b.length-a.length);
   const explicitArea=areaCandidates.find(x=>x.length>2&&n.includes(norm(x)))||null;
@@ -224,7 +224,7 @@ function matchSearch(rows,query,category,previous){
   const area=explicitArea||(unknownAreaMatch?unknownAreaMatch[1].trim():null)||previous?.areaName||null;
   const areaCityMatches=area?[...new Set(rows.filter(r=>areaFields(r).some(v=>norm(v).includes(norm(area)))).map(r=>String(r.city||'').trim()).filter(Boolean))]:[];
   const areaCity=areaCityMatches.length===1?areaCityMatches[0]:null;
-  const city=explicitCity||(unknownCityMatch?unknownCityMatch[1]:null)||areaCity||previous?.cityName||null;
+  const city=cityBase||areaCity||previous?.cityName||null;
   const gender=genderOf(query)||previous?.gender||null;
   const budget=budgetOf(query)??previous?.budget??null;
   const requested=requestedFacilities(query);
