@@ -1,5 +1,9 @@
 name: Build AI Chatbot
 
+concurrency:
+  group: ai-chatbot-build-main
+  cancel-in-progress: true
+
 on:
   push:
     branches:
@@ -32,6 +36,11 @@ jobs:
       - name: Install dependencies
         working-directory: ai-chatbot
         run: npm install
+      - name: Validate chatbot dependencies and types
+        working-directory: ai-chatbot
+        run: |
+          npm audit --audit-level=moderate
+          npm run lint
       - name: Repair source and authentication compatibility
         run: |
           python3 -c 'from pathlib import Path; import re; p=Path("ai-chatbot/src/components/ChatWidget.tsx"); s=p.read_text(encoding="utf-8"); pattern=r";\s*\{properties\.length\s*>\s*0\s*&&\s*\(\s*<div className=[\"\\\x27]space-y-3[\"\\\x27]>\s*\{properties\.map\(renderPropertyCard\)\}\s*</div>\s*\)\}"; fixed,count=re.subn(pattern,";",s,count=1); p.write_text(fixed,encoding="utf-8") if count else None; print("ChatWidget repaired" if count else "ChatWidget already clean")'
@@ -103,4 +112,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ai-chatbot
           git diff --cached --quiet || git commit -m "Fix mobile chatbot overflow and compact panel [skip ci]"
-          git push
+          git pull --rebase origin main
+          git push origin HEAD:main
