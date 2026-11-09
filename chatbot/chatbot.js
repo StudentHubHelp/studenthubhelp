@@ -117,7 +117,14 @@ const FACILITY_TERMS={
   charging_point:['charging point','charging'],
   locker:['locker'],
   girls_section:['girls section','girls area'],
-  delivery:['home delivery','delivery']
+  delivery:['home delivery','delivery'],
+  open_24_hours:['24 hours','24 hour','24/7','24 ghante'],
+  seating:['seating','seats','study seats'],
+  girls_section:['girls section','girls area'],
+  boys_section:['boys section','boys area'],
+  stationery:['stationery'],
+  photocopy:['photocopy','xerox'],
+  book_rental:['book rental','rent books']
 };
 function requestedFacilities(q){
   const n=norm(q),out=[];
@@ -144,6 +151,8 @@ function facilityValue(r,key){
   if(key==='ac'&&r?.ac_available===true)return true;
   if(key==='wifi'&&r?.wifi===true)return true;
   if(key==='food'&&(r?.food_available===true||r?.mess_available===true||r?.breakfast_available===true||r?.lunch_available===true||r?.dinner_available===true))return true;
+  if(key==='delivery'&&(r?.delivery_available===true||r?.home_delivery===true||r?.delivery===true))return true;
+  if(key==='seating'&&(Number(r?.seating_capacity)>0||Number(r?.available_seats)>0))return true;
   const text=norm([r?.facilities,r?.description,r?.menu,r?.features].filter(Boolean).join(' '));
   const terms=FACILITY_TERMS[key]||[key];
   if(terms.some(t=>text.includes(norm(t))))return true;
@@ -227,11 +236,11 @@ function detailsUrl(r){
 }
 function facilitiesForCard(r){
   const list=[];
-  const map={wifi:'Wi-Fi',ac_available:'AC',food_available:'Food',mess_available:'Mess',attached_bathroom:'Attached Bathroom',parking:'Parking',laundry:'Laundry',security:'Security',cctv:'CCTV',geyser:'Hot Water',power_backup:'Power Backup',charging_point:'Charging',locker:'Locker',delivery_available:'Delivery',home_delivery:'Home Delivery',takeaway:'Takeaway',open_24_hours:'24 Hours',stationery:'Stationery',photocopy:'Photocopy'};
+  const map={wifi:'Wi-Fi',ac:'AC',ac_available:'AC',food_available:'Food',mess_available:'Mess',attached_bathroom:'Attached Bathroom',parking:'Parking',laundry:'Laundry',security:'Security',cctv:'CCTV',power_backup:'Power Backup',charging_point:'Charging',locker:'Locker',delivery_available:'Delivery',home_delivery:'Home Delivery',delivery:'Delivery',takeaway:'Takeaway',open_24_hours:'24 Hours',girls_section:'Girls Section',boys_section:'Boys Section',stationery:'Stationery',photocopy:'Photocopy',printing:'Printing',second_hand_books:'Second-hand Books',book_rental:'Book Rental',jain_food:'Jain Food'};
   for(const [k,label] of Object.entries(map))if(r?.[k]===true&&!list.includes(label))list.push(label);
-  if(!list.length&&r?.facilities){
+  if(r?.facilities){
     const parts=String(r.facilities).split(/[,;|\n]/).map(x=>x.trim()).filter(Boolean);
-    list.push(...parts.slice(0,4));
+    for(const item of parts)if(!list.includes(item))list.push(item);
   }
   return list.slice(0,4);
 }
@@ -242,22 +251,31 @@ function categoryDetails(r){
     add('Room',r.room_sharing||(Array.isArray(r.room_types)?r.room_types.join(', '):r.room_types));
     if(Number(r.available_beds)>0)add('Seats',Number(r.available_beds)+' available');
     if(r.food_available===true||r.mess_available===true)add('Food',r.food_type||'Available');
+    if(Number(r.security_deposit)>0)add('Deposit','₹'+Number(r.security_deposit).toLocaleString('en-IN'));
   }else if(c==='tiffin'){
     add('Meals',r.meal_type||[r.breakfast_available?'Breakfast':'',r.lunch_available?'Lunch':'',r.dinner_available?'Dinner':''].filter(Boolean).join(', '));
+    add('Food',r.food_type);
     add('Plan',r.plan_type);
     if(r.delivery_available===true||r.home_delivery===true)add('Delivery','Available');
+    if(r.jain_food===true)add('Jain Food','Available');
   }else if(c==='library'){
     add('Type',r.library_type);
     if(r.open_24_hours===true)add('Hours','24 hours');
     if(Number(r.available_seats)>0)add('Seats',Number(r.available_seats)+' available');
+    if(r.girls_section===true)add('Section','Girls');
+    if(r.boys_section===true)add('Section','Boys');
   }else if(c==='cafe'){
     add('Cuisine',r.cuisine);
+    add('Price range',r.price_range);
+    if(Number(r.seating_capacity)>0)add('Seating',Number(r.seating_capacity));
     add('Hours',[r.opening_time,r.closing_time].filter(Boolean).join(' – '));
-    if(r.delivery===true)add('Delivery','Available');
+    if(r.delivery===true||r.takeaway===true)add('Service',[r.delivery?'Delivery':'',r.takeaway?'Takeaway':''].filter(Boolean).join(', '));
   }else if(c==='bookstore'){
     add('Books',r.categories||r.classes);
+    if(r.competitive_books===true||r.exam_books===true)add('Exam Books','Available');
     if(r.stationery===true)add('Service','Stationery');
-    if(r.photocopy===true)add('Service','Photocopy');
+    if(r.photocopy===true||r.printing===true)add('Print','Available');
+    if(r.book_rental===true)add('Book Rental','Available');
   }
   return items.slice(0,3);
 }
