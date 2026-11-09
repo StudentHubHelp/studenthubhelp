@@ -294,7 +294,7 @@ function parseImages(r){
 function rowSearchText(r){
   return norm([r.name,r.category,r.type,r.area,r.address,r.city,r.landmark,r.nearby_coaching,r.description,r.facilities].filter(Boolean).join(' '));
 }
-async function namedListingMatches(rows,query,category){
+function namedListingMatches(rows,query,category){
   const n=norm(query);
   const filler=new Set(['ke','ka','ki','k','bare','baare','about','mein','me','batao','btao','bta','details','detail','info','information','kya','hai','he','please','mujhe','bta','btao','dikhao','show','find','search','the','for','of','tell','me']);
   const categoryWords=new Set(['hostel','hostals','hostal','pg','tiffin','tifin','mess','library','libraries','libary','cafe','cafes','cafee','bookstore','book','store','stationery']);
@@ -316,7 +316,7 @@ function isNonLocationPhrase(value){
   const parts=words(value);
   return !parts.length||parts.some(x=>stop.has(x));
 }
-function loadRows(){
+async function loadRows(){
   if(cacheRows)return cacheRows;
   const client=await getDb();
   const entries=Object.entries(CFG.categories);
