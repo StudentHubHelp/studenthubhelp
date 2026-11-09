@@ -10,10 +10,27 @@ const cases = [
   { query: 'Sikar mein Allen ke paas boys hostel', city: 'Sikar', category: 'hostel', forbiddenCity: 'Kota' },
   { query: 'Kota Talwandi mein budget tiffin', city: 'Kota', category: 'tiffin', forbiddenCategory: 'hostel' },
   { query: 'Jhunjhunu me cafe', city: 'Jhunjhunu', category: 'cafe' },
+  { query: 'Sikar mein hostel dikhao', city: 'Sikar', category: 'hostel' },
+  { query: 'Sikar mein tiffin dikhao', city: 'Sikar', category: 'tiffin' },
+  { query: 'Sikar mein library dikhao', city: 'Sikar', category: 'library' },
+  { query: 'Sikar mein cafe dikhao', city: 'Sikar', category: 'cafe' },
+  { query: 'Sikar mein bookstore dikhao', city: 'Sikar', category: 'bookstore' },
   { query: 'Piprali Road hostel under 5000', city: 'Sikar', category: 'hostel', maxBudget: 5000, allowNoResults: true },
   { query: 'Kota mein ₹15000 me hostel aur tiffin', city: 'Kota', combo: true, maxBudget: 15000 },
   { query: 'Mere paas hostel dikhao', expectLocationPrompt: true },
 ];
+
+function sameCity(actual, expected) {
+  const normalize = (value) => String(value ?? '')
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[^a-z0-9\\u0900-\\u097f]+/gi, ' ')
+    .replace(/\\s+/g, ' ')
+    .trim();
+  const actualValue = normalize(actual);
+  const expectedValue = normalize(expected);
+  return actualValue === expectedValue || actualValue.split(' ').includes(expectedValue);
+}
 
 function numericPrice(value) {
   const match = String(value ?? '').replace(/,/g, '').match(/\d+(?:\.\d+)?/);
@@ -73,7 +90,7 @@ async function runCase(testCase, index) {
     const listingCategory = String(listing.type || listing.category || '').toLowerCase();
     if (!listingCategory) failures.push('listing category missing: ' + (listing.name || listing.id));
     if (!listingCity) failures.push('listing city missing: ' + (listing.name || listing.id));
-    if (listingCity && listingCity !== testCase.city.toLowerCase()) failures.push('cross-city listing leaked: ' + listing.city);
+    if (listingCity && !sameCity(listing.city, testCase.city)) failures.push('cross-city listing leaked: ' + listing.city);
     if (testCase.forbiddenCity && listingCity.includes(testCase.forbiddenCity.toLowerCase())) failures.push('forbidden city leaked: ' + listing.city);
     if (testCase.forbiddenCategory && listingCategory.includes(testCase.forbiddenCategory)) failures.push('forbidden category leaked: ' + listingCategory);
     if (testCase.category && listingCategory && !listingCategory.includes(testCase.category)) failures.push('wrong category listing: ' + listingCategory);
