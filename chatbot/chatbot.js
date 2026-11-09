@@ -338,6 +338,45 @@ function supportAnswer(q){
   if(/(?:how|kaise|kese|kes[e]?)\b.*\b(?:book|booking)\b|\b(?:book|booking)\b.*\b(?:kaise|kese|kare|kre|karu|karna|process)\b/.test(n)){
     return 'Hostel / PG book karne ka tarika:<br>1. <a href="/pg-finder.html">Hostel / PG Finder</a> kholen aur apni pasand ka hostel select karein.<br>2. Hostel ke details page par <b>Book Now</b> par click karein.<br>3. Booking form mein <b>Joining Date</b> aur <b>Duration</b> select karein.<br>4. Login karein (agar pehle se login nahi hain), phir <b>Confirm Booking Request</b> dabayein.<br>5. Request <b>Pending</b> status mein save hogi. Owner/admin ke response ke baad status update hoga; request submit hona confirmed room ya payment ki guarantee nahi hai.<br><br><a href="/pg-finder.html">Hostel Finder kholen</a>.';
   }
+  // Category-wise everyday help: answer guidance questions without hijacking listing searches.
+  const helpCategory=categoryOf(q);
+  const asksHow=/\\b(how|kaise|kese|kes[e]?|kya|what|which|where|when|kitna|kitne|kab|kahan|kaun|can i|do you|does|is there|available|milta|milti|milega|milengi|chahiye|batao|samjhao)\\b/.test(n);
+  const asksInfo=/\\b(price|rate|fees?|charges?|cost|timing|time|hours|open|close|menu|food|meal|delivery|seating|seat|books?|stationery|photocopy|xerox|printing|rental|rent|facilit|feature|detail|contact|number|location|address|payment|refund|cancel|plan|monthly|daily|weekly|veg|non.?veg|jain|wifi|ac|parking|washroom|bathroom|security|rules?)\\b/.test(n);
+  const isSearchRequest=/\\b(show|dikhao|dikhाओ|find|search|listings?|options?|suggest|recommend|near|nearby|ke paas|paas|in|mein|me|par|pr)\\b/.test(n);
+  if(helpCategory && (asksHow || asksInfo) && !isSearchRequest){
+    const label=CFG.categories[helpCategory].label;
+    const common='Aap chatbot se city/area ke saath category ka naam likhkar active listings search kar sakte hain, jaise <b>"Sikar mein '+label+' dikhao"</b>. Listing card par jo price, address, facilities aur contact details available hongi, wahi dikhengi. Jis detail ka record nahi hai, main uska guess nahi karunga.';
+    if(helpCategory==='tiffin'){
+      if(/delivery|home delivery|deliver/.test(n))return 'Tiffin/Mess listing mein delivery ya home-delivery ki detail tabhi confirm mani jayegi jab listing par delivery available dikhaya gaya ho. Aap <b>"Sikar mein tiffin with delivery dikhao"</b> likhkar search karein. '+common;
+      if(/menu|meal|food|breakfast|lunch|dinner|veg|non.?veg|jain/.test(n))return 'Tiffin/Mess ke menu, meal type (breakfast/lunch/dinner), veg/Jain food aur food details listing ke available record ke hisaab se dikhte hain. Har provider ka menu same nahi hota; missing menu ko main assume nahi karunga. '+common;
+      if(/price|rate|fees?|charges?|cost|monthly|daily|weekly|plan|kitna|kitne/.test(n))return 'Tiffin/Mess ka price plan ke hisaab se alag ho sakta hai—daily, weekly ya monthly. Chatbot listing mein saved price/plan hi dikhata hai. Aap <b>"Kota mein tiffin 3000 tak dikhao"</b> jaise query se budget filter kar sakte hain. '+common;
+      return 'Tiffin/Mess ke liye aap meal type, veg/Jain food, delivery aur daily/weekly/monthly plan ke baare mein pooch sakte hain. Exact details har active listing ke saved data se hi batayi jayengi. '+common;
+    }
+    if(helpCategory==='library'){
+      if(/timing|time|hours|open|close|kab/.test(n))return 'Library ki opening/closing timing ya 24-hour availability tabhi bata sakta hoon jab ye detail listing mein di gayi ho. Aap <b>"Jaipur mein 24 hours library dikhao"</b> likhkar search karein; card par available timing/seat details dekhein. '+common;
+      if(/seat|seating|capacity|girls|boys|section/.test(n))return 'Library ki available seats aur girls/boys section ki information listing mein record hone par hi dikhayi jayegi. Seat availability badal sakti hai, isliye visit se pehle listing par diye contact se confirm karein. '+common;
+      if(/price|rate|fees?|charges?|cost|monthly|daily|kitna/.test(n))return 'Library fees daily ya monthly ho sakti hai. Chatbot listing mein saved daily/monthly fee hi dikhata hai; missing fee ka estimate nahi banata. Aap <b>"Jaipur mein library 1000 tak dikhao"</b> likhkar budget search kar sakte hain. '+common;
+      return 'Library ke liye aap timing, daily/monthly fee, available seats, girls/boys section aur study facilities ke baare mein pooch sakte hain. Sirf listing mein di gayi details confirm mani jayengi. '+common;
+    }
+    if(helpCategory==='cafe'){
+      if(/menu|food|coffee|tea|cuisine|veg|non.?veg|jain/.test(n))return 'Cafe ka menu, cuisine aur food options tabhi confirm bata sakta hoon jab listing mein ye details di gayi hon. Aap <b>"Piprali Road par cafe dikhao"</b> ya city ke saath cafe search karein; card ke details/contact se menu confirm karein. '+common;
+      if(/timing|time|hours|open|close|kab/.test(n))return 'Cafe ki opening/closing timing listing mein available hone par card par dikhayi jayegi. Live open/closed status har cafe ke liye verify nahi hota, isliye jaane se pehle listed contact par timing confirm karein. '+common;
+      if(/seat|seating|capacity|delivery|takeaway/.test(n))return 'Cafe ki seating capacity, delivery ya takeaway option listing mein record hone par hi confirm hoga. Aap <b>"Sikar mein seating wale cafes dikhao"</b> jaise query se search kar sakte hain. '+common;
+      if(/price|rate|fees?|charges?|cost|kitna|kitne/.test(n))return 'Cafe ka price menu aur item ke hisaab se badalta hai. Listing mein price range di ho toh card par dikhegi; exact menu price ke liye cafe se directly confirm karein. '+common;
+      return 'Cafe ke liye aap cuisine/menu, price range, seating, opening hours, delivery aur takeaway ke baare mein pooch sakte hain. Main wahi detail confirm karunga jo listing mein saved hai. '+common;
+    }
+    if(helpCategory==='bookstore'){
+      if(/book|books|textbook|exam|competitive|class|school|college|availability/.test(n))return 'Bookstore mein kaunsi books ya exam material available hai, ye listing ke categories/details par depend karta hai. Har title ka live stock chatbot verify nahi karta; specific book ke liye store ke listed contact par availability confirm karein. '+common;
+      if(/stationery|photocopy|xerox|printing|print/.test(n))return 'Bookstore ki stationery, photocopy/Xerox aur printing services listing mein available dikhayi gayi hon tabhi confirm mani jayengi. Aap <b>"Kota mein stationery wali bookstore dikhao"</b> likhkar search karein. '+common;
+      if(/price|rate|fees?|charges?|cost|kitna|kitne/.test(n))return 'Books aur stationery ke prices item, edition aur stock ke hisaab se alag hote hain. Chatbot kisi specific book ka live price/stock assume nahi karta; listing ke contact se confirm karein. '+common;
+      return 'Bookstore ke liye aap textbooks, competitive exam books, stationery, photocopy/Xerox, printing aur book rental ke baare mein pooch sakte hain. Exact availability store se confirm karni hogi. '+common;
+    }
+    if(helpCategory==='hostel'){
+      if(/price|rent|fees?|charges?|deposit|kitna|kitne|monthly/.test(n))return 'Hostel/PG ka rent room type aur listing ke hisaab se alag hota hai. Card par saved rent, deposit aur room details hi dikhengi. Aap <b>"Sikar mein boys hostel 6000 tak dikhao"</b> likhkar budget filter kar sakte hain. '+common;
+      if(/facility|feature|wifi|food|ac|parking|laundry|washroom|bathroom|security|rule/.test(n))return 'Hostel/PG ki Wi-Fi, food, AC, parking, laundry, washroom aur security details listing mein record hone par hi confirm hongi. Aap required facility ke saath city/area likhkar search karein. '+common;
+      return 'Hostel/PG ke liye rent, room sharing, girls/boys, facilities, food aur booking process ke baare mein pooch sakte hain. '+common;
+    }
+  }
   if(/complaint|complain|report issue|report a problem|shikayat|शिकायत/.test(n)){
     return 'Main aapki problem samajh sakta hoon. Abhi chatbot ke liye dedicated complaint-submission table/workflow verify nahi hua hai, isliye main fake ticket create nahi karunga. Aap <a href="/contact-us.html">Contact Us</a> page se issue bhej sakte hain ya <a href="mailto:'+CFG.contactEmail+'?subject=StudentHubHelp%20Support%20Issue">support email</a> par details bhej sakte hain.';
   }
