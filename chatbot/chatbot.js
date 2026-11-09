@@ -19,7 +19,7 @@ const CFG = {
 };
 const $ = (s,root=document)=>root.querySelector(s);
 const esc = v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const norm = v=>String(v==null?'':v).toLocaleLowerCase('en-IN').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+const norm = v=>String(v==null?'':v).toLocaleLowerCase('en-IN').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\brd\b/g,'road').replace(/\s+/g,' ').trim();
 const words = s=>norm(s).split(' ').filter(Boolean);
 let chatbotDb=null,sessionUser=null,profile=null,cacheRows=null,cacheGallery=null,cacheErrors={},activeSearch=null,history=[];
 let sdkPromise=null;
