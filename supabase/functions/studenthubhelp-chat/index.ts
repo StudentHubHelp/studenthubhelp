@@ -95,7 +95,7 @@ function monthlyAmount(p:any,type:string){return type==="hostel"?positiveAmount(
 async function planComboBudget(cityName:string,totalBudget:number,genderFilter?:string){
  const hostelCap=Math.floor(totalBudget*0.70),tiffinCap=Math.floor(totalBudget*0.35);
  const [hostelRows,tiffinRows]=await Promise.all([direct("hostel",cityName,hostelCap,undefined,genderFilter),direct("tiffin",cityName,tiffinCap)]);
- const hostels=hostelRows.filter(p=>n(p.city||"")===n(cityName));const tiffins=tiffinRows.filter(p=>n(p.city||"")===n(cityName));
+ const hostels=hostelRows.filter(p=>cityMatches(p.city,cityName));const tiffins=tiffinRows.filter(p=>cityMatches(p.city,cityName));
  const pricedHostels=hostels.map(p=>({p,cost:monthlyAmount(p,"hostel")})).filter(x=>x.cost!==undefined) as Array<{p:any;cost:number}>;
  const pricedTiffins=tiffins.map(p=>({p,cost:monthlyAmount(p,"tiffin")})).filter(x=>x.cost!==undefined) as Array<{p:any;cost:number}>;
  let best:{hostel:any;tiffin:any;hostelCost:number;tiffinCost:number;total:number;score:number}|undefined;
@@ -509,7 +509,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
   if(u.budgetMax!==null||u.budgetMin!==null)rows=rows.filter(p=>{const v=budgetValue(p,p._type||c);if(v===undefined)return false;return (u.budgetMax===null||v<=u.budgetMax)&&(u.budgetMin===null||v>=u.budgetMin)});
   if(u.facilities?.length)rows=rows.filter(p=>matchesFacility(p,u.facilities));
   const landmark=u.landmark?findLandmark(u.landmark)||LANDMARKS.find(l=>l.key===u.landmark):findLandmark(near||"");
-  if(landmark){for(const p of rows){const d=distanceToLandmark(p,landmark);if(d!==undefined)p._distanceKm=d;else if(searchText(p).includes(n(landmark.key)))p._nearbyAreaMatch=true}rows=rows.filter(p=>n(p.city||"")===n(landmark.city)&&((p._distanceKm!==undefined&&p._distanceKm<=10)||p._nearbyAreaMatch===true))}
+  if(landmark){for(const p of rows){const d=distanceToLandmark(p,landmark);if(d!==undefined)p._distanceKm=d;else if(searchText(p).includes(n(landmark.key)))p._nearbyAreaMatch=true}rows=rows.filter(p=>cityMatches(p.city,landmark.city)&&((p._distanceKm!==undefined&&p._distanceKm<=10)||p._nearbyAreaMatch===true))}
   else if(near){const q=n(normalizeSearchTerms(near));const exact=rows.filter(p=>searchText(p).includes(q));if(exact.length){for(const p of exact)if(p._distanceKm===undefined)p._nearbyAreaMatch=true;rows=exact}else rows=[]}
   if(nearCats.length){const secondaryRows=await multiDirect(nearCats,ct);for(const p of rows){let best=Infinity,hasCoords=false;for(const q of secondaryRows){const d=distanceKm(p,q);if(d!==undefined){hasCoords=true;best=Math.min(best,d)}else if(p.area&&searchText(q).includes(n(p.area)))best=Math.min(best,1)}if(best<=3){p._nearbyDistanceKm=best;p._nearbyVerified=hasCoords;p._nearbyAreaMatch=!hasCoords}}rows=rows.filter(p=>p._nearbyDistanceKm!==undefined)}
   rows=rows.filter(p=>!shownIds.has(String(p.id)));
