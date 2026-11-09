@@ -152,9 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {section('AI & Automation',
           <>
-            {item('admin-profile', 'Admin Profile', User)}
-            {item('chatbot-crm', 'AI Chatbot & CRM', Bot)}
-          </>
+            {item('admin-profile', 'Admin Profile', User)}</>
         )}
 
         {section('Directory & Listings',
