@@ -222,7 +222,7 @@ function matchSearch(rows,query,category,previous){
   const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\s+([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})/i)
     ||n.match(/([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})\s+(?:par|pr|pe|mein|me)\b/i);
   const area=explicitArea||(unknownAreaMatch?unknownAreaMatch[1].trim():null)||previous?.areaName||null;
-  const areaCityMatches=area?[...new Set(rows.filter(r=>areaFields(r).some(v=>norm(v).includes(norm(area)))).map(r=>String(r.city||'').trim()).filter(Boolean))]:[];
+  const areaCityMatches=area?[...new Map(rows.filter(r=>areaFields(r).some(v=>norm(v).includes(norm(area)))).map(r=>[norm(r.city),String(r.city||'').trim()]).filter(([key,value])=>key&&value)).values()]:[];
   const areaCity=areaCityMatches.length===1?areaCityMatches[0]:null;
   const city=cityBase||areaCity||previous?.cityName||null;
   const gender=genderOf(query)||previous?.gender||null;
