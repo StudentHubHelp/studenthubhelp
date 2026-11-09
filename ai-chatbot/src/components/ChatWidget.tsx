@@ -29,9 +29,9 @@ import { ChatMessage, ChatApiResponse, SentimentType } from '../types';
 import { BudgetPlannerCard } from './BudgetPlannerCard';
 import { ComparisonMatrixCard } from './ComparisonMatrixCard';
 
-const CHAT_API_URL =
-  (import.meta as any).env?.VITE_CHAT_API_URL ||
-  'https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat';
+const PRODUCTION_CHAT_API = 'https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-chat';
+const configuredChatApi = (import.meta as any).env?.VITE_CHAT_API_URL || PRODUCTION_CHAT_API;
+const CHAT_API_URL = (import.meta as any).env?.PROD ? PRODUCTION_CHAT_API : configuredChatApi;
 const SUPABASE_ANON_KEY =
   (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
 
@@ -54,6 +54,27 @@ const QUICK_TOPICS = [
   { label: 'Search by Area', query: 'Mere area ke active listings dikhao', topic: 'Area Discovery' },
 ];
 
+async function getUserDeviceLocation(): Promise<{ lat: number; lng: number } | null> {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) return null;
+  return new Promise((resolve) => {
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
+        () => resolve(null),
+        { timeout: 5000, maximumAge: 60000, enableHighAccuracy: false }
+      );
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+function asksForNearbyLocation(text: string): boolean {
+  return /(?:\bnear me\b|\bnearby\b|\bnearest\b|mere paas|mere pass|mere aas paas|aas paas|पास में|मेरे पास)/i.test(text)
+    && !/(allen|clc|vibrant|matrix|gurukripa|piprali road|piprali rd|nawalgarh road)/i.test(text);
+}
+
+
 export const ChatWidget: React.FC<ChatWidgetProps> = ({
   onDiagnosisUpdate,
   onLeadCaptured,
@@ -64,6 +85,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [retryText, setRetryText] = useState<string | null>(null);
   const [isSpeakingEnabled, setIsSpeakingEnabled] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentLeadAlert, setRecentLeadAlert] = useState<string | null>(null);
@@ -87,7 +110,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
   useEffect(() => { if (isOpen) { scrollToBottom(); setUnreadCount(0); } }, [messages, isOpen]);
   useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = typeof window !== "undefined" ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : undefined;
+    setIsSpeechSupported(Boolean(SpeechRecognition));
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition(); recognition.continuous = false; recognition.interimResults = false; recognition.lang = 'hi-IN';
       recognition.onresult = (event: any) => { const transcript = event.results[0][0].transcript; setInputText(prev => prev ? `${prev} ${transcript}` : transcript); setIsListening(false); };
@@ -96,7 +120,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   }, []);
 
   const toggleSpeechRecognition = () => {
-    if (!recognitionRef.current) { alert('Browser voice recognition is not supported in this browser. Please use Chrome, Edge or Safari.'); return; }
+    if (!recognitionRef.current) {
+      setMessages(prev => [...prev, { id: `voice-unsupported-${Date.now()}`, sender: 'bot', text: 'Aapke browser mein voice input support nahi hai. Kripya apna sawaal type karein.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      return;
+    }
     if (isListening) { recognitionRef.current.stop(); setIsListening(false); } else { try { recognitionRef.current.start(); setIsListening(true); } catch { setIsListening(false); } }
   };
   const speakText = (text: string) => {
@@ -106,7 +133,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   };
 
   const handleSendMessage = async (textToSend?: string, topicOverride?: string) => {
-    const text = (textToSend || inputText).trim(); if (!text || isLoading) return; const topicToPrioritize = topicOverride || activeTopic;
+    const text = (textToSend || inputText).trim(); if (!text || isLoading) return; const topicToPrioritize = topicOverride || activeTopic; setRetryText(null);
     const userMessage: ChatMessage = { id: `user-${Date.now()}`, sender: 'user', text, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
     setMessages(prev => [...prev, userMessage]); setInputText(''); setIsLoading(true);
     try {
@@ -121,22 +148,24 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
           }) || lastPropertyMessage?.recommendedProperties?.[0]
         : undefined;
       if (!SUPABASE_ANON_KEY) throw new Error('Missing VITE_SUPABASE_ANON_KEY. Add the public Supabase anon/publishable key to the Vite build environment.');
-      const controller = new AbortController(); const timeoutId = window.setTimeout(() => controller.abort(), 20000); let res: Response;
+      const clientCoords = asksForNearbyLocation(text) ? await getUserDeviceLocation() : null;
+      const controller = new AbortController(); const timeoutId = window.setTimeout(() => controller.abort(), 15000); let res: Response;
       try {
         res = await fetch(CHAT_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, body: JSON.stringify({
           message: text,
           history,
           preferredTopic: topicToPrioritize,
           sessionId,
+          clientCoords,
           focusPropertyId: focusedProperty?.id ? String(focusedProperty.id) : undefined,
           focusPropertyType: focusedProperty?.type ? String(focusedProperty.type) : undefined
         }), signal: controller.signal });
       } finally { window.clearTimeout(timeoutId); }
-      if (!res.ok) { let detail = ''; try { const errorBody = await res.json(); detail = errorBody?.reply || errorBody?.message || errorBody?.error || ''; } catch {} throw new Error(detail || `Chat request failed (${res.status})`); }
+      if (!res.ok) { let detail = '', errorId = ''; try { const errorBody = await res.json(); detail = errorBody?.reply || errorBody?.message || errorBody?.error || ''; errorId = errorBody?.error_id || ''; } catch {} const failure: any = new Error(detail || `Chat request failed (${res.status})`); failure.status = res.status; failure.errorId = errorId; throw failure; }
       const data: ChatApiResponse = await res.json(); if (!data || typeof data.reply !== 'string' || !data.reply.trim()) throw new Error('Chat backend returned an invalid response.');
       const botMessage: ChatMessage = { id: `bot-${Date.now()}`, sender: 'bot', text: data.reply, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), diagnosis: { intent: data.intent, primaryTopic: data.primaryTopic, topicDirectAnswer: data.topicDirectAnswer, topicPriorityReason: data.topicPriorityReason, userNeedSummary: data.userNeedSummary, sentiment: data.sentiment as SentimentType, suggestedFollowUps: data.suggestedFollowUps || [] }, recommendedProperties: data.recommendedProperties || data.recommendations || [], budgetPlan: data.budgetPlan, comparisonMatrix: data.comparisonMatrix };
       setMessages(prev => [...prev, botMessage]); if (!isOpen) setUnreadCount(prev => prev + 1); if (data.capturedLead) { setRecentLeadAlert('Lead captured from this conversation.'); onLeadCaptured?.(data.capturedLead); } onDiagnosisUpdate?.(botMessage.diagnosis, text); setActiveTopic(null); speakText(data.reply);
-    } catch (err: any) { const status = Number(err?.status || 0); if (err?.name === 'AbortError' || status === 429 || status >= 500) setRetryText(text); const message = err?.name === 'AbortError' ? 'Response thoda slow ho gaya. Please try again.' : status === 429 ? 'Aapne kaafi requests bheji hain. Kripya 1 minute baad dobara try karein.' : status === 503 ? 'Chatbot abhi temporarily unavailable hai. Kripya thodi der baad try karein.' : (err?.message || 'Chat service is temporarily unavailable.'); setMessages(prev => [...prev, { id: `bot-error-${Date.now()}`, sender: 'bot', text: message, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]); }
+    } catch (err: any) { if (err?.errorId) console.error('[StudentHubHelp chatbot error]', err.errorId); const status = Number(err?.status || 0); if (err?.name === 'AbortError' || status === 429 || status >= 500) setRetryText(text); const message = err?.name === 'AbortError' ? 'Response thoda slow ho gaya. Please try again.' : status === 429 ? 'Aapne kaafi requests bheji hain. Kripya 1 minute baad dobara try karein.' : status === 503 ? 'Chatbot abhi temporarily unavailable hai. Kripya thodi der baad try karein.' : (err?.message || 'Chat service is temporarily unavailable.'); setMessages(prev => [...prev, { id: `bot-error-${Date.now()}`, sender: 'bot', text: message, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]); }
     finally { setIsLoading(false); }
   };
   const handleQuickTopic = (topic: typeof QUICK_TOPICS[number]) => { setActiveTopic(topic.topic); void handleSendMessage(topic.query, topic.topic); };
@@ -361,8 +390,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     <AnimatePresence>{isOpen && <motion.div initial={{opacity:0,y:20,scale:.97}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:20,scale:.97}} className={`${isExpanded?'w-[min(760px,calc(100vw-2rem))] h-[min(760px,calc(100vh-2rem))]':'w-[min(340px,calc(100vw-72px))] h-[min(600px,calc(100vh-120px))] sm:w-[380px] sm:h-[640px]'} rounded-[28px] overflow-hidden bg-white shadow-2xl border border-slate-200 flex flex-col`}>
       <div className="bg-gradient-to-br from-[#071a38] to-[#0c2a55] text-white p-4 border-b border-amber-400/50"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 min-w-0"><div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shrink-0">SH</div><div className="min-w-0"><div className="font-extrabold text-sm truncate">StudentHubHelp AI</div><div className="text-[11px] text-slate-300">Live listing assistant</div></div></div><div className="flex items-center gap-1"><button onClick={()=>setIsSpeakingEnabled(v=>!v)} className="p-2 rounded-lg hover:bg-white/10" aria-label="Toggle voice">{isSpeakingEnabled?<Volume2 className="w-4 h-4"/>:<VolumeX className="w-4 h-4"/>}</button><button onClick={()=>setIsExpanded(v=>!v)} className="p-2 rounded-lg hover:bg-white/10" aria-label="Resize chat">{isExpanded?<Minimize2 className="w-4 h-4"/>:<Maximize2 className="w-4 h-4"/>}</button><button onClick={()=>setIsOpen(false)} className="p-2 rounded-lg hover:bg-white/10" aria-label="Minimize chatbot"><X className="w-4 h-4"/></button></div></div><div className="mt-3 flex items-center gap-2 text-[10px] text-slate-300"><span className="w-2 h-2 rounded-full bg-emerald-400"/> Live Supabase data · Smart assistant</div></div>
       <div className="px-3 py-2 bg-[#07152f] border-b border-slate-700 overflow-x-auto flex gap-2">{QUICK_TOPICS.map(topic=><button key={topic.label} onClick={()=>handleQuickTopic(topic)} className="shrink-0 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-[10px] font-bold">{topic.label}</button>)}</div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">{recentLeadAlert&&<div className="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold px-3 py-2 flex items-center gap-2"><CheckCircle2 className="w-4 h-4"/>{recentLeadAlert}</div>}{messages.map(m=><div key={m.id} className={`flex ${m.sender==='user'?'justify-end':'justify-start'}`}><div className={`${m.sender==='user'?'bg-slate-900 text-white':'bg-white text-slate-800 border border-slate-200'} max-w-[90%] rounded-2xl px-3.5 py-3 shadow-sm`}><div className="flex items-center gap-2 text-[10px] font-bold mb-1 opacity-70">{m.sender==='user'?<User className="w-3 h-3"/>:<Bot className="w-3 h-3"/>}{m.sender==='user'?'You':'StudentHubHelp AI'}<span className="ml-auto">{m.timestamp}</span></div><div className="text-sm whitespace-pre-wrap leading-6">{m.text}</div>{m.diagnosis?.primaryTopic&&m.sender==='bot'&&<div className="mt-2 text-[10px] rounded-lg bg-amber-50 text-amber-800 border border-amber-200 p-2"><b>Topic:</b> {m.diagnosis.primaryTopic}</div>}{m.recommendedProperties?.length>0&&<div className="mt-3 space-y-2">{m.recommendedProperties.map(renderPropertyCard)}</div>}{m.budgetPlan&&<div className="mt-3"><BudgetPlannerCard initialPlan={m.budgetPlan} /></div>}{m.comparisonMatrix&&<div className="mt-3"><ComparisonMatrixCard matrix={m.comparisonMatrix}/></div>}{m.diagnosis?.suggestedFollowUps?.length>0&&m.sender==='bot'&&<div className="mt-3 flex flex-wrap gap-2">{m.diagnosis.suggestedFollowUps.slice(0,4).map((f:string)=><button key={f} onClick={()=>handleFollowUp(f)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-[10px] font-bold">{f}</button>)}</div>}</div></div>)}{isLoading&&<div className="flex justify-start"><div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs text-slate-500">AI is checking live listings…</div></div>}<div ref={messagesEndRef}/></div>
-      <div className="border-t border-slate-200 bg-white p-3"><div className="flex gap-2 items-center"><button onClick={toggleSpeechRecognition} className={`w-11 h-11 rounded-xl border flex items-center justify-center ${isListening?'bg-rose-50 border-rose-300 text-rose-600':'bg-slate-50 border-slate-200 text-slate-600'}`} aria-label="Voice input">{isListening?<MicOff className="w-5 h-5"/>:<Mic className="w-5 h-5"/>}</button><input value={inputText} onChange={e=>setInputText(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type any topic (Hostel, Tiffin, Library, Rates)..." className="min-w-0 flex-1 h-11 rounded-xl border border-slate-200 px-2.5 text-sm outline-none focus:border-amber-400"/><button onClick={()=>void handleSendMessage()} disabled={isLoading||!inputText.trim()} className="w-11 h-11 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center disabled:opacity-50" aria-label="Send message"><Send className="w-5 h-5"/></button></div><div className="flex items-center justify-between mt-2 text-[10px] text-slate-400"><span>Live listing support</span><button onClick={clearConversation} className="flex items-center gap-1 hover:text-slate-700"><RotateCcw className="w-3 h-3"/> Clear chat</button></div></div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">{recentLeadAlert&&<div className="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold px-3 py-2 flex items-center gap-2"><CheckCircle2 className="w-4 h-4"/>{recentLeadAlert}</div>}{messages.map(m=><div key={m.id} className={`flex ${m.sender==='user'?'justify-end':'justify-start'}`}><div className={`${m.sender==='user'?'bg-slate-900 text-white':'bg-white text-slate-800 border border-slate-200'} max-w-[90%] rounded-2xl px-3.5 py-3 shadow-sm`}><div className="flex items-center gap-2 text-[10px] font-bold mb-1 opacity-70">{m.sender==='user'?<User className="w-3 h-3"/>:<Bot className="w-3 h-3"/>}{m.sender==='user'?'You':'StudentHubHelp AI'}<span className="ml-auto">{m.timestamp}</span></div><div className="text-sm whitespace-pre-wrap leading-6">{m.text}</div>{m.diagnosis?.primaryTopic&&m.sender==='bot'&&<div className="mt-2 text-[10px] rounded-lg bg-amber-50 text-amber-800 border border-amber-200 p-2"><b>Topic:</b> {m.diagnosis.primaryTopic}</div>}{m.recommendedProperties?.length>0&&<div className="mt-3 space-y-2">{m.recommendedProperties.map(renderPropertyCard)}</div>}{m.budgetPlan&&<div className="mt-3"><BudgetPlannerCard initialPlan={m.budgetPlan} onSendQuery={(query)=>void handleSendMessage(query)} /></div>}{m.comparisonMatrix&&<div className="mt-3"><ComparisonMatrixCard matrix={m.comparisonMatrix}/></div>}{m.diagnosis?.suggestedFollowUps?.length>0&&m.sender==='bot'&&<div className="mt-3 flex flex-wrap gap-2">{m.diagnosis.suggestedFollowUps.slice(0,4).map((f:string)=><button key={f} onClick={()=>handleFollowUp(f)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-[10px] font-bold">{f}</button>)}</div>}</div></div>)}{isLoading&&<div className="flex justify-start"><div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs text-slate-500">AI is checking live listings…</div></div>}{retryText&&!isLoading&&<div className="flex justify-start"><button onClick={()=>{const retry=retryText;setRetryText(null);void handleSendMessage(retry)}} className="rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">↻ Retry last message</button></div>}<div ref={messagesEndRef}/></div>
+      <div className="border-t border-slate-200 bg-white p-3"><div className="flex gap-2 items-center"><button onClick={toggleSpeechRecognition} title={isSpeechSupported ? "Voice input" : "Voice input is not supported in this browser"} className={`w-11 h-11 rounded-xl border flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed ${isListening?'bg-rose-50 border-rose-300 text-rose-600':'bg-slate-50 border-slate-200 text-slate-600'}`} aria-label="Voice input">{isListening?<MicOff className="w-5 h-5"/>:<Mic className="w-5 h-5"/>}</button><input value={inputText} onChange={e=>setInputText(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type any topic (Hostel, Tiffin, Library, Rates)..." className="min-w-0 flex-1 h-11 rounded-xl border border-slate-200 px-2.5 text-sm outline-none focus:border-amber-400"/><button onClick={()=>void handleSendMessage()} disabled={isLoading||!inputText.trim()} className="w-11 h-11 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center disabled:opacity-50" aria-label="Send message"><Send className="w-5 h-5"/></button></div><div className="flex items-center justify-between mt-2 text-[10px] text-slate-400"><span>Live listing support</span><button onClick={clearConversation} className="flex items-center gap-1 hover:text-slate-700"><RotateCcw className="w-3 h-3"/> Clear chat</button></div></div>
     </motion.div>}</AnimatePresence>
   </div>;
 };
