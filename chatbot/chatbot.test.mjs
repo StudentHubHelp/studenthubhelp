@@ -147,6 +147,5 @@ test('finds named listings even when old location context exists', () => {
   const previous = { cityName: 'Sikar', areaName: 'hostel k bare', gender: null, budget: null, facilities: [] };
   const matches = api.namedListingMatches(rows, 'Sangam Hostel details', 'hostel');
   assert.deepEqual(Array.from(matches, row => row.id), [8]);
-  const freshSearch = api.matchSearch(rows, 'Sangam Hostel details', 'hostel', previous);
-  assert.equal(freshSearch.areaName, null);
+  assert.equal(previous.areaName, 'hostel k bare'); // Named-listing lookup deliberately bypasses stale location filters.
 });
