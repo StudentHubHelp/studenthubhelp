@@ -84,10 +84,10 @@ function genderOf(q){
   return null;
 }
 function budgetOf(q){
-  const rawCurrency=String(q||'').match(/(?:₹|rs\\.?\\s*)(\\d[\\d,]*(?:\\.\\d+)?)\\s*(k|thousand)?/i);
+  const rawCurrency=String(q||'').match(/(?:₹|rs\.?\s*)(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)?/i);
   if(rawCurrency){let amount=Number(rawCurrency[1].replace(/,/g,''));if(rawCurrency[2])amount*=1000;return Number.isFinite(amount)&&amount>0?amount:null;}
   const n=norm(q);
-  const suffix=n.match(/(?:^|\\s)(\\d[\\d,]*(?:\\.\\d+)?)\\s*(k|thousand)\\b/i);
+  const suffix=n.match(/(?:^|\s)(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)\b/i);
   if(suffix){let amount=Number(suffix[1].replace(/,/g,''));if(suffix[2])amount*=1000;return Number.isFinite(amount)&&amount>0?amount:null;}
   const m=n.match(/(?:under|below|less than|upto|up to|within|budget|tak|maximum|max|₹|rs)\s*(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)?|(?:₹|rs\.?\s*)(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)?/i);
   if(!m){
