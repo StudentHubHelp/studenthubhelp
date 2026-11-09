@@ -1,0 +1,29 @@
+name: Chatbot regression tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'chatbot/**'
+      - '.github/workflows/chatbot-tests.yml'
+  pull_request:
+    paths:
+      - 'chatbot/**'
+      - '.github/workflows/chatbot-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chatbot-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - name: Check chatbot JavaScript syntax
+        run: node --check chatbot/chatbot.js
+      - name: Run chatbot intent and location regression tests
+        run: node --test chatbot/chatbot.test.mjs
