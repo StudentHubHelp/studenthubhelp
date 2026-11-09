@@ -294,7 +294,29 @@ function parseImages(r){
 function rowSearchText(r){
   return norm([r.name,r.category,r.type,r.area,r.address,r.city,r.landmark,r.nearby_coaching,r.description,r.facilities].filter(Boolean).join(' '));
 }
-async function loadRows(){
+async function namedListingMatches(rows,query,category){
+  const n=norm(query);
+  const filler=new Set(['ke','ka','ki','k','bare','baare','about','mein','me','batao','btao','bta','details','detail','info','information','kya','hai','he','please','mujhe','bta','btao','dikhao','show','find','search','the','for','of','tell','me']);
+  const categoryWords=new Set(['hostel','hostals','hostal','pg','tiffin','tifin','mess','library','libraries','libary','cafe','cafes','cafee','bookstore','book','store','stationery']);
+  const genderWords=new Set(['boy','boys','girl','girls','male','female']);
+  const tokens=words(n).filter(t=>t.length>2&&!filler.has(t)&&!categoryWords.has(t)&&!genderWords.has(t)&&!/^\\d+$/.test(t));
+  if(!tokens.length)return [];
+  const candidates=rows.filter(r=>!category||r.__category===category).map(r=>{
+    const nameWords=words(r.name||r.property_name||'');
+    const locationWords=words([r.city,r.area].filter(Boolean).join(' '));
+    const matched=tokens.filter(t=>nameWords.some(w=>w===t||w.includes(t)||(t.length>=5&&editDistance(w,t)<=1))||locationWords.includes(t));
+    return {row:r,score:matched.length/tokens.length,matched:matched.length};
+  }).filter(x=>x.matched===tokens.length).sort((a,b)=>b.score-a.score);
+  if(!candidates.length)return [];
+  const best=candidates[0].score;
+  return candidates.filter(x=>x.score===best).map(x=>x.row);
+}
+function isNonLocationPhrase(value){
+  const stop=new Set(['k','ke','ka','ki','bare','baare','about','details','detail','info','information','batao','btao','bta','hai','he','kya','please']);
+  const parts=words(value);
+  return !parts.length||parts.every(x=>stop.has(x))||stop.has(parts[0]);
+}
+function loadRows(){
   if(cacheRows)return cacheRows;
   const client=await getDb();
   const entries=Object.entries(CFG.categories);
@@ -350,7 +372,8 @@ function matchSearch(rows,query,category,previous){
   const explicitArea=areaCandidates.find(x=>x.length>2&&n.includes(norm(x)))||null;
   const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\s+([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})/i)
     ||(!cityBase?n.match(/([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})\s+(?:par|pr|pe|mein|me)\b/i):null);
-  const areaPhrase=unknownAreaMatch?.[1]?.trim()||(!cityBase?cityPhrase:null);
+  const rawAreaPhrase=unknownAreaMatch?.[1]?.trim()||(!cityBase?cityPhrase:null);
+  const areaPhrase=rawAreaPhrase&&!isNonLocationPhrase(rawAreaPhrase)?rawAreaPhrase:null;
   const fuzzyArea=areaPhrase?areaCandidates.map(name=>({name,distance:editDistance(areaPhrase,name),length:norm(name).length}))
     .filter(x=>x.length>=5&&x.distance<=Math.max(1,Math.floor(x.length*0.22)))
     .sort((a,b)=>a.distance-b.distance||b.length-a.length)[0]?.name:null;
@@ -601,6 +624,13 @@ async function processMessage(q,container){
   if(cat){
     const rows=await loadRows();
     if(cacheErrors[cat])throw new Error('Unable to read '+CFG.categories[cat].table);
+    const namedMatches=namedListingMatches(rows,q,cat);
+    if(namedMatches.length){
+      activeSearch={category:cat,query:q,cityName:null,areaName:null,city:null,area:null,gender:null,budget:null,facilities:[],results:namedMatches,offset:0};saveConversationContext();
+      const gallery=await loadGallery();
+      const intro=namedMatches.length===1?'Mujhe aapki maangi hui listing mil gayi. Ye rahi uski available details:':'Is naam se ye matching listings mili hain. Aap sahi property select kar sakte hain:';
+      return intro+namedMatches.slice(0,5).map(r=>cardHtml(r,gallery)).join('')+(namedMatches.length>5?quickMarkup(['Aur listings dikhao']):'');
+    }
     const previous=activeSearch||null;
     const result=matchSearch(rows,q,cat,previous);
     activeSearch={category:cat,query:q,city:result.city,area:result.area,cityName:result.cityName,areaName:result.areaName,gender:result.gender,budget:result.budget,facilities:result.facilities,results:result.rows,offset:0};saveConversationContext();
