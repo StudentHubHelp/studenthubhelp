@@ -29,28 +29,61 @@ function coords(p:any){if(!p||typeof p!=="object")return null;const lat=Number(p
 function distanceKm(a:any,b:any){const A=coords(a),B=coords(b);if(!A||!B)return undefined;const r=(v:number)=>v*Math.PI/180,dLat=r(B.lat-A.lat),dLon=r(B.lng-A.lng),h=Math.sin(dLat/2)**2+Math.cos(r(A.lat))*Math.cos(r(B.lat))*Math.sin(dLon/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h))}
 function distanceToLandmark(p:any,l:any){const A=coords(p),B=l?{latitude:l.lat,longitude:l.lng}:null;if(!A||!B)return undefined;return distanceKm(A,B)}
 function searchText(p:any){return n([p.name,p.title,p.business_name,p.service_name,p.type,p.gender_type,p.gender,p.city,p.area,p.service_area,p.address,p.landmark,p.nearby_coaching,p.description,p.facilities,p.amenities].filter(Boolean).join(" "))}
+function cityMatches(actual:any,target:any){
+ const a=n(actual),t=n(target);
+ if(!a||!t)return false;
+ if(a===t)return true;
+ const actualWords=a.split(" ");
+ if(t.split(" ").length===1)return actualWords.includes(t);
+ return a.startsWith(t+" ")||a.endsWith(" "+t);
+}
+function isCityDuplicateTerm(term:string|undefined,cityName:string|undefined){
+ const value=n(term||""),cityValue=n(cityName||"");
+ const meaningful=value.split(" ").filter(word=>!["city","district","rajasthan","india"].includes(word)).join(" ");
+ return !!meaningful&&!!cityValue&&meaningful===cityValue;
+}
 async function direct(type:string,ct?:string,maxBudget?:number,locationTerm?:string,genderFilter?:string){
- const table=SRC.find(x=>x[1]===type)?.[0];if(!table)return [];
- const pageSize=250,maxRows=5000;const params=new URLSearchParams({select:"*",status:"eq.active",limit:String(pageSize),order:"id.asc"});
- if(ct)params.set("city",`ilike.*${ct.replace(/[%,()]/g,"")}*`);
- const orGroups:string[]=[];
- if(maxBudget!==undefined&&Number.isFinite(maxBudget)&&maxBudget>0){
-  const budget=String(Math.floor(maxBudget));
-  orGroups.push(type==="hostel"
-   ? `monthly_rent.lte.${budget},monthly_fee.lte.${budget},price.lte.${budget}`
-   : type==="tiffin" ? `monthly_plan.lte.${budget},monthly_fee.lte.${budget}` : `monthly_fee.lte.${budget},price.lte.${budget}`);
+ const table=SRC.find(x=>x[1]===type)?.[0];
+ if(!table){console.error(`[SEARCH_CONFIG_ERROR] Unknown category: ${type}`);return []}
+ const pageSize=250,maxRows=5000;
+ const cleanCity=String(ct||"").replace(/[%,()*]/g," ").replace(/\s+/g," ").trim();
+ const fetchActiveRows=async(cityFilter?:string)=>{
+  const params=new URLSearchParams({select:"*",status:"eq.active",limit:String(pageSize),order:"id.asc"});
+  if(cityFilter)params.set("city",`ilike.*${cityFilter}*`);
+  const rowsOut:any[]=[];
+  let cursor:string|number|undefined;
+  const pagingDeadline=Date.now()+8000;
+  while(rowsOut.length<maxRows&&Date.now()<pagingDeadline){
+   if(cursor!==undefined)params.set("id",`gt.${cursor}`);
+   const batch=await db<any[]>(`/rest/v1/${table}?${params.toString()}`);
+   if(!Array.isArray(batch))throw Error(`Unexpected ${table} response: expected an array`);
+   if(!batch.length)break;
+   rowsOut.push(...batch);
+   const lastId=batch[batch.length-1]?.id;
+   if(lastId===undefined||batch.length<pageSize)break;
+   cursor=lastId;
+  }
+  if(Date.now()>=pagingDeadline)console.warn(`[SEARCH_PARTIAL] ${type} pagination reached its 8s limit; fetched ${rowsOut.length} rows`);
+  return rowsOut;
+ };
+ let rawRows=await fetchActiveRows(cleanCity||undefined);
+ console.info(`[SEARCH_FETCH] category=${type} table=${table} city=${cleanCity||"ALL"} rows=${rawRows.length}`);
+ if(ct&&rawRows.length===0){
+  console.warn(`[SEARCH_RECHECK] category=${type} city=${cleanCity}: retrying active rows without the city filter`);
+  const broadRows=await fetchActiveRows();
+  rawRows=broadRows.filter(p=>cityMatches(p.city,cleanCity));
+  console.info(`[SEARCH_RECHECK_RESULT] category=${type} city=${cleanCity} broadRows=${broadRows.length} cityMatches=${rawRows.length}`);
  }
+ let rows=ct?rawRows.filter(p=>cityMatches(p.city,cleanCity)):rawRows;
+ if(maxBudget!==undefined&&Number.isFinite(maxBudget)&&maxBudget>0)rows=rows.filter(p=>{const value=budgetValue(p,type);return value!==undefined&&value<=maxBudget});
  const term=String(locationTerm||"").replace(/[^a-zA-Z0-9\u0900-\u097f -]/g," ").replace(/\s+/g," ").trim();
- if(term)orGroups.push(["name","area","address","landmark","nearby_coaching","description"].map(col=>`${col}.ilike.*${term}*`).join(","));
+ if(term&&!isCityDuplicateTerm(term,cleanCity)){const wanted=n(term);rows=rows.filter(p=>searchText(p).includes(wanted))}
  if(type==="hostel"&&(genderFilter==="girls"||genderFilter==="boys")){
   const variants=genderFilter==="girls"?["girls","girl","female","women","ladies","ladki","महिला","लड़क"]:["boys","boy","male","men","ladke","लड़के"];
-  orGroups.push(variants.flatMap(v=>["name","description","type"].map(col=>`${col}.ilike.*${v}*`)).join(","));
+  rows=rows.filter(p=>{const text=n([p.name,p.description,p.type,p.gender_type,p.gender].filter(Boolean).join(" "));return variants.some(v=>text.includes(n(v)))});
  }
- if(orGroups.length===1)params.set("or",`(${orGroups[0]})`);
- else if(orGroups.length>1)params.set("and",`(${orGroups.map(group=>`or(${group})`).join(",")})`);
- const page:any[]=[];let cursor:string|number|undefined;const pagingDeadline=Date.now()+8000;while(page.length<maxRows&&Date.now()<pagingDeadline){if(cursor!==undefined)params.set("id",`gt.${cursor}`);const rows=await db<any[]>(`/rest/v1/${table}?${params.toString()}`);const batch=Array.isArray(rows)?rows:[];if(!batch.length)break;page.push(...batch);const lastId=batch[batch.length-1]?.id;if(lastId===undefined||batch.length<pageSize)break;cursor=lastId}if(Date.now()>=pagingDeadline)console.warn(`[SEARCH] ${type} cursor pagination reached its 8s budget; returning bounded partial results`);
- // Keyset pagination on the category primary key; filters run in Postgres before each bounded page.
- return page.map(p=>({...p,_type:type})).filter(p=>!ct||n(p.city||"").includes(n(ct)));
+ console.info(`[SEARCH_FILTERED] category=${type} city=${cleanCity||"ALL"} rows=${rows.length}`);
+ return rows.map(p=>({...p,_type:type}));
 }
 async function multiDirect(types:string[],ct?:string,maxBudget?:number,locationTerm?:string,genderFilter?:string){
  const unique=[...new Set(types.filter(Boolean))];
@@ -350,7 +383,25 @@ Deno.serve(async(req:Request)=>{
   }
   if(isAccountSupport(msg))return await chatResponse({reply:accountSupportReply(msg),intent:"Account / Login Support",primaryTopic:"Account access",suggestedFollowUps:["I forgot my password","Google login is not working","Dashboard is not opening","Contact support"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
   if(isContact(msg)||String(b?.action||"")==="contact_support")return await chatResponse({reply:"Ji bilkul 😊 StudentHubHelp team se contact ke liye:\n\n📧 Email: studenthubhelpp@gmail.com\n📞 Phone: +91 9929718264",intent:"Support / Contact",primaryTopic:"Contact StudentHubHelp",suggestedFollowUps:["Find a hostel","Find a library","Search by area","Back to search"],recommendations:[],recommendedProperties:[],grounded:true,sessionId},{headers:H},sessionId,msg);
-  const previous=history.filter(x=>x.role==="user").map(x=>x.text||"").join(" "),combined=previous+" "+msg,aiRaw=await aiUnderstand(msg,history,cfg,requestDeadlineAt),u=mergeIntent(aiRaw,msg,history),explicitCat=cat(msg),nearCats=secondaryCats(msg),multiCategoryRequest=/(?:\b(?:and|plus|with)\b|\+|\baur\b|और)/i.test(n(msg)),detectedCats=["hostel","tiffin","library","cafe","bookstore"].filter(type=>new RegExp(type==="hostel"?"hostel|\\bpg\\b|हॉस्टल|पीजी":type==="tiffin"?"tiffin|mess|meal|टिफिन|मेस":type==="library"?"library|reading room|लाइब्रेरी":type==="cafe"?"cafe|कैफे":"bookstore|book shop|stationery|बुकस्टोर","i").test(n(msg))),aiCats=explicitCat&&!multiCategoryRequest?[explicitCat]:[...new Set([...(u.categories||[]),...detectedCats])],c=explicitCat&&!multiCategoryRequest?explicitCat:(u.category||explicitCat||(u.followUp?cat(previous):"")),propertyMode=u.intent.startsWith("property_")||isPropertyQuery(msg,u.followUp?previous:""),ct=u.city||(u.followUp?city(previous):""),near=u.landmark||u.area||u.locality||(u.nearRelation?nearTerm(msg):""),locationForFilter=strictLocation(msg),action=String(b?.action||u.action||""),shownList=(Array.isArray(b?.shownPropertyIds)?b.shownPropertyIds:[]).map((x:any)=>String(x)),shownIds=new Set(shownList);
+  const previous=history.filter(x=>x.role==="user").map(x=>x.text||" ").join(" ");
+  const combined=previous+" "+msg;
+  const aiRaw=await aiUnderstand(msg,history,cfg,requestDeadlineAt);
+  const u=mergeIntent(aiRaw,msg,history);
+  const explicitCat=cat(msg),nearCats=secondaryCats(msg);
+  const multiCategoryRequest=/(?:\b(?:and|plus|with)\b|\+|\baur\b|और)/i.test(n(msg));
+  const detectedCats=["hostel","tiffin","library","cafe","bookstore"].filter(type=>new RegExp(type==="hostel"?"hostel|\\bpg\\b|हॉस्टल|पीजी":type==="tiffin"?"tiffin|mess|meal|टिफिन|मेस":type==="library"?"library|reading room|लाइब्रेरी":type==="cafe"?"cafe|कैफे":"bookstore|book shop|stationery|बुकस्टोर","i").test(n(msg)));
+  const aiCats=explicitCat&&!multiCategoryRequest?[explicitCat]:[...new Set([...(u.categories||[]),...detectedCats])];
+  const c=explicitCat&&!multiCategoryRequest?explicitCat:(u.category||explicitCat||(u.followUp?cat(previous):""));
+  const propertyMode=u.intent.startsWith("property_")||isPropertyQuery(msg,u.followUp?previous:"");
+  const locationForFilter=strictLocation(msg);
+  const ct=locationForFilter.city||u.city||(u.followUp?city(previous):"");
+  const rawAreaTerm=u.area||u.locality||"";
+  const areaTerm=isCityDuplicateTerm(rawAreaTerm,ct)?"":rawAreaTerm;
+  const rawNear=u.landmark||areaTerm||(u.nearRelation?nearTerm(msg):"");
+  const near=isCityDuplicateTerm(rawNear,ct)?"":rawNear;
+  const action=String(b?.action||u.action||"");
+  const shownList=(Array.isArray(b?.shownPropertyIds)?b.shownPropertyIds:[]).map((x:any)=>String(x));
+  const shownIds=new Set(shownList);
   const clientCoords=coords(b?.clientCoords);
   const genericNearbyIntent=/(?:\bnear me\b|\bnearby\b|\bnearest\b|mere paas|mere pass|mere aas paas|aas paas|पास में|मेरे पास)/i.test(n(msg))&&!u.landmark&&!u.area&&!u.locality&&!nearTerm(msg);
   if(propertyMode&&genericNearbyIntent&&!clientCoords)return await chatResponse({reply:"Aapke aas-paas listings dikhane ke liye device location ki zaroorat hai. Kripya location access allow karein ya apna landmark/area batayein (jaise Piprali Road ya Allen ke paas).",intent:"Location Required",primaryTopic:"Nearby listing search",recommendedProperties:[],recommendations:[],suggestedFollowUps:["Search by area","Search by city"],grounded:true,sessionId},{headers:H},sessionId,msg);
@@ -444,13 +495,13 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
     const reply=`Aapke ₹${budgetFromText.toLocaleString("en-IN")} monthly budget mein ${ct} ka best available combo:\n\n🏠 **Hostel:** ${hostelCard.name} — ₹${combo.hostelCost.toLocaleString("en-IN")}/month\n🍲 **Tiffin:** ${tiffinCard.name} — ₹${combo.tiffinCost.toLocaleString("en-IN")}/month\n\n💰 **Total:** ₹${total.toLocaleString("en-IN")}/month\n**Bachat:** ₹${savings.toLocaleString("en-IN")}/month\n\nYeh prices active listing records se li gayi hain; final inclusions aur availability provider se confirm karein.`;
     return await chatResponse({reply,intent:"Combined Budget Plan",primaryTopic:"Hostel + Tiffin Combo Budget",budgetPlan,recommendedProperties:[hostelCard,tiffinCard],recommendations:[hostelCard,tiffinCard],suggestedFollowUps:["Hostel ki full details batao","Tiffin ki full details batao","Aur combo options dikhao"],grounded:true,sessionId,targetCity:ct,targetCategory:"hostel+tiffin"},{headers:H},sessionId,msg);
   }
-  let rows=await multiDirect(aiCats.length?aiCats:(c?[c]:(nearCats.length?nearCats:["hostel"])),ct,u.budgetMax??undefined,u.area||u.locality||undefined,u.gender||genderWanted(msg));
+  let rows=await multiDirect(aiCats.length?aiCats:(c?[c]:(nearCats.length?nearCats:["hostel"])),ct,u.budgetMax??undefined,areaTerm||undefined,u.gender||genderWanted(msg));
   if(clientCoords)for(const p of rows){const d=distanceKm(clientCoords,p);if(d!==undefined)p._distanceKm=d}
-  const wantedGender=u.gender||genderWanted(msg),wantedArea=u.area?(/nawalgarh/i.test(u.area)?"nawalgarh":/piprali/i.test(u.area)?"piprali":u.area.toLowerCase()):areaWanted(msg);
-  const wantedLocality=n(u.locality||"");
+  const wantedGender=u.gender||genderWanted(msg),wantedArea=areaTerm?(/nawalgarh/i.test(areaTerm)?"nawalgarh":/piprali/i.test(areaTerm)?"piprali":areaTerm.toLowerCase()):areaWanted(msg);
+  const wantedLocality=isCityDuplicateTerm(u.locality,ct)?"":n(u.locality||"");
   if(wantedGender)rows=rows.filter(p=>{const z=searchText(p);const g=n([p.gender_type,p.gender,p.hostel_type,p.type,p.name,p.title,p.description].filter(Boolean).join(" "));return wantedGender==="girls"?/girls|girl|female|women|ladki|ladkiyon|महिला|लड़क/i.test(g):/boys|boy|male|men|ladke|लड़के/i.test(g)});
   // Explicit city is a hard boundary; never leak another city into the answer.
-  if(locationForFilter.city)rows=rows.filter(p=>n(p.city||"")===n(locationForFilter.city));
+  if(ct)rows=rows.filter(p=>cityMatches(p.city,ct));
   if(wantedArea)rows=rows.filter(p=>searchText(p).includes(n(wantedArea)));
   if(wantedLocality)rows=rows.filter(p=>searchText(p).includes(wantedLocality));
   // An explicit road/locality is also a hard constraint when the user asked for it.
