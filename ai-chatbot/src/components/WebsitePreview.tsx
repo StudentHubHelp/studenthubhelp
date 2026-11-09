@@ -98,7 +98,7 @@ export const WebsitePreview: React.FC<WebsitePreviewProps> = ({ onPromptChat }) 
               className="text-xs sm:text-sm text-slate-700 bg-slate-100 font-semibold px-4 py-2.5 rounded-xl border-none outline-none w-full sm:w-auto"
             >
               <option value="all">All Cities</option>
-              {Array.from(new Set(properties.map(p => String(p.city || '')).filter(Boolean))).sort().map(city => (
+              {Array.from(new Set<string>(properties.map(p => String(p.city || '')).filter(city => city.length > 0))).sort().map((city: string) => (
                 <option key={city} value={city.toLowerCase()}>{city}</option>
               ))}
             </select>
