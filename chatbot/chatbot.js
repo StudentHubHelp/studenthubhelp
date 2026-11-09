@@ -23,6 +23,79 @@ const norm = v=>String(v==null?'':v).toLocaleLowerCase('en-IN').normalize('NFKD'
 const words = s=>norm(s).split(' ').filter(Boolean);
 let chatbotDb=null,sessionUser=null,profile=null,cacheRows=null,cacheGallery=null,cacheErrors={},activeSearch=null,history=[];
 let sdkPromise=null;
+let chatSession=null;
+const CHAT_SESSION_KEY='shh-chat-session-v2';
+const CHAT_CONTEXT_KEY='shh-chat-context-v2';
+function makeUuid(){
+  try{if(window.crypto?.randomUUID)return window.crypto.randomUUID();}catch(e){}
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16);});
+}
+function getChatSession(){
+  if(chatSession)return chatSession;
+  try{
+    const saved=JSON.parse(localStorage.getItem(CHAT_SESSION_KEY)||'null');
+    const expired=!saved||!saved.conversationId||!saved.visitorId||Date.now()-Number(saved.lastActivity||0)>86400000;
+    chatSession=expired?{conversationId:makeUuid(),visitorId:makeUuid(),lastActivity:Date.now()}:saved;
+    chatSession.lastActivity=Date.now();
+    localStorage.setItem(CHAT_SESSION_KEY,JSON.stringify(chatSession));
+  }catch(e){chatSession={conversationId:makeUuid(),visitorId:makeUuid(),lastActivity:Date.now()};}
+  return chatSession;
+}
+function saveConversationContext(){
+  try{
+    const a=activeSearch;
+    if(!a){localStorage.removeItem(CHAT_CONTEXT_KEY);return;}
+    localStorage.setItem(CHAT_CONTEXT_KEY,JSON.stringify({
+      category:a.category,query:a.query,cityName:a.cityName||a.city||null,areaName:a.areaName||a.area||null,
+      gender:a.gender||null,budget:a.budget??null,facilities:Array.isArray(a.facilities)?a.facilities:[],
+      offset:Number(a.offset)||0,updatedAt:Date.now()
+    }));
+  }catch(e){}
+}
+function restoreConversationContext(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(CHAT_CONTEXT_KEY)||'null');
+    if(!saved||Date.now()-Number(saved.updatedAt||0)>86400000)return;
+    activeSearch={category:saved.category,query:saved.query||'',city:saved.cityName||null,cityName:saved.cityName||null,
+      area:saved.areaName||null,areaName:saved.areaName||null,gender:saved.gender||null,budget:saved.budget??null,
+      facilities:Array.isArray(saved.facilities)?saved.facilities:[],offset:Number(saved.offset)||0,results:[]};
+  }catch(e){}
+}
+function classifyIntent(q){
+  const n=norm(q),cat=categoryOf(q);
+  if(/\b(book|booking|reservation|cancel|refund|payment)\b/.test(n))return 'booking_support';
+  if(/\b(my profile|my account|meri profile|mera account|my booking|my listing|status)\b/.test(n))return 'account_support';
+  if(cat&&/\b(price|rate|fees?|timing|hours|menu|delivery|seats?|facilit|wifi|ac|food|rent|deposit|books?|stationery)\b/.test(n))return 'category_faq';
+  if(cat||/\b(show|dikhao|find|search|near|nearby|options?)\b/.test(n))return 'listing_search';
+  if(/\b(complaint|complain|feedback|suggestion|contact|help|support)\b/.test(n))return 'general_support';
+  return 'general_question';
+}
+async function logChatMessage(role,content,extra={}){
+  try{
+    const client=await getDb();
+    const user=await getUser();
+    const session=getChatSession();
+    const context=activeSearch||{};
+    const metadata={
+      page_path:String(location.pathname||'').slice(0,240),
+      search_city:context.cityName||context.city||null,
+      search_area:context.areaName||context.area||null,
+      search_gender:context.gender||null,
+      search_budget:context.budget??null,
+      search_facilities:Array.isArray(context.facilities)?context.facilities:[],
+      result_count:Array.isArray(context.results)?context.results.length:null,
+      ...extra
+    };
+    const {error}=await client.from('chatbot_messages').insert({
+      conversation_id:session.conversationId,visitor_id:session.visitorId,user_id:user?.id||null,
+      role,content:String(content||'').slice(0,12000),intent:role==='user'?classifyIntent(content):null,
+      category:categoryOf(content)||context.category||null,metadata
+    });
+    if(error)console.warn('[SHH chatbot] transcript save failed:',error.message);
+    session.lastActivity=Date.now();
+    try{localStorage.setItem(CHAT_SESSION_KEY,JSON.stringify(session));}catch(e){}
+  }catch(e){console.warn('[SHH chatbot] transcript save unavailable');}
+}
 
 function getExistingClient(){
   try{if(typeof dbClient!=='undefined'&&dbClient&&typeof dbClient.from==='function')return dbClient;}catch(e){}
@@ -74,6 +147,18 @@ function categoryOf(q){
   const n=norm(q);
   for(const [key,c] of Object.entries(CFG.categories)){
     if(c.aliases.some(a=>n.includes(norm(a))))return key;
+  }
+  const tokens=words(n);
+  const typoAliases={hostel:['hostle','hostal','hostals'],tiffin:['tifin','tifffin'],library:['libary','librrary'],cafe:['cafee','caffee'],bookstore:['bookstroe','bookstor']};
+  for(const [key,aliases] of Object.entries(typoAliases)){
+    if(aliases.some(a=>tokens.includes(a)))return key;
+  }
+  for(const [key,c] of Object.entries(CFG.categories)){
+    const candidates=c.aliases.map(norm).filter(a=>a.length>=5);
+    if(tokens.some(token=>token.length>=5&&candidates.some(alias=>{
+      const d=editDistance(token,alias);
+      return d<=1||(token.length>=8&&d<=2);
+    })))return key;
   }
   return null;
 }
@@ -339,7 +424,7 @@ function supportAnswer(q){
     return 'Hostel / PG book karne ka tarika:<br>1. <a href="/pg-finder.html">Hostel / PG Finder</a> kholen aur apni pasand ka hostel select karein.<br>2. Hostel ke details page par <b>Book Now</b> par click karein.<br>3. Booking form mein <b>Joining Date</b> aur <b>Duration</b> select karein.<br>4. Login karein (agar pehle se login nahi hain), phir <b>Confirm Booking Request</b> dabayein.<br>5. Request <b>Pending</b> status mein save hogi. Owner/admin ke response ke baad status update hoga; request submit hona confirmed room ya payment ki guarantee nahi hai.<br><br><a href="/pg-finder.html">Hostel Finder kholen</a>.';
   }
   // Category-wise everyday help: answer guidance questions without hijacking listing searches.
-  const helpCategory=categoryOf(q);
+  const helpCategory=categoryOf(q)||activeSearch?.category;
   const asksHow=/\b(how|kaise|kese|kes[e]?|kya|what|which|where|when|kitna|kitne|kab|kahan|kaun|can i|do you|does|is there|available|milta|milti|milega|milengi|chahiye|batao|samjhao)\b/.test(n);
   const asksInfo=/\b(price|rate|fees?|charges?|cost|timing|time|hours|open|close|menu|food|meal|delivery|seating|seat|books?|stationery|photocopy|xerox|printing|rental|rent|facilit|feature|detail|contact|number|location|address|payment|refund|cancel|plan|monthly|daily|weekly|veg|non.?veg|jain|wifi|ac|parking|washroom|bathroom|security|rules?)\b/.test(n);
   const isSearchRequest=/\b(show|dikhao|find|search|listings?|options?|suggest|recommend|near|nearby)\b|ke paas|\bpaas\b/.test(n);
@@ -464,25 +549,30 @@ async function processMessage(q,container){
   }
   const support=supportAnswer(q);
   if(support)return support;
-  if(/more|aur listings|next results|aur dikhao/.test(n)&&activeSearch?.results?.length){
-    const next=activeSearch.offset+4,shown=activeSearch.results.slice(next,next+4);
+  if(/more|aur listings|next results|aur dikhao/.test(n)&&activeSearch?.category){
+    if(!activeSearch.results?.length){
+      const rows=await loadRows();
+      const rebuilt=matchSearch(rows,activeSearch.query||'',activeSearch.category,activeSearch);
+      activeSearch.results=rebuilt.rows;
+    }
+    const next=Number(activeSearch.offset||0)+4,shown=activeSearch.results.slice(next,next+4);
     if(!shown.length)return 'Is search ke saare matching results dikhaye ja chuke hain. Aap filters badal kar nayi search kar sakte hain.';
-    activeSearch.offset=next;
+    activeSearch.offset=next;saveConversationContext();
     const gallery=await loadGallery();
     return shown.map(r=>cardHtml(r,gallery)).join('')+(activeSearch.results.length>next+4?quickMarkup(['Aur listings dikhao']):'');
   }
   if(/budget badlo|change budget/.test(n))return 'Aapka naya maximum budget kitna hai? Example: 5000 tak.';
   if(/area badlo|change area/.test(n))return 'Kaunsa area, road ya coaching landmark chahiye? Example: Piprali Road par.';
-  if(/city batao|city badlo|change city/.test(n)){if(activeSearch){activeSearch.areaName=null;activeSearch.area=null;}return 'Kaunsa city chahiye? Example: Sikar, Jaipur ya Kota.';}
+  if(/city batao|city badlo|change city/.test(n)){if(activeSearch){activeSearch.areaName=null;activeSearch.area=null;activeSearch.cityName=null;activeSearch.city=null;saveConversationContext();}return 'Kaunsa city chahiye? Example: Sikar, Jaipur ya Kota.';}
   if(/facilities filter/.test(n))return 'Kaunsi facility zaroori hai? Example: Wi-Fi, AC, food ya parking.';
   let cat=categoryOf(q);
   if(!cat&&activeSearch?.category)cat=activeSearch.category;
   if(cat){
     const rows=await loadRows();
     if(cacheErrors[cat])throw new Error('Unable to read '+CFG.categories[cat].table);
-    const previous=activeSearch&&activeSearch.category===cat?activeSearch:null;
+    const previous=activeSearch||null;
     const result=matchSearch(rows,q,cat,previous);
-    activeSearch={category:cat,query:q,city:result.city,area:result.area,cityName:result.cityName,areaName:result.areaName,gender:result.gender,budget:result.budget,facilities:result.facilities,results:result.rows,offset:0};
+    activeSearch={category:cat,query:q,city:result.city,area:result.area,cityName:result.cityName,areaName:result.areaName,gender:result.gender,budget:result.budget,facilities:result.facilities,results:result.rows,offset:0};saveConversationContext();
     if(!result.rows.length){
       let nextSteps;
       if(result.area&&result.city){
@@ -510,7 +600,13 @@ async function processMessage(q,container){
   if(/hostel|pg|tiffin|mess|library|cafe|bookstore|book store|dikhao|show me|find|search/.test(n)){
     return 'Main aapke liye listing search kar sakta hoon. Kaunsi category chahiye—Hostel/PG, Tiffin, Library, Cafe ya Bookstore? City aur budget bhi bata sakte hain.'+quickMarkup(['Hostel / PG','Tiffin / Mess','Library','Cafe','Bookstore']);
   }
-  return 'Main StudentHubHelp ki listings, booking guidance, account/listing support, website use, student safety aur contact details mein help kar sakta hoon. Apna sawal thoda aur detail mein batayein.'+quickMarkup(['Hostel dikhao','Meri booking status','Meri listing status','Contact support']);
+  if(activeSearch){
+    return 'Aapki pichhli search ka context mere paas hai: <b>'+esc(CFG.categories[activeSearch.category]?.label||'listing')+'</b>'+
+      (activeSearch.cityName?' · '+esc(activeSearch.cityName):'')+(activeSearch.areaName?' · '+esc(activeSearch.areaName):'')+
+      '. Aap isi ke baare mein pooch rahe hain ya nayi search karni hai? Thoda specific bata dein—jaise timing, price, facilities, booking ya doosri category.'+
+      quickMarkup(['Isi area mein cafes dikhao','Budget badlo','Facilities filter karo','Nayi search']);
+  }
+  return 'Main StudentHubHelp ki listings, booking guidance, account/listing support, website use, student safety aur contact details mein help kar sakta hoon. Aap apna sawal Hindi, Hinglish ya English mein likhein. Agar sawal ka matlab clear na hua toh main guess karne ke bajay clarification poochunga.'+quickMarkup(['Hostel dikhao','Meri booking status','Meri listing status','Contact support']);
 }
 function buildUI(){
   if($('#shh-chat-launcher'))return;
@@ -527,8 +623,17 @@ function buildUI(){
     q=String(q||'').trim();if(!q)return;
     addMessage(messages,esc(q),'user');input.value='';input.focus();
     const wait=typing(messages);
-    try{const answer=await processMessage(q,messages);wait.remove();addMessage(messages,answer);}
-    catch(e){console.error('[SHH chatbot]',e);wait.remove();addMessage(messages,'Abhi data load nahi ho pa raha. Kripya thodi der baad try karein ya <a href="/contact-us.html">support team se contact</a> karein.');}
+    await logChatMessage('user',q);
+    try{
+      const answer=await processMessage(q,messages);wait.remove();addMessage(messages,answer);
+      await logChatMessage('assistant',answer,{is_error:false});
+      saveConversationContext();
+    }
+    catch(e){
+      console.error('[SHH chatbot]',e);wait.remove();
+      const errorAnswer='Abhi data load nahi ho pa raha. Kripya thodi der baad try karein ya <a href="/contact-us.html">support team se contact</a> karein.';
+      addMessage(messages,errorAnswer);await logChatMessage('assistant',errorAnswer,{is_error:true,error_message:String(e?.message||e).slice(0,500)});
+    }
   }
   form.addEventListener('submit',e=>{e.preventDefault();send(input.value);});
   panel.addEventListener('click',e=>{
@@ -538,6 +643,8 @@ function buildUI(){
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel.classList.contains('shh-open'))close();});
 }
 function start(){
+  restoreConversationContext();
+  getChatSession();
   const link=document.createElement('link');link.rel='stylesheet';link.href='/chatbot/chatbot.css';document.head.appendChild(link);
   buildUI();
 }
