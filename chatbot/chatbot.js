@@ -235,8 +235,12 @@ function matchSearch(rows,query,category,previous){
   const areaCandidates=[...new Set(rows.flatMap(areaFields))].sort((a,b)=>b.length-a.length);
   const explicitArea=areaCandidates.find(x=>x.length>2&&n.includes(norm(x)))||null;
   const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\s+([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})/i)
-    ||(!cityPhrase? n.match(/([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})\s+(?:par|pr|pe|mein|me)\b/i):null);
-  const area=explicitArea||(unknownAreaMatch?unknownAreaMatch[1].trim():null)||previous?.areaName||null;
+    ||(!cityBase?n.match(/([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,2})\s+(?:par|pr|pe|mein|me)\b/i):null);
+  const areaPhrase=unknownAreaMatch?.[1]?.trim()||(!cityBase?cityPhrase:null);
+  const fuzzyArea=areaPhrase?areaCandidates.map(name=>({name,distance:editDistance(areaPhrase,name),length:norm(name).length}))
+    .filter(x=>x.length>=5&&x.distance<=Math.max(1,Math.floor(x.length*0.22)))
+    .sort((a,b)=>a.distance-b.distance||b.length-a.length)[0]?.name:null;
+  const area=explicitArea||fuzzyArea||areaPhrase||previous?.areaName||null;
   const areaCityMatches=area?[...new Map(rows.filter(r=>areaFields(r).some(v=>norm(v).includes(norm(area)))).map(r=>[norm(r.city),String(r.city||'').trim()]).filter(([key,value])=>key&&value)).values()]:[];
   const areaCity=areaCityMatches.length===1?areaCityMatches[0]:null;
   const city=cityBase||areaCity||previous?.cityName||null;
