@@ -26,6 +26,7 @@ let sdkPromise=null;
 let chatSession=null;
 const CHAT_SESSION_KEY='shh-chat-session-v2';
 const CHAT_CONTEXT_KEY='shh-chat-context-v2';
+const CHAT_HISTORY_KEY='shh-chat-history-v2';
 function makeUuid(){
   try{if(window.crypto?.randomUUID)return window.crypto.randomUUID();}catch(e){}
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16);});
@@ -51,6 +52,16 @@ function saveConversationContext(){
       offset:Number(a.offset)||0,updatedAt:Date.now()
     }));
   }catch(e){}
+}
+function saveHistory(role,content){
+  try{history.push({role,content:String(content||'').slice(0,3000),at:Date.now()});history=history.slice(-20);localStorage.setItem(CHAT_HISTORY_KEY,JSON.stringify(history));}catch(e){}
+}
+function restoreHistory(){
+  try{const saved=JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY)||'[]');if(Array.isArray(saved))history=saved.filter(x=>x&&Date.now()-Number(x.at||0)<86400000).slice(-20);}catch(e){history=[];}
+}
+function lastConversationCategory(){
+  for(let i=history.length-1;i>=0;i--){if(history[i].role==='user'){const cat=categoryOf(history[i].content);if(cat)return cat;}}
+  return null;
 }
 function restoreConversationContext(){
   try{
@@ -328,6 +339,7 @@ function matchSearch(rows,query,category,previous){
   const area=explicitArea||fuzzyArea||areaPhrase||previous?.areaName||null;
   const areaCityMatches=area?[...new Map(rows.filter(r=>areaFields(r).some(v=>norm(v).includes(norm(area)))).map(r=>[norm(r.city),String(r.city||'').trim()]).filter(([key,value])=>key&&value)).values()]:[];
   const areaCity=areaCityMatches.length===1?areaCityMatches[0]:null;
+  const ambiguousAreaCity=Boolean(area&&!cityBase&&!previous?.cityName&&areaCityMatches.length>1);
   const city=cityBase||areaCity||previous?.cityName||null;
   const gender=genderOf(query)||previous?.gender||null;
   const budget=budgetOf(query)??previous?.budget??null;
@@ -344,7 +356,7 @@ function matchSearch(rows,query,category,previous){
   if(facilities.length)out=out.filter(r=>facilities.every(f=>facilityValue(r,f)));
   const tokens=words(query).filter(w=>w.length>2&&!/^\d+$/.test(w)&&!['hostel','hostals','girls','boys','dikhao','show','please','chahiye','mujhe','mein','me','ka','ki','ke','near','nearby','paas','budget','under','upto','tak','only','kar','do','badlo','change','more','aur','listings','next','with','and','for','the','from','in','all','want','need'].includes(w));
   const explicitLocation=/\b(?:near|nearby|around|road|area|par|pr|pe|mein|me)\b|ke paas|paas/.test(n);
-  if(explicitLocation&&!city&&!explicitArea&&!unknownAreaMatch&&!previous?.areaName)out=[];
+  if(ambiguousAreaCity||(explicitLocation&&!city&&!explicitArea&&!unknownAreaMatch&&!previous?.areaName))out=[];
   else if(!city&&!area&&!gender&&!facilities.length&&tokens.length)out=out.filter(r=>{const h=rowSearchText(r);return tokens.some(t=>h.includes(t));});
   return {rows:out,city,area,gender,budget,facilities,cityName:city,areaName:area};
 }
@@ -424,7 +436,7 @@ function supportAnswer(q){
     return 'Hostel / PG book karne ka tarika:<br>1. <a href="/pg-finder.html">Hostel / PG Finder</a> kholen aur apni pasand ka hostel select karein.<br>2. Hostel ke details page par <b>Book Now</b> par click karein.<br>3. Booking form mein <b>Joining Date</b> aur <b>Duration</b> select karein.<br>4. Login karein (agar pehle se login nahi hain), phir <b>Confirm Booking Request</b> dabayein.<br>5. Request <b>Pending</b> status mein save hogi. Owner/admin ke response ke baad status update hoga; request submit hona confirmed room ya payment ki guarantee nahi hai.<br><br><a href="/pg-finder.html">Hostel Finder kholen</a>.';
   }
   // Category-wise everyday help: answer guidance questions without hijacking listing searches.
-  const helpCategory=categoryOf(q)||activeSearch?.category;
+  const helpCategory=categoryOf(q)||activeSearch?.category||lastConversationCategory();
   const asksHow=/\b(how|kaise|kese|kes[e]?|kya|what|which|where|when|kitna|kitne|kab|kahan|kaun|can i|do you|does|is there|available|milta|milti|milega|milengi|chahiye|batao|samjhao)\b/.test(n);
   const asksInfo=/\b(price|rate|fees?|charges?|cost|timing|time|hours|open|close|menu|food|meal|delivery|seating|seat|books?|stationery|photocopy|xerox|printing|rental|rent|facilit|feature|detail|contact|number|location|address|payment|refund|cancel|plan|monthly|daily|weekly|veg|non.?veg|jain|wifi|ac|parking|washroom|bathroom|security|rules?)\b/.test(n);
   const isSearchRequest=/\b(show|dikhao|find|search|listings?|options?|suggest|recommend|near|nearby)\b|ke paas|\bpaas\b/.test(n);
@@ -567,6 +579,7 @@ async function processMessage(q,container){
   if(/facilities filter/.test(n))return 'Kaunsi facility zaroori hai? Example: Wi-Fi, AC, food ya parking.';
   let cat=categoryOf(q);
   if(!cat&&activeSearch?.category)cat=activeSearch.category;
+  if(!cat)cat=lastConversationCategory();
   if(cat){
     const rows=await loadRows();
     if(cacheErrors[cat])throw new Error('Unable to read '+CFG.categories[cat].table);
@@ -621,18 +634,18 @@ function buildUI(){
   $('[data-shh-close]',panel).addEventListener('click',close);
   async function send(q){
     q=String(q||'').trim();if(!q)return;
-    addMessage(messages,esc(q),'user');input.value='';input.focus();
+    addMessage(messages,esc(q),'user');saveHistory('user',q);input.value='';input.focus();
     const wait=typing(messages);
     await logChatMessage('user',q);
     try{
       const answer=await processMessage(q,messages);wait.remove();addMessage(messages,answer);
       await logChatMessage('assistant',answer,{is_error:false});
-      saveConversationContext();
+      saveHistory('assistant',answer);saveConversationContext();
     }
     catch(e){
       console.error('[SHH chatbot]',e);wait.remove();
       const errorAnswer='Abhi data load nahi ho pa raha. Kripya thodi der baad try karein ya <a href="/contact-us.html">support team se contact</a> karein.';
-      addMessage(messages,errorAnswer);await logChatMessage('assistant',errorAnswer,{is_error:true,error_message:String(e?.message||e).slice(0,500)});
+      addMessage(messages,errorAnswer);saveHistory('assistant',errorAnswer);await logChatMessage('assistant',errorAnswer,{is_error:true,error_message:String(e?.message||e).slice(0,500)});
     }
   }
   form.addEventListener('submit',e=>{e.preventDefault();send(input.value);});
@@ -643,6 +656,7 @@ function buildUI(){
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel.classList.contains('shh-open'))close();});
 }
 function start(){
+  restoreHistory();
   restoreConversationContext();
   getChatSession();
   const link=document.createElement('link');link.rel='stylesheet';link.href='/chatbot/chatbot.css';document.head.appendChild(link);
