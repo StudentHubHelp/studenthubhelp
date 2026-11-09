@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('./chatbot.js', import.meta.url), 'utf8');
 const instrumented = source.replace(/\}\)\(\);\s*$/, [
-  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, genderOf, budgetOf, requestedFacilities, matchSearch, supportAnswer, processMessage, isContextFollowUp, lastConversationCategory, saveHistory, restoreHistory, saveConversationContext, restoreConversationContext, setActiveSearch(value) { activeSearch = value; }, getActiveSearch() { return activeSearch; }, clearHistory() { history = []; } };',
+  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, genderOf, budgetOf, requestedFacilities, matchSearch, namedListingMatches, isNonLocationPhrase, supportAnswer, processMessage, isContextFollowUp, lastConversationCategory, saveHistory, restoreHistory, saveConversationContext, restoreConversationContext, setActiveSearch(value) { activeSearch = value; }, getActiveSearch() { return activeSearch; }, clearHistory() { history = []; } };',
   '})();',
 ].join('\n'));
 assert.notEqual(instrumented, source, 'test hook should attach before the chatbot IIFE closes');
@@ -28,6 +28,7 @@ const rows = [
   { id: 1, __category: 'cafe', city: 'Sikar', area: 'Piprali Road', name: 'Sikar Piprali Cafe', status: 'active' },
   { id: 2, __category: 'cafe', city: 'Jaipur', area: 'Piprali Road', name: 'Jaipur Piprali Cafe', status: 'active' },
   { id: 3, __category: 'hostel', city: 'Sikar', area: 'Piprali Road', name: 'Alpha Boys Hostel', type: 'Boys', monthly_rent: 5000, facilities: 'WiFi, AC', status: 'active' },
+  { id: 8, __category: 'hostel', city: 'Jaipur', area: 'Mansarovar', name: 'Sangam Hostel', type: 'Boys', monthly_rent: 6500, facilities: 'WiFi, Food', status: 'active' },
   { id: 4, __category: 'hostel', city: 'Sikar', area: 'Piprali Road', name: 'Beta Girls Hostel', type: 'Girls', monthly_rent: 5500, status: 'active' },
   { id: 5, __category: 'library', city: 'Jaipur', area: 'Malviya Nagar', name: 'Study Library', girls_section: true, status: 'active' },
   { id: 6, __category: 'tiffin', city: 'Kota', area: 'Talwandi', name: 'Daily Tiffin', monthly_plan: 2500, delivery_available: true, status: 'active' },
@@ -126,4 +127,26 @@ test('asks for clarification instead of reusing stale category for unrelated que
   api.clearHistory();
   const answer = await api.processMessage('what is photosynthesis?');
   assert.match(answer, /Apna sawal Hindi|detail mein batayein|clarification/i);
+});
+
+
+test('does not interpret conversational phrases like ke bare me as an area', () => {
+  assert.equal(api.isNonLocationPhrase('k bare'), true);
+  assert.equal(api.isNonLocationPhrase('btao'), true);
+  assert.equal(api.isNonLocationPhrase('Piprali Road'), false);
+  const result = api.matchSearch(rows, 'Sangam Hostel k bare me btao', 'hostel', null);
+  assert.equal(result.areaName, null);
+});
+
+test('finds a named hostel when the user asks for its details', () => {
+  const matches = api.namedListingMatches(rows, 'Sangam Hostel ke bare me batao', 'hostel');
+  assert.deepEqual(Array.from(matches, row => row.id), [8]);
+});
+
+test('finds named listings even when old location context exists', () => {
+  const previous = { cityName: 'Sikar', areaName: 'hostel k bare', gender: null, budget: null, facilities: [] };
+  const matches = api.namedListingMatches(rows, 'Sangam Hostel details', 'hostel');
+  assert.deepEqual(Array.from(matches, row => row.id), [8]);
+  const freshSearch = api.matchSearch(rows, 'Sangam Hostel details', 'hostel', previous);
+  assert.equal(freshSearch.areaName, null);
 });
