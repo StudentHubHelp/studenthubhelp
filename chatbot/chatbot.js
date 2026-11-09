@@ -314,7 +314,7 @@ async function namedListingMatches(rows,query,category){
 function isNonLocationPhrase(value){
   const stop=new Set(['k','ke','ka','ki','bare','baare','about','details','detail','info','information','batao','btao','bta','hai','he','kya','please']);
   const parts=words(value);
-  return !parts.length||parts.every(x=>stop.has(x))||stop.has(parts[0]);
+  return !parts.length||parts.some(x=>stop.has(x));
 }
 function loadRows(){
   if(cacheRows)return cacheRows;
