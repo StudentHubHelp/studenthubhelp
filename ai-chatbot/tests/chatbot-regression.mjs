@@ -9,13 +9,16 @@ if (!apiKey) {
 const cases = [
   { query: 'Sikar mein Allen ke paas boys hostel', city: 'Sikar', category: 'hostel', forbiddenCity: 'Kota' },
   { query: 'Kota Talwandi mein budget tiffin', city: 'Kota', category: 'tiffin', forbiddenCategory: 'hostel' },
-  { query: 'Jhunjhunu me cafe', city: 'Jhunjhunu', category: 'cafe' },
+  { query: 'Jhunjhunu me cafe dikhao', city: 'Jhunjhunu', category: 'cafe' },
+  { query: 'Sikar me boys hostel', city: 'Sikar', category: 'hostel' },
   { query: 'Sikar mein hostel dikhao', city: 'Sikar', category: 'hostel' },
   { query: 'Sikar mein tiffin dikhao', city: 'Sikar', category: 'tiffin' },
   { query: 'Sikar mein library dikhao', city: 'Sikar', category: 'library' },
   { query: 'Sikar mein cafe dikhao', city: 'Sikar', category: 'cafe' },
   { query: 'Sikar mein bookstore dikhao', city: 'Sikar', category: 'bookstore' },
   { query: 'Piprali Road hostel under 5000', city: 'Sikar', category: 'hostel', maxBudget: 5000, allowNoResults: true },
+  { query: 'Sikar mein hostel under 6000', city: 'Sikar', category: 'hostel', maxBudget: 6000, allowNoResults: true },
+  { query: 'Sikar mein 5000 se 8000 ke beech hostel', city: 'Sikar', category: 'hostel', minBudget: 5000, maxBudget: 8000, allowNoResults: true },
   { query: 'Kota mein ₹15000 me hostel aur tiffin', city: 'Kota', combo: true, maxBudget: 15000 },
   { query: 'Mere paas hostel dikhao', expectLocationPrompt: true },
 ];
@@ -94,10 +97,11 @@ async function runCase(testCase, index) {
     if (testCase.forbiddenCity && listingCity.includes(testCase.forbiddenCity.toLowerCase())) failures.push('forbidden city leaked: ' + listing.city);
     if (testCase.forbiddenCategory && listingCategory.includes(testCase.forbiddenCategory)) failures.push('forbidden category leaked: ' + listingCategory);
     if (testCase.category && listingCategory && !listingCategory.includes(testCase.category)) failures.push('wrong category listing: ' + listingCategory);
-    if (testCase.maxBudget) {
+    if (testCase.maxBudget || testCase.minBudget) {
       const price = numericPrice(listing.price);
-      if (price !== null && price > testCase.maxBudget) failures.push('budget exceeded: ' + listing.price);
-      if (price === null) failures.push('listing price missing; cannot verify max budget: ' + (listing.name || listing.id));
+      if (price !== null && testCase.maxBudget && price > testCase.maxBudget) failures.push('budget exceeded: ' + listing.price);
+      if (price !== null && testCase.minBudget && price < testCase.minBudget) failures.push('price below requested minimum: ' + listing.price);
+      if (price === null) failures.push('listing price missing; cannot verify requested budget range: ' + (listing.name || listing.id));
     }
   }
 
