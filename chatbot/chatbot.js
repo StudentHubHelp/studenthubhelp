@@ -335,6 +335,9 @@ function typing(container){
 }
 function supportAnswer(q){
   const n=norm(q);
+  if(/(?:how|kaise|kese|kes[e]?)\b.*\b(?:book|booking)\b|\b(?:book|booking)\b.*\b(?:kaise|kese|kare|kre|karu|karna|process)\b/.test(n)){
+    return 'Hostel / PG book karne ka tarika:<br>1. <a href="/pg-finder.html">Hostel / PG Finder</a> kholen aur apni pasand ka hostel select karein.<br>2. Hostel ke details page par <b>Book Now</b> par click karein.<br>3. Booking form mein <b>Joining Date</b> aur <b>Duration</b> select karein.<br>4. Login karein (agar pehle se login nahi hain), phir <b>Confirm Booking Request</b> dabayein.<br>5. Request <b>Pending</b> status mein save hogi. Owner/admin ke response ke baad status update hoga; request submit hona confirmed room ya payment ki guarantee nahi hai.<br><br><a href="/pg-finder.html">Hostel Finder kholen</a>.';
+  }
   if(/complaint|complain|report issue|report a problem|shikayat|शिकायत/.test(n)){
     return 'Main aapki problem samajh sakta hoon. Abhi chatbot ke liye dedicated complaint-submission table/workflow verify nahi hua hai, isliye main fake ticket create nahi karunga. Aap <a href="/contact-us.html">Contact Us</a> page se issue bhej sakte hain ya <a href="mailto:'+CFG.contactEmail+'?subject=StudentHubHelp%20Support%20Issue">support email</a> par details bhej sakte hain.';
   }
