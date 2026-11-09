@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('./chatbot.js', import.meta.url), 'utf8');
 const instrumented = source.replace(/\}\)\(\);\s*$/, [
-  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, genderOf, budgetOf, requestedFacilities, matchSearch };',
+  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, genderOf, budgetOf, requestedFacilities, matchSearch, supportAnswer, processMessage, isContextFollowUp, lastConversationCategory, saveHistory, restoreHistory, saveConversationContext, restoreConversationContext, setActiveSearch(value) { activeSearch = value; }, getActiveSearch() { return activeSearch; }, clearHistory() { history = []; } };',
   '})();',
 ].join('\n'));
 assert.notEqual(instrumented, source, 'test hook should attach before the chatbot IIFE closes');
@@ -81,4 +81,47 @@ test('corrects a common city spelling error without widening to other cities', (
   const result = api.matchSearch(rows, 'Jaipurr mein cafe dikhao', 'cafe', null);
   assert.deepEqual(Array.from(result.rows, row => row.id), [2]);
   assert.equal(result.cityName, 'Jaipur');
+});
+
+
+test('answers natural FAQ questions for every listing category', () => {
+  assert.match(api.supportAnswer('hostel rent kitna hai'), /rent|deposit/i);
+  assert.match(api.supportAnswer('tiffin delivery available hai kya'), /delivery/i);
+  assert.match(api.supportAnswer('library kaise join kare'), /Library/i);
+  assert.match(api.supportAnswer('cafe menu kya hai'), /menu|cuisine/i);
+  assert.match(api.supportAnswer('bookstore me xerox hota hai kya'), /photocopy|Xerox|printing/i);
+});
+
+test('does not let a listing FAQ rule hijack a location search', () => {
+  assert.equal(api.supportAnswer('Piprali Road par cafe dikhao'), null);
+  assert.match(api.supportAnswer('hostel kese book kre'), /Book Now|Booking Request/i);
+});
+
+test('remembers the previous category for a genuine follow-up only', () => {
+  api.clearHistory();
+  api.saveHistory('user', 'Sikar mein cafe dikhao');
+  api.restoreHistory();
+  assert.equal(api.lastConversationCategory(), 'cafe');
+  assert.equal(api.isContextFollowUp('what about timing'), true);
+  assert.match(api.supportAnswer('what about timing'), /Cafe ki opening\/closing timing/i);
+  assert.equal(api.isContextFollowUp('what is photosynthesis'), false);
+});
+
+test('stores and restores search context between page visits', () => {
+  api.setActiveSearch({ category: 'hostel', query: 'Sikar boys hostel', cityName: 'Sikar', areaName: 'Piprali Road', gender: 'boys', budget: 6000, facilities: ['wifi'], offset: 4, results: [] });
+  api.saveConversationContext();
+  api.setActiveSearch(null);
+  api.restoreConversationContext();
+  const context = api.getActiveSearch();
+  assert.equal(context.cityName, 'Sikar');
+  assert.equal(context.areaName, 'Piprali Road');
+  assert.equal(context.gender, 'boys');
+  assert.equal(context.budget, 6000);
+  assert.deepEqual(Array.from(context.facilities), ['wifi']);
+  assert.equal(context.offset, 4);
+});
+
+test('asks for clarification instead of reusing stale category for unrelated questions', async () => {
+  const answer = await api.processMessage('what is photosynthesis?');
+  assert.match(answer, /Apna sawal Hindi|detail mein batayein|clarification/i);
 });
