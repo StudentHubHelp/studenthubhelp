@@ -61,8 +61,8 @@ function restoreHistory(){
 }
 function isContextFollowUp(q){
   const n=norm(q);
-  return /^(aur|and|also|same|waha|wahaan|there|it|usme|isme|what about|how much|kitna|kitne|price|fees?|timing|hours|menu|delivery|seats?|rent|deposit|wifi|ac|food|facility|facilities|boys|girls|under|budget|\\d{3,})\\b/.test(n)
-    || /\\b(what about|how much|aur batao|same area|usi area|wahi)\\b/.test(n);
+  return /^(aur|and|also|same|waha|wahaan|there|it|usme|isme|what about|how much|kitna|kitne|price|fees?|timing|hours|menu|delivery|seats?|rent|deposit|wifi|ac|food|facility|facilities|boys|girls|under|budget|\d{3,})\b/.test(n)
+    || /\b(what about|how much|aur batao|same area|usi area|wahi)\b/.test(n);
 }
 function lastConversationCategory(){
   for(let i=history.length-1;i>=0;i--){if(history[i].role==='user'){const cat=categoryOf(history[i].content);if(cat)return cat;}}
