@@ -39,7 +39,10 @@ function cityMatches(actual:any,target:any){
 }
 function isCityDuplicateTerm(term:string|undefined,cityName:string|undefined){
  const value=n(term||""),cityValue=n(cityName||"");
- const meaningful=value.split(" ").filter(word=>!["city","district","rajasthan","india"].includes(word)).join(" ");
+ // AI extraction may include conversational glue ("Jhunjhunu me/ mein") in a
+ // locality field. Strip those words before deciding whether it is a real area.
+ const filler=new Set(["me","mein","mai","main","in","within","city","district","rajasthan","india","ke","ka","ki","ko"]);
+ const meaningful=value.split(" ").filter(word=>word&&!filler.has(word)).join(" ");
  return !!meaningful&&!!cityValue&&meaningful===cityValue;
 }
 async function direct(type:string,ct?:string,maxBudget?:number,locationTerm?:string,genderFilter?:string){
@@ -496,6 +499,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
     return await chatResponse({reply,intent:"Combined Budget Plan",primaryTopic:"Hostel + Tiffin Combo Budget",budgetPlan,recommendedProperties:[hostelCard,tiffinCard],recommendations:[hostelCard,tiffinCard],suggestedFollowUps:["Hostel ki full details batao","Tiffin ki full details batao","Aur combo options dikhao"],grounded:true,sessionId,targetCity:ct,targetCategory:"hostel+tiffin"},{headers:H},sessionId,msg);
   }
   let rows=await multiDirect(aiCats.length?aiCats:(c?[c]:(nearCats.length?nearCats:["hostel"])),ct,u.budgetMax??undefined,areaTerm||undefined,u.gender||genderWanted(msg));
+  const fetchedCandidateCount=rows.length;
   if(clientCoords)for(const p of rows){const d=distanceKm(clientCoords,p);if(d!==undefined)p._distanceKm=d}
   const wantedGender=u.gender||genderWanted(msg),wantedArea=areaTerm?(/nawalgarh/i.test(areaTerm)?"nawalgarh":/piprali/i.test(areaTerm)?"piprali":areaTerm.toLowerCase()):areaWanted(msg);
   const wantedLocality=isCityDuplicateTerm(u.locality,ct)?"":n(u.locality||"");
@@ -513,6 +517,7 @@ const ownerDetailsIntent=/(?:owner|malik|maalik|proprietor|manager).{0,35}(?:det
   else if(near){const q=n(normalizeSearchTerms(near));const exact=rows.filter(p=>searchText(p).includes(q));if(exact.length){for(const p of exact)if(p._distanceKm===undefined)p._nearbyAreaMatch=true;rows=exact}else rows=[]}
   if(nearCats.length){const secondaryRows=await multiDirect(nearCats,ct);for(const p of rows){let best=Infinity,hasCoords=false;for(const q of secondaryRows){const d=distanceKm(p,q);if(d!==undefined){hasCoords=true;best=Math.min(best,d)}else if(p.area&&searchText(q).includes(n(p.area)))best=Math.min(best,1)}if(best<=3){p._nearbyDistanceKm=best;p._nearbyVerified=hasCoords;p._nearbyAreaMatch=!hasCoords}}rows=rows.filter(p=>p._nearbyDistanceKm!==undefined)}
   rows=rows.filter(p=>!shownIds.has(String(p.id)));
+  console.info(`[SEARCH_FINAL_CANDIDATES] category=${c||"unknown"} city=${ct||"ALL"} fetched=${fetchedCandidateCount} final=${rows.length} area=${wantedArea||""} locality=${wantedLocality||""} landmark=${u.landmark||""} facilities=${(u.facilities||[]).join(",")} budgetMin=${u.budgetMin??""} budgetMax=${u.budgetMax??""} shownIds=${shownIds.size}`);
   const ranked=rows.map(p=>({...p,_score:rank(p,combined,ct,near)})).sort((a,z)=>z._score-a._score).slice(0,cfg.max_candidates);
   let recs=ranked.slice(0,cfg.max_results).map(card);
   if(action==="view_details"){const focusId=String(b?.focusPropertyId||""),focusType=String(b?.focusPropertyType||c||"hostel"),focusRows=await multiDirect([focusType],ct),focus=focusRows.find(p=>String(p.id)===focusId);recs=focus?[card(focus)]:recs.slice(0,1)}
