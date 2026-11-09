@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('./chatbot.js', import.meta.url), 'utf8');
 const instrumented = source.replace(/\}\)\(\);\s*$/, [
-  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, genderOf, budgetOf, requestedFacilities, matchSearch, namedListingMatches, isNonLocationPhrase, supportAnswer, processMessage, isContextFollowUp, lastConversationCategory, saveHistory, restoreHistory, saveConversationContext, restoreConversationContext, setActiveSearch(value) { activeSearch = value; }, getActiveSearch() { return activeSearch; }, clearHistory() { history = []; } };',
+  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, genderOf, budgetOf, requestedFacilities, matchSearch, namedListingMatches, isNonLocationPhrase, supportAnswer, processMessage, isContextFollowUp, lastConversationCategory, saveHistory, restoreHistory, saveConversationContext, restoreConversationContext, setActiveSearch(value) { activeSearch = value; }, getActiveSearch() { return activeSearch; }, setCacheRows(value) { cacheRows = value; cacheErrors = {}; }, setCacheGallery(value) { cacheGallery = value; }, clearHistory() { history = []; } };',
   '})();',
 ].join('\n'));
 assert.notEqual(instrumented, source, 'test hook should attach before the chatbot IIFE closes');
@@ -136,6 +136,18 @@ test('does not interpret conversational phrases like ke bare me as an area', () 
   assert.equal(api.isNonLocationPhrase('Piprali Road'), false);
   const result = api.matchSearch(rows, 'Sangam Hostel k bare me btao', 'hostel', null);
   assert.equal(result.areaName, null);
+});
+
+test('answers named hostel detail questions with the active Supabase listing card before generic FAQs', async () => {
+  const sangam = { id: 99, __category: 'hostel', __table: 'hostels', name: 'Sangam Girls Hostel', city: 'SIKAR', area: 'Veer Hanuman, balagi wali gali', address: 'Veer Hanuman, balagi wali gali, opposite HDFC Bank, Ghorana Ki Dhani, Sikar, Rajasthan 332001', status: 'active', type: 'Girls Hostel', verified: true, food_available: true, mess_available: true, phone: '09784482121', slug: 'sangam-girls-hostel-veer-hanuman-balagi-wali-gali-sikar', facilities: 'Wi-Fi, CCTV, RO water' };
+  api.setCacheRows([sangam]);
+  api.setCacheGallery([]);
+  api.setActiveSearch(null);
+  const answer = await api.processMessage('Sangam Hostel ke baare mein batao');
+  assert.match(answer, /Sangam Girls Hostel/);
+  assert.match(answer, /Veer Hanuman/);
+  assert.match(answer, /View Details/);
+  assert.doesNotMatch(answer, /Aap chatbot se city\\/area/);
 });
 
 test('finds a named hostel when the user asks for its details', () => {
