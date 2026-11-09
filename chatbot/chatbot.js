@@ -255,7 +255,7 @@ function matchSearch(rows,query,category,previous){
   if(facilities.length)out=out.filter(r=>facilities.every(f=>facilityValue(r,f)));
   const tokens=words(query).filter(w=>w.length>2&&!/^\d+$/.test(w)&&!['hostel','hostals','girls','boys','dikhao','show','please','chahiye','mujhe','mein','me','ka','ki','ke','near','nearby','paas','budget','under','upto','tak','only','kar','do','badlo','change','more','aur','listings','next','with','and','for','the','from','in','all','want','need'].includes(w));
   const explicitLocation=/\b(?:near|nearby|around|road|area|par|pr|pe|mein|me)\b|ke paas|paas/.test(n);
-  if(explicitLocation&&!explicitArea&&!unknownAreaMatch&&!previous?.areaName)out=[];
+  if(explicitLocation&&!city&&!explicitArea&&!unknownAreaMatch&&!previous?.areaName)out=[];
   else if(!city&&!area&&!gender&&!facilities.length&&tokens.length)out=out.filter(r=>{const h=rowSearchText(r);return tokens.some(t=>h.includes(t));});
   return {rows:out,city,area,gender,budget,facilities,cityName:city,areaName:area};
 }
