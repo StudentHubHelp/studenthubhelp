@@ -28,7 +28,8 @@ import {
   Sliders,
   Tags,
   Power,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -164,6 +165,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {item('libraries', '24/7 Libraries', BookOpen)}
             {item('cafes', 'Student Cafes', Coffee)}
             {item('bookstores', 'Bookstores', Store)}
+          </>
+        )}
+
+        {section('AI & Conversations',
+          <>
+            {item('chatbot', 'Chatbot', MessageSquare)}
           </>
         )}
 
