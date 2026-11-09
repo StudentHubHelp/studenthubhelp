@@ -182,11 +182,11 @@ function matchSearch(rows,query,category,previous){
   const n=norm(query);
   const cityCandidates=[...new Set(rows.map(r=>String(r.city||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
   const explicitCity=cityCandidates.find(x=>x.length>1&&n.includes(norm(x)))||null;
-  const unknownCityMatch=n.match(/\\b(?:in|mein|me)\\s+([a-z][a-z-]*)/i)||n.match(/^([a-z][a-z-]*)\\s+mein\\b/i);
+  const unknownCityMatch=n.match(/\b(?:in|mein|me)\s+([a-z][a-z-]*)/i)||n.match(/^([a-z][a-z-]*)\s+mein\b/i);
   const city=explicitCity||(unknownCityMatch?unknownCityMatch[1]:null)||previous?.cityName||null;
   const areaCandidates=[...new Set(rows.flatMap(r=>[r.area,r.landmark,r.nearby_coaching].filter(Boolean).map(String)))].sort((a,b)=>b.length-a.length);
   const explicitArea=areaCandidates.find(x=>x.length>2&&n.includes(norm(x)))||null;
-  const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\\s+([a-z][a-z-]*)/i);
+  const unknownAreaMatch=n.match(/(?:near|nearby|around|ke paas|paas)\s+([a-z][a-z-]*)/i);
   const area=explicitArea||(unknownAreaMatch?unknownAreaMatch[1]:null)||previous?.areaName||null;
   const gender=genderOf(query)||previous?.gender||null;
   const budget=budgetOf(query)??previous?.budget??null;
@@ -201,13 +201,10 @@ function matchSearch(rows,query,category,previous){
   }
   if(budget!==null)out=out.filter(r=>{const p=rowPrice(r);return p&&p.value!==null&&p.value<=budget;});
   if(facilities.length)out=out.filter(r=>facilities.every(f=>facilityValue(r,f)));
-  const tokens=words(query).filter(w=>w.length>2&&!['hostel','hostals','girls','boys','dikhao','show','please','chahiye','mujhe','mein','me','ka','ki','ke','near','nearby','paas','budget','under','upto','tak','only','kar','do','badlo','change','more','aur','listings','next'].includes(w));
-  const explicitLocation=/\\b(?:near|nearby|around|road|area)\\b|ke paas|paas/.test(n);
+  const tokens=words(query).filter(w=>w.length>2&&!/^\d+$/.test(w)&&!['hostel','hostals','girls','boys','dikhao','show','please','chahiye','mujhe','mein','me','ka','ki','ke','near','nearby','paas','budget','under','upto','tak','only','kar','do','badlo','change','more','aur','listings','next','with','and','for','the','from','in','all','want','need'].includes(w));
+  const explicitLocation=/\b(?:near|nearby|around|road|area)\b|ke paas|paas/.test(n);
   if(explicitLocation&&!explicitArea&&!unknownAreaMatch&&!previous?.areaName)out=[];
-  else if(!city&&!area&&tokens.length){
-    const filtered=out.filter(r=>{const h=rowSearchText(r);return tokens.some(t=>h.includes(t));});
-    if(filtered.length)out=filtered;
-  }
+  else if(!city&&!area&&!gender&&!facilities.length&&tokens.length)out=out.filter(r=>{const h=rowSearchText(r);return tokens.some(t=>h.includes(t));});
   return {rows:out,city,area,gender,budget,facilities,cityName:city,areaName:area};
 }
 function detailsUrl(r){
