@@ -600,6 +600,20 @@ async function processMessage(q,container){
     if(!result.rows.length)return 'Aapke account se linked koi listing request nahi mili. Agar aapne kisi doosre account se submit ki thi, us account se login karein.';
     return 'Aapki latest listing requests:<br>'+result.rows.map(r=>'• <b>'+esc(r.name)+'</b> — '+esc(statusText(r.status))+(r.admin_note?'<br>Admin note: '+esc(r.admin_note):'')).join('<br>')+'<br><br>Ye status Supabase ke current record se read kiya gaya hai.';
   }
+  // Resolve named property questions from active Supabase rows before generic FAQ replies.
+  const namedCategory=categoryOf(q);
+  const asksNamedProperty=/(?:\\b(?:bare|baare|about|details?|info|information)\\b|ke\\s+bare)/.test(n);
+  if(namedCategory&&asksNamedProperty){
+    const liveRows=await loadRows();
+    if(cacheErrors[namedCategory])throw new Error('Unable to read '+CFG.categories[namedCategory].table);
+    const liveNamedMatches=namedListingMatches(liveRows,q,namedCategory);
+    if(liveNamedMatches.length){
+      activeSearch={category:namedCategory,query:q,cityName:null,areaName:null,city:null,area:null,gender:null,budget:null,facilities:[],results:liveNamedMatches,offset:0};saveConversationContext();
+      const liveGallery=await loadGallery();
+      const intro=liveNamedMatches.length===1?'Mujhe aapki maangi hui active listing mil gayi. Ye rahi uski available details:':'Is naam se ye matching active listings mili hain. Aap sahi property select kar sakte hain:';
+      return intro+liveNamedMatches.slice(0,5).map(r=>cardHtml(r,liveGallery)).join('')+(liveNamedMatches.length>5?quickMarkup(['Aur listings dikhao']):'');
+    }
+  }
   const support=supportAnswer(q);
   if(support)return support;
   if(/more|aur listings|next results|aur dikhao/.test(n)&&activeSearch?.category){
