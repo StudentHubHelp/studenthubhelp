@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { ChatbotAdminView } from './ChatbotAdminView';
-import { ChatbotAdminControls } from './ChatbotAdminControls';
 import {
   AreaItem,
   AdminNotification,
@@ -41,7 +39,6 @@ interface IntelligenceViewsProps {
     | 'settings'
     | 'categories'
     | 'admin-profile'
-    | 'chatbot-crm';
 
   areas: AreaItem[];
   notifications: AdminNotification[];
@@ -1100,7 +1097,6 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
    *
    * IMPORTANT:
    * Only Admin Profile + Security lives here.
-   * Chatbot/CRM is NOT rendered here anymore.
    * =========================================================
    */
 
@@ -1241,7 +1237,6 @@ export const IntelligenceViews: React.FC<IntelligenceViewsProps> = ({
             </button>
           </form>
         </div>
-        <ChatbotAdminControls showProfile showAiControls={false} />
       </div>
     );
   }
