@@ -97,7 +97,6 @@ export const ChatbotView: React.FC = () => {
 
   const selected = conversations.find(item => item.id === selectedId) || null;
   const userMessages = messages.filter(message => message.role === 'user').length;
-  const assistantMessages = messages.filter(message => message.role === 'assistant').length;
   const errorMessages = messages.filter(message => message.metadata?.is_error === true).length;
   const hasMore = messages.length < totalCount;
 
@@ -114,10 +113,11 @@ export const ChatbotView: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
         <Metric icon={MessagesSquare} label="Messages loaded" value={messages.length.toLocaleString('en-IN')} />
         <Metric icon={MessageSquare} label="Conversations loaded" value={conversations.length.toLocaleString('en-IN')} />
         <Metric icon={Users} label="User messages" value={userMessages.toLocaleString('en-IN')} />
+        <Metric icon={MessageSquare} label="Bot replies" value={messages.filter(message => message.role === 'assistant').length.toLocaleString('en-IN')} />
         <Metric icon={AlertTriangle} label="Bot errors" value={errorMessages.toLocaleString('en-IN')} warning={errorMessages > 0} />
       </div>
 
