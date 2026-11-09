@@ -436,7 +436,7 @@ async function processMessage(q,container){
         nextSteps=['City batao','Area batao'];
       }
       if(result.budget!==null)nextSteps.push('Budget badlo');
-      return 'Aapne '+(result.area?'<b>'+esc(result.area)+'</b> area':'is location')+(result.city?' ('+esc(result.city)+')':'')+' mein '+esc(CFG.categories[cat].label.toLowerCase())+' maange hain. Is exact location par abhi koi matching active listing nahi mili. Main doosre area ki listings bina aapki permission ke nahi dikhaunga. Kya aap city ke doosre areas ke cafes dekhna chahenge, ya location change karni hai?'+quickMarkup(nextSteps);
+      return 'Aapne '+(result.area?'<b>'+esc(result.area)+'</b> area':'is location')+(result.city?' ('+esc(result.city)+')':'')+' mein '+esc(CFG.categories[cat].label.toLowerCase())+' maange hain. Is exact location par abhi koi matching active listing nahi mili. Main doosre area ki listings bina aapki permission ke nahi dikhaunga. Kya aap city ke doosre areas ke '+(cat==='cafe'?'cafes':CFG.categories[cat].label.toLowerCase())+' dekhna chahenge, ya location change karni hai?'+quickMarkup(nextSteps);
     }
     const gallery=await loadGallery();
     const shown=result.rows.slice(0,4);
