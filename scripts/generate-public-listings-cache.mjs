@@ -73,3 +73,5 @@ async function main() {
   console.log(`Wrote public snapshot: ${Object.values(listings).reduce((sum, rows) => sum + rows.length, 0)} listings, ${Buffer.byteLength(json)} bytes.`);
 }
 main().catch(error => { console.error(error); process.exit(1); });
+
+// The output is intentionally committed only when the public listing data changes.
