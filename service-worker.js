@@ -3,7 +3,7 @@
    Supabase/API/auth data is never cached.
    Background/periodic sync refresh only the public shell.
    Push events display notifications when a configured push service sends them. */
-const CACHE_NAME = "studenthubhelp-static-v5";
+const CACHE_NAME = "studenthubhelp-static-v6";
 const OFFLINE_URL = "/index.html";
 const STATIC_ASSETS = [OFFLINE_URL, "/logo.png", "/hostel-banner.png", "/tiffin-banner.png", "/cafe-banner.png", "/library-banner.png", "/bookstore-banner.png"];
 const SYNC_TAG = "studenthubhelp-refresh-shell";
@@ -57,6 +57,27 @@ self.addEventListener("fetch", (event) => {
   // Never cache Supabase, authentication, functions, or API responses.
   if (url.pathname.startsWith("/rest/") || url.pathname.startsWith("/auth/") ||
       url.pathname.startsWith("/functions/")) return;
+
+  // Public listing snapshots are network-first, with offline cache fallback.
+  if (url.pathname === "/data/public-listings.json") {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        const response = await fetch(request, { cache: "no-cache" });
+        if (response.ok && response.type === "basic") {
+          await cache.put("/data/public-listings.json", response.clone());
+        }
+        return response;
+      } catch (_) {
+        const cached = await cache.match("/data/public-listings.json");
+        return cached || new Response("Public listings are temporarily unavailable.", {
+          status: 503,
+          headers: { "Content-Type": "text/plain; charset=utf-8" }
+        });
+      }
+    })());
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(

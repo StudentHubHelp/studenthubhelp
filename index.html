@@ -6081,6 +6081,29 @@ body,button,input,textarea,select{font-synthesis:none}
     /* ========================================= 
         LIVE STATS 
     ========================================= */ 
+    const PUBLIC_LISTINGS_CACHE_URL = "/data/public-listings.json";
+    let publicListingsSnapshotPromise = null;
+    async function getPublicListingsSnapshot() {
+      if (!publicListingsSnapshotPromise) {
+        publicListingsSnapshotPromise = fetch(PUBLIC_LISTINGS_CACHE_URL, {
+          method: "GET",
+          cache: "no-cache",
+          headers: { "Accept": "application/json" }
+        }).then(async response => {
+          if (!response.ok) throw new Error("Public listings cache HTTP " + response.status);
+          const snapshot = await response.json();
+          if (snapshot?.schemaVersion !== 1 || !snapshot?.listings || !snapshot?.counts) {
+            throw new Error("Public listings cache has an unsupported format.");
+          }
+          return snapshot;
+        }).catch(error => {
+          publicListingsSnapshotPromise = null;
+          throw error;
+        });
+      }
+      return publicListingsSnapshotPromise;
+    }
+
     const statsConfig = [ 
       ["hostels","hostelCount"], 
       ["tiffins","tiffinCount"], 
@@ -6108,67 +6131,48 @@ body,button,input,textarea,select{font-synthesis:none}
       return Math.floor(Math.max(0, Number(value) || 0) / 50) * 50;
     }
 
-    async function loadHostelCapacity() {
+    async function loadHostelCapacity(cachedRows = null) {
       const box = $("hostelCapacity");
       const totalEl = $("hostelCapacityTotal");
       const splitEl = $("hostelCapacitySplit");
       if (!box || !totalEl || !splitEl) return;
-
       try {
-        const { data, error } = await supabaseClient
-          .from("hostels")
-          .select("total_beds,type,category,status");
-
-        if (error) throw error;
-        const rows = Array.isArray(data) ? data : [];
-        let totalBeds = 0;
-        let girlsBeds = 0;
-        let boysBeds = 0;
-
+        let rows = Array.isArray(cachedRows) ? cachedRows : null;
+        if (!rows) {
+          const { data, error } = await supabaseClient.from("hostels").select("total_beds,type,category,status");
+          if (error) throw error;
+          rows = Array.isArray(data) ? data : [];
+        }
+        let totalBeds = 0, girlsBeds = 0, boysBeds = 0;
         rows.forEach(row => {
           const status = String(row?.status ?? "").trim().toLowerCase();
           if (status && !["active", "published", "approved", "live"].includes(status)) return;
-
           const beds = Number(row?.total_beds);
           if (!Number.isFinite(beds) || beds <= 0) return;
           totalBeds += beds;
-
-          const type = String(row?.type ?? "").trim().toLowerCase();
-          const category = String(row?.category ?? "").trim().toLowerCase();
-          const genderText = type + " " + category;
+          const genderText = String(row?.type ?? "").toLowerCase() + " " + String(row?.category ?? "").toLowerCase();
           const saysGirls = /\b(?:girl|girls|women|female)\b/.test(genderText);
           const saysBoys = /\b(?:boy|boys|men|male)\b/.test(genderText);
           const saysMixed = /co[ -]?ed|mixed|boys\s*\/\s*girls|girls\s*\/\s*boys/.test(genderText);
-
-          // Only assign a gender total when the record is explicitly and
-          // unambiguously gender-specific; co-ed/unclear records stay total-only.
           if (!saysMixed && saysGirls && !saysBoys) girlsBeds += beds;
           else if (!saysMixed && saysBoys && !saysGirls) boysBeds += beds;
         });
-
         const knownTotal = roundSeatsDownTo50(totalBeds);
-        if (!knownTotal) {
-          box.hidden = true;
-          return;
-        }
-
+        if (!knownTotal) { box.hidden = true; return; }
         totalEl.textContent = knownTotal.toLocaleString("en-IN") + "+ Known Seats";
         const split = [];
-        const girls = roundSeatsDownTo50(girlsBeds);
-        const boys = roundSeatsDownTo50(boysBeds);
+        const girls = roundSeatsDownTo50(girlsBeds), boys = roundSeatsDownTo50(boysBeds);
         if (girls > 0) split.push("👩 Girls " + girls.toLocaleString("en-IN") + "+");
         if (boys > 0) split.push("👨 Boys " + boys.toLocaleString("en-IN") + "+");
         splitEl.textContent = split.length ? split.join(" · ") : "Gender-wise capacity not fully available";
         box.hidden = false;
       } catch (error) {
-        // Capacity is supplementary: if data cannot be read, keep the existing
-        // hostel count visible and hide only this new line.
         console.error("Hostel capacity load error:", error);
         box.hidden = true;
       }
     }
 
-    async function loadCategoryHighlights() {
+    async function loadCategoryHighlights(cachedListings = null) {
       const specs = [
         { table: "tiffins", columns: "verified,food_type,meal_type,delivery_available,home_delivery,breakfast_available,lunch_available,dinner_available,status", target: "tiffinStatsDetail", fallback: "🍱 Meal & tiffin services", build(rows) {
           const verified = rows.filter(r => r.verified === true).length;
@@ -6221,13 +6225,17 @@ body,button,input,textarea,select{font-synthesis:none}
         const el = $(spec.target);
         if (!el) return;
         try {
-          const { data, error } = await supabaseClient
-            .from(spec.table)
-            .select(spec.columns)
-            .in("status", ["active", "published", "approved", "live"])
-            .limit(1000);
-          if (error) throw error;
-          el.textContent = spec.build((data || []).filter(isPubliclyActive));
+          let rows = Array.isArray(cachedListings?.[spec.table]) ? cachedListings[spec.table] : null;
+          if (!rows) {
+            const { data, error } = await supabaseClient
+              .from(spec.table)
+              .select(spec.columns)
+              .in("status", ["active", "published", "approved", "live"])
+              .limit(1000);
+            if (error) throw error;
+            rows = data || [];
+          }
+          el.textContent = spec.build(rows.filter(isPubliclyActive));
         } catch (error) {
           console.error("Category highlight error: " + spec.table, error);
           el.textContent = spec.fallback;
@@ -6235,14 +6243,32 @@ body,button,input,textarea,select{font-synthesis:none}
       }));
     }
 
-    async function loadStats() { 
-      const counts = await Promise.all(statsConfig.map(([table,id]) => loadSingleCount(table,id))); 
-      const total = counts.reduce((a,b)=>a+b,0); 
-      const verifiedCount = $("verifiedCount"); 
-      if (verifiedCount) verifiedCount.textContent = total.toLocaleString("en-IN"); 
+    async function loadStats() {
+      try {
+        const snapshot = await getPublicListingsSnapshot();
+        const counts = statsConfig.map(([table, id]) => {
+          const count = Number(snapshot.counts[table] ?? 0);
+          const element = $(id);
+          if (element) element.textContent = Number.isFinite(count) ? count.toLocaleString("en-IN") : "0";
+          return Number.isFinite(count) ? count : 0;
+        });
+        const verifiedCount = $("verifiedCount");
+        if (verifiedCount) verifiedCount.textContent = counts.reduce((a, b) => a + b, 0).toLocaleString("en-IN");
+        await Promise.all([
+          loadHostelCapacity(snapshot.listings.hostels || []),
+          loadCategoryHighlights(snapshot.listings)
+        ]);
+        return;
+      } catch (cacheError) {
+        console.warn("Shared listings cache unavailable; using the Supabase fallback.", cacheError);
+      }
+      const counts = await Promise.all(statsConfig.map(([table,id]) => loadSingleCount(table,id)));
+      const total = counts.reduce((a,b)=>a+b,0);
+      const verifiedCount = $("verifiedCount");
+      if (verifiedCount) verifiedCount.textContent = total.toLocaleString("en-IN");
       loadHostelCapacity();
       loadCategoryHighlights();
-    } 
+    }
     /* Defer non-critical Supabase data until the browser has a chance to paint the hero. */
     function scheduleHomepageDataLoad() {
       const start = () => {
@@ -6477,12 +6503,25 @@ body,button,input,textarea,select{font-synthesis:none}
         const grid = $("listingGrid"); 
         if (grid) grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>'; 
 
-        const results = await Promise.all(sourceConfig.map(fetchListings)); 
-        allListings = results.flat();
+        let snapshot = null;
+        try {
+          snapshot = await getPublicListingsSnapshot();
+        } catch (cacheError) {
+          console.warn("Shared listings cache unavailable; loading listings directly from Supabase.", cacheError);
+        }
+        if (snapshot) {
+          allListings = sourceConfig.flatMap(source =>
+            (snapshot.listings[source.table] || [])
+              .filter(isPubliclyActive)
+              .map(row => normalizeListing(row, source))
+          );
+        } else {
+          const results = await Promise.all(sourceConfig.map(fetchListings));
+          allListings = results.flat();
+        }
+        studentLifeShowcaseListings = allListings;
         shhRenderIndiaMap(allListings);
         updateStudentHubShowcase();
-        // Do not derive homepage totals from this preview: each table fetch is
-        // intentionally capped at 100 rows. loadStats() owns the exact counts.
         applyFilters(); 
       })();
       return homepageListingsPromise;
@@ -6576,29 +6615,12 @@ const query = state.search.trim().toLowerCase();
     let studentLifeShowcaseListings = null;
     async function loadStudentLifeShowcase() {
       try {
-        // Reuse the initial category preview instead of downloading those same
-        // rows again. Keep the complete paginated query for every remaining row.
+        // The shared snapshot already contains the full active public dataset.
+        // Reuse it instead of issuing another five paginated Supabase reads.
         await loadListings();
-        const pageSize = 500;
-        const results = await Promise.all(sourceConfig.map(async source => {
-          const previewRows = allListings.filter(item => item.sourceTable === source.table);
-          const rows = [...previewRows];
-          for (let from = previewRows.length; ; from += pageSize) {
-            const {data,error} = await supabaseClient.from(source.table)
-              .select("*")
-              .in("status", ["active", "published", "approved", "live"])
-              .order("created_at", {ascending:false})
-              .range(from, from + pageSize - 1);
-            if (error) throw error;
-            const batch = (data || []).filter(isPubliclyActive);
-            rows.push(...batch.map(row => normalizeListing(row, source)));
-            if (!data || data.length < pageSize) break;
-          }
-          return rows;
-        }));
-        studentLifeShowcaseListings = results.flat();
+        studentLifeShowcaseListings = allListings;
       } catch (error) {
-        console.error("Student life showcase live listings error:", error);
+        console.error("Student life showcase cache load error:", error);
         studentLifeShowcaseListings = null;
       }
       updateStudentHubShowcase();
@@ -7306,15 +7328,7 @@ function renderListingCard(item) {
       if (homepageRealtimeStarted) return;
       homepageRealtimeStarted = true;
 
-      sourceConfig.forEach(source=>{
-        supabaseClient
-          .channel(`homepage-${source.table}`)
-          .on("postgres_changes",{event:"*",schema:"public",table:source.table},async()=>{
-            await loadStats();
-            await loadListings();
-          })
-          .subscribe();
-      });
+      // Listing snapshots refresh through GitHub Actions; only reviews stay realtime.
 
       supabaseClient
         .channel("homepage-reviews")
