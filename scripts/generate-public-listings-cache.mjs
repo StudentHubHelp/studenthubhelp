@@ -21,6 +21,7 @@ function authHeaders(extra = {}) {
 }
 async function fetchActiveRows(table) {
   const rows = [];
+  let exactCount = null;
   for (let offset = 0; ; offset += PAGE_SIZE) {
     const url = makeUrl(table, "*");
     url.searchParams.set("status", PUBLIC_STATUSES);
@@ -31,30 +32,23 @@ async function fetchActiveRows(table) {
       Prefer: "count=exact"
     }) });
     if (!response.ok) throw new Error(`Supabase listing read failed for ${table}: HTTP ${response.status} ${(await response.text()).slice(0, 400)}`);
+    const contentRange = response.headers.get("content-range") || "";
+    const countMatch = contentRange.match(/\/(\d+)$/);
+    if (countMatch) exactCount = Number(countMatch[1]);
     const batch = await response.json();
     if (!Array.isArray(batch)) throw new Error(`Unexpected response for ${table}`);
     rows.push(...batch);
     if (batch.length < PAGE_SIZE) break;
   }
-  return rows;
-}
-async function fetchVisibleCount(table) {
-  const response = await fetch(makeUrl(table, "id"), { method: "HEAD", headers: authHeaders({
-    Prefer: "count=exact", Range: "0-0", "Range-Unit": "items"
-  }) });
-  if (!response.ok) throw new Error(`Supabase count failed for ${table}: HTTP ${response.status}`);
-  const contentRange = response.headers.get("content-range") || "";
-  const match = contentRange.match(/\/(\d+)$/);
-  if (!match) throw new Error(`Supabase did not return an exact count for ${table}: ${contentRange}`);
-  return Number(match[1]);
+  return { rows, total: exactCount ?? rows.length };
 }
 async function main() {
   const listings = {}, counts = {};
   await Promise.all(CATEGORIES.map(async table => {
-    const [rows, count] = await Promise.all([fetchActiveRows(table), fetchVisibleCount(table)]);
-    listings[table] = rows;
-    counts[table] = count;
-    console.log(`${table}: ${rows.length} public active rows; ${count} visible rows total`);
+    const result = await fetchActiveRows(table);
+    listings[table] = result.rows;
+    counts[table] = result.total;
+    console.log(`${table}: ${result.rows.length} public active rows; ${result.total} public active count`);
   }));
   const stablePayload = { schemaVersion: 1, counts, listings };
   let previous = null;
