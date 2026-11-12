@@ -8,6 +8,14 @@ on:
       - "scripts/generate-public-listings-cache.mjs"
       - ".github/workflows/public-listings-cache.yml"
 
+  pull_request:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "service-worker.js"
+      - "scripts/generate-public-listings-cache.mjs"
+      - ".github/workflows/public-listings-cache.yml"
+
 permissions:
   contents: write
 
@@ -31,6 +39,21 @@ jobs:
       - name: Validate snapshot and JavaScript syntax
         run: |
           node --check scripts/generate-public-listings-cache.mjs
+          node --check service-worker.js
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          start = html.rfind("<script>")
+          if start < 0:
+              raise SystemExit("Homepage inline application script was not found")
+          start += len("<script>")
+          end = html.find("</script>", start)
+          if end < 0:
+              raise SystemExit("Homepage inline application script is not closed")
+          Path("/tmp/studenthubhelp-homepage.js").write_text(html[start:end], encoding="utf-8")
+          PY
+          node --check /tmp/studenthubhelp-homepage.js
           python - <<'PY'
           import json
           from pathlib import Path
