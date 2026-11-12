@@ -13,7 +13,7 @@ const CFG = {
     cafe:{table:'cafes',label:'Cafe',icon:'☕',banner:'/cafe-banner.png',aliases:['cafe','cafes','café','coffee shop','कैफे','कॉफी']},
     bookstore:{table:'bookstores',label:'Book Store',icon:'📖',banner:'/bookstore-banner.png',aliases:['bookstore','book store','book shop','bookshop','stationery','books','किताब','स्टेशनरी']}
   },
-  contactEmail:'studenthubhelpp@gmail.com',
+  contactEmail:'support@studenthubhelp.in',
   instagram:'https://www.instagram.com/studenthubhelp/',
   supportUrl:'/contact-us.html'
 };
