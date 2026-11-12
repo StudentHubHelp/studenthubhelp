@@ -1,0 +1,62 @@
+name: Public listings cache
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
+  push:
+    paths:
+      - "scripts/generate-public-listings-cache.mjs"
+      - ".github/workflows/public-listings-cache.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: studenthubhelp-public-listings-cache
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate shared public listings snapshot
+        env:
+          SUPABASE_URL: https://idurlccrarznnnqixxsd.supabase.co
+          SUPABASE_KEY: sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT
+        run: node scripts/generate-public-listings-cache.mjs
+      - name: Validate snapshot and JavaScript syntax
+        run: |
+          node --check scripts/generate-public-listings-cache.mjs
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path("data/public-listings.json").read_text(encoding="utf-8"))
+          categories = ["hostels", "tiffins", "libraries", "cafes", "bookstores"]
+          assert payload.get("schemaVersion") == 1
+          assert all(isinstance(payload.get("listings", {}).get(name), list) for name in categories)
+          assert all(isinstance(payload.get("counts", {}).get(name), int) for name in categories)
+          allowed = {"active", "published", "approved", "live"}
+          for category in categories:
+              for row in payload["listings"][category]:
+                  assert str(row.get("status") or "").strip().lower() in allowed, f"Non-public status in {category}"
+          total = sum(len(payload["listings"][name]) for name in categories)
+          assert total > 0, "Refusing to publish an empty public listings snapshot"
+          print(f"Validated shared cache: {total} active listings; counts={payload['counts']}")
+          PY
+      - name: Commit cache only when data changed
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/public-listings.json
+          if git diff --cached --quiet; then
+            echo "Public listings cache is unchanged."
+            exit 0
+          fi
+          git commit -m "chore: refresh public listings cache [skip ci]"
+          git pull --rebase -X ours origin main
+          git push origin HEAD:main
