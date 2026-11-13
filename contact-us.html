@@ -113,13 +113,13 @@ main{background:linear-gradient(180deg,#fff7fb,#fff 52%,#fff8fc)}.support-types{
 <a class="type-card" href="#contact-form" data-reason="Feedback"><span class="type-icon">☏</span><span><strong>Feedback & Business</strong><small>Share website feedback or partnership enquiries.</small></span><span class="type-arrow">›</span></a></section>
 <section class="contact-layout">
 <article class="panel" id="contact-form"><span class="section-label">Get in touch</span><h2>Send us a message</h2><p class="panel-intro">Tell us what you need, and we'll help route your request for review.</p>
-<form class="form" action="mailto:contact@studenthubhelp.in" method="post" enctype="text/plain">
-<div class="form-row"><div class="field"><label for="name">Your name *</label><input id="name" name="Name" required autocomplete="name" placeholder="Your full name"></div><div class="field"><label for="email">Email address *</label><input id="email" name="Email" type="email" required autocomplete="email" placeholder="you@example.com"></div></div>
+<form class="form" id="studenthub-contact-form" novalidate>
+<div style="position:absolute;left:-10000px" aria-hidden="true"><label for="website">Leave this field empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div><div class="form-row"><div class="field"><label for="name">Your name *</label><input id="name" name="Name" required autocomplete="name" placeholder="Your full name"></div><div class="field"><label for="email">Email address *</label><input id="email" name="Email" type="email" required autocomplete="email" placeholder="you@example.com"></div></div>
 <div class="form-row"><div class="field"><label for="category">I am a</label><select id="category" name="I am a"><option>Student</option><option>Parent / Guardian</option><option>Property Owner / Manager</option><option>Local Business</option><option>Other</option></select></div><div class="field"><label for="reason">Request type</label><select id="reason" name="Request Type"><option>General Support</option><option>Listing Correction</option><option>Claim Listing</option><option>Remove Listing</option><option>Report Information</option><option>Business Inquiry</option><option>Feedback</option><option>Other</option></select></div></div>
 <div class="form-row"><div class="field"><label for="listing">Property / listing name</label><input id="listing" name="Listing Name" placeholder="If relevant"></div><div class="field"><label for="city">City</label><input id="city" name="City" placeholder="If relevant"></div></div>
 <div class="field"><label for="url">Property URL or listing ID (optional)</label><input id="url" name="Listing URL or ID" placeholder="Paste a page link or ID"></div>
 <div class="field"><label for="message">Your message *</label><textarea id="message" name="Message" required placeholder="Please tell us how we can help..."></textarea></div>
-<div class="submit-row"><button class="btn" type="submit">Send message →</button><p class="form-note">This form opens your email app to prepare a message; it does not submit to a server.</p></div><p class="form-note">Please don't include passwords, OTPs or payment-card details. Read our <a href="privacy-policy.html">Privacy Policy</a>.</p></form></article>
+<div class="submit-row"><button class="btn" type="submit">Send message →</button><p class="form-note" id="contact-form-status" role="status" aria-live="polite">Your message will be sent securely to our support team.</p></div><p class="form-note">Please don't include passwords, OTPs or payment-card details. Read our <a href="privacy-policy.html">Privacy Policy</a>.</p></form></article>
 <aside class="contact-info"><span class="section-label">We're listening</span><h2>Contact information</h2><p>Choose whichever channel works best for your question.</p>
 <div class="contact-line"><span class="type-icon">⌖</span><div><strong>StudentHubHelp online</strong><p>Student-focused discovery for hostels, PGs, tiffin, libraries, cafes and bookstores across India.</p><a href="index.html">Explore the website →</a></div></div>
 <div class="contact-line"><span class="type-icon">✉</span><div><strong>Email us</strong><a href="mailto:support@studenthubhelp.in">contact@studenthubhelp.in</a><p>Best for detailed listing corrections, claims and support requests.</p></div></div>
@@ -141,6 +141,29 @@ main{background:linear-gradient(180deg,#fff7fb,#fff 52%,#fff8fc)}.support-types{
 <footer class="footer"><div class="wrap"><div class="footer-grid"><div><div class="footer-brand"><img src="logo.png" alt="StudentHubHelp logo" loading="lazy decoding="async"<span><strong>StudentHubHelp</strong><small>Find · Connect · Explore</small></span></div><p>Together for a better student life.</p></div><div><h3>Quick links</h3><div class="footer-links"><a href="about.html">About Us</a><a href="privacy-policy.html">Privacy Policy</a><a href="terms-and-conditions.html">Terms & Conditions</a><a href="appointment.html">Appointment</a><a href="student-support.html">Student Support</a></div></div><div><h3>Contact & support</h3><div class="footer-links"><a href="mailto:contact@studenthubhelp.in">✉ contact@studenthubhelp.in</a><a href="tel:+919929718264">☎ +91 9929718264</a><a href="contact-us.html">Contact Us</a><a href="index.html">Home</a></div></div></div><div class="footer-bottom"><span>© 2026 StudentHubHelp. All rights reserved.</span><strong>Here for your student journey ✦</strong></div></div></footer>
 <script>document.querySelectorAll('[data-reason]').forEach(function(card){card.addEventListener('click',function(){var select=document.getElementById('reason');if(select){select.value=card.getAttribute('data-reason');}});});</script>
 
-<script src="/chatbot/chatbot.js" defer></script>
+<script>
+(function(){
+ const form=document.getElementById('studenthub-contact-form');
+ if(!form)return;
+ const button=form.querySelector('button[type="submit"]');
+ const status=document.getElementById('contact-form-status');
+ form.addEventListener('submit',async function(event){
+  event.preventDefault();
+  if(!form.reportValidity())return;
+  const value=id=>document.getElementById(id)?.value?.trim()||'';
+  const payload={name:value('name'),email:value('email'),role:value('category'),reason:value('reason'),listing:value('listing'),city:value('city'),listingUrl:value('url'),message:value('message'),website:value('website')};
+  button.disabled=true;button.textContent='Sending…';status.textContent='Sending your message securely…';
+  try{
+   const response=await fetch('https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok||!result.ok)throw new Error(result.error||'Message could not be sent. Please try again.');
+   status.textContent='Thank you! Your message has been sent. A confirmation email will arrive if email delivery is available.';
+   form.reset();
+  }catch(error){status.textContent=error.message||'Unable to send right now. Please try again later.';}
+  finally{button.disabled=false;button.textContent='Send message →';}
+ });
+})();
+</script>
+\n<script src="/chatbot/chatbot.js" defer></script>
 </body>
 </html>
