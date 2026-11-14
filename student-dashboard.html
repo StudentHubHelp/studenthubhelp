@@ -995,11 +995,26 @@ async function submitSupportQuery(e){
       status:"open"
     });
     if(error)throw error;
+    let emailNotice="Admin will review it.";
+    try{
+      const {data:{session}}=await supabaseClient.auth.getSession();
+      if(!session?.access_token)throw new Error("Session unavailable");
+      const mailResponse=await fetch("https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-email",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},
+        body:JSON.stringify({kind:"dashboard_support",name,email,phone,category,message})
+      });
+      const mailResult=await mailResponse.json().catch(()=>({}));
+      if(!mailResponse.ok||!mailResult.ok)throw new Error(mailResult.error||"Notification failed");
+    }catch(mailError){
+      console.error("Support email notification",mailError);
+      emailNotice="Your query is saved, but the email notification could not be sent. Admin can still review it in the dashboard.";
+    }
     $("supportQueryForm").reset();
     $("supportName").value=currentProfile?.full_name||"";
     $("supportEmail").value=currentProfile?.email||currentUser.email||"";
     $("supportPhone").value=currentProfile?.phone||"";
-    showToast("Query submitted successfully. Admin will review it.");
+    showToast("Query submitted successfully. "+emailNotice);
   }catch(err){
     console.error("Support query",err);
     showToast(err?.message||"Unable to submit query. Please try again.");
