@@ -6590,15 +6590,14 @@ const query = state.search.trim().toLowerCase();
     let studentLifeShowcaseListings = null;
     async function loadStudentLifeShowcase() {
       try {
-        // The shared snapshot already contains the full active public dataset.
-        // Reuse it instead of issuing another five paginated Supabase reads.
+        // loadListings() already loads the shared dataset and renders the showcase.
+        // Reuse its promise without rendering the same cards a second time.
         await loadListings();
-        studentLifeShowcaseListings = allListings;
       } catch (error) {
         console.error("Student life showcase cache load error:", error);
         studentLifeShowcaseListings = null;
+        updateStudentHubShowcase();
       }
-      updateStudentHubShowcase();
     }
 
     function updateStudentHubShowcase() {
