@@ -6015,6 +6015,7 @@ body,button,input,textarea,select{font-synthesis:none}
     const tickerItems = document.querySelectorAll("#headerCategoryTicker .cat-item");
     let carouselIndex = 0;
     let carouselTimer = null;
+    let heroCarouselVisible = true;
     // Keep the first hero stable during the mobile LCP window.
     const carouselBootAt = Date.now();
 
@@ -6033,12 +6034,12 @@ body,button,input,textarea,select{font-synthesis:none}
 
     function resetCarouselTimer() { 
       if (carouselTimer) clearInterval(carouselTimer); 
-      if (heroSlides.length > 1) { 
+      if (heroSlides.length > 1 && heroCarouselVisible && !document.hidden) { 
         carouselTimer = setInterval(() => {
           // Keep the first hero image stable through Lighthouse's initial LCP window
           // on desktop and mobile. Category ticker clicks still switch immediately.
           const initialLcpWindow = Date.now() - carouselBootAt < 15000;
-          if (!document.hidden && !initialLcpWindow) showCarousel(carouselIndex + 1);
+          if (!initialLcpWindow) showCarousel(carouselIndex + 1);
         }, 2500); 
       } 
     } 
@@ -6050,7 +6051,17 @@ body,button,input,textarea,select{font-synthesis:none}
       });
     });
 
-    showCarousel(0); 
+    showCarousel(0);
+    const heroSection = document.querySelector(".hero-upgraded");
+    if ("IntersectionObserver" in window && heroSection) {
+      heroCarouselVisible = false;
+      const heroVisibilityObserver = new IntersectionObserver(entries => {
+        heroCarouselVisible = entries.some(entry => entry.isIntersecting);
+        resetCarouselTimer();
+      }, {threshold:0.01});
+      heroVisibilityObserver.observe(heroSection);
+    }
+    document.addEventListener("visibilitychange", resetCarouselTimer);
     resetCarouselTimer(); 
 
     /* ========================================= 
@@ -6590,15 +6601,14 @@ const query = state.search.trim().toLowerCase();
     let studentLifeShowcaseListings = null;
     async function loadStudentLifeShowcase() {
       try {
-        // The shared snapshot already contains the full active public dataset.
-        // Reuse it instead of issuing another five paginated Supabase reads.
+        // loadListings() already loads the shared dataset and renders the showcase.
+        // Reuse its promise without rendering the same cards a second time.
         await loadListings();
-        studentLifeShowcaseListings = allListings;
       } catch (error) {
         console.error("Student life showcase cache load error:", error);
         studentLifeShowcaseListings = null;
+        updateStudentHubShowcase();
       }
-      updateStudentHubShowcase();
     }
 
     function updateStudentHubShowcase() {
@@ -7112,8 +7122,26 @@ function renderListingCard(item) {
     /* ========================================= 
         REVIEWS 
     ========================================= */ 
-    let reviews = []; 
-    let reviewIndex = 0; 
+    let reviews = [];
+    let reviewIndex = 0;
+    let reviewWrapVisible = false;
+    let reviewVisibilityObserver = null;
+    let reviewRotationSync = () => {};
+
+    function observeReviewVisibility(wrap) {
+      if (!("IntersectionObserver" in window)) {
+        reviewWrapVisible = true;
+        return;
+      }
+      if (reviewVisibilityObserver) return;
+      reviewVisibilityObserver = new IntersectionObserver(entries => {
+        reviewWrapVisible = entries.some(entry => entry.isIntersecting);
+        reviewRotationSync();
+      }, {threshold:0.01});
+      reviewVisibilityObserver.observe(wrap);
+    }
+
+    document.addEventListener("visibilitychange", () => reviewRotationSync()); 
 
     function starsHTML(rating) { 
       const value = Math.max(0,Math.min(5,Math.round(Number(rating)||0))); 
@@ -7139,7 +7167,8 @@ function renderListingCard(item) {
 
     function renderReviews() { 
       const wrap=$("testimonialWrap"); 
-      if(!wrap) return; 
+      if(!wrap) return;
+      observeReviewVisibility(wrap);
       clearInterval(window.__reviewTimer);
       if(!reviews.length) { 
         wrap.innerHTML=`<div class="testimonial"><div class="testimonial-user">StudentHubHelp</div><div class="stars">☆☆☆☆☆</div><div class="testimonial-text">Be the first to share a public review.</div></div>`; 
@@ -7163,12 +7192,16 @@ function renderListingCard(item) {
 
       reviewIndex=0;
       showReviewPair();
-      if(reviews.length>2) {
-        window.__reviewTimer=setInterval(()=>{
-          reviewIndex=(reviewIndex+2)%reviews.length;
-          showReviewPair();
-        },4000);
-      }
+      reviewRotationSync = () => {
+        clearInterval(window.__reviewTimer);
+        if (reviews.length > 2 && reviewWrapVisible && !document.hidden) {
+          window.__reviewTimer = setInterval(() => {
+            reviewIndex = (reviewIndex + 2) % reviews.length;
+            showReviewPair();
+          }, 4000);
+        }
+      };
+      reviewRotationSync();
     }
 
     const REVIEW_DRAFT_KEY="studenthubhelp_public_review_draft_v1";
@@ -7344,6 +7377,29 @@ function renderListingCard(item) {
     if(window.location.hash === "#live-listings") { 
       setTimeout(()=>$("live-listings")?.scrollIntoView({behavior:"smooth"}),300); 
     } 
+
+    /* Pause decorative marquee motion when it is outside the viewport or the tab is hidden. */
+    function pauseOffscreenMarquees() {
+      const tracks = document.querySelectorAll(".studenthub-marquee-track,.student-life-marquee-track");
+      if (!tracks.length || !("IntersectionObserver" in window)) return;
+      const visibility = new WeakMap();
+      const syncTrack = track => {
+        if (document.hidden || visibility.get(track) !== true) {
+          track.style.animationPlayState = "paused";
+        } else {
+          track.style.removeProperty("animation-play-state");
+        }
+      };
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          visibility.set(entry.target, entry.isIntersecting);
+          syncTrack(entry.target);
+        });
+      }, {rootMargin:"120px 0px"});
+      tracks.forEach(track => observer.observe(track));
+      document.addEventListener("visibilitychange", () => tracks.forEach(syncTrack));
+    }
+    pauseOffscreenMarquees();
 
     console.log("StudentHubHelp clean white, soft pink & black theme initialized."); 
   </script> 
