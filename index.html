@@ -6016,9 +6016,6 @@ body,button,input,textarea,select{font-synthesis:none}
     let carouselIndex = 0;
     let carouselTimer = null;
     let heroCarouselVisible = true;
-    // Keep the first hero stable during the mobile LCP window.
-    const carouselBootAt = Date.now();
-
     function showCarousel(index) { 
       if (!heroSlides.length) return; 
       carouselIndex = (index + heroSlides.length) % heroSlides.length; 
@@ -6036,10 +6033,8 @@ body,button,input,textarea,select{font-synthesis:none}
       if (carouselTimer) clearInterval(carouselTimer); 
       if (heroSlides.length > 1 && heroCarouselVisible && !document.hidden) { 
         carouselTimer = setInterval(() => {
-          // Keep the first hero image stable through Lighthouse's initial LCP window
-          // on desktop and mobile. Category ticker clicks still switch immediately.
-          const initialLcpWindow = Date.now() - carouselBootAt < 15000;
-          if (!initialLcpWindow) showCarousel(carouselIndex + 1);
+          // Keep the hero banner and linked category ticker on the same 2.5-second cycle.
+          showCarousel(carouselIndex + 1);
         }, 2500); 
       } 
     } 
