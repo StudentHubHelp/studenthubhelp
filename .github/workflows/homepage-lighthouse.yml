@@ -65,7 +65,7 @@ jobs:
           for (const file of fs.readdirSync(dir).filter(x => x.endsWith('.json')).sort()) {
             const report = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
             const a = report.audits || {};
-            const score = id => a[id]?.score == null ? 'n/a' : Math.round(a[id].score * 100);
+            const score = id => report.categories?.[id]?.score == null ? 'n/a' : Math.round(report.categories[id].score * 100);
             const ms = id => a[id]?.numericValue == null ? 'n/a' : Math.round(a[id].numericValue);
             rows.push({
               run: file.replace('.json', ''),
