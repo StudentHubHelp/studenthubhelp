@@ -1,0 +1,97 @@
+name: Homepage Lighthouse baseline
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["pages build and deployment"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current homepage source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run Lighthouse three times on mobile and desktop
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p lighthouse-results
+          npx --yes lighthouse@12 --version
+          for device in mobile desktop; do
+            for run in 1 2 3; do
+              if [ "$device" = "mobile" ]; then
+                npx --yes lighthouse@12 https://studenthubhelp.in/index.html \
+                  --chrome-flags="--headless --no-sandbox" \
+                  --form-factor=mobile \
+                  --screenEmulation.mobile=true \
+                  --screenEmulation.width=412 \
+                  --screenEmulation.height=823 \
+                  --screenEmulation.deviceScaleFactor=1.75 \
+                  --throttling-method=simulate \
+                  --output=json \
+                  --output-path="lighthouse-results/mobile-$run.json"
+              else
+                npx --yes lighthouse@12 https://studenthubhelp.in/index.html \
+                  --chrome-flags="--headless --no-sandbox" \
+                  --preset=desktop \
+                  --output=json \
+                  --output-path="lighthouse-results/desktop-$run.json"
+              fi
+            done
+          done
+
+      - name: Summarize Lighthouse metrics
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const dir = 'lighthouse-results';
+          const rows = [];
+          for (const file of fs.readdirSync(dir).filter(x => x.endsWith('.json')).sort()) {
+            const report = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+            const a = report.audits || {};
+            const score = id => a[id]?.score == null ? 'n/a' : Math.round(a[id].score * 100);
+            const ms = id => a[id]?.numericValue == null ? 'n/a' : Math.round(a[id].numericValue);
+            rows.push({
+              run: file.replace('.json', ''),
+              performance: score('performance'),
+              accessibility: score('accessibility'),
+              bestPractices: score('best-practices'),
+              seo: score('seo'),
+              fcp: ms('first-contentful-paint'),
+              lcp: ms('largest-contentful-paint'),
+              tbt: ms('total-blocking-time'),
+              cls: a['cumulative-layout-shift']?.numericValue?.toFixed(3) ?? 'n/a',
+              speedIndex: ms('speed-index')
+            });
+          }
+          const headers = ['run','performance','accessibility','bestPractices','seo','fcp','lcp','tbt','cls','speedIndex'];
+          const table = [
+            '| ' + headers.join(' | ') + ' |',
+            '| ' + headers.map(() => '---').join(' | ') + ' |',
+            ...rows.map(r => '| ' + headers.map(h => r[h]).join(' | ') + ' |')
+          ].join('\n');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '# Homepage Lighthouse results\n\nTimes are milliseconds; CLS is unitless. Three runs per device are retained for comparison.\n\n' + table + '\n');
+          NODE
+
+      - name: Upload raw Lighthouse reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: homepage-lighthouse-reports
+          path: lighthouse-results/*.json
+          retention-days: 14
