@@ -142,19 +142,35 @@ async function main() {
   let redirects = {};
   try { redirects = JSON.parse(await readFile(redirectsPath, 'utf8')); } catch {}
   const seen = new Set();
-  const counts = {};
+  const recordKeys = new Set();
+  const redirectedSources = new Set();
+  const generatedUrls = [];
+  const redirectedUrls = [];
+  const counts = Object.fromEntries(CATEGORIES.map(({ type }) => [type, 0]));
   let generated = 0;
   const detailsTemplate = await readFile(path.join(ROOT, 'property-details.html'), 'utf8');
 
   for (const { table, type } of CATEGORIES) {
     const records = await fetchAll(table);
-    counts[type] = records.length;
     console.log(`${table}: fetched ${records.length}`);
     for (const row of records) {
       const slug = String(row.slug || '').trim();
       if (!slug) throw new Error(`Missing slug in ${table}, id=${row.id}; refusing to publish incomplete property paths.`);
       const key = `${type}/${slug}`;
-      if (seen.has(key)) throw new Error(`Duplicate static property URL: ${key}`);
+      if (recordKeys.has(key)) throw new Error(`Duplicate static property URL: ${key}`);
+      recordKeys.add(key);
+
+      // A URL explicitly mapped to another canonical slug must never be emitted as
+      // a second indexable property page, even when the legacy row is still active.
+      const mappedRedirect = redirects[`/properties/${type}/${slug}/`];
+      if (mappedRedirect && mappedRedirect.type && mappedRedirect.slug) {
+        const targetKey = `${mappedRedirect.type}/${mappedRedirect.slug}`;
+        if (targetKey !== key) {
+          redirectedSources.add(key);
+          continue;
+        }
+      }
+
       seen.add(key);
       const dir = path.join(ROOT, 'properties', type, slug);
       await mkdir(dir, { recursive: true });
@@ -171,6 +187,18 @@ async function main() {
       }
       await writeFile(path.join(dir, 'index.html'), html, 'utf8');
       generated++;
+      counts[type]++;
+      generatedUrls.push(`${BASE_URL}/properties/${type}/${encodeURIComponent(slug)}/`);
+    }
+  }
+
+  // Every active legacy source must point to a current generated canonical target.
+  for (const sourceKey of redirectedSources) {
+    const [sourceType, sourceSlug] = sourceKey.split('/');
+    const redirect = redirects[`/properties/${sourceType}/${sourceSlug}/`];
+    const targetKey = `${redirect.type}/${redirect.slug}`;
+    if (!seen.has(targetKey)) {
+      throw new Error(`Active legacy property ${sourceKey} maps to a missing canonical target: ${targetKey}`);
     }
   }
 
@@ -186,8 +214,10 @@ async function main() {
     const targetKey = `${redirect.type}/${redirect.slug}`;
     if (!CATEGORIES.some((category) => category.type === redirect.type)) continue;
     if (oldType === redirect.type && oldSlug === redirect.slug) continue;
-    // Never overwrite a currently valid canonical property page.
-    if (seen.has(`${oldType}/${oldSlug}`)) continue;
+    const sourceKey = `${oldType}/${oldSlug}`;
+    // Do not create a redirect to a canonical page that is no longer active.
+    if (!seen.has(targetKey)) continue;
+    if (seen.has(sourceKey)) continue;
     const oldDir = path.join(ROOT, 'properties', oldType, oldSlug);
     await mkdir(oldDir, { recursive: true });
     await writeFile(
@@ -196,6 +226,10 @@ async function main() {
       'utf8'
     );
     legacyRedirectPages++;
+    redirectedUrls.push({
+      from: `${BASE_URL}${oldPath}`,
+      to: `${BASE_URL}/properties/${redirect.type}/${encodeURIComponent(redirect.slug)}/`
+    });
   }
   console.log(`Generated ${legacyRedirectPages} legacy property redirect pages.`);
 
@@ -203,7 +237,15 @@ async function main() {
   if (!redirects || typeof redirects !== 'object' || Array.isArray(redirects)) {
     throw new Error('property-url-redirects.json has an invalid format.');
   }
-  const report = { generatedAt: new Date().toISOString(), total: generated, byCategory: counts };
+  generatedUrls.sort();
+  redirectedUrls.sort((a, b) => a.from.localeCompare(b.from));
+  const report = {
+    generatedAt: new Date().toISOString(),
+    total: generated,
+    byCategory: counts,
+    generatedUrls,
+    redirectedUrls
+  };
   await writeFile(path.join(ROOT, 'property-pages-manifest.json'), JSON.stringify(report, null, 2) + '\n', 'utf8');
   if (generated < 600) throw new Error(`Expected around 625 property pages; only generated ${generated}. No publish should proceed.`);
   console.log(`Generated ${generated} real static index.html pages.`);
