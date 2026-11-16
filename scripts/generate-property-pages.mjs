@@ -98,7 +98,7 @@ function buildHtml({ type, slug, name, city, address, description, detailsTempla
     '<meta property="og:image:secure_url" content="https://studenthubhelp.in/logo.png">\n' +
     '<meta property="og:image:alt" content="StudentHubHelp logo">');
   return renderedTemplate
-    .replace(/<div id="app"><div class="loading">[\\s\\S]*?<\\/div><\\/div>/i, `<div id="app">${fallbackHtml}</div>`)
+    .replace(/<div id="app"><div class="loading">[\s\S]*?<\/div><\/div>/i, `<div id="app">${fallbackHtml}</div>`)
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
     .replace(/<meta id="ogTitle" property="og:title" content="[^"]*">/i, `<meta id="ogTitle" property="og:title" content="${escapeHtml(title)}">`)
