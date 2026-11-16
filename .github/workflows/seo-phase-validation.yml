@@ -1,0 +1,110 @@
+name: SEO phase validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'sitemap.html'
+      - 'property-index.html'
+      - 'property-details.html'
+      - 'scripts/generate-property-pages.mjs'
+      - 'scripts/generate-seo-pages.mjs'
+      - 'scripts/generate-sitemap.mjs'
+      - '.github/workflows/seo-phase-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  seo-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check SEO generator syntax
+        run: |
+          node --check scripts/generate-property-pages.mjs
+          node --check scripts/generate-seo-pages.mjs
+          node --check scripts/generate-sitemap.mjs
+
+      - name: Regenerate property HTML from published listing data
+        env:
+          SUPABASE_URL: https://idurlccrarznnnqixxsd.supabase.co
+          SUPABASE_KEY: sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT
+          BASE_URL: https://studenthubhelp.in
+        run: node scripts/generate-property-pages.mjs
+
+      - name: Validate internal links, property HTML and schema
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          base='https://studenthubhelp.in/'
+          home=Path('index.html').read_text(encoding='utf-8')
+          visual=Path('sitemap.html').read_text(encoding='utf-8')
+          directory=Path('property-index.html').read_text(encoding='utf-8')
+          assert 'href="property-index.html">Browse All Properties' in home
+          assert 'href="property-index.html"' in visual
+          for city in ('sikar','kota','jaipur','delhi'):
+              assert f'href="/{city}/"' in home, f'Missing generated city link: {city}'
+          assert '<link rel="canonical" href="https://studenthubhelp.in/property-index.html">' in directory
+          assert re.search(r'<a href="https://studenthubhelp\.in/properties/', directory), 'Property directory has no crawlable property links'
+
+          report=json.loads(Path('property-pages-manifest.json').read_text(encoding='utf-8'))
+          assert report['total'] >= 600, f"Unexpected property count: {report['total']}"
+          for category in ('hostel','tiffin','library','cafe','bookstore'):
+              expected=report['byCategory'].get(category,0)
+              pages=list(Path('properties',category).glob('*/index.html'))
+              assert expected > 0 and len(pages) >= expected, f'{category}: generated page count mismatch'
+              for page in pages:
+                  html=page.read_text(encoding='utf-8')
+                  assert 'id="canonicalLink" rel="canonical"' in html, f'Missing canonical: {page}'
+                  assert 'id="seo-property-fallback"' in html, f'Missing server-rendered summary: {page}'
+                  match=re.search(r'<script id="propertySchema" type="application/ld\+json">([\s\S]*?)</script>',html)
+                  assert match, f'Missing property schema: {page}'
+                  schema=json.loads(match.group(1))
+                  assert schema.get('@type') == 'WebPage' and schema.get('mainEntity',{}).get('@type') == 'Thing', f'Invalid property schema: {page}'
+          print(f"SEO validation passed: {report['total']} property pages; category totals {report['byCategory']}")
+          PY
+
+      - name: Regenerate SEO directories and XML sitemap
+        env:
+          SUPABASE_URL: https://idurlccrarznnnqixxsd.supabase.co
+          SUPABASE_KEY: sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT
+          BASE_URL: https://studenthubhelp.in/
+          SEO_LOCATION_MIN_PROPERTIES: 3
+        run: |
+          node scripts/generate-seo-pages.mjs
+          node scripts/generate-sitemap.mjs
+
+      - name: Validate sitemap output
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from urllib.parse import urlparse
+          import json, xml.etree.ElementTree as ET
+
+          ns='http://www.sitemaps.org/schemas/sitemap/0.9'
+          root=ET.parse('sitemap.xml').getroot()
+          assert root.tag == f'{{{ns}}}sitemapindex'
+          urls=[]
+          for item in root.findall(f'{{{ns}}}sitemap'):
+              loc=item.find(f'{{{ns}}}loc').text.strip()
+              child=ET.parse(Path(urlparse(loc).path).name).getroot()
+              assert child.tag == f'{{{ns}}}urlset'
+              urls.extend(x.find(f'{{{ns}}}loc').text.strip() for x in child.findall(f'{{{ns}}}url'))
+          assert len(urls)==len(set(urls)), 'Duplicate URL across sitemaps'
+          assert 'https://studenthubhelp.in/' in urls
+          assert 'https://studenthubhelp.in/property-index.html' in urls
+          generated=json.loads(Path('seo-generated-manifest.json').read_text(encoding='utf-8')).get('generated',[])
+          assert all(url in urls for url in generated), 'Generated SEO URL missing from sitemap'
+          print(f'Sitemap validation passed: {len(urls)} unique URLs.')
+          PY
