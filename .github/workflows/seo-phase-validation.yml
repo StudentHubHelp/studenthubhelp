@@ -71,9 +71,13 @@ jobs:
                       continue
                   canonical_pages.append(page)
                   assert 'id="canonicalLink" rel="canonical"' in html, f'Missing canonical: {page}'
-                  match=re.search(r'<script id="propertySchema" type="application/ld\\+json">([\\s\\S]*?)</script>',html)
-                  assert match, f'Missing property schema: {page}'
-                  schema=json.loads(match.group(1))
+                  schema_tag='<script id="propertySchema" type="application/ld+json">'
+                  schema_start=html.find(schema_tag)
+                  assert schema_start >= 0, f'Missing property schema: {page}'
+                  schema_start += len(schema_tag)
+                  schema_end=html.find('</script>', schema_start)
+                  assert schema_end >= 0, f'Unclosed property schema: {page}'
+                  schema=json.loads(html[schema_start:schema_end])
                   assert schema.get('@type') == 'WebPage' and schema.get('mainEntity',{}).get('@type') == 'Thing', f'Invalid property schema: {page}'
               assert len(canonical_pages) >= expected, f'{category}: expected {expected} canonical pages with server-rendered summaries, found {len(canonical_pages)}'
           print(f"SEO validation passed: {report['total']} property pages; category totals {report['byCategory']}")
