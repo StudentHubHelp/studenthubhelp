@@ -75,14 +75,19 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     }
     return `${shortName} | ${suffix}`;
   };
-  const title = [
+  const titleSuffixCandidates = [
     [titleLocation, categoryLabel, 'StudentHubHelp'],
     [titleLocation, 'StudentHubHelp'],
     [city, categoryLabel, 'StudentHubHelp'],
     [city, 'StudentHubHelp'],
     [categoryLabel, 'StudentHubHelp'],
     ['StudentHubHelp']
-  ].map(makeTitle).find(Boolean) || 'StudentHubHelp';
+  ];
+  const fullNameTitle = titleSuffixCandidates.map(parts => {
+    const suffix = parts.filter(Boolean).join(' | ');
+    return propertyName.length + suffix.length + 3 <= 60 ? `${propertyName} | ${suffix}` : '';
+  }).find(Boolean);
+  const title = fullNameTitle || titleSuffixCandidates.map(makeTitle).find(Boolean) || 'StudentHubHelp';
 
   const locationText = [address, area, city].filter(Boolean).map(value => String(value).trim()).filter(Boolean).join(' · ');
   const sourceDescription = String(description || '').replace(/\s+/g, ' ').trim();
