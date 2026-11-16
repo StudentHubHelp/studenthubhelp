@@ -64,10 +64,17 @@ jobs:
               expected=report['byCategory'].get(category,0)
               pages=list(Path('properties',category).glob('*/index.html'))
               assert expected > 0 and len(pages) >= expected, f'{category}: generated page count mismatch'
+              canonical_pages=[]
               for page in pages:
                   html=page.read_text(encoding='utf-8')
+                  if 'id="seo-property-fallback"' in html:
+                      canonical_pages.append((page,html))
+                  else:
+                      assert 'name="robots" content="noindex,follow"' in html, f'Legacy page must be noindex: {page}'
+                      assert re.search(r'<link[^>]+rel="canonical"[^>]+href="https://studenthubhelp\.in/properties/',html), f'Legacy redirect missing target canonical: {page}'
+              assert len(canonical_pages) >= expected, f'{category}: expected {expected} canonical property pages with server-rendered summaries, found {len(canonical_pages)}'
+              for page,html in canonical_pages:
                   assert 'id="canonicalLink" rel="canonical"' in html, f'Missing canonical: {page}'
-                  assert 'id="seo-property-fallback"' in html, f'Missing server-rendered summary: {page}'
                   match=re.search(r'<script id="propertySchema" type="application/ld\+json">([\s\S]*?)</script>',html)
                   assert match, f'Missing property schema: {page}'
                   schema=json.loads(match.group(1))
