@@ -60,7 +60,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     cafe: '/cafe-finder.html',
     bookstore: '/bookstore-finder.html'
   })[type] || '/property-index.html';
-  const propertyName = String(name || 'Property Details').replace(/\\s+/g, ' ').trim();
+  const propertyName = String(name || 'Property Details').replace(/\s+/g, ' ').trim();
   const titleLocation = [area, city].filter(Boolean).map(value => String(value).trim()).filter(Boolean).join(', ');
   const makeTitle = (suffixParts) => {
     const suffix = suffixParts.filter(Boolean).join(' | ');
@@ -69,7 +69,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     let shortName = propertyName;
     if (shortName.length > maxNameLength) {
       const visibleLength = Math.max(1, maxNameLength - 1);
-      const wordSafe = shortName.slice(0, visibleLength).replace(/\\s+\\S*$/, '').trim();
+      const wordSafe = shortName.slice(0, visibleLength).replace(/\s+\S*$/, '').trim();
       shortName = `${wordSafe || shortName.slice(0, visibleLength).trim()}…`;
     }
     return `${shortName} | ${suffix}`;
@@ -83,10 +83,10 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   ].map(makeTitle).find(Boolean) || 'StudentHubHelp';
 
   const locationText = [address, area, city].filter(Boolean).map(value => String(value).trim()).filter(Boolean).join(' · ');
-  const sourceDescription = String(description || '').replace(/\\s+/g, ' ').trim();
+  const sourceDescription = String(description || '').replace(/\s+/g, ' ').trim();
   const fallbackDescription = `${propertyName} ${categoryLabel} listing${locationText ? ` in ${locationText}` : ''}.`;
   const desc = `${sourceDescription || fallbackDescription} View available listing details on StudentHubHelp.`
-    .replace(/\\s+/g, ' ').trim().slice(0, 160);
+    .replace(/\s+/g, ' ').trim().slice(0, 160);
 
   // Match the category-specific entity types already used by the live property-details app.
   const entityType = ({
@@ -134,20 +134,20 @@ function buildHtml({ type, slug, name, city, area, address, description, details
 
   // Remove inherited favicon tags (including the old purple-N SVG) before rendering.
   const cleanTemplate = detailsTemplate
-    .replace(/<link\\b(?=[^>]*\\brel\\s*=\\s*["'](?:icon|shortcut icon|alternate icon)["'])[^>]*>\\s*/gi, '')
-    .replace(/<link\\b(?=[^>]*\\brel\\s*=\\s*["']apple-touch-icon["'])[^>]*>\\s*/gi, '')
-    .replace(/<meta\\b(?=[^>]*\\bproperty\\s*=\\s*["']og:image:secure_url["'])[^>]*>\\s*/gi, '')
-    .replace(/<meta\\b(?=[^>]*\\bproperty\\s*=\\s*["']og:image:alt["'])[^>]*>\\s*/gi, '');
+    .replace(/<link\b(?=[^>]*\brel\s*=\s*["'](?:icon|shortcut icon|alternate icon)["'])[^>]*>\s*/gi, '')
+    .replace(/<link\b(?=[^>]*\brel\s*=\s*["']apple-touch-icon["'])[^>]*>\s*/gi, '')
+    .replace(/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:image:secure_url["'])[^>]*>\s*/gi, '')
+    .replace(/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:image:alt["'])[^>]*>\s*/gi, '');
   const renderedTemplate = cleanTemplate.replace(/<head([^>]*)>/i, (_match, attributes) =>
-    '<head' + attributes + '>\\n' +
-    '<link rel="icon" type="image/png" href="/logo.png">\\n' +
-    '<link rel="shortcut icon" type="image/png" href="/logo.png">\\n' +
-    '<link rel="apple-touch-icon" href="/logo.png">\\n' +
-    '<meta property="og:image:secure_url" content="https://studenthubhelp.in/logo.png">\\n' +
+    '<head' + attributes + '>\n' +
+    '<link rel="icon" type="image/png" href="/logo.png">\n' +
+    '<link rel="shortcut icon" type="image/png" href="/logo.png">\n' +
+    '<link rel="apple-touch-icon" href="/logo.png">\n' +
+    '<meta property="og:image:secure_url" content="https://studenthubhelp.in/logo.png">\n' +
     '<meta property="og:image:alt" content="StudentHubHelp logo">');
   return renderedTemplate
-    .replace(/<div id="app"><div class="loading">[\\s\\S]*?<\\/div><\\/div>/i, `<div id="app">${fallbackHtml}</div>`)
-    .replace(/<title>[\\s\\S]*?<\\/title>/i, `<title>${escapeHtml(title)}</title>`)
+    .replace(/<div id="app"><div class="loading">[\s\S]*?<\/div><\/div>/i, `<div id="app">${fallbackHtml}</div>`)
+    .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
     .replace(/<meta id="ogTitle" property="og:title" content="[^"]*">/i, `<meta id="ogTitle" property="og:title" content="${escapeHtml(title)}">`)
     .replace(/<meta id="ogDescription" property="og:description" content="[^"]*">/i, `<meta id="ogDescription" property="og:description" content="${escapeHtml(desc)}">`)
@@ -158,8 +158,8 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     .replace(/<meta id="twitterImage" name="twitter:image" content="[^"]*">/i, '<meta id="twitterImage" name="twitter:image" content="https://studenthubhelp.in/logo.png">')
     .replace(/<meta id="twitterTitle" name="twitter:title" content="[^"]*">/i, `<meta id="twitterTitle" name="twitter:title" content="${escapeHtml(title)}">`)
     .replace(/<meta id="twitterDescription" name="twitter:description" content="[^"]*">/i, `<meta id="twitterDescription" name="twitter:description" content="${escapeHtml(desc)}">`)
-    .replace(/<script id="propertySchema" type="application\\/ld\\+json">[\\s\\S]*?<\\/script>/i, `<script id="propertySchema" type="application/ld+json">\\n${schema}\\n</script>`)
-    .replace(/<title>[^<]*<\\/title>/i, (tag) => tag + `\\n<link id="canonicalLink" rel="canonical" href="${escapeHtml(canonical)}">`);
+    .replace(/<script id="propertySchema" type="application\/ld\\+json">[\s\S]*?<\/script>/i, `<script id="propertySchema" type="application/ld+json">\n${schema}\n</script>`)
+    .replace(/<title>[^<]*<\/title>/i, (tag) => tag + `\n<link id="canonicalLink" rel="canonical" href="${escapeHtml(canonical)}">`);
 }
 function buildLegacyRedirectHtml(oldPath, targetType, targetSlug) {
   const canonical = `${BASE_URL}/properties/${targetType}/${encodeURIComponent(targetSlug)}/`;
