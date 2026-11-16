@@ -45,7 +45,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json, re
+          import html as html_lib, json, re
 
           base='https://studenthubhelp.in/'
           home=Path('index.html').read_text(encoding='utf-8')
@@ -100,7 +100,8 @@ jobs:
                       'bookstore':'/bookstore-finder.html'
                   }[category] + '"' in html, f'Missing category finder link: {page}'
                   title_match=re.search(r'<title>(.*?)</title>', html, re.I|re.S)
-                  assert title_match and len(re.sub(r'\s+',' ',title_match.group(1)).strip()) <= 60, f'Property title exceeds 60 characters: {page}'
+                  title_text=html_lib.unescape(title_match.group(1)) if title_match else ''
+                  assert title_match and len(re.sub(r'\s+',' ',title_text).strip()) <= 60, f'Property title exceeds 60 characters: {page}'
               assert len(canonical_pages) >= expected, f'{category}: expected {expected} canonical pages with server-rendered summaries, found {len(canonical_pages)}'
           print(f"SEO validation passed: {report['total']} property pages; category totals {report['byCategory']}")
           PY
