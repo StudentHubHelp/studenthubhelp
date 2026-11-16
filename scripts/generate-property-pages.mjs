@@ -65,7 +65,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   const makeTitle = (suffixParts) => {
     const suffix = suffixParts.filter(Boolean).join(' | ');
     const maxNameLength = 60 - suffix.length - 3;
-    if (maxNameLength < 1) return '';
+    if (maxNameLength < 8) return '';
     let shortName = propertyName;
     if (shortName.length > maxNameLength) {
       const visibleLength = Math.max(1, maxNameLength - 1);
