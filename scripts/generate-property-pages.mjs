@@ -57,8 +57,32 @@ function buildHtml({ type, slug, name, city, address, description, detailsTempla
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: title,
-    url: canonical
+    description: desc,
+    url: canonical,
+    mainEntity: {
+      '@type': 'Thing',
+      name: name || 'Student property',
+      description: desc,
+      url: canonical
+    }
   }).replace(/</g, '\\u003c');
+
+  const categoryLabel = ({
+    hostel: 'Hostel / PG',
+    tiffin: 'Tiffin / Mess',
+    library: 'Library',
+    cafe: 'Cafe',
+    bookstore: 'Bookstore'
+  })[type] || 'Student service';
+  const locationText = [address, city].filter(Boolean).map(value => String(value).trim()).filter(Boolean).join(' · ');
+  const fallbackHtml = `<section class="card" id="seo-property-fallback" aria-label="Property information">
+  <div class="section-kicker">STUDENTHUBHELP LISTING</div>
+  <h1>${escapeHtml(name || 'Student property')}</h1>
+  <p><strong>Category:</strong> ${escapeHtml(categoryLabel)}</p>
+  ${locationText ? `<p><strong>Location:</strong> ${escapeHtml(locationText)}</p>` : ''}
+  <p>${escapeHtml(desc)}</p>
+  <p>Explore the complete listing details, facilities and contact information on this page.</p>
+</section>`;
 
   // Remove inherited favicon tags (including the old purple-N SVG) before rendering.
   const cleanTemplate = detailsTemplate
@@ -74,6 +98,7 @@ function buildHtml({ type, slug, name, city, address, description, detailsTempla
     '<meta property="og:image:secure_url" content="https://studenthubhelp.in/logo.png">\n' +
     '<meta property="og:image:alt" content="StudentHubHelp logo">');
   return renderedTemplate
+    .replace(/<div id="app"><div class="loading">[\\s\\S]*?<\\/div><\\/div>/i, `<div id="app">${fallbackHtml}</div>`)
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
     .replace(/<meta id="ogTitle" property="og:title" content="[^"]*">/i, `<meta id="ogTitle" property="og:title" content="${escapeHtml(title)}">`)
