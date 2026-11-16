@@ -69,15 +69,17 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     let shortName = propertyName;
     if (shortName.length > maxNameLength) {
       const visibleLength = Math.max(1, maxNameLength - 1);
-      const wordSafe = shortName.slice(0, visibleLength).replace(/\s+\S*$/, '').trim();
-      shortName = `${wordSafe || shortName.slice(0, visibleLength).trim()}…`;
+      const candidate = shortName.slice(0, visibleLength).trimEnd();
+      const wordSafe = candidate.replace(/\s+\S*$/, '').trim();
+      shortName = `${wordSafe.length >= candidate.length * 0.65 ? wordSafe : candidate}…`;
     }
     return `${shortName} | ${suffix}`;
   };
   const title = [
     [titleLocation, categoryLabel, 'StudentHubHelp'],
-    [city, categoryLabel, 'StudentHubHelp'],
     [titleLocation, 'StudentHubHelp'],
+    [city, categoryLabel, 'StudentHubHelp'],
+    [city, 'StudentHubHelp'],
     [categoryLabel, 'StudentHubHelp'],
     ['StudentHubHelp']
   ].map(makeTitle).find(Boolean) || 'StudentHubHelp';
