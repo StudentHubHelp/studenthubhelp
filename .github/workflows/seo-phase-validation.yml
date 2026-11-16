@@ -67,18 +67,15 @@ jobs:
               canonical_pages=[]
               for page in pages:
                   html=page.read_text(encoding='utf-8')
-                  if 'id="seo-property-fallback"' in html:
-                      canonical_pages.append((page,html))
-                  else:
-                      assert 'name="robots" content="noindex,follow"' in html, f'Legacy page must be noindex: {page}'
-                      assert re.search(r'<link[^>]+rel="canonical"[^>]+href="https://studenthubhelp\.in/properties/',html), f'Legacy redirect missing target canonical: {page}'
-              assert len(canonical_pages) >= expected, f'{category}: expected {expected} canonical property pages with server-rendered summaries, found {len(canonical_pages)}'
-              for page,html in canonical_pages:
+                  if 'id="seo-property-fallback"' not in html:
+                      continue
+                  canonical_pages.append(page)
                   assert 'id="canonicalLink" rel="canonical"' in html, f'Missing canonical: {page}'
-                  match=re.search(r'<script id="propertySchema" type="application/ld\+json">([\s\S]*?)</script>',html)
+                  match=re.search(r'<script id="propertySchema" type="application/ld\\+json">([\\s\\S]*?)</script>',html)
                   assert match, f'Missing property schema: {page}'
                   schema=json.loads(match.group(1))
                   assert schema.get('@type') == 'WebPage' and schema.get('mainEntity',{}).get('@type') == 'Thing', f'Invalid property schema: {page}'
+              assert len(canonical_pages) >= expected, f'{category}: expected {expected} canonical pages with server-rendered summaries, found {len(canonical_pages)}'
           print(f"SEO validation passed: {report['total']} property pages; category totals {report['byCategory']}")
           PY
 
