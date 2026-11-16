@@ -93,22 +93,6 @@ jobs:
           node scripts/generate-seo-pages.mjs
           node scripts/generate-sitemap.mjs
 
-      - name: Capture production Lighthouse baseline
-        timeout-minutes: 3
-        continue-on-error: true
-        run: |
-          mkdir -p lighthouse-report
-          npx --yes lighthouse https://studenthubhelp.in/ --only-categories=performance,seo,accessibility,best-practices --output=json --output-path=./lighthouse-report/homepage.json --chrome-flags="--headless --no-sandbox"
-          node -e "const r=require('./lighthouse-report/homepage.json'); for (const [k,v] of Object.entries(r.categories)) console.log(k+': '+Math.round(v.score*100))"
-
-      - name: Upload Lighthouse baseline
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: studenthubhelp-lighthouse-production-baseline
-          path: lighthouse-report/
-          if-no-files-found: ignore
-
       - name: Validate sitemap output
         run: |
           python - <<'PY'
