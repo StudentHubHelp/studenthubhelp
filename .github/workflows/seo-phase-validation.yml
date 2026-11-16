@@ -78,7 +78,29 @@ jobs:
                   schema_end=html.find('</script>', schema_start)
                   assert schema_end >= 0, f'Unclosed property schema: {page}'
                   schema=json.loads(html[schema_start:schema_end])
-                  assert schema.get('@type') == 'WebPage' and schema.get('mainEntity',{}).get('@type') == 'Thing', f'Invalid property schema: {page}'
+                  expected_entity_types={
+                      'hostel':'LodgingBusiness',
+                      'tiffin':'FoodEstablishment',
+                      'library':'Library',
+                      'cafe':'CafeOrCoffeeShop',
+                      'bookstore':'BookStore'
+                  }
+                  entity=schema.get('mainEntity',{})
+                  assert schema.get('@type') == 'WebPage', f'Invalid property WebPage schema: {page}'
+                  assert entity.get('@type') in ('Thing', expected_entity_types[category]), f'Invalid category entity schema: {page}'
+                  if entity.get('address'):
+                      assert entity.get('@type') == expected_entity_types[category], f'Missing category-specific entity type: {page}'
+                  assert 'href="/property-index.html"' in html, f'Missing property directory link: {page}'
+                  assert 'href="/"' in html, f'Missing homepage link: {page}'
+                  assert 'href="' + {
+                      'hostel':'/pg-finder.html',
+                      'tiffin':'/tiffin-finder.html',
+                      'library':'/library-finder.html',
+                      'cafe':'/cafe-finder.html',
+                      'bookstore':'/bookstore-finder.html'
+                  }[category] + '"' in html, f'Missing category finder link: {page}'
+                  title_match=re.search(r'<title>(.*?)</title>', html, re.I|re.S)
+                  assert title_match and len(re.sub(r'\\s+',' ',title_match.group(1)).strip()) <= 60, f'Property title exceeds 60 characters: {page}'
               assert len(canonical_pages) >= expected, f'{category}: expected {expected} canonical pages with server-rendered summaries, found {len(canonical_pages)}'
           print(f"SEO validation passed: {report['total']} property pages; category totals {report['byCategory']}")
           PY
