@@ -119,7 +119,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     description: desc,
     url: canonical,
     mainEntity: entity
-  }).replace(/</g, '\\\\u003c');
+  }).replace(/</g, '\\u003c');
 
   const fallbackHtml = `<section class="card" id="seo-property-fallback" aria-label="Property information">
   <div class="section-kicker">STUDENTHUBHELP LISTING</div>
@@ -160,7 +160,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     .replace(/<meta id="twitterImage" name="twitter:image" content="[^"]*">/i, '<meta id="twitterImage" name="twitter:image" content="https://studenthubhelp.in/logo.png">')
     .replace(/<meta id="twitterTitle" name="twitter:title" content="[^"]*">/i, `<meta id="twitterTitle" name="twitter:title" content="${escapeHtml(title)}">`)
     .replace(/<meta id="twitterDescription" name="twitter:description" content="[^"]*">/i, `<meta id="twitterDescription" name="twitter:description" content="${escapeHtml(desc)}">`)
-    .replace(/<script id="propertySchema" type="application\/ld\\+json">[\s\S]*?<\/script>/i, `<script id="propertySchema" type="application/ld+json">\n${schema}\n</script>`)
+    .replace(/<script id="propertySchema" type="application\/ld\+json">[\s\S]*?<\/script>/i, `<script id="propertySchema" type="application/ld+json">\n${schema}\n</script>`)
     .replace(/<title>[^<]*<\/title>/i, (tag) => tag + `\n<link id="canonicalLink" rel="canonical" href="${escapeHtml(canonical)}">`);
 }
 function buildLegacyRedirectHtml(oldPath, targetType, targetSlug) {
