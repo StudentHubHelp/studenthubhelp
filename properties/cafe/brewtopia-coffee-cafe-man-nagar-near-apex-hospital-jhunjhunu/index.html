@@ -137,6 +137,27 @@ button{font:inherit}
 .report-options{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.report-chip{border:1px solid #dfe5ed;background:#fff;border-radius:999px;padding:9px 11px;font-size:12px;font-weight:750;color:#536177;cursor:pointer}.report-message{margin-top:12px;color:#197647}
 .review{border-top:1px solid #edf0f4;padding-top:14px;margin-top:14px}.review-text{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;line-height:1.7;font-size:15px}
 .footer{text-align:center;color:#8590a1;font-size:12px;padding:24px}.notice{text-align:center;padding:60px 20px}.loading{padding:90px;text-align:center}
+/* Lightweight property-shaped loading skeleton; shared by all five categories. */
+.property-skeleton{overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow)}
+.skeleton-gallery{height:500px;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:6px;background:#e9edf4}
+.skeleton-side{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:6px}
+.skeleton-block{position:relative;overflow:hidden;background:#e9edf4;border-radius:12px}
+.skeleton-block:after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:property-skeleton-shimmer 1.35s ease-in-out infinite}
+@keyframes property-skeleton-shimmer{100%{transform:translateX(100%)}}
+.skeleton-info{padding:30px 34px}
+.skeleton-kicker{width:145px;height:12px;margin-bottom:17px}
+.skeleton-heading{width:min(62%,520px);height:39px;margin-bottom:13px}
+.skeleton-line{width:min(42%,350px);height:16px}
+.skeleton-trust{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:22px}
+.skeleton-trust .skeleton-block{height:68px;border:1px solid var(--line);background:#f5f7fb}
+.skeleton-price{height:82px;margin-top:18px;background:#f5f3ff}
+.skeleton-lower{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-top:22px}
+.skeleton-lower .skeleton-block{height:190px;background:#f5f7fb}
+.skeleton-status{display:block;margin-top:16px;color:#778399;font-size:12px;font-weight:700}
+.seo-fallback-content{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:normal!important;border:0!important}
+@media(max-width:800px){.skeleton-gallery{height:auto;grid-template-columns:1fr;grid-template-rows:270px auto}.skeleton-main-photo{min-height:250px}.skeleton-side{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:82px}.skeleton-info{padding:20px}.skeleton-heading{width:85%;height:30px}.skeleton-line{width:65%}.skeleton-trust{grid-template-columns:1fr}.skeleton-trust .skeleton-block{height:52px}.skeleton-lower{grid-template-columns:1fr}.skeleton-lower .skeleton-block{height:125px}}
+@media(prefers-reduced-motion:reduce){.skeleton-block:after{animation:none}}
+
 .claim-modal{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(4,8,20,.72);backdrop-filter:blur(7px)}.claim-modal.show{display:flex}
 .claim-modal-box{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)}
 .claim-modal-head{display:flex;justify-content:space-between;gap:15px;margin-bottom:18px}.claim-close{width:38px;height:38px;border:0;border-radius:10px;background:#f1f4f8;cursor:pointer;font-size:18px}
@@ -191,7 +212,7 @@ body .wrap {
 <body>
 <div class="wrap">
   <div class="top"><button class="back" id="backBtn"><i class="fa-solid fa-arrow-left"></i> Back</button><button class="share" id="shareBtn"><i class="fa-solid fa-share-nodes"></i> Share</button></div>
-  <div id="app"><section class="card" id="seo-property-fallback" aria-label="Property information">
+  <!--PROPERTY_APP_START--><div id="app" aria-busy="true"><div class="property-skeleton" role="status" aria-label="Loading property details"><div class="skeleton-gallery"><div class="skeleton-block skeleton-main-photo"></div><div class="skeleton-side"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></div><div class="skeleton-info"><div class="skeleton-block skeleton-kicker"></div><div class="skeleton-block skeleton-heading"></div><div class="skeleton-block skeleton-line"></div><div class="skeleton-trust"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div><div class="skeleton-block skeleton-price"></div><div class="skeleton-lower"><div class="skeleton-block"></div><div class="skeleton-block"></div></div><span class="skeleton-status">Loading property details…</span></div></div></div><section class="seo-fallback-content" aria-hidden="true" aria-label="Property information"><section class="card" id="seo-property-fallback" aria-label="Property information">
   <div class="section-kicker">STUDENTHUBHELP LISTING</div>
   <h1>Brewtopia Coffee Cafe</h1>
   <p><strong>Category:</strong> Cafe</p>
@@ -202,7 +223,7 @@ body .wrap {
     <a href="/property-index.html">Browse all student properties</a> ·
     <a href="/">StudentHubHelp home</a>
   </nav>
-</section></div>
+</section></section><!--PROPERTY_APP_END-->
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -853,24 +874,6 @@ async function load(){
      }
    }
 
-   // Load the property-specific gallery records as well as the primary image fields.
-   // This supports images saved in the dedicated property_images table.
-   try {
-     const { data: galleryRows, error: galleryError } = await db
-       .from('property_images')
-       .select('image_url, sort_order')
-       .eq('property_id', String(data.id))
-       .eq('property_table', cfg.table)
-       .order('sort_order', { ascending: true });
-     if (!galleryError && Array.isArray(galleryRows) && galleryRows.length) {
-       data.images = [...propertyImageUrls(data), ...galleryRows.map(row => row.image_url)]
-         .filter((url, index, arr) => /^https?:\/\//i.test(String(url || '')) && arr.indexOf(url) === index)
-         .slice(0, 5);
-     }
-   } catch (galleryError) {
-     console.warn('Property gallery records could not be loaded:', galleryError);
-   }
-
    // Correct the visible location when the saved city contradicts the full address.
    // For this listing, the address clearly identifies Gurugram, Haryana, not Sikar.
    const addressTextForCity = String(data.address || '').toLowerCase();
@@ -894,9 +897,12 @@ async function load(){
      return fail('Property not found','This listing may have been removed or its URL is incorrect.');
    }
 
+   // Render the property as soon as its primary row is available. Dedicated gallery
+   // records are hydrated in the background so they never delay the first useful paint.
    render(data);
    updatePropertySEO(data);
    app.setAttribute('aria-busy','false');
+   loadDedicatedPropertyImages(data);
  }catch(err){
    console.error('Property load exception:',err);
    fail('Unable to load property','Something went wrong while loading this listing. Please try again.');
@@ -1567,6 +1573,53 @@ function propertyImageUrls(r){
   };
   add(r.images);add(r.image_urls);add(r.gallery);add(r.photos);add(r.image);
   return out.slice(0,5);
+}
+
+async function loadDedicatedPropertyImages(property){
+  try{
+    const {data:galleryRows,error}=await db
+      .from('property_images')
+      .select('image_url, sort_order')
+      .eq('property_id',String(property.id))
+      .eq('property_table',cfg.table)
+      .order('sort_order',{ascending:true});
+    if(error||!Array.isArray(galleryRows)||!galleryRows.length)return;
+    const urls=[...propertyImageUrls(property),...galleryRows.map(row=>row.image_url)]
+      .filter((url,index,all)=>/^https?:\/\//i.test(String(url||''))&&all.indexOf(url)===index)
+      .slice(0,5);
+    if(!urls.length)return;
+    property.images=urls;
+    const main=document.querySelector('.gallery .mainimg');
+    if(main){main.src=urls[0];main.alt=(property.name||property.service_name||'Property')+' — Property photo 1';}
+    const side=document.querySelector('.gallery .side');
+    if(side){
+      side.replaceChildren();
+      for(let index=1;index<5;index++){
+        if(urls[index]){
+          const image=document.createElement('img');
+          image.loading='lazy';image.decoding='async';
+          image.alt=(property.name||property.service_name||'Property')+' — Property photo '+(index+1);
+          image.src=urls[index];
+          side.appendChild(image);
+        }else{
+          const fallback=document.createElement('div');
+          fallback.className='gallery-fallback';
+          const image=document.createElement('img');
+          image.loading='lazy';image.decoding='async';
+          image.alt=cfg.label+' category banner';
+          image.src=cfg.banner;
+          const label=document.createElement('span');
+          label.textContent=cfg.label+' banner';
+          fallback.append(image,label);
+          side.appendChild(fallback);
+        }
+      }
+    }
+    document.querySelectorAll('.property-photos-grid .property-photo-cell img').forEach((image,index)=>{
+      image.src=urls[index]||cfg.banner;
+      image.alt=(property.name||property.service_name||'Property')+' — '+(urls[index]?'Property photo '+(index+1):cfg.label+' category banner');
+    });
+  }catch(error){console.warn('Property gallery records could not be loaded:',error);}
 }
 
 function render(r){
