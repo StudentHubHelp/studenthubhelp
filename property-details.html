@@ -1591,11 +1591,24 @@ async function loadDedicatedPropertyImages(property){
     if(side){
       side.replaceChildren();
       for(let index=1;index<5;index++){
-        const image=document.createElement('img');
-        image.loading='lazy';image.decoding='async';
-        image.alt=(property.name||property.service_name||'Property')+' — Property photo '+(index+1);
-        image.src=urls[index]||cfg.banner;
-        side.appendChild(image);
+        if(urls[index]){
+          const image=document.createElement('img');
+          image.loading='lazy';image.decoding='async';
+          image.alt=(property.name||property.service_name||'Property')+' — Property photo '+(index+1);
+          image.src=urls[index];
+          side.appendChild(image);
+        }else{
+          const fallback=document.createElement('div');
+          fallback.className='gallery-fallback';
+          const image=document.createElement('img');
+          image.loading='lazy';image.decoding='async';
+          image.alt=cfg.label+' category banner';
+          image.src=cfg.banner;
+          const label=document.createElement('span');
+          label.textContent=cfg.label+' banner';
+          fallback.append(image,label);
+          side.appendChild(fallback);
+        }
       }
     }
     document.querySelectorAll('.property-photos-grid .property-photo-cell img').forEach((image,index)=>{
