@@ -139,6 +139,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   </nav>
 </section>`;
 
+  const loadingSkeleton = `<div class="property-skeleton" role="status" aria-label="Loading property details"><div class="skeleton-gallery"><div class="skeleton-block skeleton-main-photo"></div><div class="skeleton-side"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></div><div class="skeleton-info"><div class="skeleton-block skeleton-kicker"></div><div class="skeleton-block skeleton-heading"></div><div class="skeleton-block skeleton-line"></div><div class="skeleton-trust"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div><div class="skeleton-block skeleton-price"></div><div class="skeleton-lower"><div class="skeleton-block"></div><div class="skeleton-block"></div></div><span class="skeleton-status">Loading property details…</span></div></div>`;
   // Remove inherited favicon tags (including the old purple-N SVG) before rendering.
   const cleanTemplate = detailsTemplate
     .replace(/<link\b(?=[^>]*\brel\s*=\s*["'](?:icon|shortcut icon|alternate icon)["'])[^>]*>\s*/gi, '')
@@ -153,7 +154,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     '<meta property="og:image:secure_url" content="https://studenthubhelp.in/logo.png">\n' +
     '<meta property="og:image:alt" content="StudentHubHelp logo">');
   return renderedTemplate
-    .replace(/<div id="app"><div class="loading">[\s\S]*?<\/div><\/div>/i, `<div id="app">${fallbackHtml}</div>`)
+        .replace(/<div id="app"[^>]*>[\\s\\S]*?<\\/div>/i, `<div id="app" aria-busy="true">${loadingSkeleton}</div><section id="seo-property-fallback" class="seo-fallback-content" aria-hidden="true" aria-label="Property information">${fallbackHtml}</section>`)
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
     .replace(/<meta id="ogTitle" property="og:title" content="[^"]*">/i, `<meta id="ogTitle" property="og:title" content="${escapeHtml(title)}">`)
