@@ -175,7 +175,7 @@ for(const c of cities.values()){
   const cityCoachingSlugs=[...new Set(c.rows.flatMap(matchedCoachings))];
   const coachingLinks=cityCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('coaching/'+m.slug+'/')+'">🎓 '+esc(m.name)+'</a>';}).join('');
   const coachingSection=coachingLinks?'<section class="section"><h2>Coaching & study hubs in '+esc(c.name)+'</h2><p>Explore student properties connected to major coaching and study locations through verified listing data.</p><div class="links">'+coachingLinks+'</div></section>':'';
-  const body=coachingSection+'<section class="section"><h2>Student-focused listings in '+esc(c.name)+'</h2><div class="grid">'+[...groups.entries()].map(([type,rows])=>{const m=TABLES.find(x=>x.type===type);return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+rows.length+' verified and active listing'+(rows.length===1?'':'s')+'.</p><a href="'+esc(type+'/')+'">View '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('')+'</div></section>'+
+  const body=coachingSection+'<section class="section"><h2>Student-focused listings in '+esc(c.name)+'</h2><div class="grid">'+[...eligibleGroups.entries()].map(([type,rows])=>{const m=TABLES.find(x=>x.type===type);return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+rows.length+' verified and active listing'+(rows.length===1?'':'s')+'.</p><a href="'+esc(type+'/')+'">View '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('')+'</div></section>'+
     '<section class="section"><h2>Explore '+esc(c.name)+'</h2><div class="links">'+categoryLinks+'</div></section>'+
     '<section class="section"><h2>Verified properties</h2><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
   const cityPath=cityDir+'/index.html'; expected.add(cityPath); generated.push(cityUrl);
@@ -199,7 +199,7 @@ for(const c of cities.values()){
     if(a.rows.length<LOCATION_MIN_PROPERTIES) continue;
     const as=slug(a.name); if(!as || as===cs) continue;
     const dir=cityDir+'/'+as; const url=new URL(cs+'/'+as+'/',BASE).href;
-    const groupLinks=[...new Set(a.rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('../'+type+'/' )+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
+    const groupLinks=[...new Set(a.rows.map(r=>r.type))].filter(type=>eligibleGroups.has(type)).map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('../'+type+'/' )+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
     const areaCoachingSlugs=[...new Set(a.rows.flatMap(matchedCoachings))];
     const areaCoachingLinks=areaCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../coaching/'+m.slug+'/')+'">🎓 '+esc(m.name)+'</a>';}).join('');
     const areaCoachingSection=areaCoachingLinks?'<section class="section"><h2>Nearby coaching & institutes</h2><p>Coaching relationships are derived only when the coaching name is present in active verified listing data.</p><div class="links">'+areaCoachingLinks+'</div></section>':'';
@@ -215,7 +215,7 @@ for(const c of cities.values()){
     const rows=c.rows.filter(r=>matchedCoachings(r).includes(coachSlug)); if(rows.length<LOCATION_MIN_PROPERTIES) continue;
     const dir=cityDir+'/coaching/'+coach.slug;
     const url=new URL(cs+'/coaching/'+coach.slug+'/',BASE).href;
-    const typeLinks=[...new Set(rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('../../'+type+'/')+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
+    const typeLinks=[...new Set(rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('/'+m.finder)+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
     const body='<section class="section"><h2>Student properties near '+esc(coach.name)+' in '+esc(c.name)+'</h2><p>These verified and active listings mention this coaching or institute in their stored name, area, or address.</p><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section><section class="section"><h2>Categories</h2><div class="links">'+typeLinks+'</div></section><p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
     await write(p,shell({title:'Student Properties near '+coach.name+' in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffins, cafes, libraries and bookstores near '+coach.name+' in '+c.name+'.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':'EducationalOrganization','name':coach.name},{'@type':'City','name':c.name}]}));
