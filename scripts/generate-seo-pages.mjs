@@ -53,12 +53,12 @@ function stateForCity(city,rows=[]){
     'chennai':'Tamil Nadu','coimbatore':'Tamil Nadu','vellore':'Tamil Nadu','kanchipuram':'Tamil Nadu','madurai':'Tamil Nadu','salem':'Tamil Nadu','tiruchirappalli':'Tamil Nadu','tirunelveli':'Tamil Nadu','thanjavur':'Tamil Nadu',
     'patna':'Bihar','delhi':'Delhi','new delhi':'Delhi','gurugram':'Haryana','panchkula':'Haryana','sonipat':'Haryana','pune':'Maharashtra','vadodara':'Gujarat'
   };
-  const normalized=key(city).replace(/\\s*\\([^)]*\\)/g,'').trim();
+  const normalized=key(city).replace(/\s*\\([^)]*\\)/g,'').trim();
   if(known[normalized]) return known[normalized];
   const counts=new Map();
   for(const row of rows){
-    const match=String(row.address||'').match(/\\b(Rajasthan|Karnataka|Tamil Nadu|Bihar|Delhi|Haryana|Maharashtra|Gujarat|Uttar Pradesh|Madhya Pradesh|Kerala|Telangana|Andhra Pradesh|West Bengal|Punjab|Odisha|Assam)\\b/i);
-    if(match){const state=match[1].replace(/\\b\\w/g,c=>c.toUpperCase());counts.set(state,(counts.get(state)||0)+1);}
+    const match=String(row.address||'').match(/\b(Rajasthan|Karnataka|Tamil Nadu|Bihar|Delhi|Haryana|Maharashtra|Gujarat|Uttar Pradesh|Madhya Pradesh|Kerala|Telangana|Andhra Pradesh|West Bengal|Punjab|Odisha|Assam)\b/i);
+    if(match){const state=match[1].replace(/\b\\w/g,c=>c.toUpperCase());counts.set(state,(counts.get(state)||0)+1);}
   }
   return [...counts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'India';
 }
