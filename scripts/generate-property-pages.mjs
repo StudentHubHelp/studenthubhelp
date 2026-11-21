@@ -139,7 +139,30 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   </nav>
 </section>`;
 
-  const loadingSkeleton = `<div class="property-skeleton" role="status" aria-label="Loading property details"><div class="skeleton-gallery"><div class="skeleton-block skeleton-main-photo"></div><div class="skeleton-side"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></div><div class="skeleton-info"><div class="skeleton-block skeleton-kicker"></div><div class="skeleton-block skeleton-heading"></div><div class="skeleton-block skeleton-line"></div><div class="skeleton-trust"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div><div class="skeleton-block skeleton-price"></div><div class="skeleton-lower"><div class="skeleton-block"></div><div class="skeleton-block"></div></div><span class="skeleton-status">Loading property details…</span></div></div>`;
+  const loadingSkeleton = `<div class="property-skeleton" role="status" aria-label="Loading property details">
+  <section class="skeleton-hero">
+    <div class="skeleton-gallery"><div class="skeleton-block skeleton-main-photo"></div><div class="skeleton-side"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></div>
+    <div class="skeleton-info">
+      <div class="skeleton-title-row"><div class="skeleton-title-copy"><div class="skeleton-block skeleton-kicker"></div><div class="skeleton-block skeleton-heading"></div><div class="skeleton-block skeleton-line"></div></div><div class="skeleton-block skeleton-verified"></div></div>
+      <div class="skeleton-trust"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+      <div class="skeleton-actions"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+    </div>
+  </section>
+  <div class="skeleton-content">
+    <main class="skeleton-main">
+      <section class="skeleton-card"><div class="skeleton-block skeleton-section-kicker"></div><div class="skeleton-block skeleton-section-title"></div><div class="skeleton-facts"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></section>
+      <section class="skeleton-card"><div class="skeleton-block skeleton-section-kicker"></div><div class="skeleton-block skeleton-section-title"></div><div class="skeleton-highlight-grid"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></section>
+      <section class="skeleton-card"><div class="skeleton-block skeleton-section-kicker"></div><div class="skeleton-block skeleton-section-title"></div><div class="skeleton-facts"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></section>
+      <section class="skeleton-card"><div class="skeleton-block skeleton-section-kicker"></div><div class="skeleton-block skeleton-section-title"></div><div class="skeleton-paragraph"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></section>
+      <section class="skeleton-card skeleton-long-card"><div class="skeleton-block skeleton-section-kicker"></div><div class="skeleton-block skeleton-section-title"></div><div class="skeleton-facts"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></section>
+    </main>
+    <aside class="skeleton-sidebar">
+      <section class="skeleton-card"><div class="skeleton-block skeleton-section-kicker"></div><div class="skeleton-block skeleton-section-title"></div><div class="skeleton-block skeleton-status-pill"></div><div class="skeleton-sidebar-lines"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div><div class="skeleton-block skeleton-sidebar-note"></div></section>
+      <section class="skeleton-card"><div class="skeleton-block skeleton-section-kicker"></div><div class="skeleton-block skeleton-section-title"></div><div class="skeleton-block skeleton-contact-line"></div><div class="skeleton-block skeleton-contact-line"></div></section>
+    </aside>
+  </div>
+  <span class="skeleton-status">Loading property details…</span>
+</div>`;
   // Remove inherited favicon tags (including the old purple-N SVG) before rendering.
   const cleanTemplate = detailsTemplate
     .replace(/<link\b(?=[^>]*\brel\s*=\s*["'](?:icon|shortcut icon|alternate icon)["'])[^>]*>\s*/gi, '')
