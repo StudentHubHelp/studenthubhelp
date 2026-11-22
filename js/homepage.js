@@ -240,7 +240,7 @@
         : categoryBannerMarkup(source);
       return '<article class="listing-card"><a href="' + esc(href) + '" aria-label="View details for ' + esc(name) + '"><div class="listing-photo">' + photoMarkup + '<span class="listing-category-label">' + esc(source.label) + '</span></div></a><div class="listing-body"><div class="listing-topline"><span class="' + (verified ? 'listing-verified' : 'listing-unverified') + '">' + (verified ? '✓ VERIFIED LISTING' : 'DETAILS PROVIDED') + '</span></div><h3>' + esc(name) + '</h3><div class="listing-address">' + (address || 'Location details on listing page') + '</div><div class="listing-facts">' + facilities.map((label) => '<span>' + esc(label) + '</span>').join('') + '</div></div><div class="listing-foot"><span class="listing-price">' + esc(price || 'View pricing') + '</span><a class="listing-details" href="' + esc(href) + '">View details ↗</a></div></article>';
     }).join('');
-    if (status) status.textContent = 'Showing up to six recent publicly active listings. Availability and details should be confirmed directly.';
+    if (status) status.textContent = 'Showing up to six rotating publicly active listings. Availability and details should be confirmed directly.';
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
