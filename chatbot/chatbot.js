@@ -629,7 +629,7 @@ async function findNearby(q){
   const category=categoryOf(q)||activeSearch?.category;
   if(!category)return {answer:'Nearby search ke liye pehle category batayein—Hostel, Tiffin, Library, Cafe ya Bookstore.',rows:null};
   if(!navigator.geolocation)return {answer:'Is browser mein location access available nahi hai. Aap city ya area likhkar search kar sakte hain.',rows:null};
-  const position=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:10000,maximumAge:120000}));
+  let position;try{position=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:10000,maximumAge:120000}));}catch(error){return {answer:error?.code===1?'Nearby search ke liye browser location permission allow karein, ya city/area se search karein.':'Aapki location abhi access nahi ho paayi. City/area se search kar sakte hain.',rows:null};}
   const rows=await loadRows();if(cacheErrors[category])throw new Error('Unable to read '+CFG.categories[category].table);
   const origin={latitude:position.coords.latitude,longitude:position.coords.longitude};
   const near=rows.filter(r=>r.__category===category).map(r=>({...r,__distanceKm:distanceKm(origin,r)})).filter(r=>r.__distanceKm!==null).sort((a,b)=>a.__distanceKm-b.__distanceKm).slice(0,10);
@@ -649,7 +649,7 @@ async function processMessage(q,container){
   const incomingCategory=categoryOf(q);
   if(activeSearch&&incomingCategory&&incomingCategory!==activeSearch.category){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
   if(activeSearch&&/\b(?:my profile|my account|my booking|my bookings|my listing|booking status|listing status|contact support|complaint|feedback|appointment|add listing|verified badge|student safety|transport help)\b/.test(n)){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
-  if(/\b(?:near me|nearby|mere paas|aas paas|around me)\b|\bnearest\b/.test(n)){
+  if(/\b(?:near me|mere paas|aas paas|around me)\b|\bnearest\b/.test(n)){
     const near=await findNearby(q);
     if(!near.rows)return near.answer;
     const gallery=await loadGallery();
@@ -752,7 +752,7 @@ async function processMessage(q,container){
       }else{
         nextSteps=['City batao','Area batao'];
       }
-      if(result.budget!==null)nextSteps.push('Budget badlo');
+      if(result.budget!==null){nextSteps.push('Budget badlo');nextSteps.push('₹'+(Number(result.budget)+1000).toLocaleString('en-IN')+' tak dikhao');}
       const widerText=result.city?'Agar aap chahen, main '+esc(result.city)+' ke doosre areas ke '+(cat==='cafe'?'cafes':CFG.categories[cat].label.toLowerCase())+' dikha sakta hoon.':'City bata dein, phir main usi city mein exact active listings check karunga.';
       return 'Aapne '+(result.area?'<b>'+esc(result.area)+'</b> area':'is location')+(result.city?' ('+esc(result.city)+')':'')+' mein '+esc(CFG.categories[cat].label.toLowerCase())+' maange hain. Is exact location par abhi koi matching active listing nahi mili. Main doosre area ki listings bina aapki permission ke nahi dikhaunga. '+widerText+quickMarkup(nextSteps);
     }
