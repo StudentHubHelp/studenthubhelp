@@ -1,0 +1,51 @@
+name: Nearby Search Tests
+
+on:
+  pull_request:
+    paths:
+      - 'js/nearby-search.js'
+      - 'js/finder-power-search.js'
+      - 'js/smart-search-experience.js'
+      - 'global-search.html'
+      - 'index.html'
+      - '*-finder.html'
+      - 'tests/nearby-search.test.cjs'
+      - '.github/workflows/nearby-search-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'js/nearby-search.js'
+      - 'js/finder-power-search.js'
+      - 'js/smart-search-experience.js'
+      - 'global-search.html'
+      - 'index.html'
+      - '*-finder.html'
+      - 'tests/nearby-search.test.cjs'
+      - '.github/workflows/nearby-search-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nearby-search:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check JavaScript syntax
+        run: |
+          node --check js/nearby-search.js
+          node --check js/finder-power-search.js
+          node --check js/smart-search-experience.js
+      - name: Run nearby search tests
+        run: node --test tests/nearby-search.test.cjs
+      - name: Validate global search integration
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('global-search.html', 'utf8');
+          for (const token of ['/js/nearby-search.js', 'nearbyMode', 'filterWithinRadius', 'shhNearbyToolbar', '__userDistanceKm']) {
+            if (!html.includes(token)) throw new Error('Missing global nearby integration: ' + token);
+          }
+          console.log('Global nearby integration validation passed.');
+          NODE
