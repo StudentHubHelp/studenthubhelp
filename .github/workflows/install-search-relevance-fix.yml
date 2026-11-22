@@ -78,6 +78,7 @@ jobs:
           assert('plural bookstore category',p.category==='bookstore'&&p.city==='sikar',JSON.stringify(p));
           const run=(q,expected)=>{const got=window.StudentHubUniversalSearch.search(rows,q,data=>data).map(x=>x.id).sort();assert(q,JSON.stringify(got)===JSON.stringify(expected.slice().sort()),JSON.stringify(got));};
           run({rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:'',source:'global-search'},['h1','h2']);
+          run({rawKeyword:'Sikar Piprali Road par Allen ke paas boys hostel',explicitLocation:'',selectedCategory:'',source:'global-search'},['h1']);
           run({rawKeyword:'girls hostel under 5000',explicitLocation:'',selectedCategory:'',source:'global-search'},['h2','h3']);
           run({rawKeyword:'cafe',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['c1']);
           run({rawKeyword:'library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
@@ -88,7 +89,7 @@ jobs:
           assert('near-me without GPS mode is not broadened',window.StudentHubUniversalSearch.search(rows,'hostel near me',data=>data).length===0);
           const ambiguous=window.StudentHubUniversalSearch.search(rows,'Piprali Road cafe',data=>data).map(x=>x.id);
           assert('ambiguous road retained and grouped by city',JSON.stringify(ambiguous)===JSON.stringify(['c2','c1']),JSON.stringify(ambiguous));
-          console.log('UNIFIED PARSER + PHASE 6: 17/17 PASS');
+          console.log('UNIFIED PARSER + PHASE 6: 18/18 PASS');
           NODE
 
       - name: Verify data loader, nearby labels and autocomplete safety
