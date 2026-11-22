@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('./chatbot.js', import.meta.url), 'utf8');
 const instrumented = source.replace(/\}\)\(\);\s*$/, [
-  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, genderOf, budgetOf, requestedFacilities, matchSearch, namedListingMatches, isNonLocationPhrase, supportAnswer, processMessage, isContextFollowUp, lastConversationCategory, saveHistory, restoreHistory, saveConversationContext, restoreConversationContext, setActiveSearch(value) { activeSearch = value; }, getActiveSearch() { return activeSearch; }, setCacheRows(value) { cacheRows = value; cacheErrors = {}; }, setCacheGallery(value) { cacheGallery = value; }, clearHistory() { history = []; } };',
+  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, genderOf, budgetOf, requestedFacilities, matchSearch, namedListingMatches, isNonLocationPhrase, supportAnswer, processMessage, isContextFollowUp, lastConversationCategory, saveHistory, restoreHistory, saveConversationContext, restoreConversationContext, setActiveSearch(value) { activeSearch = value; }, getActiveSearch() { return activeSearch; }, setCacheRows(value) { cacheRows = value; cacheRowsAt = Date.now(); cacheErrors = {}; }, setCacheGallery(value) { cacheGallery = value; }, clearHistory() { history = []; } };',
   '})();',
 ].join('\n'));
 assert.notEqual(instrumented, source, 'test hook should attach before the chatbot IIFE closes');
