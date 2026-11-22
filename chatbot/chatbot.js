@@ -460,7 +460,7 @@ function cardHtml(r,gallery){
   const chips=facilitiesForCard(r),details=categoryDetails(r);
   const price=p?(p.value!==null?'₹'+Math.round(p.value).toLocaleString('en-IN'):''):'';
   const rating=String(r.rating||'').trim();
-  return '<article class="shh-chat-card"><img loading="lazy" decoding="async" src="'+esc(image)+'" alt="'+esc(name)+'" onerror="this.onerror=null;this.src=&#39;'+esc(cfg.banner)+'&#39;"><div class="shh-card-body"><div class="shh-card-top"><div class="shh-card-title">'+esc(name)+'</div><span class="shh-card-verified '+(verified?'':'shh-card-provided')+'">'+(verified?'✓ Verified':'Details Provided')+'</span></div>'+(price?'<div class="shh-card-price">'+esc(price)+' <small>'+esc(p.label)+'</small></div>':p?'<div class="shh-card-price">'+esc(p.label)+'</div>':'')+'<div class="shh-card-meta">📍 '+esc(address)+'</div>'+(gender?'<div class="shh-card-meta">👥 '+(gender==='girls'?'Girls':gender==='boys'?'Boys':'Co-ed')+'</div>':'')+(rating?'<div class="shh-card-meta">★ Rating: '+esc(rating)+'</div>':'')+(details.length?'<div class="shh-card-meta">'+details.map(esc).join(' · ')+'</div>':'')+(chips.length?'<div class="shh-card-chips">'+chips.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':'')+'<div class="shh-card-actions"><a href="'+esc(detailsUrl(r))+'">View Details</a>'+(phone?'<a class="secondary" href="tel:'+esc(phone)+'">Call Owner</a>':whatsapp?'<a class="secondary" href="https://wa.me/'+esc(whatsapp)+'" target="_blank" rel="noopener">WhatsApp</a>':'<a class="secondary" href="'+esc(detailsUrl(r))+'">Contact Info</a>')+'</div></div></article>';
+  return '<article class="shh-chat-card"><img loading="lazy" decoding="async" src="'+esc(image)+'" alt="'+esc(name)+'" onerror="this.onerror=null;this.src=&#39;'+esc(cfg.banner)+'&#39;"><div class="shh-card-body"><div class="shh-card-top"><div class="shh-card-title">'+esc(name)+'</div><span class="shh-card-verified '+(verified?'':'shh-card-provided')+'">'+(verified?'✓ Verified':'Details Provided')+'</span></div>'+(price?'<div class="shh-card-price">'+esc(price)+' <small>'+esc(p.label)+'</small></div>':p?'<div class="shh-card-price">'+esc(p.label)+'</div>':'')+'<div class="shh-card-meta">📍 '+esc(address)+'</div>'+(gender?'<div class="shh-card-meta">👥 '+(gender==='girls'?'Girls':gender==='boys'?'Boys':'Co-ed')+'</div>':'')+(rating?'<div class="shh-card-meta">★ Rating: '+esc(rating)+'</div>':'')+(r.__distanceKm!==undefined?'<div class="shh-card-meta">📍 '+Number(r.__distanceKm).toFixed(1)+' km away</div>':'')+(details.length?'<div class="shh-card-meta">'+details.map(esc).join(' · ')+'</div>':'')+(chips.length?'<div class="shh-card-chips">'+chips.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':'')+'<div class="shh-card-actions"><a href="'+esc(detailsUrl(r))+'">View Details</a>'+(phone?'<a class="secondary" href="tel:'+esc(phone)+'">Call Owner</a>':whatsapp?'<a class="secondary" href="https://wa.me/'+esc(whatsapp)+'" target="_blank" rel="noopener">WhatsApp</a>':'<a class="secondary" href="'+esc(detailsUrl(r))+'">Contact Info</a>')+'</div></div></article>';
 }
 function addMessage(container,text,who='bot',extra=''){
   const wrap=document.createElement('div');wrap.className='shh-chat-message '+(who==='user'?'shh-user':'');
@@ -578,6 +578,24 @@ function statusText(s){
 }
 async function processMessage(q,container){
   const n=norm(q);
+  if(/\\b(?:near me|nearby|mere paas|aas paas|around me)\\b|\\bnearest\\b/.test(n)){
+    const near=await findNearby(q);
+    if(!near.rows)return near.answer;
+    const gallery=await loadGallery();
+    return near.answer+(near.rows.length?'<br>'+near.rows.slice(0,5).map(r=>cardHtml(r,gallery).replace('</div></div></article>','<div class="shh-card-meta">📍 '+r.__distanceKm.toFixed(1)+' km away</div></div></div></article>')).join(''):'')+quickMarkup(['City se search karo','Contact support']);
+  }
+  if(/\\b(compare|comparison|compare these|tulana|muqabla)\\b/.test(n)){
+    if(!activeSearch?.category)return 'Pehle ek category aur city mein listings search karein; phir main 2–3 matching options compare kar dunga.'+quickMarkup(['Hostel / PG','Tiffin / Mess','Library','Cafe','Bookstore']);
+    if(!activeSearch.results?.length){const rows=await loadRows();activeSearch.results=matchSearch(rows,activeSearch.query||'',activeSearch.category,activeSearch).rows;}
+    return compareListings(activeSearch.results);
+  }
+  if(/\\b(?:cheapest|lowest price|sabse sasta|sasti|sasta|verified first|verified pehle|newest|latest|naye|new listings)\\b/.test(n)&&activeSearch?.category){
+    if(!activeSearch.results?.length){const rows=await loadRows();activeSearch.results=matchSearch(rows,activeSearch.query||'',activeSearch.category,activeSearch).rows;}
+    const mode=/verified/.test(n)?'verified':/newest|latest|naye|new listings/.test(n)?'newest':'cheapest';
+    activeSearch.results=sortListings(activeSearch.results,mode);activeSearch.offset=0;saveConversationContext();
+    const gallery=await loadGallery();
+    return (mode==='verified'?'Verified listings pehle:':mode==='newest'?'Newest listings pehle:':'Lowest price pehle:')+activeSearch.results.slice(0,5).map(r=>cardHtml(r,gallery)).join('')+quickMarkup(['Compare these','Aur listings dikhao']);
+  }
   if(/my profile|my account|meri profile|mera account|profile details|मेरा अकाउंट|मेरी प्रोफाइल/.test(n)){
     const result=await myProfile();
     if(result.login)return 'Aapki personal profile details dekhne ke liye pehle <a href="/auth.html">login</a> karein.';
@@ -613,7 +631,7 @@ async function processMessage(q,container){
       activeSearch={category:namedCategory,query:q,cityName:null,areaName:null,city:null,area:null,gender:null,budget:null,facilities:[],results:liveNamedMatches,offset:0};saveConversationContext();
       const liveGallery=await loadGallery();
       const intro=liveNamedMatches.length===1?'Mujhe aapki maangi hui active listing mil gayi. Ye rahi uski available details:':'Is naam se ye matching active listings mili hain. Aap sahi property select kar sakte hain:';
-      return intro+liveNamedMatches.slice(0,5).map(r=>cardHtml(r,liveGallery)).join('')+(liveNamedMatches.length>5?quickMarkup(['Aur listings dikhao']):'');
+      return intro+liveNamedMatches.slice(0,5).map(r=>cardHtml(r,liveGallery)+(liveNamedMatches.length===1?fullListingDetailsHtml(r):'')).join('')+(liveNamedMatches.length>5?quickMarkup(['Aur listings dikhao']):'');
     }
   }
   const support=supportAnswer(q);
@@ -645,10 +663,11 @@ async function processMessage(q,container){
       activeSearch={category:cat,query:q,cityName:null,areaName:null,city:null,area:null,gender:null,budget:null,facilities:[],results:namedMatches,offset:0};saveConversationContext();
       const gallery=await loadGallery();
       const intro=namedMatches.length===1?'Mujhe aapki maangi hui listing mil gayi. Ye rahi uski available details:':'Is naam se ye matching listings mili hain. Aap sahi property select kar sakte hain:';
-      return intro+namedMatches.slice(0,5).map(r=>cardHtml(r,gallery)).join('')+(namedMatches.length>5?quickMarkup(['Aur listings dikhao']):'');
+      return intro+namedMatches.slice(0,5).map(r=>cardHtml(r,gallery)+(namedMatches.length===1?fullListingDetailsHtml(r):'')).join('')+(namedMatches.length>5?quickMarkup(['Aur listings dikhao']):'');
     }
     const previous=activeSearch||null;
     const result=matchSearch(rows,q,cat,previous);
+    if(!result.city&&!result.area){activeSearch={category:cat,query:q,city:null,area:null,cityName:null,areaName:null,gender:result.gender,budget:result.budget,facilities:result.facilities,results:[],offset:0};saveConversationContext();return 'Sahi listings dikhane ke liye city ya area bata dein. Main location guess nahi karunga.'+quickMarkup(['Sikar','Jaipur','Kota','Delhi']);}
     activeSearch={category:cat,query:q,city:result.city,area:result.area,cityName:result.cityName,areaName:result.areaName,gender:result.gender,budget:result.budget,facilities:result.facilities,results:result.rows,offset:0};saveConversationContext();
     if(!result.rows.length){
       let nextSteps;
