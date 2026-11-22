@@ -27,9 +27,50 @@ jobs:
       - name: Test search intelligence JavaScript
         shell: bash
         run: |
-          for f in search-phase6-universal.js search-relevance-fix.js search-distance-intelligence.js search-phase1-intelligence.js search-phase2-intelligence.js search-phase3-location-intelligence.js search-phase4-final-fusion.js search-phase5-natural-language.js js/finder-power-search.js; do
+          for f in search-query-parser.js search-phase6-universal.js search-relevance-fix.js search-distance-intelligence.js search-phase1-intelligence.js search-phase2-intelligence.js search-phase3-location-intelligence.js search-phase4-final-fusion.js search-phase5-natural-language.js js/finder-power-search.js; do
             node --check "$f"
           done
+
+      - name: Validate unified parser and strict search integration
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          source=Path('global-search.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',source,re.I)
+          for index,script in enumerate(scripts):
+              Path(f'/tmp/shh-inline-{index}.js').write_text(script,encoding='utf-8')
+          print(f'Extracted {len(scripts)} inline scripts for syntax validation')
+          PY
+          for f in /tmp/shh-inline-*.js; do node --check "$f"; done
+          node <<'NODE'
+          const fs=require('fs');
+          global.window={};
+          eval(fs.readFileSync('search-query-parser.js','utf8'));
+          eval(fs.readFileSync('search-phase6-universal.js','utf8'));
+          const rows=[
+            {id:'h1',__category:'hostel',name:'Allen Boys Hostel',city:'Sikar',area:'Piprali Road',address:'Near Allen, Piprali Road, Sikar',type:'boys'},
+            {id:'h2',__category:'hostel',name:'Piprali Girls Hostel',city:'Sikar',area:'Piprali Rd',address:'Piprali Road, Sikar',type:'girls',monthly_rent:4500},
+            {id:'c1',__category:'cafe',name:'Piprali Cafe',city:'Sikar',area:'Piprali Road',address:'Piprali Road, Sikar'},
+            {id:'c2',__category:'cafe',name:'Jaipur Cafe',city:'Jaipur',area:'Piprali Road',address:'Piprali Road, Jaipur'},
+            {id:'l1',__category:'library',name:'WiFi Study Library',city:'Jaipur',area:'Jagatpura',facilities:'WiFi'}
+          ];
+          const assert=(name,ok,detail='')=>{if(!ok)throw new Error(name+' failed '+detail);console.log('PASS '+name)};
+          let p=window.StudentHubQueryParser.parse('hostels piprali road',rows);
+          assert('plural category parsed',p.category==='hostel'&&p.locationPhrase==='piprali road',JSON.stringify(p));
+          p=window.StudentHubQueryParser.parse('Sikar mein Allen ke paas boys hostel',rows);
+          assert('Hinglish city + landmark + gender',p.city==='sikar'&&p.gender.includes('boys')&&p.locationPhrase.includes('allen'),JSON.stringify(p));
+          p=window.StudentHubQueryParser.parse('girls hostel under 5000',rows);
+          assert('gender + budget',p.gender.includes('girls')&&p.budget.max===5000,JSON.stringify(p));
+          p=window.StudentHubQueryParser.parse('Jaipur mein WiFi wali library',rows);
+          assert('city + facility + category',p.city==='jaipur'&&p.facilities.includes('wifi')&&p.category==='library',JSON.stringify(p));
+          const run=(q,expected)=>{const got=window.StudentHubUniversalSearch.search(rows,q,data=>data).map(x=>x.id).sort();assert(q,JSON.stringify(got)===JSON.stringify(expected.slice().sort()),JSON.stringify(got));};
+          run({rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:'',source:'global-search'},['h1','h2']);
+          run({rawKeyword:'cafe',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['c1']);
+          run({rawKeyword:'library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
+          console.log('UNIFIED PARSER + PHASE 6: 7/7 PASS');
+          NODE
 
       - name: Run 45 search intelligence tests
         shell: bash
@@ -266,7 +307,7 @@ jobs:
           from pathlib import Path
           import re
           p=Path('global-search.html'); s=p.read_text(encoding='utf-8')
-          files=['search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js','search-phase3-location-intelligence.js','search-phase4-final-fusion.js','search-phase5-natural-language.js']
+          files=['search-query-parser.js','search-phase6-universal.js','search-relevance-fix.js','search-distance-intelligence.js','search-phase1-intelligence.js','search-phase2-intelligence.js','search-phase3-location-intelligence.js','search-phase4-final-fusion.js','search-phase5-natural-language.js']
           for f in files: s=re.sub(r'\s*<script\s+src=["\']'+re.escape(f)+r'["\']\s*></script>','',s,flags=re.I)
           m=re.search(r'</body\s*>',s,re.I) or re.search(r'</html\s*>',s,re.I)
           if not m: raise SystemExit('global-search closing marker not found')
