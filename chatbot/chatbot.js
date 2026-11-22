@@ -647,8 +647,16 @@ function compareListings(rows){
 async function processMessage(q,container){
   const n=norm(q);
   const incomingCategory=categoryOf(q);
+  if(/\b(?:contact owner|owner se baat|owner ka number|call owner|whatsapp owner)\b/.test(n)&&activeSearch?.category){
+    const rows=activeSearch.results||[];
+    if(!rows.length)return 'Pehle listing select/search karein. Listing card par Call Owner ya WhatsApp option milega.';
+    const gallery=await loadGallery();
+    return 'Owner se contact karne ke liye listing card par available Call Owner / WhatsApp option use karein:<br>'+rows.slice(0,3).map(r=>cardHtml(r,gallery)).join('');
+  }
   if(activeSearch&&incomingCategory&&incomingCategory!==activeSearch.category){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
-  if(activeSearch&&/\b(?:my profile|my account|my booking|my bookings|my listing|booking status|listing status|contact support|complaint|feedback|appointment|add listing|verified badge|student safety|transport help)\b/.test(n)){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
+  const currentSearchAction=/\b(?:compare|comparison|tulana|muqabla|cheapest|lowest price|sabse sasta|sasti|sasta|verified first|verified pehle|newest|latest|naye|new listings|near me|mere paas|aas paas|around me|nearest|more|aur listings|next results)\b/.test(n);
+  if(activeSearch&&!incomingCategory&&!isContextFollowUp(q)&&!currentSearchAction){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
+  if(activeSearch&&/\b(?:my profile|my account|my booking|my bookings|my listing|booking status|listing status|contact support|complaint|feedback|appointment|add listing|verified badge|student safety|transport help)\b/.test(n)){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}}
   if(/\b(?:near me|mere paas|aas paas|around me)\b|\bnearest\b/.test(n)){
     const near=await findNearby(q);
     if(!near.rows)return near.answer;
