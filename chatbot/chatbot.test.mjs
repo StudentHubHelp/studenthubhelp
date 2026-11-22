@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('./chatbot.js', import.meta.url), 'utf8');
 const instrumented = source.replace(/\}\)\(\);\s*$/, [
-  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, genderOf, budgetOf, requestedFacilities, matchSearch, namedListingMatches, isNonLocationPhrase, supportAnswer, processMessage, isContextFollowUp, lastConversationCategory, saveHistory, restoreHistory, saveConversationContext, restoreConversationContext, setActiveSearch(value) { activeSearch = value; }, getActiveSearch() { return activeSearch; }, setCacheRows(value) { cacheRows = value; cacheRowsAt = Date.now(); cacheErrors = {}; }, setCacheGallery(value) { cacheGallery = value; }, clearHistory() { history = []; } };',
+  'globalThis.__SHH_CHATBOT_TEST__ = { norm, categoryOf, classifyIntent, genderOf, budgetOf, requestedFacilities, matchSearch, namedListingMatches, isNonLocationPhrase, supportAnswer, processMessage, isContextFollowUp, lastConversationCategory, saveHistory, restoreHistory, saveConversationContext, restoreConversationContext, setActiveSearch(value) { activeSearch = value; }, getActiveSearch() { return activeSearch; }, setCacheRows(value) { cacheRows = value; cacheRowsAt = Date.now(); cacheErrors = {}; }, setCacheGallery(value) { cacheGallery = value; }, clearHistory() { history = []; } };',
   '})();',
 ].join('\n'));
 assert.notEqual(instrumented, source, 'test hook should attach before the chatbot IIFE closes');
@@ -93,9 +93,16 @@ test('answers natural FAQ questions for every listing category', () => {
   assert.match(api.supportAnswer('bookstore me xerox hota hai kya'), /photocopy|Xerox|printing/i);
 });
 
-test('does not let a listing FAQ rule hijack a location search', () => {
-  assert.equal(api.supportAnswer('Piprali Road par cafe dikhao'), null);
+test('routes booking and membership questions to the explicitly named category', () => {
+  const library = api.supportAnswer('library kese book kre');
+  assert.match(library, /Library Finder/);
+  assert.match(library, /membership|seat availability/i);
+  assert.doesNotMatch(library, /Hostel \/ PG book|pg-finder|Book Now/i);
+  assert.equal(api.classifyIntent('library kese book kre'), 'category_faq');
   assert.match(api.supportAnswer('hostel kese book kre'), /Book Now|Booking Request/i);
+  assert.match(api.supportAnswer('tiffin order kese kre'), /Tiffin Finder/);
+  assert.match(api.supportAnswer('cafe table reserve kese kare'), /Cafe Finder/);
+  assert.match(api.supportAnswer('bookstore se book order kese kare'), /Bookstore Finder/);
 });
 
 test('remembers the previous category for a genuine follow-up only', () => {
