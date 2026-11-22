@@ -230,7 +230,6 @@
         .map(esc).join(', ');
       const photo = imageUrl(row);
       const verified = row.verified === true || row.is_verified === true;
-      const price = priceText(row, source.key);
       const facilities = facilityLabels(row);
       const href = detailUrl(row, source.key);
       const photoMarkup = photo
