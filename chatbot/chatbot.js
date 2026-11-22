@@ -656,7 +656,7 @@ async function processMessage(q,container){
   if(activeSearch&&incomingCategory&&incomingCategory!==activeSearch.category){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
   const currentSearchAction=/\b(?:compare|comparison|tulana|muqabla|cheapest|lowest price|sabse sasta|sasti|sasta|verified first|verified pehle|newest|latest|naye|new listings|near me|mere paas|aas paas|around me|nearest|more|aur listings|next results)\b/.test(n);
   if(activeSearch&&!incomingCategory&&!isContextFollowUp(q)&&!currentSearchAction){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
-  if(activeSearch&&/\b(?:my profile|my account|my booking|my bookings|my listing|booking status|listing status|contact support|complaint|feedback|appointment|add listing|verified badge|student safety|transport help)\b/.test(n)){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}}
+  if(activeSearch&&/\b(?:my profile|my account|my booking|my bookings|my listing|booking status|listing status|contact support|complaint|feedback|appointment|add listing|verified badge|student safety|transport help)\b/.test(n)){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
   if(/\b(?:near me|mere paas|aas paas|around me)\b|\bnearest\b/.test(n)){
     const near=await findNearby(q);
     if(!near.rows)return near.answer;
