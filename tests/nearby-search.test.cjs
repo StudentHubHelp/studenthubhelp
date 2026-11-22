@@ -92,9 +92,9 @@ test('global and Finder inline scripts remain syntactically valid', () => {
   const pages = ['global-search.html', 'pg-finder.html', 'tiffin-finder.html', 'library-finder.html', 'cafe-finder.html', 'bookstore-finder.html'];
   for (const page of pages) {
     const html = fs.readFileSync(path.join(__dirname, '..', page), 'utf8');
-    const blocks = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)];
+    const blocks = [...html.matchAll(new RegExp('<script\\\\b([^>]*)>([\\\\s\\\\S]*?)<\\\\/script>', 'gi'))];
     for (const [index, block] of blocks.entries()) {
-      if (/type=["']application\\/ld\\+json["']/i.test(block[1])) continue;
+      if (block[1].includes('application/ld+json')) continue;
       const code = block[2].trim();
       if (code) new vm.Script(code, { filename: page + '#inline-' + index });
     }
