@@ -93,6 +93,27 @@ test('answers natural FAQ questions for every listing category', () => {
   assert.match(api.supportAnswer('bookstore me xerox hota hai kya'), /photocopy|Xerox|printing/i);
 });
 
+test('recognizes technical website problems and gives support steps instead of listing answers', async () => {
+  const prompts = [
+    'technical issue ho to kya kre',
+    'website mein problem aa rahi hai',
+    'site nhi chal rhi',
+    'page is not loading',
+    'I found a bug on the website',
+    'login issue aa raha hai'
+  ];
+  for (const prompt of prompts) {
+    assert.equal(api.classifyIntent(prompt), 'technical_support', prompt);
+    assert.match(api.supportAnswer(prompt), /Contact Us|support email/i, prompt);
+    assert.match(api.supportAnswer(prompt), /refresh|Incognito|error/i, prompt);
+  }
+  api.setActiveSearch({category:'hostel',query:'Sikar hostel',cityName:'Sikar',results:[]});
+  const answer = await api.processMessage('technical issue ho to kya kre');
+  assert.match(answer, /Contact Us|support email/i);
+  assert.doesNotMatch(answer, /Hostel Finder|Hostel\/PG/i);
+  assert.equal(api.getActiveSearch(), null);
+});
+
 test('routes booking and membership questions to the explicitly named category', () => {
   const library = api.supportAnswer('library kese book kre');
   assert.match(library, /Library Finder/);
