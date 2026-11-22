@@ -814,7 +814,7 @@ async function showSuggestions(q){if(!q.trim()){hideSuggestions();return}const d
     window.triggerGlobalSearch=function(){performSearch(buildSearchContext(input.value,document.getElementById('cityAreaInput')?.value||''));};
     async function performSearch(queryOrContext){
       const context=queryOrContext&&typeof queryOrContext==='object'&&!Array.isArray(queryOrContext)?{...queryOrContext}:buildSearchContext(queryOrContext,document.getElementById('cityAreaInput')?.value||'');
-      context.rawKeyword=String(context.rawKeyword??context.keyword??'').trim();context.explicitLocation=String(context.explicitLocation??context.location??'').trim();context.selectedCategory=activeFilter==='all'?String(context.selectedCategory||''):activeFilter;context.fallbackQuery=[context.rawKeyword,context.explicitLocation].filter(Boolean).join(' ');
+      context.rawKeyword=String(context.rawKeyword??context.keyword??'').trim();context.explicitLocation=String(context.explicitLocation??context.location??'').trim();context.selectedCategory=activeFilter==='all'?String(context.selectedCategory||''):activeFilter;context.nearbyMode=nearbyMode;context.fallbackQuery=[context.rawKeyword,context.explicitLocation].filter(Boolean).join(' ');
       const req=++requestNo;currentQuery=clean(context.fallbackQuery);hideSuggestions();showLoading(true);showEmpty(false);setURLQuery(context);
       const data=await loadAll();if(req!==requestNo)return;
       const pureNearbyQuery=['near me','nearby','near my location','nearby me'].includes(norm(currentQuery));
