@@ -70,9 +70,11 @@ jobs:
           run({rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:'',source:'global-search'},['h1','h2']);
           run({rawKeyword:'cafe',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['c1']);
           run({rawKeyword:'library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
+          run({rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},['h1','h2']);
+          assert('near-me without GPS mode is not broadened',window.StudentHubUniversalSearch.search(rows,'hostel near me',data=>data).length===0);
           const ambiguous=window.StudentHubUniversalSearch.search(rows,'Piprali Road cafe',data=>data).map(x=>x.id);
           assert('ambiguous road retained and grouped by city',JSON.stringify(ambiguous)===JSON.stringify(['c2','c1']),JSON.stringify(ambiguous));
-          console.log('UNIFIED PARSER + PHASE 6: 8/8 PASS');
+          console.log('UNIFIED PARSER + PHASE 6: 10/10 PASS');
           NODE
 
       - name: Verify data loader, nearby labels and autocomplete safety
@@ -93,6 +95,7 @@ jobs:
             'failed cache invalidation':'categoryCache.delete(key)',
             'area-only result label':'Area Match · distance unavailable',
             'structured autocomplete action':'performSearch(x.context||x.q)',
+            'nearby mode context':'context.nearbyMode=nearbyMode',
             'Phase 6 suggestion preview':'strictFilter(data,item.context)',
             'city displayed with locality':"[area,r.city].filter(Boolean).join(', ')",
             'deferred initial search':'setTimeout(()=>performSearch(buildSearchContext(initial,initialArea)),250)',
