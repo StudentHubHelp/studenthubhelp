@@ -194,15 +194,18 @@
   }
 
   const CATEGORY_BANNERS = {
-    hostel: { path: '/hostel-banner.png', alt: 'Hostel and PG category banner' },
-    tiffin: { path: '/tiffin-banner.png', alt: 'Tiffin and mess category banner' },
-    library: { path: '/library-banner.png', alt: 'Library category banner' },
-    cafe: { path: '/cafe-banner.png', alt: 'Cafe category banner' },
-    bookstore: { path: '/bookstore-banner.png', alt: 'Bookstore category banner' }
+    hostel: { label: 'HOSTEL & PG', icon: '⌂', title: 'A place to call home' },
+    tiffin: { label: 'TIFFIN & MESS', icon: '◒', title: 'Everyday meals, nearby' },
+    library: { label: 'LIBRARY', icon: '▤', title: 'Space to focus' },
+    cafe: { label: 'CAFE', icon: '☕', title: 'Your student hangout' },
+    bookstore: { label: 'BOOKSTORE', icon: '▣', title: 'Books & essentials' }
   };
   const categoryBannerMarkup = (source) => {
     const banner = CATEGORY_BANNERS[source.key] || CATEGORY_BANNERS.hostel;
-    return '<img class="category-fallback-image" src="' + banner.path + '" alt="' + esc(banner.alt) + '" loading="lazy" decoding="async">';
+    return '<div class="listing-category-banner listing-category-banner--' + esc(source.key) + '" role="img" aria-label="' + esc(banner.label + ' category banner') + '">' +
+      '<span class="category-banner-icon" aria-hidden="true">' + banner.icon + '</span>' +
+      '<span class="category-banner-copy"><strong>' + esc(banner.title) + '</strong><small>' + esc(banner.label) + ' · STUDENTHUBHELP</small></span>' +
+      '<span class="category-banner-orbit" aria-hidden="true"></span></div>';
   };
 
   function renderFeatured(items) {
@@ -214,7 +217,9 @@
         const image = event.target;
         if (!(image instanceof HTMLImageElement) || !image.matches('.listing-photo img')) return;
         const category = SOURCES.find((source) => source.key === image.dataset.category);
-        if (category) image.parentElement.replaceWith(document.createRange().createContextualFragment(categoryBannerMarkup(category)));
+        if (!category || image.dataset.fallbackApplied === 'true') return;
+        image.dataset.fallbackApplied = 'true';
+        image.replaceWith(document.createRange().createContextualFragment(categoryBannerMarkup(category)));
       }, true);
       grid.dataset.fallbackListener = 'true';
     }
