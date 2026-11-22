@@ -42,6 +42,7 @@ export function CursorEffects() {
     const draw = (now: number) => {
       frame = 0;
       ctx.clearRect(0, 0, width, height);
+      const lightMode = document.querySelector('#root > div[data-theme]')?.getAttribute('data-theme') === 'light';
 
       for (let i = trail.length - 1; i >= 0; i--) {
         const point = trail[i];
@@ -53,9 +54,13 @@ export function CursorEffects() {
         }
         const radius = 2.4 * alpha + .5;
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(56, 217, 245, ' + (alpha * .48) + ')';
-        ctx.shadowColor = 'rgba(56, 217, 245, ' + (alpha * .7) + ')';
-        ctx.shadowBlur = 13 * alpha;
+        ctx.fillStyle = lightMode
+          ? 'rgba(8, 145, 178, ' + (alpha * .27) + ')'
+          : 'rgba(56, 217, 245, ' + (alpha * .48) + ')';
+        ctx.shadowColor = lightMode
+          ? 'rgba(8, 145, 178, ' + (alpha * .34) + ')'
+          : 'rgba(56, 217, 245, ' + (alpha * .7) + ')';
+        ctx.shadowBlur = (lightMode ? 7 : 13) * alpha;
         ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
         ctx.fill();
       }
@@ -69,10 +74,12 @@ export function CursorEffects() {
           continue;
         }
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(56, 217, 245, ' + ((1 - progress) * .7) + ')';
-        ctx.lineWidth = 1.5 * (1 - progress) + .35;
-        ctx.shadowColor = 'rgba(56, 217, 245, .55)';
-        ctx.shadowBlur = 10 * (1 - progress);
+        ctx.strokeStyle = lightMode
+          ? 'rgba(109, 82, 190, ' + ((1 - progress) * .48) + ')'
+          : 'rgba(56, 217, 245, ' + ((1 - progress) * .7) + ')';
+        ctx.lineWidth = (lightMode ? 1.2 : 1.5) * (1 - progress) + .3;
+        ctx.shadowColor = lightMode ? 'rgba(109, 82, 190, .28)' : 'rgba(56, 217, 245, .55)';
+        ctx.shadowBlur = (lightMode ? 5 : 10) * (1 - progress);
         ctx.arc(ripple.x, ripple.y, 4 + progress * 20, 0, Math.PI * 2);
         ctx.stroke();
       }
