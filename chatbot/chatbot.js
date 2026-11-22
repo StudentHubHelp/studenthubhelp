@@ -79,9 +79,10 @@ function restoreConversationContext(){
 }
 function classifyIntent(q){
   const n=norm(q),cat=categoryOf(q);
-  if(/\b(book|booking|reservation|cancel|refund|payment)\b/.test(n))return 'booking_support';
   if(/\b(my profile|my account|meri profile|mera account|my booking|my listing|status)\b/.test(n))return 'account_support';
-  if(cat&&/\b(price|rate|fees?|timing|hours|menu|delivery|seats?|facilit|wifi|ac|food|rent|deposit|books?|stationery)\b/.test(n))return 'category_faq';
+  // A named service category takes precedence over generic words such as "book".
+  if(cat&&(/\b(price|rate|fees?|timing|hours|menu|delivery|seats?|facilit|wifi|ac|food|rent|deposit|books?|stationery|book|booking|join|membership|order|reserve|reservation)\b/.test(n)))return 'category_faq';
+  if(!cat&&/\b(book|booking|reservation|cancel|refund|payment)\b/.test(n))return 'booking_support';
   if(cat||/\b(show|dikhao|find|search|near|nearby|options?)\b/.test(n))return 'listing_search';
   if(/\b(complaint|complain|feedback|suggestion|contact|help|support)\b/.test(n))return 'general_support';
   return 'general_question';
@@ -478,7 +479,22 @@ function typing(container){
 }
 function supportAnswer(q){
   const n=norm(q);
-  if(/(?:how|kaise|kese|kes[e]?)\b.*\b(?:book|booking)\b|\b(?:book|booking)\b.*\b(?:kaise|kese|kare|kre|karu|karna|process)\b/.test(n)){
+  const explicitCategory=categoryOf(q);
+  const asksBooking=/(?:how|kaise|kese|kes[e]?)\b.*\b(?:book|booking|join|membership|reserve|reservation|order)\b|\b(?:book|booking|join|membership|reserve|reservation|order)\b.*\b(?:kaise|kese|kare|kre|karu|karna|process)\b/.test(n);
+  // Never let a generic "book" keyword turn a library/bookstore/cafe/tiffin question into hostel booking.
+  if(asksBooking&&explicitCategory==='library'){
+    return 'Library use/join karne ke liye:<br>1. <a href="/library-finder.html">Library Finder</a> kholen aur apne city/area ki library select karein.<br>2. Listing par available fees, timing, seats aur facilities check karein.<br>3. Membership, seat availability aur payment process library ke listed phone/WhatsApp contact par confirm karein.<br><br>Har library ke liye online booking available hona zaroori nahi hai; chatbot booking confirm nahi karta. <a href="/library-finder.html">Libraries dekhein</a>.';
+  }
+  if(asksBooking&&explicitCategory==='tiffin'){
+    return 'Tiffin/Mess order ya subscription ke liye <a href="/tiffin-finder.html">Tiffin Finder</a> par apne area ki active service select karein. Listing par diye phone/WhatsApp contact se menu, plan, delivery area, price aur start date confirm karke order place karein. Chatbot order ya payment confirm nahi karta.';
+  }
+  if(asksBooking&&explicitCategory==='cafe'){
+    return 'Cafe visit/table reserve karne ke liye <a href="/cafe-finder.html">Cafe Finder</a> par cafe select karein aur listing ke phone/WhatsApp contact se table availability, timing aur reservation policy confirm karein. Chatbot table reservation confirm nahi karta.';
+  }
+  if(asksBooking&&explicitCategory==='bookstore'){
+    return 'Books/stationery kharidne ya reserve karne ke liye <a href="/bookstore-finder.html">Bookstore Finder</a> par store select karein. Specific title, edition, stock, price aur pickup/delivery ke liye store ke listed contact par confirm karein. Chatbot order ya stock reserve nahi karta.';
+  }
+  if(asksBooking&&(!explicitCategory||explicitCategory==='hostel')){
     return 'Hostel / PG book karne ka tarika:<br>1. <a href="/pg-finder.html">Hostel / PG Finder</a> kholen aur apni pasand ka hostel select karein.<br>2. Hostel ke details page par <b>Book Now</b> par click karein.<br>3. Booking form mein <b>Joining Date</b> aur <b>Duration</b> select karein.<br>4. Login karein (agar pehle se login nahi hain), phir <b>Confirm Booking Request</b> dabayein.<br>5. Request <b>Pending</b> status mein save hogi. Owner/admin ke response ke baad status update hoga; request submit hona confirmed room ya payment ki guarantee nahi hai.<br><br><a href="/pg-finder.html">Hostel Finder kholen</a>.';
   }
   // Category-wise everyday help: answer guidance questions without hijacking listing searches.
