@@ -194,17 +194,15 @@
   }
 
   const CATEGORY_BANNERS = {
-    hostel: { icon: '⌂', title: 'A place to feel at home', detail: 'STUDENT STAYS & PGs', className: 'hostel' },
-    tiffin: { icon: '♨', title: 'Fresh meals, every day', detail: 'TIFFIN & MESS', className: 'tiffin' },
-    library: { icon: '▤', title: 'Your space to focus', detail: 'LIBRARIES & STUDY SPACES', className: 'library' },
-    cafe: { icon: '☕', title: 'Good coffee, good company', detail: 'CAFÉS & HANGOUTS', className: 'cafe' },
-    bookstore: { icon: '▣', title: 'Everything for your next chapter', detail: 'BOOKS & STATIONERY', className: 'bookstore' }
+    hostel: { path: '/hostel-banner.png', alt: 'Hostel and PG category banner' },
+    tiffin: { path: '/tiffin-banner.png', alt: 'Tiffin and mess category banner' },
+    library: { path: '/library-banner.png', alt: 'Library category banner' },
+    cafe: { path: '/cafe-banner.png', alt: 'Cafe category banner' },
+    bookstore: { path: '/bookstore-banner.png', alt: 'Bookstore category banner' }
   };
   const categoryBannerMarkup = (source) => {
     const banner = CATEGORY_BANNERS[source.key] || CATEGORY_BANNERS.hostel;
-    return '<div class="listing-category-banner listing-category-banner--' + banner.className + '" role="img" aria-label="' + esc(source.label) + ' category banner">' +
-      '<span class="category-banner-orbit" aria-hidden="true"></span><span class="category-banner-icon" aria-hidden="true">' + banner.icon + '</span>' +
-      '<span class="category-banner-copy"><strong>' + esc(banner.title) + '</strong><small>' + esc(banner.detail) + '</small></span></div>';
+    return '<img class="category-fallback-image" src="' + banner.path + '" alt="' + esc(banner.alt) + '" loading="lazy" decoding="async">';
   };
 
   function renderFeatured(items) {
