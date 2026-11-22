@@ -1,0 +1,40 @@
+name: Optimize homepage image delivery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/optimize-homepage-images.py'
+      - '.github/workflows/optimize-homepage-images.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Install image tooling
+        run: python -m pip install --disable-pip-version-check Pillow
+
+      - name: Generate optimized homepage WebP assets
+        run: python scripts/optimize-homepage-images.py
+
+      - name: Commit optimized assets and homepage references
+        run: |
+          git config user.name 'StudentHubHelp Performance Bot'
+          git config user.email 'actions@github.com'
+          git add index.html logo-optimized.webp herobanner.webp hostelherobanner.webp tiffinherobanner.webp libraryherobanner.webp cafeherobanner.webp bookstoreherobanner.webp
+          if git diff --cached --quiet; then
+            echo 'No homepage image changes to commit.'
+            exit 0
+          fi
+          git commit -m 'perf: optimize homepage images for mobile [homepage-images-optimized]'
+          git push
