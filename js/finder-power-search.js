@@ -74,12 +74,28 @@
       .finder-power-result{min-height:60px!important;padding:12px!important;border-radius:13px!important}
       .finder-power-result strong{font-size:12px!important}.finder-power-result small{font-size:10px!important}
       @media(max-width:720px){.search-box{display:flex!important;flex-direction:row!important;align-items:center!important;flex-wrap:nowrap!important;min-height:62px!important;padding:6px!important;gap:8px!important;border-radius:18px!important}.search-box .search-icon{display:none!important}.search-box #searchInput{display:block!important;flex:1 1 auto!important;width:0!important;min-width:0!important;height:44px!important;font-size:13px!important;padding:0 8px!important;line-height:1.3!important}.search-box .search-btn{display:inline-flex!important;flex:0 0 46px!important;align-items:center!important;justify-content:center!important;min-height:44px!important;height:44px!important;width:46px!important;min-width:46px!important;padding:0!important;border-radius:13px!important;font-size:0!important;gap:0!important}.search-box .search-btn i{display:inline-block!important;font-size:16px!important}.finder-power-chips{gap:6px!important;margin-top:12px!important}.finder-power-chips-label{width:100%;font-size:10px}.finder-power-chip{min-height:32px;padding:7px 10px;font-size:10px}}
-      @media(prefers-reduced-motion:reduce){.finder-power-chip,.search-box,.search-box .search-btn{transition:none!important}}
+      .finder-power-nearby-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 9px}
+      .finder-power-nearby{min-height:40px;padding:0 14px;border:1px solid rgba(22,131,75,.24);border-radius:12px;background:#eefaf3;color:#126c3e;font-size:11px;font-weight:900;cursor:pointer;transition:background .18s,border-color .18s}
+      .finder-power-nearby:hover{background:#e1f5e9;border-color:#9bd5b2}
+      .finder-power-nearby[aria-pressed="true"]{background:#126c3e;color:#fff;border-color:#126c3e}
+      .finder-power-nearby:disabled{opacity:.65;cursor:wait}
+      .finder-power-nearby-status{font-size:10px;font-weight:700;color:#667085}
+      .finder-power-nearby-status[data-state="error"]{color:#b42318}
+      .shh-nearby-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+      .shh-nearby-distance{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#eaf8f0;color:#137447;font-size:10px;font-weight:900}
+      .shh-nearby-directions{color:#315d95;font-size:10px;font-weight:900;text-decoration:none}
+      .shh-nearby-directions:hover{text-decoration:underline}
+      @media(max-width:720px){.finder-power-nearby-row{align-items:stretch}.finder-power-nearby{width:100%;min-height:42px}.finder-power-nearby-status{width:100%}}
+      @media(prefers-reduced-motion:reduce){.finder-power-chip,.search-box,.search-box .search-btn,.finder-power-nearby{transition:none!important}}
     `;
     document.head.appendChild(style);
 
     const panel=document.createElement('div'); panel.className='finder-power-panel';
     panel.innerHTML=`
+      <div class="finder-power-nearby-row">
+        <button type="button" class="finder-power-nearby" id="finderPowerNearby" aria-pressed="false"><i class="fa-solid fa-location-crosshairs"></i> Use My Location · 5 km</button>
+        <span class="finder-power-nearby-status" id="finderPowerNearbyStatus" role="status" aria-live="polite"></span>
+      </div>
       <div class="finder-power-filters" id="finderPowerFilters">
         <button type="button" class="finder-power-toggle" id="finderPowerToggle"><i class="fa-solid fa-sliders"></i> Smart Filters</button>
         <input id="finderPowerCity" placeholder="City" aria-label="Filter by city">
@@ -132,7 +148,12 @@
     const suggest=panel.querySelector('#finderPowerSuggest');
     filters.style.display='none';
 
-    const state={city:'',area:'',min:null,max:null,rating:null,verified:false,active:0};
+    const state={city:'',area:'',min:null,max:null,rating:null,verified:false,active:0,nearby:false,coords:null};
+    const nearby=window.StudentHubNearbySearch;
+    const nearbyButton=document.getElementById('finderPowerNearby');
+    const nearbyStatus=document.getElementById('finderPowerNearbyStatus');
+    const setNearbyStatus=(message,type)=>{if(!nearbyStatus)return;nearbyStatus.textContent=message||'';nearbyStatus.dataset.state=type||'info';};
+    const syncNearbyButton=()=>{if(!nearbyButton)return;nearbyButton.setAttribute('aria-pressed',String(state.nearby));nearbyButton.innerHTML=state.nearby?'<i class="fa-solid fa-location-dot"></i> Nearby On · Clear':'<i class="fa-solid fa-location-crosshairs"></i> Use My Location · 5 km';};
     const val=id=>String(document.getElementById(id)?.value||'').trim();
     const norm=v=>String(v??'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
     const numberFrom=v=>{const n=Number(String(v??'').replace(/[^0-9.]/g,''));return Number.isFinite(n)?n:null};
@@ -163,6 +184,9 @@
       const categoryKey=page==='pg-finder.html'?'hostel':page.replace('-finder.html','');
       let ranked=window.StudentHubSearchEngine.rankRows(source,query,categoryKey);
       ranked=ranked.filter(passes);
+      if(state.nearby && state.coords && nearby){
+        ranked=nearby.filterWithinRadius(ranked,state.coords,nearby.defaultRadiusKm);
+      }
 
       const backupRecords=allRecords;
       const backupValue=input.value;
@@ -176,11 +200,38 @@
         input.value=backupValue;
         allRecords=backupRecords;
       }
+      if(state.nearby && nearby && grid){
+        grid.querySelectorAll('.card').forEach((card,index)=>{
+          const record=ranked[index];
+          if(!record || record.__nearbyDistanceKm==null)return;
+          const metaNode=document.createElement('div');
+          metaNode.className='shh-nearby-meta';
+          const distanceNode=document.createElement('span');
+          distanceNode.className='shh-nearby-distance';
+          distanceNode.textContent='📍 '+nearby.formatDistance(record.__nearbyDistanceKm)+' away';
+          metaNode.appendChild(distanceNode);
+          const directions=nearby.directionsUrl(record);
+          if(directions){
+            const link=document.createElement('a');
+            link.className='shh-nearby-directions';
+            link.href=directions;
+            link.target='_blank';
+            link.rel='noopener noreferrer';
+            link.textContent='Directions ↗';
+            metaNode.appendChild(link);
+          }
+          (card.querySelector('.card-body')||card).appendChild(metaNode);
+        });
+      }
 
       const meta=document.getElementById('resultText');
       const note=document.getElementById('finderPowerMatchNote');
       const tier=ranked[0]?.__matchTier||'';
-      if(meta && query){
+      if(meta && state.nearby){
+        meta.textContent=query
+          ? `Showing ${ranked.length} matching listing${ranked.length===1?'':'s'} within 5 km for "${query}"`
+          : `Showing ${ranked.length} listing${ranked.length===1?'':'s'} within 5 km, nearest first`;
+      }else if(meta && query){
         if(tier==='exact'){
           meta.textContent=`Showing ${ranked.length} exact result${ranked.length===1?'':'s'} for "${query}"`;
         }else if(tier==='nearby'){
@@ -190,8 +241,10 @@
         }
       }
       if(note){
-        note.hidden=true;
-        note.textContent='';
+        note.hidden=!state.nearby;
+        note.textContent=state.nearby
+          ? (ranked.length ? 'Nearby search is active: results are within 5 km, sorted by straight-line distance.' : 'No active listings with valid coordinates were found within 5 km. Try another location or use the regular search.')
+          : '';
       }
       return ranked;
     };
@@ -206,6 +259,44 @@
       }).join(''):`<div class="finder-power-meta">No matching suggestions</div>`;
       suggest._rows=ranked; suggest.classList.add('show'); state.active=0;
     };
+
+    if(nearbyButton){
+      nearbyButton.addEventListener('click',async()=>{
+        if(state.nearby){
+          state.nearby=false;
+          state.coords=null;
+          nearby?.clearStoredLocation();
+          setNearbyStatus('Nearby filter cleared. Regular category search restored.','info');
+          syncNearbyButton();
+          render();
+          return;
+        }
+        if(!nearby){setNearbyStatus('Nearby search could not load. Please refresh and try again.','error');return;}
+        nearbyButton.disabled=true;
+        setNearbyStatus('Detecting your current location…','loading');
+        try{
+          state.coords=await nearby.getCurrentLocation();
+          state.nearby=true;
+          setNearbyStatus('Location detected. Showing results within 5 km.','success');
+          syncNearbyButton();
+          render();
+        }catch(error){
+          setNearbyStatus(error?.message||'Unable to detect your location.','error');
+        }finally{
+          nearbyButton.disabled=false;
+          syncNearbyButton();
+        }
+      });
+    }
+    if(nearby && new URLSearchParams(location.search).get('nearby')==='1'){
+      state.coords=nearby.getStoredLocation();
+      state.nearby=!!state.coords;
+      if(state.nearby)setNearbyStatus('Nearby location restored for this session.','success');
+      else setNearbyStatus('Your saved location expired. Select Use My Location to refresh it.','error');
+    }
+    syncNearbyButton();
+    window.addEventListener('shh:finder-records-loaded',()=>{if(state.nearby)render()});
+    if(state.nearby && originalRecords().length)render();
 
     document.getElementById('finderPowerToggle').addEventListener('click',()=>{filters.style.display=filters.style.display==='none'?'flex':'none'});
     document.getElementById('finderPowerClear').addEventListener('click',()=>{input.value='';['finderPowerCity','finderPowerArea','finderPowerMin','finderPowerMax','finderPowerRating'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});document.getElementById('finderPowerVerified').checked=false;Object.assign(state,{city:'',area:'',min:null,max:null,rating:null,verified:false});suggest.classList.remove('show');render();input.focus()});
