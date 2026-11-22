@@ -29,7 +29,7 @@
     front:['in front of','front of','aage','आगे'],
     between:['between','ke beech','ke bich','बीच में','के बीच']
   };
-  const norm=s=>String(s??'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[|,;:/()[\]{}.!?]+/g,' ').replace(/\s+/g,' ').trim();
+  const norm=s=>window.normalizeLocationText?window.normalizeLocationText(s):String(s??'').toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').replace(/[|,;:/()[\\]{}.!?]+/g,' ').replace(/\\s+/g,' ').replace(/\\brd\\b/g,'road').trim();
   const contains=(text,alts)=>{const n=norm(text);return alts.some(x=>n.includes(norm(x)));};
   const hits=(q,map)=>Object.entries(map).filter(([,alts])=>contains(q,alts)).map(([k])=>k);
   const queryInfo=q=>{const n=norm(q);return {raw:n,roads:hits(n,ROAD),landmarks:hits(n,LANDMARK),relations:hits(n,REL),between:/\bbetween\b|\bke beech\b|\bke bich\b|बीच|के बीच/i.test(n)};};
