@@ -39,10 +39,12 @@ function parse(input,rows){
  const cityStripped=city?(' '+remainder+' ').replace(' '+city+' ',' ').trim():remainder;
  const locationTokens=cityStripped.split(' ').filter(t=>t.length>1&&!STOP.has(t)),locationPhrase=locationTokens.join(' ');
  const roadQuery=/\broad\b/i.test(normalized),roadMatch=normalized.match(/([\p{L}\p{N}]+)\s+road\b/iu),roadRoot=roadMatch?roadMatch[1]:null;
- const inferredCities=locationPhrase?[...new Set(records.filter(r=>norm(textOf(r,fields)).includes(locationPhrase)).map(r=>canonical(r?.city)).filter(Boolean))]:[];
+ const roadPhrase=roadQuery&&roadRoot?roadRoot+' road':'';
+ const inferencePhrase=roadPhrase||locationPhrase;
+ const inferredCities=inferencePhrase?[...new Set(records.filter(r=>norm(textOf(r,fields)).includes(inferencePhrase)).map(r=>canonical(r?.city)).filter(Boolean))]:[];
  const explicitLocation=context?String(context.explicitLocation??context.location??'').trim():'',explicitLocationNorm=norm(explicitLocation);
  const explicitLocationCity=cities.find(c=>(' '+explicitLocationNorm+' ').includes(' '+c+' '))||null;
- return {rawQuery:raw,normalizedQuery:normalized,category,city:explicitLocationCity||city,cityMatches:cityMatches.length?cityMatches:explicitLocationCity?[explicitLocationCity]:[],locationTokens,locationPhrase,roadQuery,roadRoot,gender,facilities,budget,landmarks,freeTextKeywords:locationTokens.filter(t=>!landmarks.some(l=>l.split(' ').includes(t))&&!(roadRoot||'').includes(t)),nearby,requestedPropertyType,inferredCities,ambiguousRoad:roadQuery&&!explicitLocationCity&&!city&&inferredCities.length>1,explicitLocation,selectedCategory:selected||''};
+ return {rawQuery:raw,normalizedQuery:normalized,category,city:explicitLocationCity||city,cityMatches:cityMatches.length?cityMatches:explicitLocationCity?[explicitLocationCity]:[],locationTokens,locationPhrase,roadQuery,roadRoot,gender,facilities,budget,landmarks,freeTextKeywords:locationTokens.filter(t=>t!=='road'&&t!==roadRoot),nearby,requestedPropertyType,inferredCities,ambiguousRoad:roadQuery&&!explicitLocationCity&&!city&&inferredCities.length>1,explicitLocation,selectedCategory:selected||''};
 }
 window.StudentHubQueryParser=Object.freeze({parse,normalize:norm,canonical,version:'1.0.0'});
 })(window);
