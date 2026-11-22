@@ -84,6 +84,7 @@ function isTechnicalSupportQuery(n){
 }
 function technicalIssueKind(n){
   if(/\b(login|log in|sign in|signin|password|otp|account access)\b/.test(n))return 'login';
+  if(/\b(bug|error|glitch|crash)\b/.test(n))return 'general';
   if(/\b(load|loading|not loading|slow|spinner|stuck|blank page)\b/.test(n))return 'loading';
   if(/\b(website|site|webpage|browser|server)\b/.test(n)||/\b(website|site)\b.*\b(chal|khul)\b/.test(n)||/\b(chal|khul)\b.*\b(website|site)\b/.test(n))return 'website';
   return 'general';
