@@ -578,11 +578,14 @@ function statusText(s){
 }
 async function processMessage(q,container){
   const n=norm(q);
+  const incomingCategory=categoryOf(q);
+  if(activeSearch&&incomingCategory&&incomingCategory!==activeSearch.category){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
+  if(activeSearch&&/\\b(?:my profile|my account|my booking|my bookings|my listing|booking status|listing status|contact support|complaint|feedback|appointment|add listing|verified badge|student safety|transport help)\\b/.test(n)){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
   if(/\\b(?:near me|nearby|mere paas|aas paas|around me)\\b|\\bnearest\\b/.test(n)){
     const near=await findNearby(q);
     if(!near.rows)return near.answer;
     const gallery=await loadGallery();
-    return near.answer+(near.rows.length?'<br>'+near.rows.slice(0,5).map(r=>cardHtml(r,gallery).replace('</div></div></article>','<div class="shh-card-meta">📍 '+r.__distanceKm.toFixed(1)+' km away</div></div></div></article>')).join(''):'')+quickMarkup(['City se search karo','Contact support']);
+    return near.answer+(near.rows.length?'<br>'+near.rows.slice(0,5).map(r=>cardHtml(r,gallery)).join(''):'')+quickMarkup(['City se search karo','Contact support']);
   }
   if(/\\b(compare|comparison|compare these|tulana|muqabla)\\b/.test(n)){
     if(!activeSearch?.category)return 'Pehle ek category aur city mein listings search karein; phir main 2–3 matching options compare kar dunga.'+quickMarkup(['Hostel / PG','Tiffin / Mess','Library','Cafe','Bookstore']);
@@ -690,7 +693,7 @@ async function processMessage(q,container){
     const count=result.rows.length;
     const summary='Mujhe <b>'+count+'</b> matching active listing'+(count===1?' mili':'s mili')+'. '+(result.city?'City: <b>'+esc(result.city)+'</b>. ':'')+(result.gender?'Type: <b>'+(result.gender==='girls'?'Girls': 'Boys')+'</b>. ':'')+(result.budget?'Budget: <b>₹'+result.budget.toLocaleString('en-IN')+' tak</b>. ':'');
     const cards=shown.map(r=>cardHtml(r,gallery)).join('');
-    const more=count>4?quickMarkup(['Aur listings dikhao','Budget badlo','Facilities filter karo']):'';
+    const more=quickMarkup(['Aur listings dikhao','Sabse sasta pehle','Verified pehle','Newest pehle','Compare these','Budget badlo','Facilities filter karo']);
     return summary+cards+more;
   }
   if(/hostel|pg|tiffin|mess|library|cafe|bookstore|book store|dikhao|show me|find|search/.test(n)){
