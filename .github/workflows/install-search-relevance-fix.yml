@@ -73,6 +73,51 @@ jobs:
           console.log('UNIFIED PARSER + PHASE 6: 7/7 PASS');
           NODE
 
+      - name: Verify data loader, nearby labels and autocomplete safety
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('global-search.html').read_text(encoding='utf-8')
+          parser=html.find('<script src="search-query-parser.js"></script>')
+          phase6=html.find('<script src="search-phase6-universal.js"></script>')
+          assert 0 <= parser < phase6, 'Unified parser must load before Phase 6'
+          checks={
+            'per-category cache':'categoryCache=new Map()',
+            'cache TTL':'SEARCH_CACHE_TTL=2*60*1000',
+            'ordered pagination':".order('id',{ascending:true}).range(from,from+SEARCH_PAGE_SIZE-1)",
+            'three fetch attempts':'attempt<3',
+            'active-only public filter':"String(r.status??'').trim().toLowerCase()==='active'",
+            'failed cache invalidation':'categoryCache.delete(key)',
+            'area-only result label':'Area Match · distance unavailable',
+            'structured autocomplete action':'performSearch(x.context||x.q)',
+            'deferred initial search':'setTimeout(()=>performSearch(buildSearchContext(initial,initialArea)),0)',
+            'no legacy global promise cache':'window.__SHH_DATA_PROMISE__'
+          }
+          for label,needle in checks.items():
+            present=needle in html
+            if label=='no legacy global promise cache': present=not present
+            assert present, label+' check failed'
+            print('PASS '+label)
+          assert '.limit(1000)' not in html, 'Old fixed limit still exists'
+          print('GLOBAL SEARCH DATA/AUTOCOMPLETE STATIC CHECKS: PASS')
+          PY
+          node <<'NODE'
+          const fs=require('fs');
+          global.window={};
+          eval(fs.readFileSync('js/nearby-search.js','utf8'));
+          const nearby=window.StudentHubNearbySearch;
+          const rows=[
+            {id:'near',latitude:0.01,longitude:0},
+            {id:'far',latitude:1,longitude:1},
+            {id:'missing'}
+          ];
+          const matches=nearby.filterWithinRadius(rows,{lat:0,lng:0},5);
+          if(matches.length!==1||matches[0].id!=='near'||matches[0].__userDistanceKm>5)throw new Error('GPS 5 km filtering failed');
+          if(nearby.coordinateOf(rows[2])!==null)throw new Error('Missing coordinates must not be treated as GPS nearby');
+          console.log('GPS NEARBY FILTER: 2/2 PASS');
+          NODE
+
       - name: Run 45 search intelligence tests
         shell: bash
         run: |
