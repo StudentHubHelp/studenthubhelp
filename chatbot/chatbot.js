@@ -77,9 +77,20 @@ function restoreConversationContext(){
       facilities:Array.isArray(saved.facilities)?saved.facilities:[],offset:Number(saved.offset)||0,results:[]};
   }catch(e){}
 }
+function isTechnicalSupportQuery(n){
+  return /\b(technical|techincal|tech|website|site|webpage|page|browser|server|login|log in|sign in|signin|password|form|upload|search|error|bug|glitch|crash)\b/.test(n)
+    && /\b(issue|problem|error|bug|glitch|not working|doesnt work|does not work|wont open|not opening|not loading|loading|dikkat|problem|issue|fail|failed|stuck|nahi chal|nhi chal|nahi khul|nhi khul|khul nahi|khul nhi|load nahi|load nhi|chal nahi|chal nhi|chal rahi|chal raha|kaam nahi|kaam nhi|pareshani)\b/.test(n)
+    || /\b(login|log in|sign in|signin)\b.*\b(problem|issue|dikkat|nahi ho|nhi ho|nahi kar|nhi kar|fail|failed|stuck)\b/.test(n);
+}
+function technicalIssueKind(n){
+  if(/\b(login|log in|sign in|signin|password|otp|account access)\b/.test(n))return 'login';
+  if(/\b(load|loading|not loading|slow|spinner|stuck|blank page)\b/.test(n))return 'loading';
+  if(/\b(website|site|webpage|browser|server)\b/.test(n)||/\b(website|site)\b.*\b(chal|khul)\b/.test(n)||/\b(chal|khul)\b.*\b(website|site)\b/.test(n))return 'website';
+  return 'general';
+}
 function classifyIntent(q){
   const n=norm(q),cat=categoryOf(q);
-  if(/\b(technical|techincal|tech|website|site|webpage|page|browser|server|error|bug|glitch|crash|not working|doesnt work|does not work|wont open|not opening|not loading|loading issue|website issue|site issue|page issue|website problem|site problem|page problem|login issue|form issue|upload issue|search not working|dikkat|problem|issue)\b/.test(n)&&/\b(issue|problem|error|bug|glitch|not working|doesnt work|does not work|wont open|not opening|not loading|dikkat|nahi chal|nhi chal|open nahi|open nhi|load nahi|load nhi|kaam nahi|kaam nhi|fail|failed|stuck|technical|techincal|tech)\b/.test(n))return 'technical_support';
+  if(isTechnicalSupportQuery(n))return 'technical_support';
   if(/\b(my profile|my account|meri profile|mera account|my booking|my listing|status)\b/.test(n))return 'account_support';
   // A named service category takes precedence over generic words such as "book".
   if(cat&&(/\b(price|rate|fees?|timing|hours|menu|delivery|seats?|facilit|wifi|ac|food|rent|deposit|books?|stationery|book|booking|join|membership|order|reserve|reservation)\b/.test(n)))return 'category_faq';
@@ -482,7 +493,12 @@ function supportAnswer(q){
   const n=norm(q);
   const explicitCategory=categoryOf(q);
   if(classifyIntent(q)==='technical_support'){
-    return 'Agar StudentHubHelp website ya kisi feature mein technical issue aa raha hai, ye steps try karein:<br>1. Page ko refresh karein; internet connection check karein.<br>2. Browser ka latest version use karein ya Incognito/Private window mein page kholkar dekhein.<br>3. Agar issue rahe, page ka exact URL, kya kar rahe the, screen par dikh raha exact error, device/browser aur issue ka time note karein. Password, OTP, UPI PIN ya private account details share na karein.<br>4. Ye details <a href="/contact-us.html">Contact Us / Support</a> page se bhejein ya <a href="mailto:'+CFG.contactEmail+'?subject=StudentHubHelp%20Technical%20Issue">support email</a> par report karein.<br><br>Main is chat se automatic technical ticket create ya fix deploy nahi kar sakta. Support team ko issue details bhejna zaroori hai.';
+    const kind=technicalIssueKind(n);
+    const report='<br><br>Agar issue continue ho, <a href="/contact-us.html">Contact Us / Support</a> par exact URL, screenshot/error text, device/browser aur issue ka time bhejein ya <a href="mailto:'+CFG.contactEmail+'?subject=StudentHubHelp%20Technical%20Issue">support email</a> karein. Password, OTP aur UPI PIN kabhi share na karein. Main chat se ticket create ya fix deploy nahi kar sakta.';
+    if(kind==='login')return '<b>Login / account access issue</b><br>1. Confirm karein ki email/phone sahi enter kiya hai aur internet stable hai.<br>2. Password issue ho toh Login page par available password-reset option use karein; baar-baar galat password try na karein.<br>3. Page refresh karke ya Incognito window mein dobara login try karein. Browser mein cookies/site data block na hon.<br>4. Agar OTP nahi aa raha, registered contact details aur SMS/email spam folder check karein; OTP kisi ke saath share na karein.'+report;
+    if(kind==='loading')return '<b>Page loading / blank screen issue</b><br>1. 10–15 seconds wait karke ek baar hard refresh karein (Windows: Ctrl + Shift + R).<br>2. Internet connection check karein; phir same page Incognito window mein kholkar dekhein.<br>3. Agar sirf ek page atak raha hai, us page ka exact URL note karein. Agar sabhi pages load nahi ho rahe, woh bhi report mein batayein.<br>4. Browser update karein aur temporarily ad/script-blocking extension disable karke test karein.'+report;
+    if(kind==='website')return '<b>Website open nahi ho rahi / kaam nahi kar rahi</b><br>1. Check karein ki doosri websites open ho rahi hain ya nahi; mobile data aur Wi-Fi dono se test karein.<br>2. StudentHubHelp ko ek baar refresh karein, phir Incognito/private window mein kholen.<br>3. Browser cache clear karke latest Chrome/Edge mein try karein.<br>4. Agar website sabhi networks par unavailable hai, exact time aur browser/device note karein.'+report;
+    return '<b>Technical issue report karne ke steps</b><br>1. Page refresh karein aur internet connection check karein.<br>2. Latest browser ya Incognito/private window mein issue reproduce karke dekhein.<br>3. Note karein: exact URL, issue se pehle kiya gaya action, exact error, device/browser aur issue ka time.<br>4. Agar issue sirf login, loading ya kisi ek page par hai, report mein woh clearly mention karein.'+report;
   }
   const asksBooking=/(?:how|kaise|kese|kes[e]?)\b.*\b(?:book|booking|join|membership|reserve|reservation|order)\b|\b(?:book|booking|join|membership|reserve|reservation|order)\b.*\b(?:kaise|kese|kare|kre|karu|karna|process)\b/.test(n);
   // Never let a generic "book" keyword turn a library/bookstore/cafe/tiffin question into hostel booking.
