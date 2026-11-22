@@ -116,14 +116,24 @@ export function CursorEffects() {
       }
     };
 
-    const resetMagnetic = (event: PointerEvent) => {
+    const onPointerOut = (event: PointerEvent) => {
       const target = event.target instanceof Element ? event.target : null;
+      const next = event.relatedTarget instanceof Element ? event.relatedTarget : null;
+
       const button = target?.closest<HTMLElement>('.shh-magnetic');
-      if (!button) return;
-      button.style.setProperty('--shh-magnetic-x', '0px');
-      button.style.setProperty('--shh-magnetic-y', '0px');
-      button.classList.remove('shh-magnetic');
-      activeButtons.delete(button);
+      if (button && (!next || !button.contains(next))) {
+        button.style.setProperty('--shh-magnetic-x', '0px');
+        button.style.setProperty('--shh-magnetic-y', '0px');
+        button.classList.remove('shh-magnetic');
+        activeButtons.delete(button);
+      }
+
+      const card = target?.closest<HTMLElement>('#root main .shh-cursor-card');
+      if (card && (!next || !card.contains(next))) {
+        card.classList.remove('shh-cursor-card');
+        card.style.removeProperty('--shh-spot-x');
+        card.style.removeProperty('--shh-spot-y');
+      }
     };
 
     const onClick = (event: MouseEvent) => {
@@ -145,7 +155,7 @@ export function CursorEffects() {
     resize();
     window.addEventListener('resize', resize, { passive: true });
     window.addEventListener('pointermove', onPointerMove, { passive: true });
-    window.addEventListener('pointerout', resetMagnetic, { passive: true });
+    window.addEventListener('pointerout', onPointerOut, { passive: true });
     window.addEventListener('click', onClick, { passive: true });
     document.addEventListener('visibilitychange', onVisibility);
 
@@ -153,7 +163,7 @@ export function CursorEffects() {
       if (frame) window.cancelAnimationFrame(frame);
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerout', resetMagnetic);
+      window.removeEventListener('pointerout', onPointerOut);
       window.removeEventListener('click', onClick);
       document.removeEventListener('visibilitychange', onVisibility);
       activeButtons.forEach((button) => {
