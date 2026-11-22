@@ -194,15 +194,16 @@
   }
 
   const CATEGORY_BANNERS = {
-    hostel: { label: 'HOSTEL & PG', icon: '⌂', title: 'A place to call home' },
-    tiffin: { label: 'TIFFIN & MESS', icon: '◒', title: 'Everyday meals, nearby' },
-    library: { label: 'LIBRARY', icon: '▤', title: 'Space to focus' },
-    cafe: { label: 'CAFE', icon: '☕', title: 'Your student hangout' },
-    bookstore: { label: 'BOOKSTORE', icon: '▣', title: 'Books & essentials' }
+    hostel: { path: '/hostel-banner.png', label: 'HOSTEL & PG', icon: '⌂', title: 'A place to call home' },
+    tiffin: { path: '/tiffin-banner.png', label: 'TIFFIN & MESS', icon: '◒', title: 'Everyday meals, nearby' },
+    library: { path: '/library-banner.png', label: 'LIBRARY', icon: '▤', title: 'Space to focus' },
+    cafe: { path: '/cafe-banner.png', label: 'CAFE', icon: '☕', title: 'Your student hangout' },
+    bookstore: { path: '/bookstore-banner.png', label: 'BOOKSTORE', icon: '▣', title: 'Books & essentials' }
   };
   const categoryBannerMarkup = (source) => {
     const banner = CATEGORY_BANNERS[source.key] || CATEGORY_BANNERS.hostel;
-    return '<div class="listing-category-banner listing-category-banner--' + esc(source.key) + '" role="img" aria-label="' + esc(banner.label + ' category banner') + '">' +
+    const imageLayer = "linear-gradient(90deg, rgba(5, 25, 18, .72), rgba(5, 25, 18, .18)), url('" + banner.path + "')";
+    return '<div class="listing-category-banner listing-category-banner--' + esc(source.key) + '" role="img" aria-label="' + esc(banner.label + ' category banner') + '" style="background-image:' + imageLayer + ';background-size:cover;background-position:center;background-repeat:no-repeat">' +
       '<span class="category-banner-icon" aria-hidden="true">' + banner.icon + '</span>' +
       '<span class="category-banner-copy"><strong>' + esc(banner.title) + '</strong><small>' + esc(banner.label) + ' · STUDENTHUBHELP</small></span>' +
       '<span class="category-banner-orbit" aria-hidden="true"></span></div>';
