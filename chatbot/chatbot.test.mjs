@@ -100,7 +100,7 @@ test('routes technical, website, login and loading issues to distinct actionable
     ['login mein problem aa rahi hai', /Login \/ account access issue/i],
     ['page is not loading', /Page loading \/ blank screen issue/i],
     ['site nhi chal rhi', /Website open nahi ho rahi/i],
-    ['I found a bug on the website', /Website open nahi ho rahi/i]
+    ['I found a bug on the website', /Technical issue report karne ke steps/i]
   ];
   const answers=[];
   for (const [prompt, expected] of cases) {
