@@ -47,7 +47,7 @@ test('filters strictly to 5 km, excludes bad coordinates and sorts nearest first
     { id: 'invalid', latitude: 10, longitude: 770505 }
   ];
   const result = api.filterWithinRadius(rows, { lat: 0, lng: 0 }, 5);
-  assert.deepEqual(result.map(row => row.id), ['near', 'mid']);
+  assert.deepEqual(Array.from(result, row => row.id), ['near', 'mid']);
   assert.ok(result.every(row => row.__nearbyDistanceKm <= 5));
 });
 
@@ -85,5 +85,18 @@ test('all five Finder pages load the shared nearby engine before Finder search',
     assert.match(html, /js\/nearby-search\.js/);
     assert.match(html, /js\/finder-power-search\.js/);
     assert.ok(html.indexOf('js/nearby-search.js') < html.indexOf('js/finder-power-search.js'));
+  }
+});
+
+test('global and Finder inline scripts remain syntactically valid', () => {
+  const pages = ['global-search.html', 'pg-finder.html', 'tiffin-finder.html', 'library-finder.html', 'cafe-finder.html', 'bookstore-finder.html'];
+  for (const page of pages) {
+    const html = fs.readFileSync(path.join(__dirname, '..', page), 'utf8');
+    const blocks = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)];
+    for (const [index, block] of blocks.entries()) {
+      if (/type=["']application\\/ld\\+json["']/i.test(block[1])) continue;
+      const code = block[2].trim();
+      if (code) new vm.Script(code, { filename: page + '#inline-' + index });
+    }
   }
 });
