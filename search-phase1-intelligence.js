@@ -47,6 +47,7 @@
     if(intent?.hasTypoCorrection)s+=4;
     return s;
   }
+  window.normalizeLocationText = window.normalizeLocationText || function(value){return String(value ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\./g,'').replace(/\brd\b/g,'road').replace(/\bst\b/g,'street').replace(/\bngr\b/g,'nagar').replace(/\bclny\b/g,'colony').replace(/[^\p{L}\p{N}₹]+/gu,' ').replace(/\s+/g,' ').trim();};
   function install(){
     if(typeof window.ranked!=='function'||window.__studentHubPhase1Installed)return;
     const old=window.ranked;window.__studentHubPhase1Installed=true;
