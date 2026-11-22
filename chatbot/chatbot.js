@@ -322,10 +322,16 @@ async function loadRows(){
   const client=await getDb();
   const entries=Object.entries(CFG.categories);
   const results=await Promise.all(entries.map(async([key,c])=>{
-    const {data,error}=await client.from(c.table).select('*').eq('status','active').limit(500);
-    if(error){cacheErrors[key]=error.message;console.warn('[SHH chatbot] '+c.table+':',error.message);return [];}
+    const all=[];let from=0;const pageSize=500;
+    while(true){
+      const {data,error}=await client.from(c.table).select('*').eq('status','active').range(from,from+pageSize-1);
+      if(error){cacheErrors[key]=error.message;console.warn('[SHH chatbot] '+c.table+':',error.message);return [];}
+      const page=data||[];all.push(...page);
+      if(page.length<pageSize)break;
+      from+=pageSize;
+    }
     cacheErrors[key]=null;
-    return (data||[]).map(r=>({...r,__category:key,__table:c.table}));
+    return all.map(r=>({...r,__category:key,__table:c.table}));
   }));
   cacheRows=results.flat();
   cacheRowsAt=Date.now();
@@ -344,9 +350,6 @@ async function loadGallery(){
 function galleryImage(r,gallery){
   const row=(gallery||[]).find(x=>String(x.property_id)===String(r.id)&&String(x.property_table||'').toLowerCase()===String(r.__table).toLowerCase());
   return row?.image_url||parseImages(r)[0]||'';
-}
-function rowPrice(r){
-  return numberPrice(r,r.__category);
 }
 function editDistance(a,b){
   const x=norm(a),y=norm(b);
@@ -576,23 +579,88 @@ function statusText(s){
   if(x==='cancelled')return 'Cancelled';
   return s||'Status unavailable';
 }
+
+function sortListings(rows,mode){
+  const list=[...(rows||[])];
+  if(mode==='cheapest')return list.sort((a,b)=>(rowPrice(a)?.value??Infinity)-(rowPrice(b)?.value??Infinity));
+  if(mode==='verified')return list.sort((a,b)=>Number(b.verified===true)-Number(a.verified===true));
+  if(mode==='newest')return list.sort((a,b)=>new Date(b.created_at||b.updated_at||0)-new Date(a.created_at||a.updated_at||0));
+  return list;
+}
+function distanceKm(a,b){
+  const rad=x=>x*Math.PI/180,lat1=Number(a.latitude),lon1=Number(a.longitude),lat2=Number(b.latitude),lon2=Number(b.longitude);
+  if(![lat1,lon1,lat2,lon2].every(Number.isFinite))return null;
+  const dLat=rad(lat2-lat1),dLon=rad(lon2-lon1),h=Math.sin(dLat/2)**2+Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
+  return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
+}
+function missingDetail(label){
+  return '<div class="shh-detail-row"><b>'+esc(label)+':</b> Ye detail listing mein nahi di gayi, owner se confirm karein.</div>';
+}
+function fullListingDetailsHtml(r){
+  const c=r.__category,rows=[],add=(label,value)=>rows.push(value!==undefined&&value!==null&&String(value).trim()!==''?'<div class="shh-detail-row"><b>'+esc(label)+':</b> '+esc(value)+'</div>':missingDetail(label));
+  add('Address',[r.address,r.area,r.city].filter(Boolean).join(', '));
+  if(c==='hostel'){
+    add('Monthly rent',r.monthly_rent??r.monthly_fee??r.price);add('Security deposit',r.security_deposit);
+    add('Room sharing',r.room_sharing??(Array.isArray(r.room_types)?r.room_types.join(', '):r.room_types));
+    add('Available beds',r.available_beds);add('Timing',r.timing);add('Rules',r.rules);add('Facilities',r.facilities);
+  }else if(c==='tiffin'){
+    add('Price / plan',r.daily_plan??r.weekly_plan??r.monthly_plan??r.price);add('Plan type',r.plan_type);
+    add('Menu',r.menu);add('Meal type',r.meal_type);add('Timing',r.timings??r.timing);
+    add('Delivery',r.delivery_available===true||r.home_delivery===true?'Available':r.delivery_available===false?'Not available':null);
+  }else if(c==='library'){
+    add('Monthly fee',r.monthly_fee);add('Daily fee',r.daily_fee);add('Available seats',r.available_seats??r.seating_capacity);
+    add('Timing',r.timing);add('Rules',r.rules);add('Facilities',r.facilities);
+  }else if(c==='cafe'){
+    add('Price range',r.price_range??r.price);add('Menu',r.menu);
+    add('Opening hours',[r.opening_time,r.closing_time].filter(Boolean).join(' – ')||r.timing);
+    add('Seating capacity',r.seating_capacity);add('Delivery',r.delivery===true?'Available':r.delivery===false?'Not available':null);
+  }else{
+    add('Book categories',r.categories??r.classes);add('Opening hours',[r.opening_time,r.closing_time].filter(Boolean).join(' – ')||r.timing);
+    add('Stationery',r.stationery===true?'Available':r.stationery===false?'Not available':null);
+    add('Photocopy / printing',r.photocopy===true||r.printing===true?'Available':null);
+    add('Book rental',r.book_rental===true?'Available':r.book_rental===false?'Not available':null);
+  }
+  add('Phone',r.phone);add('WhatsApp',r.whatsapp);
+  const savedMap=String(r.google_maps_url||'');
+  const maps=/^https?:\/\//i.test(savedMap)?savedMap:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([r.address,r.area,r.city].filter(Boolean).join(', '));
+  return '<div class="shh-full-details"><b>'+esc(r.name||r.property_name||CFG.categories[c].label)+'</b>'+rows.join('')+'<div class="shh-detail-links">'+(r.phone?'<a href="tel:'+esc(String(r.phone).replace(/[^\d+]/g,''))+'">Call owner</a>':'')+(r.whatsapp?'<a target="_blank" rel="noopener" href="https://wa.me/'+esc(String(r.whatsapp).replace(/\D/g,''))+'">WhatsApp</a>':'')+'<a target="_blank" rel="noopener" href="'+esc(maps)+'">Google Maps</a><a href="'+esc(detailsUrl(r))+'">View Details</a></div></div>';
+}
+async function findNearby(q){
+  const category=categoryOf(q)||activeSearch?.category;
+  if(!category)return {answer:'Nearby search ke liye pehle category batayein—Hostel, Tiffin, Library, Cafe ya Bookstore.',rows:null};
+  if(!navigator.geolocation)return {answer:'Is browser mein location access available nahi hai. Aap city ya area likhkar search kar sakte hain.',rows:null};
+  const position=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:10000,maximumAge:120000}));
+  const rows=await loadRows();if(cacheErrors[category])throw new Error('Unable to read '+CFG.categories[category].table);
+  const origin={latitude:position.coords.latitude,longitude:position.coords.longitude};
+  const near=rows.filter(r=>r.__category===category).map(r=>({...r,__distanceKm:distanceKm(origin,r)})).filter(r=>r.__distanceKm!==null).sort((a,b)=>a.__distanceKm-b.__distanceKm).slice(0,10);
+  activeSearch={category,query:q,city:null,cityName:null,area:null,areaName:null,gender:null,budget:null,facilities:[],results:near,offset:0};saveConversationContext();
+  return {rows:near,answer:near.length?'Aapki browser location ke hisaab se nearest listings (sirf saved coordinates wali listings):':'Aapke aas-paas coordinates wali active listing nahi mili. City/area se search kar sakte hain.'};
+}
+function compareListings(rows){
+  const selected=(rows||[]).slice(0,3);
+  if(selected.length<2)return 'Comparison ke liye kam se kam 2 matching listings chahiye. Pehle listing search karein.';
+  const cell=(r,key)=>{const v=key(r);return '<td>'+(v!==undefined&&v!==null&&String(v).trim()!==''?esc(v):'Not provided')+'</td>';};
+  const body=selected.map(r=>'<tr><th>'+esc(r.name||r.property_name||'Listing')+'</th>'+cell(r,x=>{const p=rowPrice(x);return p?.value!==null&&p?.value!==undefined?'₹'+p.value+(p.label?' / '+p.label:''):p?.label||null;})+cell(r,x=>x.security_deposit?'₹'+Number(x.security_deposit).toLocaleString('en-IN'):null)+cell(r,x=>x.room_sharing??x.room_types??null)+cell(r,x=>x.available_beds??x.available_seats??null)+cell(r,x=>x.facilities||(facilitiesForCard(x).join(', ')||null))+cell(r,x=>x.area||x.address||null)+'</tr>').join('');
+  return '<div class="shh-compare-wrap"><b>Listing comparison</b><table class="shh-compare"><thead><tr><th>Listing</th><th>Rent / price</th><th>Deposit</th><th>Sharing</th><th>Beds / seats</th><th>Facilities</th><th>Area / address</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+}
+
 async function processMessage(q,container){
   const n=norm(q);
   const incomingCategory=categoryOf(q);
   if(activeSearch&&incomingCategory&&incomingCategory!==activeSearch.category){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
-  if(activeSearch&&/\\b(?:my profile|my account|my booking|my bookings|my listing|booking status|listing status|contact support|complaint|feedback|appointment|add listing|verified badge|student safety|transport help)\\b/.test(n)){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
-  if(/\\b(?:near me|nearby|mere paas|aas paas|around me)\\b|\\bnearest\\b/.test(n)){
+  if(activeSearch&&/\b(?:my profile|my account|my booking|my bookings|my listing|booking status|listing status|contact support|complaint|feedback|appointment|add listing|verified badge|student safety|transport help)\b/.test(n)){activeSearch=null;try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}}
+  if(/\b(?:near me|nearby|mere paas|aas paas|around me)\b|\bnearest\b/.test(n)){
     const near=await findNearby(q);
     if(!near.rows)return near.answer;
     const gallery=await loadGallery();
     return near.answer+(near.rows.length?'<br>'+near.rows.slice(0,5).map(r=>cardHtml(r,gallery)).join(''):'')+quickMarkup(['City se search karo','Contact support']);
   }
-  if(/\\b(compare|comparison|compare these|tulana|muqabla)\\b/.test(n)){
+  if(/\b(compare|comparison|compare these|tulana|muqabla)\b/.test(n)){
     if(!activeSearch?.category)return 'Pehle ek category aur city mein listings search karein; phir main 2–3 matching options compare kar dunga.'+quickMarkup(['Hostel / PG','Tiffin / Mess','Library','Cafe','Bookstore']);
     if(!activeSearch.results?.length){const rows=await loadRows();activeSearch.results=matchSearch(rows,activeSearch.query||'',activeSearch.category,activeSearch).rows;}
     return compareListings(activeSearch.results);
   }
-  if(/\\b(?:cheapest|lowest price|sabse sasta|sasti|sasta|verified first|verified pehle|newest|latest|naye|new listings)\\b/.test(n)&&activeSearch?.category){
+  if(/\b(?:cheapest|lowest price|sabse sasta|sasti|sasta|verified first|verified pehle|newest|latest|naye|new listings)\b/.test(n)&&activeSearch?.category){
     if(!activeSearch.results?.length){const rows=await loadRows();activeSearch.results=matchSearch(rows,activeSearch.query||'',activeSearch.category,activeSearch).rows;}
     const mode=/verified/.test(n)?'verified':/newest|latest|naye|new listings/.test(n)?'newest':'cheapest';
     activeSearch.results=sortListings(activeSearch.results,mode);activeSearch.offset=0;saveConversationContext();
