@@ -79,6 +79,7 @@ function restoreConversationContext(){
 }
 function classifyIntent(q){
   const n=norm(q),cat=categoryOf(q);
+  if(/\b(technical|techincal|tech|website|site|webpage|page|browser|server|error|bug|glitch|crash|not working|doesnt work|does not work|wont open|not opening|not loading|loading issue|website issue|site issue|page issue|website problem|site problem|page problem|login issue|form issue|upload issue|search not working|dikkat|problem|issue)\b/.test(n)&&/\b(issue|problem|error|bug|glitch|not working|doesnt work|does not work|wont open|not opening|not loading|dikkat|nahi chal|nhi chal|open nahi|open nhi|load nahi|load nhi|kaam nahi|kaam nhi|fail|failed|stuck|technical|techincal|tech)\b/.test(n))return 'technical_support';
   if(/\b(my profile|my account|meri profile|mera account|my booking|my listing|status)\b/.test(n))return 'account_support';
   // A named service category takes precedence over generic words such as "book".
   if(cat&&(/\b(price|rate|fees?|timing|hours|menu|delivery|seats?|facilit|wifi|ac|food|rent|deposit|books?|stationery|book|booking|join|membership|order|reserve|reservation)\b/.test(n)))return 'category_faq';
@@ -480,6 +481,9 @@ function typing(container){
 function supportAnswer(q){
   const n=norm(q);
   const explicitCategory=categoryOf(q);
+  if(classifyIntent(q)==='technical_support'){
+    return 'Agar StudentHubHelp website ya kisi feature mein technical issue aa raha hai, ye steps try karein:<br>1. Page ko refresh karein; internet connection check karein.<br>2. Browser ka latest version use karein ya Incognito/Private window mein page kholkar dekhein.<br>3. Agar issue rahe, page ka exact URL, kya kar rahe the, screen par dikh raha exact error, device/browser aur issue ka time note karein. Password, OTP, UPI PIN ya private account details share na karein.<br>4. Ye details <a href="/contact-us.html">Contact Us / Support</a> page se bhejein ya <a href="mailto:'+CFG.contactEmail+'?subject=StudentHubHelp%20Technical%20Issue">support email</a> par report karein.<br><br>Main is chat se automatic technical ticket create ya fix deploy nahi kar sakta. Support team ko issue details bhejna zaroori hai.';
+  }
   const asksBooking=/(?:how|kaise|kese|kes[e]?)\b.*\b(?:book|booking|join|membership|reserve|reservation|order)\b|\b(?:book|booking|join|membership|reserve|reservation|order)\b.*\b(?:kaise|kese|kare|kre|karu|karna|process)\b/.test(n);
   // Never let a generic "book" keyword turn a library/bookstore/cafe/tiffin question into hostel booking.
   if(asksBooking&&explicitCategory==='library'){
@@ -662,6 +666,11 @@ function compareListings(rows){
 
 async function processMessage(q,container){
   const n=norm(q);
+  if(classifyIntent(q)==='technical_support'){
+    activeSearch=null;
+    try{localStorage.removeItem(CHAT_CONTEXT_KEY);}catch(e){}
+    return supportAnswer(q);
+  }
   const incomingCategory=categoryOf(q);
   if(/\b(?:contact owner|owner se baat|owner ka number|call owner|whatsapp owner)\b/.test(n)&&activeSearch?.category){
     const rows=activeSearch.results||[];
