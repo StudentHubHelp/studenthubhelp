@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Create small WebP delivery variants for the homepage without changing source artwork."""
 from pathlib import Path
-import re
 from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,11 +13,7 @@ def make_webp(source_name: str, output_name: str, max_width: int, quality: int) 
     with Image.open(source) as original:
         image = ImageOps.exif_transpose(original)
         image.thumbnail((max_width, max_width), Image.Resampling.LANCZOS)
-        options = {
-            "format": "WEBP",
-            "quality": quality,
-            "method": 6,
-        }
+        options = {"format": "WEBP", "quality": quality, "method": 6}
         icc_profile = original.info.get("icc_profile")
         if icc_profile:
             options["icc_profile"] = icc_profile
@@ -43,13 +38,11 @@ def main() -> None:
     html = index_path.read_text(encoding="utf-8")
     original = html
 
-    # Only visible <img> logo instances are switched. Favicon, Apple touch icon,
-    # Open Graph, Twitter and structured-data logo URLs deliberately remain logo.png.
-    html = re.sub(
-        r'(<img\\b[^>]*?\\bsrc=["\'])/logo\\.png(?:\\?[^"\']*)?(["\'])',
-        r'\\1/logo-optimized.webp?v=20261122-mobile-performance\\2',
-        html,
-        flags=re.IGNORECASE,
+    # Switch only visible <img> logo instances. Keep favicon, Apple touch icon,
+    # Open Graph, Twitter and structured-data logo references on the original.
+    html = html.replace(
+        'src="/logo.png?v=20261122-home-refresh"',
+        'src="/logo-optimized.webp?v=20261122-mobile-performance"',
     )
     html = html.replace('href="/herobanner.jpg"', 'href="/herobanner.webp"')
     html = html.replace('src="/herobanner.jpg"', 'src="/herobanner.webp"')
@@ -60,23 +53,12 @@ def main() -> None:
         "cafeherobanner.jpg",
         "bookstoreherobanner.jpg",
     ):
-        html = html.replace(f'src="/{name}"', f'src="/{Path(name).with_suffix(".webp").name}"')
+        optimized = Path(name).with_suffix(".webp").name
+        html = html.replace(f'src="/{name}"', f'src="/{optimized}"')
 
-    # Let fallback text render immediately while Google font files arrive.
-    html = html.replace(
-        "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800;900&display=swap",
-        "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800;900&display=swap",
-    )
-    # Existing URL did not request font-display swap; add it once.
-    html = re.sub(
-        r'(https://fonts\\.googleapis\\.com/css2\\?[^"\\s]+?)(?=["\\s])',
-        lambda match: match.group(1) if "display=swap" in match.group(1) else match.group(1) + "&display=swap",
-        html,
-        count=1,
-    )
     if html != original:
         index_path.write_text(html, encoding="utf-8")
-        print("Updated homepage image URLs and Google Fonts swap behavior.")
+        print("Updated homepage image URLs. Existing Google Fonts URL already uses display=swap.")
     else:
         print("Homepage already references optimized assets; no HTML changes needed.")
 
