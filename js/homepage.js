@@ -161,17 +161,65 @@
         return [];
       }
     }));
-    return groups.flat().sort((a, b) => {
-      const ad = Date.parse(a.row.created_at || '') || 0;
-      const bd = Date.parse(b.row.created_at || '') || 0;
-      return bd - ad;
-    }).slice(0, 6);
+    const candidates = groups.flat();
+    const shuffle = (list) => {
+      const copy = list.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
+    const identity = ({ row, source }) => source.key + ':' + String(
+      first(row, ['id', 'slug']) || slugify([
+        first(row, ['name', 'property_name', 'service_name', 'title', 'business_name']),
+        first(row, ['area', 'locality', 'location']),
+        first(row, ['city', 'district'])
+      ].filter(Boolean).join('-'))
+    );
+    let previous = [];
+    try {
+      previous = JSON.parse(localStorage.getItem('shh-home-featured-rotation') || '[]');
+      if (!Array.isArray(previous)) previous = [];
+    } catch (_) { previous = []; }
+    const randomized = shuffle(candidates);
+    const unseen = randomized.filter((item) => !previous.includes(identity(item)));
+    const repeated = randomized.filter((item) => previous.includes(identity(item)));
+    const selected = unseen.slice(0, 6);
+    if (selected.length < 6) selected.push(...repeated.slice(0, 6 - selected.length));
+    try {
+      localStorage.setItem('shh-home-featured-rotation', JSON.stringify(selected.map(identity)));
+    } catch (_) { /* Rotation still works for this page view when storage is unavailable. */ }
+    return selected;
   }
+
+  const CATEGORY_BANNERS = {
+    hostel: { icon: '⌂', title: 'A place to feel at home', detail: 'STUDENT STAYS & PGs', className: 'hostel' },
+    tiffin: { icon: '♨', title: 'Fresh meals, every day', detail: 'TIFFIN & MESS', className: 'tiffin' },
+    library: { icon: '▤', title: 'Your space to focus', detail: 'LIBRARIES & STUDY SPACES', className: 'library' },
+    cafe: { icon: '☕', title: 'Good coffee, good company', detail: 'CAFÉS & HANGOUTS', className: 'cafe' },
+    bookstore: { icon: '▣', title: 'Everything for your next chapter', detail: 'BOOKS & STATIONERY', className: 'bookstore' }
+  };
+  const categoryBannerMarkup = (source) => {
+    const banner = CATEGORY_BANNERS[source.key] || CATEGORY_BANNERS.hostel;
+    return '<div class="listing-category-banner listing-category-banner--' + banner.className + '" role="img" aria-label="' + esc(source.label) + ' category banner">' +
+      '<span class="category-banner-orbit" aria-hidden="true"></span><span class="category-banner-icon" aria-hidden="true">' + banner.icon + '</span>' +
+      '<span class="category-banner-copy"><strong>' + esc(banner.title) + '</strong><small>' + esc(banner.detail) + '</small></span></div>';
+  };
 
   function renderFeatured(items) {
     const grid = $('featuredListings');
     const status = $('featuredStatus');
     if (!grid) return;
+    if (!grid.dataset.fallbackListener) {
+      grid.addEventListener('error', (event) => {
+        const image = event.target;
+        if (!(image instanceof HTMLImageElement) || !image.matches('.listing-photo img')) return;
+        const category = SOURCES.find((source) => source.key === image.dataset.category);
+        if (category) image.parentElement.replaceWith(document.createRange().createContextualFragment(categoryBannerMarkup(category)));
+      }, true);
+      grid.dataset.fallbackListener = 'true';
+    }
     if (!items.length) {
       grid.innerHTML = '<div class="listing-empty-state">No public listings are available to feature right now. <a href="/explore-listings.html">Browse the directory</a>.</div>';
       if (status) status.textContent = 'Listings appear here when publicly active records are available.';
@@ -188,8 +236,8 @@
       const facilities = facilityLabels(row);
       const href = detailUrl(row, source.key);
       const photoMarkup = photo
-        ? '<img src="' + esc(photo) + '" alt="' + esc(name) + '" loading="lazy" decoding="async">'
-        : '<div class="listing-photo-placeholder"><div><strong>' + esc(source.label) + '</strong><small>Property photo not provided</small></div></div>';
+        ? '<img src="' + esc(photo) + '" data-category="' + esc(source.key) + '" alt="' + esc(name) + '" loading="lazy" decoding="async">'
+        : categoryBannerMarkup(source);
       return '<article class="listing-card"><a href="' + esc(href) + '" aria-label="View details for ' + esc(name) + '"><div class="listing-photo">' + photoMarkup + '<span class="listing-category-label">' + esc(source.label) + '</span></div></a><div class="listing-body"><div class="listing-topline"><span class="' + (verified ? 'listing-verified' : 'listing-unverified') + '">' + (verified ? '✓ VERIFIED LISTING' : 'DETAILS PROVIDED') + '</span></div><h3>' + esc(name) + '</h3><div class="listing-address">' + (address || 'Location details on listing page') + '</div><div class="listing-facts">' + facilities.map((label) => '<span>' + esc(label) + '</span>').join('') + '</div></div><div class="listing-foot"><span class="listing-price">' + esc(price || 'View pricing') + '</span><a class="listing-details" href="' + esc(href) + '">View details ↗</a></div></article>';
     }).join('');
     if (status) status.textContent = 'Showing up to six recent publicly active listings. Availability and details should be confirmed directly.';
