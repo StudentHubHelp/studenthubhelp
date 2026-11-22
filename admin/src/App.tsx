@@ -37,6 +37,7 @@ import {
 } from './lib/supabase';
 
 import { Sidebar } from './components/Sidebar';
+import { CursorEffects } from './components/CursorEffects';
 import { Header } from './components/Header';
 const OverviewView = lazy(() => import('./components/OverviewView').then((m) => ({ default: m.OverviewView })));
 const AnalyticsView = lazy(() => import('./components/AnalyticsView').then((m) => ({ default: m.AnalyticsView })));
@@ -1578,6 +1579,7 @@ export default function App() {
 
   return (
     <div data-theme={theme} className="min-h-screen bg-[#07090E] text-slate-100 flex overflow-hidden font-sans antialiased selection:bg-amber-400 selection:text-slate-950">
+      <CursorEffects />
 
       {/* TOAST */}
 
