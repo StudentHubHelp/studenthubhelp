@@ -38,7 +38,7 @@ jobs:
           import re
           from pathlib import Path
           source=Path('global-search.html').read_text(encoding='utf-8')
-          scripts=re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',source,re.I)
+          scripts=re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',source,re.I)
           for index,script in enumerate(scripts):
               Path(f'/tmp/shh-inline-{index}.js').write_text(script,encoding='utf-8')
           print(f'Extracted {len(scripts)} inline scripts for syntax validation')
@@ -47,6 +47,7 @@ jobs:
           node <<'NODE'
           const fs=require('fs');
           global.window={};
+          window.normalizeLocationText=value=>String(value??'').normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/\\brd\\b/g,'road').replace(/[^\\p{L}\\p{N}]+/gu,' ').replace(/\\s+/g,' ').trim();
           eval(fs.readFileSync('search-query-parser.js','utf8'));
           eval(fs.readFileSync('search-phase6-universal.js','utf8'));
           const rows=[
