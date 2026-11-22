@@ -72,6 +72,9 @@
       #homepageGlobalSearch .shh-home-chip{border:1px solid #e5d6dc;background:#fff;color:#70394d;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s}
       #homepageGlobalSearch .shh-home-chip:hover{background:#fff0f5;border-color:#df9ab0}
       #homepageGlobalSearch .shh-home-chip-label{font-weight:800;color:#5d5260}
+      #homepageGlobalSearch #shh-home-location-status{display:block;flex-basis:100%;margin-top:4px;color:#667085;font-size:11px;font-weight:700}
+      #homepageGlobalSearch #shh-home-location-status[data-state="error"]{color:#b42318}
+      #homepageGlobalSearch #shh-home-location-status[data-state="success"]{color:#16834b}
       @media(max-width:600px){#homepageGlobalSearch .homepage-search-hint{font-size:10px;gap:5px}#homepageGlobalSearch .shh-home-chip{padding:5px 8px;font-size:10px}#homepageGlobalSearch .shh-home-suggestion{padding:10px}#homepageGlobalSearch .shh-home-suggestion-title{font-size:12px}}
     `;
     document.head.appendChild(style);
@@ -89,13 +92,28 @@
     let timer = null, request = 0, activeIndex = -1, currentItems = [];
     const close = () => { dropdown.hidden = true; dropdown.innerHTML=''; currentItems=[]; activeIndex=-1; input.setAttribute('aria-expanded','false'); };
     const go = q => { const query=String(q||'').trim(); if(query) window.location.href='global-search.html?q='+encodeURIComponent(query); };
+    const setLocationFeedback = (message, type) => {
+      let status = form.querySelector('#shh-home-location-status');
+      if (!status) {
+        status = document.createElement('span');
+        status.id = 'shh-home-location-status';
+        status.setAttribute('role','status');
+        status.setAttribute('aria-live','polite');
+        hint.appendChild(status);
+      }
+      status.textContent = message || '';
+      status.dataset.state = type || 'info';
+    };
     const goNearMe = () => {
-      if (!navigator.geolocation) { window.alert('Location is not available in this browser. Please search by city or area.'); return; }
-      navigator.geolocation.getCurrentPosition(pos => {
-        try { sessionStorage.setItem('shhSmartSearchCoords', JSON.stringify({lat:pos.coords.latitude,lng:pos.coords.longitude,at:Date.now()})); }
-        catch (e) { window.alert('Could not keep your location for this search. Please search by city or area.'); return; }
-        go('near me');
-      }, () => window.alert('Location permission was not granted. Please search by city or area instead.'), {enableHighAccuracy:false,timeout:8000,maximumAge:300000});
+      const nearby = window.StudentHubNearbySearch;
+      if (!nearby) { setLocationFeedback('Nearby search is temporarily unavailable. Please try again.','error'); return; }
+      setLocationFeedback('Detecting your current location…','loading');
+      nearby.getCurrentLocation().then(() => {
+        setLocationFeedback('Location detected. Finding listings within 5 km…','success');
+        window.location.href = 'global-search.html?q=' + encodeURIComponent('near me') + '&nearby=1';
+      }).catch(error => {
+        setLocationFeedback(error?.message || 'Unable to detect your location. Search by city or area instead.','error');
+      });
     };
     function render(items) {
       currentItems = items.slice(0,7);
