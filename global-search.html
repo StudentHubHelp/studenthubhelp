@@ -721,7 +721,7 @@ function renderResults(results){const mode=document.getElementById('shhSort')?.v
 }
 function suggestions(q,data){
  const n=norm(q),info=parse(q),out=[],seen=new Set();
- const add=item=>{const key=norm(item.title)+'|'+item.kind;if(!item.title||seen.has(key))return;seen.add(key);out.push(item);};
+ const add=item=>{const key=norm(item.title)+'|'+item.kind;if(!item.title||seen.has(key))return;if(item.context&&window.StudentHubUniversalSearch?.strictFilter){const preview=window.StudentHubUniversalSearch.strictFilter(data,item.context);if(!Array.isArray(preview)||!preview.length)return;}seen.add(key);out.push(item);};
  const unified=window.StudentHubQueryParser?.parse(q,data);
  if(unified?.category&&unified.locationPhrase){const label=CATEGORIES[unified.category].label,title=unified.locationPhrase+' '+label;add({q:title,title,sub:'Unified location + category search',kind:'Smart Search',icon:'✦',context:{rawKeyword:'',explicitLocation:unified.locationPhrase,selectedCategory:unified.category,source:'autocomplete'}});}
  for(const [key,category] of Object.entries(CATEGORIES)){for(const alias of [category.label,...ALIASES[key]]){const title=clean(alias);if(title&&(norm(title).includes(n)||n.includes(norm(title))||sim(n,title)>.68))add({q:title,title,sub:'Search matching '+category.label+' listings',kind:category.label,icon:category.icon,context:{rawKeyword:title,explicitLocation:'',selectedCategory:key,source:'autocomplete'}});}}
