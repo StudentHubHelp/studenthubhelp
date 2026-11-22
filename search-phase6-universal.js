@@ -23,6 +23,7 @@ function parse(q,rows){
   let roadQuery=!!unified.roadQuery;
   let city=unified.city||null;
   let inferredCities=unified.inferredCities||[];
+  let ambiguousRoad=!!unified.ambiguousRoad;
   if(q&&typeof q==='object'){
     const explicitLocation=String(q.explicitLocation??q.location??'').trim();
     if(explicitLocation){
@@ -31,6 +32,7 @@ function parse(q,rows){
       roadQuery=!!locationIntent.roadQuery||/\\b(road|rd)\\b/i.test(explicitLocation);
       city=locationIntent.city||city;
       inferredCities=locationIntent.inferredCities||inferredCities;
+      ambiguousRoad=!!locationIntent.ambiguousRoad;
     }
   }
   const anchoredCity=city||(roadQuery&&inferredCities.length===1?inferredCities[0]:null);
@@ -48,7 +50,7 @@ function parse(q,rows){
     explicitCity:city,
     anchoredCity,
     inferredCities,
-    ambiguousRoad:false,
+    ambiguousRoad,
     requestedPropertyType:unified.requestedPropertyType||legacy.requestedPropertyType,
     locationTokens:unified.locationTokens||[],
     landmarks:unified.landmarks||[],
@@ -60,8 +62,8 @@ function cityMatch(r,city,roadQuery,phrase){const actual=canonical(r&&r.city);if
 function strictFilter(rows,q){const i=parse(q,rows);let result=(Array.isArray(rows)?rows:[]).slice();if(i.requestedPropertyType)result=result.filter(r=>/\b(flat|flats|apartment|apartments)\b/i.test(val(r,['property_type','type','category','name','title','room_type','accommodation_type'])));if(i.category)result=result.filter(r=>r.__category===i.category);if(i.anchoredCity||i.explicitCity||i.locationPhrase){const wanted=i.anchoredCity||i.explicitCity;result=result.filter(r=>cityMatch(r,wanted,i.roadQuery,i.locationPhrase));}if(i.genders.length)result=result.filter(r=>i.genders.every(g=>evidence(r,'gender',g)));if(i.facilities.length)result=result.filter(r=>i.facilities.every(f=>evidence(r,'facility',f)));if(i.room.length)result=result.filter(r=>i.room.every(x=>evidence(r,'room',x)));if(i.prices.max!=null||i.prices.min!=null)result=result.filter(r=>{const p=priceOf(r);return p!=null&&(i.prices.max==null||p<=i.prices.max)&&(i.prices.min==null||p>=i.prices.min);});if(i.nearby&&!i.locationPhrase&&!i.explicitCity)return[];return result;}
 function search(rows,q,ranked){
 const context=q&&typeof q==='object'&&!Array.isArray(q)?q:null;
-const candidates=strictFilter(rows,q);if(!candidates.length)return[];
+const intent=parse(q,rows),candidates=strictFilter(rows,q);if(!candidates.length)return[];
 const rankingQuery=context?[String(context.rawKeyword??context.keyword??'').trim(),String(context.explicitLocation??context.location??'').trim()].filter(Boolean).join(' '):q;
-const rankedRows=typeof ranked==='function'?ranked(candidates,rankingQuery):candidates;if(!Array.isArray(rankedRows))return candidates;const keys=new Set(candidates.map(r=>String(r.id??r.property_id??r.slug??r.name)+'|'+String(r.__category)));const safe=rankedRows.filter(r=>keys.has(String(r.id??r.property_id??r.slug??r.name)+'|'+String(r.__category)));return safe.length?safe:candidates;}
+const rankedRows=typeof ranked==='function'?ranked(candidates,rankingQuery):candidates;if(!Array.isArray(rankedRows))return candidates;const keys=new Set(candidates.map(r=>String(r.id??r.property_id??r.slug??r.name)+'|'+String(r.__category)));const safe=rankedRows.filter(r=>keys.has(String(r.id??r.property_id??r.slug??r.name)+'|'+String(r.__category)));const finalRows=safe.length?safe:candidates;if(intent.ambiguousRoad&&!intent.explicitCity)return finalRows.slice().sort((a,b)=>canonical(a.city).localeCompare(canonical(b.city))||(Number(b.__score)||0)-(Number(a.__score)||0)||String(a.name||'').localeCompare(String(b.name||'')));return finalRows;}
 window.StudentHubUniversalSearch={parse,strictFilter,search,priceOf,version:'1.1.0'};
 })();
