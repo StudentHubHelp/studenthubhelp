@@ -2,7 +2,7 @@
   'use strict';
 
   const SUPABASE_URL = 'https://idurlccrarznnnqixxsd.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJpZHVybGNjcmFyem5ubmlx eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA'.replace(/\s/g, '');
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdXJsY2NyYXJ6bm5ubmlx eHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY3NTgsImV4cCI6MjEwMzU2Mjc1OH0.pq_rza98twL-SETqm_6TGNzsPCkVJxwjocFUeLB1yMA'.replace(/\\s/g, '');
   const SOURCES = [
     { table: 'hostels', key: 'hostel', label: 'Hostel / PG', countId: 'hostelCount', icon: '⌂' },
     { table: 'tiffins', key: 'tiffin', label: 'Tiffin / Mess', countId: 'tiffinCount', icon: '◒' },
