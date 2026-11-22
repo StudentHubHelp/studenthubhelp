@@ -57,7 +57,8 @@ jobs:
             {id:'h2',__category:'hostel',name:'Piprali Girls Hostel',city:'Sikar',area:'Piprali Rd',address:'Piprali Road, Sikar',type:'girls',monthly_rent:4500},
             {id:'c1',__category:'cafe',name:'Piprali Cafe',city:'Sikar',area:'Piprali Road',address:'Piprali Road, Sikar'},
             {id:'c2',__category:'cafe',name:'Jaipur Cafe',city:'Jaipur',area:'Piprali Road',address:'Piprali Road, Jaipur'},
-            {id:'l1',__category:'library',name:'WiFi Study Library',city:'Jaipur',area:'Jagatpura',wifi:true}
+            {id:'l1',__category:'library',name:'WiFi Study Library',city:'Jaipur',area:'Jagatpura',wifi:true},
+            {id:'b1',__category:'bookstore',name:'Sikar Book Depot',city:'Sikar',area:'Station Road'}
           ];
           const assert=(name,ok,detail='')=>{if(!ok)throw new Error(name+' failed '+detail);console.log('PASS '+name)};
           let p=window.StudentHubQueryParser.parse('hostels piprali road',rows);
@@ -68,17 +69,20 @@ jobs:
           assert('gender + budget',p.gender.includes('girls')&&p.budget.max===5000,JSON.stringify(p));
           p=window.StudentHubQueryParser.parse('Jaipur mein WiFi wali library',rows);
           assert('city + facility + category',p.city==='jaipur'&&p.facilities.includes('wifi')&&p.category==='library'&&p.locationPhrase==='',JSON.stringify(p));
+          p=window.StudentHubQueryParser.parse('bookstores in Sikar',rows);
+          assert('plural bookstore category',p.category==='bookstore'&&p.city==='sikar',JSON.stringify(p));
           const run=(q,expected)=>{const got=window.StudentHubUniversalSearch.search(rows,q,data=>data).map(x=>x.id).sort();assert(q,JSON.stringify(got)===JSON.stringify(expected.slice().sort()),JSON.stringify(got));};
           run({rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:'',source:'global-search'},['h1','h2']);
           run({rawKeyword:'cafe',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['c1']);
           run({rawKeyword:'library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
           run({rawKeyword:'wifi library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
           run({rawKeyword:'Jaipur mein WiFi wali library',explicitLocation:'',selectedCategory:'',source:'global-search'},['l1']);
+          run({rawKeyword:'bookstores',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['b1']);
           run({rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},['h1','h2']);
           assert('near-me without GPS mode is not broadened',window.StudentHubUniversalSearch.search(rows,'hostel near me',data=>data).length===0);
           const ambiguous=window.StudentHubUniversalSearch.search(rows,'Piprali Road cafe',data=>data).map(x=>x.id);
           assert('ambiguous road retained and grouped by city',JSON.stringify(ambiguous)===JSON.stringify(['c2','c1']),JSON.stringify(ambiguous));
-          console.log('UNIFIED PARSER + PHASE 6: 12/12 PASS');
+          console.log('UNIFIED PARSER + PHASE 6: 14/14 PASS');
           NODE
 
       - name: Verify data loader, nearby labels and autocomplete safety
