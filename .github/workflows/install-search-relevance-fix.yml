@@ -67,17 +67,18 @@ jobs:
           p=window.StudentHubQueryParser.parse('girls hostel under 5000',rows);
           assert('gender + budget',p.gender.includes('girls')&&p.budget.max===5000,JSON.stringify(p));
           p=window.StudentHubQueryParser.parse('Jaipur mein WiFi wali library',rows);
-          assert('city + facility + category',p.city==='jaipur'&&p.facilities.includes('wifi')&&p.category==='library',JSON.stringify(p));
+          assert('city + facility + category',p.city==='jaipur'&&p.facilities.includes('wifi')&&p.category==='library'&&p.locationPhrase==='',JSON.stringify(p));
           const run=(q,expected)=>{const got=window.StudentHubUniversalSearch.search(rows,q,data=>data).map(x=>x.id).sort();assert(q,JSON.stringify(got)===JSON.stringify(expected.slice().sort()),JSON.stringify(got));};
           run({rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:'',source:'global-search'},['h1','h2']);
           run({rawKeyword:'cafe',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['c1']);
           run({rawKeyword:'library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
           run({rawKeyword:'wifi library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
+          run({rawKeyword:'Jaipur mein WiFi wali library',explicitLocation:'',selectedCategory:'',source:'global-search'},['l1']);
           run({rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},['h1','h2']);
           assert('near-me without GPS mode is not broadened',window.StudentHubUniversalSearch.search(rows,'hostel near me',data=>data).length===0);
           const ambiguous=window.StudentHubUniversalSearch.search(rows,'Piprali Road cafe',data=>data).map(x=>x.id);
           assert('ambiguous road retained and grouped by city',JSON.stringify(ambiguous)===JSON.stringify(['c2','c1']),JSON.stringify(ambiguous));
-          console.log('UNIFIED PARSER + PHASE 6: 11/11 PASS');
+          console.log('UNIFIED PARSER + PHASE 6: 12/12 PASS');
           NODE
 
       - name: Verify data loader, nearby labels and autocomplete safety
