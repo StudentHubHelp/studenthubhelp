@@ -23,8 +23,8 @@ def make_webp(source_name: str, output_name: str, max_width: int, quality: int) 
     print(f"{source_name}: {source.stat().st_size:,} bytes -> {output_name}: {output.stat().st_size:,} bytes")
 
 def main() -> None:
-    make_webp("logo.png", "logo-optimized.webp", 256, 86)
-    make_webp("herobanner.jpg", "herobanner.webp", 1280, 80)
+    make_webp("logo.png", "logo-optimized.webp", 192, 82)
+    make_webp("herobanner.jpg", "herobanner.webp", 1280, 74)
     for name in (
         "hostelherobanner.jpg",
         "tiffinherobanner.jpg",
@@ -32,7 +32,7 @@ def main() -> None:
         "cafeherobanner.jpg",
         "bookstoreherobanner.jpg",
     ):
-        make_webp(name, Path(name).with_suffix(".webp").name, 800, 80)
+        make_webp(name, Path(name).with_suffix(".webp").name, 800, 62)
 
     index_path = ROOT / "index.html"
     html = index_path.read_text(encoding="utf-8")
