@@ -28,19 +28,23 @@ function parse(q,rows){
   if(!window.StudentHubQueryParser)return parseString(q,rows);
   const unified=window.StudentHubQueryParser.parse(q,rows);
   const legacy=parseString(unified.rawQuery,rows);
-  let locationPhrase=unified.locationPhrase||'';
+  let locationPhrase=unified.roadQuery&&unified.roadRoot?unified.roadRoot+' road':(unified.locationPhrase||'');
   let roadQuery=!!unified.roadQuery;
+  let roadRoot=unified.roadRoot||null;
   let city=unified.city||null;
   let inferredCities=unified.inferredCities||[];
+  let freeTextKeywords=unified.freeTextKeywords||[];
   let ambiguousRoad=!!unified.ambiguousRoad;
   if(q&&typeof q==='object'){
     const explicitLocation=String(q.explicitLocation??q.location??'').trim();
     if(explicitLocation){
       const locationIntent=window.StudentHubQueryParser.parse(explicitLocation,rows);
-      locationPhrase=locationIntent.locationPhrase||window.StudentHubQueryParser.normalize(explicitLocation);
       roadQuery=!!locationIntent.roadQuery||/\\b(road|rd)\\b/i.test(explicitLocation);
+      roadRoot=locationIntent.roadRoot||roadRoot;
+      locationPhrase=roadQuery&&roadRoot?roadRoot+' road':(locationIntent.locationPhrase||window.StudentHubQueryParser.normalize(explicitLocation));
       city=locationIntent.city||city;
-      inferredCities=locationIntent.inferredCities||inferredCities;
+      inferredCities=locationIntent.inferredCities?.length?locationIntent.inferredCities:inferredCities;
+      freeTextKeywords=[...new Set([...freeTextKeywords,...(locationIntent.freeTextKeywords||[])])];
       ambiguousRoad=!!locationIntent.ambiguousRoad;
     }
   }
@@ -63,13 +67,15 @@ function parse(q,rows){
     requestedPropertyType:unified.requestedPropertyType||legacy.requestedPropertyType,
     locationTokens:unified.locationTokens||[],
     landmarks:unified.landmarks||[],
+    freeTextKeywords,
+    roadRoot,
     unifiedIntent:unified,
     nearbyMode:!!(q&&typeof q==='object'&&q.nearbyMode)
   };
 }
 function evidence(r,kind,key){const keys=kind==='location'?['area','locality','neighborhood','address','full_address','location','location_address','landmark','landmarks','nearby','nearby_coaching','service_area']:kind==='facility'?['facilities','amenities','features','services','description','details',...(FACILITY_COLUMNS[key]||[])]:kind==='gender'?['gender','gender_type','gender_suitability','hostel_type','property_type','type','category','name','title','description']:kind==='room'?['room_type','room_types','sharing','sharing_type','room_sharing','property_type','type','name','title','description']:['name','title','property_name','service_name','category','type'];if(kind==='facility'&&(FACILITY_COLUMNS[key]||[]).some(k=>r&&([true,1].includes(r[k])||['true','yes','available','1'].includes(norm(r[k])))))return true;const v=norm(val(r,keys));return(FACILITIES[key]||GENDER[key]||[key]).some(a=>(' '+v+' ').includes(' '+norm(a)+' '));}
 function cityMatch(r,city,roadQuery,phrase){const actual=canonical(r&&r.city);if(roadQuery&&phrase){if(!locText(r).includes(phrase))return false;if(city&&actual!==canonical(city))return false;return true;}if(city){if(actual&&actual!==canonical(city))return false;if(!actual&&!locText(r).includes(canonical(city)))return false;if(phrase&&!locText(r).includes(phrase))return false;return true;}if(phrase)return locText(r).includes(phrase);return true;}
-function strictFilter(rows,q){const i=parse(q,rows);let result=(Array.isArray(rows)?rows:[]).slice();if(i.requestedPropertyType)result=result.filter(r=>/\b(flat|flats|apartment|apartments)\b/i.test(val(r,['property_type','type','category','name','title','room_type','accommodation_type'])));if(i.category)result=result.filter(r=>r.__category===i.category);if(i.anchoredCity||i.explicitCity||i.locationPhrase){const wanted=i.anchoredCity||i.explicitCity;result=result.filter(r=>cityMatch(r,wanted,i.roadQuery,i.locationPhrase));}if(i.genders.length)result=result.filter(r=>i.genders.every(g=>evidence(r,'gender',g)));if(i.facilities.length)result=result.filter(r=>i.facilities.every(f=>evidence(r,'facility',f)));if(i.room.length)result=result.filter(r=>i.room.every(x=>evidence(r,'room',x)));if(i.prices.max!=null||i.prices.min!=null)result=result.filter(r=>{const p=priceBounds(r);return p!=null&&(i.prices.max==null||p.min<=i.prices.max)&&(i.prices.min==null||p.max>=i.prices.min);});if(i.nearby&&!i.locationPhrase&&!i.explicitCity&&!i.nearbyMode)return[];return result;}
+function strictFilter(rows,q){const i=parse(q,rows);let result=(Array.isArray(rows)?rows:[]).slice();if(i.requestedPropertyType)result=result.filter(r=>/\b(flat|flats|apartment|apartments)\b/i.test(val(r,['property_type','type','category','name','title','room_type','accommodation_type'])));if(i.category)result=result.filter(r=>r.__category===i.category);if(i.anchoredCity||i.explicitCity||i.locationPhrase){const wanted=i.anchoredCity||i.explicitCity;result=result.filter(r=>cityMatch(r,wanted,i.roadQuery,i.locationPhrase));}if(i.freeTextKeywords?.length)result=result.filter(r=>{const hay=norm(val(r,['name','title','property_name','service_name','area','address','landmark','nearby_coaching','service_area']));return i.freeTextKeywords.every(t=>(' '+hay+' ').includes(' '+norm(t)+' '));});if(i.genders.length)result=result.filter(r=>i.genders.every(g=>evidence(r,'gender',g)));if(i.facilities.length)result=result.filter(r=>i.facilities.every(f=>evidence(r,'facility',f)));if(i.room.length)result=result.filter(r=>i.room.every(x=>evidence(r,'room',x)));if(i.prices.max!=null||i.prices.min!=null)result=result.filter(r=>{const p=priceBounds(r);return p!=null&&(i.prices.max==null||p.min<=i.prices.max)&&(i.prices.min==null||p.max>=i.prices.min);});if(i.nearby&&!i.locationPhrase&&!i.explicitCity&&!i.nearbyMode)return[];return result;}
 function search(rows,q,ranked){
 const context=q&&typeof q==='object'&&!Array.isArray(q)?q:null;
 const intent=parse(q,rows),candidates=strictFilter(rows,q);if(!candidates.length)return[];
