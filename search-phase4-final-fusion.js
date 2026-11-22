@@ -2,7 +2,7 @@
   'use strict';
   const STOP=new Set(['the','a','an','is','are','me','mujhe','mujko','mko','chahiye','chaiye','please','for','of','in','on','at','par','pe','pr','ke','ka','ki','k','near','nearby','pass','pas','paas','hai','hain','ko','se','tak','and','or','ya','with','under','below','upto','up','less','than','within','above','over','more','greater','minimum','min','at','least','budget','mein','me','mai','m','में','पर','के','का','की','पास','को','से','तक','और','या','चाहिए','चाहिये']);
   const FIELDS={exact:['name','property_name','service_name','title'],location:['area','city','address','nearby','landmark','location','locality','service_area'],attributes:['category','type','gender','food_type','meal_type','room_type','sharing','book_type','specialization','facilities','timing'],descriptive:['description','features','menu','details']};
-  const norm=s=>String(s??'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[|,;:/()[\]{}.!?]+/g,' ').replace(/\s+/g,' ').trim();
+  const norm=s=>window.normalizeLocationText?window.normalizeLocationText(s):String(s??'').toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').replace(/[|,;:/()[\\]{}.!?]+/g,' ').replace(/\\s+/g,' ').replace(/\\brd\\b/g,'road').trim();
   const tokens=s=>norm(s).split(/\s+/).filter(Boolean);
   const textOf=(r,keys)=>norm(keys.map(k=>r?.[k]).filter(v=>v!=null).map(v=>typeof v==='object'?JSON.stringify(v):String(v)).join(' '));
   const nameOf=r=>String(r?.name||r?.property_name||r?.service_name||r?.title||'');
