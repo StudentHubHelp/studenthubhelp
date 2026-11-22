@@ -42,7 +42,7 @@ export function CursorEffects() {
     const draw = (now: number) => {
       frame = 0;
       ctx.clearRect(0, 0, width, height);
-      const lightMode = document.querySelector('#root > div[data-theme]')?.getAttribute('data-theme') === 'light';
+      const lightMode = document.querySelector('#root [data-theme]')?.getAttribute('data-theme') === 'light';
 
       for (let i = trail.length - 1; i >= 0; i--) {
         const point = trail[i];
