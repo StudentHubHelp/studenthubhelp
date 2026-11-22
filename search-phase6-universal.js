@@ -16,29 +16,48 @@ let rest=n;const remove=arr=>{for(const x of arr.slice().sort((a,b)=>String(b).l
 remove(Object.values(CATEGORY).flat());remove(Object.values(GENDER).flat());remove(Object.values(FACILITIES).flat());remove(['under','below','upto','up to','less than','within','max','budget','se kam','से कम','tak','तक','above','over','more than','at least','minimum','kam se kam','से ऊपर','से ज्यादा','₹','rs','inr','rupees','thousand','hazar','हजार','nearby','near','close to','around','opposite','beside','next to','ke paas','ke pass','paas','nazdeek','नजदीक','पास','2 bhk','2bhk','1 bhk','1bhk','double sharing','triple sharing','single room','private room','single occupancy','room','rooms','flat','flats']);rest=rest.replace(/\b\d+(?:\.\d+)?\s*(?:k|thousand|hazar|हजार)?\b/g,' ').split(' ').filter(t=>t.length>1&&!FILLER.has(t)).join(' ').replace(/\s+/g,' ').trim();
 const records=Array.isArray(rows)?rows:[],cityValues=[...new Set(records.map(r=>canonical(r&&r.city)).filter(Boolean))].sort((a,b)=>b.length-a.length),explicitCity=cityValues.find(c=>(' '+n+' ').includes(' '+c+' '))||null,areaFields=['area','locality','neighborhood','address','full_address','location','location_address','landmark','landmarks','nearby','nearby_coaching','service_area'],locationPhrase=explicitCity?norm((' '+rest+' ').split(' '+explicitCity+' ').join(' ')):rest,roadQuery=/\b(road|rd)\b/i.test(locationPhrase),requestedPropertyType=/\b(flat|flats|apartment|apartments)\b/i.test(n)?'flat':null;let inferredCities=[];if(locationPhrase){const hits=records.filter(r=>norm(val(r,areaFields)).includes(locationPhrase));inferredCities=[...new Set(hits.map(r=>canonical(r&&r.city)).filter(Boolean))];}const anchoredCity=explicitCity||(locationPhrase&&roadQuery&&inferredCities.length===1?inferredCities[0]:null);const ambiguousRoad=roadQuery&&!explicitCity&&inferredCities.length!==1;return{raw:String(q||''),normalized:n,category:cat,genders,facilities,room,prices,nearby,locationPhrase,roadQuery,explicitCity,anchoredCity,inferredCities,requestedPropertyType,ambiguousRoad};}
 function parse(q,rows){
-  if(q && typeof q==='object' && !Array.isArray(q)){
-    const keyword=String(q.rawKeyword??q.keyword??'').trim();
+  if(!window.StudentHubQueryParser)return parseString(q,rows);
+  const unified=window.StudentHubQueryParser.parse(q,rows);
+  const legacy=parseString(unified.rawQuery,rows);
+  let locationPhrase=unified.locationPhrase||'';
+  let roadQuery=!!unified.roadQuery;
+  let city=unified.city||null;
+  let inferredCities=unified.inferredCities||[];
+  if(q&&typeof q==='object'){
     const explicitLocation=String(q.explicitLocation??q.location??'').trim();
-    const selectedCategory=norm(q.selectedCategory||'').replace(/s$/,'');
-    const parsed=parseString([keyword,explicitLocation].filter(Boolean).join(' '),rows);
-    if(selectedCategory && selectedCategory!=='all' && CATEGORY[selectedCategory]) parsed.category=selectedCategory;
-    parsed.rawKeyword=keyword;parsed.explicitLocation=explicitLocation;parsed.selectedCategory=selectedCategory==='all'?'':selectedCategory;parsed.source=q.source||'structured';
     if(explicitLocation){
-      const locationParsed=parseString(explicitLocation,rows);
-      parsed.locationPhrase=locationParsed.locationPhrase||norm(explicitLocation);
-      parsed.roadQuery=locationParsed.roadQuery||/\b(road|rd)\b/i.test(norm(explicitLocation));
-      parsed.explicitCity=locationParsed.explicitCity||parsed.explicitCity;
-      parsed.anchoredCity=locationParsed.anchoredCity||parsed.anchoredCity;
-      parsed.inferredCities=locationParsed.inferredCities||parsed.inferredCities;
-      parsed.ambiguousRoad=locationParsed.ambiguousRoad;
+      const locationIntent=window.StudentHubQueryParser.parse(explicitLocation,rows);
+      locationPhrase=locationIntent.locationPhrase||window.StudentHubQueryParser.normalize(explicitLocation);
+      roadQuery=!!locationIntent.roadQuery||/\\b(road|rd)\\b/i.test(explicitLocation);
+      city=locationIntent.city||city;
+      inferredCities=locationIntent.inferredCities||inferredCities;
     }
-    return parsed;
   }
-  return parseString(q,rows);
+  const anchoredCity=city||(roadQuery&&inferredCities.length===1?inferredCities[0]:null);
+  return {
+    ...legacy,
+    raw:unified.rawQuery,
+    normalized:unified.normalizedQuery,
+    category:unified.category||legacy.category,
+    genders:unified.gender||legacy.genders,
+    facilities:unified.facilities||legacy.facilities,
+    prices:unified.budget||legacy.prices,
+    nearby:unified.nearby,
+    locationPhrase,
+    roadQuery,
+    explicitCity:city,
+    anchoredCity,
+    inferredCities,
+    ambiguousRoad:false,
+    requestedPropertyType:unified.requestedPropertyType||legacy.requestedPropertyType,
+    locationTokens:unified.locationTokens||[],
+    landmarks:unified.landmarks||[],
+    unifiedIntent:unified
+  };
 }
 function evidence(r,kind,key){const keys=kind==='location'?['area','locality','neighborhood','address','full_address','location','location_address','landmark','landmarks','nearby','nearby_coaching','service_area']:kind==='facility'?['facilities','amenities','features','services','description','details']:kind==='gender'?['gender','gender_suitability','hostel_type','property_type','type','category','name','title','description']:kind==='room'?['room_type','room_types','sharing','sharing_type','room_sharing','property_type','type','name','title','description']:['name','title','property_name','service_name','category','type'];const v=norm(val(r,keys));return(FACILITIES[key]||GENDER[key]||[key]).some(a=>(' '+v+' ').includes(' '+norm(a)+' '));}
 function cityMatch(r,city,roadQuery,phrase){const actual=canonical(r&&r.city);if(roadQuery&&phrase){if(!locText(r).includes(phrase))return false;if(city&&actual!==canonical(city))return false;return true;}if(city){if(actual&&actual!==canonical(city))return false;if(!actual&&!locText(r).includes(canonical(city)))return false;if(phrase&&!locText(r).includes(phrase))return false;return true;}if(phrase)return locText(r).includes(phrase);return true;}
-function strictFilter(rows,q){const i=parse(q,rows);if(i.ambiguousRoad)return[];let result=(Array.isArray(rows)?rows:[]).slice();if(i.requestedPropertyType)result=result.filter(r=>/\b(flat|flats|apartment|apartments)\b/i.test(val(r,['property_type','type','category','name','title','room_type','accommodation_type'])));if(i.category)result=result.filter(r=>r.__category===i.category);if(i.anchoredCity||i.explicitCity||i.locationPhrase){const wanted=i.anchoredCity||i.explicitCity;result=result.filter(r=>cityMatch(r,wanted,i.roadQuery,i.locationPhrase));}if(i.genders.length)result=result.filter(r=>i.genders.every(g=>evidence(r,'gender',g)));if(i.facilities.length)result=result.filter(r=>i.facilities.every(f=>evidence(r,'facility',f)));if(i.room.length)result=result.filter(r=>i.room.every(x=>evidence(r,'room',x)));if(i.prices.max!=null||i.prices.min!=null)result=result.filter(r=>{const p=priceOf(r);return p!=null&&(i.prices.max==null||p<=i.prices.max)&&(i.prices.min==null||p>=i.prices.min);});if(i.nearby&&!i.locationPhrase&&!i.explicitCity)return[];return result;}
+function strictFilter(rows,q){const i=parse(q,rows);let result=(Array.isArray(rows)?rows:[]).slice();if(i.requestedPropertyType)result=result.filter(r=>/\b(flat|flats|apartment|apartments)\b/i.test(val(r,['property_type','type','category','name','title','room_type','accommodation_type'])));if(i.category)result=result.filter(r=>r.__category===i.category);if(i.anchoredCity||i.explicitCity||i.locationPhrase){const wanted=i.anchoredCity||i.explicitCity;result=result.filter(r=>cityMatch(r,wanted,i.roadQuery,i.locationPhrase));}if(i.genders.length)result=result.filter(r=>i.genders.every(g=>evidence(r,'gender',g)));if(i.facilities.length)result=result.filter(r=>i.facilities.every(f=>evidence(r,'facility',f)));if(i.room.length)result=result.filter(r=>i.room.every(x=>evidence(r,'room',x)));if(i.prices.max!=null||i.prices.min!=null)result=result.filter(r=>{const p=priceOf(r);return p!=null&&(i.prices.max==null||p<=i.prices.max)&&(i.prices.min==null||p>=i.prices.min);});if(i.nearby&&!i.locationPhrase&&!i.explicitCity)return[];return result;}
 function search(rows,q,ranked){
 const context=q&&typeof q==='object'&&!Array.isArray(q)?q:null;
 const candidates=strictFilter(rows,q);if(!candidates.length)return[];
