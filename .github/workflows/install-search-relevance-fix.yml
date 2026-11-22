@@ -87,9 +87,11 @@ jobs:
           run({rawKeyword:'bookstores',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['b1']);
           run({rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},['h1','h2']);
           assert('near-me without GPS mode is not broadened',window.StudentHubUniversalSearch.search(rows,'hostel near me',data=>data).length===0);
+          const partialRanking=window.StudentHubUniversalSearch.search(rows,{rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:''},data=>data.slice(0,1));
+          assert('ranking cannot discard strict matches',partialRanking.length===2,JSON.stringify(partialRanking.map(x=>x.id)));
           const ambiguous=window.StudentHubUniversalSearch.search(rows,'Piprali Road cafe',data=>data).map(x=>x.id);
           assert('ambiguous road retained and grouped by city',JSON.stringify(ambiguous)===JSON.stringify(['c2','c1']),JSON.stringify(ambiguous));
-          console.log('UNIFIED PARSER + PHASE 6: 18/18 PASS');
+          console.log('UNIFIED PARSER + PHASE 6: 19/19 PASS');
           NODE
 
       - name: Verify data loader, nearby labels and autocomplete safety
