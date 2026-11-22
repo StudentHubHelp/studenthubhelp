@@ -27,7 +27,7 @@ jobs:
       - name: Test search intelligence JavaScript
         shell: bash
         run: |
-          for f in search-relevance-fix.js search-distance-intelligence.js search-phase1-intelligence.js search-phase2-intelligence.js search-phase3-location-intelligence.js search-phase4-final-fusion.js search-phase5-natural-language.js js/finder-power-search.js; do
+          for f in search-phase6-universal.js search-relevance-fix.js search-distance-intelligence.js search-phase1-intelligence.js search-phase2-intelligence.js search-phase3-location-intelligence.js search-phase4-final-fusion.js search-phase5-natural-language.js js/finder-power-search.js; do
             node --check "$f"
           done
 
@@ -119,6 +119,29 @@ jobs:
           })().catch(err=>{console.error(err);process.exit(1);});
           NODE
 
+
+      - name: Run structured global search context tests
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          global.window={};
+          window.ranked=(data)=>data;
+          eval(fs.readFileSync('search-phase6-universal.js','utf8'));
+          const rows=[
+            {id:'c1',__category:'cafe',name:'Piprali Cafe',city:'Sikar',area:'Piprali Rd',address:'Piprali Rd, Sikar'},
+            {id:'c2',__category:'cafe',name:'CLC Cafe',city:'Sikar',area:'Piprali Road',nearby_coaching:'CLC Chowk',address:'CLC Chowk, Piprali Road, Sikar'},
+            {id:'h1',__category:'hostel',name:'Piprali Hostel',city:'Sikar',area:'Piprali Road',address:'Piprali Road, Sikar'},
+            {id:'x1',__category:'cafe',name:'Jaipur Cafe',city:'Jaipur',area:'Vaishali Nagar',address:'Vaishali Nagar, Jaipur'}
+          ];
+          const check=(name,ctx,expected)=>{const got=window.StudentHubUniversalSearch.search(rows,ctx,(data)=>data);const ids=got.map(r=>r.id);if(JSON.stringify(ids.sort())!==JSON.stringify(expected.slice().sort()))throw new Error(name+': '+JSON.stringify(ids)+' expected '+JSON.stringify(expected));console.log('PASS '+name);};
+          check('location field + cafe pill',{rawKeyword:'',explicitLocation:'Piprali Road',selectedCategory:'cafe'},['c1','c2']);
+          check('Rd alias + cafe keyword',{rawKeyword:'cafe in Piprali Rd',explicitLocation:'',selectedCategory:''},['c1','c2']);
+          check('Hindi/Hinglish par query',{rawKeyword:'Piprali Road par cafe',explicitLocation:'',selectedCategory:''},['c1','c2']);
+          check('CLC landmark location',{rawKeyword:'CLC Chowk cafe',explicitLocation:'',selectedCategory:''},['c2']);
+          check('explicit city isolation',{rawKeyword:'cafe in Sikar',explicitLocation:'',selectedCategory:''},['c1','c2']);
+          console.log('STRUCTURED GLOBAL SEARCH: 5/5 PASS');
+          NODE
 
       - name: Run 8 rounds of natural-language search regression (120 checks)
         shell: bash
