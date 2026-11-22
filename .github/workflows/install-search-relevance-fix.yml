@@ -70,7 +70,9 @@ jobs:
           run({rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:'',source:'global-search'},['h1','h2']);
           run({rawKeyword:'cafe',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['c1']);
           run({rawKeyword:'library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
-          console.log('UNIFIED PARSER + PHASE 6: 7/7 PASS');
+          const ambiguous=window.StudentHubUniversalSearch.search(rows,'Piprali Road cafe',data=>data).map(x=>x.id);
+          assert('ambiguous road retained and grouped by city',JSON.stringify(ambiguous)===JSON.stringify(['c2','c1']),JSON.stringify(ambiguous));
+          console.log('UNIFIED PARSER + PHASE 6: 8/8 PASS');
           NODE
 
       - name: Verify data loader, nearby labels and autocomplete safety
@@ -91,6 +93,8 @@ jobs:
             'failed cache invalidation':'categoryCache.delete(key)',
             'area-only result label':'Area Match · distance unavailable',
             'structured autocomplete action':'performSearch(x.context||x.q)',
+            'Phase 6 suggestion preview':'strictFilter(data,item.context)',
+            'city displayed with locality':"[area,r.city].filter(Boolean).join(', ')",
             'deferred initial search':'setTimeout(()=>performSearch(buildSearchContext(initial,initialArea)),0)',
             'no legacy global promise cache':'window.__SHH_DATA_PROMISE__'
           }
