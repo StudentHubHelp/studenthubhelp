@@ -93,20 +93,24 @@ test('answers natural FAQ questions for every listing category', () => {
   assert.match(api.supportAnswer('bookstore me xerox hota hai kya'), /photocopy|Xerox|printing/i);
 });
 
-test('recognizes technical website problems and gives support steps instead of listing answers', async () => {
-  const prompts = [
-    'technical issue ho to kya kre',
-    'website mein problem aa rahi hai',
-    'site nhi chal rhi',
-    'page is not loading',
-    'I found a bug on the website',
-    'login issue aa raha hai'
+test('routes technical, website, login and loading issues to distinct actionable answers', async () => {
+  const cases = [
+    ['technical issue ho to kya kre', /Technical issue report karne ke steps/i],
+    ['website nahi chal rahi', /Website open nahi ho rahi/i],
+    ['login mein problem aa rahi hai', /Login \/ account access issue/i],
+    ['page is not loading', /Page loading \/ blank screen issue/i],
+    ['site nhi chal rhi', /Website open nahi ho rahi/i],
+    ['I found a bug on the website', /Technical issue report karne ke steps/i]
   ];
-  for (const prompt of prompts) {
+  const answers=[];
+  for (const [prompt, expected] of cases) {
     assert.equal(api.classifyIntent(prompt), 'technical_support', prompt);
-    assert.match(api.supportAnswer(prompt), /Contact Us|support email/i, prompt);
-    assert.match(api.supportAnswer(prompt), /refresh|Incognito|error/i, prompt);
+    const answer=api.supportAnswer(prompt);
+    assert.match(answer, expected, prompt);
+    assert.match(answer, /Contact Us|support email/i, prompt);
+    answers.push(answer);
   }
+  assert.equal(new Set(answers).size, answers.length, 'each issue type should receive a tailored response');
   api.setActiveSearch({category:'hostel',query:'Sikar hostel',cityName:'Sikar',results:[]});
   const answer = await api.processMessage('technical issue ho to kya kre');
   assert.match(answer, /Contact Us|support email/i);
