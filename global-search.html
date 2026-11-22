@@ -469,7 +469,8 @@ function renderResults(results){grid.innerHTML='';updateSummary(results,currentQ
     async function performSearch(q){
       const req=++requestNo;currentQuery=clean(q);hideSuggestions();showLoading(true);showEmpty(false);setURLQuery(currentQuery);
       const data=await loadAll();if(req!==requestNo)return;
-      let result=currentQuery?(window.StudentHubUniversalSearch?window.StudentHubUniversalSearch.search(data,currentQuery,ranked):((locationOnlyResults(data,currentQuery)||ranked(data,currentQuery)))):data.filter(r=>activeFilter==='all'||r.__category===activeFilter);
+      const pureNearbyQuery=['near me','nearby','near my location','nearby me'].includes(norm(currentQuery));
+      let result=pureNearbyQuery?data.filter(r=>activeFilter==='all'||r.__category===activeFilter):(currentQuery?(window.StudentHubUniversalSearch?window.StudentHubUniversalSearch.search(data,currentQuery,ranked):((locationOnlyResults(data,currentQuery)||ranked(data,currentQuery)))):data.filter(r=>activeFilter==='all'||r.__category===activeFilter));
       const helper=window.StudentHubNearbySearch,userCoords=nearbyMode?helper?.getStoredLocation():null;
       if(nearbyMode)result=userCoords?helper.filterWithinRadius(result,userCoords,5):[];
       allResults=result;renderResults(result);showLoading(false);
