@@ -550,3 +550,31 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   #root a.shh-magnetic,
   #root main .shh-cursor-card { transition: none !important; translate: none !important; }
 }
+
+
+/* Exact pointer-position card spotlight. The negative stacking layer stays
+   between each card's background and its content, so text and controls remain clear. */
+#root main .shh-cursor-card {
+  position: relative;
+  isolation: isolate;
+}
+#root main .shh-cursor-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: .92;
+  background: radial-gradient(
+    circle 235px at var(--shh-spot-x, 50%) var(--shh-spot-y, 50%),
+    rgba(56, 217, 245, .13),
+    rgba(56, 217, 245, .045) 38%,
+    transparent 74%
+  );
+  transition: opacity .16s ease;
+}
+#root main .shh-cursor-card:not(:hover)::after { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  #root main .shh-cursor-card::after { display: none !important; }
+}
