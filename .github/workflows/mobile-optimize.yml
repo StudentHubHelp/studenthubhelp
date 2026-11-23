@@ -76,6 +76,18 @@ jobs:
                   if 'isBlockingVerification' not in text:
                       text = text.replace('</body>', guard + '</body>')
 
+                  # The guard is executable JavaScript: normalize literal escaped
+                  # newline sequences so the browser does not parse "\\n" as JS code.
+                  escaped_start = r'\\n<script>\\n(function(){'
+                  start = text.find(escaped_start)
+                  if start >= 0:
+                      escaped_end = r'\\n</script>\\n'
+                      end = text.find(escaped_end, start)
+                      if end >= 0:
+                          end += len(escaped_end)
+                          block = text[start:end].replace(r'\\n', '\\n')
+                          text = text[:start] + block + text[end:]
+
               path.write_text(text, encoding='utf-8')
 
       - name: Ensure mobile navbar control styling exists
