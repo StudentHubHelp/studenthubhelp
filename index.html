@@ -4,6 +4,33 @@
 <meta property="og:image:secure_url" content="https://studenthubhelp.in/logo.png?v=logo-hd-20261029">
 
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f3c2d">
+<script>
+(function(){
+  const query = new URLSearchParams(location.search);
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const description = (query.get("error_description") || hash.get("error_description") || "").toLowerCase();
+  const isRecoveryCallback =
+    query.has("code") ||
+    query.get("type") === "recovery" ||
+    query.get("error_code") === "otp_expired" ||
+    hash.get("type") === "recovery" ||
+    hash.has("access_token") ||
+    hash.get("error_code") === "otp_expired" ||
+    description.includes("otp_expired") ||
+    description.includes("expired");
+  const isLegacyHost =
+    location.hostname === "studenthubhelp.github.io" &&
+    location.pathname.startsWith("/studenthubhelp");
+  const isProductionHome =
+    location.hostname === "studenthubhelp.in" &&
+    (location.pathname === "/" || location.pathname === "/index.html");
+  if(!isRecoveryCallback || (!isLegacyHost && !isProductionHome)) return;
+  const target = new URL("https://studenthubhelp.in/auth.html");
+  target.search = location.search;
+  target.hash = location.hash;
+  location.replace(target.href);
+})();
+</script>
 <title>StudentHubHelp | Hostels, PGs, Tiffin & Study Spaces in India</title>
 <meta name="description" content="Find student-friendly hostels, PGs, tiffin services, libraries, cafes and bookstores across India. Explore by city, locality, budget or coaching landmark.">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
