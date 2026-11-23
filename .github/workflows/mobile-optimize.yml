@@ -28,7 +28,9 @@ jobs:
           skip = {'google7168366cd2bfb7eb.html'}
           finder_pages = {'pg-finder.html','tiffin-finder.html','library-finder.html','cafe-finder.html','bookstore-finder.html'}
           for path in Path('.').glob('*.html'):
-              if path.name in skip:
+              # Homepage is intentionally frozen: never inject mobile styles,
+              # menu markup/scripts, lazy-loading hints, or other automated edits.
+              if path.name == 'index.html' or path.name in skip:
                   continue
               text = path.read_text(encoding='utf-8')
 
