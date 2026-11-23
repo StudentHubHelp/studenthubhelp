@@ -80,7 +80,6 @@
           name: String(row.user_name || 'Student').trim(),
           rating: Math.max(1, Math.min(5, Number(row.rating) || 5)),
           text: String(row.published_review_text || row.review_text || '').replace(/^\s*sample\s*:\s*/i, '').trim(),
-          date: row.created_at,
           verified: row.review_source === 'public_verified_email'
         })).filter((row) => row.text);
     } catch (error) {
@@ -131,8 +130,7 @@
     const visible = platformReviews.slice(start, start + platformReviewVisible);
     const markup = visible.map((review) => {
       const stars = '★'.repeat(Math.round(review.rating)) + '☆'.repeat(5 - Math.round(review.rating));
-      const date = review.date ? new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-      return '<article class="review-card"><div class="review-card-top"><span class="review-stars" aria-label="' + esc(review.rating) + ' out of 5 stars">' + stars + '</span><span class="review-card-quote" aria-hidden="true">“</span></div><p>' + esc(review.text) + '</p><div class="review-card-person"><span class="review-avatar" aria-hidden="true">' + esc(String(review.name).split(/\s+/).slice(0,2).map(part => part.charAt(0)).join('').toUpperCase()) + '</span><span><strong>' + esc(review.name) + '</strong><small>' + (review.verified ? 'Email verified' : 'Community review') + (date ? ' · ' + esc(date) : '') + '</small></span><span class="review-person-check" aria-label="' + (review.verified ? 'Email verified' : 'Community review') + '">' + (review.verified ? '✓' : '★') + '</span></div></article>';
+      return '<article class="review-card"><div class="review-card-top"><span class="review-stars" aria-label="' + esc(review.rating) + ' out of 5 stars">' + stars + '</span><span class="review-card-quote" aria-hidden="true">“</span></div><p>' + esc(review.text) + '</p><div class="review-card-person"><span class="review-avatar" aria-hidden="true">' + esc(String(review.name).split(/\s+/).slice(0,2).map(part => part.charAt(0)).join('').toUpperCase()) + '</span><span><strong>' + esc(review.name) + '</strong><small>' + (review.verified ? 'Email verified' : 'Community review') + '</small></span><span class="review-person-check" aria-label="' + (review.verified ? 'Email verified' : 'Community review') + '">' + (review.verified ? '✓' : '★') + '</span></div></article>';
     }).join('');
     if (animate) {
       grid.classList.add('is-transitioning');
@@ -141,8 +139,10 @@
         requestAnimationFrame(() => grid.classList.remove('is-transitioning'));
       });
     } else grid.innerHTML = markup;
-    dots.innerHTML = Array.from({ length: pages }, (_, index) =>
-      '<button type="button" data-page="' + index + '" class="' + (index === platformReviewPage ? 'is-active' : '') + '" aria-label="Show review page ' + (index + 1) + '" aria-current="' + (index === platformReviewPage ? 'true' : 'false') + '"></button>'
+    const dotCount = Math.min(3, pages);
+    const activeDot = Math.min(dotCount - 1, Math.floor(platformReviewPage * dotCount / pages));
+    dots.innerHTML = Array.from({ length: dotCount }, (_, index) =>
+      '<button type="button" data-page="' + Math.floor(index * pages / dotCount) + '" class="' + (index === activeDot ? 'is-active' : '') + '" aria-label="Show review group ' + (index + 1) + ' of ' + dotCount + '" aria-current="' + (index === activeDot ? 'true' : 'false') + '"></button>'
     ).join('');
     dots.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => {
       platformReviewPage = Number(button.dataset.page) || 0;
