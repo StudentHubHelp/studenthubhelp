@@ -124,7 +124,7 @@ async function loadGalleryRows(r,db){try{const res=await db.from('property_image
 function showError(title,message){app.setAttribute('aria-busy','false');app.innerHTML='<section class="state-panel"><div class="eyebrow">STUDENTHUBHELP</div><h1>'+esc(title)+'</h1><p>'+esc(message)+'</p><a class="btn btn-primary" href="/explore-listings.html">Explore listings</a></section>'}
 document.getElementById('menuToggle').addEventListener('click',function(){const nav=document.getElementById('primaryNav'),open=nav.classList.toggle('open');this.setAttribute('aria-expanded',String(open));this.setAttribute('aria-label',open?'Close navigation':'Open navigation')});
 const nav=document.getElementById('primaryNav');nav.addEventListener('click',e=>{if(e.target.closest('a')){nav.classList.remove('open');document.getElementById('menuToggle').setAttribute('aria-expanded','false')}});
-const dbReady=()=>{if(window.supabase&&window.supabase.createClient)load();else setTimeout(dbReady,60)};dbReady();
+let dbWaitCount=0;const dbReady=()=>{if(window.supabase&&window.supabase.createClient){load();return}if(++dbWaitCount<50){setTimeout(dbReady,100);return}showError('Listings temporarily unavailable','The property service could not be loaded. Please refresh the page.')};dbReady();
 })();
 </script>
 
