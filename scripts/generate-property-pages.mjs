@@ -169,9 +169,10 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     .replace(/<link\b(?=[^>]*\brel\s*=\s*["']apple-touch-icon["'])[^>]*>\s*/gi, '')
     .replace(/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:image:secure_url["'])[^>]*>\s*/gi, '')
     .replace(/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:image:alt["'])[^>]*>\s*/gi, '');
-  const renderedTemplate = cleanTemplate.replace(/<head([^>]*)>/i, (_match, attributes) =>
+  const withJsClass = cleanTemplate.replace(/<html([^>]*)>/i, (_match, attributes) =>
+    '<html' + attributes + ' class="js">');
+  const renderedTemplate = withJsClass.replace(/<head([^>]*)>/i, (_match, attributes) =>
     '<head' + attributes + '>\n' +
-    '<script>document.documentElement.classList.add("js");</script>\n' +
     '<link rel="icon" type="image/png" href="/logo.png">\n' +
     '<link rel="shortcut icon" type="image/png" href="/logo.png">\n' +
     '<link rel="apple-touch-icon" href="/logo.png">\n' +
