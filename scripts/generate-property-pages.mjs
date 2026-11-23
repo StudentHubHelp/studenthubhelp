@@ -190,7 +190,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     .replace(/<meta id="twitterTitle" name="twitter:title" content="[^"]*">/i, `<meta id="twitterTitle" name="twitter:title" content="${escapeHtml(title)}">`)
     .replace(/<meta id="twitterDescription" name="twitter:description" content="[^"]*">/i, `<meta id="twitterDescription" name="twitter:description" content="${escapeHtml(desc)}">`)
     .replace(/<script id="propertySchema" type="application\/ld\+json">[\s\S]*?<\/script>/i, `<script id="propertySchema" type="application/ld+json">\n${schema}\n</script>`)
-    .replace(/<title>[^<]*<\/title>/i, (tag) => tag + `\n<link id="canonicalLink" rel="canonical" href="${escapeHtml(canonical)}">`);
+    .replace(/<link id="canonicalLink" rel="canonical" href="[^"]*">/i, `<link id="canonicalLink" rel="canonical" href="${escapeHtml(canonical)}">`);
 }
 function buildLegacyRedirectHtml(oldPath, targetType, targetSlug) {
   const canonical = `${BASE_URL}/properties/${targetType}/${encodeURIComponent(targetSlug)}/`;
