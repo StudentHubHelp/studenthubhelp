@@ -66,6 +66,178 @@
     return candidates.filter(([key]) => row?.[key] === true).map(([, label]) => label).slice(0, 3);
   };
 
+
+  async function loadPlatformReviews(db) {
+    try {
+      const { data, error } = await db.from('reviews')
+        .select('id,user_name,rating,review_text,published_review_text,created_at,review_source')
+        .eq('review_scope', 'platform').eq('status', 'published')
+        .order('created_at', { ascending: false }).limit(60);
+      if (error) throw error;
+      return (data || []).filter((row) => row.user_name && (row.published_review_text || row.review_text))
+        .map((row) => ({
+          id: row.id,
+          name: String(row.user_name || 'Student').trim(),
+          rating: Math.max(1, Math.min(5, Number(row.rating) || 5)),
+          text: String(row.published_review_text || row.review_text || '').replace(/^\\s*sample\\s*:\\s*/i, '').trim(),
+          date: row.created_at,
+          verified: row.review_source === 'public_verified_email'
+        })).filter((row) => row.text);
+    } catch (error) {
+      console.warn('[StudentHubHelp] Platform reviews unavailable', error.message);
+      return [];
+    }
+  }
+
+  let platformReviews = [];
+  let platformReviewPage = 0;
+  let platformReviewTimer = null;
+  let platformReviewPaused = false;
+  let platformReviewVisible = 3;
+  let platformReviewRating = 5;
+
+  const visiblePlatformReviewCount = () => window.matchMedia('(max-width: 700px)').matches ? 1 : 3;
+  const platformReviewPages = () => Math.max(1, Math.ceil(platformReviews.length / platformReviewVisible));
+
+  function renderPlatformReviews(items) {
+    platformReviews = Array.isArray(items) ? items : [];
+    const count = $('platformReviewCount');
+    const grid = $('reviewCarousel');
+    const dots = $('reviewDots');
+    if (!grid || !dots) return;
+    platformReviewVisible = visiblePlatformReviewCount();
+    platformReviewPage = 0;
+    if (count) count.textContent = platformReviews.length + (platformReviews.length === 1 ? ' published review' : ' published reviews');
+    if (!platformReviews.length) {
+      grid.innerHTML = '<article class="review-card review-card-empty"><span class="review-stars">★★★★★</span><h3>Your experience belongs here.</h3><p>Be the first to share a verified StudentHubHelp review.</p></article>';
+      dots.innerHTML = '';
+      return;
+    }
+    drawPlatformReviewPage(false);
+    startPlatformReviewRotation();
+    grid.addEventListener('mouseenter', pausePlatformReviewRotation);
+    grid.addEventListener('mouseleave', resumePlatformReviewRotation);
+    grid.addEventListener('focusin', pausePlatformReviewRotation);
+    grid.addEventListener('focusout', (event) => { if (!grid.contains(event.relatedTarget)) resumePlatformReviewRotation(); });
+  }
+
+  function drawPlatformReviewPage(animate = true) {
+    const grid = $('reviewCarousel');
+    const dots = $('reviewDots');
+    if (!grid || !dots || !platformReviews.length) return;
+    const pages = platformReviewPages();
+    platformReviewPage = ((platformReviewPage % pages) + pages) % pages;
+    const start = platformReviewPage * platformReviewVisible;
+    const visible = platformReviews.slice(start, start + platformReviewVisible);
+    const markup = visible.map((review) => {
+      const stars = '★'.repeat(Math.round(review.rating)) + '☆'.repeat(5 - Math.round(review.rating));
+      const date = review.date ? new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      return '<article class="review-card"><div class="review-card-top"><span class="review-stars" aria-label="' + esc(review.rating) + ' out of 5 stars">' + stars + '</span><span class="review-card-quote" aria-hidden="true">“</span></div><p>' + esc(review.text) + '</p><div class="review-card-person"><span class="review-avatar" aria-hidden="true">' + esc(String(review.name).split(/\\s+/).slice(0,2).map(part => part.charAt(0)).join('').toUpperCase()) + '</span><span><strong>' + esc(review.name) + '</strong><small>' + (review.verified ? 'Email verified' : 'Community review') + (date ? ' · ' + esc(date) : '') + '</small></span><span class="review-person-check" aria-label="' + (review.verified ? 'Email verified' : 'Community review') + '">' + (review.verified ? '✓' : '★') + '</span></div></article>';
+    }).join('');
+    if (animate) {
+      grid.classList.add('is-transitioning');
+      requestAnimationFrame(() => {
+        grid.innerHTML = markup;
+        requestAnimationFrame(() => grid.classList.remove('is-transitioning'));
+      });
+    } else grid.innerHTML = markup;
+    dots.innerHTML = Array.from({ length: pages }, (_, index) =>
+      '<button type="button" data-page="' + index + '" class="' + (index === platformReviewPage ? 'is-active' : '') + '" aria-label="Show review page ' + (index + 1) + '" aria-current="' + (index === platformReviewPage ? 'true' : 'false') + '"></button>'
+    ).join('');
+    dots.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => {
+      platformReviewPage = Number(button.dataset.page) || 0;
+      drawPlatformReviewPage();
+      restartPlatformReviewRotation();
+    }));
+    const previous = $('reviewPrev'), next = $('reviewNext');
+    if (previous) previous.disabled = pages <= 1;
+    if (next) next.disabled = pages <= 1;
+  }
+
+  function startPlatformReviewRotation() {
+    stopPlatformReviewRotation();
+    if (platformReviews.length <= platformReviewVisible || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!platformReviewPaused) platformReviewTimer = window.setInterval(() => {
+      platformReviewPage = (platformReviewPage + 1) % platformReviewPages();
+      drawPlatformReviewPage();
+    }, 3000);
+  }
+  function stopPlatformReviewRotation() {
+    if (platformReviewTimer) window.clearInterval(platformReviewTimer);
+    platformReviewTimer = null;
+  }
+  function pausePlatformReviewRotation() {
+    platformReviewPaused = true;
+    stopPlatformReviewRotation();
+    const button = $('reviewPause');
+    if (button) { button.textContent = '▶'; button.setAttribute('aria-label', 'Resume automatic review rotation'); }
+  }
+  function resumePlatformReviewRotation() {
+    platformReviewPaused = false;
+    const button = $('reviewPause');
+    if (button) { button.textContent = 'Ⅱ'; button.setAttribute('aria-label', 'Pause automatic review rotation'); }
+    startPlatformReviewRotation();
+  }
+  function restartPlatformReviewRotation() { if (!platformReviewPaused) startPlatformReviewRotation(); }
+
+  function bindPlatformReviewForm() {
+    const form = $('platformReviewForm');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+    const ratingGroup = $('platformReviewRating');
+    const setRating = (rating) => {
+      platformReviewRating = Math.max(1, Math.min(5, Number(rating) || 5));
+      ratingGroup?.querySelectorAll('button').forEach((button) => {
+        const active = Number(button.dataset.rating) <= platformReviewRating;
+        button.classList.toggle('is-selected', active);
+        button.setAttribute('aria-pressed', String(Number(button.dataset.rating) === platformReviewRating));
+      });
+    };
+    ratingGroup?.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => setRating(button.dataset.rating)));
+    setRating(5);
+    $('reviewPrev')?.addEventListener('click', () => { platformReviewPage--; drawPlatformReviewPage(); restartPlatformReviewRotation(); });
+    $('reviewNext')?.addEventListener('click', () => { platformReviewPage++; drawPlatformReviewPage(); restartPlatformReviewRotation(); });
+    $('reviewPause')?.addEventListener('click', () => platformReviewPaused ? resumePlatformReviewRotation() : pausePlatformReviewRotation());
+    window.addEventListener('resize', () => {
+      const nextVisible = visiblePlatformReviewCount();
+      if (nextVisible !== platformReviewVisible) {
+        platformReviewVisible = nextVisible;
+        platformReviewPage = 0;
+        drawPlatformReviewPage(false);
+        restartPlatformReviewRotation();
+      }
+    });
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const name = $('platformReviewName')?.value.trim() || '';
+      const email = $('platformReviewEmail')?.value.trim() || '';
+      const review = $('platformReviewText')?.value.trim() || '';
+      const website = $('platformReviewWebsite')?.value || '';
+      const status = $('platformReviewStatus');
+      const button = $('platformReviewSubmit');
+      if (name.length < 2 || name.length > 80) { if (status) status.textContent = 'Please enter your name (2–80 characters).'; $('platformReviewName')?.focus(); return; }
+      if (!/^[^\\s@]+@gmail\\.com$/i.test(email)) { if (status) status.textContent = 'Please enter a valid Gmail address for verification.'; $('platformReviewEmail')?.focus(); return; }
+      if (review.length < 5 || review.length > 800) { if (status) status.textContent = 'Your review must be between 5 and 800 characters.'; $('platformReviewText')?.focus(); return; }
+      if (button) { button.disabled = true; button.textContent = 'Sending verification…'; }
+      if (status) status.textContent = 'Sending a secure verification link to your Gmail…';
+      try {
+        const response = await fetch('https://idurlccrarznnnqixxsd.supabase.co/functions/v1/studenthubhelp-review', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'request', name, email, rating: platformReviewRating, review, website })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Unable to send verification email.');
+        form.reset();
+        setRating(5);
+        if (status) status.textContent = result.message || 'Verification email sent. Please check your Gmail inbox.';
+      } catch (error) {
+        if (status) status.textContent = error.message || 'Unable to submit your review right now.';
+      } finally {
+        if (button) { button.disabled = false; button.innerHTML = 'Submit review <span>→</span>'; }
+      }
+    });
+  }
+
   async function init() {
     $('footerYear') && ($('footerYear').textContent = String(new Date().getFullYear()));
     if (!window.supabase?.createClient) {
@@ -77,12 +249,14 @@
       SUPABASE_URL, SUPABASE_ANON_KEY,
       { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
     ));
-    const [counts, capacity, listingGroups] = await Promise.all([
-      loadCounts(db), loadCapacity(db), loadFeatured(db)
+    const [counts, capacity, listingGroups, platformReviews] = await Promise.all([
+      loadCounts(db), loadCapacity(db), loadFeatured(db), loadPlatformReviews(db)
     ]);
     renderCounts(counts);
     renderCapacity(capacity);
     renderFeatured(listingGroups);
+    renderPlatformReviews(platformReviews);
+    bindPlatformReviewForm();
   }
 
   function showStatsUnavailable() {
