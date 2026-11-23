@@ -1580,6 +1580,8 @@ const RESEND_COOLDOWN =
 let routing = false;
 let listenerReady = false;
 let recoveryMode = false;
+let recoveryEventSeen = false;
+const recoveryHashAtLoad = new URLSearchParams(location.hash.slice(1)).get("type") === "recovery";
 let lastSignupEmail = "";
 let pendingGoogleUser = null;
 let panelChanging = false;
@@ -1753,10 +1755,12 @@ if(
   }
 
   if(
-    m.includes("token") &&
-    m.includes("expired")
+    (m.includes("token") && m.includes("expired")) ||
+    m.includes("otp_expired") ||
+    m.includes("invalid_grant") ||
+    (m.includes("invalid") && m.includes("token"))
   ){
-    return "Reset link expire ho gaya. Naya reset link request karo.";
+    return "This password reset link is invalid or has expired. Please request a new reset link.";
   }
 
   if(
@@ -3417,11 +3421,9 @@ $("recoveryForm").onsubmit =
           email,
           {
 
-            redirectTo:
-              new URL(
-                "auth.html?mode=reset",
-                location.href
-              ).href,
+            // Always return to the production domain. Relative URLs can resolve
+            // to the legacy GitHub Pages origin and be rejected by Supabase.
+            redirectTo: "https://studenthubhelp.in/auth.html",
 
           }
         );
@@ -3530,19 +3532,12 @@ $("resetForm").onsubmit =
 
       }
 
-      if(!isEmailVerified(data.user)){
-
-        await denyAccess(
-          "Password update ho gaya, lekin email verification required hai."
-        );
-
-        return;
-
-      }
-
-      await route(
-        data.user
-      );
+      // Recovery is complete: end this local recovery session and ask the
+      // user to sign in with the new password instead of routing away.
+      recoveryMode = false;
+      await db.auth.signOut({ scope: "local" });
+      showLogin();
+      msg("Your password has been updated successfully. Please sign in with your new password.", "success");
 
     }catch(error){
 
@@ -3649,9 +3644,10 @@ document
 
 function resetMode(){
 
-  return new URLSearchParams(
-    location.search
-  ).get("mode") === "reset";
+  return (
+    new URLSearchParams(location.search).get("mode") === "reset" ||
+    recoveryHashAtLoad
+  );
 
 }
 
@@ -3666,6 +3662,7 @@ function setupAuth(){
 
       if(event==="PASSWORD_RECOVERY"){
 
+        recoveryEventSeen = true;
         showReset();
 
         return;
@@ -3808,36 +3805,36 @@ document.addEventListener(
 
       loading(
         true,
-        "Preparing password reset..."
+        "Verifying your secure password reset link..."
       );
 
-      setTimeout(()=>{
+      // Only show the password form after Supabase confirms a recovery session.
+      // A token-looking URL fragment alone is not proof of a valid session.
+      setTimeout(async ()=>{
 
-        if(!recoveryMode){
+        if(recoveryEventSeen || recoveryMode)return;
 
-          const hash =
-            location.hash || "";
+        // Fallback for browsers where the recovery event was delivered before
+        // the UI listener attached: require both a recovery URL and a session.
+        const { data: recoverySession, error: sessionError } =
+          await db.auth.getSession();
 
-          if(
-            hash.includes("type=recovery") ||
-            hash.includes("access_token=")
-          ){
+        if(
+          !sessionError &&
+          recoveryHashAtLoad &&
+          recoverySession?.session?.user
+        ){
 
-            showReset();
-
-          }else{
-
-            loading(false);
-
-            msg(
-              "Password reset link invalid ya expire ho gaya hai."
-            );
-
-          }
+          recoveryEventSeen = true;
+          showReset();
+          return;
 
         }
 
-      },1200);
+        loading(false);
+        msg("This password reset link is invalid or has expired. Please return to Login and request a new reset link.");
+
+      },4000);
 
       return;
 
