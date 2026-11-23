@@ -1581,7 +1581,7 @@ let routing = false;
 let listenerReady = false;
 let recoveryMode = false;
 let recoveryEventSeen = false;
-const recoveryHashAtLoad = location.hash.includes("type=recovery") || location.hash.includes("access_token=");
+const recoveryHashAtLoad = new URLSearchParams(location.hash.slice(1)).get("type") === "recovery";
 let lastSignupEmail = "";
 let pendingGoogleUser = null;
 let panelChanging = false;
@@ -3810,14 +3810,29 @@ document.addEventListener(
 
       // Only show the password form after Supabase confirms a recovery session.
       // A token-looking URL fragment alone is not proof of a valid session.
-      setTimeout(()=>{
+      setTimeout(async ()=>{
 
-        if(!recoveryEventSeen && !recoveryMode){
+        if(recoveryEventSeen || recoveryMode)return;
 
-          loading(false);
-          msg("This password reset link is invalid or has expired. Please return to Login and request a new reset link.");
+        // Fallback for browsers where the recovery event was delivered before
+        // the UI listener attached: require both a recovery URL and a session.
+        const { data: recoverySession, error: sessionError } =
+          await db.auth.getSession();
+
+        if(
+          !sessionError &&
+          recoveryHashAtLoad &&
+          recoverySession?.session?.user
+        ){
+
+          recoveryEventSeen = true;
+          showReset();
+          return;
 
         }
+
+        loading(false);
+        msg("This password reset link is invalid or has expired. Please return to Login and request a new reset link.");
 
       },4000);
 
