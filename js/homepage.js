@@ -79,7 +79,7 @@
           id: row.id,
           name: String(row.user_name || 'Student').trim(),
           rating: Math.max(1, Math.min(5, Number(row.rating) || 5)),
-          text: String(row.published_review_text || row.review_text || '').replace(/^\\s*sample\\s*:\\s*/i, '').trim(),
+          text: String(row.published_review_text || row.review_text || '').replace(/^\s*sample\s*:\s*/i, '').trim(),
           date: row.created_at,
           verified: row.review_source === 'public_verified_email'
         })).filter((row) => row.text);
@@ -132,7 +132,7 @@
     const markup = visible.map((review) => {
       const stars = '★'.repeat(Math.round(review.rating)) + '☆'.repeat(5 - Math.round(review.rating));
       const date = review.date ? new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-      return '<article class="review-card"><div class="review-card-top"><span class="review-stars" aria-label="' + esc(review.rating) + ' out of 5 stars">' + stars + '</span><span class="review-card-quote" aria-hidden="true">“</span></div><p>' + esc(review.text) + '</p><div class="review-card-person"><span class="review-avatar" aria-hidden="true">' + esc(String(review.name).split(/\\s+/).slice(0,2).map(part => part.charAt(0)).join('').toUpperCase()) + '</span><span><strong>' + esc(review.name) + '</strong><small>' + (review.verified ? 'Email verified' : 'Community review') + (date ? ' · ' + esc(date) : '') + '</small></span><span class="review-person-check" aria-label="' + (review.verified ? 'Email verified' : 'Community review') + '">' + (review.verified ? '✓' : '★') + '</span></div></article>';
+      return '<article class="review-card"><div class="review-card-top"><span class="review-stars" aria-label="' + esc(review.rating) + ' out of 5 stars">' + stars + '</span><span class="review-card-quote" aria-hidden="true">“</span></div><p>' + esc(review.text) + '</p><div class="review-card-person"><span class="review-avatar" aria-hidden="true">' + esc(String(review.name).split(/\s+/).slice(0,2).map(part => part.charAt(0)).join('').toUpperCase()) + '</span><span><strong>' + esc(review.name) + '</strong><small>' + (review.verified ? 'Email verified' : 'Community review') + (date ? ' · ' + esc(date) : '') + '</small></span><span class="review-person-check" aria-label="' + (review.verified ? 'Email verified' : 'Community review') + '">' + (review.verified ? '✓' : '★') + '</span></div></article>';
     }).join('');
     if (animate) {
       grid.classList.add('is-transitioning');
@@ -216,7 +216,7 @@
       const status = $('platformReviewStatus');
       const button = $('platformReviewSubmit');
       if (name.length < 2 || name.length > 80) { if (status) status.textContent = 'Please enter your name (2–80 characters).'; $('platformReviewName')?.focus(); return; }
-      if (!/^[^\\s@]+@gmail\\.com$/i.test(email)) { if (status) status.textContent = 'Please enter a valid Gmail address for verification.'; $('platformReviewEmail')?.focus(); return; }
+      if (!/^[^\s@]+@gmail\.com$/i.test(email)) { if (status) status.textContent = 'Please enter a valid Gmail address for verification.'; $('platformReviewEmail')?.focus(); return; }
       if (review.length < 5 || review.length > 800) { if (status) status.textContent = 'Your review must be between 5 and 800 characters.'; $('platformReviewText')?.focus(); return; }
       if (button) { button.disabled = true; button.textContent = 'Sending verification…'; }
       if (status) status.textContent = 'Sending a secure verification link to your Gmail…';
