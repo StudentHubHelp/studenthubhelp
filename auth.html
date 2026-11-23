@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+(function(){
+  if(location.hostname !== "studenthubhelp.github.io") return;
+  if(!location.pathname.startsWith("/studenthubhelp/")) return;
+  const target = new URL("https://studenthubhelp.in/auth.html");
+  target.search = location.search;
+  target.hash = location.hash;
+  location.replace(target.href);
+})();
+</script>
 <meta property="og:type" content="website">
 
 <meta property="og:description" content="Secure StudentHubHelp login for students and property owners.">
@@ -1581,7 +1591,16 @@ let routing = false;
 let listenerReady = false;
 let recoveryMode = false;
 let recoveryEventSeen = false;
-const recoveryHashAtLoad = new URLSearchParams(location.hash.slice(1)).get("type") === "recovery";
+const recoveryQueryAtLoad = new URLSearchParams(location.search);
+const recoveryHashParamsAtLoad = new URLSearchParams(location.hash.slice(1));
+const recoveryHashAtLoad =
+  recoveryQueryAtLoad.get("mode") === "reset" ||
+  recoveryQueryAtLoad.has("code") ||
+  recoveryQueryAtLoad.get("type") === "recovery" ||
+  recoveryQueryAtLoad.get("error_code") === "otp_expired" ||
+  recoveryHashParamsAtLoad.get("type") === "recovery" ||
+  recoveryHashParamsAtLoad.has("access_token") ||
+  recoveryHashParamsAtLoad.get("error_code") === "otp_expired";
 let lastSignupEmail = "";
 let pendingGoogleUser = null;
 let panelChanging = false;
@@ -3832,7 +3851,15 @@ document.addEventListener(
         }
 
         loading(false);
-        msg("This password reset link is invalid or has expired. Please return to Login and request a new reset link.");
+        const recoveryErrorCode =
+          recoveryQueryAtLoad.get("error_code") ||
+          recoveryHashParamsAtLoad.get("error_code") ||
+          "";
+        if(recoveryErrorCode === "otp_expired"){
+          msg("This password reset link has expired or has already been used. Please return to Login and request a new reset link.");
+        }else{
+          msg("We couldn't verify this password reset link. Please return to Login and request a new reset link.");
+        }
 
       },4000);
 
