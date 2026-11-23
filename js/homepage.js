@@ -240,9 +240,12 @@
 
   async function init() {
     $('footerYear') && ($('footerYear').textContent = String(new Date().getFullYear()));
+    bindPlatformReviewForm();
     if (!window.supabase?.createClient) {
       showStatsUnavailable();
       showListingsUnavailable('The listing service is temporarily unavailable.');
+      const reviewGrid = $('reviewCarousel');
+      if (reviewGrid) reviewGrid.innerHTML = '<article class="review-card review-card-empty"><h3>Reviews are temporarily unavailable.</h3><p>Please try again shortly.</p></article>';
       return;
     }
     const db = window.__SHH_HOME_DB__ || (window.__SHH_HOME_DB__ = window.supabase.createClient(
