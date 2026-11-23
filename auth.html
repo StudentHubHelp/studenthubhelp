@@ -1593,14 +1593,18 @@ let recoveryMode = false;
 let recoveryEventSeen = false;
 const recoveryQueryAtLoad = new URLSearchParams(location.search);
 const recoveryHashParamsAtLoad = new URLSearchParams(location.hash.slice(1));
-const recoveryHashAtLoad =
-  recoveryQueryAtLoad.get("mode") === "reset" ||
+const recoveryHasErrorAtLoad =
+  recoveryQueryAtLoad.get("error_code") === "otp_expired" ||
+  recoveryHashParamsAtLoad.get("error_code") === "otp_expired";
+const recoveryHasSessionCallbackAtLoad =
   recoveryQueryAtLoad.has("code") ||
   recoveryQueryAtLoad.get("type") === "recovery" ||
-  recoveryQueryAtLoad.get("error_code") === "otp_expired" ||
   recoveryHashParamsAtLoad.get("type") === "recovery" ||
-  recoveryHashParamsAtLoad.has("access_token") ||
-  recoveryHashParamsAtLoad.get("error_code") === "otp_expired";
+  recoveryHashParamsAtLoad.has("access_token");
+const recoveryHashAtLoad =
+  recoveryQueryAtLoad.get("mode") === "reset" ||
+  recoveryHasSessionCallbackAtLoad ||
+  recoveryHasErrorAtLoad;
 let lastSignupEmail = "";
 let pendingGoogleUser = null;
 let panelChanging = false;
@@ -3840,7 +3844,8 @@ document.addEventListener(
 
         if(
           !sessionError &&
-          recoveryHashAtLoad &&
+          recoveryHasSessionCallbackAtLoad &&
+          !recoveryHasErrorAtLoad &&
           recoverySession?.session?.user
         ){
 
