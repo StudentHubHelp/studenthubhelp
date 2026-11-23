@@ -255,7 +255,7 @@ async function main() {
       seen.add(key);
       const dir = path.join(ROOT, 'properties', type, slug);
       await mkdir(dir, { recursive: true });
-      const name = row.name || row.service_name || row.title || 'Property Details';
+      const name = row.service_name || row.name || row.title || 'Property Details';
       const html = buildHtml({
         type, slug, name,
         city: row.city,
