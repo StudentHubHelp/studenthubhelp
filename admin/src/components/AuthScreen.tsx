@@ -92,6 +92,9 @@ function readableAuthError(error: any): string {
   if (lower.includes('not supported') || lower.includes('webauthn')) {
     return 'This browser or device does not support passkey / biometric login.';
   }
+  if (lower.includes('session_not_found') || lower.includes('session is no longer valid')) {
+    return 'Your sign-in session expired or was replaced. Please sign in again.';
+  }
   if (lower.includes('cancel') || lower.includes('abort')) {
     return 'Biometric verification was cancelled. Try again.';
   }
@@ -103,8 +106,19 @@ function readableAuthError(error: any): string {
 
 async function verifyAdminUser(client: typeof supabase) {
   const { data: userData, error: userError } = await client.auth.getUser();
-  if (userError || !userData.user?.id || !userData.user.email) {
-    throw new Error('Unable to verify the signed-in account.');
+  if (userError) {
+    console.error('[Director Auth] getUser verification failed:', {
+      status: userError.status,
+      code: userError.code,
+      message: userError.message,
+    });
+    if (userError.code === 'session_not_found') {
+      throw new Error('Your sign-in session is no longer valid. Please sign in again.');
+    }
+    throw userError;
+  }
+  if (!userData.user?.id || !userData.user.email) {
+    throw new Error('Supabase did not return a verified signed-in account. Please sign in again.');
   }
 
   const { data: profile, error: profileError } = await client
@@ -118,7 +132,7 @@ async function verifyAdminUser(client: typeof supabase) {
   const role = String(profile?.role || '').trim().toLowerCase();
   const status = String(profile?.status || 'active').trim().toLowerCase();
   if (role !== ADMIN_ROLE || status !== 'active') {
-    await client.auth.signOut();
+    await client.auth.signOut({ scope: 'local' });
     throw new Error('Access denied. Only an active admin account can enter the Director Control Center.');
   }
 
@@ -246,7 +260,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
       // Admin authorization is still enforced by verifyAdminUser().
       await finishAdminLogin(supabase, data.user.email);
     } catch (err: any) {
-      try { await supabase.auth.signOut(); } catch { /* cleanup only */ }
+      try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* cleanup only */ }
       setErrorMsg(readableAuthError(err));
     } finally {
       setLoading(false);
@@ -295,7 +309,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
       // A passkey is already the complete login method. Do not start TOTP/MFA after it.
       await finishAdminLogin(passkeyClient, verified.data.user.email);
     } catch (err: any) {
-      try { await passkeyClient.auth.signOut(); } catch { /* cleanup only */ }
+      try { await passkeyClient.auth.signOut({ scope: 'local' }); } catch { /* cleanup only */ }
       setInfoMsg(null);
       setErrorMsg(readableAuthError(err));
     } finally {
@@ -346,7 +360,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLoginSuccess }) => {
           </button>
           <button
             type="button"
-            onClick={async () => { try { await supabase.auth.signOut(); } finally { setMfaMode('none'); setMfaCode(''); setInfoMsg(null); } }}
+            onClick={async () => { try { await supabase.auth.signOut({ scope: 'local' }); } finally { setMfaMode('none'); setMfaCode(''); setInfoMsg(null); } }}
             className="w-full text-xs text-slate-500 hover:text-white"
           >
             Cancel and sign out

@@ -33,6 +33,10 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+      // Keep Director auth isolated from public-site/student/owner Supabase clients
+      // that share this browser origin and otherwise use the same default storage key.
+      storageKey: 'shh-director-admin-auth-v1',
+      detectSessionInUrl: false,
       experimental: { passkey: true },
     },
   }
