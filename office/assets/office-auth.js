@@ -9,7 +9,7 @@
   const status = (message, ok=false) => { $("status").textContent=message; $("status").className="status"+(ok?" success":""); };
   $("year").textContent = new Date().getFullYear();
   let currentFactorId = null;
-  let isEnrollment = false;
+  const isUuid = value => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
   async function verifyOwnerSession() {
     const { data: { session } } = await client.auth.getSession();
@@ -29,8 +29,8 @@
   async function startMfa() {
     const { data: { totp }, error } = await client.auth.mfa.enroll({ factorType:"totp", friendlyName:"StudentHubHelp Office" });
     if (error) throw error;
+    if (!isUuid(totp?.id)) throw new Error("Authenticator setup returned an invalid factor ID. Please retry sign-in.");
     currentFactorId = totp.id;
-    isEnrollment = true;
     $("mfa-title").textContent = "Set up your authenticator";
     $("mfa-copy").textContent = "Scan this QR code in Google Authenticator, Microsoft Authenticator or another TOTP app. Then enter its 6-digit code.";
     $("qr-image").src = totp.qr_code;
@@ -41,14 +41,13 @@
   }
 
   async function challengeExistingFactor(factor) {
+    if (!isUuid(factor?.id)) throw new Error("Your authenticator factor ID is invalid. Please contact support before changing MFA settings.");
     currentFactorId = factor.id;
-    isEnrollment = false;
     $("mfa-title").textContent = "Verify your identity";
     $("mfa-copy").textContent = "Enter the current 6-digit code from your authenticator app.";
     $("qr-wrap").hidden = true;
     $("mfa-panel").hidden = false;
     $("totp-code").focus();
-    return data.id;
   }
 
   $("login-form").addEventListener("submit", async event => {
@@ -59,7 +58,7 @@
       if (error) throw error;
       const { data: factors, error: factorError } = await client.auth.mfa.listFactors();
       if (factorError) throw factorError;
-      const verified = factors.totp.filter(f => f.status === "verified");
+      const verified = (factors?.totp || []).filter(f => f.status === "verified");
       if (verified.length) {
         await challengeExistingFactor(verified[0]);
       } else {
@@ -83,6 +82,7 @@
     const button=$("mfa-form").querySelector("button"); button.disabled=true; status("Verifying authenticator code…");
     try {
       const code=$("totp-code").value.trim();
+      if (!isUuid(currentFactorId)) throw new Error("Authenticator factor ID is missing or invalid. Please sign in again.");
       const { data: challenge, error: challengeError } = await client.auth.mfa.challenge({ factorId:currentFactorId });
       if (challengeError) throw challengeError;
       const { error: verifyError } = await client.auth.mfa.verify({ factorId:currentFactorId, challengeId:challenge.id, code });
