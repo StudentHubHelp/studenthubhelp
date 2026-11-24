@@ -420,8 +420,27 @@
       const card = node("article", "integration-card");
       const top = node("div", "integration-card-top");
       const heading = node("h3", "", integration.display_name);
-      const state = node("span", "integration-state integration-" + integration.connection_status,
-        titleCase(integration.connection_status).replace(/_/g, " "));
+      let stateClass = integration.connection_status;
+      let stateLabel = titleCase(integration.connection_status).replace(/_/g, " ");
+      if (integration.provider_key === "tavily") {
+        if (!integration.secret_configured) {
+          stateClass = "needs_secret";
+          stateLabel = "Credential missing";
+        } else if (integration.credential_status === "invalid") {
+          stateClass = "needs_secret";
+          stateLabel = "Invalid API key";
+        } else if (integration.credential_status === "unavailable") {
+          stateClass = "needs_secret";
+          stateLabel = "Validation unavailable";
+        } else if (integration.credential_valid && integration.free_plan_allowed) {
+          stateClass = "connected";
+          stateLabel = "Connected · Free plan";
+        } else if (integration.credential_valid) {
+          stateClass = "disabled";
+          stateLabel = "Paid plan blocked";
+        }
+      }
+      const state = node("span", "integration-state integration-" + stateClass, stateLabel);
       top.append(heading, state);
       card.append(top);
       card.append(node("p", "integration-note", integration.notes || ""));
@@ -429,8 +448,19 @@
       meta.append(node("span", "", "Mode: " + titleCase(integration.access_mode)));
       if (integration.secret_reference) {
         meta.append(node("span", "", "Secret reference: " + integration.secret_reference));
-        meta.append(node("span", integration.secret_configured ? "credential-present" : "credential-missing",
-          integration.secret_configured ? "Credential present · validation pending" : "Credential missing"));
+        if (integration.provider_key === "tavily") {
+          const credentialText = !integration.secret_configured ? "Credential missing"
+            : integration.credential_status === "invalid" ? "API key invalid"
+            : integration.credential_status === "unavailable" ? "Credential check unavailable"
+            : integration.free_plan_allowed ? "API key valid · Free plan verified"
+            : integration.credential_valid ? "API key valid · paid plan blocked" : "Credential check pending";
+          meta.append(node("span", integration.free_plan_allowed ? "credential-present" : "credential-missing", credentialText));
+          if (integration.provider_plan) meta.append(node("span", "", "Tavily plan: " + integration.provider_plan));
+          if (integration.provider_key_limit) meta.append(node("span", "", "Tavily usage: " + Number(integration.provider_key_usage || 0) + " / " + Number(integration.provider_key_limit) + " credits"));
+        } else {
+          meta.append(node("span", integration.secret_configured ? "credential-present" : "credential-missing",
+            integration.secret_configured ? "Credential present · validation pending" : "Credential missing"));
+        }
       } else {
         meta.append(node("span", "credential-present", "Server-managed connection"));
       }
