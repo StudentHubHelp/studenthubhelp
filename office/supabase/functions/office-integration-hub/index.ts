@@ -79,11 +79,50 @@ Deno.serve(async (req: Request) => {
       const result = await rpc(supabaseUrl, serviceKey, "office_integration_overview", { p_user_id: user.id });
       if (!result.ok) return respond({ ok: false, code: "owner_access_denied" }, 403, origin);
       const data = result.data || {};
-      data.integrations = (data.integrations || []).map((integration: any) => ({
-        ...integration,
-        secret_configured: integration.secret_reference
-          ? Boolean(Deno.env.get(integration.secret_reference))
-          : integration.provider_key === "supabase"
+      data.integrations = await Promise.all((data.integrations || []).map(async (integration: any) => {
+        const secret = integration.secret_reference ? Deno.env.get(integration.secret_reference) || "" : "";
+        const base = {
+          ...integration,
+          secret_configured: integration.secret_reference ? Boolean(secret) : integration.provider_key === "supabase"
+        };
+        if (integration.provider_key !== "tavily") return base;
+        if (!secret) return {
+          ...base, credential_valid: false, credential_status: "missing",
+          free_plan_allowed: false, paygo_enabled: false
+        };
+        try {
+          const usageResponse = await fetch("https://api.tavily.com/usage", {
+            method: "GET",
+            headers: { Authorization: "Bearer " + secret },
+            signal: AbortSignal.timeout(10000)
+          });
+          if (!usageResponse.ok) return {
+            ...base,
+            credential_valid: false,
+            credential_status: usageResponse.status === 401 || usageResponse.status === 403 ? "invalid" : "unavailable",
+            free_plan_allowed: false,
+            paygo_enabled: false
+          };
+          const usage = await usageResponse.json();
+          const plan = String(usage.account?.current_plan || "");
+          const paygoLimit = Number(usage.account?.paygo_limit || 0);
+          const freePlanAllowed = ["researcher", "free"].includes(plan.toLowerCase()) && paygoLimit === 0;
+          return {
+            ...base,
+            credential_valid: true,
+            credential_status: freePlanAllowed ? "valid_free" : "paid_plan_blocked",
+            provider_plan: plan,
+            free_plan_allowed: freePlanAllowed,
+            paygo_enabled: paygoLimit > 0,
+            provider_key_usage: Number(usage.key?.usage || 0),
+            provider_key_limit: Number(usage.key?.limit || 0)
+          };
+        } catch {
+          return {
+            ...base, credential_valid: null, credential_status: "unavailable",
+            free_plan_allowed: false, paygo_enabled: false
+          };
+        }
       }));
       return respond({ ok: true, data }, 200, origin);
     }
