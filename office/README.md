@@ -101,3 +101,11 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 - Edge Function: `office-report-center`.
 - Report docs: `office/reports/README.md`.
 - Migration: `supabase/migrations/20261124075647_office_phase_10_dashboard_reporting.sql`.
+
+
+## Phase 11 — Security & test assertions
+- Added a non-destructive SQL assertion suite for Office schema grants, RLS, SECURITY DEFINER RPC grants/search_path, employee activation state, integration execution flags and Gemini fail-closed state.
+- Hardened `office-auth-check` to also require the JWT subject to match the user returned by Supabase Auth.
+- Full audit notes: `office/security/phase11-audit.md`.
+- SQL assertions: `office/tests/phase11-security-assertions.sql`.
+- Existing website/Admin SECURITY DEFINER warnings and global Auth settings are documented but deliberately not changed as part of this isolated Office scope.
