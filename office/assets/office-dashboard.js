@@ -194,7 +194,13 @@
       card.append(node("p", "integration-note", integration.notes || ""));
       const meta = node("div", "integration-meta");
       meta.append(node("span", "", "Mode: " + titleCase(integration.access_mode)));
-      if (integration.secret_reference) meta.append(node("span", "", "Secret: " + integration.secret_reference));
+      if (integration.secret_reference) {
+        meta.append(node("span", "", "Secret reference: " + integration.secret_reference));
+        meta.append(node("span", integration.secret_configured ? "credential-present" : "credential-missing",
+          integration.secret_configured ? "Credential present · validation pending" : "Credential missing"));
+      } else {
+        meta.append(node("span", "credential-present", "Server-managed connection"));
+      }
       card.append(meta);
       const scopes = node("div", "integration-scopes");
       (integration.allowed_scopes || []).forEach(scope => scopes.append(node("span", "integration-scope", titleCase(scope))));
