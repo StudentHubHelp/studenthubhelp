@@ -868,15 +868,15 @@ function renderCompare(){
 async function loadAccount(){
   const {data:{session},error:sessionError}=await supabaseClient.auth.getSession();
   if(sessionError)console.error(sessionError);
-  if(!session?.user){window.location.href="auth.html";return false}
+  if(!session?.user){window.location.replace("auth.html");return false}
   currentUser=session.user;
   hydrateStudentLocalState();
   const {data:profile,error}=await supabaseClient.from("profiles").select("id,full_name,phone,email,address,role").eq("id",currentUser.id).maybeSingle();
   if(error){console.error("Profile error:",error);showToast("Unable to load your profile.");return false}
   if(!profile?.role){document.body.innerHTML='<div class="min-h-screen flex items-center justify-center p-6 bg-white text-black"><div class="card p-8 rounded-3xl max-w-lg text-center"><div class="text-4xl">⚠️</div><h1 class="text-xl font-black mt-4">Profile role not found</h1><p class="text-black/60 mt-3">Your account role could not be verified. Please contact the administrator.</p></div></div>';return false}
   const role=String(profile.role).toLowerCase().trim();
-  if(role==="admin"){location.href="admin-dashboard.html";return false}
-  if(role==="owner"){location.href="owner-dashboard.html";return false}
+  if(role==="admin"){location.replace("admin-dashboard.html");return false}
+  if(role==="owner"){location.replace("owner-dashboard.html");return false}
   if(role!=="student"){document.body.innerHTML='<div class="min-h-screen flex items-center justify-center p-6 bg-white text-black"><div class="card p-8 rounded-3xl max-w-lg text-center"><div class="text-4xl">🔐</div><h1 class="text-xl font-black mt-4">Access Restricted</h1><p class="text-black/60 mt-3">Your account does not have student access.</p></div></div>';return false}
   currentProfile=profile;renderProfile();return true
 }
@@ -1051,6 +1051,12 @@ async function init(){
   renderRecommended();renderNotifications();subscribeRealtime();
   $("dashboardBoot").textContent="Dashboard ready";
 }
+window.addEventListener("pageshow",event=>{
+  if(event.persisted){
+    document.documentElement.style.visibility="hidden";
+    window.location.reload();
+  }
+});
 init();
 </script>
 
