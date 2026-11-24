@@ -117,3 +117,7 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 - The Office Pages project still uses `feature/office-phase-3` as its production branch. No production branch change has been made.
 - The Pages custom-domain list currently contains only `studenthubhelp-office.pages.dev`; `office.studenthubhelp.in` is not yet attached.
 - Final go-live is intentionally held until the consolidated acceptance tests, provider-secret setup (if needed), custom-domain binding and explicit Owner cutover approval are complete.
+
+
+## Phase status
+See `office/PHASES.md` for the consolidated 12-phase status, hard safety gates and remaining production launch steps.
