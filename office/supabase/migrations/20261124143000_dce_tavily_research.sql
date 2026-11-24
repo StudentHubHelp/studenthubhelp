@@ -35,7 +35,7 @@ begin
     where role_key='data_collection_executive' and status='active'
   ) then raise exception using errcode='22023', message='employee_role_unavailable'; end if;
 
-  perform pg_advisory_xact_lock(hashtext('office:tavily:' || p_user_id::text));
+  perform pg_advisory_xact_lock(hashtext('office:tavily:' || p_user_id::text)::bigint);
   select coalesce(sum(credits_used),0)::integer into v_month_used
   from office.office_external_api_usage where provider_key='tavily' and usage_month=v_month;
   select coalesce(max(credits_used),0)::integer into v_day_used
