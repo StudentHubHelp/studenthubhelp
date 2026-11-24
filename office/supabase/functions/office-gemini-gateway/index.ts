@@ -105,8 +105,8 @@ Deno.serve(async (req: Request) => {
 
     const estimatedInputTokens = Math.max(
       64,
-      Math.ceil(prompt.length / 2) + 64,
-      Math.ceil(new TextEncoder().encode(prompt).length / 3) + 64
+      Math.ceil(prompt.length * 0.75) + 64,
+      Math.ceil(new TextEncoder().encode(prompt).length / 2) + 64
     );
     const reservation = await rpc(supabaseUrl, serviceKey, "office_gemini_reserve", {
       p_user_id: user.id,
