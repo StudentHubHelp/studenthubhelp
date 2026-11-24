@@ -2,6 +2,12 @@
   const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT";
   const CONTROL_API = SUPABASE_URL + "/functions/v1/office-control-api";
+  const GM_API = SUPABASE_URL + "/functions/v1/office-general-manager";
+  const EMPLOYEE_API = SUPABASE_URL + "/functions/v1/office-employee-agent";
+  const INTEGRATION_API = SUPABASE_URL + "/functions/v1/office-integration-hub";
+  const APPROVAL_API = SUPABASE_URL + "/functions/v1/office-approval-center";
+  const REPORT_API = SUPABASE_URL + "/functions/v1/office-report-center";
+  const QUOTA_API = SUPABASE_URL + "/functions/v1/office-gemini-gateway";
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -58,21 +64,417 @@
     return result.data || {};
   }
 
+  async function gmApi(action, payload = {}) {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(GM_API, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + session.access_token,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) {
+      const messages = {
+        gemini_gateway_disabled: "Gemini is safely disabled until its Free Tier key and quota limits are configured.",
+        gemini_secret_not_configured: "Gemini API key is not configured in Supabase Edge Function Secrets yet.",
+        free_tier_confirmation_required: "Free Tier project confirmation is still pending.",
+        free_tier_caps_not_configured: "Project-specific Gemini RPM, TPM and daily caps are not configured yet.",
+        task_must_be_queued: "Only queued tasks can be planned by the General Manager.",
+        gm_plan_validation_failed: "The proposed plan did not pass safety validation. No plan was saved.",
+        owner_access_denied: "This account is not authorized for Office access."
+      };
+      if (response.status === 401 || response.status === 428) {
+        await client.auth.signOut();
+        location.replace("./login.html");
+      }
+      throw new Error(messages[result.code] || "General Manager request failed. Please try again later.");
+    }
+    return result.data || {};
+  }
+
+  async function employeeApi(action, payload = {}) {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(EMPLOYEE_API, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + session.access_token,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) {
+      const messages = {
+        gemini_gateway_disabled: "Gemini is safely disabled until its Free Tier key and quota limits are configured.",
+        gemini_secret_not_configured: "Gemini API key is not configured in Supabase Edge Function Secrets yet.",
+        free_tier_confirmation_required: "Free Tier project confirmation is still pending.",
+        free_tier_caps_not_configured: "Project-specific Gemini RPM, TPM and daily caps are not configured yet.",
+        quota_guard_disabled: "The Gemini quota guard is currently disabled.",
+        paid_billing_mode_forbidden: "Only the Free Tier billing mode is permitted.",
+        gm_plan_required: "The General Manager must create a draft plan before an employee can prepare work.",
+        role_step_mismatch: "This employee role is not assigned to the selected General Manager step.",
+        task_must_be_queued: "Only queued tasks can receive employee drafts.",
+        employee_draft_validation_failed: "The employee draft did not pass safety validation. Nothing was saved.",
+        employee_role_unavailable: "This employee role is paused or disabled."
+      };
+      if (response.status === 401 || response.status === 428) {
+        await client.auth.signOut();
+        location.replace("./login.html");
+      }
+      throw new Error(messages[result.code] || "Employee request failed. Please try again later.");
+    }
+    return result.data || {};
+  }
+
+  async function integrationApi(action, payload = {}) {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(INTEGRATION_API, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + session.access_token,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) {
+      if (response.status === 401 || response.status === 428) {
+        await client.auth.signOut();
+        location.replace("./login.html");
+      }
+      throw new Error("Unable to load the secure integration registry.");
+    }
+    return result.data || {};
+  }
+
+  async function quotaApi() {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const response = await fetch(QUOTA_API, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + session.access_token, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "status" })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) throw new Error("Unable to load Gemini quota status.");
+    return result.data || {};
+  }
+
+  async function reportApi() {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(REPORT_API, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + session.access_token, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "overview" })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) throw new Error("Unable to load Office reports.");
+    return result.data || {};
+  }
+
+  function renderQuota(data = {}) {
+    const ready = data.ready === true && data.api_key_configured === true;
+    $("quota-status-pill").textContent = ready ? "Ready · Free Tier" : "Locked safely";
+    $("quota-status-pill").className = "pill " + (ready ? "quota-ready" : "quota-locked");
+    const panel = $("quota-panel");
+    panel.replaceChildren();
+    const details = node("div", "quota-details");
+    const model = node("div", "quota-model");
+    model.append(node("strong", "", data.model || "Gemini model not selected"));
+    model.append(node("small", "", "Billing mode: " + titleCase(data.billing_mode || "unknown")));
+    details.append(model);
+    const rows = [
+      ["Gateway", data.gateway_enabled ? "Enabled" : "Disabled"],
+      ["Quota guard", data.quota_guard_enabled ? "Enabled" : "Disabled"],
+      ["Free Tier confirmation", data.free_tier_confirmed ? "Confirmed" : "Pending"],
+      ["API key", data.api_key_configured ? "Present · validation pending" : "Missing"],
+      ["Daily requests", (data.daily_used ?? 0) + " / " + (data.daily_app_cap ?? "Not configured")],
+      ["Requests per minute", (data.rpm_used ?? 0) + " / " + (data.rpm_app_cap ?? "Not configured")],
+      ["Tokens per minute reserved", (data.tpm_reserved ?? 0) + " / " + (data.tpm_app_cap ?? "Not configured")],
+      ["Max output tokens", data.max_output_tokens ?? "Not configured"]
+    ];
+    rows.forEach(([label,value]) => {
+      const row = node("div", "quota-row");
+      row.append(node("span", "", label), node("strong", "", value));
+      details.append(row);
+    });
+    panel.append(details);
+    panel.append(node("p", "quota-safety-note", ready
+      ? "Quota controls are configured. No employee worker is automatically running."
+      : "Gemini requests are blocked until the server-side secret, Owner Free Tier confirmation and conservative project-specific RPM/TPM/RPD caps are all configured. No API request is sent while locked."));
+  }
+
+  function renderReport(data = {}) {
+    const usage = data.usage_7d || {};
+    const number = value => Number(value || 0).toLocaleString("en-IN");
+    $("report-requests").textContent = number(usage.requests);
+    $("report-input-tokens").textContent = number(usage.input_tokens);
+    $("report-output-tokens").textContent = number(usage.output_tokens);
+    $("report-estimated-cost").textContent = "$" + Number(usage.estimated_cost || 0).toFixed(4);
+
+    const daily = data.daily_usage_7d || [];
+    const maxRequests = Math.max(1, ...daily.map(item => Number(item.requests || 0)));
+    const chart = $("daily-usage-chart");
+    chart.replaceChildren();
+    daily.forEach(item => {
+      const row = node("div", "daily-bar-row");
+      row.append(node("span", "daily-bar-label", item.day));
+      const track = node("div", "daily-bar-track");
+      const bar = node("div", "daily-bar-fill");
+      bar.style.width = (Number(item.requests || 0) / maxRequests * 100) + "%";
+      track.append(bar);
+      row.append(track, node("strong", "daily-bar-value", number(item.requests)));
+      chart.append(row);
+    });
+    if (!daily.length) chart.append(node("div", "empty-state", "No AI requests recorded in this period."));
+
+    const renderRows = (targetId, rows, labelKey, valueKey) => {
+      const target = $(targetId);
+      target.replaceChildren();
+      if (!rows?.length) {
+        target.append(node("div", "report-empty", "No records yet."));
+        return;
+      }
+      rows.forEach(item => {
+        const row = node("div", "report-row");
+        row.append(node("span", "", titleCase(item[labelKey])));
+        row.append(node("strong", "", number(item[valueKey])));
+        target.append(row);
+      });
+    };
+    renderRows("employee-status-report", data.employee_status || [], "status", "count");
+    renderRows("task-status-report", Object.entries(data.task_counts || {}).map(([status,count])=>({status,count})), "status", "count");
+
+    const providers = $("provider-usage-report");
+    providers.replaceChildren();
+    if (!(data.provider_usage_7d || []).length) providers.append(node("div", "report-empty", "No AI provider usage recorded."));
+    (data.provider_usage_7d || []).forEach(item => {
+      const row = node("div", "report-row provider-report-row");
+      const left = node("div", "");
+      left.append(node("strong", "", item.provider + " · " + item.model));
+      left.append(node("small", "", number(item.input_tokens) + " input · " + number(item.output_tokens) + " output tokens"));
+      row.append(left,node("strong", "", number(item.requests) + " req"));
+      providers.append(row);
+    });
+
+    const activity = $("recent-activity-report");
+    activity.replaceChildren();
+    if (!(data.recent_activity || []).length) activity.append(node("div", "report-empty", "No recent activity recorded."));
+    (data.recent_activity || []).forEach(item => {
+      const row = node("div", "activity-report-row");
+      row.append(node("strong", "", item.message || titleCase(item.event_type)));
+      row.append(node("small", "", (item.task_key || "") + " · " + dateText(item.created_at)));
+      activity.append(row);
+    });
+  }
+
+  async function approvalApi(action, payload = {}) {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(APPROVAL_API, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + session.access_token,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) {
+      const messages = {
+        rejection_note_required: "Add a short reason before rejecting this proposal.",
+        approval_already_reviewed: "This approval has already been reviewed.",
+        approval_expired: "This approval request has expired."
+      };
+      if (response.status === 401 || response.status === 428) {
+        await client.auth.signOut();
+        location.replace("./login.html");
+      }
+      throw new Error(messages[result.code] || "Approval request failed. Please refresh and try again.");
+    }
+    return result.data || {};
+  }
+
+  function renderApprovals(data = {}) {
+    const list = $("approval-list");
+    list.replaceChildren();
+    const approvals = data.approvals || [];
+    const pending = data.pending_count ?? approvals.filter(item => item.status === "pending").length;
+    $("approval-count-pill").textContent = pending + " pending";
+    if (!approvals.length) {
+      list.append(node("div", "empty-state", "No approval requests in this view."));
+      return;
+    }
+    approvals.forEach(approval => {
+      const card = node("article", "approval-card");
+      const top = node("div", "approval-card-top");
+      const heading = node("div", "approval-card-heading");
+      heading.append(node("strong", "", approval.action_summary));
+      heading.append(node("small", "", approval.task_key + " · " + approval.task_title));
+      top.append(heading, node("span", "approval-state approval-" + approval.status, titleCase(approval.status)));
+      card.append(top);
+      const meta = node("div", "approval-meta");
+      meta.append(node("span", "", approval.action_type));
+      meta.append(node("span", "", "Requested " + dateText(approval.requested_at)));
+      if (approval.expires_at) meta.append(node("span", "", "Expires " + dateText(approval.expires_at)));
+      card.append(meta);
+      const payload = node("pre", "approval-payload", JSON.stringify(approval.proposed_payload || {}, null, 2));
+      card.append(payload);
+      if (approval.status === "pending") {
+        const note = node("textarea", "approval-note-input");
+        note.rows = 2;
+        note.maxLength = 1000;
+        note.placeholder = "Owner review note (required when rejecting)…";
+        card.append(note);
+        const actions = node("div", "approval-actions");
+        addAction(actions, "Approve proposal", "small-action approval-approve", button =>
+          reviewApproval(approval, "approved", note.value, button));
+        addAction(actions, "Reject", "small-action approval-reject", button =>
+          reviewApproval(approval, "rejected", note.value, button));
+        card.append(actions);
+      } else if (approval.status === "approved") {
+        card.append(node("p", "approval-outcome", "Owner approved this proposal. No external action has been executed; Phase 10 execution remains separate."));
+        if (approval.review_note) card.append(node("small", "approval-review-note", "Review note: " + approval.review_note));
+      } else {
+        if (approval.review_note) card.append(node("small", "approval-review-note", "Review note: " + approval.review_note));
+      }
+      list.append(card);
+    });
+  }
+
+  async function reviewApproval(approval, decision, note, button) {
+    if (decision === "rejected" && !String(note || "").trim()) {
+      status("Add a short reason before rejecting this proposal.");
+      return;
+    }
+    const prompt = decision === "approved"
+      ? "Record Owner approval for this proposal? This will NOT execute the action."
+      : "Reject this proposal? No external action will be executed.";
+    if (!window.confirm(prompt)) return;
+    button.disabled = true;
+    try {
+      const result = await approvalApi("review", {
+        approval_id: approval.id, decision, review_note: note
+      });
+      status(result.message || "Owner decision recorded. No external action was executed.", true);
+      await loadWorkspace();
+    } catch (error) {
+      status(error.message);
+      button.disabled = false;
+    }
+  }
+
+  async function loadApprovals() {
+    try {
+      const result = await approvalApi("list", { status: $("approval-filter").value });
+      renderApprovals(result);
+    } catch (error) { status(error.message); }
+  }
+
+  function renderIntegrations(data = {}) {
+    const grid = $("integration-grid");
+    grid.replaceChildren();
+    const integrations = data.integrations || [];
+    const actions = data.actions || [];
+    $("integration-pending-pill").textContent = (data.pending_approvals ?? 0) + " pending approvals";
+    if (!integrations.length) {
+      grid.append(node("div", "empty-state", "No integrations are registered."));
+      return;
+    }
+    const actionLabels = {
+      read_office_metrics: "Read Office metrics",
+      read_listing_aggregates: "Read listing aggregates",
+      create_patch_proposal: "Create patch proposal",
+      create_pull_request: "Create pull request",
+      create_preview_deployment: "Preview deployment",
+      deploy_production: "Production deployment",
+      create_email_draft: "Email draft",
+      send_email_campaign: "Send email campaign",
+      create_post_draft: "Instagram post draft",
+      publish_post: "Publish Instagram post",
+      keyword_research: "Keyword research",
+      site_audit: "SEO site audit",
+      publish_metadata: "Publish metadata"
+    };
+    integrations.forEach(integration => {
+      const card = node("article", "integration-card");
+      const top = node("div", "integration-card-top");
+      const heading = node("h3", "", integration.display_name);
+      const state = node("span", "integration-state integration-" + integration.connection_status,
+        titleCase(integration.connection_status).replace(/_/g, " "));
+      top.append(heading, state);
+      card.append(top);
+      card.append(node("p", "integration-note", integration.notes || ""));
+      const meta = node("div", "integration-meta");
+      meta.append(node("span", "", "Mode: " + titleCase(integration.access_mode)));
+      if (integration.secret_reference) {
+        meta.append(node("span", "", "Secret reference: " + integration.secret_reference));
+        meta.append(node("span", integration.secret_configured ? "credential-present" : "credential-missing",
+          integration.secret_configured ? "Credential present · validation pending" : "Credential missing"));
+      } else {
+        meta.append(node("span", "credential-present", "Server-managed connection"));
+      }
+      card.append(meta);
+      const scopes = node("div", "integration-scopes");
+      (integration.allowed_scopes || []).forEach(scope => scopes.append(node("span", "integration-scope", titleCase(scope))));
+      card.append(scopes);
+      const providerActions = actions.filter(action => action.provider_key === integration.provider_key);
+      if (providerActions.length) {
+        const list = node("div", "integration-action-list");
+        providerActions.forEach(action => {
+          const line = node("div", "integration-action-row");
+          line.append(node("span", "integration-action-name", actionLabels[action.action_key] || titleCase(action.action_key)));
+          const mode = action.requires_approval ? "Owner approval" : titleCase(action.execution_mode);
+          const stateText = action.execution_enabled ? "Enabled" : action.proposal_enabled ? mode + " · proposal only" : mode + " · not enabled";
+          line.append(node("small", "integration-action-state", stateText));
+          list.append(line);
+        });
+        card.append(list);
+      }
+      grid.append(card);
+    });
+  }
+
   function renderMetrics(counts = {}) {
     $("metric-total").textContent = counts.total ?? 0;
     $("metric-queued").textContent = counts.queued ?? 0;
     $("metric-running").textContent = counts.running ?? 0;
     $("metric-completed").textContent = counts.completed ?? 0;
+    $("metric-waiting-approval").textContent = counts.waiting_approval ?? 0;
+    $("metric-failed").textContent = counts.failed ?? 0;
   }
 
   function addAction(parent, label, className, handler) {
     const button = node("button", className, label);
     button.type = "button";
-    button.addEventListener("click", handler);
+    button.addEventListener("click", () => handler(button));
     parent.append(button);
+    return button;
   }
 
-  function renderTasks(tasks = []) {
+  function renderTasks(tasks = [], plans = [], employeeItems = []) {
+    const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
+    const draftMap = new Map((employeeItems || []).map(item => [item.task_id, item.drafts || []]));
     const list = $("task-list");
     list.replaceChildren();
     $("task-total-pill").textContent = tasks.length + (tasks.length === 1 ? " task" : " tasks");
@@ -92,6 +494,10 @@
       meta.append(node("span", "priority priority-" + task.priority, titleCase(task.priority) + " priority"));
       meta.append(node("span", "", "Created " + dateText(task.created_at)));
       const actions = node("div", "task-actions");
+      const gmPlan = planMap.get(task.id);
+      if (task.status === "queued" && !gmPlan) {
+        addAction(actions, "Plan with GM", "small-action gm-action", button => createGmPlan(task, button));
+      }
       if (task.status === "queued" || task.status === "draft") {
         addAction(actions, "Pause", "small-action", () => changeTaskStatus(task.id, "paused"));
         addAction(actions, "Cancel", "small-action danger-action", () => changeTaskStatus(task.id, "cancelled"));
@@ -101,8 +507,71 @@
       }
       addAction(actions, "Activity", "small-action subtle-action", () => loadTaskLogs(task));
       card.append(top, heading, description, meta, actions);
+      if (gmPlan) {
+        const planBox = node("div", "gm-plan-box");
+        const planTop = node("div", "gm-plan-top");
+        planTop.append(node("strong", "gm-plan-heading", "General Manager · Draft plan"));
+        planTop.append(node("span", "gm-risk risk-" + gmPlan.risk_level, titleCase(gmPlan.risk_level) + " risk"));
+        planBox.append(planTop);
+        planBox.append(node("p", "gm-plan-summary", gmPlan.summary));
+        const steps = node("ol", "gm-plan-steps");
+        const taskDrafts = draftMap.get(task.id) || [];
+        (gmPlan.steps || []).forEach((step, stepIndex) => {
+          const li = node("li", "gm-step-item");
+          li.append(node("span", "gm-step-title", step.title + " · " + titleCase(step.role_key)));
+          const draft = taskDrafts.find(item => item.role_key === step.role_key && item.step_index === stepIndex);
+          if (draft) {
+            const draftCard = node("div", "employee-draft-card");
+            draftCard.append(node("strong", "employee-draft-title", draft.title));
+            draftCard.append(node("p", "employee-draft-summary", draft.summary));
+            draftCard.append(node("div", "employee-draft-content", draft.draft_content));
+            const checks = node("ul", "employee-draft-checks");
+            (draft.checks || []).forEach(check => checks.append(node("li", "", check)));
+            draftCard.append(checks);
+            draftCard.append(node("small", "gm-approval-note", "Draft only · Owner approval required · Not executed"));
+            li.append(draftCard);
+          } else if (task.status === "queued") {
+            addAction(li, "Generate employee draft", "small-action employee-action", button =>
+              createEmployeeDraft(task, step.role_key, stepIndex, button));
+          }
+          steps.append(li);
+        });
+        planBox.append(steps);
+        planBox.append(node("small", "gm-approval-note", "Proposal only · Owner approval required · No actions executed"));
+        card.append(planBox);
+      }
       list.append(card);
     });
+  }
+
+  async function createGmPlan(task, button) {
+    button.disabled = true;
+    button.textContent = "Planning…";
+    try {
+      await gmApi("plan_task", { task_id: task.id });
+      status("General Manager draft plan created. Nothing has been executed.", true);
+      await loadWorkspace();
+    } catch (error) {
+      status(error.message);
+      button.disabled = false;
+      button.textContent = "Plan with GM";
+    }
+  }
+
+  async function createEmployeeDraft(task, roleKey, stepIndex, button) {
+    button.disabled = true;
+    button.textContent = "Preparing…";
+    try {
+      await employeeApi("generate_draft", {
+        task_id: task.id, role_key: roleKey, step_index: stepIndex
+      });
+      status(titleCase(roleKey) + " draft created. No external action was performed.", true);
+      await loadWorkspace();
+    } catch (error) {
+      status(error.message);
+      button.disabled = false;
+      button.textContent = "Generate employee draft";
+    }
   }
 
   async function changeTaskStatus(taskId, nextStatus) {
@@ -150,12 +619,22 @@
   async function loadWorkspace() {
     $("refresh-btn").disabled = true;
     try {
-      const [overview, taskResult] = await Promise.all([
+      const [overview, taskResult, planResult, employeeResult, integrationResult, approvalResult, quotaResult, reportResult] = await Promise.all([
         api("overview"),
-        api("list_tasks")
+        api("list_tasks"),
+        gmApi("list_plans"),
+        employeeApi("list_drafts"),
+        integrationApi("overview"),
+        approvalApi("list", { status: $("approval-filter").value }),
+        quotaApi(),
+        reportApi()
       ]);
       renderMetrics(overview.task_counts);
-      renderTasks(taskResult.tasks || []);
+      renderTasks(taskResult.tasks || [], planResult.plans || [], employeeResult.items || []);
+      renderIntegrations(integrationResult);
+      renderApprovals(approvalResult);
+      renderQuota(quotaResult);
+      renderReport(reportResult);
       renderTeam(overview.employees || []);
       status("Secure owner session verified. Task queue is connected.", true);
     } catch (error) {
@@ -187,6 +666,7 @@
   });
 
   $("refresh-btn").addEventListener("click", loadWorkspace);
+  $("approval-filter").addEventListener("change", loadApprovals);
   $("close-logs-btn").addEventListener("click", () => { $("task-logs-panel").hidden = true; });
   $("logout-btn").addEventListener("click", async () => {
     const button = $("logout-btn");

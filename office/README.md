@@ -35,3 +35,89 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 ## Deployment
 - Cloudflare Pages project root remains `office`.
 - The production branch is currently configured separately. Merge/repoint only after the Phase 4 preview has been tested.
+
+
+## Phase 5 — Gemini integration and Free Tier quota guard
+- Gemini calls go through the Supabase Edge Function `office-gemini-gateway`; the browser never receives the Gemini API key.
+- The only allowlisted model is `gemini-2.5-flash-lite` from the existing Office setting. No model fallback, paid route, Google Search grounding, or external tools are enabled.
+- Every generation request requires an AAL2 session, active Owner allowlist, an Edge Function secret named `GEMINI_API_KEY`, explicit Free Tier confirmation, the global quota guard, and positive RPM/TPM/RPD application caps.
+- Quota reservations are serialized with a database advisory lock and enforce rolling one-minute RPM/TPM caps plus a UTC daily request cap. Each completed/failed provider attempt is recorded in `office.office_ai_usage`; prompts and generated content are not written to logs.
+- The gateway is deployed but remains fail-closed: `gemini_gateway_enabled=false`, `gemini_free_tier_confirmed=false`, and the project-specific caps are unset. No Gemini API request can run until the Free Tier limits are confirmed and the owner enables it.
+- Add the API key only in Supabase Dashboard → Edge Functions → Secrets as `GEMINI_API_KEY`; never commit it or paste it into chat. Supabase documents Edge Function secrets here: https://supabase.com/docs/guides/functions/secrets.
+- Exact RPM, TPM and RPD values must be read from this Google AI Studio project's Dashboard → Rate limits. They are project/model-specific and can change; do not copy generic values into app caps.
+- Migration: `supabase/migrations/20261124074103_office_phase_5_gemini_quota_guard.sql`.
+
+
+## Phase 6 — General Manager
+- Owner can request a proposal-only plan for a queued task. The General Manager receives the task text and the eight registered role descriptions/capabilities, then proposes up to eight role-mapped steps.
+- The plan is validated server-side and again by the database before it is saved under `office.office_tasks.result_payload.general_manager_plan`.
+- Plans are proposals only. No child tasks are created, no AI employee is activated, and no external action, listing edit, message, social post or deployment is executed.
+- Every plan requires Owner approval; the formal approval workflow is Phase 9.
+- Task content is sent to the Google Gemini Free Tier only after Phase 5 gateway/quota gates are enabled. Do not put student personal data, phone numbers, emails, credentials, OTPs or secrets into task text. Google states that Free Tier submitted content may be used to improve its products.
+- General Manager endpoint: `office-general-manager`. It validates Supabase session, AAL2 and active Owner status; only service_role can execute the backing RPCs.
+- Migration: `supabase/migrations/20261124074440_office_phase_6_general_manager_planning.sql`.
+
+
+## Phase 7 — Eight specialized AI employees
+- Eight role-specific draft agents are configured: Data & Listing Manager, Data Collection Executive, Customer Support Executive, Technical Support Engineer, Data Analyst & Reporting Manager, Social Media Manager, SEO & Marketing Manager and Quality Control Manager.
+- Each agent can only prepare a draft for a role that the General Manager assigned in a saved plan step. The database independently checks the task, role and step match.
+- Drafts are stored under `office.office_tasks.result_payload.employee_drafts` and shown beneath the matching GM plan step.
+- All agents remain `planned`; they do not gain production/database/API permissions from this phase.
+- No employee can send messages, change listings, scrape websites, publish Instagram content, edit production code, deploy or approve work.
+- The common output contract requires Owner approval and records a proposal-only draft. Phase 8 integrations and Phase 9 approvals are still separate.
+- Role boundaries: `office/agents/role-boundaries.md`.
+- Edge Function: `office-employee-agent`.
+- Migration: `supabase/migrations/20261124074749_office_phase_7_specialized_employee_agents.sql`.
+
+
+## Phase 8 — Tool/API integration registry
+- Added a private integration registry for Supabase, Gemini, GitHub, Cloudflare, Brevo, Instagram/Meta and OpenSEO.
+- Registry shows connection status, allowed scope labels, access mode and whether the named Edge Function secret is present. It never returns secret values.
+- Added a per-provider action catalog for read-only, draft-only and approval-required capabilities.
+- All external execution flags remain `false`. The integration hub can only create a pending approval proposal for eligible write actions, tied to an existing queued task; it never calls the provider.
+- ChatGPT connectors are separate from the Office runtime. GitHub, Brevo and OpenSEO app connections do not automatically provide Office Edge Function credentials.
+- Brevo sender identity is not an API credential. The Office runtime needs `BREVO_API_KEY`.
+- Integration setup notes: `office/integrations/README.md`.
+- Edge Function: `office-integration-hub`.
+- Migration: `supabase/migrations/20261124075121_office_phase_8_integration_registry.sql`.
+
+
+## Phase 9 — Owner approval center
+- Dashboard includes a pending/approved/rejected/all approval review queue.
+- Only the active Owner with an AAL2 session can approve or reject. Rejection requires a reason; expired requests cannot be approved.
+- Decisions are recorded in the existing `office.office_approvals` table and task/integration event logs.
+- Approval is a decision record only. Approving does not execute a send, publish, listing edit, code change, PR, or deployment.
+- Phase 10 executor must separately recheck approval state, provider credentials, action allowlist and idempotency before any permitted external action.
+- Policy: `office/approvals/README.md`.
+- Edge Function: `office-approval-center`.
+- Migration: `supabase/migrations/20261124075406_office_phase_9_owner_approval_center.sql`.
+
+
+## Phase 10 — Premium dashboard and reporting
+- Expanded the dashboard with six task KPIs, Owner approvals, integrations, Gemini quota guard, seven-day AI usage, employee/task status breakdowns and recent activity.
+- Gemini quota panel shows only readiness flags, usage/caps and a boolean secret-presence indicator; no secret values are exposed.
+- Report endpoint returns aggregate-only operational metrics and no student-level data.
+- Responsive layouts adapt from six desktop KPIs to stacked tablet/mobile cards.
+- Edge Function: `office-report-center`.
+- Report docs: `office/reports/README.md`.
+- Migration: `supabase/migrations/20261124075647_office_phase_10_dashboard_reporting.sql`.
+
+
+## Phase 11 — Security & test assertions
+- Added a non-destructive SQL assertion suite for Office schema grants, RLS, SECURITY DEFINER RPC grants/search_path, employee activation state, integration execution flags and Gemini fail-closed state.
+- Hardened `office-auth-check` to also require the JWT subject to match the user returned by Supabase Auth.
+- Full audit notes: `office/security/phase11-audit.md`.
+- SQL assertions: `office/tests/phase11-security-assertions.sql`.
+- Existing website/Admin SECURITY DEFINER warnings and global Auth settings are documented but deliberately not changed as part of this isolated Office scope.
+
+
+## Phase 12 — Release candidate and production cutover
+- Phase 12 release runbook: `office/RELEASE.md`.
+- Cloudflare preview deployment is successful at `https://feature-office-phase-12.studenthubhelp-office.pages.dev`.
+- The Office Pages project still uses `feature/office-phase-3` as its production branch. No production branch change has been made.
+- The Pages custom-domain list currently contains only `studenthubhelp-office.pages.dev`; `office.studenthubhelp.in` is not yet attached.
+- Final go-live is intentionally held until the consolidated acceptance tests, provider-secret setup (if needed), custom-domain binding and explicit Owner cutover approval are complete.
+
+
+## Phase status
+See `office/PHASES.md` for the consolidated 12-phase status, hard safety gates and remaining production launch steps.
