@@ -58,13 +58,17 @@
       if (error) throw error;
       const { data: factors, error: factorError } = await client.auth.mfa.listFactors();
       if (factorError) throw factorError;
-      const verified = (factors?.totp || []).filter(f => f.status === "verified");
+      // Supabase may return null data when no factor list is available.
+      // Normalize it before reading TOTP factors; never assume factors is non-null.
+      const totpFactors = Array.isArray(factors?.totp) ? factors.totp : [];
+      const verified = totpFactors.filter(f => f.status === "verified");
       if (verified.length) {
         await challengeExistingFactor(verified[0]);
       } else {
         // Remove abandoned, unverified enrollments so repeated login attempts do not
         // accumulate unusable TOTP factors. A fresh QR is issued for this session.
-        for (const pending of factors.totp.filter(f => f.status !== "verified")) {
+        for (const pending of totpFactors.filter(f => f.status !== "verified")) {
+          if (!isUuid(pending?.id)) continue;
           const { error: removeError } = await client.auth.mfa.unenroll({ factorId: pending.id });
           if (removeError) throw removeError;
         }
