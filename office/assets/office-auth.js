@@ -27,10 +27,14 @@
   }
 
   async function startMfa() {
-    const { data: { totp }, error } = await client.auth.mfa.enroll({ factorType:"totp", friendlyName:"StudentHubHelp Office" });
+    const { data, error } = await client.auth.mfa.enroll({ factorType:"totp", friendlyName:"StudentHubHelp Office" });
     if (error) throw error;
-    if (!isUuid(totp?.id)) throw new Error("Authenticator setup returned an invalid factor ID. Please retry sign-in.");
-    currentFactorId = totp.id;
+    // Supabase returns the factor ID at data.id and the TOTP payload at data.totp.
+    if (!isUuid(data?.id) || !data?.totp?.qr_code || !data?.totp?.secret) {
+      throw new Error("Authenticator setup response was incomplete. Please retry sign-in.");
+    }
+    currentFactorId = data.id;
+    const totp = data.totp;
     $("mfa-title").textContent = "Set up your authenticator";
     $("mfa-copy").textContent = "Scan this QR code in Google Authenticator, Microsoft Authenticator or another TOTP app. Then enter its 6-digit code.";
     $("qr-image").src = totp.qr_code;
