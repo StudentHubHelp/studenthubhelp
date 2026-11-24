@@ -33,6 +33,7 @@ begin
   if coalesce(p_decision,'') not in ('approved','rejected') then raise exception using errcode='22023',message='invalid_approval_decision'; end if;
   v_note:=nullif(btrim(coalesce(p_review_note,'')),'');
   if v_note is not null and length(v_note)>1000 then raise exception using errcode='22023',message='review_note_too_long'; end if;
+  if p_decision='rejected' and v_note is null then raise exception using errcode='22023',message='rejection_note_required'; end if;
   select * into v_approval from office.office_approvals where id=p_approval_id for update;
   if not found then raise exception using errcode='22023',message='approval_not_found'; end if;
   if v_approval.status<>'pending' then raise exception using errcode='22023',message='approval_already_reviewed'; end if;
