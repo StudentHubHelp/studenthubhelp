@@ -202,11 +202,11 @@ Deno.serve(async (req: Request) => {
       allowedSourceUrls = sources.map((source: any) => source.url).filter((url: unknown): url is string => typeof url === "string");
       // Extracted page text is returned as source.content. researchData.extraction
       // is only a status string ("completed"), not the extracted page content.
-      const compactSources = sources.slice(0, 3).map((source: any) => ({
-        title: String(source.title || "").slice(0, 90),
-        url: typeof source.url === "string" ? source.url.slice(0, 360) : "",
-        snippet: String(source.snippet || "").slice(0, 120),
-        extracted_content: String(source.content || "").slice(0, 180),
+      const compactSources = sources.slice(0, 2).map((source: any) => ({
+        title: String(source.title || "").slice(0, 70),
+        url: typeof source.url === "string" ? source.url.slice(0, 260) : "",
+        snippet: String(source.snippet || "").slice(0, 100),
+        extracted_content: String(source.content || "").slice(0, 280),
         extraction_status: String(source.extraction_status || "unknown")
       }));
       researchContext = JSON.stringify({
