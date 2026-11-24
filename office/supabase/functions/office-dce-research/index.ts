@@ -111,6 +111,19 @@ async function tavilyRequest(endpoint: "search" | "extract", key: string, body: 
   }
   return await readJsonLimited(response, maxBytes);
 }
+async function getTavilyUsage(key: string) {
+  const response = await fetch("https://api.tavily.com/usage", {
+    method: "GET",
+    headers: { Authorization: "Bearer " + key },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) throw new Error("tavily_auth_failed");
+    if (response.status === 429) throw new Error("tavily_limit_reached");
+    throw new Error("tavily_usage_unavailable");
+  }
+  return await readJsonLimited(response, 100000);
+}
 function errorCode(message: string): string {
   if (message === "owner_access_denied") return "owner_access_denied";
   if (message === "employee_role_unavailable") return "employee_role_unavailable";
@@ -150,6 +163,20 @@ Deno.serve(async (req: Request) => {
       return respond({ ok: false, code: "invalid_request" }, 400, origin);
     }
     const key = Deno.env.get("TAVILY_API_KEY") || "";
+    let providerUsage: any = null;
+    let apiKeyValid = false;
+    let freePlanAllowed = false;
+    if (key) {
+      try {
+        providerUsage = await getTavilyUsage(key);
+        apiKeyValid = true;
+        const plan = String(providerUsage.account?.current_plan || "").toLowerCase();
+        const paygoLimit = Number(providerUsage.account?.paygo_limit || 0);
+        freePlanAllowed = ["researcher", "free"].includes(plan) && paygoLimit === 0;
+      } catch (error) {
+        if (!(error instanceof Error) || error.message !== "tavily_auth_failed") throw error;
+      }
+    }
     if (body.action !== "status" && !key) {
       return respond({ ok: false, code: "tavily_secret_missing" }, 424, origin);
     }
@@ -176,7 +203,13 @@ Deno.serve(async (req: Request) => {
           employee_role: usage.role_key,
           employee_authorized: usage.authorized === true,
           api_key_configured: Boolean(key),
+          api_key_valid: apiKeyValid,
           provider: "Tavily",
+          provider_plan: String(providerUsage?.account?.current_plan || ""),
+          free_plan_allowed: freePlanAllowed,
+          paygo_enabled: Number(providerUsage?.account?.paygo_limit || 0) > 0,
+          provider_key_usage: Number(providerUsage?.key?.usage || 0),
+          provider_key_limit: Number(providerUsage?.key?.limit || 0),
           search_mode: "basic",
           billing_fallback: false,
           monthly_credit_limit: usage.month_limit,
@@ -186,6 +219,8 @@ Deno.serve(async (req: Request) => {
         },
       }, 200, origin);
     }
+    if (!apiKeyValid) return respond({ ok: false, code: "tavily_auth_failed" }, 424, origin);
+    if (!freePlanAllowed) return respond({ ok: false, code: "tavily_free_plan_required" }, 403, origin);
     const action = body.action;
     if (action === "search" || action === "research") {
       const query = typeof body.query === "string" ? body.query.trim().slice(0, 320) : "";
