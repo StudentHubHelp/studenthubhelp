@@ -78,7 +78,14 @@ Deno.serve(async (req: Request) => {
     if (body.action === "overview") {
       const result = await rpc(supabaseUrl, serviceKey, "office_integration_overview", { p_user_id: user.id });
       if (!result.ok) return respond({ ok: false, code: "owner_access_denied" }, 403, origin);
-      return respond({ ok: true, data: result.data }, 200, origin);
+      const data = result.data || {};
+      data.integrations = (data.integrations || []).map((integration: any) => ({
+        ...integration,
+        secret_configured: integration.secret_reference
+          ? Boolean(Deno.env.get(integration.secret_reference))
+          : integration.provider_key === "supabase"
+      }));
+      return respond({ ok: true, data }, 200, origin);
     }
 
     const taskId = typeof body.task_id === "string" ? body.task_id : "";
