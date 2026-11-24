@@ -193,7 +193,7 @@
     const list = $("approval-list");
     list.replaceChildren();
     const approvals = data.approvals || [];
-    const pending = approvals.filter(item => item.status === "pending").length;
+    const pending = data.pending_count ?? approvals.filter(item => item.status === "pending").length;
     $("approval-count-pill").textContent = pending + " pending";
     if (!approvals.length) {
       list.append(node("div", "empty-state", "No approval requests in this view."));
