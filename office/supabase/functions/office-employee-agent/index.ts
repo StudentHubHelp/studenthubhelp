@@ -343,7 +343,7 @@ Deno.serve(async (req: Request) => {
             extraction_status: String(source.extraction_status || "unknown")
           }))
         }
-      }).slice(0, 5000);
+      }).slice(0, 3200);
     }
     const prompt = `You are the ${employee.display_name}, a specialized StudentHubHelp AI Office employee.
 Your role-specific rules: ${roleInstructions[roleKey]}
