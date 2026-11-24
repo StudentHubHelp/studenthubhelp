@@ -2,6 +2,7 @@
   const SUPABASE_URL = "https://idurlccrarznnnqixxsd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT";
   const CONTROL_API = SUPABASE_URL + "/functions/v1/office-control-api";
+  const GM_API = SUPABASE_URL + "/functions/v1/office-general-manager";
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -58,6 +59,40 @@
     return result.data || {};
   }
 
+  async function gmApi(action, payload = {}) {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(GM_API, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + session.access_token,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) {
+      const messages = {
+        gemini_gateway_disabled: "Gemini is safely disabled until its Free Tier key and quota limits are configured.",
+        gemini_secret_not_configured: "Gemini API key is not configured in Supabase Edge Function Secrets yet.",
+        free_tier_confirmation_required: "Free Tier project confirmation is still pending.",
+        free_tier_caps_not_configured: "Project-specific Gemini RPM, TPM and daily caps are not configured yet.",
+        task_must_be_queued: "Only queued tasks can be planned by the General Manager.",
+        gm_plan_validation_failed: "The proposed plan did not pass safety validation. No plan was saved.",
+        owner_access_denied: "This account is not authorized for Office access."
+      };
+      if (response.status === 401 || response.status === 428) {
+        await client.auth.signOut();
+        location.replace("./login.html");
+      }
+      throw new Error(messages[result.code] || "General Manager request failed. Please try again later.");
+    }
+    return result.data || {};
+  }
+
   function renderMetrics(counts = {}) {
     $("metric-total").textContent = counts.total ?? 0;
     $("metric-queued").textContent = counts.queued ?? 0;
@@ -68,11 +103,13 @@
   function addAction(parent, label, className, handler) {
     const button = node("button", className, label);
     button.type = "button";
-    button.addEventListener("click", handler);
+    button.addEventListener("click", () => handler(button));
     parent.append(button);
+    return button;
   }
 
-  function renderTasks(tasks = []) {
+  function renderTasks(tasks = [], plans = []) {
+    const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
     const list = $("task-list");
     list.replaceChildren();
     $("task-total-pill").textContent = tasks.length + (tasks.length === 1 ? " task" : " tasks");
@@ -92,6 +129,10 @@
       meta.append(node("span", "priority priority-" + task.priority, titleCase(task.priority) + " priority"));
       meta.append(node("span", "", "Created " + dateText(task.created_at)));
       const actions = node("div", "task-actions");
+      const gmPlan = planMap.get(task.id);
+      if (task.status === "queued" && !gmPlan) {
+        addAction(actions, "Plan with GM", "small-action gm-action", button => createGmPlan(task, button));
+      }
       if (task.status === "queued" || task.status === "draft") {
         addAction(actions, "Pause", "small-action", () => changeTaskStatus(task.id, "paused"));
         addAction(actions, "Cancel", "small-action danger-action", () => changeTaskStatus(task.id, "cancelled"));
@@ -101,8 +142,38 @@
       }
       addAction(actions, "Activity", "small-action subtle-action", () => loadTaskLogs(task));
       card.append(top, heading, description, meta, actions);
+      if (gmPlan) {
+        const planBox = node("div", "gm-plan-box");
+        const planTop = node("div", "gm-plan-top");
+        planTop.append(node("strong", "gm-plan-heading", "General Manager · Draft plan"));
+        planTop.append(node("span", "gm-risk risk-" + gmPlan.risk_level, titleCase(gmPlan.risk_level) + " risk"));
+        planBox.append(planTop);
+        planBox.append(node("p", "gm-plan-summary", gmPlan.summary));
+        const steps = node("ol", "gm-plan-steps");
+        (gmPlan.steps || []).forEach(step => {
+          const li = node("li", "", step.title + " · " + titleCase(step.role_key));
+          steps.append(li);
+        });
+        planBox.append(steps);
+        planBox.append(node("small", "gm-approval-note", "Proposal only · Owner approval required · No actions executed"));
+        card.append(planBox);
+      }
       list.append(card);
     });
+  }
+
+  async function createGmPlan(task, button) {
+    button.disabled = true;
+    button.textContent = "Planning…";
+    try {
+      await gmApi("plan_task", { task_id: task.id });
+      status("General Manager draft plan created. Nothing has been executed.", true);
+      await loadWorkspace();
+    } catch (error) {
+      status(error.message);
+      button.disabled = false;
+      button.textContent = "Plan with GM";
+    }
   }
 
   async function changeTaskStatus(taskId, nextStatus) {
@@ -150,12 +221,13 @@
   async function loadWorkspace() {
     $("refresh-btn").disabled = true;
     try {
-      const [overview, taskResult] = await Promise.all([
+      const [overview, taskResult, planResult] = await Promise.all([
         api("overview"),
-        api("list_tasks")
+        api("list_tasks"),
+        gmApi("list_plans")
       ]);
       renderMetrics(overview.task_counts);
-      renderTasks(taskResult.tasks || []);
+      renderTasks(taskResult.tasks || [], planResult.plans || []);
       renderTeam(overview.employees || []);
       status("Secure owner session verified. Task queue is connected.", true);
     } catch (error) {

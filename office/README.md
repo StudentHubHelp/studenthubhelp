@@ -46,3 +46,13 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 - Add the API key only in Supabase Dashboard → Edge Functions → Secrets as `GEMINI_API_KEY`; never commit it or paste it into chat. Supabase documents Edge Function secrets here: https://supabase.com/docs/guides/functions/secrets.
 - Exact RPM, TPM and RPD values must be read from this Google AI Studio project's Dashboard → Rate limits. They are project/model-specific and can change; do not copy generic values into app caps.
 - Migration: `supabase/migrations/20261124074103_office_phase_5_gemini_quota_guard.sql`.
+
+
+## Phase 6 — General Manager
+- Owner can request a proposal-only plan for a queued task. The General Manager receives the task text and the eight registered role descriptions/capabilities, then proposes up to eight role-mapped steps.
+- The plan is validated server-side and again by the database before it is saved under `office.office_tasks.result_payload.general_manager_plan`.
+- Plans are proposals only. No child tasks are created, no AI employee is activated, and no external action, listing edit, message, social post or deployment is executed.
+- Every plan requires Owner approval; the formal approval workflow is Phase 9.
+- Task content is sent to the Google Gemini Free Tier only after Phase 5 gateway/quota gates are enabled. Do not put student personal data, phone numbers, emails, credentials, OTPs or secrets into task text. Google states that Free Tier submitted content may be used to improve its products.
+- General Manager endpoint: `office-general-manager`. It validates Supabase session, AAL2 and active Owner status; only service_role can execute the backing RPCs.
+- Migration: `supabase/migrations/20261124074440_office_phase_6_general_manager_planning.sql`.
