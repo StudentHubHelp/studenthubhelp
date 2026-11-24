@@ -107,6 +107,9 @@ Deno.serve(async (req: Request) => {
         : "approval_review_failed";
       return respond({ ok: false, code }, 409, origin);
     }
+    if (result.data?.ok === false) {
+      return respond({ ok: false, code: result.data.code || "approval_review_failed" }, 409, origin);
+    }
     return respond({ ok: true, data: result.data }, 200, origin);
   } catch {
     return respond({ ok: false, code: "approval_center_unavailable" }, 503, origin);
