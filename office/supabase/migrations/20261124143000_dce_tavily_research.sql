@@ -38,7 +38,7 @@ begin
   perform pg_advisory_xact_lock(hashtext('office:tavily:' || p_user_id::text));
   select coalesce(sum(credits_used),0)::integer into v_month_used
   from office.office_external_api_usage where provider_key='tavily' and usage_month=v_month;
-  select coalesce(credits_used,0)::integer into v_day_used
+  select coalesce(max(credits_used),0)::integer into v_day_used
   from office.office_external_api_usage
   where provider_key='tavily' and usage_month=v_month and usage_day=v_day;
 
