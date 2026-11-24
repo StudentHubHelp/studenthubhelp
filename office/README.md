@@ -55,4 +55,4 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 - Every plan requires Owner approval; the formal approval workflow is Phase 9.
 - Task content is sent to the Google Gemini Free Tier only after Phase 5 gateway/quota gates are enabled. Do not put student personal data, phone numbers, emails, credentials, OTPs or secrets into task text. Google states that Free Tier submitted content may be used to improve its products.
 - General Manager endpoint: `office-general-manager`. It validates Supabase session, AAL2 and active Owner status; only service_role can execute the backing RPCs.
-- Migration: `supabase/migrations/20261124074350_office_phase_6_general_manager_planning.sql`.
+- Migration: `supabase/migrations/20261124074440_office_phase_6_general_manager_planning.sql`.
