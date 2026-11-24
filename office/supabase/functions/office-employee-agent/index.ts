@@ -195,12 +195,20 @@ Deno.serve(async (req: Request) => {
       const researchData = researchResult.data || {};
       const sources = Array.isArray(researchData.sources) ? researchData.sources : [];
       allowedSourceUrls = sources.map((source: any) => source.url).filter((url: unknown): url is string => typeof url === "string");
+      const compactSources = sources.slice(0, 3).map((source: any) => ({
+        title: String(source.title || "").slice(0, 100),
+        url: typeof source.url === "string" ? source.url.slice(0, 400) : "",
+        snippet: String(source.snippet || "").slice(0, 120)
+      }));
+      const extractionText = typeof researchData.extraction === "string"
+        ? researchData.extraction
+        : JSON.stringify(researchData.extraction || {});
       researchContext = JSON.stringify({
-        query: researchData.query,
-        sources,
-        usage: researchData.usage,
-        extraction: researchData.extraction
-      }).slice(0, 14000);
+        query: String(researchData.query || "").slice(0, 160),
+        extraction: extractionText.slice(0, 320),
+        sources: compactSources,
+        usage: researchData.usage
+      }).slice(0, 1200);
     }
     const prompt = `You are the ${employee.display_name}, a specialized StudentHubHelp AI Office employee.
 Your role-specific rules: ${roleInstructions[roleKey]}
