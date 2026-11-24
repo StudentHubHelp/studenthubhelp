@@ -129,8 +129,8 @@ Deno.serve(async (req: Request) => {
 
     const taskId = typeof body.task_id === "string" ? body.task_id : "";
     const roleKey = typeof body.role_key === "string" ? body.role_key : "";
-    const stepIndex = Number(body.step_index);
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId) ||
+    const stepIndex = body.step_index;
+    if (typeof stepIndex !== "number" || !Number.isInteger(stepIndex) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId) ||
         !Object.hasOwn(roleInstructions, roleKey) || !Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex > 7) {
       return respond({ ok: false, code: "invalid_employee_request" }, 400, origin);
     }
@@ -157,6 +157,9 @@ Deno.serve(async (req: Request) => {
 
     const taskTitle = redact(String(task.title || "").slice(0, 160));
     const taskDescription = redact(String(task.description || "").slice(0, 1800));
+    const stepTitle = redact(String(step.title || "").slice(0, 160));
+    const stepRationale = redact(String(step.rationale || "").slice(0, 500));
+    const stepExpectedOutput = redact(String(step.expected_output || "").slice(0, 500));
     const prompt = `You are the ${employee.display_name}, a specialized StudentHubHelp AI Office employee.
 Your role-specific rules: ${roleInstructions[roleKey]}
 Your registered capabilities: ${(employee.capabilities || []).join(", ")}.
@@ -173,9 +176,9 @@ Description: ${taskDescription || "(not provided)"}
 Priority: ${task.priority}
 
 GENERAL MANAGER PROPOSED STEP
-Title: ${step.title}
-Rationale: ${step.rationale}
-Expected output: ${step.expected_output}
+Title: ${stepTitle}
+Rationale: ${stepRationale}
+Expected output: ${stepExpectedOutput}
 External action flag: ${step.requires_external_action}
 
 Return ONLY valid JSON:
