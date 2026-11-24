@@ -34,7 +34,9 @@ function safeProviderError(value: unknown): string {
   const code = value.toLowerCase();
   if (code.includes("resource_exhausted") || code.includes("rate limit") || code.includes("quota")) return "provider_rate_limit";
   if (code.includes("permission_denied") || code.includes("billing")) return "provider_access_denied";
-  if (code.includes("api_key_invalid") || code.includes("api key not valid")) return "provider_key_invalid";
+  if (code.includes("api_key_invalid") || code.includes("api key not valid") || code.includes("unauthenticated")) return "provider_key_invalid";
+  if (code.includes("invalid_argument") || code.includes("bad_request") || code.includes("invalid request")) return "provider_invalid_request";
+  if (code.includes("not_found")) return "provider_model_not_found";
   return "provider_error";
 }
 async function rpc(url: string, serviceKey: string, name: string, payload: Record<string, unknown>) {
@@ -131,28 +133,45 @@ Deno.serve(async (req: Request) => {
     const reservationId = reservation.data?.reservation_id;
     const model = reservation.data?.model;
     const maxOutputTokens = reservation.data?.max_output_tokens;
-    if (!reservationId || model !== "gemini-2.5-flash-lite" || !Number.isInteger(maxOutputTokens)) {
+    if (!reservationId || model !== "gemini-3.5-flash-lite" || !Number.isInteger(maxOutputTokens)) {
       return respond({ ok: false, code: "quota_reservation_invalid" }, 503, origin);
     }
 
     let actualInputTokens = 0;
     let actualOutputTokens = 0;
     try {
-      const providerResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens, temperature: 0.2 }
-          }),
-          signal: AbortSignal.timeout(45000)
+      let providerResponse: Response | null = null;
+      let providerData: any = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        providerResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens, temperature: 0.2 }
+            }),
+            signal: AbortSignal.timeout(45000)
+          }
+        );
+        if (providerResponse.ok || ![502, 503].includes(providerResponse.status) || attempt === 1) {
+          break;
         }
-      );
-      const providerData = await providerResponse.json().catch(() => null);
+        console.warn("Gemini transient upstream response; one bounded retry", JSON.stringify({
+          http_status: providerResponse.status, retry_in_ms: 2000
+        }));
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      if (!providerResponse) throw new Error("gemini_provider_unavailable");
+      providerData = await providerResponse.json().catch(() => null);
       if (!providerResponse.ok) {
-        const providerCode = safeProviderError(providerData?.error?.status || providerData?.error?.message);
+        const providerDiagnostic = [
+          providerData?.error?.status,
+          providerData?.error?.message,
+          providerData?.error?.details?.map?.((item: any) => item?.reason || item?.["@type"]).filter(Boolean).join(" ")
+        ].filter((item) => typeof item === "string").join(" ");
+        const providerCode = safeProviderError(providerDiagnostic);
         console.error("Gemini upstream request failed", JSON.stringify({ http_status: providerResponse.status, provider_code: providerCode }));
         const requestStatus = providerResponse.status === 429 ? "rate_limited" : "error";
         await rpc(supabaseUrl, serviceKey, "office_gemini_finalize", {
@@ -162,10 +181,7 @@ Deno.serve(async (req: Request) => {
         });
         return respond({
           ok: false,
-          code: providerResponse.status === 429 ? "provider_rate_limited"
-            : providerResponse.status === 403 ? "provider_access_denied"
-            : providerResponse.status === 401 ? "provider_key_invalid"
-            : "gemini_provider_error"
+          code: `gemini_provider_http_${providerResponse.status}_${providerCode}`
         }, providerResponse.status === 429 ? 429 : 502, origin);
       }
 
