@@ -139,9 +139,13 @@
         await client.auth.signOut();
         location.replace("./login.html");
       }
-      const providerFailure = /^gemini_provider_http_\d+_/.test(String(result.code || "")) || result.code === "gemini_provider_unavailable";
+      const providerCode = String(result.code || "");
+      const providerFailure = /^gemini_provider_http_\\d+_/.test(providerCode) || providerCode === "gemini_provider_unavailable";
+      const providerRateLimited = /_429_/.test(providerCode);
       throw new Error(providerFailure
-        ? "Gemini Free Tier primary/fallback model failed. Research evidence is saved, so retrying can reuse it; another quota-guarded request may be used."
+        ? (providerRateLimited
+          ? "Gemini Free Tier rate limit was reached. Research evidence is saved; wait for the rate window to reset before retrying."
+          : "Gemini Free Tier is temporarily unavailable after bounded retries (502/503). Research evidence is saved; wait briefly and retry. No paid model was used.")
         : messages[result.code] || "Employee request failed. Please try again later.");
     }
     return result.data || {};
