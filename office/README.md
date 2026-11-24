@@ -56,3 +56,15 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 - Task content is sent to the Google Gemini Free Tier only after Phase 5 gateway/quota gates are enabled. Do not put student personal data, phone numbers, emails, credentials, OTPs or secrets into task text. Google states that Free Tier submitted content may be used to improve its products.
 - General Manager endpoint: `office-general-manager`. It validates Supabase session, AAL2 and active Owner status; only service_role can execute the backing RPCs.
 - Migration: `supabase/migrations/20261124074440_office_phase_6_general_manager_planning.sql`.
+
+
+## Phase 7 — Eight specialized AI employees
+- Eight role-specific draft agents are configured: Data & Listing Manager, Data Collection Executive, Customer Support Executive, Technical Support Engineer, Data Analyst & Reporting Manager, Social Media Manager, SEO & Marketing Manager and Quality Control Manager.
+- Each agent can only prepare a draft for a role that the General Manager assigned in a saved plan step. The database independently checks the task, role and step match.
+- Drafts are stored under `office.office_tasks.result_payload.employee_drafts` and shown beneath the matching GM plan step.
+- All agents remain `planned`; they do not gain production/database/API permissions from this phase.
+- No employee can send messages, change listings, scrape websites, publish Instagram content, edit production code, deploy or approve work.
+- The common output contract requires Owner approval and records a proposal-only draft. Phase 8 integrations and Phase 9 approvals are still separate.
+- Role boundaries: `office/agents/role-boundaries.md`.
+- Edge Function: `office-employee-agent`.
+- Migration: `supabase/migrations/20261124074749_office_phase_7_specialized_employee_agents.sql`.

@@ -3,6 +3,7 @@
   const SUPABASE_KEY = "sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT";
   const CONTROL_API = SUPABASE_URL + "/functions/v1/office-control-api";
   const GM_API = SUPABASE_URL + "/functions/v1/office-general-manager";
+  const EMPLOYEE_API = SUPABASE_URL + "/functions/v1/office-employee-agent";
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -93,6 +94,44 @@
     return result.data || {};
   }
 
+  async function employeeApi(action, payload = {}) {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(EMPLOYEE_API, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + session.access_token,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) {
+      const messages = {
+        gemini_gateway_disabled: "Gemini is safely disabled until its Free Tier key and quota limits are configured.",
+        gemini_secret_not_configured: "Gemini API key is not configured in Supabase Edge Function Secrets yet.",
+        free_tier_confirmation_required: "Free Tier project confirmation is still pending.",
+        free_tier_caps_not_configured: "Project-specific Gemini RPM, TPM and daily caps are not configured yet.",
+        quota_guard_disabled: "The Gemini quota guard is currently disabled.",
+        paid_billing_mode_forbidden: "Only the Free Tier billing mode is permitted.",
+        gm_plan_required: "The General Manager must create a draft plan before an employee can prepare work.",
+        role_step_mismatch: "This employee role is not assigned to the selected General Manager step.",
+        task_must_be_queued: "Only queued tasks can receive employee drafts.",
+        employee_draft_validation_failed: "The employee draft did not pass safety validation. Nothing was saved.",
+        employee_role_unavailable: "This employee role is paused or disabled."
+      };
+      if (response.status === 401 || response.status === 428) {
+        await client.auth.signOut();
+        location.replace("./login.html");
+      }
+      throw new Error(messages[result.code] || "Employee request failed. Please try again later.");
+    }
+    return result.data || {};
+  }
+
   function renderMetrics(counts = {}) {
     $("metric-total").textContent = counts.total ?? 0;
     $("metric-queued").textContent = counts.queued ?? 0;
@@ -108,8 +147,9 @@
     return button;
   }
 
-  function renderTasks(tasks = [], plans = []) {
+  function renderTasks(tasks = [], plans = [], employeeItems = []) {
     const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
+    const draftMap = new Map((employeeItems || []).map(item => [item.task_id, item.drafts || []]));
     const list = $("task-list");
     list.replaceChildren();
     $("task-total-pill").textContent = tasks.length + (tasks.length === 1 ? " task" : " tasks");
@@ -150,8 +190,25 @@
         planBox.append(planTop);
         planBox.append(node("p", "gm-plan-summary", gmPlan.summary));
         const steps = node("ol", "gm-plan-steps");
-        (gmPlan.steps || []).forEach(step => {
-          const li = node("li", "", step.title + " · " + titleCase(step.role_key));
+        const taskDrafts = draftMap.get(task.id) || [];
+        (gmPlan.steps || []).forEach((step, stepIndex) => {
+          const li = node("li", "gm-step-item");
+          li.append(node("span", "gm-step-title", step.title + " · " + titleCase(step.role_key)));
+          const draft = taskDrafts.find(item => item.role_key === step.role_key && item.step_index === stepIndex);
+          if (draft) {
+            const draftCard = node("div", "employee-draft-card");
+            draftCard.append(node("strong", "employee-draft-title", draft.title));
+            draftCard.append(node("p", "employee-draft-summary", draft.summary));
+            draftCard.append(node("div", "employee-draft-content", draft.draft_content));
+            const checks = node("ul", "employee-draft-checks");
+            (draft.checks || []).forEach(check => checks.append(node("li", "", check)));
+            draftCard.append(checks);
+            draftCard.append(node("small", "gm-approval-note", "Draft only · Owner approval required · Not executed"));
+            li.append(draftCard);
+          } else if (task.status === "queued") {
+            addAction(li, "Generate employee draft", "small-action employee-action", button =>
+              createEmployeeDraft(task, step.role_key, stepIndex, button));
+          }
           steps.append(li);
         });
         planBox.append(steps);
@@ -173,6 +230,22 @@
       status(error.message);
       button.disabled = false;
       button.textContent = "Plan with GM";
+    }
+  }
+
+  async function createEmployeeDraft(task, roleKey, stepIndex, button) {
+    button.disabled = true;
+    button.textContent = "Preparing…";
+    try {
+      await employeeApi("generate_draft", {
+        task_id: task.id, role_key: roleKey, step_index: stepIndex
+      });
+      status(titleCase(roleKey) + " draft created. No external action was performed.", true);
+      await loadWorkspace();
+    } catch (error) {
+      status(error.message);
+      button.disabled = false;
+      button.textContent = "Generate employee draft";
     }
   }
 
@@ -221,13 +294,14 @@
   async function loadWorkspace() {
     $("refresh-btn").disabled = true;
     try {
-      const [overview, taskResult, planResult] = await Promise.all([
+      const [overview, taskResult, planResult, employeeResult] = await Promise.all([
         api("overview"),
         api("list_tasks"),
-        gmApi("list_plans")
+        gmApi("list_plans"),
+        employeeApi("list_drafts")
       ]);
       renderMetrics(overview.task_counts);
-      renderTasks(taskResult.tasks || [], planResult.plans || []);
+      renderTasks(taskResult.tasks || [], planResult.plans || [], employeeResult.items || []);
       renderTeam(overview.employees || []);
       status("Secure owner session verified. Task queue is connected.", true);
     } catch (error) {
