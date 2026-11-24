@@ -105,6 +105,12 @@ async function tavilyRequest(endpoint: "search" | "extract", key: string, body: 
     signal: AbortSignal.timeout(endpoint === "search" ? 20000 : 30000),
   });
   if (!response.ok) {
+    const errorBody = (await response.text()).slice(0, 500)
+      .replace(/(?:Bearer\\s+)[A-Za-z0-9._~-]+/gi, "Bearer [REDACTED]")
+      .replace(/[A-Za-z0-9_-]{32,}/g, "[REDACTED_TOKEN]");
+    console.error("Tavily upstream error", JSON.stringify({
+      endpoint, http_status: response.status, body_preview: errorBody
+    }));
     if (response.status === 401 || response.status === 403) throw new Error("tavily_auth_failed");
     if (response.status === 429 || response.status === 432) throw new Error("tavily_limit_reached");
     throw new Error("tavily_request_failed");
@@ -118,6 +124,12 @@ async function getTavilyUsage(key: string) {
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) {
+    const errorBody = (await response.text()).slice(0, 500)
+      .replace(/(?:Bearer\\s+)[A-Za-z0-9._~-]+/gi, "Bearer [REDACTED]")
+      .replace(/[A-Za-z0-9_-]{32,}/g, "[REDACTED_TOKEN]");
+    console.error("Tavily usage endpoint error", JSON.stringify({
+      endpoint: "usage", http_status: response.status, body_preview: errorBody
+    }));
     if (response.status === 401 || response.status === 403) throw new Error("tavily_auth_failed");
     if (response.status === 429) throw new Error("tavily_limit_reached");
     throw new Error("tavily_usage_unavailable");
@@ -245,6 +257,10 @@ Deno.serve(async (req: Request) => {
         country: "india",
       }, 300000);
       const searchResults = Array.isArray(searchData.results) ? searchData.results : [];
+      console.info("Tavily search completed", JSON.stringify({
+        endpoint: "search", result_count: searchResults.length,
+        query_length: query.length, search_depth: "basic"
+      }));
       const safeResults = searchResults.slice(0, 6).map((item: any) => ({
         title: String(item.title || "").slice(0, 240),
         url: safeResultUrl(item.url),
@@ -252,6 +268,9 @@ Deno.serve(async (req: Request) => {
         score: typeof item.score === "number" ? item.score : null,
         published_date: typeof item.published_date === "string" ? item.published_date.slice(0, 40) : null,
       })).filter((item: any) => item.url);
+      console.info("Tavily safe results filtered", JSON.stringify({
+        raw_result_count: searchResults.length, safe_https_result_count: safeResults.length
+      }));
 
       if (action === "search") {
         return respond({ ok: true, data: { query, results: safeResults, usage: requestUsage } }, 200, origin);
