@@ -1596,11 +1596,11 @@ const recoveryHashParamsAtLoad = new URLSearchParams(location.hash.slice(1));
 const recoveryHasErrorAtLoad =
   recoveryQueryAtLoad.get("error_code") === "otp_expired" ||
   recoveryHashParamsAtLoad.get("error_code") === "otp_expired";
+// Only an explicit Supabase recovery callback is allowed to activate
+// the password-reset UI. OAuth callbacks can also contain access_token/code.
 const recoveryHasSessionCallbackAtLoad =
-  recoveryQueryAtLoad.has("code") ||
   recoveryQueryAtLoad.get("type") === "recovery" ||
-  recoveryHashParamsAtLoad.get("type") === "recovery" ||
-  recoveryHashParamsAtLoad.has("access_token");
+  recoveryHashParamsAtLoad.get("type") === "recovery";
 const recoveryHashAtLoad =
   recoveryQueryAtLoad.get("mode") === "reset" ||
   recoveryHasSessionCallbackAtLoad ||
