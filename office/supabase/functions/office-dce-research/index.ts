@@ -216,21 +216,20 @@ Deno.serve(async (req: Request) => {
       if (!safeResults.length) {
         return respond({ ok: true, data: { query, sources: [], usage, extraction: "no_public_results" } }, 200, origin);
       }
+      const publicResults: any[] = [];
       const validated: string[] = [];
       for (const item of safeResults) {
         const safeUrl = await validatePublicHttpsUrl(item.url);
-        if (safeUrl && !validated.includes(safeUrl)) validated.push(safeUrl);
-        if (validated.length >= 3) break;
+        if (safeUrl && !validated.includes(safeUrl)) {
+          validated.push(safeUrl);
+          publicResults.push({ ...item, url: safeUrl });
+        }
+        if (publicResults.length >= 6) break;
       }
-      if (!validated.length) {
+      if (!publicResults.length) {
         return respond({
           ok: true,
-          data: {
-            query,
-            sources: safeResults.map((r: any) => ({ title: r.title, url: r.url, snippet: r.snippet, content: "", extraction_status: "blocked_unsafe_url" })),
-            usage,
-            extraction: "blocked_unsafe_urls",
-          },
+          data: { query, sources: [], usage, extraction: "no_validated_public_urls" },
         }, 200, origin);
       }
       const extractReservation = await rpc(supabaseUrl, serviceKey, "office_dce_reserve_tavily_credit", {
@@ -246,7 +245,7 @@ Deno.serve(async (req: Request) => {
       }, 1000000);
       const extracted = Array.isArray(extractData.results) ? extractData.results : [];
       const extractedByUrl = new Map(extracted.map((item: any) => [String(item.url || ""), item]));
-      const sources = safeResults.map((item: any) => {
+      const sources = publicResults.map((item: any) => {
         const page: any = extractedByUrl.get(item.url);
         return {
           title: item.title,
