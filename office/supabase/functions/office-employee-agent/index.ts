@@ -317,7 +317,7 @@ Deno.serve(async (req: Request) => {
         title: String(source.title || "").slice(0, 90),
         url: String(source.url || "").slice(0, 260),
         snippet: String(source.snippet || "").slice(0, 240),
-        extracted_content: String(source.content || "").slice(0, 850),
+        extracted_content: String(source.content || "").slice(0, 500),
         extraction_status: String(source.extraction_status || "unknown")
       }));
       researchContext = JSON.stringify({
@@ -325,27 +325,27 @@ Deno.serve(async (req: Request) => {
         sources: compactSources,
         extraction_status: String(researchData.extraction || "unknown"),
         extraction_counts: researchData.extraction_counts || {}
-      }).slice(0, 3400);
+      }).slice(0, 2400);
     } else if (roleKey === "quality_control_manager" && qcEvidence) {
       allowedSourceUrls = qcEvidence.verifiedSources.map((source: any) => String(source.url));
       researchContext = JSON.stringify({
         dce_draft: {
           title: String(qcEvidence.dceDraft.title || "").slice(0, 160),
-          summary: String(qcEvidence.dceDraft.summary || "").slice(0, 1000),
-          draft_content: String(qcEvidence.dceDraft.draft_content || "").slice(0, 6000)
+          summary: String(qcEvidence.dceDraft.summary || "").slice(0, 500),
+          draft_content: String(qcEvidence.dceDraft.draft_content || "").slice(0, 1500)
         },
         research_evidence: {
           query: String(qcEvidence.evidence.query || "").slice(0, 320),
-          sources: qcEvidence.verifiedSources.slice(0, 6).map((source: any) => ({
+          sources: qcEvidence.verifiedSources.slice(0, 4).map((source: any) => ({
             title: String(source.title || "").slice(0, 200),
             url: String(source.url || ""),
-            snippet: String(source.snippet || "").slice(0, 800),
+            snippet: String(source.snippet || "").slice(0, 280),
             extraction_status: String(source.extraction_status || "unknown")
           }))
         }
       }).slice(0, 3200);
     }
-    const prompt = `You are the ${employee.display_name}, a specialized StudentHubHelp AI Office employee.
+    const buildPrompt = () => `You are the ${employee.display_name}, a specialized StudentHubHelp AI Office employee.
 Your role-specific rules: ${roleInstructions[roleKey]}
 Your registered capabilities: ${(employee.capabilities || []).join(", ")}.
 Your permission scope: ${JSON.stringify(employee.permission_scope || {})}.
@@ -379,6 +379,30 @@ Return ONLY valid JSON:
   "requires_owner_approval": true
 }
 Keep the deliverable within your registered role and capabilities. This is a proposal-only draft; no action has been performed.`;
+
+    let prompt = buildPrompt();
+    if (prompt.length > 5800) {
+      const excess = prompt.length - 5800;
+      const safeUrls = allowedSourceUrls.slice(0, 5).map(url => url.slice(0, 320));
+      let urlNeutralized = researchContext;
+      for (const url of allowedSourceUrls) urlNeutralized = urlNeutralized.split(url).join("[SOURCE_URL]");
+      researchContext = JSON.stringify({
+        source_urls: safeUrls,
+        evidence_excerpt: urlNeutralized.slice(0, Math.max(500, researchContext.length - excess - 600)),
+        note: "Evidence compacted to fit the Free Tier prompt limit; source URLs are listed separately."
+      });
+      prompt = buildPrompt();
+    }
+    if (prompt.length > 6000) {
+      await releaseGenerationLock();
+      console.error("Employee prompt exceeded Gemini gateway limit after compaction", JSON.stringify({
+        role_key: roleKey, prompt_chars: prompt.length, evidence_chars: researchContext.length
+      }));
+      return respond({ ok: false, code: "employee_prompt_too_large" }, 413, origin);
+    }
+    console.info("Employee prompt prepared within Gemini gateway limit", JSON.stringify({
+      role_key: roleKey, prompt_chars: prompt.length, evidence_chars: researchContext.length
+    }));
 
     const gatewayResponse = await fetch(`${supabaseUrl}/functions/v1/office-gemini-gateway`, {
       method: "POST",
