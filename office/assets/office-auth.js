@@ -41,8 +41,6 @@
   }
 
   async function challengeExistingFactor(factor) {
-    const { data, error } = await client.auth.mfa.challenge({ factorId:factor.id });
-    if (error) throw error;
     currentFactorId = factor.id;
     isEnrollment = false;
     $("mfa-title").textContent = "Verify your identity";
@@ -62,8 +60,17 @@
       const { data: factors, error: factorError } = await client.auth.mfa.listFactors();
       if (factorError) throw factorError;
       const verified = factors.totp.filter(f => f.status === "verified");
-      if (verified.length) await challengeExistingFactor(verified[0]);
-      else await startMfa();
+      if (verified.length) {
+        await challengeExistingFactor(verified[0]);
+      } else {
+        // Remove abandoned, unverified enrollments so repeated login attempts do not
+        // accumulate unusable TOTP factors. A fresh QR is issued for this session.
+        for (const pending of factors.totp.filter(f => f.status !== "verified")) {
+          const { error: removeError } = await client.auth.mfa.unenroll({ factorId: pending.id });
+          if (removeError) throw removeError;
+        }
+        await startMfa();
+      }
       status("Password accepted. Complete authenticator verification to continue.", true);
       $("login-form").hidden=true;
     } catch (error) {
