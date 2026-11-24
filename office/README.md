@@ -35,3 +35,14 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 ## Deployment
 - Cloudflare Pages project root remains `office`.
 - The production branch is currently configured separately. Merge/repoint only after the Phase 4 preview has been tested.
+
+
+## Phase 5 — Gemini integration and Free Tier quota guard
+- Gemini calls go through the Supabase Edge Function `office-gemini-gateway`; the browser never receives the Gemini API key.
+- The only allowlisted model is `gemini-2.5-flash-lite` from the existing Office setting. No model fallback, paid route, Google Search grounding, or external tools are enabled.
+- Every generation request requires an AAL2 session, active Owner allowlist, an Edge Function secret named `GEMINI_API_KEY`, explicit Free Tier confirmation, the global quota guard, and positive RPM/TPM/RPD application caps.
+- Quota reservations are serialized with a database advisory lock and enforce rolling one-minute RPM/TPM caps plus a UTC daily request cap. Each completed/failed provider attempt is recorded in `office.office_ai_usage`; prompts and generated content are not written to logs.
+- The gateway is deployed but remains fail-closed: `gemini_gateway_enabled=false`, `gemini_free_tier_confirmed=false`, and the project-specific caps are unset. No Gemini API request can run until the Free Tier limits are confirmed and the owner enables it.
+- Add the API key only in Supabase Dashboard → Edge Functions → Secrets as `GEMINI_API_KEY`; never commit it or paste it into chat. Supabase documents Edge Function secrets here: https://supabase.com/docs/guides/functions/secrets.
+- Exact RPM, TPM and RPD values must be read from this Google AI Studio project's Dashboard → Rate limits. They are project/model-specific and can change; do not copy generic values into app caps.
+- Migration: `supabase/migrations/20261124074103_office_phase_5_gemini_quota_guard.sql`.
