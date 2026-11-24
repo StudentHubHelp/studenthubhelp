@@ -109,3 +109,11 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 - Full audit notes: `office/security/phase11-audit.md`.
 - SQL assertions: `office/tests/phase11-security-assertions.sql`.
 - Existing website/Admin SECURITY DEFINER warnings and global Auth settings are documented but deliberately not changed as part of this isolated Office scope.
+
+
+## Phase 12 — Release candidate and production cutover
+- Phase 12 release runbook: `office/RELEASE.md`.
+- Cloudflare preview deployment is successful at `https://feature-office-phase-12.studenthubhelp-office.pages.dev`.
+- The Office Pages project still uses `feature/office-phase-3` as its production branch. No production branch change has been made.
+- The Pages custom-domain list currently contains only `studenthubhelp-office.pages.dev`; `office.studenthubhelp.in` is not yet attached.
+- Final go-live is intentionally held until the consolidated acceptance tests, provider-secret setup (if needed), custom-domain binding and explicit Owner cutover approval are complete.
