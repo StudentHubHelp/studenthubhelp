@@ -560,8 +560,9 @@
             draftCard.append(checks);
             draftCard.append(node("small", "gm-approval-note", "Draft only · Owner approval required · Not executed"));
             li.append(draftCard);
-          } else if (task.status === "queued") {
-            addAction(li, "Generate employee draft", "small-action employee-action", button =>
+          }
+          if (task.status === "queued") {
+            addAction(li, draft ? "Regenerate employee draft" : "Generate employee draft", "small-action employee-action", button =>
               createEmployeeDraft(task, step.role_key, stepIndex, button));
           }
           steps.append(li);
@@ -589,18 +590,20 @@
   }
 
   async function createEmployeeDraft(task, roleKey, stepIndex, button) {
+    const originalLabel = button.textContent;
+    const isRegeneration = originalLabel === "Regenerate employee draft";
     button.disabled = true;
     button.textContent = "Preparing…";
     try {
       await employeeApi("generate_draft", {
         task_id: task.id, role_key: roleKey, step_index: stepIndex
       });
-      status(titleCase(roleKey) + " draft created. No external action was performed.", true);
+      status(titleCase(roleKey) + (isRegeneration ? " draft regenerated." : " draft created.") + " No external action was performed.", true);
       await loadWorkspace();
     } catch (error) {
       status(error.message);
       button.disabled = false;
-      button.textContent = "Generate employee draft";
+      button.textContent = originalLabel;
     }
   }
 
