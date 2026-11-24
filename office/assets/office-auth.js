@@ -26,26 +26,37 @@
     return result.ok === true && result.access === "owner";
   }
 
-  async function enrollTotpFactor() {
-    return await client.auth.mfa.enroll({ factorType:"totp", friendlyName:"StudentHubHelp Office" });
-  }
-
   async function startMfa() {
-    let enrollment = await enrollTotpFactor();
-    if (enrollment.error && /friendly name.*already exists/i.test(enrollment.error.message || "")) {
-      // Recover only abandoned, unverified Office factors. Never remove a verified authenticator.
-      const { data: listed, error: listError } = await client.auth.mfa.listFactors();
-      if (listError) throw listError;
-      const pendingOfficeFactors = (Array.isArray(listed?.totp) ? listed.totp : [])
-        .filter(f => f.status !== "verified" && f.friendly_name === "StudentHubHelp Office");
+    // Best-effort cleanup of abandoned Office TOTP enrollments. Supabase may
+    // retain an unverified factor even when the browser's factor list omits it.
+    // A unique friendly name prevents that stale factor from blocking a new QR.
+    const { data: listed, error: listError } = await client.auth.mfa.listFactors();
+    if (!listError) {
+      const factors = Array.isArray(listed?.all)
+        ? listed.all
+        : [...(Array.isArray(listed?.totp) ? listed.totp : []),
+           ...(Array.isArray(listed?.phone) ? listed.phone : [])];
+      const pendingOfficeFactors = factors.filter(f =>
+        f?.factor_type === "totp" &&
+        f?.status !== "verified" &&
+        typeof f?.friendly_name === "string" &&
+        f.friendly_name.startsWith("StudentHubHelp Office")
+      );
       for (const pending of pendingOfficeFactors) {
         if (!isUuid(pending?.id)) continue;
         const { error: removeError } = await client.auth.mfa.unenroll({ factorId: pending.id });
-        if (removeError) throw removeError;
+        // Continue with a new unique label if Supabase refuses to remove a stale factor.
+        if (removeError) console.warn("Could not clean an abandoned Office MFA factor:", removeError.message);
       }
-      enrollment = await enrollTotpFactor();
+    } else {
+      console.warn("Could not inspect existing MFA factors before enrollment:", listError.message);
     }
-    const { data, error } = enrollment;
+
+    const friendlyName = "StudentHubHelp Office " + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+    const { data, error } = await client.auth.mfa.enroll({
+      factorType: "totp",
+      friendlyName
+    });
     if (error) throw error;
     // Supabase returns the factor ID at data.id and the TOTP payload at data.totp.
     if (!isUuid(data?.id) || !data?.totp?.qr_code || !data?.totp?.secret) {
