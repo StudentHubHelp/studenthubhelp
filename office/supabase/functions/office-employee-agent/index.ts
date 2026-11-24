@@ -370,7 +370,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const sources = Array.isArray(researchData.sources) ? researchData.sources : [];
-      const firstPartyBrief = /studenthubhelp(?:\\.in)?/i.test(taskTitle + " " + taskDescription);
+      const firstPartyBrief = /studenthubhelp(?:\.in)?/i.test(taskTitle + " " + taskDescription);
       if (firstPartyBrief) {
         const officialUrls = [
           "https://studenthubhelp.in/",
@@ -457,7 +457,7 @@ Deno.serve(async (req: Request) => {
       }).slice(0, 3200);
     } else {
       researchContext = await buildRoleContext(roleKey, supabaseUrl, serviceKey);
-      allowedSourceUrls = [...new Set((researchContext.match(/https:\\/\\/[^\\s<>"']+/g) || []).map((value: string) => {
+      allowedSourceUrls = [...new Set((researchContext.match(/https:\/\/[^\s<>"']+/g) || []).map((value: string) => {
         try { const parsed = new URL(value); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; }
       }).filter(Boolean))];
     }
