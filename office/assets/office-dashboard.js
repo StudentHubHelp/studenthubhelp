@@ -4,6 +4,7 @@
   const CONTROL_API = SUPABASE_URL + "/functions/v1/office-control-api";
   const GM_API = SUPABASE_URL + "/functions/v1/office-general-manager";
   const EMPLOYEE_API = SUPABASE_URL + "/functions/v1/office-employee-agent";
+  const INTEGRATION_API = SUPABASE_URL + "/functions/v1/office-integration-hub";
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -130,6 +131,89 @@
       throw new Error(messages[result.code] || "Employee request failed. Please try again later.");
     }
     return result.data || {};
+  }
+
+  async function integrationApi(action, payload = {}) {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(INTEGRATION_API, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + session.access_token,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) {
+      if (response.status === 401 || response.status === 428) {
+        await client.auth.signOut();
+        location.replace("./login.html");
+      }
+      throw new Error("Unable to load the secure integration registry.");
+    }
+    return result.data || {};
+  }
+
+  function renderIntegrations(data = {}) {
+    const grid = $("integration-grid");
+    grid.replaceChildren();
+    const integrations = data.integrations || [];
+    const actions = data.actions || [];
+    $("integration-pending-pill").textContent = (data.pending_approvals ?? 0) + " pending approvals";
+    if (!integrations.length) {
+      grid.append(node("div", "empty-state", "No integrations are registered."));
+      return;
+    }
+    const actionLabels = {
+      read_office_metrics: "Read Office metrics",
+      read_listing_aggregates: "Read listing aggregates",
+      create_patch_proposal: "Create patch proposal",
+      create_pull_request: "Create pull request",
+      create_preview_deployment: "Preview deployment",
+      deploy_production: "Production deployment",
+      create_email_draft: "Email draft",
+      send_email_campaign: "Send email campaign",
+      create_post_draft: "Instagram post draft",
+      publish_post: "Publish Instagram post",
+      keyword_research: "Keyword research",
+      site_audit: "SEO site audit",
+      publish_metadata: "Publish metadata"
+    };
+    integrations.forEach(integration => {
+      const card = node("article", "integration-card");
+      const top = node("div", "integration-card-top");
+      const heading = node("h3", "", integration.display_name);
+      const state = node("span", "integration-state integration-" + integration.connection_status,
+        titleCase(integration.connection_status).replace(/_/g, " "));
+      top.append(heading, state);
+      card.append(top);
+      card.append(node("p", "integration-note", integration.notes || ""));
+      const meta = node("div", "integration-meta");
+      meta.append(node("span", "", "Mode: " + titleCase(integration.access_mode)));
+      if (integration.secret_reference) meta.append(node("span", "", "Secret: " + integration.secret_reference));
+      card.append(meta);
+      const scopes = node("div", "integration-scopes");
+      (integration.allowed_scopes || []).forEach(scope => scopes.append(node("span", "integration-scope", titleCase(scope))));
+      card.append(scopes);
+      const providerActions = actions.filter(action => action.provider_key === integration.provider_key);
+      if (providerActions.length) {
+        const list = node("div", "integration-action-list");
+        providerActions.forEach(action => {
+          const line = node("div", "integration-action-row");
+          line.append(node("span", "integration-action-name", actionLabels[action.action_key] || titleCase(action.action_key)));
+          const mode = action.requires_approval ? "Owner approval" : titleCase(action.execution_mode);
+          const stateText = action.execution_enabled ? "Enabled" : action.proposal_enabled ? mode + " · proposal only" : mode + " · not enabled";
+          line.append(node("small", "integration-action-state", stateText));
+          list.append(line);
+        });
+        card.append(list);
+      }
+      grid.append(card);
+    });
   }
 
   function renderMetrics(counts = {}) {
@@ -294,14 +378,16 @@
   async function loadWorkspace() {
     $("refresh-btn").disabled = true;
     try {
-      const [overview, taskResult, planResult, employeeResult] = await Promise.all([
+      const [overview, taskResult, planResult, employeeResult, integrationResult] = await Promise.all([
         api("overview"),
         api("list_tasks"),
         gmApi("list_plans"),
-        employeeApi("list_drafts")
+        employeeApi("list_drafts"),
+        integrationApi("overview")
       ]);
       renderMetrics(overview.task_counts);
       renderTasks(taskResult.tasks || [], planResult.plans || [], employeeResult.items || []);
+      renderIntegrations(integrationResult);
       renderTeam(overview.employees || []);
       status("Secure owner session verified. Task queue is connected.", true);
     } catch (error) {
