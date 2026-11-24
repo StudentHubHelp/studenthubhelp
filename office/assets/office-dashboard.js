@@ -5,6 +5,7 @@
   const GM_API = SUPABASE_URL + "/functions/v1/office-general-manager";
   const EMPLOYEE_API = SUPABASE_URL + "/functions/v1/office-employee-agent";
   const INTEGRATION_API = SUPABASE_URL + "/functions/v1/office-integration-hub";
+  const APPROVAL_API = SUPABASE_URL + "/functions/v1/office-approval-center";
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -156,6 +157,112 @@
       throw new Error("Unable to load the secure integration registry.");
     }
     return result.data || {};
+  }
+
+  async function approvalApi(action, payload = {}) {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(APPROVAL_API, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + session.access_token,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, ...payload })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) {
+      const messages = {
+        rejection_note_required: "Add a short reason before rejecting this proposal.",
+        approval_already_reviewed: "This approval has already been reviewed.",
+        approval_expired: "This approval request has expired."
+      };
+      if (response.status === 401 || response.status === 428) {
+        await client.auth.signOut();
+        location.replace("./login.html");
+      }
+      throw new Error(messages[result.code] || "Approval request failed. Please refresh and try again.");
+    }
+    return result.data || {};
+  }
+
+  function renderApprovals(data = {}) {
+    const list = $("approval-list");
+    list.replaceChildren();
+    const approvals = data.approvals || [];
+    const pending = approvals.filter(item => item.status === "pending").length;
+    $("approval-count-pill").textContent = pending + " pending";
+    if (!approvals.length) {
+      list.append(node("div", "empty-state", "No approval requests in this view."));
+      return;
+    }
+    approvals.forEach(approval => {
+      const card = node("article", "approval-card");
+      const top = node("div", "approval-card-top");
+      const heading = node("div", "approval-card-heading");
+      heading.append(node("strong", "", approval.action_summary));
+      heading.append(node("small", "", approval.task_key + " · " + approval.task_title));
+      top.append(heading, node("span", "approval-state approval-" + approval.status, titleCase(approval.status)));
+      card.append(top);
+      const meta = node("div", "approval-meta");
+      meta.append(node("span", "", approval.action_type));
+      meta.append(node("span", "", "Requested " + dateText(approval.requested_at)));
+      if (approval.expires_at) meta.append(node("span", "", "Expires " + dateText(approval.expires_at)));
+      card.append(meta);
+      const payload = node("pre", "approval-payload", JSON.stringify(approval.proposed_payload || {}, null, 2));
+      card.append(payload);
+      if (approval.status === "pending") {
+        const note = node("textarea", "approval-note-input");
+        note.rows = 2;
+        note.maxLength = 1000;
+        note.placeholder = "Owner review note (required when rejecting)…";
+        card.append(note);
+        const actions = node("div", "approval-actions");
+        addAction(actions, "Approve proposal", "small-action approval-approve", button =>
+          reviewApproval(approval, "approved", note.value, button));
+        addAction(actions, "Reject", "small-action approval-reject", button =>
+          reviewApproval(approval, "rejected", note.value, button));
+        card.append(actions);
+      } else if (approval.status === "approved") {
+        card.append(node("p", "approval-outcome", "Owner approved this proposal. No external action has been executed; Phase 10 execution remains separate."));
+        if (approval.review_note) card.append(node("small", "approval-review-note", "Review note: " + approval.review_note));
+      } else {
+        if (approval.review_note) card.append(node("small", "approval-review-note", "Review note: " + approval.review_note));
+      }
+      list.append(card);
+    });
+  }
+
+  async function reviewApproval(approval, decision, note, button) {
+    if (decision === "rejected" && !String(note || "").trim()) {
+      status("Add a short reason before rejecting this proposal.");
+      return;
+    }
+    const prompt = decision === "approved"
+      ? "Record Owner approval for this proposal? This will NOT execute the action."
+      : "Reject this proposal? No external action will be executed.";
+    if (!window.confirm(prompt)) return;
+    button.disabled = true;
+    try {
+      const result = await approvalApi("review", {
+        approval_id: approval.id, decision, review_note: note
+      });
+      status(result.message || "Owner decision recorded. No external action was executed.", true);
+      await loadWorkspace();
+    } catch (error) {
+      status(error.message);
+      button.disabled = false;
+    }
+  }
+
+  async function loadApprovals() {
+    try {
+      const result = await approvalApi("list", { status: $("approval-filter").value });
+      renderApprovals(result);
+    } catch (error) { status(error.message); }
   }
 
   function renderIntegrations(data = {}) {
@@ -384,16 +491,18 @@
   async function loadWorkspace() {
     $("refresh-btn").disabled = true;
     try {
-      const [overview, taskResult, planResult, employeeResult, integrationResult] = await Promise.all([
+      const [overview, taskResult, planResult, employeeResult, integrationResult, approvalResult] = await Promise.all([
         api("overview"),
         api("list_tasks"),
         gmApi("list_plans"),
         employeeApi("list_drafts"),
-        integrationApi("overview")
+        integrationApi("overview"),
+        approvalApi("list", { status: $("approval-filter").value })
       ]);
       renderMetrics(overview.task_counts);
       renderTasks(taskResult.tasks || [], planResult.plans || [], employeeResult.items || []);
       renderIntegrations(integrationResult);
+      renderApprovals(approvalResult);
       renderTeam(overview.employees || []);
       status("Secure owner session verified. Task queue is connected.", true);
     } catch (error) {
@@ -425,6 +534,7 @@
   });
 
   $("refresh-btn").addEventListener("click", loadWorkspace);
+  $("approval-filter").addEventListener("change", loadApprovals);
   $("close-logs-btn").addEventListener("click", () => { $("task-logs-panel").hidden = true; });
   $("logout-btn").addEventListener("click", async () => {
     const button = $("logout-btn");
