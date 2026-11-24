@@ -13,37 +13,67 @@
 </head>
 <body class="office-page">
   <aside class="sidebar">
-    <a class="brand" href="./"><span class="brand-mark">SH</span><span><strong>StudentHubHelp</strong><small>AI VIRTUAL OFFICE</small></span></a>
+    <a class="brand" href="./" aria-label="StudentHubHelp Office"><span class="brand-mark">SH</span><span><strong>StudentHubHelp</strong><small>AI VIRTUAL OFFICE</small></span></a>
     <div class="side-label">WORKSPACE</div>
-    <a class="nav-item active" href="./">Overview</a>
+    <a class="nav-item active" href="#overview">Overview</a>
     <div class="side-label">MANAGEMENT</div>
-    <div class="nav-item disabled">AI Employees <span>Phase 7</span></div>
-    <div class="nav-item disabled">Tasks & Delegation <span>Phase 4</span></div>
+    <a class="nav-item" href="#tasks">Tasks & Delegation <span>Live</span></a>
+    <a class="nav-item" href="#team">AI Employees</a>
     <div class="nav-item disabled">Approvals <span>Phase 9</span></div>
-    <div class="nav-item disabled">Reports <span>Phase 4</span></div>
+    <div class="nav-item disabled">Reports <span>Later</span></div>
     <div class="sidebar-bottom"><span class="online-dot"></span> Secure owner session</div>
   </aside>
-  <main class="main-area">
-    <header class="topbar"><div><div class="eyebrow">OWNER WORKSPACE</div><h1>Office overview</h1></div><button id="logout-btn" class="quiet-btn">Sign out ↗</button></header>
-    <section class="welcome-panel"><div><div class="eyebrow">YOUR PRIVATE AI OFFICE</div><h2>Good to see you.</h2><p>One control room for your AI team, delegated work and approvals.</p></div><div class="orb" aria-hidden="true">✦</div></section>
-    <section class="metric-grid">
-      <article class="metric"><span>AI employees</span><strong>9</strong><small>Planned team structure</small></article>
-      <article class="metric"><span>Active agents</span><strong>0</strong><small>None activated yet</small></article>
-      <article class="metric"><span>Pending tasks</span><strong>—</strong><small>Task center arrives in Phase 4</small></article>
-      <article class="metric"><span>Owner security</span><strong class="secure">AAL2</strong><small>Multi-factor verified session</small></article>
+
+  <main class="main-area" id="overview">
+    <header class="topbar">
+      <div><div class="eyebrow">OWNER WORKSPACE</div><h1>Office overview</h1></div>
+      <button id="logout-btn" class="quiet-btn" type="button">Sign out ↗</button>
+    </header>
+
+    <section class="welcome-panel">
+      <div><div class="eyebrow">YOUR PRIVATE AI OFFICE</div><h2>Good to see you.</h2><p>One control room for your AI team, delegated work and approvals.</p></div>
+      <div class="orb" aria-hidden="true">✦</div>
     </section>
-    <section class="section-heading"><div><div class="eyebrow">TEAM DIRECTORY</div><h2>Your AI team</h2></div><span class="pill">9 roles planned</span></section>
-    <section class="team-grid">
-      <article class="team-card manager"><div class="avatar">GM</div><div><strong>General Manager</strong><p>Receives your instructions and coordinates the team.</p></div><span class="state">Planned</span></article>
-      <article class="team-card"><div class="avatar">DL</div><div><strong>Data & Listing Manager</strong><p>Listing operations and data quality.</p></div><span class="state">Planned</span></article>
-      <article class="team-card"><div class="avatar">DC</div><div><strong>Data Collection Executive</strong><p>Structured data collection and verification support.</p></div><span class="state">Planned</span></article>
-      <article class="team-card"><div class="avatar">CS</div><div><strong>Customer Support Executive</strong><p>Student and listing support coordination.</p></div><span class="state">Planned</span></article>
-      <article class="team-card"><div class="avatar">TS</div><div><strong>Technical Support Engineer</strong><p>Technical investigation and maintenance.</p></div><span class="state">Planned</span></article>
-      <article class="team-card"><div class="avatar">DA</div><div><strong>Data Analyst & Reporting Manager</strong><p>Insights, metrics and scheduled reports.</p></div><span class="state">Planned</span></article>
-      <article class="team-card"><div class="avatar">SM</div><div><strong>Social Media Manager</strong><p>Instagram content planning and publishing workflow.</p></div><span class="state">Planned</span></article>
-      <article class="team-card"><div class="avatar">SE</div><div><strong>SEO & Marketing Manager</strong><p>Search visibility and growth recommendations.</p></div><span class="state">Planned</span></article>
-      <article class="team-card"><div class="avatar">QC</div><div><strong>Quality Control Manager</strong><p>Reviews outputs before approval or release.</p></div><span class="state">Planned</span></article>
+
+    <section class="metric-grid" id="metrics" aria-label="Office metrics">
+      <article class="metric"><span>Total tasks</span><strong id="metric-total">—</strong><small>All recorded tasks</small></article>
+      <article class="metric"><span>Queued</span><strong id="metric-queued">—</strong><small>Waiting for processing</small></article>
+      <article class="metric"><span>In progress</span><strong id="metric-running">—</strong><small>Worker execution is not enabled</small></article>
+      <article class="metric"><span>Completed</span><strong id="metric-completed">—</strong><small>Finished tasks</small></article>
     </section>
+
+    <section class="section-heading" id="tasks">
+      <div><div class="eyebrow">OWNER CONTROL</div><h2>Tasks & delegation</h2><p class="section-copy">Create and manage work items. Tasks are queued safely; AI execution is not enabled in this phase.</p></div>
+      <button id="refresh-btn" class="quiet-btn" type="button">↻ Refresh</button>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="control-panel">
+        <div class="panel-heading"><div><div class="eyebrow">NEW WORK ITEM</div><h3>Create a task</h3></div><span class="panel-icon">＋</span></div>
+        <form id="task-form" class="task-form">
+          <label>Task title<input name="title" type="text" minlength="3" maxlength="160" required placeholder="e.g. Review new hostel listing requests"></label>
+          <label>Description <span class="optional">Optional</span><textarea name="description" rows="4" maxlength="2000" placeholder="Add context, expected result or constraints…"></textarea></label>
+          <label>Priority<select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
+          <button class="primary-btn" id="create-task-btn" type="submit">Add to task queue <span>→</span></button>
+        </form>
+        <p class="helper-note">Owner-created tasks only. General Manager and other AI employees remain in planned mode until later phases.</p>
+      </article>
+
+      <article class="queue-panel">
+        <div class="panel-heading"><div><div class="eyebrow">WORK PIPELINE</div><h3>Task queue</h3></div><span id="task-total-pill" class="pill">Loading…</span></div>
+        <div id="task-list" class="task-list" aria-live="polite"><div class="empty-state">Loading your tasks…</div></div>
+        <div id="task-logs-panel" class="task-logs-panel" hidden>
+          <div class="logs-heading"><strong id="task-logs-title">Task activity</strong><button id="close-logs-btn" class="text-btn" type="button">Close</button></div>
+          <div id="task-logs-list"></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="section-heading team-heading" id="team"><div><div class="eyebrow">TEAM DIRECTORY</div><h2>Your AI team</h2><p class="section-copy">Nine roles are registered. All remain inactive until their dedicated setup and safety checks are complete.</p></div><span class="pill">9 roles planned</span></section>
+    <section class="team-grid" id="team-grid">
+      <article class="team-card"><div class="avatar">GM</div><div><strong>General Manager</strong><p>Receives your instructions and coordinates the team.</p></div><span class="state">Planned</span></article>
+    </section>
+
     <p id="dashboard-status" class="status" role="status" aria-live="polite"></p>
     <footer class="main-footer">StudentHubHelp AI Office · Owner-controlled · Production actions require approval</footer>
   </main>
