@@ -139,12 +139,14 @@ Deno.serve(async (req: Request) => {
 
     let actualInputTokens = 0;
     let actualOutputTokens = 0;
+    let activeReservationId = reservationId;
+    let activeModel = model;
     try {
       let providerResponse: Response | null = null;
       let providerData: any = null;
       for (let attempt = 0; attempt < 2; attempt++) {
         providerResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
@@ -155,34 +157,91 @@ Deno.serve(async (req: Request) => {
             signal: AbortSignal.timeout(45000)
           }
         );
-        if (providerResponse.ok || ![502, 503].includes(providerResponse.status) || attempt === 1) {
-          break;
-        }
-        console.warn("Gemini transient upstream response; one bounded retry", JSON.stringify({
-          http_status: providerResponse.status, retry_in_ms: 2000
+        if (providerResponse.ok || ![502, 503].includes(providerResponse.status) || attempt === 1) break;
+        console.warn("Gemini primary transient upstream response; one bounded retry", JSON.stringify({
+          model: activeModel, http_status: providerResponse.status, retry_in_ms: 2000
         }));
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
       if (!providerResponse) throw new Error("gemini_provider_unavailable");
       providerData = await providerResponse.json().catch(() => null);
+
       if (!providerResponse.ok) {
-        const providerDiagnostic = [
+        const primaryStatus = providerResponse.status;
+        const primaryDiagnostic = [
           providerData?.error?.status,
           providerData?.error?.message,
           providerData?.error?.details?.map?.((item: any) => item?.reason || item?.["@type"]).filter(Boolean).join(" ")
         ].filter((item) => typeof item === "string").join(" ");
-        const providerCode = safeProviderError(providerDiagnostic);
-        console.error("Gemini upstream request failed", JSON.stringify({ http_status: providerResponse.status, provider_code: providerCode }));
-        const requestStatus = providerResponse.status === 429 ? "rate_limited" : "error";
-        await rpc(supabaseUrl, serviceKey, "office_gemini_finalize", {
-          p_user_id: user.id, p_reservation_id: reservationId,
-          p_request_status: requestStatus, p_actual_input_tokens: 0,
-          p_actual_output_tokens: 0, p_provider_error_code: providerCode
+        const primaryCode = safeProviderError(primaryDiagnostic);
+        console.error("Gemini primary model request failed", JSON.stringify({
+          model: activeModel, http_status: primaryStatus, provider_code: primaryCode
+        }));
+        const primaryFinalized = await rpc(supabaseUrl, serviceKey, "office_gemini_finalize", {
+          p_user_id: user.id, p_reservation_id: activeReservationId,
+          p_request_status: primaryStatus === 429 ? "rate_limited" : "error",
+          p_actual_input_tokens: 0, p_actual_output_tokens: 0, p_provider_error_code: primaryCode
         });
-        return respond({
-          ok: false,
-          code: `gemini_provider_http_${providerResponse.status}_${providerCode}`
-        }, providerResponse.status === 429 ? 429 : 502, origin);
+        if (!primaryFinalized.ok) return respond({ ok: false, code: "usage_recording_failed" }, 503, origin);
+
+        if (![502, 503].includes(primaryStatus)) {
+          return respond({ ok: false, code: `gemini_provider_http_${primaryStatus}_${primaryCode}` },
+            primaryStatus === 429 ? 429 : 502, origin);
+        }
+
+        const fallbackReservation = await rpc(supabaseUrl, serviceKey, "office_gemini_reserve_fallback", {
+          p_user_id: user.id, p_estimated_input_tokens: estimatedInputTokens
+        });
+        if (!fallbackReservation.ok ||
+            fallbackReservation.data?.model !== "gemini-3.1-flash-lite" ||
+            !fallbackReservation.data?.reservation_id ||
+            !Number.isInteger(fallbackReservation.data?.max_output_tokens)) {
+          console.warn("Gemini fallback not attempted because its Free Tier quota reservation was blocked", JSON.stringify({
+            reason: fallbackReservation.message || "fallback_reservation_unavailable"
+          }));
+          return respond({ ok: false, code: "gemini_fallback_quota_guard_blocked" }, 423, origin);
+        }
+
+        activeReservationId = fallbackReservation.data.reservation_id;
+        activeModel = fallbackReservation.data.model;
+        console.warn("Gemini primary exhausted bounded retries; using Free Tier fallback once", JSON.stringify({
+          primary_model: model, fallback_model: activeModel, primary_http_status: primaryStatus
+        }));
+        providerResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: prompt }] }],
+              generationConfig: {
+                maxOutputTokens: fallbackReservation.data.max_output_tokens,
+                temperature: 0.2
+              }
+            }),
+            signal: AbortSignal.timeout(45000)
+          }
+        );
+        providerData = await providerResponse.json().catch(() => null);
+        if (!providerResponse.ok) {
+          const fallbackDiagnostic = [
+            providerData?.error?.status,
+            providerData?.error?.message,
+            providerData?.error?.details?.map?.((item: any) => item?.reason || item?.["@type"]).filter(Boolean).join(" ")
+          ].filter((item) => typeof item === "string").join(" ");
+          const fallbackCode = safeProviderError(fallbackDiagnostic);
+          await rpc(supabaseUrl, serviceKey, "office_gemini_finalize", {
+            p_user_id: user.id, p_reservation_id: activeReservationId,
+            p_request_status: providerResponse.status === 429 ? "rate_limited" : "error",
+            p_actual_input_tokens: 0, p_actual_output_tokens: 0, p_provider_error_code: fallbackCode
+          });
+          console.error("Gemini Free Tier fallback model failed", JSON.stringify({
+            model: activeModel, http_status: providerResponse.status, provider_code: fallbackCode
+          }));
+          return respond({
+            ok: false, code: `gemini_provider_http_${providerResponse.status}_${fallbackCode}_fallback`
+          }, providerResponse.status === 429 ? 429 : 502, origin);
+        }
       }
 
       actualInputTokens = Number(providerData?.usageMetadata?.promptTokenCount || 0);
@@ -193,7 +252,7 @@ Deno.serve(async (req: Request) => {
         .trim();
       if (!textOutput) {
         await rpc(supabaseUrl, serviceKey, "office_gemini_finalize", {
-          p_user_id: user.id, p_reservation_id: reservationId,
+          p_user_id: user.id, p_reservation_id: activeReservationId,
           p_request_status: "error", p_actual_input_tokens: actualInputTokens,
           p_actual_output_tokens: actualOutputTokens, p_provider_error_code: "empty_or_blocked_response"
         });
@@ -201,18 +260,18 @@ Deno.serve(async (req: Request) => {
       }
 
       const finalized = await rpc(supabaseUrl, serviceKey, "office_gemini_finalize", {
-        p_user_id: user.id, p_reservation_id: reservationId,
+        p_user_id: user.id, p_reservation_id: activeReservationId,
         p_request_status: "success", p_actual_input_tokens: actualInputTokens,
         p_actual_output_tokens: actualOutputTokens, p_provider_error_code: null
       });
       if (!finalized.ok) return respond({ ok: false, code: "usage_recording_failed" }, 503, origin);
       return respond({
         ok: true,
-        data: { text: textOutput, model, usage: { input_tokens: actualInputTokens, output_tokens: actualOutputTokens } }
+        data: { text: textOutput, model: activeModel, usage: { input_tokens: actualInputTokens, output_tokens: actualOutputTokens } }
       }, 200, origin);
     } catch {
       await rpc(supabaseUrl, serviceKey, "office_gemini_finalize", {
-        p_user_id: user.id, p_reservation_id: reservationId,
+        p_user_id: user.id, p_reservation_id: activeReservationId,
         p_request_status: "error", p_actual_input_tokens: actualInputTokens,
         p_actual_output_tokens: actualOutputTokens, p_provider_error_code: "network_or_timeout"
       }).catch(() => null);
