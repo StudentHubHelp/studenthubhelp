@@ -68,3 +68,15 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 - Role boundaries: `office/agents/role-boundaries.md`.
 - Edge Function: `office-employee-agent`.
 - Migration: `supabase/migrations/20261124074749_office_phase_7_specialized_employee_agents.sql`.
+
+
+## Phase 8 — Tool/API integration registry
+- Added a private integration registry for Supabase, Gemini, GitHub, Cloudflare, Brevo, Instagram/Meta and OpenSEO.
+- Registry shows connection status, allowed scope labels, access mode and whether the named Edge Function secret is present. It never returns secret values.
+- Added a per-provider action catalog for read-only, draft-only and approval-required capabilities.
+- All external execution flags remain `false`. The integration hub can only create a pending approval proposal for eligible write actions, tied to an existing queued task; it never calls the provider.
+- ChatGPT connectors are separate from the Office runtime. GitHub, Brevo and OpenSEO app connections do not automatically provide Office Edge Function credentials.
+- Brevo sender identity is not an API credential. The Office runtime needs `BREVO_API_KEY`.
+- Integration setup notes: `office/integrations/README.md`.
+- Edge Function: `office-integration-hub`.
+- Migration: `supabase/migrations/20261124075121_office_phase_8_integration_registry.sql`.
