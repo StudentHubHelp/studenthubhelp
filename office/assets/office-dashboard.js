@@ -132,7 +132,7 @@
         await client.auth.signOut();
         location.replace("./login.html");
       }
-      const providerFailure = /^gemini_provider_http_\\d+_/.test(String(result.code || "")) || result.code === "gemini_provider_unavailable";
+      const providerFailure = /^gemini_provider_http_\d+_/.test(String(result.code || "")) || result.code === "gemini_provider_unavailable";
       throw new Error(providerFailure
         ? "Gemini returned a temporary provider error. The employee draft was not saved. Wait briefly before retrying; another Free Tier API request will be used."
         : messages[result.code] || "Employee request failed. Please try again later.");
@@ -509,6 +509,7 @@
   function renderTasks(tasks = [], plans = [], employeeItems = []) {
     const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
     const draftMap = new Map((employeeItems || []).map(item => [item.task_id, item.drafts || []]));
+    const researchEvidenceMap = new Map((employeeItems || []).map(item => [item.task_id, item.research_evidence || null]));
     const list = $("task-list");
     list.replaceChildren();
     $("task-total-pill").textContent = tasks.length + (tasks.length === 1 ? " task" : " tasks");
@@ -550,6 +551,16 @@
         planBox.append(node("p", "gm-plan-summary", gmPlan.summary));
         const steps = node("ol", "gm-plan-steps");
         const taskDrafts = draftMap.get(task.id) || [];
+        const dceDraftForTask = taskDrafts.find(item => item.role_key === "data_collection_executive");
+        const dceEvidenceForTask = researchEvidenceMap.get(task.id);
+        const dceDraftTime = Date.parse(String(dceDraftForTask?.created_at || ""));
+        const dceEvidenceTime = Date.parse(String(dceEvidenceForTask?.saved_at || ""));
+        const dceDraftIsFresh = Boolean(dceDraftForTask) && dceEvidenceForTask?.status === "completed" &&
+          Number.isFinite(dceDraftTime) && Number.isFinite(dceEvidenceTime) && dceDraftTime >= dceEvidenceTime &&
+          Array.isArray(dceEvidenceForTask?.sources) && dceEvidenceForTask.sources.some(source => {
+            try { return new URL(String(source.url || "")).protocol === "https:"; } catch { return false; }
+          });
+        const dceRequestKey = task.id + ":data_collection_executive:0";
         (gmPlan.steps || []).forEach((step, stepIndex) => {
           const li = node("li", "gm-step-item");
           li.append(node("span", "gm-step-title", step.title + " · " + titleCase(step.role_key)));
@@ -573,6 +584,12 @@
             if (employeeDraftRequests.has(requestKey)) {
               employeeButton.disabled = true;
               employeeButton.textContent = "Generating…";
+            }
+            if (step.role_key === "quality_control_manager" &&
+                (!dceDraftIsFresh || employeeDraftRequests.has(dceRequestKey))) {
+              employeeButton.disabled = true;
+              employeeButton.textContent = "Waiting for fresh DCE research";
+              employeeButton.title = "Run DCE research successfully first. QC is blocked until its fresh draft and evidence are saved.";
             }
           }
           steps.append(li);
@@ -615,6 +632,9 @@
       await loadWorkspace();
     } catch (error) {
       employeeDraftRequests.delete(requestKey);
+      if (roleKey === "data_collection_executive") {
+        await loadWorkspace();
+      }
       status(error.message);
       button.disabled = false;
       button.textContent = originalLabel;
