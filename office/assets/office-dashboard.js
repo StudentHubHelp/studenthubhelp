@@ -131,7 +131,10 @@
         await client.auth.signOut();
         location.replace("./login.html");
       }
-      throw new Error(messages[result.code] || "Employee request failed. Please try again later.");
+      const providerFailure = /^gemini_provider_http_\\d+_/.test(String(result.code || "")) || result.code === "gemini_provider_unavailable";
+      throw new Error(providerFailure
+        ? "Gemini returned a temporary provider error. The employee draft was not saved. Wait briefly before retrying; another Free Tier API request will be used."
+        : messages[result.code] || "Employee request failed. Please try again later.");
     }
     return result.data || {};
   }
