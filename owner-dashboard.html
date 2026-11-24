@@ -3220,7 +3220,7 @@ async function checkAuth(){
   }
 
   if(!data?.session){
-    window.location.href = "auth.html";
+    window.location.replace("auth.html");
     return false;
   }
 
@@ -3236,7 +3236,7 @@ async function checkAuth(){
     console.error("Owner role check:",profileError);
     showToast("Unable to verify owner access. Please try again.","error");
     await db.auth.signOut();
-    window.location.href = "auth.html";
+    window.location.replace("auth.html");
     return false;
   }
 
@@ -3244,18 +3244,18 @@ async function checkAuth(){
   const status = String(profile?.status || "active").trim().toLowerCase();
 
   if(role === "admin" && status === "active"){
-    window.location.href = "director.html";
+    window.location.replace("director.html");
     return false;
   }
 
   if(role === "student" && status === "active"){
-    window.location.href = "student-dashboard.html";
+    window.location.replace("student-dashboard.html");
     return false;
   }
 
   if(role !== "owner" || status !== "active"){
     await db.auth.signOut();
-    window.location.href = "auth.html";
+    window.location.replace("auth.html");
     return false;
   }
 
@@ -6820,12 +6820,17 @@ document
   .addEventListener(
     "click",
     async () => {
-
-      await db.auth.signOut();
-
-      window.location.href =
-        "auth.html";
-
+      const button = document.getElementById("logoutBtn");
+      if(button) button.disabled = true;
+      try {
+        const {error} = await db.auth.signOut();
+        if(error) throw error;
+        window.location.replace("auth.html");
+      } catch(error) {
+        console.error("Owner logout:",error);
+        if(button) button.disabled = false;
+        showToast(error?.message || "Unable to logout. Please try again.","error");
+      }
     }
   );
 
@@ -7060,6 +7065,13 @@ async function init(){
   startRealtime();
 
 }
+
+window.addEventListener("pageshow",event=>{
+  if(event.persisted){
+    document.documentElement.style.visibility="hidden";
+    window.location.reload();
+  }
+});
 
 document.addEventListener(
   "DOMContentLoaded",
