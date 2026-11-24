@@ -91,3 +91,13 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 - Policy: `office/approvals/README.md`.
 - Edge Function: `office-approval-center`.
 - Migration: `supabase/migrations/20261124075406_office_phase_9_owner_approval_center.sql`.
+
+
+## Phase 10 — Premium dashboard and reporting
+- Expanded the dashboard with six task KPIs, Owner approvals, integrations, Gemini quota guard, seven-day AI usage, employee/task status breakdowns and recent activity.
+- Gemini quota panel shows only readiness flags, usage/caps and a boolean secret-presence indicator; no secret values are exposed.
+- Report endpoint returns aggregate-only operational metrics and no student-level data.
+- Responsive layouts adapt from six desktop KPIs to stacked tablet/mobile cards.
+- Edge Function: `office-report-center`.
+- Report docs: `office/reports/README.md`.
+- Migration: `supabase/migrations/20261124075647_office_phase_10_dashboard_reporting.sql`.
