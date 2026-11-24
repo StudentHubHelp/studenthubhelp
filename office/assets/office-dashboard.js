@@ -12,6 +12,7 @@
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
   const $ = id => document.getElementById(id);
+  const employeeDraftRequests = new Set();
   const status = (message, ok = false) => {
     $("dashboard-status").textContent = message;
     $("dashboard-status").className = "status" + (ok ? " success" : "");
@@ -565,8 +566,14 @@
             li.append(draftCard);
           }
           if (task.status === "queued") {
-            addAction(li, draft ? "Regenerate employee draft" : "Generate employee draft", "small-action employee-action", button =>
-              createEmployeeDraft(task, step.role_key, stepIndex, button));
+            const requestKey = task.id + ":" + step.role_key + ":" + stepIndex;
+            const employeeButton = addAction(li, draft ? "Regenerate employee draft" : "Generate employee draft",
+              "small-action employee-action", button =>
+                createEmployeeDraft(task, step.role_key, stepIndex, button, requestKey));
+            if (employeeDraftRequests.has(requestKey)) {
+              employeeButton.disabled = true;
+              employeeButton.textContent = "Generating…";
+            }
           }
           steps.append(li);
         });
@@ -592,7 +599,9 @@
     }
   }
 
-  async function createEmployeeDraft(task, roleKey, stepIndex, button) {
+  async function createEmployeeDraft(task, roleKey, stepIndex, button, requestKey) {
+    if (employeeDraftRequests.has(requestKey)) return;
+    employeeDraftRequests.add(requestKey);
     const originalLabel = button.textContent;
     const isRegeneration = originalLabel === "Regenerate employee draft";
     button.disabled = true;
@@ -601,9 +610,11 @@
       await employeeApi("generate_draft", {
         task_id: task.id, role_key: roleKey, step_index: stepIndex
       });
+      employeeDraftRequests.delete(requestKey);
       status(titleCase(roleKey) + (isRegeneration ? " draft regenerated." : " draft created.") + " No external action was performed.", true);
       await loadWorkspace();
     } catch (error) {
+      employeeDraftRequests.delete(requestKey);
       status(error.message);
       button.disabled = false;
       button.textContent = originalLabel;
