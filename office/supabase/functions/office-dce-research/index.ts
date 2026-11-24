@@ -150,6 +150,16 @@ Deno.serve(async (req: Request) => {
       return respond({ ok: false, code: "invalid_request" }, 400, origin);
     }
     const key = Deno.env.get("TAVILY_API_KEY") || "";
+    if (body.action !== "status" && !key) {
+      return respond({ ok: false, code: "tavily_secret_missing" }, 424, origin);
+    }
+    if (body.action === "search" || body.action === "research") {
+      const query = typeof body.query === "string" ? body.query.trim().slice(0, 320) : "";
+      if (query.length < 3) return respond({ ok: false, code: "invalid_query" }, 400, origin);
+    }
+    if (body.action === "extract" && (!Array.isArray(body.urls) || body.urls.length < 1 || body.urls.length > 3)) {
+      return respond({ ok: false, code: "invalid_urls" }, 400, origin);
+    }
     const creditCheck = await rpc(supabaseUrl, serviceKey, "office_dce_reserve_tavily_credit", {
       p_user_id: user.id,
       p_credits: body.action === "status" ? 0 : 1,
@@ -176,8 +186,6 @@ Deno.serve(async (req: Request) => {
         },
       }, 200, origin);
     }
-    if (!key) return respond({ ok: false, code: "tavily_secret_missing" }, 424, origin);
-
     const action = body.action;
     if (action === "search" || action === "research") {
       const query = typeof body.query === "string" ? body.query.trim().slice(0, 320) : "";
