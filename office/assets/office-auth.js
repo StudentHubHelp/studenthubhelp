@@ -26,8 +26,26 @@
     return result.ok === true && result.access === "owner";
   }
 
+  async function enrollTotpFactor() {
+    return await client.auth.mfa.enroll({ factorType:"totp", friendlyName:"StudentHubHelp Office" });
+  }
+
   async function startMfa() {
-    const { data, error } = await client.auth.mfa.enroll({ factorType:"totp", friendlyName:"StudentHubHelp Office" });
+    let enrollment = await enrollTotpFactor();
+    if (enrollment.error && /friendly name.*already exists/i.test(enrollment.error.message || "")) {
+      // Recover only abandoned, unverified Office factors. Never remove a verified authenticator.
+      const { data: listed, error: listError } = await client.auth.mfa.listFactors();
+      if (listError) throw listError;
+      const pendingOfficeFactors = (Array.isArray(listed?.totp) ? listed.totp : [])
+        .filter(f => f.status !== "verified" && f.friendly_name === "StudentHubHelp Office");
+      for (const pending of pendingOfficeFactors) {
+        if (!isUuid(pending?.id)) continue;
+        const { error: removeError } = await client.auth.mfa.unenroll({ factorId: pending.id });
+        if (removeError) throw removeError;
+      }
+      enrollment = await enrollTotpFactor();
+    }
+    const { data, error } = enrollment;
     if (error) throw error;
     // Supabase returns the factor ID at data.id and the TOTP payload at data.totp.
     if (!isUuid(data?.id) || !data?.totp?.qr_code || !data?.totp?.secret) {
