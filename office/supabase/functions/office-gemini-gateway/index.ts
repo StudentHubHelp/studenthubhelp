@@ -153,6 +153,7 @@ Deno.serve(async (req: Request) => {
       const providerData = await providerResponse.json().catch(() => null);
       if (!providerResponse.ok) {
         const providerCode = safeProviderError(providerData?.error?.status || providerData?.error?.message);
+        console.error("Gemini upstream request failed", JSON.stringify({ http_status: providerResponse.status, provider_code: providerCode }));
         const requestStatus = providerResponse.status === 429 ? "rate_limited" : "error";
         await rpc(supabaseUrl, serviceKey, "office_gemini_finalize", {
           p_user_id: user.id, p_reservation_id: reservationId,
