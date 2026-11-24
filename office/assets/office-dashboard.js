@@ -103,11 +103,13 @@
   function addAction(parent, label, className, handler) {
     const button = node("button", className, label);
     button.type = "button";
-    button.addEventListener("click", handler);
+    button.addEventListener("click", () => handler(button));
     parent.append(button);
+    return button;
   }
 
-  function renderTasks(tasks = [], plans = []) {\n    const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
+  function renderTasks(tasks = [], plans = []) {
+    const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
     const list = $("task-list");
     list.replaceChildren();
     $("task-total-pill").textContent = tasks.length + (tasks.length === 1 ? " task" : " tasks");
