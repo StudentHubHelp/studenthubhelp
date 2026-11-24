@@ -659,7 +659,7 @@
         priority: String(values.get("priority") || "normal")
       });
       form.reset();
-      status("Task added to the queue. AI execution remains disabled until later phases.", true);
+      status("Task added to the queue. GM planning and employee drafts are available; external execution remains disabled.", true);
       await loadWorkspace();
     } catch (error) { status(error.message); }
     finally { button.disabled = false; }
