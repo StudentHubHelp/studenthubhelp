@@ -161,7 +161,7 @@ Deno.serve(async (req: Request) => {
               contents: [{ role: "user", parts: [{ text: prompt }] }],
               generationConfig: { maxOutputTokens, temperature: 0.2 }
             }),
-            signal: AbortSignal.timeout(45000)
+            signal: AbortSignal.timeout(20000)
           }
         );
         if (providerResponse.ok || ![502, 503].includes(providerResponse.status) || attempt === 1) break;
@@ -225,21 +225,28 @@ Deno.serve(async (req: Request) => {
         console.warn("Gemini primary exhausted bounded retries; using Free Tier fallback once", JSON.stringify({
           primary_model: model, fallback_model: activeModel, primary_http_status: primaryStatus
         }));
-        providerResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-            body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: prompt }] }],
-              generationConfig: {
-                maxOutputTokens: fallbackReservation.data.max_output_tokens,
-                temperature: 0.2
-              }
-            }),
-            signal: AbortSignal.timeout(45000)
-          }
-        );
+        for (let fallbackAttempt = 0; fallbackAttempt < 2; fallbackAttempt++) {
+          providerResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+              body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: {
+                  maxOutputTokens: fallbackReservation.data.max_output_tokens,
+                  temperature: 0.2
+                }
+              }),
+              signal: AbortSignal.timeout(20000)
+            }
+          );
+          if (providerResponse.ok || ![502, 503].includes(providerResponse.status) || fallbackAttempt === 1) break;
+          console.warn("Gemini fallback transient upstream response; one bounded retry", JSON.stringify({
+            model: activeModel, http_status: providerResponse.status, retry_in_ms: 3000
+          }));
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
         providerData = await providerResponse.json().catch(() => null);
         if (!providerResponse.ok) {
           const fallbackDiagnostic = [
