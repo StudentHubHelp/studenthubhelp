@@ -96,10 +96,10 @@ function parseDraft(raw: string, roleKey: string, stepIndex: number, allowedSour
   return {
     role_key: roleKey,
     step_index: stepIndex,
-    title: roleKey === "data_collection_executive" ? redactDce(title, allowedSourceUrls) : redact(title),
-    summary: roleKey === "data_collection_executive" ? redactDce(summary, allowedSourceUrls) : redact(summary),
-    draft_content: roleKey === "data_collection_executive" ? redactDce(draftContent, allowedSourceUrls) : redact(draftContent),
-    checks: parsed.checks.map((v: string) => roleKey === "data_collection_executive" ? redactDce(v.trim(), allowedSourceUrls) : redact(v.trim())),
+    title: ["data_collection_executive","quality_control_manager"].includes(roleKey) ? redactDce(title, allowedSourceUrls) : redact(title),
+    summary: ["data_collection_executive","quality_control_manager"].includes(roleKey) ? redactDce(summary, allowedSourceUrls) : redact(summary),
+    draft_content: ["data_collection_executive","quality_control_manager"].includes(roleKey) ? redactDce(draftContent, allowedSourceUrls) : redact(draftContent),
+    checks: parsed.checks.map((v: string) => ["data_collection_executive","quality_control_manager"].includes(roleKey) ? redactDce(v.trim(), allowedSourceUrls) : redact(v.trim())),
     risk_level: parsed.risk_level,
     requires_owner_approval: true,
     draft_status: "proposal_only",
@@ -194,20 +194,34 @@ Deno.serve(async (req: Request) => {
     }
     generationLock = { taskId, roleKey, stepIndex };
 
+    let qcEvidence: any = null;
     if (roleKey === "quality_control_manager") {
+      const evidenceResult = await rpc(supabaseUrl, serviceKey, "office_employee_research_evidence", {
+        p_user_id: user.id, p_task_id: taskId, p_action: "get"
+      });
+      const evidence = evidenceResult.ok ? evidenceResult.data?.research_evidence : null;
       const drafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
       const dceDraft = drafts.find((item: any) => item?.role_key === "data_collection_executive");
-      const dceText = [dceDraft?.title, dceDraft?.summary, dceDraft?.draft_content,
-        ...(Array.isArray(dceDraft?.checks) ? dceDraft.checks : [])].filter(Boolean).join(" ");
-      const citedUrls = (dceText.match(/https:\/\/[^\\s<>"'`]+/gi) || []).filter((value: string) => {
-        try { return new URL(value.replace(/[.,;!?)}\\]]+$/, "")).protocol === "https:"; }
-        catch { return false; }
-      });
-      if (!citedUrls.length) {
+      const evidenceAt = Date.parse(String(evidence?.saved_at || ""));
+      const draftAt = Date.parse(String(dceDraft?.created_at || ""));
+      const verifiedSources = Array.isArray(evidence?.sources) ? evidence.sources.filter((source: any) => {
+        try {
+          const parsed = new URL(String(source?.url || ""));
+          return parsed.protocol === "https:" && !parsed.username && !parsed.password;
+        } catch { return false; }
+      }) : [];
+      if (!evidenceResult.ok || evidence?.status !== "completed" ||
+          !Number.isFinite(evidenceAt) || !Number.isFinite(draftAt) || draftAt < evidenceAt ||
+          verifiedSources.length === 0) {
         await releaseGenerationLock();
-        console.warn("QC generation stopped: DCE draft has no verified source URL", JSON.stringify({ task_id: taskId }));
-        return respond({ ok: false, code: "qc_blocked_missing_verified_sources" }, 424, origin);
+        console.warn("QC generation blocked until fresh DCE evidence and draft are saved", JSON.stringify({
+          task_id: taskId, evidence_status: evidence?.status || "missing",
+          has_fresh_dce_draft: Number.isFinite(draftAt) && Number.isFinite(evidenceAt) && draftAt >= evidenceAt,
+          source_count: verifiedSources.length
+        }));
+        return respond({ ok: false, code: "qc_waiting_for_fresh_dce" }, 409, origin);
       }
+      qcEvidence = { dceDraft, evidence, verifiedSources };
     }
 
     const taskTitle = redact(String(task.title || "").slice(0, 160));
@@ -218,57 +232,118 @@ Deno.serve(async (req: Request) => {
     let researchContext = "";
     let allowedSourceUrls: string[] = [];
     if (roleKey === "data_collection_executive") {
-      // Task descriptions contain the actual research brief; test/task labels such as "DCE"
-      // must not dominate Tavily relevance. Use the task title only as a final fallback.
-      const queryStopWords = new Set(["about","after","also","and","are","for","from","into","near","need","official","please","provide","research","studenthubhelp","that","the","this","with"]);
-      const query = [...new Set([taskDescription, stepExpectedOutput, stepTitle, stepRationale, taskTitle]
-        .join(" ").replace(/https?:\/\/\S+/gi, " ").toLowerCase()
-        .match(/[a-z0-9][a-z0-9'-]*/g) || [])]
-        .filter(word => !queryStopWords.has(word))
-        .slice(0, 9).join(" ").slice(0, 160);
-      const researchResponse = await fetch(supabaseUrl + "/functions/v1/office-dce-research", {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + token,
-          apikey: anonKey,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ action: "research", query, max_results: 5 }),
-        signal: AbortSignal.timeout(55000)
+      const previousResult = await rpc(supabaseUrl, serviceKey, "office_employee_research_evidence", {
+        p_user_id: user.id, p_task_id: taskId, p_action: "get"
       });
-      const researchResult = await researchResponse.json().catch(() => ({}));
-      if (!researchResponse.ok || researchResult.ok !== true) {
+      const previousEvidence = previousResult.ok ? previousResult.data?.research_evidence : null;
+      const previousDrafts = Array.isArray(previousResult.data?.employee_drafts) ? previousResult.data.employee_drafts : [];
+      const previousDceDraft = previousDrafts.find((item: any) => item?.role_key === "data_collection_executive");
+      const previousEvidenceAt = Date.parse(String(previousEvidence?.saved_at || ""));
+      const previousDraftAt = Date.parse(String(previousDceDraft?.created_at || ""));
+      const pendingRetry = previousEvidence?.status === "completed" &&
+        Array.isArray(previousEvidence?.sources) && previousEvidence.sources.length > 0 &&
+        (!Number.isFinite(previousDraftAt) || previousDraftAt < previousEvidenceAt) &&
+        Number.isFinite(previousEvidenceAt) && Date.now() - previousEvidenceAt < 2 * 60 * 60 * 1000
+        ? previousEvidence : null;
+
+      const beginResult = await rpc(supabaseUrl, serviceKey, "office_employee_research_evidence", {
+        p_user_id: user.id, p_task_id: taskId, p_action: "begin"
+      });
+      if (!beginResult.ok) {
         await releaseGenerationLock();
-        return respond({ ok: false, code: researchResult.code || "dce_research_unavailable" }, researchResponse.status || 503, origin);
+        return respond({ ok: false, code: beginResult.message === "task_must_be_queued" ? "task_must_be_queued" : "dce_evidence_prepare_failed" }, 409, origin);
       }
-      const researchData = researchResult.data || {};
+
+      let researchData: any = pendingRetry;
+      if (!researchData) {
+        // Task descriptions contain the actual research brief; labels such as "DCE" do not dominate relevance.
+        const queryStopWords = new Set(["about","after","also","and","are","for","from","into","near","need","official","please","provide","research","studenthubhelp","that","the","this","with"]);
+        const query = [...new Set([taskDescription, stepExpectedOutput, stepTitle, stepRationale, taskTitle]
+          .join(" ").replace(/https?:\/\/\S+/gi, " ").toLowerCase()
+          .match(/[a-z0-9][a-z0-9'-]*/g) || [])]
+          .filter(word => !queryStopWords.has(word))
+          .slice(0, 9).join(" ").slice(0, 160);
+        const researchResponse = await fetch(supabaseUrl + "/functions/v1/office-dce-research", {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token, apikey: anonKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "research", query, max_results: 5 }),
+          signal: AbortSignal.timeout(55000)
+        });
+        const researchResult = await researchResponse.json().catch(() => ({}));
+        if (!researchResponse.ok || researchResult.ok !== true) {
+          await releaseGenerationLock();
+          return respond({ ok: false, code: researchResult.code || "dce_research_unavailable" }, researchResponse.status || 503, origin);
+        }
+        researchData = researchResult.data || {};
+      }
+
       const sources = Array.isArray(researchData.sources) ? researchData.sources : [];
-      allowedSourceUrls = sources.map((source: any) => source.url).filter((url: unknown): url is string => typeof url === "string");
+      allowedSourceUrls = sources.map((source: any) => {
+        try {
+          const parsed = new URL(String(source?.url || ""));
+          return parsed.protocol === "https:" && !parsed.username && !parsed.password ? parsed.toString() : null;
+        } catch { return null; }
+      }).filter((url: string | null): url is string => Boolean(url));
       if (allowedSourceUrls.length === 0) {
         await releaseGenerationLock();
         console.warn("DCE generation stopped: no validated public evidence", JSON.stringify({
           task_id: taskId, extraction: String(researchData.extraction || "unknown")
         }));
-        return respond({
-          ok: false, code: "dce_research_inconclusive",
-          reason: String(researchData.extraction || "no_public_results")
-        }, 424, origin);
+        return respond({ ok: false, code: "dce_research_inconclusive", reason: String(researchData.extraction || "no_public_results") }, 424, origin);
       }
-      // Extracted page text is returned as source.content. researchData.extraction
-      // is only a status string ("completed"), not the extracted page content.
+
+      const evidenceSave = await rpc(supabaseUrl, serviceKey, "office_employee_research_evidence", {
+        p_user_id: user.id, p_task_id: taskId, p_action: "save",
+        p_evidence: {
+          query: String(researchData.query || "").slice(0, 320),
+          extraction: String(researchData.extraction || "unknown"),
+          extraction_counts: researchData.extraction_counts || {},
+          sources: sources.slice(0, 6).map((source: any) => ({
+            title: String(source.title || "").slice(0, 240),
+            url: String(source.url || "").slice(0, 2048),
+            snippet: String(source.snippet || "").slice(0, 1200),
+            content: String(source.content || "").slice(0, 3500),
+            extraction_status: String(source.extraction_status || "unknown"),
+            published_date: String(source.published_date || "").slice(0, 40)
+          }))
+        }
+      });
+      if (!evidenceSave.ok) {
+        await releaseGenerationLock();
+        return respond({ ok: false, code: "dce_evidence_save_failed" }, 503, origin);
+      }
+
       const compactSources = sources.slice(0, 2).map((source: any) => ({
-        title: String(source.title || "").slice(0, 70),
-        url: typeof source.url === "string" ? source.url.slice(0, 260) : "",
-        snippet: String(source.snippet || "").slice(0, 100),
-        extracted_content: String(source.content || "").slice(0, 280),
+        title: String(source.title || "").slice(0, 90),
+        url: String(source.url || "").slice(0, 260),
+        snippet: String(source.snippet || "").slice(0, 240),
+        extracted_content: String(source.content || "").slice(0, 850),
         extraction_status: String(source.extraction_status || "unknown")
       }));
       researchContext = JSON.stringify({
         query: String(researchData.query || "").slice(0, 180),
         sources: compactSources,
         extraction_status: String(researchData.extraction || "unknown"),
-        usage: researchData.usage
-      }).slice(0, 2000);
+        extraction_counts: researchData.extraction_counts || {}
+      }).slice(0, 3400);
+    } else if (roleKey === "quality_control_manager" && qcEvidence) {
+      allowedSourceUrls = qcEvidence.verifiedSources.map((source: any) => String(source.url));
+      researchContext = JSON.stringify({
+        dce_draft: {
+          title: String(qcEvidence.dceDraft.title || "").slice(0, 160),
+          summary: String(qcEvidence.dceDraft.summary || "").slice(0, 1000),
+          draft_content: String(qcEvidence.dceDraft.draft_content || "").slice(0, 6000)
+        },
+        research_evidence: {
+          query: String(qcEvidence.evidence.query || "").slice(0, 320),
+          sources: qcEvidence.verifiedSources.slice(0, 6).map((source: any) => ({
+            title: String(source.title || "").slice(0, 200),
+            url: String(source.url || ""),
+            snippet: String(source.snippet || "").slice(0, 800),
+            extraction_status: String(source.extraction_status || "unknown")
+          }))
+        }
+      }).slice(0, 5000);
     }
     const prompt = `You are the ${employee.display_name}, a specialized StudentHubHelp AI Office employee.
 Your role-specific rules: ${roleInstructions[roleKey]}
