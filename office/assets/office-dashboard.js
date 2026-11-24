@@ -126,6 +126,9 @@
         role_step_mismatch: "This employee role is not assigned to the selected General Manager step.",
         task_must_be_queued: "Only queued tasks can receive employee drafts.",
         employee_draft_validation_failed: "The employee draft did not pass safety validation. Nothing was saved.",
+        employee_prompt_too_large: "The research context was too long for the AI request. The evidence remains saved; please retry.",
+        prompt_must_be_1_to_6000_characters: "The employee request exceeded the Gemini prompt limit. The saved research evidence is safe; please retry.",
+        qc_waiting_for_fresh_dce: "QC is waiting for a fresh DCE draft. Complete DCE first, then run QC.",
         employee_role_unavailable: "This employee role is paused or disabled."
       };
       if (response.status === 401 || response.status === 428) {
