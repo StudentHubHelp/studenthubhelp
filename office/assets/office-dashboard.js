@@ -509,6 +509,7 @@
   function renderTasks(tasks = [], plans = [], employeeItems = []) {
     const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
     const draftMap = new Map((employeeItems || []).map(item => [item.task_id, item.drafts || []]));
+    const researchEvidenceMap = new Map((employeeItems || []).map(item => [item.task_id, item.research_evidence || null]));
     const list = $("task-list");
     list.replaceChildren();
     $("task-total-pill").textContent = tasks.length + (tasks.length === 1 ? " task" : " tasks");
@@ -551,10 +552,14 @@
         const steps = node("ol", "gm-plan-steps");
         const taskDrafts = draftMap.get(task.id) || [];
         const dceDraftForTask = taskDrafts.find(item => item.role_key === "data_collection_executive");
+        const dceEvidenceForTask = researchEvidenceMap.get(task.id);
         const dceDraftTime = Date.parse(String(dceDraftForTask?.created_at || ""));
-        const taskUpdatedTime = Date.parse(String(task.updated_at || ""));
-        const dceDraftIsFresh = Boolean(dceDraftForTask) && Number.isFinite(dceDraftTime) &&
-          Number.isFinite(taskUpdatedTime) && dceDraftTime >= taskUpdatedTime - 10000;
+        const dceEvidenceTime = Date.parse(String(dceEvidenceForTask?.saved_at || ""));
+        const dceDraftIsFresh = Boolean(dceDraftForTask) && dceEvidenceForTask?.status === "completed" &&
+          Number.isFinite(dceDraftTime) && Number.isFinite(dceEvidenceTime) && dceDraftTime >= dceEvidenceTime &&
+          Array.isArray(dceEvidenceForTask?.sources) && dceEvidenceForTask.sources.some(source => {
+            try { return new URL(String(source.url || "")).protocol === "https:"; } catch { return false; }
+          });
         const dceRequestKey = task.id + ":data_collection_executive:0";
         (gmPlan.steps || []).forEach((step, stepIndex) => {
           const li = node("li", "gm-step-item");
@@ -627,6 +632,9 @@
       await loadWorkspace();
     } catch (error) {
       employeeDraftRequests.delete(requestKey);
+      if (roleKey === "data_collection_executive") {
+        await loadWorkspace();
+      }
       status(error.message);
       button.disabled = false;
       button.textContent = originalLabel;
