@@ -113,6 +113,10 @@
       const messages = {
         gemini_gateway_disabled: "Gemini is safely disabled until its Free Tier key and quota limits are configured.",
         gemini_secret_not_configured: "Gemini API key is not configured in Supabase Edge Function Secrets yet.",
+        free_tier_confirmation_required: "Free Tier project confirmation is still pending.",
+        free_tier_caps_not_configured: "Project-specific Gemini RPM, TPM and daily caps are not configured yet.",
+        quota_guard_disabled: "The Gemini quota guard is currently disabled.",
+        paid_billing_mode_forbidden: "Only the Free Tier billing mode is permitted.",
         gm_plan_required: "The General Manager must create a draft plan before an employee can prepare work.",
         role_step_mismatch: "This employee role is not assigned to the selected General Manager step.",
         task_must_be_queued: "Only queued tasks can receive employee drafts.",
