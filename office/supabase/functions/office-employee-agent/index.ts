@@ -123,12 +123,24 @@ Deno.serve(async (req: Request) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !anonKey || !serviceKey) return respond({ ok: false, code: "server_configuration_error" }, 500, origin);
 
+  let generationLock: { taskId: string; roleKey: string; stepIndex: number } | null = null;
+  const releaseGenerationLock = async () => {
+    if (!generationLock) return;
+    const lock = generationLock;
+    generationLock = null;
+    await rpc(supabaseUrl, serviceKey, "office_employee_generation_lock", {
+      p_user_id: userIdForLock, p_task_id: lock.taskId,
+      p_role_key: lock.roleKey, p_step_index: lock.stepIndex, p_action: "release"
+    }).catch(() => null);
+  };
+  let userIdForLock = "";
   try {
     const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: { apikey: anonKey, Authorization: `Bearer ${token}` }
     });
     if (!authResponse.ok) return respond({ ok: false, code: "invalid_session" }, 401, origin);
     const user = await authResponse.json();
+    userIdForLock = String(user?.id || "");
     const claims = readJwt(token);
     if (!user?.id || claims?.sub !== user.id) return respond({ ok: false, code: "invalid_session" }, 401, origin);
     if (claims?.aal !== "aal2") return respond({ ok: false, code: "mfa_required" }, 428, origin);
@@ -171,6 +183,33 @@ Deno.serve(async (req: Request) => {
       return respond({ ok: false, code: "employee_context_unavailable" }, 503, origin);
     }
 
+    const lockResult = await rpc(supabaseUrl, serviceKey, "office_employee_generation_lock", {
+      p_user_id: user.id, p_task_id: taskId, p_role_key: roleKey,
+      p_step_index: stepIndex, p_action: "acquire"
+    });
+    if (!lockResult.ok) {
+      const code = lockResult.message === "employee_generation_in_progress"
+        ? "employee_generation_in_progress" : "employee_generation_lock_unavailable";
+      return respond({ ok: false, code }, code === "employee_generation_in_progress" ? 409 : 503, origin);
+    }
+    generationLock = { taskId, roleKey, stepIndex };
+
+    if (roleKey === "quality_control_manager") {
+      const drafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
+      const dceDraft = drafts.find((item: any) => item?.role_key === "data_collection_executive");
+      const dceText = [dceDraft?.title, dceDraft?.summary, dceDraft?.draft_content,
+        ...(Array.isArray(dceDraft?.checks) ? dceDraft.checks : [])].filter(Boolean).join(" ");
+      const citedUrls = (dceText.match(/https:\/\/[^\\s<>"'`]+/gi) || []).filter((value: string) => {
+        try { return new URL(value.replace(/[.,;!?)}\\]]+$/, "")).protocol === "https:"; }
+        catch { return false; }
+      });
+      if (!citedUrls.length) {
+        await releaseGenerationLock();
+        console.warn("QC generation stopped: DCE draft has no verified source URL", JSON.stringify({ task_id: taskId }));
+        return respond({ ok: false, code: "qc_blocked_missing_verified_sources" }, 424, origin);
+      }
+    }
+
     const taskTitle = redact(String(task.title || "").slice(0, 160));
     const taskDescription = redact(String(task.description || "").slice(0, 1300));
     const stepTitle = redact(String(step.title || "").slice(0, 160));
@@ -181,8 +220,12 @@ Deno.serve(async (req: Request) => {
     if (roleKey === "data_collection_executive") {
       // Task descriptions contain the actual research brief; test/task labels such as "DCE"
       // must not dominate Tavily relevance. Use the task title only as a final fallback.
-      const query = [taskDescription, stepExpectedOutput, stepTitle, stepRationale, taskTitle]
-        .filter(Boolean).join(" ").replace(/\s+/g, " ").slice(0, 320);
+      const queryStopWords = new Set(["about","after","also","and","are","for","from","into","near","need","official","please","provide","research","studenthubhelp","that","the","this","with"]);
+      const query = [...new Set([taskDescription, stepExpectedOutput, stepTitle, stepRationale, taskTitle]
+        .join(" ").replace(/https?:\/\/\S+/gi, " ").toLowerCase()
+        .match(/[a-z0-9][a-z0-9'-]*/g) || [])]
+        .filter(word => !queryStopWords.has(word))
+        .slice(0, 9).join(" ").slice(0, 160);
       const researchResponse = await fetch(supabaseUrl + "/functions/v1/office-dce-research", {
         method: "POST",
         headers: {
@@ -195,11 +238,22 @@ Deno.serve(async (req: Request) => {
       });
       const researchResult = await researchResponse.json().catch(() => ({}));
       if (!researchResponse.ok || researchResult.ok !== true) {
+        await releaseGenerationLock();
         return respond({ ok: false, code: researchResult.code || "dce_research_unavailable" }, researchResponse.status || 503, origin);
       }
       const researchData = researchResult.data || {};
       const sources = Array.isArray(researchData.sources) ? researchData.sources : [];
       allowedSourceUrls = sources.map((source: any) => source.url).filter((url: unknown): url is string => typeof url === "string");
+      if (allowedSourceUrls.length === 0) {
+        await releaseGenerationLock();
+        console.warn("DCE generation stopped: no validated public evidence", JSON.stringify({
+          task_id: taskId, extraction: String(researchData.extraction || "unknown")
+        }));
+        return respond({
+          ok: false, code: "dce_research_inconclusive",
+          reason: String(researchData.extraction || "no_public_results")
+        }, 424, origin);
+      }
       // Extracted page text is returned as source.content. researchData.extraction
       // is only a status string ("completed"), not the extracted page content.
       const compactSources = sources.slice(0, 2).map((source: any) => ({
@@ -263,6 +317,7 @@ Keep the deliverable within your registered role and capabilities. This is a pro
     });
     const gatewayResult = await gatewayResponse.json().catch(() => ({}));
     if (!gatewayResponse.ok || gatewayResult.ok !== true) {
+      await releaseGenerationLock();
       return respond({ ok: false, code: gatewayResult.code || "gemini_gateway_unavailable" },
         gatewayResponse.status || 503, origin);
     }
@@ -271,6 +326,7 @@ Keep the deliverable within your registered role and capabilities. This is a pro
     try {
       draft = parseDraft(String(gatewayResult.data?.text || ""), roleKey, stepIndex, allowedSourceUrls);
     } catch {
+      await releaseGenerationLock();
       return respond({ ok: false, code: "employee_draft_validation_failed" }, 502, origin);
     }
 
@@ -283,10 +339,13 @@ Keep the deliverable within your registered role and capabilities. This is a pro
         : saved.message === "role_step_mismatch" ? "role_step_mismatch"
         : saved.message === "employee_role_unavailable" ? "employee_role_unavailable"
         : "employee_draft_save_failed";
+      await releaseGenerationLock();
       return respond({ ok: false, code }, 409, origin);
     }
+    await releaseGenerationLock();
     return respond({ ok: true, data: { task_id: taskId, draft } }, 200, origin);
   } catch {
+    await releaseGenerationLock();
     return respond({ ok: false, code: "employee_agent_unavailable" }, 503, origin);
   }
 });
