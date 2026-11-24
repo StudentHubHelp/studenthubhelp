@@ -6,6 +6,8 @@
   const EMPLOYEE_API = SUPABASE_URL + "/functions/v1/office-employee-agent";
   const INTEGRATION_API = SUPABASE_URL + "/functions/v1/office-integration-hub";
   const APPROVAL_API = SUPABASE_URL + "/functions/v1/office-approval-center";
+  const REPORT_API = SUPABASE_URL + "/functions/v1/office-report-center";
+  const QUOTA_API = SUPABASE_URL + "/functions/v1/office-gemini-gateway";
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -157,6 +159,130 @@
       throw new Error("Unable to load the secure integration registry.");
     }
     return result.data || {};
+  }
+
+  async function quotaApi() {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const response = await fetch(QUOTA_API, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + session.access_token, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "status" })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) throw new Error("Unable to load Gemini quota status.");
+    return result.data || {};
+  }
+
+  async function reportApi() {
+    const { data: { session }, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !session) throw new Error("Your session has expired. Please sign in again.");
+    const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+    const response = await fetch(REPORT_API, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + session.access_token, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "overview" })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) throw new Error("Unable to load Office reports.");
+    return result.data || {};
+  }
+
+  function renderQuota(data = {}) {
+    const ready = data.ready === true && data.api_key_configured === true;
+    $("quota-status-pill").textContent = ready ? "Ready · Free Tier" : "Locked safely";
+    $("quota-status-pill").className = "pill " + (ready ? "quota-ready" : "quota-locked");
+    const panel = $("quota-panel");
+    panel.replaceChildren();
+    const details = node("div", "quota-details");
+    const model = node("div", "quota-model");
+    model.append(node("strong", "", data.model || "Gemini model not selected"));
+    model.append(node("small", "", "Billing mode: " + titleCase(data.billing_mode || "unknown")));
+    details.append(model);
+    const rows = [
+      ["Gateway", data.gateway_enabled ? "Enabled" : "Disabled"],
+      ["Quota guard", data.quota_guard_enabled ? "Enabled" : "Disabled"],
+      ["Free Tier confirmation", data.free_tier_confirmed ? "Confirmed" : "Pending"],
+      ["API key", data.api_key_configured ? "Present · validation pending" : "Missing"],
+      ["Daily requests", (data.daily_used ?? 0) + " / " + (data.daily_app_cap ?? "Not configured")],
+      ["Requests per minute", (data.rpm_used ?? 0) + " / " + (data.rpm_app_cap ?? "Not configured")],
+      ["Tokens per minute reserved", (data.tpm_reserved ?? 0) + " / " + (data.tpm_app_cap ?? "Not configured")],
+      ["Max output tokens", data.max_output_tokens ?? "Not configured"]
+    ];
+    rows.forEach(([label,value]) => {
+      const row = node("div", "quota-row");
+      row.append(node("span", "", label), node("strong", "", value));
+      details.append(row);
+    });
+    panel.append(details);
+    panel.append(node("p", "quota-safety-note", ready
+      ? "Quota controls are configured. No employee worker is automatically running."
+      : "Gemini requests are blocked until the server-side secret, Owner Free Tier confirmation and conservative project-specific RPM/TPM/RPD caps are all configured. No API request is sent while locked."));
+  }
+
+  function renderReport(data = {}) {
+    const usage = data.usage_7d || {};
+    const number = value => Number(value || 0).toLocaleString("en-IN");
+    $("report-requests").textContent = number(usage.requests);
+    $("report-input-tokens").textContent = number(usage.input_tokens);
+    $("report-output-tokens").textContent = number(usage.output_tokens);
+    $("report-estimated-cost").textContent = "$" + Number(usage.estimated_cost || 0).toFixed(4);
+
+    const daily = data.daily_usage_7d || [];
+    const maxRequests = Math.max(1, ...daily.map(item => Number(item.requests || 0)));
+    const chart = $("daily-usage-chart");
+    chart.replaceChildren();
+    daily.forEach(item => {
+      const row = node("div", "daily-bar-row");
+      row.append(node("span", "daily-bar-label", item.day));
+      const track = node("div", "daily-bar-track");
+      const bar = node("div", "daily-bar-fill");
+      bar.style.width = (Number(item.requests || 0) / maxRequests * 100) + "%";
+      track.append(bar);
+      row.append(track, node("strong", "daily-bar-value", number(item.requests)));
+      chart.append(row);
+    });
+    if (!daily.length) chart.append(node("div", "empty-state", "No AI requests recorded in this period."));
+
+    const renderRows = (targetId, rows, labelKey, valueKey) => {
+      const target = $(targetId);
+      target.replaceChildren();
+      if (!rows?.length) {
+        target.append(node("div", "report-empty", "No records yet."));
+        return;
+      }
+      rows.forEach(item => {
+        const row = node("div", "report-row");
+        row.append(node("span", "", titleCase(item[labelKey])));
+        row.append(node("strong", "", number(item[valueKey])));
+        target.append(row);
+      });
+    };
+    renderRows("employee-status-report", data.employee_status || [], "status", "count");
+    renderRows("task-status-report", Object.entries(data.task_counts || {}).map(([status,count])=>({status,count})), "status", "count");
+
+    const providers = $("provider-usage-report");
+    providers.replaceChildren();
+    if (!(data.provider_usage_7d || []).length) providers.append(node("div", "report-empty", "No AI provider usage recorded."));
+    (data.provider_usage_7d || []).forEach(item => {
+      const row = node("div", "report-row provider-report-row");
+      const left = node("div", "");
+      left.append(node("strong", "", item.provider + " · " + item.model));
+      left.append(node("small", "", number(item.input_tokens) + " input · " + number(item.output_tokens) + " output tokens"));
+      row.append(left,node("strong", "", number(item.requests) + " req"));
+      providers.append(row);
+    });
+
+    const activity = $("recent-activity-report");
+    activity.replaceChildren();
+    if (!(data.recent_activity || []).length) activity.append(node("div", "report-empty", "No recent activity recorded."));
+    (data.recent_activity || []).forEach(item => {
+      const row = node("div", "activity-report-row");
+      row.append(node("strong", "", item.message || titleCase(item.event_type)));
+      row.append(node("small", "", (item.task_key || "") + " · " + dateText(item.created_at)));
+      activity.append(row);
+    });
   }
 
   async function approvalApi(action, payload = {}) {
@@ -334,6 +460,8 @@
     $("metric-queued").textContent = counts.queued ?? 0;
     $("metric-running").textContent = counts.running ?? 0;
     $("metric-completed").textContent = counts.completed ?? 0;
+    $("metric-waiting-approval").textContent = counts.waiting_approval ?? 0;
+    $("metric-failed").textContent = counts.failed ?? 0;
   }
 
   function addAction(parent, label, className, handler) {
@@ -491,18 +619,22 @@
   async function loadWorkspace() {
     $("refresh-btn").disabled = true;
     try {
-      const [overview, taskResult, planResult, employeeResult, integrationResult, approvalResult] = await Promise.all([
+      const [overview, taskResult, planResult, employeeResult, integrationResult, approvalResult, quotaResult, reportResult] = await Promise.all([
         api("overview"),
         api("list_tasks"),
         gmApi("list_plans"),
         employeeApi("list_drafts"),
         integrationApi("overview"),
-        approvalApi("list", { status: $("approval-filter").value })
+        approvalApi("list", { status: $("approval-filter").value }),
+        quotaApi(),
+        reportApi()
       ]);
       renderMetrics(overview.task_counts);
       renderTasks(taskResult.tasks || [], planResult.plans || [], employeeResult.items || []);
       renderIntegrations(integrationResult);
       renderApprovals(approvalResult);
+      renderQuota(quotaResult);
+      renderReport(reportResult);
       renderTeam(overview.employees || []);
       status("Secure owner session verified. Task queue is connected.", true);
     } catch (error) {
