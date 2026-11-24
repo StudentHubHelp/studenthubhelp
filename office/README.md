@@ -80,3 +80,14 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 - Integration setup notes: `office/integrations/README.md`.
 - Edge Function: `office-integration-hub`.
 - Migration: `supabase/migrations/20261124075121_office_phase_8_integration_registry.sql`.
+
+
+## Phase 9 — Owner approval center
+- Dashboard includes a pending/approved/rejected/all approval review queue.
+- Only the active Owner with an AAL2 session can approve or reject. Rejection requires a reason; expired requests cannot be approved.
+- Decisions are recorded in the existing `office.office_approvals` table and task/integration event logs.
+- Approval is a decision record only. Approving does not execute a send, publish, listing edit, code change, PR, or deployment.
+- Phase 10 executor must separately recheck approval state, provider credentials, action allowlist and idempotency before any permitted external action.
+- Policy: `office/approvals/README.md`.
+- Edge Function: `office-approval-center`.
+- Migration: `supabase/migrations/20261124075406_office_phase_9_owner_approval_center.sql`.
