@@ -188,10 +188,10 @@ function parseDraft(raw: string, roleKey: string, stepIndex: number, allowedSour
   return {
     role_key: roleKey,
     step_index: stepIndex,
-    title: ["data_collection_executive","quality_control_manager"].includes(roleKey) ? redactDce(title, allowedSourceUrls) : redact(title),
-    summary: ["data_collection_executive","quality_control_manager"].includes(roleKey) ? redactDce(summary, allowedSourceUrls) : redact(summary),
-    draft_content: ["data_collection_executive","quality_control_manager"].includes(roleKey) ? redactDce(draftContent, allowedSourceUrls) : redact(draftContent),
-    checks: parsed.checks.map((v: string) => ["data_collection_executive","quality_control_manager"].includes(roleKey) ? redactDce(v.trim(), allowedSourceUrls) : redact(v.trim())),
+    title: allowedSourceUrls.length ? redactDce(title, allowedSourceUrls) : redact(title),
+    summary: allowedSourceUrls.length ? redactDce(summary, allowedSourceUrls) : redact(summary),
+    draft_content: allowedSourceUrls.length ? redactDce(draftContent, allowedSourceUrls) : redact(draftContent),
+    checks: parsed.checks.map((v: string) => allowedSourceUrls.length ? redactDce(v.trim(), allowedSourceUrls) : redact(v.trim())),
     risk_level: parsed.risk_level,
     requires_owner_approval: true,
     draft_status: "proposal_only",
@@ -370,6 +370,25 @@ Deno.serve(async (req: Request) => {
       }
 
       const sources = Array.isArray(researchData.sources) ? researchData.sources : [];
+      const firstPartyBrief = /studenthubhelp(?:\\.in)?/i.test(taskTitle + " " + taskDescription);
+      if (firstPartyBrief) {
+        const officialUrls = [
+          "https://studenthubhelp.in/",
+          "https://studenthubhelp.in/student-support.html",
+          "https://studenthubhelp.in/contact-us.html"
+        ];
+        const officialPages = await Promise.all(officialUrls.map(async url => {
+          const extracted = await fetchPublicText(url, 1050);
+          return extracted ? {
+            title: "StudentHubHelp official page",
+            url,
+            snippet: extracted.slice(0, 500),
+            content: extracted.slice(0, 1800),
+            extraction_status: "extracted"
+          } : null;
+        }));
+        for (const page of officialPages.filter(Boolean).reverse()) sources.unshift(page);
+      }
       allowedSourceUrls = sources.map((source: any) => {
         try {
           const parsed = new URL(String(source?.url || ""));
@@ -438,6 +457,9 @@ Deno.serve(async (req: Request) => {
       }).slice(0, 3200);
     } else {
       researchContext = await buildRoleContext(roleKey, supabaseUrl, serviceKey);
+      allowedSourceUrls = [...new Set((researchContext.match(/https:\\/\\/[^\\s<>"']+/g) || []).map((value: string) => {
+        try { const parsed = new URL(value); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; }
+      }).filter(Boolean))];
     }
     const buildPrompt = () => `You are the ${employee.display_name}, a specialized StudentHubHelp AI Office employee.
 Your role-specific rules: ${roleInstructions[roleKey]}
