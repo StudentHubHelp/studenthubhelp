@@ -127,7 +127,14 @@ Deno.serve(async (req: Request) => {
         : msg === "paid_billing_mode_forbidden" ? "paid_billing_mode_forbidden"
         : msg === "model_not_allowlisted" ? "model_not_allowlisted"
         : "quota_guard_blocked";
-      return respond({ ok: false, code }, msg === "owner_access_denied" ? 403 : 423, origin);
+      const quotaLimitReached = [
+        "daily_app_cap_reached",
+        "rpm_app_cap_reached",
+        "tpm_app_cap_reached",
+        "request_exceeds_tpm_app_cap"
+      ].includes(msg);
+      return respond({ ok: false, code },
+        msg === "owner_access_denied" ? 403 : quotaLimitReached ? 429 : 503, origin);
     }
 
     const reservationId = reservation.data?.reservation_id;
@@ -196,10 +203,21 @@ Deno.serve(async (req: Request) => {
             fallbackReservation.data?.model !== "gemini-3.1-flash-lite" ||
             !fallbackReservation.data?.reservation_id ||
             !Number.isInteger(fallbackReservation.data?.max_output_tokens)) {
+          const fallbackReason = fallbackReservation.message || "fallback_reservation_unavailable";
+          const fallbackQuotaLimitReached = [
+            "daily_app_cap_reached",
+            "rpm_app_cap_reached",
+            "tpm_app_cap_reached",
+            "request_exceeds_tpm_app_cap",
+            "fallback_quota_cap_blocked"
+          ].includes(fallbackReason);
           console.warn("Gemini fallback not attempted because its Free Tier quota reservation was blocked", JSON.stringify({
-            reason: fallbackReservation.message || "fallback_reservation_unavailable"
+            reason: fallbackReason
           }));
-          return respond({ ok: false, code: "gemini_fallback_quota_guard_blocked" }, 423, origin);
+          return respond({
+            ok: false,
+            code: fallbackQuotaLimitReached ? "daily_quota_guard_reached" : "gemini_fallback_quota_guard_blocked"
+          }, fallbackQuotaLimitReached ? 429 : 503, origin);
         }
 
         activeReservationId = fallbackReservation.data.reservation_id;
