@@ -172,10 +172,10 @@ Deno.serve(async (req: Request) => {
     }
 
     const taskTitle = redact(String(task.title || "").slice(0, 160));
-    const taskDescription = redact(String(task.description || "").slice(0, 1800));
+    const taskDescription = redact(String(task.description || "").slice(0, 1300));
     const stepTitle = redact(String(step.title || "").slice(0, 160));
-    const stepRationale = redact(String(step.rationale || "").slice(0, 500));
-    const stepExpectedOutput = redact(String(step.expected_output || "").slice(0, 500));
+    const stepRationale = redact(String(step.rationale || "").slice(0, 300));
+    const stepExpectedOutput = redact(String(step.expected_output || "").slice(0, 300));
     let researchContext = "";
     let allowedSourceUrls: string[] = [];
     if (roleKey === "data_collection_executive") {
@@ -206,7 +206,7 @@ Deno.serve(async (req: Request) => {
         title: String(source.title || "").slice(0, 90),
         url: typeof source.url === "string" ? source.url.slice(0, 360) : "",
         snippet: String(source.snippet || "").slice(0, 120),
-        extracted_content: String(source.content || "").slice(0, 300),
+        extracted_content: String(source.content || "").slice(0, 180),
         extraction_status: String(source.extraction_status || "unknown")
       }));
       researchContext = JSON.stringify({
@@ -214,7 +214,7 @@ Deno.serve(async (req: Request) => {
         sources: compactSources,
         extraction_status: String(researchData.extraction || "unknown"),
         usage: researchData.usage
-      }).slice(0, 2600);
+      }).slice(0, 2000);
     }
     const prompt = `You are the ${employee.display_name}, a specialized StudentHubHelp AI Office employee.
 Your role-specific rules: ${roleInstructions[roleKey]}
