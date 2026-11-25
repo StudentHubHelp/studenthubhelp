@@ -1054,14 +1054,27 @@ Deno.serve(async (req: Request) => {
     } else if (roleKey === "quality_control_manager" && isConsolidatedTeamQaTask(taskTitle, taskDescription)) {
       const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
       researchContext = "CONSOLIDATED_QA_DRAFTS_JSON:" + JSON.stringify({
-        employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => ({
-          role_key: String(item.role_key || ""),
-          title: String(item.title || "").slice(0, 160),
-          summary: String(item.summary || "").slice(0, 400),
-          draft_content: String(item.draft_content || "").slice(-1400),
-          checks: Array.isArray(item.checks) ? item.checks.slice(0, 5) : []
-        }))
-      }).slice(0, 14000);
+        employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => {
+          const role = String(item.role_key || "");
+          const raw = String(item.draft_content || "");
+          const marker = role === "data_listing_manager" ? "READ-ONLY LISTING REVIEW"
+            : role === "data_collection_executive" ? "## Sources"
+            : role === "customer_support_executive" ? "## Available policy context"
+            : role === "technical_support_engineer" ? "## Inspected public code and evidence"
+            : role === "data_analyst_reporting_manager" ? "AGGREGATE_COUNT_EVIDENCE_JSON:"
+            : role === "social_media_manager" ? "## Verified brand context"
+            : role === "seo_marketing_manager" ? "## Public crawl evidence" : "";
+          const start = marker ? raw.indexOf(marker) : -1;
+          const limit = role === "data_listing_manager" ? 7000 : role === "technical_support_engineer" || role === "seo_marketing_manager" ? 3500 : 2200;
+          return {
+            role_key: role,
+            title: String(item.title || "").slice(0, 160),
+            summary: String(item.summary || "").slice(0, 400),
+            draft_content: start >= 0 ? raw.slice(start, start + limit) : raw.slice(-limit),
+            checks: Array.isArray(item.checks) ? item.checks.slice(0, 5) : []
+          };
+        })
+      }).slice(0, 26000);
     } else if (roleKey === "quality_control_manager" && isCountingTask(taskTitle, taskDescription)) {
       // QC independently reruns exact city-filtered counts instead of trusting a truncated
       // Analyst draft. This keeps the evidence payload intact and makes the review independent.
