@@ -103,7 +103,7 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const analyticsQuestion = /report|analytics|aggregate|count|metric|trend|dashboard|how many|kitne|कितने|कितनी|कौन.*ज्यादा|(?:sabse|sbse)\s+(?:jyada|adhik)|सबसे ज्यादा/.test(textValue);
   const fixRequest = /fix|resolve|repair|correct|thik|sahi karo|sudhar|ठीक करो|सुधार/.test(textValue);
   const countTask = /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(textValue) &&
-    /(property|properties|listing|hostel|\\bpg\\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल)/i.test(textValue);
+    /(property|properties|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल)/i.test(textValue);
   if (countTask) {
     // Counting work needs one source-of-truth analyst and an independent QC reviewer.
     // Avoid unrelated support/listing-review drafts triggered by the word StudentHubHelp.
