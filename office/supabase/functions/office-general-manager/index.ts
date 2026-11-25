@@ -228,14 +228,25 @@ Deno.serve(async (req: Request) => {
         }
         completed.push({ role_key: step.role_key, step_index: stepIndex });
       }
+      const draftsResult = await rpc(supabaseUrl, serviceKey, "office_employee_list_drafts", { p_user_id: user.id });
+      const draftRows = Array.isArray(draftsResult.data?.items) ? draftsResult.data.items : [];
+      const taskDraftRow = draftRows.find((item: any) => String(item.task_id) === taskId);
+      const taskDrafts = Array.isArray(taskDraftRow?.drafts) ? taskDraftRow.drafts : [];
+      const qcDraft = taskDrafts.find((item: any) => item.role_key === "quality_control_manager");
+      const qcPassed = Boolean(qcDraft && /QC verdict: *PASS/i.test(String(qcDraft.draft_content || "")));
+      const taskText = String(preparedForRun.data?.task?.title || "") + " " + String(preparedForRun.data?.task?.description || "");
+      const countTask = /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskText);
+      const blockedReason = !draftsResult.ok ? "qc_drafts_unavailable" : !qcDraft ? "qc_draft_missing"
+        : !qcPassed ? (countTask ? "counting_task_qc_failed" : "qc_pass_required") : null;
       return respond({
         ok: true,
         data: {
-          task_id: taskId,
-          completed_steps: completed,
-          draft_only: true,
-          external_actions_executed: false,
-          message: "All planned employee drafts were generated. Owner review is still required."
+          task_id: taskId, completed_steps: completed, draft_only: true, external_actions_executed: false,
+          task_completed: qcPassed, completion_status: qcPassed ? "qc_pass_owner_review_required" : "blocked_qc",
+          qc_status: qcPassed ? "PASS" : (qcDraft ? "FAIL_OR_INCONCLUSIVE" : "MISSING"),
+          completion_blocked_reason: blockedReason,
+          message: qcPassed ? "QC passed. Evidence-backed report is ready for Owner review; no external action was executed."
+            : "Employee drafts were generated, but the task is NOT complete. QC PASS is mandatory."
         }
       }, 200, origin);
     }

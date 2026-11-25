@@ -633,16 +633,19 @@
         const completedDrafts = (gmPlan.steps || []).map((step, stepIndex) =>
           taskDrafts.find(item => item.role_key === step.role_key && item.step_index === stepIndex)
         );
+        const qcDraft = completedDrafts.find((draft, index) => (gmPlan.steps || [])[index]?.role_key === "quality_control_manager");
+        const qcPassed = Boolean(qcDraft && /QC verdict: *PASS/i.test(String(qcDraft.draft_content || "")));
         if (completedDrafts.length > 0 && completedDrafts.every(Boolean)) {
           const finalReport = node("div", "gm-final-report");
-          finalReport.append(node("strong", "gm-final-report-title", "General Manager · Final task report"));
+          finalReport.append(node("strong", "gm-final-report-title", qcPassed
+            ? "General Manager · Final task report (QC PASS)"
+            : "Employee drafts generated · Task NOT complete"));
           finalReport.append(node("p", "", completedDrafts.length + "/" + (gmPlan.steps || []).length +
-            " employee drafts completed. All findings below are draft-only and require Owner review."));
+            " employee drafts generated. " + (qcPassed ? "QC passed; Owner review is still required." : "QC PASS is missing. Draft generation is not task completion.")));
           completedDrafts.forEach((draft, index) => {
             const role = (gmPlan.steps || [])[index]?.role_key || "employee";
             finalReport.append(node("p", "", titleCase(role) + ": " + (draft.summary || draft.title || "Draft saved.")));
           });
-          const qcDraft = completedDrafts.find((draft, index) => (gmPlan.steps || [])[index]?.role_key === "quality_control_manager");
           if (qcDraft) finalReport.append(node("small", "gm-approval-note", "QC review: " + (qcDraft.summary || "See the QC draft above.") + " Owner approval is still required."));
           planBox.append(finalReport);
         }
@@ -680,8 +683,10 @@
     try {
       const result = await gmApi("execute_plan", { task_id: task.id });
       const count = Array.isArray(result.completed_steps) ? result.completed_steps.length : 0;
-      finalMessage = count + " employee draft(s) generated successfully. Owner review is still required; no external actions were executed.";
-      succeeded = true;
+      finalMessage = result.task_completed === true
+        ? count + " employee draft(s) generated and QC PASS. Owner review is still required; no external actions were executed."
+        : count + " employee draft(s) generated, but task remains INCOMPLETE: QC PASS is required. " + (result.completion_blocked_reason || "");
+      succeeded = result.task_completed === true;
     } catch (error) {
       finalMessage = error.message || "Employee workflow failed.";
     } finally {
@@ -786,7 +791,9 @@
       try {
         const result = await gmApi("execute_plan", { task_id: task.id });
         const count = Array.isArray(result.completed_steps) ? result.completed_steps.length : 0;
-        status("GM completed " + count + " employee draft(s) for " + task.task_key + ". The final report is available in its task card.", true);
+        status(result.task_completed === true
+        ? "GM generated " + count + " drafts and QC passed for " + task.task_key + ". Owner review is still required."
+        : "GM generated " + count + " drafts for " + task.task_key + ", but the task remains INCOMPLETE because QC did not PASS.");
       } catch (error) {
         status("Automatic workflow for " + task.task_key + " stopped: " + (error.message || "Unknown error") + ". Saved drafts remain available for review.");
       } finally {
