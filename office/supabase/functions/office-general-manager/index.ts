@@ -229,8 +229,10 @@ Deno.serve(async (req: Request) => {
         completed.push({ role_key: step.role_key, step_index: stepIndex });
       }
       const draftsResult = await rpc(supabaseUrl, serviceKey, "office_employee_list_drafts", { p_user_id: user.id });
-      const drafts = Array.isArray(draftsResult.data?.items) ? draftsResult.data.items : [];
-      const qcDraft = drafts.find((item: any) => String(item.task_id) === taskId && item.role_key === "quality_control_manager");
+      const draftRows = Array.isArray(draftsResult.data?.items) ? draftsResult.data.items : [];
+      const taskDraftRow = draftRows.find((item: any) => String(item.task_id) === taskId);
+      const taskDrafts = Array.isArray(taskDraftRow?.drafts) ? taskDraftRow.drafts : [];
+      const qcDraft = taskDrafts.find((item: any) => item.role_key === "quality_control_manager");
       const qcPassed = Boolean(qcDraft && /QC verdict: *PASS/i.test(String(qcDraft.draft_content || "")));
       const taskText = String(preparedForRun.data?.task?.title || "") + " " + String(preparedForRun.data?.task?.description || "");
       const countTask = /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskText);
