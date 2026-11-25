@@ -654,7 +654,7 @@ function buildConsolidatedQaQc(researchContext: string) {
       content.includes("## Read-only listing evidence") && content.includes("duplicate_candidates") &&
       content.includes("missing_field_counts") && content.includes("sample_limit") &&
       [...content.matchAll(/"sample_size":\s*(\d+)/g)].some(match => Number(match[1]) > 0) },
-    { key: "data_collection_executive", label: "DCE", check: (content: string) => content.includes("## Sources") && /https:\/\/studenthubhelp\.in\//i.test(content) },
+    { key: "data_collection_executive", label: "DCE", check: (content: string) => content.includes("## Retrieved first-party evidence") && content.includes("## Sources") && /https:\/\/studenthubhelp\.in\//i.test(content) },
     { key: "customer_support_executive", label: "CSE", check: (content: string) =>
       content.includes("## Reply draft") && content.includes("## Escalation") &&
       /do not share passwords, OTPs or payment credentials/i.test(content) && content.includes("https://studenthubhelp.in/") },
@@ -662,7 +662,7 @@ function buildConsolidatedQaQc(researchContext: string) {
       content.includes("## Inspected public code and evidence") &&
       content.includes("No genuine issue is confirmed") && content.includes("raw.githubusercontent.com") },
     { key: "data_analyst_reporting_manager", label: "DAR", check: (content: string) => {
-      const match = content.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
+      const match = content.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);\n      if (!content.includes("## Exact aggregate table totals")) return false;
       try {
         const evidence = match ? JSON.parse(match[1]) : null;
         const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
@@ -1067,14 +1067,14 @@ Deno.serve(async (req: Request) => {
           const role = String(item.role_key || "");
           const raw = String(item.draft_content || "");
           const marker = role === "data_listing_manager" ? "## Read-only listing evidence"
-            : role === "data_collection_executive" ? "## Sources"
+            : role === "data_collection_executive" ? "## Retrieved first-party evidence"
             : role === "customer_support_executive" ? "## Available policy context"
             : role === "technical_support_engineer" ? "## Inspected public code and evidence"
-            : role === "data_analyst_reporting_manager" ? "AGGREGATE_COUNT_EVIDENCE_JSON:"
+            : role === "data_analyst_reporting_manager" ? "## Exact aggregate table totals"
             : role === "social_media_manager" ? "## Verified brand context"
             : role === "seo_marketing_manager" ? "## Public crawl evidence" : "";
           const start = marker ? raw.indexOf(marker) : -1;
-          const limit = role === "data_listing_manager" ? 7000 : role === "technical_support_engineer" || role === "seo_marketing_manager" ? 3500 : 2200;
+          const limit = role === "data_listing_manager" ? 7000 : role === "technical_support_engineer" || role === "seo_marketing_manager" || role === "data_collection_executive" ? 3500 : 2200;
           return {
             role_key: role,
             title: String(item.title || "").slice(0, 160),
