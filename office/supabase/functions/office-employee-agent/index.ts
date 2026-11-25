@@ -644,7 +644,7 @@ function buildConsolidatedQaQc(researchContext: string) {
   const roleSpecs: Array<{key:string;label:string;check:(content:string)=>boolean}> = [
     { key: "data_listing_manager", label: "DLM", check: (content: string) =>
       content.includes("## Read-only listing evidence") && content.includes("duplicate_candidates") &&
-      content.includes("missing_field_counts") && content.includes("sample_limit") },
+      content.includes("missing_field_counts") && content.includes("sample_limit") &&\n      [...content.matchAll(/"sample_size":\\s*(\\d+)/g)].some(match => Number(match[1]) > 0) },
     { key: "data_collection_executive", label: "DCE", check: (content: string) => content.includes("## Sources") && /https:\/\/studenthubhelp\.in\//i.test(content) },
     { key: "customer_support_executive", label: "CSE", check: (content: string) =>
       content.includes("## Reply draft") && content.includes("## Escalation") &&
@@ -666,12 +666,12 @@ function buildConsolidatedQaQc(researchContext: string) {
     }},
     { key: "social_media_manager", label: "SMM", check: (content: string) =>
       content.includes("## Draft caption") && content.includes("## CTA") &&
-      content.includes("Do not imply guaranteed safety") },
+      content.includes("Do not imply guaranteed safety") && /https:\\\\/\\\\/studenthubhelp\\\\.in\\\\//i.test(content) },
     { key: "seo_marketing_manager", label: "SEO Manager", check: (content: string) =>
       content.includes("## Homepage SEO audit") && content.includes("Title and meta description") &&
       content.includes("Canonical") && content.includes("robots.txt") && content.includes("sitemap.xml") &&
       content.includes("Favicon and Open Graph") && content.includes("Structured data") &&
-      content.includes("Internal links") && content.includes("INCONCLUSIVE") }
+      content.includes("Internal links") && content.includes("INCONCLUSIVE") &&\n      content.includes("https://studenthubhelp.in/robots.txt") && content.includes("https://studenthubhelp.in/sitemap.xml") }
   ];
   const results = roleSpecs.map(spec => {
     const draft: any = byRole.get(spec.key);
