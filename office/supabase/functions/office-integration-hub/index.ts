@@ -86,6 +86,10 @@ Deno.serve(async (req: Request) => {
           secret_configured: integration.secret_reference ? Boolean(secret) : integration.provider_key === "supabase"
         };
         if (integration.provider_key !== "tavily") return base;
+        if (integration.connection_status !== "connected") return {
+          ...base, credential_valid: null, credential_status: "disabled",
+          free_plan_allowed: false, paygo_enabled: false
+        };
         if (!secret) return {
           ...base, credential_valid: false, credential_status: "missing",
           free_plan_allowed: false, paygo_enabled: false
