@@ -120,9 +120,9 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
       if (!response.ok) return { table, status: "unavailable" };
       const data = await response.json();
       const rows = Array.isArray(data) ? data : [];
-      const fields = ["name","city","area","status"];
-      const missing: Record<string,number> = {};
-      for (const field of fields) missing[field] = rows.filter((row:any) => row[field] == null || String(row[field]).trim() === "").length;
+      const fields = ["name", "city", "area", "status"];
+      const missing: Record<string, number> = {};
+      for (const field of fields) missing[field] = rows.filter((row: any) => row[field] == null || String(row[field]).trim() === "").length;
       return { table, sample_limit: 25, sample_size: rows.length, missing_field_counts: missing, rows };
     } catch { return { table, status: "unavailable" }; }
   }));
@@ -133,13 +133,34 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
     });
     if (response.ok) reports = await response.json();
   } catch { reports = null; }
+  const duplicateMap = new Map<string, any[]>();
+  for (const result of results) {
+    for (const row of Array.isArray(result.rows) ? result.rows : []) {
+      const key = [row.name, row.city, row.area].map((value: any) => String(value || "").trim().toLowerCase()).join("|");
+      if (!row.name || !row.city) continue;
+      const group = duplicateMap.get(key) || [];
+      group.push({ table: result.table, id: row.id, name: row.name, city: row.city, area: row.area });
+      duplicateMap.set(key, group);
+    }
+  }
+  const duplicateCandidates = [...duplicateMap.values()].filter(group => group.length > 1).slice(0, 30);
   return "READ-ONLY LISTING REVIEW (contact details and reporter identities excluded; latest 25 rows per category only): " +
-    JSON.stringify({ category_samples: results, property_issue_reports: Array.isArray(reports) ? reports : null,
-      limitation: "Missing-field counts apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review." }).slice(0, 5200);
+    JSON.stringify({
+      category_samples: results.map(({ rows, ...sample }: any) => sample),
+      duplicate_candidates: duplicateCandidates,
+      duplicate_method: "Exact normalized name + city + area match within returned samples; candidates require manual confirmation.",
+      property_issue_reports: Array.isArray(reports) ? reports : null,
+      limitation: "Missing-field counts and duplicate candidates apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review."
+    }).slice(0, 6500);
 }
 
+function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
+  const value = (taskTitle + " " + taskDescription).toLowerCase();
+  return /consolidated/.test(value) && /all\s+(?:8|eight)\s+employees/.test(value) &&
+    /qc manager|quality control manager/.test(value) && /seo manager/.test(value);
+}
 function isCountingTask(taskTitle: string, taskDescription: string): boolean {
-  return /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskTitle + " " + taskDescription);
+  return !isConsolidatedTeamQaTask(taskTitle, taskDescription) && /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskTitle + " " + taskDescription);
 }
 function extractRequestedCity(value: string): string {
   const text = value.replace(/\s+/g, " ").trim();
@@ -385,7 +406,8 @@ async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, ta
       });
       const range = response.headers.get("content-range") || "";
       const count = range.includes("/") ? range.split("/").pop() : null;
-      return { table, count: response.ok && count && count !== "*" ? Number(count) : null };
+      const exactCount = response.ok && count && count !== "*" ? Number(count) : null;
+      return { table, count: Number.isInteger(exactCount) ? exactCount : null, query_ok: Number.isInteger(exactCount) };
     } catch { return { table, count: null }; }
   }));
   async function rows(path: string) {
@@ -411,7 +433,7 @@ async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, ta
   const securityRows = Array.isArray(security) ? security : [];
   const viewCounts = group(viewRows, r => String(r.property_table||"unknown")+":"+String(r.property_id||"unknown"));
   const reportCounts = group(reportRows, r => String(r.property_table||"unknown")+":"+String(r.property_id||"unknown")+" | "+String(r.reason||"unspecified")+" | "+String(r.status||"unknown"));
-  return "READ-ONLY OPERATIONAL METRICS (no user IDs, messages, emails or phone numbers): " + JSON.stringify({
+  return "AGGREGATE_COUNT_EVIDENCE_JSON:" + JSON.stringify({ listing_counts: counts, generated_at: new Date().toISOString() }) + "\nREAD-ONLY OPERATIONAL METRICS (no user IDs, messages, emails or phone numbers): " + JSON.stringify({
     listing_counts: counts,
     property_detail_views: { available: Array.isArray(views), sampled_rows: viewRows.length, top_properties_by_detail_views: viewCounts, note: "Detail views are not search queries." },
     property_issue_reports: { available: Array.isArray(reports), sampled_rows: reportRows.length, by_property_reason_status: reportCounts },
@@ -500,13 +522,55 @@ function parseDraft(raw: string, roleKey: string, stepIndex: number, allowedSour
 function buildOwnerCountReport(context: string) {
   let evidence: any = null;
   try {
-    const match = context.match(/COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
+    const match = context.match(/(?:^|\n)COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
     evidence = match ? JSON.parse(match[1]) : null;
   } catch { evidence = null; }
   if (!evidence) {
+    const aggregateMatch = context.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
+    let aggregate: any = null;
+    try { aggregate = aggregateMatch ? JSON.parse(aggregateMatch[1]) : null; } catch { aggregate = null; }
+    if (!aggregate || !Array.isArray(aggregate.listing_counts)) {
+      return {
+        summary: "Exact aggregate listing counts are unavailable. No total should be shown to the Owner.",
+        content: "AGGREGATE_COUNT_EVIDENCE_JSON is missing. Treat every unavailable value as unknown, not zero."
+      };
+    }
+    const canonicalTables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
+    const rows = aggregate.listing_counts;
+    const byTable = (table: string) => rows.find((item: any) => item.table === table);
+    const allExact = canonicalTables.every(table => {
+      const item = byTable(table);
+      return item?.query_ok === true && Number.isInteger(item?.count);
+    });
+    const totalRows = allExact ? canonicalTables.reduce((sum, table) => sum + Number(byTable(table).count), 0) : null;
+    const fmtCount = (item: any) => item?.query_ok === true && Number.isInteger(item?.count) ? String(item.count) : "Unavailable";
+    const lines = [
+      "## Exact aggregate table totals (all cities; not city-specific)",
+      "",
+      "| Source table | Exact rows | Interpretation |",
+      "|---|---:|---|",
+      "| hostels | " + fmtCount(byTable("hostels")) + " | Combined hostel + PG canonical table; not a separate hostel-only count |",
+      "| tiffins | " + fmtCount(byTable("tiffins")) + " | Canonical Tiffin / Mess table |",
+      "| libraries | " + fmtCount(byTable("libraries")) + " | Canonical library table |",
+      "| cafes | " + fmtCount(byTable("cafes")) + " | Canonical cafe table |",
+      "| bookstores | " + fmtCount(byTable("bookstores")) + " | Canonical bookstore table |",
+      "| PG category | Unavailable | Not separately derived from the combined hostels table in this aggregate query |",
+      "| Legacy pg_listings | " + fmtCount(byTable("pg_listings")) + " | Legacy table; excluded from canonical total |",
+      "| Legacy tiffin_listings | " + fmtCount(byTable("tiffin_listings")) + " | Legacy table; excluded from canonical total |",
+      "| Legacy library_listings | " + fmtCount(byTable("library_listings")) + " | Legacy table; excluded from canonical total |",
+      "",
+      "**Canonical table-row total:** " + (totalRows === null ? "Unavailable (one or more exact queries failed)" : String(totalRows)),
+      "**Unique property total:** Unavailable; cross-table duplicate reconciliation was not run.",
+      "**Status breakdown:** Unavailable; this aggregate query did not fetch status counts.",
+      "**Legacy tables:** Reported separately in the evidence; not added to canonical totals.",
+      "",
+      "AGGREGATE_COUNT_EVIDENCE_JSON:" + JSON.stringify(aggregate)
+    ];
     return {
-      summary: "Exact city-wise property counts are unavailable. No total should be shown to the Owner.",
-      content: "COUNT_EVIDENCE_JSON is missing. Treat every unavailable value as unknown, not zero."
+      summary: allExact
+        ? "Exact all-city table counts are available; no city-specific or unique-property total is claimed."
+        : "Some exact aggregate table counts are unavailable; unknown values are not zero.",
+      content: lines.join("\n")
     };
   }
   const city = String(evidence.city_filter?.value || "requested city");
@@ -569,6 +633,93 @@ function buildOwnerCountReport(context: string) {
   return { summary, content: lines.join("\n") };
 }
 
+function buildConsolidatedQaQc(researchContext: string) {
+  let payload: any = null;
+  try {
+    const match = researchContext.match(/CONSOLIDATED_QA_DRAFTS_JSON:(\{[\s\S]*\})$/);
+    payload = match ? JSON.parse(match[1]) : null;
+  } catch { payload = null; }
+  const priorDrafts = Array.isArray(payload?.employee_drafts) ? payload.employee_drafts : [];
+  const byRole = new Map<string, any>(priorDrafts.map((item: any) => [String(item?.role_key || ""), item] as [string, any]));
+  const requiredRoleKeys = [
+    "data_listing_manager", "data_collection_executive", "customer_support_executive",
+    "technical_support_engineer", "data_analyst_reporting_manager", "social_media_manager",
+    "seo_marketing_manager"
+  ];
+  const inventoryValid = priorDrafts.length === requiredRoleKeys.length &&
+    new Set(priorDrafts.map((item: any) => String(item?.role_key || ""))).size === requiredRoleKeys.length &&
+    requiredRoleKeys.every(roleKey => byRole.has(roleKey));
+  const roleSpecs: Array<{key:string;label:string;check:(content:string)=>boolean}> = [
+    { key: "data_listing_manager", label: "DLM", check: (content: string) =>
+      content.includes("## Read-only listing evidence") && content.includes("duplicate_candidates") &&
+      content.includes("missing_field_counts") && content.includes("sample_limit") &&
+      [...content.matchAll(/"sample_size":\s*(\d+)/g)].some(match => Number(match[1]) > 0) },
+    { key: "data_collection_executive", label: "DCE", check: (content: string) => content.includes("## Retrieved first-party evidence") && content.includes("## Sources") && /https:\/\/studenthubhelp\.in\//i.test(content) },
+    { key: "customer_support_executive", label: "CSE", check: (content: string) =>
+      content.includes("## Reply draft") && content.includes("## Escalation") &&
+      /do not share passwords, OTPs or payment credentials/i.test(content) && content.includes("https://studenthubhelp.in/") },
+    { key: "technical_support_engineer", label: "TSE", check: (content: string) =>
+      content.includes("## Inspected public code and evidence") &&
+      content.includes("No genuine issue is confirmed") && content.includes("raw.githubusercontent.com") },
+    { key: "data_analyst_reporting_manager", label: "DAR", check: (content: string) => {
+      const match = content.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
+      if (!content.includes("## Exact aggregate table totals")) return false;
+      try {
+        const evidence = match ? JSON.parse(match[1]) : null;
+        const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
+        const legacyTables = ["pg_listings", "tiffin_listings", "library_listings"];
+        const hasExact = (table: string) => evidence?.listing_counts?.some((item: any) =>
+          item.table === table && item.query_ok === true && Number.isInteger(item.count)
+        );
+        return tables.every(hasExact) && legacyTables.every(hasExact);
+      } catch { return false; }
+    }},
+    { key: "social_media_manager", label: "SMM", check: (content: string) =>
+      content.includes("## Draft caption") && content.includes("## CTA") &&
+      content.includes("Do not imply guaranteed safety") && content.includes("https://studenthubhelp.in/") },
+    { key: "seo_marketing_manager", label: "SEO Manager", check: (content: string) =>
+      content.includes("## Homepage SEO audit") && content.includes("Title and meta description") &&
+      content.includes("Canonical") && content.includes("robots.txt") && content.includes("sitemap.xml") &&
+      content.includes("Favicon and Open Graph") && content.includes("Structured data") &&
+      content.includes("Internal links") && content.includes("INCONCLUSIVE") &&
+      content.includes("https://studenthubhelp.in/robots.txt") && content.includes("https://studenthubhelp.in/sitemap.xml") }
+  ];
+  const results = roleSpecs.map(spec => {
+    const draft: any = byRole.get(spec.key);
+    if (!draft || !String(draft.draft_content || "").trim()) {
+      return { ...spec, verdict: "FAIL", reason: "Required employee draft is missing." };
+    }
+    const content = String(draft.draft_content || "");
+    if (!spec.check(content)) {
+      const evidenceUnavailable = /No verified context|No independently verified source URLs|No external context|No matching source-code sections|Unavailable|INCONCLUSIVE/.test(content) || content.includes('"sample_size":0');
+      return { ...spec, verdict: evidenceUnavailable ? "INCONCLUSIVE" : "FAIL",
+        reason: "Role-specific deliverable or required evidence marker is incomplete." };
+    }
+    return { ...spec, verdict: "PASS", reason: "Required role-specific deliverable and evidence markers are present." };
+  });
+  const allPass = inventoryValid && results.length === 7 && results.every(item => item.verdict === "PASS");
+  const anyFail = !inventoryValid || results.some(item => item.verdict === "FAIL");
+  const overall = allPass ? "PASS" : anyFail ? "FAIL" : "INCONCLUSIVE";
+  const lines = [
+    "## Consolidated employee QA review",
+    "- Seven-draft inventory: " + (inventoryValid ? "PASS — exactly seven unique employee roles are present." : "FAIL — missing, duplicate or unexpected employee drafts."),
+    ...results.map(item => "- " + item.label + " (" + item.key + "): " + item.verdict + " — " + item.reason),
+    "",
+    "## Overall QC verdict: " + overall,
+    allPass
+      ? "All seven employee drafts were independently checked against their role-specific deliverable and evidence markers."
+      : "The consolidated task is NOT complete. Missing, incomplete or unavailable evidence must be resolved; no PASS is inferred.",
+    "",
+    "This is a deterministic structural/evidence-marker review. Owner must inspect the underlying source facts before approving any external action."
+  ];
+  return {
+    summary: "Consolidated QA overall QC " + overall + " — " + results.filter(item => item.verdict === "PASS").length + "/7 employee drafts passed.",
+    content: lines.join("\n"),
+    checks: ["All seven employee drafts must exist.", "Every role must meet its role-specific evidence criteria.", "Overall PASS requires seven PASS results.", "Owner review remains required."],
+    risk: overall === "PASS" ? "medium" : "high"
+  };
+}
+
 function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
   const brief = [taskTitle, taskDescription, stepTitle, stepRationale, stepExpectedOutput].filter(Boolean).join("\n");
   const context = researchContext || "No verified context was available.";
@@ -597,7 +748,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
     },
     technical_support_engineer: {
       summary: "Read-only technical triage and investigation checklist; no code was changed.",
-      content: "## Reported task\n" + brief + "\n\n## Available repository context\n" + context + "\n\n## Diagnostic plan\n1. Reproduce the reported behavior in a safe test environment.\n2. Inspect the exact route, component, function and recent commits.\n3. Capture console, network and server errors with secrets redacted.\n4. Propose the smallest scoped patch and regression tests.\n\n## Current conclusion\nNo root cause is asserted unless the supplied evidence directly demonstrates it.",
+      content: "## Reported task\n" + brief + "\n\n## Inspected public code and evidence\n" + context + "\n\n## Findings\nNo genuine issue is confirmed in the fetched excerpts. This is a bounded review of the sources shown above, not proof that the entire repository is defect-free. No unsupported root cause is asserted.\n\n## Diagnostic limitations\nOnly publicly fetched source excerpts were inspected; no login, account, production or write operation was performed.",
       checks: ["Attach exact file/line evidence before proposing a code change.", "Run targeted tests and review the diff before merging."], risk: "medium"
     },
     data_analyst_reporting_manager: (() => {
@@ -617,10 +768,11 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
     },
     seo_marketing_manager: {
       summary: "Rule-based SEO inspection notes from publicly fetched crawl resources.",
-      content: "## SEO task\n" + brief + "\n\n## Public crawl context\n" + context + "\n\n## Audit checklist\n- Check robots.txt and sitemap reachability.\n- Compare canonical URLs with the preferred live URL.\n- Inspect unique titles, descriptions and H1 headings.\n- Check internal links and indexability.\n\n## Limitation\nThis deterministic workflow does not calculate search volume, rankings, backlinks or AI visibility.",
+      content: "## SEO task\n" + brief + "\n\n## Public crawl evidence\n" + context + "\n\n## Homepage SEO audit\n- Title and meta description: not independently extracted from the homepage head; INCONCLUSIVE.\n- Canonical: not independently extracted; INCONCLUSIVE.\n- robots.txt: public resource fetch attempted; inspect the evidence above for returned content.\n- sitemap.xml: public resource fetch attempted; inspect the evidence above for returned content.\n- Favicon and Open Graph image: not independently inspected; INCONCLUSIVE.\n- Structured data: not independently inspected; INCONCLUSIVE.\n- Internal links: not crawled comprehensively; INCONCLUSIVE.\n- Indexability: only robots and sitemap signals were sampled; full indexability is INCONCLUSIVE.\n\n## Limitations\nThis deterministic workflow does not calculate search volume, rankings, backlinks or AI visibility. Uninspected fields are explicitly unknown, not passed.",
       checks: ["Verify each URL and page status.", "Use Search Console data for actual impressions and indexing metrics."], risk: "medium"
     },
     quality_control_manager: (() => {
+      if (isConsolidatedTeamQaTask(taskTitle, taskDescription)) return buildConsolidatedQaQc(researchContext);
       const countTask = isCountingTask(taskTitle, taskDescription);
       let evidence: any = null;
       try {
@@ -799,7 +951,7 @@ Deno.serve(async (req: Request) => {
       }
     }
     const taskTitle = redact(String(task.title || "").slice(0, 160));
-    const taskDescription = redact(String(task.description || "").slice(0, 1300));
+    const taskDescription = redact(String(task.description || "").slice(0, 1800));
     const stepTitle = redact(String(step.title || "").slice(0, 160));
     const stepRationale = redact(String(step.rationale || "").slice(0, 300));
     const stepExpectedOutput = redact(String(step.expected_output || "").slice(0, 300));
@@ -909,6 +1061,30 @@ Deno.serve(async (req: Request) => {
           }))
         }
       }).slice(0, 3200);
+    } else if (roleKey === "quality_control_manager" && isConsolidatedTeamQaTask(taskTitle, taskDescription)) {
+      const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
+      researchContext = "CONSOLIDATED_QA_DRAFTS_JSON:" + JSON.stringify({
+        employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => {
+          const role = String(item.role_key || "");
+          const raw = String(item.draft_content || "");
+          const marker = role === "data_listing_manager" ? "## Read-only listing evidence"
+            : role === "data_collection_executive" ? "## Retrieved first-party evidence"
+            : role === "customer_support_executive" ? "## Available policy context"
+            : role === "technical_support_engineer" ? "## Inspected public code and evidence"
+            : role === "data_analyst_reporting_manager" ? "## Exact aggregate table totals"
+            : role === "social_media_manager" ? "## Verified brand context"
+            : role === "seo_marketing_manager" ? "## Public crawl evidence" : "";
+          const start = marker ? raw.indexOf(marker) : -1;
+          const limit = role === "data_listing_manager" ? 7000 : role === "technical_support_engineer" || role === "seo_marketing_manager" || role === "data_collection_executive" ? 3500 : 2200;
+          return {
+            role_key: role,
+            title: String(item.title || "").slice(0, 160),
+            summary: String(item.summary || "").slice(0, 400),
+            draft_content: start >= 0 ? raw.slice(start, start + limit) : raw.slice(-limit),
+            checks: Array.isArray(item.checks) ? item.checks.slice(0, 5) : []
+          };
+        })
+      }).slice(0, 26000);
     } else if (roleKey === "quality_control_manager" && isCountingTask(taskTitle, taskDescription)) {
       // QC independently reruns exact city-filtered counts instead of trusting a truncated
       // Analyst draft. This keeps the evidence payload intact and makes the review independent.
