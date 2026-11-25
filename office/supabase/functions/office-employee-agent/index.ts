@@ -390,7 +390,7 @@ async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, ta
       });
       const range = response.headers.get("content-range") || "";
       const count = range.includes("/") ? range.split("/").pop() : null;
-      return { table, count: response.ok && count && count !== "*" ? Number(count) : null };
+      const exactCount = response.ok && count && count !== "*" ? Number(count) : null;\n      return { table, count: Number.isInteger(exactCount) ? exactCount : null, query_ok: Number.isInteger(exactCount) };
     } catch { return { table, count: null }; }
   }));
   async function rows(path: string) {
@@ -416,7 +416,7 @@ async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, ta
   const securityRows = Array.isArray(security) ? security : [];
   const viewCounts = group(viewRows, r => String(r.property_table||"unknown")+":"+String(r.property_id||"unknown"));
   const reportCounts = group(reportRows, r => String(r.property_table||"unknown")+":"+String(r.property_id||"unknown")+" | "+String(r.reason||"unspecified")+" | "+String(r.status||"unknown"));
-  return "READ-ONLY OPERATIONAL METRICS (no user IDs, messages, emails or phone numbers): " + JSON.stringify({
+  return "AGGREGATE_COUNT_EVIDENCE_JSON:" + JSON.stringify({ listing_counts: counts, generated_at: new Date().toISOString() }) + "\\nREAD-ONLY OPERATIONAL METRICS (no user IDs, messages, emails or phone numbers): " + JSON.stringify({
     listing_counts: counts,
     property_detail_views: { available: Array.isArray(views), sampled_rows: viewRows.length, top_properties_by_detail_views: viewCounts, note: "Detail views are not search queries." },
     property_issue_reports: { available: Array.isArray(reports), sampled_rows: reportRows.length, by_property_reason_status: reportCounts },
@@ -509,9 +509,48 @@ function buildOwnerCountReport(context: string) {
     evidence = match ? JSON.parse(match[1]) : null;
   } catch { evidence = null; }
   if (!evidence) {
+    const aggregateMatch = context.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\\{[^\\n]*\\})/);
+    let aggregate: any = null;
+    try { aggregate = aggregateMatch ? JSON.parse(aggregateMatch[1]) : null; } catch { aggregate = null; }
+    if (!aggregate || !Array.isArray(aggregate.listing_counts)) {
+      return {
+        summary: "Exact aggregate listing counts are unavailable. No total should be shown to the Owner.",
+        content: "AGGREGATE_COUNT_EVIDENCE_JSON is missing. Treat every unavailable value as unknown, not zero."
+      };
+    }
+    const canonicalTables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
+    const rows = aggregate.listing_counts;
+    const byTable = (table: string) => rows.find((item: any) => item.table === table);
+    const allExact = canonicalTables.every(table => {
+      const item = byTable(table);
+      return item?.query_ok === true && Number.isInteger(item?.count);
+    });
+    const totalRows = allExact ? canonicalTables.reduce((sum, table) => sum + Number(byTable(table).count), 0) : null;
+    const fmtCount = (item: any) => item?.query_ok === true && Number.isInteger(item?.count) ? String(item.count) : "Unavailable";
+    const lines = [
+      "## Exact aggregate table totals (all cities; not city-specific)",
+      "",
+      "| Source table | Exact rows | Interpretation |",
+      "|---|---:|---|",
+      "| hostels | " + fmtCount(byTable("hostels")) + " | Combined hostel + PG canonical table; not a separate hostel-only count |",
+      "| tiffins | " + fmtCount(byTable("tiffins")) + " | Canonical Tiffin / Mess table |",
+      "| libraries | " + fmtCount(byTable("libraries")) + " | Canonical library table |",
+      "| cafes | " + fmtCount(byTable("cafes")) + " | Canonical cafe table |",
+      "| bookstores | " + fmtCount(byTable("bookstores")) + " | Canonical bookstore table |",
+      "| PG category | Unavailable | Not separately derived from the combined hostels table in this aggregate query |",
+      "",
+      "**Canonical table-row total:** " + (totalRows === null ? "Unavailable (one or more exact queries failed)" : String(totalRows)),
+      "**Unique property total:** Unavailable; cross-table duplicate reconciliation was not run.",
+      "**Status breakdown:** Unavailable; this aggregate query did not fetch status counts.",
+      "**Legacy tables:** Reported separately in the evidence; not added to canonical totals.",
+      "",
+      "AGGREGATE_COUNT_EVIDENCE_JSON:" + JSON.stringify(aggregate)
+    ];
     return {
-      summary: "Exact city-wise property counts are unavailable. No total should be shown to the Owner.",
-      content: "COUNT_EVIDENCE_JSON is missing. Treat every unavailable value as unknown, not zero."
+      summary: allExact
+        ? "Exact all-city table counts are available; no city-specific or unique-property total is claimed."
+        : "Some exact aggregate table counts are unavailable; unknown values are not zero.",
+      content: lines.join("\\n")
     };
   }
   const city = String(evidence.city_filter?.value || "requested city");
