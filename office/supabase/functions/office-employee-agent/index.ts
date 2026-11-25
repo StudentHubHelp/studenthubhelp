@@ -95,6 +95,21 @@ async function fetchPublicText(url: string, maxChars = 900): Promise<string> {
   } catch { return ""; }
 }
 
+
+function extractSourceSnippets(source: string, patterns: string[], maxPer = 650): string {
+  if (!source) return "No source code could be fetched.";
+  const body = source.includes("\n") ? source.slice(source.indexOf("\n") + 1) : source;
+  const snippets: string[] = [];
+  for (const pattern of patterns) {
+    const index = body.toLowerCase().indexOf(pattern.toLowerCase());
+    if (index < 0) continue;
+    const start = Math.max(0, index - Math.floor(maxPer * 0.35));
+    const end = Math.min(body.length, index + Math.ceil(maxPer * 0.65));
+    snippets.push("MATCH " + pattern + ": " + body.slice(start, end).replace(/\s+/g, " ").trim());
+  }
+  return snippets.length ? source.split("\n")[0] + "\n" + snippets.join("\n") : "No matching source-code sections were found.";
+}
+
 async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string): Promise<string> {
   const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
   const headers = { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public" };
@@ -169,8 +184,10 @@ async function buildRoleContext(roleKey: string, supabaseUrl: string, serviceKey
   if (roleKey === "data_analyst_reporting_manager") return await fetchAggregateContext(supabaseUrl, serviceKey);
   const sources: string[] = [];
   if (roleKey === "technical_support_engineer") {
-    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/auth.html", 1600));
-    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/chatbot/chatbot.js", 1200));
+    const authSource = await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/auth.html", 30000);
+    const chatbotSource = await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/chatbot/chatbot.js", 30000);
+    sources.push(extractSourceSnippets(authSource, ["signInWithPassword", "signInWithOAuth", "resetPasswordForEmail", "updateUser", "onAuthStateChange", "getSession", "mfa"], 650));
+    sources.push(extractSourceSnippets(chatbotSource, ["technicalIssueKind", "getSession", "login", "contact-us"], 600));
     sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/README.md", 500));
     sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/README.md", 700));
     sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/tests/phase11-security-assertions.sql", 500));
