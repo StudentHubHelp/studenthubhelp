@@ -159,7 +159,7 @@ Deno.serve(async (req: Request) => {
     if (claims?.aal !== "aal2") return respond({ ok: false, code: "mfa_required" }, 428, origin);
 
     const body = await req.json().catch(() => null);
-    if (!body || !["list_plans", "plan_task"].includes(body.action)) {
+    if (!body || !["list_plans", "plan_task", "execute_plan"].includes(body.action)) {
       return respond({ ok: false, code: "invalid_request" }, 400, origin);
     }
 
@@ -172,6 +172,72 @@ Deno.serve(async (req: Request) => {
     const taskId = typeof body.task_id === "string" ? body.task_id : "";
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId)) {
       return respond({ ok: false, code: "invalid_task_id" }, 400, origin);
+    }
+
+    if (body.action === "execute_plan") {
+      const preparedForRun = await rpc(supabaseUrl, serviceKey, "office_gm_prepare_task", {
+        p_user_id: user.id, p_task_id: taskId
+      });
+      if (!preparedForRun.ok) {
+        const code = preparedForRun.message === "task_must_be_queued" ? "task_must_be_queued"
+          : preparedForRun.message === "task_not_found" ? "task_not_found" : "owner_access_denied";
+        return respond({ ok: false, code }, preparedForRun.message === "owner_access_denied" ? 403 : 409, origin);
+      }
+      const plansResult = await rpc(supabaseUrl, serviceKey, "office_gm_list_plans", { p_user_id: user.id });
+      if (!plansResult.ok) return respond({ ok: false, code: "gm_plan_unavailable" }, 503, origin);
+      const planRow = (Array.isArray(plansResult.data?.plans) ? plansResult.data.plans : [])
+        .find((item: any) => String(item.task_id) === taskId);
+      const plan = planRow?.plan;
+      const steps = Array.isArray(plan?.steps) ? plan.steps : [];
+      if (!plan || plan.plan_status !== "proposal_only" || plan.requires_owner_approval !== true ||
+          steps.length < 1 || steps.length > 8 ||
+          steps.some((step: any) => !step || typeof step.role_key !== "string" ||
+            step.role_key === "general_manager" || step.requires_external_action !== false)) {
+        return respond({ ok: false, code: "gm_plan_not_safe_to_run" }, 409, origin);
+      }
+      const completed: Array<{ role_key: string; step_index: number }> = [];
+      for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
+        const step = steps[stepIndex];
+        const employeeResponse = await fetch(supabaseUrl + "/functions/v1/office-employee-agent", {
+          method: "POST",
+          headers: {
+            apikey: anonKey,
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "generate_draft",
+            task_id: taskId,
+            role_key: step.role_key,
+            step_index: stepIndex
+          }),
+          signal: AbortSignal.timeout(45000)
+        });
+        const employeeResult = await employeeResponse.json().catch(() => null);
+        if (!employeeResponse.ok || employeeResult?.ok !== true) {
+          return respond({
+            ok: false,
+            code: "employee_step_failed",
+            data: {
+              task_id: taskId,
+              completed_steps: completed,
+              failed_step: { role_key: step.role_key, step_index: stepIndex },
+              employee_code: String(employeeResult?.code || "employee_agent_unavailable")
+            }
+          }, 424, origin);
+        }
+        completed.push({ role_key: step.role_key, step_index: stepIndex });
+      }
+      return respond({
+        ok: true,
+        data: {
+          task_id: taskId,
+          completed_steps: completed,
+          draft_only: true,
+          external_actions_executed: false,
+          message: "All planned employee drafts were generated. Owner review is still required."
+        }
+      }, 200, origin);
     }
 
     const prepared = await rpc(supabaseUrl, serviceKey, "office_gm_prepare_task", {
