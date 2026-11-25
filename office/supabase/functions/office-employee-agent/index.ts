@@ -138,8 +138,13 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
       limitation: "Missing-field counts apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review." }).slice(0, 5200);
 }
 
+function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
+  const value = (taskTitle + " " + taskDescription).toLowerCase();
+  return /consolidated/.test(value) && /all\\s+(?:8|eight)\\s+employees/.test(value) &&
+    /qc manager|quality control manager/.test(value) && /seo manager/.test(value);
+}
 function isCountingTask(taskTitle: string, taskDescription: string): boolean {
-  return /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskTitle + " " + taskDescription);
+  return !isConsolidatedTeamQaTask(taskTitle, taskDescription) && /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskTitle + " " + taskDescription);
 }
 function extractRequestedCity(value: string): string {
   const text = value.replace(/\s+/g, " ").trim();
@@ -597,7 +602,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
     },
     technical_support_engineer: {
       summary: "Read-only technical triage and investigation checklist; no code was changed.",
-      content: "## Reported task\n" + brief + "\n\n## Available repository context\n" + context + "\n\n## Diagnostic plan\n1. Reproduce the reported behavior in a safe test environment.\n2. Inspect the exact route, component, function and recent commits.\n3. Capture console, network and server errors with secrets redacted.\n4. Propose the smallest scoped patch and regression tests.\n\n## Current conclusion\nNo root cause is asserted unless the supplied evidence directly demonstrates it.",
+      content: undefined,
       checks: ["Attach exact file/line evidence before proposing a code change.", "Run targeted tests and review the diff before merging."], risk: "medium"
     },
     data_analyst_reporting_manager: (() => {
@@ -617,7 +622,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
     },
     seo_marketing_manager: {
       summary: "Rule-based SEO inspection notes from publicly fetched crawl resources.",
-      content: "## SEO task\n" + brief + "\n\n## Public crawl context\n" + context + "\n\n## Audit checklist\n- Check robots.txt and sitemap reachability.\n- Compare canonical URLs with the preferred live URL.\n- Inspect unique titles, descriptions and H1 headings.\n- Check internal links and indexability.\n\n## Limitation\nThis deterministic workflow does not calculate search volume, rankings, backlinks or AI visibility.",
+      content: undefined,
       checks: ["Verify each URL and page status.", "Use Search Console data for actual impressions and indexing metrics."], risk: "medium"
     },
     quality_control_manager: (() => {
@@ -909,6 +914,17 @@ Deno.serve(async (req: Request) => {
           }))
         }
       }).slice(0, 3200);
+    } else if (roleKey === "quality_control_manager" && isConsolidatedTeamQaTask(taskTitle, taskDescription)) {
+      const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
+      researchContext = "CONSOLIDATED_QA_DRAFTS_JSON:" + JSON.stringify({
+        employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => ({
+          role_key: String(item.role_key || ""),
+          title: String(item.title || "").slice(0, 160),
+          summary: String(item.summary || "").slice(0, 400),
+          draft_content: String(item.draft_content || "").slice(0, 1000),
+          checks: Array.isArray(item.checks) ? item.checks.slice(0, 5) : []
+        }))
+      }).slice(0, 9000);
     } else if (roleKey === "quality_control_manager" && isCountingTask(taskTitle, taskDescription)) {
       // QC independently reruns exact city-filtered counts instead of trusting a truncated
       // Analyst draft. This keeps the evidence payload intact and makes the review independent.
