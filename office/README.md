@@ -149,5 +149,5 @@ The dashboard explicitly identifies search-query telemetry as unavailable until 
 - When the authenticated Owner creates a task from the dashboard, the browser immediately calls the General Manager to create and validate the proposal-only plan, then invokes the existing sequential employee runner without requiring a second click.
 - The workflow runs only with the active Owner's AAL2 session. If a step fails, the task remains queued, completed drafts remain available, and the dashboard reports the failure so the Owner can review and retry.
 - When every planned employee draft is saved, the task card displays a deterministic General Manager final report assembled from the saved employee summaries, including the QC summary when present.
-- Existing queued tasks are not auto-started retroactively. New tasks created after this change are automatically delegated and run.
+- When the Owner opens the dashboard, queued tasks with a saved safe GM plan and no employee drafts are automatically resumed. Two previously protected task keys remain excluded. New tasks created after this change are automatically delegated and run.
 - All prior boundaries remain: employee drafts only; no listing writes, account changes, outbound messages, publishing, code commits, merges or deployments.
