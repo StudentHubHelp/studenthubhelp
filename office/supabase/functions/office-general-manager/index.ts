@@ -96,42 +96,37 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const available = new Map(roles.map((role: any) => [String(role.role_key), role]));
   const selected: string[] = [];
   const add = (roleKey: string) => { if (available.has(roleKey) && !selected.includes(roleKey)) selected.push(roleKey); };
+  const loginIssue = /login|log in|sign.?in|password|otp|authentication|auth issue|account access|लॉग.?इन|पासवर्ड|ओटीपी/.test(textValue);
+  const customerIssue = /customer|student|user|visitor|complaint|ticket|support|issue|problem|pareshani|dikkat|समस्या|शिकायत|ग्राहक|छात्र/.test(textValue);
+  const propertyIssue = /property|listing|hostel|\\bpg\\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल/.test(textValue);
+  const popularityQuestion = /most searched|most search|highest search|popular property|top searched|search.*property|property.*search|sabse jyada search|sabse adhik search|zyada search|popular listing|सबसे ज्यादा खोज|सबसे अधिक खोज/.test(textValue);
+  const analyticsQuestion = /report|analytics|aggregate|count|metric|trend|dashboard|how many|kitne|कितने|कितनी|कौन.*ज्यादा|sabse jyada|सबसे ज्यादा/.test(textValue);
+  const fixRequest = /fix|resolve|repair|correct|thik|sahi karo|sudhar|ठीक करो|सुधार/.test(textValue);
+  if (loginIssue) { add("technical_support_engineer"); if (customerIssue) add("customer_support_executive"); }
+  if (popularityQuestion || analyticsQuestion) add("data_analyst_reporting_manager");
+  if (propertyIssue) add("data_listing_manager");
+  if (customerIssue && !loginIssue) add("customer_support_executive");
+  if (/bug|error|code|technical|deploy|build|function|api|crash|website|page|mobile|map|direction|not working|nahi chal|failed|failure|त्रुटि|एरर/.test(textValue)) add("technical_support_engineer");
   if (/research|source|public web|studenthubhelp|student support|official website|citation/.test(textValue)) add("data_collection_executive");
-  if (/listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore|duplicate|missing field|verification/.test(textValue)) add("data_listing_manager");
-  if (/report|analytics|aggregate|count|metric|trend|dashboard/.test(textValue)) add("data_analyst_reporting_manager");
-  if (/bug|error|code|technical|deploy|build|function|api|login|crash/.test(textValue)) add("technical_support_engineer");
   if (/seo|robots|sitemap|canonical|metadata|indexing|ranking|search visibility/.test(textValue)) add("seo_marketing_manager");
   if (/social|instagram|caption|post|content calendar|campaign/.test(textValue)) add("social_media_manager");
-  if (/support|contact|privacy|ticket|complaint|student query|reply/.test(textValue)) add("customer_support_executive");
   if (/test|quality|verify|verification|acceptance criteria|regression/.test(textValue)) add("quality_control_manager");
+  if (fixRequest && (loginIssue || propertyIssue || customerIssue)) add("quality_control_manager");
   if (selected.length === 0) add("quality_control_manager");
   if (selected.length > 1 && !selected.includes("quality_control_manager")) add("quality_control_manager");
   const labels: Record<string, {title:string;rationale:string;expected:string}> = {
-    data_collection_executive: {title:"Collect first-party StudentHubHelp evidence",rationale:"The task calls for research or source-backed public information; this role uses only approved first-party public pages in API-independent mode.",expected:"A source inventory with exact URLs, extracted facts and explicit unknowns."},
-    data_listing_manager: {title:"Review listing data quality",rationale:"The task concerns listing completeness, consistency or verification; this role has read-only access to safe listing fields.",expected:"A sample-scoped issue report with confirmed defects separated from suspected issues."},
-    data_analyst_reporting_manager: {title:"Prepare aggregate data analysis",rationale:"The task requests counts, metrics or reporting; this role uses aggregate data and avoids personal records.",expected:"A report with table sources, counts, calculation notes and limitations."},
-    technical_support_engineer: {title:"Perform read-only technical triage",rationale:"The task concerns code, errors or technical behavior; this role prepares evidence-based diagnostics and patch proposals.",expected:"Reproduction steps, inspected evidence, root-cause hypotheses and regression checklist."},
-    seo_marketing_manager: {title:"Inspect public SEO and crawl signals",rationale:"The task concerns search visibility or technical SEO; this role reviews public crawl resources and page metadata.",expected:"An evidence-based SEO audit checklist with prioritized recommendations."},
-    social_media_manager: {title:"Prepare social content draft",rationale:"The task concerns social content or campaigns; this role creates draft-only copy from verified brand facts.",expected:"A content draft or calendar proposal, not published."},
-    customer_support_executive: {title:"Prepare student-support response draft",rationale:"The task concerns a support request or policy information; this role drafts a reply using available official support context.",expected:"An empathetic reply draft, missing-information list and escalation triggers; not sent."},
-    quality_control_manager: {title:"Review deliverable and acceptance criteria",rationale:"Independent quality review is required; this role reports PASS, FAIL or INCONCLUSIVE only when supported by evidence.",expected:"A criterion-by-criterion QC report; no release approval."}
+    data_collection_executive: {title:"Collect first-party StudentHubHelp evidence",rationale:"The task calls for source-backed public information; use approved first-party pages only in API-independent mode.",expected:"A source inventory with exact URLs, extracted facts and explicit unknowns."},
+    data_listing_manager: {title:"Inspect listing quality and property issues",rationale:"The request concerns property/listing popularity, completeness or reported defects; inspect safe listing fields and report evidence only.",expected:"Property-wise findings with confirmed defects, suspected issues and proposed updates; no listing changes."},
+    data_analyst_reporting_manager: {title:"Analyze property popularity and operational metrics",rationale:"The request asks for popularity, searches, counts or trends; use available aggregate telemetry and clearly distinguish searches from detail views.",expected:"A dated metrics report with source tables, calculations, unavailable telemetry and limitations; never invent search counts."},
+    technical_support_engineer: {title:"Diagnose technical or login issue",rationale:"The request concerns authentication, website behavior or a technical failure; inspect repository code and available safe diagnostics.",expected:"Reproduction steps, evidence-backed cause or hypotheses, minimal patch proposal and regression checklist; no production deploy."},
+    seo_marketing_manager: {title:"Inspect public SEO and crawl signals",rationale:"The task concerns search visibility or technical SEO; review public crawl resources and page metadata.",expected:"An evidence-based SEO audit checklist with prioritized recommendations."},
+    social_media_manager: {title:"Prepare social content draft",rationale:"The task concerns social content or campaigns; create draft-only copy from verified brand facts.",expected:"A content draft or calendar proposal, not published."},
+    customer_support_executive: {title:"Triage customer issue and prepare reply",rationale:"The task includes a student/customer concern; classify it and draft a safe response without exposing account data or sending messages.",expected:"A support response draft, required non-sensitive details and escalation triggers; no account changes or message sending."},
+    quality_control_manager: {title:"Verify findings and proposed resolution",rationale:"Independent review is required to check evidence, privacy and acceptance criteria before owner review.",expected:"A criterion-by-criterion PASS/FAIL/INCONCLUSIVE report; no release approval or production action."}
   };
-  const steps = selected.slice(0,8).map(role_key => ({
-    title: labels[role_key].title,
-    role_key,
-    rationale: labels[role_key].rationale,
-    expected_output: labels[role_key].expected,
-    requires_external_action: false
-  }));
-  return {
-    objective: redact((taskTitle || "Office task").slice(0,240)),
-    summary: "Deterministic role routing based on task keywords. This is a proposal-only plan, not a claim that work has been executed.",
-    risk_level: selected.some(k => ["data_collection_executive","technical_support_engineer","customer_support_executive"].includes(k)) ? "medium" : "low",
-    requires_owner_approval: true,
-    steps
-  };
+  const steps = selected.slice(0,8).map(role_key => ({title:labels[role_key].title,role_key,rationale:labels[role_key].rationale,expected_output:labels[role_key].expected,requires_external_action:false}));
+  return {objective:redact((taskTitle||"Office task").slice(0,240)),summary:"Deterministic intent routing with role-specific delegation. Metrics are reported only when telemetry exists; all steps are proposal-only and require owner approval for changes.",risk_level:selected.some(k=>["data_collection_executive","technical_support_engineer","customer_support_executive","data_listing_manager"].includes(k))?"medium":"low",requires_owner_approval:true,steps};
 }
-
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (req.method === "OPTIONS") {
