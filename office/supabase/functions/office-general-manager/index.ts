@@ -80,6 +80,7 @@ function parsePlan(raw: string, allowedRoles: Set<string>) {
       requires_external_action: step.requires_external_action
     };
   });
+  if (new Set(steps.map((step: any) => step.role_key)).size !== steps.length) throw new Error("duplicate_plan_role");
   return {
     objective: redact(objective),
     summary: redact(summary),
@@ -90,6 +91,17 @@ function parsePlan(raw: string, allowedRoles: Set<string>) {
     created_at: new Date().toISOString()
   };
 }
+
+function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
+  const value = (taskTitle + " " + taskDescription).toLowerCase();
+  return /consolidated/.test(value) && /all\s+(?:8|eight)\s+employees/.test(value) &&
+    /qc manager|quality control manager/.test(value) && /seo manager/.test(value);
+}
+const consolidatedQaRoles = [
+  "data_listing_manager", "data_collection_executive", "customer_support_executive",
+  "technical_support_engineer", "data_analyst_reporting_manager", "social_media_manager",
+  "seo_marketing_manager", "quality_control_manager"
+];
 
 function buildDeterministicPlan(taskTitle: string, taskDescription: string, roles: any[]) {
   const textValue = (taskTitle + " " + taskDescription).toLowerCase();
@@ -102,9 +114,12 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const popularityQuestion = /most searched|most search|highest search|popular property|top searched|search.*property|property.*search|(?:sabse|sbse|sabase)\s+(?:jyada|jyaada|adhik)\s+(?:search|seach|searched|dekhi)|search(?:ed)?\s+(?:ki|hui|gayi|gyi|h|hai)|popular listing|सबसे ज्यादा खोज|सबसे अधिक खोज/.test(textValue);
   const analyticsQuestion = /report|analytics|aggregate|count|metric|trend|dashboard|how many|kitne|कितने|कितनी|कौन.*ज्यादा|(?:sabse|sbse)\s+(?:jyada|adhik)|सबसे ज्यादा/.test(textValue);
   const fixRequest = /fix|resolve|repair|correct|thik|sahi karo|sudhar|ठीक करो|सुधार/.test(textValue);
-  const countTask = /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(textValue) &&
+  const consolidatedQaTask = isConsolidatedTeamQaTask(taskTitle, taskDescription);
+  const countTask = !consolidatedQaTask && /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(textValue) &&
     /(property|properties|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल)/i.test(textValue);
-  if (countTask) {
+  if (consolidatedQaTask) {
+    for (const roleKey of consolidatedQaRoles) add(roleKey);
+  } else if (countTask) {
     // Counting work needs one source-of-truth analyst and an independent QC reviewer.
     // Avoid unrelated support/listing-review drafts triggered by the word StudentHubHelp.
     add("data_analyst_reporting_manager");
@@ -198,11 +213,21 @@ Deno.serve(async (req: Request) => {
         .find((item: any) => String(item.task_id) === taskId);
       const plan = planRow?.plan;
       const steps = Array.isArray(plan?.steps) ? plan.steps : [];
+      const taskForPlan = preparedForRun.data?.task;
+      const consolidatedQaTask = isConsolidatedTeamQaTask(
+        String(taskForPlan?.title || ""), String(taskForPlan?.description || "")
+      );
+      const planRoleKeys = steps.map((step: any) => String(step?.role_key || ""));
+      const consolidatedPlanValid = !consolidatedQaTask || (
+        steps.length === consolidatedQaRoles.length &&
+        new Set(planRoleKeys).size === consolidatedQaRoles.length &&
+        consolidatedQaRoles.every(roleKey => planRoleKeys.includes(roleKey))
+      );
       if (!plan || plan.plan_status !== "proposal_only" || plan.requires_owner_approval !== true ||
-          steps.length < 1 || steps.length > 8 ||
+          steps.length < 1 || steps.length > 8 || !consolidatedPlanValid ||
           steps.some((step: any) => !step || typeof step.role_key !== "string" ||
             step.role_key === "general_manager" || step.requires_external_action !== false)) {
-        return respond({ ok: false, code: "gm_plan_not_safe_to_run" }, 409, origin);
+        return respond({ ok: false, code: consolidatedQaTask ? "gm_consolidated_plan_incomplete" : "gm_plan_not_safe_to_run" }, 409, origin);
       }
       const completed: Array<{ role_key: string; step_index: number }> = [];
       for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
@@ -242,20 +267,44 @@ Deno.serve(async (req: Request) => {
       const taskDraftRow = draftRows.find((item: any) => String(item.task_id) === taskId);
       const taskDrafts = Array.isArray(taskDraftRow?.drafts) ? taskDraftRow.drafts : [];
       const qcDraft = taskDrafts.find((item: any) => item.role_key === "quality_control_manager");
-      const qcPassed = Boolean(qcDraft && /QC verdict: *PASS/i.test(String(qcDraft.draft_content || "")));
-      const taskText = String(preparedForRun.data?.task?.title || "") + " " + String(preparedForRun.data?.task?.description || "");
-      const countTask = /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskText);
-      const blockedReason = !draftsResult.ok ? "qc_drafts_unavailable" : !qcDraft ? "qc_draft_missing"
+      const taskForCompletion = preparedForRun.data?.task;
+      const consolidatedQaTask = isConsolidatedTeamQaTask(
+        String(taskForCompletion?.title || ""), String(taskForCompletion?.description || "")
+      );
+      const completedRoleKeys = completed.map(item => item.role_key);
+      const savedRoleKeys = taskDrafts.map((item: any) => String(item?.role_key || ""));
+      const completedRolesValid = !consolidatedQaTask || (
+        completed.length === consolidatedQaRoles.length &&
+        new Set(completedRoleKeys).size === consolidatedQaRoles.length &&
+        consolidatedQaRoles.every(roleKey => completedRoleKeys.includes(roleKey))
+      );
+      const savedDraftsValid = !consolidatedQaTask || (
+        taskDrafts.length === consolidatedQaRoles.length &&
+        new Set(savedRoleKeys).size === consolidatedQaRoles.length &&
+        consolidatedQaRoles.every(roleKey => savedRoleKeys.includes(roleKey))
+      );
+      const qcPassed = Boolean(qcDraft && (consolidatedQaTask
+        ? /(?:^|\n)## Overall QC verdict: PASS(?:\s|$)/i.test(String(qcDraft.draft_content || ""))
+        : /QC verdict: *PASS/i.test(String(qcDraft.draft_content || ""))));
+      const taskCompleted = consolidatedQaTask
+        ? completedRolesValid && savedDraftsValid && qcPassed
+        : qcPassed;
+      const taskText = String(taskForCompletion?.title || "") + " " + String(taskForCompletion?.description || "");
+      const countTask = !consolidatedQaTask && /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskText);
+      const blockedReason = !draftsResult.ok ? "qc_drafts_unavailable"
+        : consolidatedQaTask && !completedRolesValid ? "consolidated_employee_assignments_incomplete"
+        : consolidatedQaTask && !savedDraftsValid ? "consolidated_employee_drafts_incomplete"
+        : !qcDraft ? "qc_draft_missing"
         : !qcPassed ? (countTask ? "counting_task_qc_failed" : "qc_pass_required") : null;
       return respond({
         ok: true,
         data: {
           task_id: taskId, completed_steps: completed, draft_only: true, external_actions_executed: false,
-          task_completed: qcPassed, completion_status: qcPassed ? "qc_pass_owner_review_required" : "blocked_qc",
+          task_completed: taskCompleted, completion_status: taskCompleted ? "qc_pass_owner_review_required" : "blocked_qc",
           qc_status: qcPassed ? "PASS" : (qcDraft ? "FAIL_OR_INCONCLUSIVE" : "MISSING"),
           completion_blocked_reason: blockedReason,
-          message: qcPassed ? "QC passed. Evidence-backed report is ready for Owner review; no external action was executed."
-            : "Employee drafts were generated, but the task is NOT complete. QC PASS is mandatory."
+          message: taskCompleted ? "QC passed and all eight unique employee drafts are saved. Evidence-backed report is ready for Owner review; no external action was executed."
+            : "Employee drafts were generated, but the task is NOT complete. All required role drafts and QC PASS are mandatory."
         }
       }, 200, origin);
     }
@@ -281,6 +330,12 @@ Deno.serve(async (req: Request) => {
       const allowedRoles = new Set(roles.map((role: any) => role.role_key));
       const deterministic = buildDeterministicPlan(taskTitle, taskDescription, roles);
       plan = parsePlan(JSON.stringify(deterministic), allowedRoles);
+      if (isConsolidatedTeamQaTask(taskTitle, taskDescription) &&
+          (plan.steps.length !== consolidatedQaRoles.length ||
+           new Set(plan.steps.map((step: any) => step.role_key)).size !== consolidatedQaRoles.length ||
+           !consolidatedQaRoles.every(roleKey => plan.steps.some((step: any) => step.role_key === roleKey)))) {
+        return respond({ ok: false, code: "gm_consolidated_plan_incomplete" }, 503, origin);
+      }
     } catch {
       return respond({ ok: false, code: "gm_plan_validation_failed" }, 502, origin);
     }
