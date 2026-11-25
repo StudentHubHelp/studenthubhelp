@@ -92,11 +92,18 @@
         free_tier_caps_not_configured: "Project-specific Gemini RPM, TPM and daily caps are not configured yet.",
         task_must_be_queued: "Only queued tasks can be planned by the General Manager.",
         gm_plan_validation_failed: "The proposed plan did not pass safety validation. No plan was saved.",
-        owner_access_denied: "This account is not authorized for Office access."
+        owner_access_denied: "This account is not authorized for Office access.",
+        gm_plan_unavailable: "The General Manager plan could not be loaded.",
+        gm_plan_not_safe_to_run: "This plan contains an external action or failed the draft-only safety checks."
       };
       if (response.status === 401 || response.status === 428) {
         await client.auth.signOut();
         location.replace("./login.html");
+      }
+      if (result.code === "employee_step_failed") {
+        const completed = Array.isArray(result.data?.completed_steps) ? result.data.completed_steps.length : 0;
+        const failed = result.data?.failed_step?.role_key ? titleCase(result.data.failed_step.role_key) : "an employee";
+        throw new Error("Workflow stopped at " + failed + ". " + completed + " employee draft(s) were saved; refresh to review them and retry the remaining step.");
       }
       throw new Error(messages[result.code] || "General Manager request failed. Please try again later.");
     }
