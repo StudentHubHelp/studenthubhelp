@@ -390,7 +390,8 @@ async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, ta
       });
       const range = response.headers.get("content-range") || "";
       const count = range.includes("/") ? range.split("/").pop() : null;
-      const exactCount = response.ok && count && count !== "*" ? Number(count) : null;\n      return { table, count: Number.isInteger(exactCount) ? exactCount : null, query_ok: Number.isInteger(exactCount) };
+      const exactCount = response.ok && count && count !== "*" ? Number(count) : null;
+      return { table, count: Number.isInteger(exactCount) ? exactCount : null, query_ok: Number.isInteger(exactCount) };
     } catch { return { table, count: null }; }
   }));
   async function rows(path: string) {
@@ -416,7 +417,7 @@ async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, ta
   const securityRows = Array.isArray(security) ? security : [];
   const viewCounts = group(viewRows, r => String(r.property_table||"unknown")+":"+String(r.property_id||"unknown"));
   const reportCounts = group(reportRows, r => String(r.property_table||"unknown")+":"+String(r.property_id||"unknown")+" | "+String(r.reason||"unspecified")+" | "+String(r.status||"unknown"));
-  return "AGGREGATE_COUNT_EVIDENCE_JSON:" + JSON.stringify({ listing_counts: counts, generated_at: new Date().toISOString() }) + "\\nREAD-ONLY OPERATIONAL METRICS (no user IDs, messages, emails or phone numbers): " + JSON.stringify({
+  return "AGGREGATE_COUNT_EVIDENCE_JSON:" + JSON.stringify({ listing_counts: counts, generated_at: new Date().toISOString() }) + "\nREAD-ONLY OPERATIONAL METRICS (no user IDs, messages, emails or phone numbers): " + JSON.stringify({
     listing_counts: counts,
     property_detail_views: { available: Array.isArray(views), sampled_rows: viewRows.length, top_properties_by_detail_views: viewCounts, note: "Detail views are not search queries." },
     property_issue_reports: { available: Array.isArray(reports), sampled_rows: reportRows.length, by_property_reason_status: reportCounts },
@@ -509,7 +510,7 @@ function buildOwnerCountReport(context: string) {
     evidence = match ? JSON.parse(match[1]) : null;
   } catch { evidence = null; }
   if (!evidence) {
-    const aggregateMatch = context.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\\{[^\\n]*\\})/);
+    const aggregateMatch = context.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
     let aggregate: any = null;
     try { aggregate = aggregateMatch ? JSON.parse(aggregateMatch[1]) : null; } catch { aggregate = null; }
     if (!aggregate || !Array.isArray(aggregate.listing_counts)) {
@@ -550,7 +551,7 @@ function buildOwnerCountReport(context: string) {
       summary: allExact
         ? "Exact all-city table counts are available; no city-specific or unique-property total is claimed."
         : "Some exact aggregate table counts are unavailable; unknown values are not zero.",
-      content: lines.join("\\n")
+      content: lines.join("\n")
     };
   }
   const city = String(evidence.city_filter?.value || "requested city");
@@ -610,7 +611,7 @@ function buildOwnerCountReport(context: string) {
   }
   lines.push("", "**City filter:** city ILIKE exact match (no wildcard), value " + city + ".",
     "**Generated:** " + String(evidence.generated_at || "timestamp unavailable") + ".");
-  return { summary, content: lines.join("\n") };
+      content: lines.join("\n")
 }
 
 function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
