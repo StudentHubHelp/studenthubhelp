@@ -144,64 +144,236 @@ function isCountingTask(taskTitle: string, taskDescription: string): boolean {
 function extractRequestedCity(value: string): string {
   const text = value.replace(/\s+/g, " ").trim();
   const patterns = [
-    /([a-z][a-z -]{1,40}?)\s+(?:(?:me|mein)\b|में(?=\s))/i,
-    /(?:city\s*[:=]|in|for)\s+([a-z][a-z -]{1,40}?)(?=\s+(?:count|total|properties|property|listings?|hai|hain|is|are)\b|[?,;.]|$)/i
+    /\b(?:sirf|only|city\s*[:=]|in|for)\s+([a-z][a-z .'-]{1,50}?)(?=\s+(?:rajasthan|state|ki|ke|ka|mein|me|properties?|property|listings?|count|total|hai|hain|is|are)\b|[,;.!?]|$)/i,
+    /\b([a-z][a-z .'-]{1,40}?)\s+(?:mein|me)\b/i
   ];
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match?.[1]) return match[1].trim().replace(/\s+/g, " ");
+    if (!match?.[1]) continue;
+    const city = match[1].trim().replace(/\s+/g, " ").replace(/[.,;:!?]+$/g, "");
+    if (city && !/^(sirf|only|city|in|for)$/i.test(city)) return city;
   }
   return "";
 }
-async function exactCityCount(supabaseUrl: string, serviceKey: string, table: string, city: string, status?: string) {
-  const params = new URLSearchParams({ select: "id", city: "ilike." + city, limit: "0" });
-  if (status) params.set("status", "eq." + status);
+
+async function exactCityCount(
+  supabaseUrl: string,
+  serviceKey: string,
+  table: string,
+  city: string,
+  filters: Record<string, string> = {}
+): Promise<number | null> {
+  const params = new URLSearchParams({ select: "id", city: "ilike." + city, limit: "0", ...filters });
   const response = await fetch(supabaseUrl + "/rest/v1/" + table + "?" + params.toString(), {
     method: "GET",
-    headers: { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public", Prefer: "count=exact" },
+    headers: {
+      apikey: serviceKey,
+      Authorization: "Bearer " + serviceKey,
+      "Accept-Profile": "public",
+      Prefer: "count=exact"
+    },
     signal: AbortSignal.timeout(9000)
   });
   const range = response.headers.get("content-range") || "";
   const total = range.includes("/") ? range.slice(range.lastIndexOf("/") + 1) : "";
   return response.ok && /^\d+$/.test(total) ? Number(total) : null;
 }
-async function fetchCityCountEvidence(supabaseUrl: string, serviceKey: string, taskTitle: string, taskDescription: string): Promise<string> {
-  const city = extractRequestedCity(taskTitle + " " + taskDescription);
-  if (!city) return "COUNT_EVIDENCE_JSON:" + JSON.stringify({ query_status: "failed", exact_count_query: false, city_filter: null, error: "City could not be extracted; no unfiltered count was run." });
-  const primary = [
-    { table: "hostels", category: "Hostels" }, { table: "pg_listings", category: "PG" }, { table: "tiffins", category: "Tiffin / Mess" },
-    { table: "libraries", category: "Libraries" }, { table: "cafes", category: "Cafes" },
-    { table: "bookstores", category: "Bookstores" }
-  ];
-  const legacy = [
-    { table: "tiffin_listings", category: "Tiffin (legacy table)" },
-    { table: "library_listings", category: "Library (legacy table)" }
-  ];
+
+async function runStatusTable(
+  supabaseUrl: string,
+  serviceKey: string,
+  table: string,
+  category: string,
+  city: string,
+  filters: Record<string, string> = {}
+) {
   const statuses = ["active", "pending", "suspended", "rejected"];
-  const runTable = async (item: {table:string;category:string}) => {
-    const [total, ...stateCounts] = await Promise.all([
-      exactCityCount(supabaseUrl, serviceKey, item.table, city),
-      ...statuses.map(state => exactCityCount(supabaseUrl, serviceKey, item.table, city, state))
-    ]);
-    return { table: item.table, category: item.category, exact_total: total,
-      status_counts: Object.fromEntries(statuses.map((state, index) => [state, stateCounts[index]])),
-      query_ok: total !== null && stateCounts.every(value => value !== null) };
-  };
-  const [primaryResults, legacyResults] = await Promise.all([
-    Promise.all(primary.map(runTable)), Promise.all(legacy.map(runTable))
+  const [total, ...stateCounts] = await Promise.all([
+    exactCityCount(supabaseUrl, serviceKey, table, city, filters),
+    ...statuses.map(state => exactCityCount(supabaseUrl, serviceKey, table, city, { ...filters, status: "eq." + state }))
   ]);
-  const all = [...primaryResults, ...legacyResults];
+  const statusCounts = Object.fromEntries(statuses.map((state, index) => [state, stateCounts[index]]));
+  const otherStatusCount = Number.isInteger(total) && stateCounts.every(Number.isInteger)
+    ? Number(total) - stateCounts.reduce((sum, value) => sum + Number(value), 0) : null;
+  return {
+    table,
+    category,
+    exact_total: total,
+    status_model: "status_column",
+    status_counts: { ...statusCounts, other: otherStatusCount },
+    query_ok: total !== null && stateCounts.every(value => value !== null)
+  };
+}
+
+async function runApprovalTable(
+  supabaseUrl: string,
+  serviceKey: string,
+  table: string,
+  category: string,
+  city: string
+) {
+  const [total, approved, notApproved] = await Promise.all([
+    exactCityCount(supabaseUrl, serviceKey, table, city),
+    exactCityCount(supabaseUrl, serviceKey, table, city, { is_approved: "eq.true" }),
+    exactCityCount(supabaseUrl, serviceKey, table, city, { is_approved: "eq.false" })
+  ]);
+  return {
+    table,
+    category,
+    exact_total: total,
+    status_model: "is_approved_boolean",
+    status_counts: { active: approved, pending: notApproved, suspended: null, rejected: null },
+    unsupported_statuses: ["suspended", "rejected"],
+    query_ok: total !== null && approved !== null && notApproved !== null
+  };
+}
+
+async function fetchCityIdentityRows(supabaseUrl: string, serviceKey: string, table: string, city: string) {
+  const rows: any[] = [];
+  let expected: number | null = null;
+  const pageSize = 1000;
+  const maxRows = 10000;
+  for (let offset = 0; offset < maxRows; offset += pageSize) {
+    const params = new URLSearchParams({
+      select: table === "hostels" ? "id,property_id,category,type" : "id,property_id",
+      city: "ilike." + city,
+      order: "id.asc",
+      limit: String(pageSize),
+      offset: String(offset)
+    });
+    const response = await fetch(supabaseUrl + "/rest/v1/" + table + "?" + params.toString(), {
+      headers: {
+        apikey: serviceKey,
+        Authorization: "Bearer " + serviceKey,
+        "Accept-Profile": "public",
+        Prefer: "count=exact"
+      },
+      signal: AbortSignal.timeout(9000)
+    });
+    if (!response.ok) return { complete: false, expected, rows };
+    if (expected === null) {
+      const range = response.headers.get("content-range") || "";
+      const total = range.includes("/") ? range.slice(range.lastIndexOf("/") + 1) : "";
+      if (!/^\d+$/.test(total)) return { complete: false, expected: null, rows };
+      expected = Number(total);
+    }
+    const page = await response.json().catch(() => null);
+    if (!Array.isArray(page)) return { complete: false, expected, rows };
+    rows.push(...page);
+    if (rows.length >= expected) break;
+    if (page.length < pageSize) break;
+  }
+  return { complete: expected !== null && rows.length === expected, expected, rows };
+}
+
+async function fetchCityCountEvidence(
+  supabaseUrl: string,
+  serviceKey: string,
+  taskTitle: string,
+  taskDescription: string
+): Promise<string> {
+  const city = extractRequestedCity(taskTitle + " " + taskDescription);
+  if (!city) {
+    return "COUNT_EVIDENCE_JSON:" + JSON.stringify({
+      query_status: "failed",
+      exact_count_query: false,
+      city_filter: null,
+      error: "City could not be extracted; no unfiltered count was run."
+    });
+  }
+
+  // The hostels table stores both Hostel and PG rows. Split them using category/type;
+  // pg_listings is retained as a separate legacy source and is never silently added.
+  const pgHostelFilter = { or: "(category.ilike.*pg*,type.ilike.*pg*)" };
+  const [allHostels, pgHostels, tiffins, libraries, cafes, bookstores, legacyPg, legacyTiffins, legacyLibraries] = await Promise.all([
+    runStatusTable(supabaseUrl, serviceKey, "hostels", "All hostels-table rows", city),
+    runStatusTable(supabaseUrl, serviceKey, "hostels", "PG rows stored in hostels", city, pgHostelFilter),
+    runStatusTable(supabaseUrl, serviceKey, "tiffins", "Tiffin / Mess", city),
+    runStatusTable(supabaseUrl, serviceKey, "libraries", "Libraries", city),
+    runStatusTable(supabaseUrl, serviceKey, "cafes", "Cafes", city),
+    runStatusTable(supabaseUrl, serviceKey, "bookstores", "Bookstores", city),
+    runApprovalTable(supabaseUrl, serviceKey, "pg_listings", "PG legacy table", city),
+    runApprovalTable(supabaseUrl, serviceKey, "tiffin_listings", "Tiffin legacy table", city),
+    runApprovalTable(supabaseUrl, serviceKey, "library_listings", "Library legacy table", city)
+  ]);
+
+  const subtractCounts = (left: any, right: any, category: string) => {
+    const total = Number.isInteger(left.exact_total) && Number.isInteger(right.exact_total)
+      ? Number(left.exact_total) - Number(right.exact_total) : null;
+    const states: Record<string, number | null> = {};
+    for (const state of ["active", "pending", "suspended", "rejected", "other"]) {
+      const a = left.status_counts?.[state];
+      const b = right.status_counts?.[state];
+      states[state] = Number.isInteger(a) && Number.isInteger(b) ? Number(a) - Number(b) : null;
+    }
+    return {
+      table: "hostels",
+      category,
+      category_filter: "city exact match AND category/type does not match PG subset",
+      exact_total: total,
+      status_model: "status_column",
+      status_counts: states,
+      query_ok: total !== null && Object.values(states).every(value => value !== null)
+    };
+  };
+
+  const hostelCategory = subtractCounts(allHostels, pgHostels, "Hostels");
+  const pgCategory = {
+    ...pgHostels,
+    category: "PG",
+    category_filter: "city exact match AND category OR type contains PG"
+  };
+  const primaryResults = [hostelCategory, pgCategory, tiffins, libraries, cafes, bookstores];
+  const legacyResults = [legacyPg, legacyTiffins, legacyLibraries];
+
+  const identityTables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
+  const identityResults = await Promise.all(identityTables.map(table =>
+    fetchCityIdentityRows(supabaseUrl, serviceKey, table, city)
+  ));
+  const identityComplete = identityResults.every(result => result.complete);
+  const seen = new Map<string, string>();
+  let duplicateCount = 0;
+  let rowsChecked = 0;
+  for (let index = 0; index < identityResults.length; index++) {
+    const table = identityTables[index];
+    for (const row of identityResults[index].rows) {
+      rowsChecked++;
+      const propertyId = row?.property_id == null ? "" : String(row.property_id).trim();
+      const key = propertyId ? "property:" + propertyId.toLowerCase() : table + ":id:" + String(row?.id);
+      if (seen.has(key)) duplicateCount++;
+      else seen.set(key, table);
+    }
+  }
+
+  const allQueriesOk = primaryResults.every(item => item.query_ok) && legacyResults.every(item => item.query_ok);
+  const legacyReconciliationRequired = legacyResults.some(item => Number(item.exact_total) > 0);
+  const duplicateCheckOk = identityComplete && duplicateCount === 0;
+  const queryStatus = allQueriesOk && duplicateCheckOk && !legacyReconciliationRequired ? "success" : "partial_failure";
   const primaryTotal = primaryResults.every(item => Number.isInteger(item.exact_total))
     ? primaryResults.reduce((sum, item) => sum + Number(item.exact_total), 0) : null;
+
   return "COUNT_EVIDENCE_JSON:" + JSON.stringify({
-    query_status: all.every(item => item.query_ok) ? "success" : "partial_failure",
-    exact_count_query: true, city_filter: { column: "city", operator: "ilike exact (no wildcard)", value: city },
-    primary_category_counts: primaryResults, legacy_table_counts: legacyResults,
-    primary_category_total: primaryTotal, total_is_sum_of_primary_tables_only: true,
-    legacy_tables_excluded_from_total_to_avoid_double_counting: true, status_values_checked: statuses,
-    generated_at: new Date().toISOString(), limitations: "Failed exact counts are null, never zero."
+    query_status: queryStatus,
+    exact_count_query: allQueriesOk,
+    city_filter: { column: "city", operator: "ilike exact (no wildcard)", value: city },
+    primary_category_counts: primaryResults,
+    primary_category_total: primaryTotal,
+    total_is_sum_of_six_disjoint_primary_categories: true,
+    legacy_table_counts: legacyResults,
+    legacy_tables_excluded_from_total: true,
+    legacy_reconciliation_required: legacyReconciliationRequired,
+    duplicate_check: {
+      complete: identityComplete,
+      rows_checked: rowsChecked,
+      duplicate_count: duplicateCount,
+      method: "Compare property_id across canonical category tables; fall back to table-scoped id when property_id is null."
+    },
+    status_values_checked: ["active", "pending", "suspended", "rejected"],
+    generated_at: new Date().toISOString(),
+    limitations: "Legacy is_approved tables expose approved/unapproved only; suspended/rejected are not represented and remain unavailable, never zero. Non-zero legacy counts require reconciliation before inclusion."
   });
 }
+
 async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, taskTitle = "", taskDescription = ""): Promise<string> {
   if (isCountingTask(taskTitle, taskDescription)) return await fetchCityCountEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription);
   const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores", "pg_listings", "tiffin_listings", "library_listings"];
