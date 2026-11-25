@@ -83,7 +83,7 @@ async function fetchPublicText(url: string, maxChars = 900): Promise<string> {
     const type = response.headers.get("content-type") || "";
     if (!/(text\/|application\/(xml|rss\+xml))/.test(type)) return "";
     let value = (await response.text()).slice(0, 30000);
-    if (/html/i.test(type)) value = value
+    if (/html/i.test(type) && !url.includes("raw.githubusercontent.com")) value = value
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
       .replace(/<(nav|footer|header)[^>]*>[\s\S]*?<\/\1>/gi, " ")
@@ -97,45 +97,83 @@ async function fetchPublicText(url: string, maxChars = 900): Promise<string> {
 
 async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string): Promise<string> {
   const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
+  const headers = { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public" };
   const results = await Promise.all(tables.map(async table => {
     try {
-      const url = supabaseUrl + "/rest/v1/" + table + "?select=id,name,city,area,status,verified&order=created_at.desc&limit=5";
-      const response = await fetch(url, {
-        headers: { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public" },
-        signal: AbortSignal.timeout(7000)
-      });
+      const url = supabaseUrl + "/rest/v1/" + table + "?select=id,name,city,area,status,verified&order=created_at.desc&limit=25";
+      const response = await fetch(url, { headers, signal: AbortSignal.timeout(7000) });
       if (!response.ok) return { table, status: "unavailable" };
-      const rows = await response.json();
-      return { table, rows: Array.isArray(rows) ? rows : [] };
+      const data = await response.json();
+      return { table, sample_limit: 25, rows: Array.isArray(data) ? data : [] };
     } catch { return { table, status: "unavailable" }; }
   }));
-  return "READ-ONLY LISTING SAMPLES (contact fields excluded): " + JSON.stringify(results).slice(0, 2300);
+  let reports: any = null;
+  try {
+    const response = await fetch(supabaseUrl + "/rest/v1/property_reports?select=property_id,property_table,reason,status,created_at&order=created_at.desc&limit=200", {
+      headers, signal: AbortSignal.timeout(7000)
+    });
+    if (response.ok) reports = await response.json();
+  } catch { reports = null; }
+  return "READ-ONLY LISTING REVIEW (contact details and reporter identities excluded; latest 25 rows per category only): " +
+    JSON.stringify({ category_samples: results, property_issue_reports: Array.isArray(reports) ? reports : null,
+      limitation: "A missing report does not prove no issue exists. Samples are not a full-database audit; recommendations require owner review." }).slice(0, 5200);
 }
 
 async function fetchAggregateContext(supabaseUrl: string, serviceKey: string): Promise<string> {
   const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores", "pg_listings", "tiffin_listings", "library_listings"];
-  const results = await Promise.all(tables.map(async table => {
+  const headers = { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public" };
+  const counts = await Promise.all(tables.map(async table => {
     try {
       const response = await fetch(supabaseUrl + "/rest/v1/" + table + "?select=id&limit=0", {
-        headers: { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public", Prefer: "count=exact" },
-        signal: AbortSignal.timeout(7000)
+        headers: { ...headers, Prefer: "count=exact" }, signal: AbortSignal.timeout(7000)
       });
       const range = response.headers.get("content-range") || "";
       const count = range.includes("/") ? range.split("/").pop() : null;
       return { table, count: response.ok && count && count !== "*" ? Number(count) : null };
     } catch { return { table, count: null }; }
   }));
-  return "READ-ONLY AGGREGATE COUNTS (null means unavailable, not zero): " + JSON.stringify(results);
+  async function rows(path: string) {
+    try {
+      const response = await fetch(supabaseUrl + "/rest/v1/" + path, { headers, signal: AbortSignal.timeout(7000) });
+      return response.ok ? await response.json() : null;
+    } catch { return null; }
+  }
+  const [views, reports, chats, security] = await Promise.all([
+    rows("property_views?select=property_id,property_table,viewed_at&order=viewed_at.desc&limit=1000"),
+    rows("property_reports?select=property_id,property_table,reason,status,created_at&order=created_at.desc&limit=500"),
+    rows("chatbot_messages?select=role,intent,category,created_at&order=created_at.desc&limit=500"),
+    rows("security_audit_log?select=action,entity_type,created_at&order=created_at.desc&limit=500")
+  ]);
+  const group = (items: any[], keyFn: (item:any)=>string) => {
+    const map = new Map<string, number>();
+    for (const item of items) { const key = keyFn(item) || "unknown"; map.set(key, (map.get(key)||0)+1); }
+    return [...map.entries()].map(([key,count])=>({key,count})).sort((a,b)=>b.count-a.count).slice(0,12);
+  };
+  const viewRows = Array.isArray(views) ? views : [];
+  const reportRows = Array.isArray(reports) ? reports : [];
+  const chatRows = Array.isArray(chats) ? chats : [];
+  const securityRows = Array.isArray(security) ? security : [];
+  const viewCounts = group(viewRows, r => String(r.property_table||"unknown")+":"+String(r.property_id||"unknown"));
+  const reportCounts = group(reportRows, r => String(r.property_table||"unknown")+":"+String(r.property_id||"unknown")+" | "+String(r.reason||"unspecified")+" | "+String(r.status||"unknown"));
+  return "READ-ONLY OPERATIONAL METRICS (no user IDs, messages, emails or phone numbers): " + JSON.stringify({
+    listing_counts: counts,
+    property_detail_views: { available: Array.isArray(views), sampled_rows: viewRows.length, top_properties_by_detail_views: viewCounts, note: "Detail views are not search queries." },
+    property_issue_reports: { available: Array.isArray(reports), sampled_rows: reportRows.length, by_property_reason_status: reportCounts },
+    support_message_intents: { available: Array.isArray(chats), sampled_rows: chatRows.length, by_intent: group(chatRows, r => String(r.intent||r.category||r.role||"unclassified")) },
+    security_event_types: { available: Array.isArray(security), sampled_rows: securityRows.length, by_action: group(securityRows, r => String(r.action||"unknown")+" | "+String(r.entity_type||"unknown")) },
+    search_query_telemetry: { available: false, note: "No search-event table or query-event records are currently available. Do not report a most-searched property; request search tracking instrumentation." }
+  }).slice(0, 6500);
 }
-
 async function buildRoleContext(roleKey: string, supabaseUrl: string, serviceKey: string): Promise<string> {
   if (roleKey === "data_listing_manager") return await fetchListingReviewContext(supabaseUrl, serviceKey);
   if (roleKey === "data_analyst_reporting_manager") return await fetchAggregateContext(supabaseUrl, serviceKey);
   const sources: string[] = [];
   if (roleKey === "technical_support_engineer") {
-    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/README.md", 700));
-    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/README.md", 1300));
-    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/tests/phase11-security-assertions.sql", 700));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/auth.html", 1600));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/chatbot/chatbot.js", 1200));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/README.md", 500));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/README.md", 700));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/tests/phase11-security-assertions.sql", 500));
   } else if (roleKey === "seo_marketing_manager") {
     sources.push(await fetchPublicText("https://studenthubhelp.in/robots.txt", 800));
     sources.push(await fetchPublicText("https://studenthubhelp.in/sitemap.xml", 1100));
@@ -156,7 +194,9 @@ async function buildRoleContext(roleKey: string, supabaseUrl: string, serviceKey
 function redactDce(value: string, allowedSourceUrls: string[]): string {
   const allowed = new Set(allowedSourceUrls);
   const tokens: Array<{ token: string; url: string }> = [];
-  const protectedValue = value.replace(/https?:\/\/[^\s<>"']+/gi, match => {
+  // Normalize Markdown links first; stop URL matching at JSON escape delimiters.
+  const normalized = value.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/gi, "$2");
+  const protectedValue = normalized.replace(/https?:\/\/[^\s<>"'\\]+/gi, match => {
     let clean = match;
     while (/[.,;!?)}\]>]$/.test(clean)) clean = clean.slice(0, -1);
     try { clean = new URL(clean).toString(); } catch { return "[UNVERIFIED_URL]"; }
