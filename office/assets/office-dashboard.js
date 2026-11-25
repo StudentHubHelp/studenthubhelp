@@ -588,6 +588,7 @@
             try { return new URL(String(source.url || "")).protocol === "https:"; } catch { return false; }
           });
         const dceRequestKey = task.id + ":data_collection_executive:0";
+        const requiresDceResearch = /research|public web|citation|official website|source collection|student support services/i.test(String(task.title || "") + " " + String(task.description || ""));
         (gmPlan.steps || []).forEach((step, stepIndex) => {
           const li = node("li", "gm-step-item");
           li.append(node("span", "gm-step-title", step.title + " · " + titleCase(step.role_key)));
@@ -612,7 +613,7 @@
               employeeButton.disabled = true;
               employeeButton.textContent = "Generating…";
             }
-            if (step.role_key === "quality_control_manager" &&
+            if (step.role_key === "quality_control_manager" && requiresDceResearch &&
                 (!dceDraftIsFresh || employeeDraftRequests.has(dceRequestKey))) {
               employeeButton.disabled = true;
               employeeButton.textContent = "Waiting for fresh DCE research";
@@ -651,14 +652,15 @@
     button.disabled = true;
     button.textContent = "Running employee drafts…";
     status("General Manager is running the planned employees one by one. Drafts only; no external actions will run.");
+    let finalMessage = "";
+    let succeeded = false;
     try {
       const result = await gmApi("execute_plan", { task_id: task.id });
       const count = Array.isArray(result.completed_steps) ? result.completed_steps.length : 0;
-      status(count + " employee draft(s) generated successfully. Owner review is still required; no external actions were executed.", true);
-      await loadWorkspace();
+      finalMessage = count + " employee draft(s) generated successfully. Owner review is still required; no external actions were executed.";
+      succeeded = true;
     } catch (error) {
-      status(error.message);
-      await loadWorkspace();
+      finalMessage = error.message || "Employee workflow failed.";
     } finally {
       planExecutionRequests.delete(task.id);
       if (button) {
@@ -666,6 +668,8 @@
         button.textContent = originalLabel;
       }
     }
+    await loadWorkspace();
+    status(finalMessage, succeeded);
   }
 
   async function createEmployeeDraft(task, roleKey, stepIndex, button, requestKey) {
