@@ -662,7 +662,8 @@ function buildConsolidatedQaQc(researchContext: string) {
       content.includes("## Inspected public code and evidence") &&
       content.includes("No genuine issue is confirmed") && content.includes("raw.githubusercontent.com") },
     { key: "data_analyst_reporting_manager", label: "DAR", check: (content: string) => {
-      const match = content.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);\n      if (!content.includes("## Exact aggregate table totals")) return false;
+      const match = content.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\\{[^\\n]*\\})/);
+      if (!content.includes("## Exact aggregate table totals")) return false;
       try {
         const evidence = match ? JSON.parse(match[1]) : null;
         const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
