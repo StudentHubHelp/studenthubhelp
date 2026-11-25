@@ -102,25 +102,34 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const popularityQuestion = /most searched|most search|highest search|popular property|top searched|search.*property|property.*search|(?:sabse|sbse|sabase)\s+(?:jyada|jyaada|adhik)\s+(?:search|seach|searched|dekhi)|search(?:ed)?\s+(?:ki|hui|gayi|gyi|h|hai)|popular listing|सबसे ज्यादा खोज|सबसे अधिक खोज/.test(textValue);
   const analyticsQuestion = /report|analytics|aggregate|count|metric|trend|dashboard|how many|kitne|कितने|कितनी|कौन.*ज्यादा|(?:sabse|sbse)\s+(?:jyada|adhik)|सबसे ज्यादा/.test(textValue);
   const fixRequest = /fix|resolve|repair|correct|thik|sahi karo|sudhar|ठीक करो|सुधार/.test(textValue);
-  if (loginIssue) { add("technical_support_engineer"); if (customerIssue) add("customer_support_executive"); }
-  if (popularityQuestion || analyticsQuestion) add("data_analyst_reporting_manager");
-  if (propertyIssue && !popularityQuestion) add("data_listing_manager");
-  if (propertyIssue && /issue|problem|galat|missing|update|outdated|duplicate|kharab|दिक्कत|गलत|अपडेट|समस्या/.test(textValue)) add("data_listing_manager");
-  if (customerIssue && !loginIssue) add("customer_support_executive");
-  if (/bug|error|code|technical|deploy|build|function|api|crash|website|page|mobile|map|direction|not working|nahi chal|failed|failure|त्रुटि|एरर/.test(textValue)) add("technical_support_engineer");
-  if (/research|source|public web|student support|official website|citation|website research/.test(textValue)) add("data_collection_executive");
-  if (/seo|robots|sitemap|canonical|metadata|indexing|ranking|search visibility/.test(textValue)) add("seo_marketing_manager");
-  if (/social|instagram|caption|post|content calendar|campaign/.test(textValue)) add("social_media_manager");
-  if (/test|quality|verify|verification|acceptance criteria|regression/.test(textValue)) add("quality_control_manager");
-  if (fixRequest && (loginIssue || propertyIssue || customerIssue)) add("quality_control_manager");
-  if (popularityQuestion || analyticsQuestion) add("quality_control_manager");
-  if ((loginIssue || customerIssue || (propertyIssue && /issue|problem|missing|update|outdated|duplicate|kharab|दिक्कत|गलत|अपडेट|समस्या/.test(textValue))) && !selected.includes("quality_control_manager")) add("quality_control_manager");
-  if (selected.length === 0) add("quality_control_manager");
-  if (selected.length > 1 && !selected.includes("quality_control_manager")) add("quality_control_manager");
+  const countTask = /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(textValue) &&
+    /(property|properties|listing|hostel|\\bpg\\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल)/i.test(textValue);
+  if (countTask) {
+    // Counting work needs one source-of-truth analyst and an independent QC reviewer.
+    // Avoid unrelated support/listing-review drafts triggered by the word StudentHubHelp.
+    add("data_analyst_reporting_manager");
+    add("quality_control_manager");
+  } else {
+    if (loginIssue) { add("technical_support_engineer"); if (customerIssue) add("customer_support_executive"); }
+    if (popularityQuestion || analyticsQuestion) add("data_analyst_reporting_manager");
+    if (propertyIssue && !popularityQuestion) add("data_listing_manager");
+    if (propertyIssue && /issue|problem|galat|missing|update|outdated|duplicate|kharab|दिक्कत|गलत|अपडेट|समस्या/.test(textValue)) add("data_listing_manager");
+    if (customerIssue && !loginIssue) add("customer_support_executive");
+    if (/bug|error|code|technical|deploy|build|function|api|crash|website|page|mobile|map|direction|not working|nahi chal|failed|failure|त्रुटि|एरर/.test(textValue)) add("technical_support_engineer");
+    if (/research|source|public web|student support|official website|citation|website research/.test(textValue)) add("data_collection_executive");
+    if (/seo|robots|sitemap|canonical|metadata|indexing|ranking|search visibility/.test(textValue)) add("seo_marketing_manager");
+    if (/social|instagram|caption|post|content calendar|campaign/.test(textValue)) add("social_media_manager");
+    if (/test|quality|verify|verification|acceptance criteria|regression/.test(textValue)) add("quality_control_manager");
+    if (fixRequest && (loginIssue || propertyIssue || customerIssue)) add("quality_control_manager");
+    if (popularityQuestion || analyticsQuestion) add("quality_control_manager");
+    if ((loginIssue || customerIssue || (propertyIssue && /issue|problem|missing|update|outdated|duplicate|kharab|दिक्कत|गलत|अपडेट|समस्या/.test(textValue))) && !selected.includes("quality_control_manager")) add("quality_control_manager");
+    if (selected.length === 0) add("quality_control_manager");
+    if (selected.length > 1 && !selected.includes("quality_control_manager")) add("quality_control_manager");
+  }
   const labels: Record<string, {title:string;rationale:string;expected:string}> = {
     data_collection_executive: {title:"Collect first-party StudentHubHelp evidence",rationale:"The task calls for source-backed public information; use approved first-party pages only in API-independent mode.",expected:"A source inventory with exact URLs, extracted facts and explicit unknowns."},
     data_listing_manager: {title:"Inspect listing quality and property issues",rationale:"The request concerns property/listing popularity, completeness or reported defects; inspect safe listing fields and report evidence only.",expected:"Property-wise findings with confirmed defects, suspected issues and proposed updates; no listing changes."},
-    data_analyst_reporting_manager: {title:"Analyze property popularity and operational metrics",rationale:"The request asks for popularity, searches, counts or trends; use available aggregate telemetry and clearly distinguish searches from detail views.",expected:"A dated metrics report with source tables, calculations, unavailable telemetry and limitations; never invent search counts."},
+    data_analyst_reporting_manager: {title:"Count city-wise properties and prepare Owner report",rationale:"The task explicitly requests category-wise property counts for a city; use exact city-filtered Supabase evidence and never substitute global totals or samples.",expected:"An Owner-facing total, six category counts, active/pending/suspended/rejected breakdown, source tables and limitations."},
     technical_support_engineer: {title:"Diagnose technical or login issue",rationale:"The request concerns authentication, website behavior or a technical failure; inspect repository code and available safe diagnostics.",expected:"Reproduction steps, evidence-backed cause or hypotheses, minimal patch proposal and regression checklist; no production deploy."},
     seo_marketing_manager: {title:"Inspect public SEO and crawl signals",rationale:"The task concerns search visibility or technical SEO; review public crawl resources and page metadata.",expected:"An evidence-based SEO audit checklist with prioritized recommendations."},
     social_media_manager: {title:"Prepare social content draft",rationale:"The task concerns social content or campaigns; create draft-only copy from verified brand facts.",expected:"A content draft or calendar proposal, not published."},
