@@ -144,7 +144,7 @@ function isCountingTask(taskTitle: string, taskDescription: string): boolean {
 function extractRequestedCity(value: string): string {
   const text = value.replace(/\s+/g, " ").trim();
   const patterns = [
-    /([a-z][a-z -]{1,40}?)\s+(?:me|mein|में)\b/i,
+    /([a-z][a-z -]{1,40}?)\s+(?:(?:me|mein)\b|में(?=\s))/i,
     /(?:city\s*[:=]|in|for)\s+([a-z][a-z -]{1,40}?)(?=\s+(?:count|total|properties|property|listings?|hai|hain|is|are)\b|[,;.]|$)/i
   ];
   for (const pattern of patterns) {
@@ -376,10 +376,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
       const countTask = isCountingTask(taskTitle, taskDescription);
       let evidence: any = null;
       try {
-        const parsedContext = JSON.parse(context);
-        const analyst = Array.isArray(parsedContext?.employee_drafts)
-          ? parsedContext.employee_drafts.find((item: any) => item?.role_key === "data_analyst_reporting_manager") : null;
-        const evidenceMatch = String(analyst?.draft_content || "").match(/COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
+        const evidenceMatch = context.match(/COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
         evidence = evidenceMatch ? JSON.parse(evidenceMatch[1]) : null;
       } catch { evidence = null; }
       const categories = Array.isArray(evidence?.primary_category_counts) ? evidence.primary_category_counts : [];
@@ -660,6 +657,8 @@ Deno.serve(async (req: Request) => {
       }).slice(0, 3200);
     } else if (roleKey === "quality_control_manager") {
       const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
+      const analystDraft = priorDrafts.find((item: any) => item?.role_key === "data_analyst_reporting_manager");
+      const countEvidence = String(analystDraft?.draft_content || "").match(/COUNT_EVIDENCE_JSON:\\{[^\\n]*\\}/)?.[0] || "COUNT_EVIDENCE_JSON:{}";
       researchContext = JSON.stringify({
         employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => ({
           role_key: String(item.role_key || ""),
@@ -669,7 +668,7 @@ Deno.serve(async (req: Request) => {
           checks: Array.isArray(item.checks) ? item.checks.slice(0, 5) : []
         })),
         review_note: "No DCE web research dependency applies to this task. Review the available role drafts against the task's acceptance criteria. Do not infer missing evidence."
-      }).slice(0, 3200);
+      }).slice(0, 3200) + "\\n" + countEvidence;
     } else {
       researchContext = roleKey === "data_analyst_reporting_manager" ? await fetchAggregateContext(supabaseUrl, serviceKey, taskTitle, taskDescription) : await buildRoleContext(roleKey, supabaseUrl, serviceKey);
       allowedSourceUrls = [...new Set((researchContext.match(/https:\/\/[^\s<>"']+/g) || []).map((value: string) => {
