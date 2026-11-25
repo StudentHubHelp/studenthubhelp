@@ -94,7 +94,7 @@ function parsePlan(raw: string, allowedRoles: Set<string>) {
 
 function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
   const value = (taskTitle + " " + taskDescription).toLowerCase();
-  return /consolidated/.test(value) && /all\s+(?:8|eight)\\s+employees/.test(value) &&
+  return /consolidated/.test(value) && /all\s+(?:8|eight)\s+employees/.test(value) &&
     /qc manager|quality control manager/.test(value) && /seo manager/.test(value);
 }
 const consolidatedQaRoles = [
