@@ -130,3 +130,5 @@ See `office/PHASES.md` for the consolidated 12-phase status, hard safety gates a
 - Gemini, Tavily, Brevo, Gmail, Instagram/Meta, OpenSEO, Google Places and the Cloudflare API integration are marked disabled in the integration registry. Their secrets, if present in Supabase, are retained and are not read by the employee generation path.
 - Supabase remains connected. GitHub runtime API access remains needs_secret; public raw repository reads and Cloudflare Pages GitHub-App deployments are separate from a private Office GitHub API token.
 - Deterministic drafts are templates/checklists, not LLM-quality reasoning. No employee can publish, send messages, write listing data, merge code or deploy production changes from this mode.
+
+- The General Manager now creates deterministic proposal-only plans from task keywords; it does not call Gemini. Ambiguous tasks route to QC for clarification rather than inventing work.
