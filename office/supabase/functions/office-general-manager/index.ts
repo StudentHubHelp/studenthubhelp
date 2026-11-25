@@ -330,6 +330,12 @@ Deno.serve(async (req: Request) => {
       const allowedRoles = new Set(roles.map((role: any) => role.role_key));
       const deterministic = buildDeterministicPlan(taskTitle, taskDescription, roles);
       plan = parsePlan(JSON.stringify(deterministic), allowedRoles);
+      if (isConsolidatedTeamQaTask(taskTitle, taskDescription) &&
+          (plan.steps.length !== consolidatedQaRoles.length ||
+           new Set(plan.steps.map((step: any) => step.role_key)).size !== consolidatedQaRoles.length ||
+           !consolidatedQaRoles.every(roleKey => plan.steps.some((step: any) => step.role_key === roleKey)))) {
+        return respond({ ok: false, code: "gm_consolidated_plan_incomplete" }, 503, origin);
+      }
     } catch {
       return respond({ ok: false, code: "gm_plan_validation_failed" }, 502, origin);
     }
