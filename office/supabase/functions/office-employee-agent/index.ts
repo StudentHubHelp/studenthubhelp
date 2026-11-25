@@ -658,7 +658,7 @@ Deno.serve(async (req: Request) => {
     } else if (roleKey === "quality_control_manager") {
       const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
       const analystDraft = priorDrafts.find((item: any) => item?.role_key === "data_analyst_reporting_manager");
-      const countEvidence = String(analystDraft?.draft_content || "").match(/COUNT_EVIDENCE_JSON:\\{[^\\n]*\\}/)?.[0] || "COUNT_EVIDENCE_JSON:{}";
+      const countEvidence = String(analystDraft?.draft_content || "").match(/COUNT_EVIDENCE_JSON:(\{[^\n]*\})/)?.[0] || "COUNT_EVIDENCE_JSON:{}";
       researchContext = JSON.stringify({
         employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => ({
           role_key: String(item.role_key || ""),
