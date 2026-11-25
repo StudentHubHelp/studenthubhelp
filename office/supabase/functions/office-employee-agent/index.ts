@@ -146,7 +146,7 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
   const duplicateCandidates = [...duplicateMap.values()].filter(group => group.length > 1).slice(0, 30);
   return "READ-ONLY LISTING REVIEW (contact details and reporter identities excluded; latest 25 rows per category only): " +
     JSON.stringify({
-      category_samples: results,
+      category_samples: results.map(({ rows, ...sample }: any) => sample),
       duplicate_candidates: duplicateCandidates,
       duplicate_method: "Exact normalized name + city + area match within returned samples; candidates require manual confirmation.",
       property_issue_reports: Array.isArray(reports) ? reports : null,
@@ -522,7 +522,7 @@ function parseDraft(raw: string, roleKey: string, stepIndex: number, allowedSour
 function buildOwnerCountReport(context: string) {
   let evidence: any = null;
   try {
-    const match = context.match(/COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
+    const match = context.match(/(?:^|\n)COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
     evidence = match ? JSON.parse(match[1]) : null;
   } catch { evidence = null; }
   if (!evidence) {
@@ -644,7 +644,8 @@ function buildConsolidatedQaQc(researchContext: string) {
   const roleSpecs: Array<{key:string;label:string;check:(content:string)=>boolean}> = [
     { key: "data_listing_manager", label: "DLM", check: (content: string) =>
       content.includes("## Read-only listing evidence") && content.includes("duplicate_candidates") &&
-      content.includes("missing_field_counts") && content.includes("sample_limit") &&\n      [...content.matchAll(/"sample_size":\\s*(\\d+)/g)].some(match => Number(match[1]) > 0) },
+      content.includes("missing_field_counts") && content.includes("sample_limit") &&
+      [...content.matchAll(/"sample_size":\s*(\d+)/g)].some(match => Number(match[1]) > 0) },
     { key: "data_collection_executive", label: "DCE", check: (content: string) => content.includes("## Sources") && /https:\/\/studenthubhelp\.in\//i.test(content) },
     { key: "customer_support_executive", label: "CSE", check: (content: string) =>
       content.includes("## Reply draft") && content.includes("## Escalation") &&
@@ -666,12 +667,13 @@ function buildConsolidatedQaQc(researchContext: string) {
     }},
     { key: "social_media_manager", label: "SMM", check: (content: string) =>
       content.includes("## Draft caption") && content.includes("## CTA") &&
-      content.includes("Do not imply guaranteed safety") && /https:\\\\/\\\\/studenthubhelp\\\\.in\\\\//i.test(content) },
+      content.includes("Do not imply guaranteed safety") && content.includes("https://studenthubhelp.in/") },
     { key: "seo_marketing_manager", label: "SEO Manager", check: (content: string) =>
       content.includes("## Homepage SEO audit") && content.includes("Title and meta description") &&
       content.includes("Canonical") && content.includes("robots.txt") && content.includes("sitemap.xml") &&
       content.includes("Favicon and Open Graph") && content.includes("Structured data") &&
-      content.includes("Internal links") && content.includes("INCONCLUSIVE") &&\n      content.includes("https://studenthubhelp.in/robots.txt") && content.includes("https://studenthubhelp.in/sitemap.xml") }
+      content.includes("Internal links") && content.includes("INCONCLUSIVE") &&
+      content.includes("https://studenthubhelp.in/robots.txt") && content.includes("https://studenthubhelp.in/sitemap.xml") }
   ];
   const results = roleSpecs.map(spec => {
     const draft: any = byRole.get(spec.key);
