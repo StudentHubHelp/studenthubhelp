@@ -909,6 +909,14 @@ Deno.serve(async (req: Request) => {
           }))
         }
       }).slice(0, 3200);
+    } else if (roleKey === "quality_control_manager" && isCountingTask(taskTitle, taskDescription)) {
+      // QC independently reruns exact city-filtered counts instead of trusting a truncated
+      // Analyst draft. This keeps the evidence payload intact and makes the review independent.
+      const independentCountEvidence = await fetchCityCountEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription);
+      const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
+      const analystDraft = priorDrafts.find((item: any) => item?.role_key === "data_analyst_reporting_manager");
+      researchContext = "ANALYST_DRAFT_SUMMARY: " + String(analystDraft?.summary || "Missing") +
+        "\nINDEPENDENT_QC_COUNT_EVIDENCE:\n" + independentCountEvidence;
     } else if (roleKey === "quality_control_manager") {
       const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
       const analystDraft = priorDrafts.find((item: any) => item?.role_key === "data_analyst_reporting_manager");
