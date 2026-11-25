@@ -93,6 +93,7 @@ Deno.serve(async (req: Request) => {
       const message = typeof result?.message === "string" ? result.message : "";
       const code = message === "owner_access_denied" ? "owner_access_denied"
         : message === "task_not_found_or_transition_not_allowed" ? "task_transition_not_allowed"
+        : message === "task_not_found_or_archive_blocked" ? "task_archive_blocked"
         : message.startsWith("title_") || message === "description_too_long" ||
           message === "invalid_priority" || message.startsWith("invalid_") ||
           message.startsWith("owner_can_only") ? "invalid_input"
