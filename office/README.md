@@ -132,3 +132,5 @@ See `office/PHASES.md` for the consolidated 12-phase status, hard safety gates a
 - Deterministic drafts are templates/checklists, not LLM-quality reasoning. No employee can publish, send messages, write listing data, merge code or deploy production changes from this mode.
 
 - The General Manager now creates deterministic proposal-only plans from task keywords; it does not call Gemini. Ambiguous tasks route to QC for clarification rather than inventing work.
+
+- In API-independent mode, the standalone DCE/Tavily Edge Function is hard-blocked before any provider usage/search/extract request; the integration overview skips usage validation for disabled providers. The Gemini gateway global kill switch is OFF.

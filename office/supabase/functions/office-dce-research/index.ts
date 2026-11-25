@@ -174,6 +174,15 @@ Deno.serve(async (req: Request) => {
     if (!body || !["status", "search", "extract", "research"].includes(body.action)) {
       return respond({ ok: false, code: "invalid_request" }, 400, origin);
     }
+    // API-independent mode: block Tavily before any provider usage/status/search/extract request.
+    if (body.action === "status") {
+      return respond({ ok: true, data: {
+        enabled: false, provider: "Tavily", connection_status: "disabled",
+        mode: "api_independent", message: "Tavily is disabled in API-independent Office mode."
+      } }, 200, origin);
+    }
+    return respond({ ok: false, code: "integration_disabled", provider: "tavily" }, 403, origin);
+
     const key = Deno.env.get("TAVILY_API_KEY") || "";
     if (body.action === "search" || body.action === "research") {
       const query = typeof body.query === "string" ? body.query.trim().slice(0, 320) : "";
