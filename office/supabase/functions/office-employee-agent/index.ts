@@ -144,64 +144,236 @@ function isCountingTask(taskTitle: string, taskDescription: string): boolean {
 function extractRequestedCity(value: string): string {
   const text = value.replace(/\s+/g, " ").trim();
   const patterns = [
-    /([a-z][a-z -]{1,40}?)\s+(?:(?:me|mein)\b|में(?=\s))/i,
-    /(?:city\s*[:=]|in|for)\s+([a-z][a-z -]{1,40}?)(?=\s+(?:count|total|properties|property|listings?|hai|hain|is|are)\b|[?,;.]|$)/i
+    /\b(?:sirf|only|city\s*[:=]|in|for)\s+([a-z][a-z .'-]{1,50}?)(?=\s+(?:rajasthan|state|ki|ke|ka|mein|me|properties?|property|listings?|count|total|hai|hain|is|are)\b|[,;.!?]|$)/i,
+    /\b([a-z][a-z .'-]{1,40}?)\s+(?:mein|me)\b/i
   ];
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match?.[1]) return match[1].trim().replace(/\s+/g, " ");
+    if (!match?.[1]) continue;
+    const city = match[1].trim().replace(/\s+/g, " ").replace(/[.,;:!?]+$/g, "");
+    if (city && !/^(sirf|only|city|in|for)$/i.test(city)) return city;
   }
   return "";
 }
-async function exactCityCount(supabaseUrl: string, serviceKey: string, table: string, city: string, status?: string) {
-  const params = new URLSearchParams({ select: "id", city: "ilike." + city, limit: "0" });
-  if (status) params.set("status", "eq." + status);
+
+async function exactCityCount(
+  supabaseUrl: string,
+  serviceKey: string,
+  table: string,
+  city: string,
+  filters: Record<string, string> = {}
+): Promise<number | null> {
+  const params = new URLSearchParams({ select: "id", city: "ilike." + city, limit: "0", ...filters });
   const response = await fetch(supabaseUrl + "/rest/v1/" + table + "?" + params.toString(), {
     method: "GET",
-    headers: { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public", Prefer: "count=exact" },
+    headers: {
+      apikey: serviceKey,
+      Authorization: "Bearer " + serviceKey,
+      "Accept-Profile": "public",
+      Prefer: "count=exact"
+    },
     signal: AbortSignal.timeout(9000)
   });
   const range = response.headers.get("content-range") || "";
   const total = range.includes("/") ? range.slice(range.lastIndexOf("/") + 1) : "";
   return response.ok && /^\d+$/.test(total) ? Number(total) : null;
 }
-async function fetchCityCountEvidence(supabaseUrl: string, serviceKey: string, taskTitle: string, taskDescription: string): Promise<string> {
-  const city = extractRequestedCity(taskTitle + " " + taskDescription);
-  if (!city) return "COUNT_EVIDENCE_JSON:" + JSON.stringify({ query_status: "failed", exact_count_query: false, city_filter: null, error: "City could not be extracted; no unfiltered count was run." });
-  const primary = [
-    { table: "hostels", category: "Hostels" }, { table: "pg_listings", category: "PG" }, { table: "tiffins", category: "Tiffin / Mess" },
-    { table: "libraries", category: "Libraries" }, { table: "cafes", category: "Cafes" },
-    { table: "bookstores", category: "Bookstores" }
-  ];
-  const legacy = [
-    { table: "tiffin_listings", category: "Tiffin (legacy table)" },
-    { table: "library_listings", category: "Library (legacy table)" }
-  ];
+
+async function runStatusTable(
+  supabaseUrl: string,
+  serviceKey: string,
+  table: string,
+  category: string,
+  city: string,
+  filters: Record<string, string> = {}
+) {
   const statuses = ["active", "pending", "suspended", "rejected"];
-  const runTable = async (item: {table:string;category:string}) => {
-    const [total, ...stateCounts] = await Promise.all([
-      exactCityCount(supabaseUrl, serviceKey, item.table, city),
-      ...statuses.map(state => exactCityCount(supabaseUrl, serviceKey, item.table, city, state))
-    ]);
-    return { table: item.table, category: item.category, exact_total: total,
-      status_counts: Object.fromEntries(statuses.map((state, index) => [state, stateCounts[index]])),
-      query_ok: total !== null && stateCounts.every(value => value !== null) };
-  };
-  const [primaryResults, legacyResults] = await Promise.all([
-    Promise.all(primary.map(runTable)), Promise.all(legacy.map(runTable))
+  const [total, ...stateCounts] = await Promise.all([
+    exactCityCount(supabaseUrl, serviceKey, table, city, filters),
+    ...statuses.map(state => exactCityCount(supabaseUrl, serviceKey, table, city, { ...filters, status: "eq." + state }))
   ]);
-  const all = [...primaryResults, ...legacyResults];
+  const statusCounts = Object.fromEntries(statuses.map((state, index) => [state, stateCounts[index]]));
+  const otherStatusCount = Number.isInteger(total) && stateCounts.every(Number.isInteger)
+    ? Number(total) - stateCounts.reduce((sum, value) => sum + Number(value), 0) : null;
+  return {
+    table,
+    category,
+    exact_total: total,
+    status_model: "status_column",
+    status_counts: { ...statusCounts, other: otherStatusCount },
+    query_ok: total !== null && stateCounts.every(value => value !== null)
+  };
+}
+
+async function runApprovalTable(
+  supabaseUrl: string,
+  serviceKey: string,
+  table: string,
+  category: string,
+  city: string
+) {
+  const [total, approved, notApproved] = await Promise.all([
+    exactCityCount(supabaseUrl, serviceKey, table, city),
+    exactCityCount(supabaseUrl, serviceKey, table, city, { is_approved: "eq.true" }),
+    exactCityCount(supabaseUrl, serviceKey, table, city, { is_approved: "eq.false" })
+  ]);
+  return {
+    table,
+    category,
+    exact_total: total,
+    status_model: "is_approved_boolean",
+    status_counts: { active: approved, pending: notApproved, suspended: null, rejected: null },
+    unsupported_statuses: ["suspended", "rejected"],
+    query_ok: total !== null && approved !== null && notApproved !== null
+  };
+}
+
+async function fetchCityIdentityRows(supabaseUrl: string, serviceKey: string, table: string, city: string) {
+  const rows: any[] = [];
+  let expected: number | null = null;
+  const pageSize = 1000;
+  const maxRows = 10000;
+  for (let offset = 0; offset < maxRows; offset += pageSize) {
+    const params = new URLSearchParams({
+      select: table === "hostels" ? "id,property_id,category,type" : "id,property_id",
+      city: "ilike." + city,
+      order: "id.asc",
+      limit: String(pageSize),
+      offset: String(offset)
+    });
+    const response = await fetch(supabaseUrl + "/rest/v1/" + table + "?" + params.toString(), {
+      headers: {
+        apikey: serviceKey,
+        Authorization: "Bearer " + serviceKey,
+        "Accept-Profile": "public",
+        Prefer: "count=exact"
+      },
+      signal: AbortSignal.timeout(9000)
+    });
+    if (!response.ok) return { complete: false, expected, rows };
+    if (expected === null) {
+      const range = response.headers.get("content-range") || "";
+      const total = range.includes("/") ? range.slice(range.lastIndexOf("/") + 1) : "";
+      if (!/^\d+$/.test(total)) return { complete: false, expected: null, rows };
+      expected = Number(total);
+    }
+    const page = await response.json().catch(() => null);
+    if (!Array.isArray(page)) return { complete: false, expected, rows };
+    rows.push(...page);
+    if (rows.length >= expected) break;
+    if (page.length < pageSize) break;
+  }
+  return { complete: expected !== null && rows.length === expected, expected, rows };
+}
+
+async function fetchCityCountEvidence(
+  supabaseUrl: string,
+  serviceKey: string,
+  taskTitle: string,
+  taskDescription: string
+): Promise<string> {
+  const city = extractRequestedCity(taskTitle + " " + taskDescription);
+  if (!city) {
+    return "COUNT_EVIDENCE_JSON:" + JSON.stringify({
+      query_status: "failed",
+      exact_count_query: false,
+      city_filter: null,
+      error: "City could not be extracted; no unfiltered count was run."
+    });
+  }
+
+  // The hostels table stores both Hostel and PG rows. Split them using category/type;
+  // pg_listings is retained as a separate legacy source and is never silently added.
+  const pgHostelFilter = { or: "(category.ilike.*pg*,type.ilike.*pg*,name.ilike.*pg*,name.ilike.*p g*,category.ilike.*paying guest*,type.ilike.*paying guest*,name.ilike.*paying guest*)" };
+  const [allHostels, pgHostels, tiffins, libraries, cafes, bookstores, legacyPg, legacyTiffins, legacyLibraries] = await Promise.all([
+    runStatusTable(supabaseUrl, serviceKey, "hostels", "All hostels-table rows", city),
+    runStatusTable(supabaseUrl, serviceKey, "hostels", "PG rows stored in hostels", city, pgHostelFilter),
+    runStatusTable(supabaseUrl, serviceKey, "tiffins", "Tiffin / Mess", city),
+    runStatusTable(supabaseUrl, serviceKey, "libraries", "Libraries", city),
+    runStatusTable(supabaseUrl, serviceKey, "cafes", "Cafes", city),
+    runStatusTable(supabaseUrl, serviceKey, "bookstores", "Bookstores", city),
+    runApprovalTable(supabaseUrl, serviceKey, "pg_listings", "PG legacy table", city),
+    runApprovalTable(supabaseUrl, serviceKey, "tiffin_listings", "Tiffin legacy table", city),
+    runApprovalTable(supabaseUrl, serviceKey, "library_listings", "Library legacy table", city)
+  ]);
+
+  const subtractCounts = (left: any, right: any, category: string) => {
+    const total = Number.isInteger(left.exact_total) && Number.isInteger(right.exact_total)
+      ? Number(left.exact_total) - Number(right.exact_total) : null;
+    const states: Record<string, number | null> = {};
+    for (const state of ["active", "pending", "suspended", "rejected", "other"]) {
+      const a = left.status_counts?.[state];
+      const b = right.status_counts?.[state];
+      states[state] = Number.isInteger(a) && Number.isInteger(b) ? Number(a) - Number(b) : null;
+    }
+    return {
+      table: "hostels",
+      category,
+      category_filter: "city exact match AND category/type does not match PG subset",
+      exact_total: total,
+      status_model: "status_column",
+      status_counts: states,
+      query_ok: total !== null && Object.values(states).every(value => value !== null)
+    };
+  };
+
+  const hostelCategory = subtractCounts(allHostels, pgHostels, "Hostels");
+  const pgCategory = {
+    ...pgHostels,
+    category: "PG",
+    category_filter: "city exact match AND category OR type contains PG"
+  };
+  const primaryResults = [hostelCategory, pgCategory, tiffins, libraries, cafes, bookstores];
+  const legacyResults = [legacyPg, legacyTiffins, legacyLibraries];
+
+  const identityTables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
+  const identityResults = await Promise.all(identityTables.map(table =>
+    fetchCityIdentityRows(supabaseUrl, serviceKey, table, city)
+  ));
+  const identityComplete = identityResults.every(result => result.complete);
+  const seen = new Map<string, string>();
+  let duplicateCount = 0;
+  let rowsChecked = 0;
+  for (let index = 0; index < identityResults.length; index++) {
+    const table = identityTables[index];
+    for (const row of identityResults[index].rows) {
+      rowsChecked++;
+      const propertyId = row?.property_id == null ? "" : String(row.property_id).trim();
+      const key = propertyId ? "property:" + propertyId.toLowerCase() : table + ":id:" + String(row?.id);
+      if (seen.has(key)) duplicateCount++;
+      else seen.set(key, table);
+    }
+  }
+
+  const allQueriesOk = primaryResults.every(item => item.query_ok) && legacyResults.every(item => item.query_ok);
+  const legacyReconciliationRequired = legacyResults.some(item => Number(item.exact_total) > 0);
+  const duplicateCheckOk = identityComplete && duplicateCount === 0;
+  const queryStatus = allQueriesOk && duplicateCheckOk && !legacyReconciliationRequired ? "success" : "partial_failure";
   const primaryTotal = primaryResults.every(item => Number.isInteger(item.exact_total))
     ? primaryResults.reduce((sum, item) => sum + Number(item.exact_total), 0) : null;
+
   return "COUNT_EVIDENCE_JSON:" + JSON.stringify({
-    query_status: all.every(item => item.query_ok) ? "success" : "partial_failure",
-    exact_count_query: true, city_filter: { column: "city", operator: "ilike exact (no wildcard)", value: city },
-    primary_category_counts: primaryResults, legacy_table_counts: legacyResults,
-    primary_category_total: primaryTotal, total_is_sum_of_primary_tables_only: true,
-    legacy_tables_excluded_from_total_to_avoid_double_counting: true, status_values_checked: statuses,
-    generated_at: new Date().toISOString(), limitations: "Failed exact counts are null, never zero."
+    query_status: queryStatus,
+    exact_count_query: allQueriesOk,
+    city_filter: { column: "city", operator: "ilike exact (no wildcard)", value: city },
+    primary_category_counts: primaryResults,
+    primary_category_total: primaryTotal,
+    total_is_sum_of_six_disjoint_primary_categories: true,
+    legacy_table_counts: legacyResults,
+    legacy_tables_excluded_from_total: true,
+    legacy_reconciliation_required: legacyReconciliationRequired,
+    duplicate_check: {
+      complete: identityComplete,
+      rows_checked: rowsChecked,
+      duplicate_count: duplicateCount,
+      method: "Compare property_id across canonical category tables; fall back to table-scoped id when property_id is null."
+    },
+    status_values_checked: ["active", "pending", "suspended", "rejected"],
+    generated_at: new Date().toISOString(),
+    limitations: "Legacy is_approved tables expose approved/unapproved only; suspended/rejected are not represented and remain unavailable, never zero. Non-zero legacy counts require reconciliation before inclusion."
   });
 }
+
 async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, taskTitle = "", taskDescription = ""): Promise<string> {
   if (isCountingTask(taskTitle, taskDescription)) return await fetchCityCountEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription);
   const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores", "pg_listings", "tiffin_listings", "library_listings"];
@@ -325,6 +497,78 @@ function parseDraft(raw: string, roleKey: string, stepIndex: number, allowedSour
   };
 }
 
+function buildOwnerCountReport(context: string) {
+  let evidence: any = null;
+  try {
+    const match = context.match(/COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
+    evidence = match ? JSON.parse(match[1]) : null;
+  } catch { evidence = null; }
+  if (!evidence) {
+    return {
+      summary: "Exact city-wise property counts are unavailable. No total should be shown to the Owner.",
+      content: "COUNT_EVIDENCE_JSON is missing. Treat every unavailable value as unknown, not zero."
+    };
+  }
+  const city = String(evidence.city_filter?.value || "requested city");
+  const categories = Array.isArray(evidence.primary_category_counts) ? evidence.primary_category_counts : [];
+  const labels = ["Hostels", "PG", "Tiffin / Mess", "Libraries", "Cafes", "Bookstores"];
+  const find = (label: string) => categories.find((item: any) => item.category === label);
+  const fmt = (value: any) => Number.isInteger(value) ? String(value) : "Unavailable";
+  const activeTotal = categories.every((item: any) => Number.isInteger(item.status_counts?.active))
+    ? categories.reduce((sum: number, item: any) => sum + Number(item.status_counts.active), 0) : null;
+  const pendingTotal = categories.every((item: any) => Number.isInteger(item.status_counts?.pending))
+    ? categories.reduce((sum: number, item: any) => sum + Number(item.status_counts.pending), 0) : null;
+  const suspendedTotal = categories.every((item: any) => Number.isInteger(item.status_counts?.suspended))
+    ? categories.reduce((sum: number, item: any) => sum + Number(item.status_counts.suspended), 0) : null;
+  const rejectedTotal = categories.every((item: any) => Number.isInteger(item.status_counts?.rejected))
+    ? categories.reduce((sum: number, item: any) => sum + Number(item.status_counts.rejected), 0) : null;
+  const breakdown = labels.map(label => {
+    const item = find(label);
+    return label + " " + fmt(item?.exact_total) + " (" + fmt(item?.status_counts?.active) + " active)";
+  }).join("; ");
+  const verified = evidence.query_status === "success" && evidence.exact_count_query === true &&
+    evidence.duplicate_check?.complete === true && evidence.duplicate_check?.duplicate_count === 0;
+  const summary = verified
+    ? city + ": " + fmt(evidence.primary_category_total) + " total properties (" + fmt(activeTotal) +
+      " active; " + fmt(pendingTotal) + " pending; " + fmt(suspendedTotal) + " suspended; " +
+      fmt(rejectedTotal) + "). " + breakdown + "."
+    : city + ": counts are provisional and NOT VERIFIED. " + breakdown + ". QC must not PASS.";
+  const lines = [
+    "## Owner business answer",
+    "**" + city + " — " + fmt(evidence.primary_category_total) + " total properties**",
+    "",
+    "| Category | Total | Active | Pending | Suspended | Rejected | Source table |",
+    "|---|---:|---:|---:|---:|---:|---|"
+  ];
+  for (const label of labels) {
+    const item = find(label);
+    lines.push("| " + label + " | " + fmt(item?.exact_total) + " | " +
+      fmt(item?.status_counts?.active) + " | " + fmt(item?.status_counts?.pending) + " | " +
+      fmt(item?.status_counts?.suspended) + " | " + fmt(item?.status_counts?.rejected) + " | " +
+      String(item?.table || "Unavailable") + " |");
+  }
+  lines.push(
+    "",
+    "**Overall status:** Active " + fmt(activeTotal) + " · Pending " + fmt(pendingTotal) +
+      " · Suspended " + fmt(suspendedTotal) + " · Rejected " + fmt(rejectedTotal),
+    "",
+    "**Duplicate check:** " + (evidence.duplicate_check?.complete
+      ? fmt(evidence.duplicate_check.duplicate_count) + " duplicate property_id candidates across " + fmt(evidence.duplicate_check.rows_checked) + " rows checked."
+      : "Incomplete; do not claim unique property totals."),
+    "",
+    "**Legacy tables (excluded from total):**"
+  );
+  for (const item of Array.isArray(evidence.legacy_table_counts) ? evidence.legacy_table_counts : []) {
+    lines.push("- " + item.table + ": " + fmt(item.exact_total) +
+      " rows; approved " + fmt(item.status_counts?.active) +
+      "; unapproved " + fmt(item.status_counts?.pending) +
+      "; suspended/rejected " + (item.unsupported_statuses?.join(", ") || "not reported") + ".");
+  }
+  lines.push("", "**City filter:** city ILIKE exact match (no wildcard), value " + city + ".",
+    "**Generated:** " + String(evidence.generated_at || "timestamp unavailable") + ".");
+  return { summary, content: lines.join("\n") };
+}
+
 function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
   const brief = [taskTitle, taskDescription, stepTitle, stepRationale, stepExpectedOutput].filter(Boolean).join("\n");
   const context = researchContext || "No verified context was available.";
@@ -356,11 +600,16 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
       content: "## Reported task\n" + brief + "\n\n## Available repository context\n" + context + "\n\n## Diagnostic plan\n1. Reproduce the reported behavior in a safe test environment.\n2. Inspect the exact route, component, function and recent commits.\n3. Capture console, network and server errors with secrets redacted.\n4. Propose the smallest scoped patch and regression tests.\n\n## Current conclusion\nNo root cause is asserted unless the supplied evidence directly demonstrates it.",
       checks: ["Attach exact file/line evidence before proposing a code change.", "Run targeted tests and review the diff before merging."], risk: "medium"
     },
-    data_analyst_reporting_manager: {
-      summary: "Aggregate data context prepared from Supabase counts; no personal records accessed.",
-      content: "## Reporting request\n" + brief + "\n\n## Aggregate evidence\n" + context + "\n\n## Interpretation rules\nA null or unavailable count is not zero. Do not add overlapping category tables together. No student-level records or personal information were queried.",
-      checks: ["Confirm reporting period and table definitions.", "Check whether tables overlap before calculating totals."], risk: "low"
-    },
+    data_analyst_reporting_manager: (() => {
+      const report = buildOwnerCountReport(context);
+      return {
+        summary: report.summary,
+        content: "## Reporting request\n" + brief + "\n\n" + report.content +
+          "\n\n## Interpretation rules\nA null or unavailable count is not zero. Legacy tables are excluded unless reconciled. No student-level records or personal information were queried.",
+        checks: ["Verify exact city filter and category source tables.", "Reconcile any non-zero legacy tables before using the grand total.", "Check duplicate property identifiers before reporting unique properties."],
+        risk: report.summary.includes("NOT VERIFIED") || report.summary.includes("unavailable") ? "high" : "low"
+      };
+    })(),
     social_media_manager: {
       summary: "Social content concept drafted from available first-party brand context; not published.",
       content: "## Campaign brief\n" + brief + "\n\n## Verified brand context\n" + context + "\n\n## Draft caption\nFinding student essentials in a new city should feel simpler. Explore StudentHubHelp resources for student accommodation and local services.\n\n## CTA\nExplore StudentHubHelp.\n\n## Creative notes\nUse only approved brand assets and verified listing information. Do not imply guaranteed safety, availability, verification or outcomes.",
@@ -379,14 +628,18 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
         evidence = evidenceMatch ? JSON.parse(evidenceMatch[1]) : null;
       } catch { evidence = null; }
       const categories = Array.isArray(evidence?.primary_category_counts) ? evidence.primary_category_counts : [];
-      const required = ["hostels", "pg_listings", "tiffins", "libraries", "cafes", "bookstores"];
-      const categoryCountsComplete = required.every(table => categories.some((item: any) =>
-        item.table === table && Number.isInteger(item.exact_total) &&
+      const required = ["Hostels", "PG", "Tiffin / Mess", "Libraries", "Cafes", "Bookstores"];
+      const categoryCountsComplete = required.every(category => categories.some((item: any) =>
+        item.category === category && Number.isInteger(item.exact_total) &&
         ["active", "pending", "suspended", "rejected"].every(state => Number.isInteger(item.status_counts?.[state]))
       ));
       const cityValid = typeof evidence?.city_filter?.value === "string" && evidence.city_filter.value.trim().length > 0;
       const exactQuery = evidence?.exact_count_query === true && evidence?.query_status === "success";
-      const passed = countTask && exactQuery && cityValid && categoryCountsComplete && Number.isInteger(evidence?.primary_category_total);
+      const legacyClear = Array.isArray(evidence?.legacy_table_counts) &&
+        evidence.legacy_table_counts.every((item: any) => item.query_ok === true && item.exact_total === 0);
+      const duplicatesClear = evidence?.duplicate_check?.complete === true && evidence?.duplicate_check?.duplicate_count === 0;
+      const passed = countTask && exactQuery && cityValid && categoryCountsComplete &&
+        Number.isInteger(evidence?.primary_category_total) && legacyClear && duplicatesClear;
       const verdict = countTask ? (passed ? "PASS" : "FAIL") : "INCONCLUSIVE";
       const summary = countTask
         ? (passed ? "QC PASS — exact city-filtered count query and category-wise counts verified."
@@ -397,7 +650,9 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
         content: "## QC target\n" + brief + "\n\n## Evidence under review\n" + context +
           "\n\n## QC checks\n- Exact count query: " + (exactQuery ? "PASS" : "FAIL") +
           "\n- City filter: " + (cityValid ? "PASS" : "FAIL") +
-          "\n- Category-wise totals and status counts: " + (categoryCountsComplete ? "PASS" : "FAIL") +
+          "\n- Six category totals and status counts: " + (categoryCountsComplete ? "PASS" : "FAIL") +
+          "\n- Legacy-table reconciliation: " + (legacyClear ? "PASS" : "FAIL") +
+          "\n- Duplicate property-ID check: " + (duplicatesClear ? "PASS" : "FAIL") +
           "\n\n## QC verdict: " + verdict + "\n" + summary +
           "\n\nDraft creation alone is not task completion. Owner review remains required.",
         checks: countTask
