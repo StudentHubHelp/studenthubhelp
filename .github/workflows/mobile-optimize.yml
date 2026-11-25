@@ -35,7 +35,12 @@ jobs:
               text = path.read_text(encoding='utf-8')
 
               # Keep the homepage isolated: its responsive styles belong only to homepage.css.
-              if path.name != 'index.html' and 'href="mobile.css"' not in text and '</head>' in text.lower():
+              if path.name == 'property-details.html':
+                  # Nested property URLs must use the root-absolute stylesheet only.
+                  text = re.sub(r'''(?im)^[ \t]*<link\b(?=[^>]*\bhref\s*=\s*["']mobile\.css(?:\?[^"']*)?["'])[^>]*>[ \t]*(?:\r?\n)?''', '', text)
+                  if 'href="/mobile.css"' not in text and '</head>' in text.lower():
+                      text = re.sub(r'</head>', '  <link rel="stylesheet" href="/mobile.css">\n</head>', text, count=1, flags=re.I)
+              elif path.name != 'index.html' and 'href="mobile.css"' not in text and '</head>' in text.lower():
                   text = re.sub(r'</head>', '  <link rel="stylesheet" href="mobile.css">\n</head>', text, count=1, flags=re.I)
 
               if path.name in finder_pages and 'js/finder-power-search.js' not in text and '</body>' in text.lower():
