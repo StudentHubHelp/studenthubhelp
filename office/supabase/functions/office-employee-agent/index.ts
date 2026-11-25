@@ -635,7 +635,6 @@ function buildConsolidatedQaQc(researchContext: string) {
       content.includes("## Read-only listing evidence") && content.includes("duplicate_candidates") &&
       content.includes("missing_field_counts") && content.includes("sample_limit") },
     { key: "data_collection_executive", label: "DCE", check: (content: string) => content.includes("## Sources") && /https:\/\/studenthubhelp\.in\//i.test(content) },
-      content.includes("## Sources") && /https:\\/\\/studenthubhelp\\.in\\//i.test(content) },
     { key: "customer_support_executive", label: "CSE", check: (content: string) =>
       content.includes("## Reply draft") && content.includes("## Escalation") &&
       /do not share passwords, OTPs or payment credentials/i.test(content) },
