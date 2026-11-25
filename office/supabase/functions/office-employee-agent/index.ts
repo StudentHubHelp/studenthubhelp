@@ -165,7 +165,7 @@ function isCountingTask(taskTitle: string, taskDescription: string): boolean {
 function extractRequestedCity(value: string): string {
   const text = value.replace(/\s+/g, " ").trim();
   const patterns = [
-    /\b(?:sirf|only|city\s*[:=]|in|for)\s+([a-z][a-z .'-]{1,50}?)(?=\s+(?:rajasthan|state|ki|ke|ka|mein|me|properties?|property|listings?|count|total|hai|hain|is|are)\b|[,;.!?]|$)/i,
+    /\b(?:sirf|only|city\s*[:=]|in|for)\s+([a-z][a-z .'-]{1,50}?)(?=\s+(?:rajasthan|state|city|ki|ke|ka|mein|me|properties?|property|listings?|count|total|hai|hain|is|are)\b|[,;.!?]|$)/i,
     /\b([a-z][a-z .'-]{1,40}?)\s+(?:mein|me)\b/i
   ];
   for (const pattern of patterns) {
@@ -175,6 +175,13 @@ function extractRequestedCity(value: string): string {
     if (city && !/^(sirf|only|city|in|for)$/i.test(city)) return city;
   }
   return "";
+}
+
+// Prefer the task description (the owner's actual request) over the display title.
+// Titles often contain labels such as "SIKAR KI PROPERTY", which must never be
+// concatenated into the city phrase "SIKAR ME".
+function extractTaskCity(taskTitle: string, taskDescription: string): string {
+  return extractRequestedCity(taskDescription) || extractRequestedCity(taskTitle);
 }
 
 async function exactCityCount(
@@ -293,7 +300,7 @@ async function fetchCityCountEvidence(
   taskTitle: string,
   taskDescription: string
 ): Promise<string> {
-  const city = extractRequestedCity(taskTitle + " " + taskDescription);
+  const city = extractTaskCity(taskTitle, taskDescription);
   if (!city) {
     return "COUNT_EVIDENCE_JSON:" + JSON.stringify({
       query_status: "failed",
@@ -785,7 +792,12 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
         item.category === category && Number.isInteger(item.exact_total) &&
         ["active", "pending", "suspended", "rejected"].every(state => Number.isInteger(item.status_counts?.[state]))
       ));
-      const cityValid = typeof evidence?.city_filter?.value === "string" && evidence.city_filter.value.trim().length > 0;
+      const expectedCity = extractTaskCity(taskTitle, taskDescription);
+      const evidenceCity = typeof evidence?.city_filter?.value === "string" ? evidence.city_filter.value.trim() : "";
+      const cityValid = !!expectedCity && !!evidenceCity &&
+        evidenceCity.toLocaleLowerCase() === expectedCity.toLocaleLowerCase() &&
+        evidence?.city_filter?.column === "city" &&
+        evidence?.city_filter?.operator === "ilike exact (no wildcard)";
       const exactQuery = evidence?.exact_count_query === true && evidence?.query_status === "success";
       const legacyClear = Array.isArray(evidence?.legacy_table_counts) &&
         evidence.legacy_table_counts.every((item: any) => item.query_ok === true && item.exact_total === 0);
@@ -801,7 +813,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
         summary,
         content: "## QC target\n" + brief + "\n\n## Evidence under review\n" + context +
           "\n\n## QC checks\n- Exact count query: " + (exactQuery ? "PASS" : "FAIL") +
-          "\n- City filter: " + (cityValid ? "PASS" : "FAIL") +
+          "\n- City filter matches owner's requested city (" + (expectedCity || "not extracted") + "): " + (cityValid ? "PASS" : "FAIL") +
           "\n- Six category totals and status counts: " + (categoryCountsComplete ? "PASS" : "FAIL") +
           "\n- Legacy-table reconciliation: " + (legacyClear ? "PASS" : "FAIL") +
           "\n- Duplicate property-ID check: " + (duplicatesClear ? "PASS" : "FAIL") +
