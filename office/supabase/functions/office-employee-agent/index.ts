@@ -84,9 +84,9 @@ async function fetchPublicText(url: string, maxChars = 900): Promise<string> {
     if (!/(text\/|application\/(xml|rss\+xml))/.test(type)) return "";
     let value = (await response.text()).slice(0, 30000);
     if (/html/i.test(type) && !url.includes("raw.githubusercontent.com")) value = value
-      .replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
-      .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
-      .replace(/<(nav|footer|header)[^>]*>[\\s\\S]*?<\\/\\1>/gi, " ")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<(nav|footer|header)[^>]*>[\s\S]*?<\/\1>/gi, " ")
       .replace(/<[^>]+>/g, " ")
       .replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&")
       .replace(/&lt;/gi, "<").replace(/&gt;/gi, ">")
@@ -195,10 +195,10 @@ function redactDce(value: string, allowedSourceUrls: string[]): string {
   const allowed = new Set(allowedSourceUrls);
   const tokens: Array<{ token: string; url: string }> = [];
   // Normalize Markdown links first; stop URL matching at JSON escape delimiters.
-  const normalized = value.replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^)\\s]+)\\)/gi, "$2");
-  const protectedValue = normalized.replace(/https?:\\/\\/[^\\s<>"'\\\\]+/gi, match => {
+  const normalized = value.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/gi, "$2");
+  const protectedValue = normalized.replace(/https?:\/\/[^\s<>"'\\]+/gi, match => {
     let clean = match;
-    while (/[.,;!?)}\\]>]$/.test(clean)) clean = clean.slice(0, -1);
+    while (/[.,;!?)}\]>]$/.test(clean)) clean = clean.slice(0, -1);
     try { clean = new URL(clean).toString(); } catch { return "[UNVERIFIED_URL]"; }
     if (!allowed.has(clean)) return "[UNVERIFIED_URL]";
     const token = "DCE_SOURCE_TOKEN_" + tokens.length;
