@@ -497,6 +497,78 @@ function parseDraft(raw: string, roleKey: string, stepIndex: number, allowedSour
   };
 }
 
+function buildOwnerCountReport(context: string) {
+  let evidence: any = null;
+  try {
+    const match = context.match(/COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
+    evidence = match ? JSON.parse(match[1]) : null;
+  } catch { evidence = null; }
+  if (!evidence) {
+    return {
+      summary: "Exact city-wise property counts are unavailable. No total should be shown to the Owner.",
+      content: "COUNT_EVIDENCE_JSON is missing. Treat every unavailable value as unknown, not zero."
+    };
+  }
+  const city = String(evidence.city_filter?.value || "requested city");
+  const categories = Array.isArray(evidence.primary_category_counts) ? evidence.primary_category_counts : [];
+  const labels = ["Hostels", "PG", "Tiffin / Mess", "Libraries", "Cafes", "Bookstores"];
+  const find = (label: string) => categories.find((item: any) => item.category === label);
+  const fmt = (value: any) => Number.isInteger(value) ? String(value) : "Unavailable";
+  const activeTotal = categories.every((item: any) => Number.isInteger(item.status_counts?.active))
+    ? categories.reduce((sum: number, item: any) => sum + Number(item.status_counts.active), 0) : null;
+  const pendingTotal = categories.every((item: any) => Number.isInteger(item.status_counts?.pending))
+    ? categories.reduce((sum: number, item: any) => sum + Number(item.status_counts.pending), 0) : null;
+  const suspendedTotal = categories.every((item: any) => Number.isInteger(item.status_counts?.suspended))
+    ? categories.reduce((sum: number, item: any) => sum + Number(item.status_counts.suspended), 0) : null;
+  const rejectedTotal = categories.every((item: any) => Number.isInteger(item.status_counts?.rejected))
+    ? categories.reduce((sum: number, item: any) => sum + Number(item.status_counts.rejected), 0) : null;
+  const breakdown = labels.map(label => {
+    const item = find(label);
+    return label + " " + fmt(item?.exact_total) + " (" + fmt(item?.status_counts?.active) + " active)";
+  }).join("; ");
+  const verified = evidence.query_status === "success" && evidence.exact_count_query === true &&
+    evidence.duplicate_check?.complete === true && evidence.duplicate_check?.duplicate_count === 0;
+  const summary = verified
+    ? city + ": " + fmt(evidence.primary_category_total) + " total properties (" + fmt(activeTotal) +
+      " active; " + fmt(pendingTotal) + " pending; " + fmt(suspendedTotal) + " suspended; " +
+      fmt(rejectedTotal) + "). " + breakdown + "."
+    : city + ": counts are provisional and NOT VERIFIED. " + breakdown + ". QC must not PASS.";
+  const lines = [
+    "## Owner business answer",
+    "**" + city + " — " + fmt(evidence.primary_category_total) + " total properties**",
+    "",
+    "| Category | Total | Active | Pending | Suspended | Rejected | Source table |",
+    "|---|---:|---:|---:|---:|---:|---|"
+  ];
+  for (const label of labels) {
+    const item = find(label);
+    lines.push("| " + label + " | " + fmt(item?.exact_total) + " | " +
+      fmt(item?.status_counts?.active) + " | " + fmt(item?.status_counts?.pending) + " | " +
+      fmt(item?.status_counts?.suspended) + " | " + fmt(item?.status_counts?.rejected) + " | " +
+      String(item?.table || "Unavailable") + " |");
+  }
+  lines.push(
+    "",
+    "**Overall status:** Active " + fmt(activeTotal) + " · Pending " + fmt(pendingTotal) +
+      " · Suspended " + fmt(suspendedTotal) + " · Rejected " + fmt(rejectedTotal),
+    "",
+    "**Duplicate check:** " + (evidence.duplicate_check?.complete
+      ? fmt(evidence.duplicate_check.duplicate_count) + " duplicate property_id candidates across " + fmt(evidence.duplicate_check.rows_checked) + " rows checked."
+      : "Incomplete; do not claim unique property totals."),
+    "",
+    "**Legacy tables (excluded from total):**"
+  );
+  for (const item of Array.isArray(evidence.legacy_table_counts) ? evidence.legacy_table_counts : []) {
+    lines.push("- " + item.table + ": " + fmt(item.exact_total) +
+      " rows; approved " + fmt(item.status_counts?.active) +
+      "; unapproved " + fmt(item.status_counts?.pending) +
+      "; suspended/rejected " + (item.unsupported_statuses?.join(", ") || "not reported") + ".");
+  }
+  lines.push("", "**City filter:** city ILIKE exact match (no wildcard), value " + city + ".",
+    "**Generated:** " + String(evidence.generated_at || "timestamp unavailable") + ".");
+  return { summary, content: lines.join("\n") };
+}
+
 function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
   const brief = [taskTitle, taskDescription, stepTitle, stepRationale, stepExpectedOutput].filter(Boolean).join("\n");
   const context = researchContext || "No verified context was available.";
@@ -528,11 +600,16 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
       content: "## Reported task\n" + brief + "\n\n## Available repository context\n" + context + "\n\n## Diagnostic plan\n1. Reproduce the reported behavior in a safe test environment.\n2. Inspect the exact route, component, function and recent commits.\n3. Capture console, network and server errors with secrets redacted.\n4. Propose the smallest scoped patch and regression tests.\n\n## Current conclusion\nNo root cause is asserted unless the supplied evidence directly demonstrates it.",
       checks: ["Attach exact file/line evidence before proposing a code change.", "Run targeted tests and review the diff before merging."], risk: "medium"
     },
-    data_analyst_reporting_manager: {
-      summary: "Aggregate data context prepared from Supabase counts; no personal records accessed.",
-      content: "## Reporting request\n" + brief + "\n\n## Aggregate evidence\n" + context + "\n\n## Interpretation rules\nA null or unavailable count is not zero. Do not add overlapping category tables together. No student-level records or personal information were queried.",
-      checks: ["Confirm reporting period and table definitions.", "Check whether tables overlap before calculating totals."], risk: "low"
-    },
+    data_analyst_reporting_manager: (() => {
+      const report = buildOwnerCountReport(context);
+      return {
+        summary: report.summary,
+        content: "## Reporting request\n" + brief + "\n\n" + report.content +
+          "\n\n## Interpretation rules\nA null or unavailable count is not zero. Legacy tables are excluded unless reconciled. No student-level records or personal information were queried.",
+        checks: ["Verify exact city filter and category source tables.", "Reconcile any non-zero legacy tables before using the grand total.", "Check duplicate property identifiers before reporting unique properties."],
+        risk: report.summary.includes("NOT VERIFIED") || report.summary.includes("unavailable") ? "high" : "low"
+      };
+    })(),
     social_media_manager: {
       summary: "Social content concept drafted from available first-party brand context; not published.",
       content: "## Campaign brief\n" + brief + "\n\n## Verified brand context\n" + context + "\n\n## Draft caption\nFinding student essentials in a new city should feel simpler. Explore StudentHubHelp resources for student accommodation and local services.\n\n## CTA\nExplore StudentHubHelp.\n\n## Creative notes\nUse only approved brand assets and verified listing information. Do not imply guaranteed safety, availability, verification or outcomes.",
@@ -551,14 +628,18 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
         evidence = evidenceMatch ? JSON.parse(evidenceMatch[1]) : null;
       } catch { evidence = null; }
       const categories = Array.isArray(evidence?.primary_category_counts) ? evidence.primary_category_counts : [];
-      const required = ["hostels", "pg_listings", "tiffins", "libraries", "cafes", "bookstores"];
-      const categoryCountsComplete = required.every(table => categories.some((item: any) =>
-        item.table === table && Number.isInteger(item.exact_total) &&
+      const required = ["Hostels", "PG", "Tiffin / Mess", "Libraries", "Cafes", "Bookstores"];
+      const categoryCountsComplete = required.every(category => categories.some((item: any) =>
+        item.category === category && Number.isInteger(item.exact_total) &&
         ["active", "pending", "suspended", "rejected"].every(state => Number.isInteger(item.status_counts?.[state]))
       ));
       const cityValid = typeof evidence?.city_filter?.value === "string" && evidence.city_filter.value.trim().length > 0;
       const exactQuery = evidence?.exact_count_query === true && evidence?.query_status === "success";
-      const passed = countTask && exactQuery && cityValid && categoryCountsComplete && Number.isInteger(evidence?.primary_category_total);
+      const legacyClear = Array.isArray(evidence?.legacy_table_counts) &&
+        evidence.legacy_table_counts.every((item: any) => item.query_ok === true && item.exact_total === 0);
+      const duplicatesClear = evidence?.duplicate_check?.complete === true && evidence?.duplicate_check?.duplicate_count === 0;
+      const passed = countTask && exactQuery && cityValid && categoryCountsComplete &&
+        Number.isInteger(evidence?.primary_category_total) && legacyClear && duplicatesClear;
       const verdict = countTask ? (passed ? "PASS" : "FAIL") : "INCONCLUSIVE";
       const summary = countTask
         ? (passed ? "QC PASS — exact city-filtered count query and category-wise counts verified."
@@ -569,7 +650,9 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
         content: "## QC target\n" + brief + "\n\n## Evidence under review\n" + context +
           "\n\n## QC checks\n- Exact count query: " + (exactQuery ? "PASS" : "FAIL") +
           "\n- City filter: " + (cityValid ? "PASS" : "FAIL") +
-          "\n- Category-wise totals and status counts: " + (categoryCountsComplete ? "PASS" : "FAIL") +
+          "\n- Six category totals and status counts: " + (categoryCountsComplete ? "PASS" : "FAIL") +
+          "\n- Legacy-table reconciliation: " + (legacyClear ? "PASS" : "FAIL") +
+          "\n- Duplicate property-ID check: " + (duplicatesClear ? "PASS" : "FAIL") +
           "\n\n## QC verdict: " + verdict + "\n" + summary +
           "\n\nDraft creation alone is not task completion. Owner review remains required.",
         checks: countTask
