@@ -98,7 +98,7 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const add = (roleKey: string) => { if (available.has(roleKey) && !selected.includes(roleKey)) selected.push(roleKey); };
   const loginIssue = /login|log in|sign.?in|password|otp|authentication|auth issue|account access|लॉग.?इन|पासवर्ड|ओटीपी/.test(textValue);
   const customerIssue = /customer|student|user|visitor|complaint|ticket|support|issue|problem|pareshani|dikkat|समस्या|शिकायत|ग्राहक|छात्र/.test(textValue);
-  const propertyIssue = /property|listing|hostel|\\bpg\\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल/.test(textValue);
+  const propertyIssue = /property|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल/.test(textValue);
   const popularityQuestion = /most searched|most search|highest search|popular property|top searched|search.*property|property.*search|sabse jyada search|sabse adhik search|zyada search|popular listing|सबसे ज्यादा खोज|सबसे अधिक खोज/.test(textValue);
   const analyticsQuestion = /report|analytics|aggregate|count|metric|trend|dashboard|how many|kitne|कितने|कितनी|कौन.*ज्यादा|sabse jyada|सबसे ज्यादा/.test(textValue);
   const fixRequest = /fix|resolve|repair|correct|thik|sahi karo|sudhar|ठीक करो|सुधार/.test(textValue);
