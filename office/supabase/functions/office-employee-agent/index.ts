@@ -402,7 +402,7 @@ Deno.serve(async (req: Request) => {
 
       // API-independent mode: collect only first-party StudentHubHelp pages.
       // No Tavily search/extraction request is made from the employee workflow.
-      const firstPartyBrief = /studenthubhelp(?:\\.in)?/i.test(taskTitle + " " + taskDescription);
+      const firstPartyBrief = /studenthubhelp(?:\.in)?/i.test(taskTitle + " " + taskDescription);
       const officialUrls = firstPartyBrief ? [
         "https://studenthubhelp.in/",
         "https://studenthubhelp.in/student-support.html",
@@ -412,7 +412,7 @@ Deno.serve(async (req: Request) => {
       const officialPages = await Promise.all(officialUrls.map(async url => {
         const extracted = await fetchPublicText(url, 1600);
         if (!extracted) return null;
-        const content = extracted.slice(extracted.indexOf("\\n") + 1);
+        const content = extracted.slice(extracted.indexOf("\n") + 1);
         return {
           title: "StudentHubHelp official page",
           url,
