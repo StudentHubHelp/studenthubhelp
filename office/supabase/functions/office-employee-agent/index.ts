@@ -198,6 +198,74 @@ function parseDraft(raw: string, roleKey: string, stepIndex: number, allowedSour
     created_at: new Date().toISOString()
   };
 }
+
+function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
+  const brief = [taskTitle, taskDescription, stepTitle, stepRationale, stepExpectedOutput].filter(Boolean).join("\n");
+  const context = researchContext || "No verified context was available.";
+  const sourceList = sourceUrls.length ? sourceUrls.map(url => "- " + url).join("\n") : "No independently verified source URLs.";
+  const baseChecks = [
+    "Generated without Gemini or any paid AI API; content is rule-based and may require human interpretation.",
+    "Only supplied task data and fetched read-only context were used.",
+    "No database rows, production files, external accounts or public content were modified.",
+    "Owner approval is required before any external action."
+  ];
+  const drafts: Record<string, {summary:string; content:string; checks:string[]; risk:"low"|"medium"|"high"}> = {
+    data_listing_manager: {
+      summary: "Read-only listing review based on available samples; automated checks only.",
+      content: "## Review scope\n" + brief + "\n\n## Read-only listing evidence\n" + context + "\n\n## Review limitations\nThis is a sample-based review, not a complete audit of every listing. Missing fields in the returned sample are not proof that the full database lacks those fields. No listing was edited, approved or verified.",
+      checks: ["Confirm sample coverage before treating findings as complete.", "Manually inspect suspected duplicates and verification evidence."], risk: "medium"
+    },
+    data_collection_executive: {
+      summary: "First-party StudentHubHelp evidence collection; external web search is disabled in API-independent mode.",
+      content: "## Research brief\n" + brief + "\n\n## Retrieved first-party evidence\n" + context + "\n\n## Sources\n" + sourceList + "\n\n## Limitations\nTavily and general web search were not called. Findings are limited to the official StudentHubHelp pages successfully fetched. Any fact not present in those pages remains unknown.",
+      checks: ["Verify each cited page and its relevance to the exact task.", "Use a separately approved research provider only if third-party discovery is essential."], risk: sourceUrls.length ? "medium" : "high"
+    },
+    customer_support_executive: {
+      summary: "Support response framework prepared from available official support context; not sent.",
+      content: "## Issue\n" + brief + "\n\n## Available policy context\n" + context + "\n\n## Reply draft\nThank you for contacting StudentHubHelp. We understand your concern and will help based on the details available. Please share the non-sensitive details needed to identify the issue. Do not share passwords, OTPs or payment credentials.\n\n## Escalation\nEscalate to the owner when policy, safety, availability or account-specific facts are not present in the supplied context.",
+      checks: ["Owner must verify policy and account-specific facts before sending.", "Never request passwords, OTPs or payment credentials."], risk: "medium"
+    },
+    technical_support_engineer: {
+      summary: "Read-only technical triage and investigation checklist; no code was changed.",
+      content: "## Reported task\n" + brief + "\n\n## Available repository context\n" + context + "\n\n## Diagnostic plan\n1. Reproduce the reported behavior in a safe test environment.\n2. Inspect the exact route, component, function and recent commits.\n3. Capture console, network and server errors with secrets redacted.\n4. Propose the smallest scoped patch and regression tests.\n\n## Current conclusion\nNo root cause is asserted unless the supplied evidence directly demonstrates it.",
+      checks: ["Attach exact file/line evidence before proposing a code change.", "Run targeted tests and review the diff before merging."], risk: "medium"
+    },
+    data_analyst_reporting_manager: {
+      summary: "Aggregate data context prepared from Supabase counts; no personal records accessed.",
+      content: "## Reporting request\n" + brief + "\n\n## Aggregate evidence\n" + context + "\n\n## Interpretation rules\nA null or unavailable count is not zero. Do not add overlapping category tables together. No student-level records or personal information were queried.",
+      checks: ["Confirm reporting period and table definitions.", "Check whether tables overlap before calculating totals."], risk: "low"
+    },
+    social_media_manager: {
+      summary: "Social content concept drafted from available first-party brand context; not published.",
+      content: "## Campaign brief\n" + brief + "\n\n## Verified brand context\n" + context + "\n\n## Draft caption\nFinding student essentials in a new city should feel simpler. Explore StudentHubHelp resources for student accommodation and local services.\n\n## CTA\nExplore StudentHubHelp.\n\n## Creative notes\nUse only approved brand assets and verified listing information. Do not imply guaranteed safety, availability, verification or outcomes.",
+      checks: ["Owner to approve copy and creative assets.", "Verify every factual claim before publication."], risk: "medium"
+    },
+    seo_marketing_manager: {
+      summary: "Rule-based SEO inspection notes from publicly fetched crawl resources.",
+      content: "## SEO task\n" + brief + "\n\n## Public crawl context\n" + context + "\n\n## Audit checklist\n- Check robots.txt and sitemap reachability.\n- Compare canonical URLs with the preferred live URL.\n- Inspect unique titles, descriptions and H1 headings.\n- Check internal links and indexability.\n\n## Limitation\nThis deterministic workflow does not calculate search volume, rankings, backlinks or AI visibility.",
+      checks: ["Verify each URL and page status.", "Use Search Console data for actual impressions and indexing metrics."], risk: "medium"
+    },
+    quality_control_manager: {
+      summary: "Rule-based quality review; PASS is reserved for checks directly supported by evidence.",
+      content: "## QC target\n" + brief + "\n\n## Evidence under review\n" + context + "\n\n## Source inventory\n" + sourceList + "\n\n## QC outcome\nINCONCLUSIVE — deterministic checks can confirm source presence and basic relevance signals, but cannot establish semantic claim-to-source support for every statement. Owner review is required before acceptance.",
+      checks: ["Check exact source URL membership.", "Check extracted text exists and matches the task entity.", "Manually verify each material claim against its source."], risk: "high"
+    }
+  };
+  const selected = drafts[roleKey] || {
+    summary: "Deterministic workflow output prepared.",
+    content: "## Task\n" + brief + "\n\n## Available context\n" + context,
+    checks: ["Owner review required."], risk: "medium" as const
+  };
+  return {
+    title: (taskTitle || stepTitle || "Employee workflow draft").slice(0, 150),
+    summary: selected.summary,
+    draft_content: selected.content.slice(0, 7800),
+    checks: [...baseChecks, ...selected.checks].slice(0, 8),
+    risk_level: selected.risk,
+    requires_owner_approval: true
+  };
+}
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (req.method === "OPTIONS") {
@@ -346,28 +414,33 @@ Deno.serve(async (req: Request) => {
         return respond({ ok: false, code: beginResult.message === "task_must_be_queued" ? "task_must_be_queued" : "dce_evidence_prepare_failed" }, 409, origin);
       }
 
-      let researchData: any = pendingRetry;
-      if (!researchData) {
-        // Task descriptions contain the actual research brief; labels such as "DCE" do not dominate relevance.
-        const queryStopWords = new Set(["about","after","also","and","are","for","from","into","near","need","official","please","provide","research","studenthubhelp","that","the","this","with"]);
-        const query = [...new Set([taskDescription, stepExpectedOutput, stepTitle, stepRationale, taskTitle]
-          .join(" ").replace(/https?:\/\/\S+/gi, " ").toLowerCase()
-          .match(/[a-z0-9][a-z0-9'-]*/g) || [])]
-          .filter(word => !queryStopWords.has(word))
-          .slice(0, 9).join(" ").slice(0, 160);
-        const researchResponse = await fetch(supabaseUrl + "/functions/v1/office-dce-research", {
-          method: "POST",
-          headers: { Authorization: "Bearer " + token, apikey: anonKey, "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "research", query, max_results: 5 }),
-          signal: AbortSignal.timeout(55000)
-        });
-        const researchResult = await researchResponse.json().catch(() => ({}));
-        if (!researchResponse.ok || researchResult.ok !== true) {
-          await releaseGenerationLock();
-          return respond({ ok: false, code: researchResult.code || "dce_research_unavailable" }, researchResponse.status || 503, origin);
-        }
-        researchData = researchResult.data || {};
-      }
+      // API-independent mode: collect only first-party StudentHubHelp pages.
+      // No Tavily search/extraction request is made from the employee workflow.
+      const firstPartyBrief = /studenthubhelp(?:\\.in)?/i.test(taskTitle + " " + taskDescription);
+      const officialUrls = firstPartyBrief ? [
+        "https://studenthubhelp.in/",
+        "https://studenthubhelp.in/student-support.html",
+        "https://studenthubhelp.in/contact-us.html",
+        "https://studenthubhelp.in/privacy-policy.html"
+      ] : [];
+      const officialPages = await Promise.all(officialUrls.map(async url => {
+        const extracted = await fetchPublicText(url, 1600);
+        if (!extracted) return null;
+        const content = extracted.slice(extracted.indexOf("\\n") + 1);
+        return {
+          title: "StudentHubHelp official page",
+          url,
+          snippet: content.slice(0, 500),
+          content: content.slice(0, 3500),
+          extraction_status: "extracted"
+        };
+      }));
+      const researchData: any = {
+        query: taskTitle,
+        sources: officialPages.filter(Boolean),
+        extraction: officialPages.some(Boolean) ? "first_party_only" : "no_first_party_match",
+        extraction_counts: { requested: officialUrls.length, extracted: officialPages.filter(Boolean).length, snippet_only: 0 }
+      };
 
       const sources = Array.isArray(researchData.sources) ? researchData.sources : [];
       const firstPartyBrief = /studenthubhelp(?:\.in)?/i.test(taskTitle + " " + taskDescription);
@@ -524,29 +597,18 @@ Keep the deliverable within your registered role and capabilities. This is a pro
       role_key: roleKey, prompt_chars: prompt.length, evidence_chars: researchContext.length
     }));
 
-    const gatewayResponse = await fetch(`${supabaseUrl}/functions/v1/office-gemini-gateway`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: anonKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ action: "generate", prompt }),
-      signal: AbortSignal.timeout(55000)
-    });
-    const gatewayResult = await gatewayResponse.json().catch(() => ({}));
-    if (!gatewayResponse.ok || gatewayResult.ok !== true) {
-      await releaseGenerationLock();
-      return respond({ ok: false, code: gatewayResult.code || "gemini_gateway_unavailable" },
-        gatewayResponse.status || 503, origin);
-    }
-
+    // Default operating mode is deterministic and API-independent.
+    // No Gemini request is made. A future opt-in AI mode must be explicitly configured and separately approved.
     let draft;
     try {
-      draft = parseDraft(String(gatewayResult.data?.text || ""), roleKey, stepIndex, allowedSourceUrls);
+      const deterministic = buildDeterministicDraft(
+        roleKey, taskTitle, taskDescription, stepTitle, stepRationale,
+        stepExpectedOutput, researchContext, allowedSourceUrls
+      );
+      draft = parseDraft(JSON.stringify(deterministic), roleKey, stepIndex, allowedSourceUrls);
     } catch {
       await releaseGenerationLock();
-      return respond({ ok: false, code: "employee_draft_validation_failed" }, 502, origin);
+      return respond({ ok: false, code: "employee_deterministic_draft_failed" }, 500, origin);
     }
 
     const saved = await rpc(supabaseUrl, serviceKey, "office_employee_save_draft", {
