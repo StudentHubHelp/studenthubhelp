@@ -83,10 +83,10 @@ async function fetchPublicText(url: string, maxChars = 900): Promise<string> {
     const type = response.headers.get("content-type") || "";
     if (!/(text\/|application\/(xml|rss\+xml))/.test(type)) return "";
     let value = (await response.text()).slice(0, 30000);
-    if (/html/i.test(type)) value = value
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<(nav|footer|header)[^>]*>[\s\S]*?<\/\1>/gi, " ")
+    if (/html/i.test(type) && !url.includes("raw.githubusercontent.com")) value = value
+      .replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
+      .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
+      .replace(/<(nav|footer|header)[^>]*>[\\s\\S]*?<\\/\\1>/gi, " ")
       .replace(/<[^>]+>/g, " ")
       .replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&")
       .replace(/&lt;/gi, "<").replace(/&gt;/gi, ">")
@@ -133,9 +133,11 @@ async function buildRoleContext(roleKey: string, supabaseUrl: string, serviceKey
   if (roleKey === "data_analyst_reporting_manager") return await fetchAggregateContext(supabaseUrl, serviceKey);
   const sources: string[] = [];
   if (roleKey === "technical_support_engineer") {
-    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/README.md", 700));
-    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/README.md", 1300));
-    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/tests/phase11-security-assertions.sql", 700));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/auth.html", 1600));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/chatbot/chatbot.js", 1200));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/README.md", 500));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/README.md", 700));
+    sources.push(await fetchPublicText("https://raw.githubusercontent.com/StudentHubHelp/studenthubhelp/feature/office-phase-3/office/tests/phase11-security-assertions.sql", 500));
   } else if (roleKey === "seo_marketing_manager") {
     sources.push(await fetchPublicText("https://studenthubhelp.in/robots.txt", 800));
     sources.push(await fetchPublicText("https://studenthubhelp.in/sitemap.xml", 1100));
@@ -156,9 +158,11 @@ async function buildRoleContext(roleKey: string, supabaseUrl: string, serviceKey
 function redactDce(value: string, allowedSourceUrls: string[]): string {
   const allowed = new Set(allowedSourceUrls);
   const tokens: Array<{ token: string; url: string }> = [];
-  const protectedValue = value.replace(/https?:\/\/[^\s<>"']+/gi, match => {
+  // Normalize Markdown links first; stop URL matching at JSON escape delimiters.
+  const normalized = value.replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^)\\s]+)\\)/gi, "$2");
+  const protectedValue = normalized.replace(/https?:\\/\\/[^\\s<>"'\\\\]+/gi, match => {
     let clean = match;
-    while (/[.,;!?)}\]>]$/.test(clean)) clean = clean.slice(0, -1);
+    while (/[.,;!?)}\\]>]$/.test(clean)) clean = clean.slice(0, -1);
     try { clean = new URL(clean).toString(); } catch { return "[UNVERIFIED_URL]"; }
     if (!allowed.has(clean)) return "[UNVERIFIED_URL]";
     const token = "DCE_SOURCE_TOKEN_" + tokens.length;
