@@ -112,12 +112,20 @@ function extractSourceSnippets(source: string, patterns: string[], maxPer = 650)
 
 async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string): Promise<string> {
   const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
-        const legacyTables = ["pg_listings", "tiffin_listings", "library_listings"];
-        return tables.every(table => evidence?.listing_counts?.some((item: any) =>
-          item.table === table && item.query_ok === true && Number.isInteger(item.count)
-        )) && legacyTables.every(table => evidence?.listing_counts?.some((item: any) =>
-          item.table === table && item.query_ok === true && Number.isInteger(item.count)
-        ));
+  const headers = { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public" };
+  const results = await Promise.all(tables.map(async table => {
+    try {
+      const url = supabaseUrl + "/rest/v1/" + table + "?select=id,name,city,area,status,verified&order=created_at.desc&limit=25";
+      const response = await fetch(url, { headers, signal: AbortSignal.timeout(7000) });
+      if (!response.ok) return { table, status: "unavailable" };
+      const data = await response.json();
+      const rows = Array.isArray(data) ? data : [];
+      const fields = ["name", "city", "area", "status"];
+      const missing: Record<string, number> = {};
+      for (const field of fields) missing[field] = rows.filter((row: any) => row[field] == null || String(row[field]).trim() === "").length;
+      return { table, sample_limit: 25, sample_size: rows.length, missing_field_counts: missing, rows };
+    } catch { return { table, status: "unavailable" }; }
+  }));
   let reports: any = null;
   try {
     const response = await fetch(supabaseUrl + "/rest/v1/property_reports?select=property_id,property_table,reason,status,created_at&order=created_at.desc&limit=200", {
@@ -137,10 +145,13 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
   }
   const duplicateCandidates = [...duplicateMap.values()].filter(group => group.length > 1).slice(0, 30);
   return "READ-ONLY LISTING REVIEW (contact details and reporter identities excluded; latest 25 rows per category only): " +
-    JSON.stringify({ category_samples: results, duplicate_candidates: duplicateCandidates,
-      duplicate_method: "Exact normalized name + city + area match within the returned samples; candidates require manual confirmation.",
+    JSON.stringify({
+      category_samples: results,
+      duplicate_candidates: duplicateCandidates,
+      duplicate_method: "Exact normalized name + city + area match within returned samples; candidates require manual confirmation.",
       property_issue_reports: Array.isArray(reports) ? reports : null,
-      limitation: "Missing-field counts and duplicate candidates apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review." }).slice(0, 6500);
+      limitation: "Missing-field counts and duplicate candidates apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review."
+    }).slice(0, 6500);
 }
 
 function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
@@ -646,9 +657,11 @@ function buildConsolidatedQaQc(researchContext: string) {
       try {
         const evidence = match ? JSON.parse(match[1]) : null;
         const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
-        return tables.every(table => evidence?.listing_counts?.some((item: any) =>
+        const legacyTables = ["pg_listings", "tiffin_listings", "library_listings"];
+        const hasExact = (table: string) => evidence?.listing_counts?.some((item: any) =>
           item.table === table && item.query_ok === true && Number.isInteger(item.count)
-        ));
+        );
+        return tables.every(hasExact) && legacyTables.every(hasExact);
       } catch { return false; }
     }},
     { key: "social_media_manager", label: "SMM", check: (content: string) =>
