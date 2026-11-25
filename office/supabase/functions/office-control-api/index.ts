@@ -65,7 +65,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => null);
     const allowedActions = new Set([
       "overview", "list_tasks", "list_employees", "create_task",
-      "set_task_status", "list_task_logs",
+      "set_task_status", "list_task_logs", "archive_task", "restore_task",
     ]);
     if (!body || typeof body.action !== "string" || !allowedActions.has(body.action)) {
       return respond({ ok: false, code: "invalid_request" }, 400, origin);
