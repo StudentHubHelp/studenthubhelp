@@ -119,7 +119,11 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
       const response = await fetch(url, { headers, signal: AbortSignal.timeout(7000) });
       if (!response.ok) return { table, status: "unavailable" };
       const data = await response.json();
-      return { table, sample_limit: 25, rows: Array.isArray(data) ? data : [] };
+      const rows = Array.isArray(data) ? data : [];
+      const fields = ["name","city","area","status"];
+      const missing: Record<string,number> = {};
+      for (const field of fields) missing[field] = rows.filter((row:any) => row[field] == null || String(row[field]).trim() === "").length;
+      return { table, sample_limit: 25, sample_size: rows.length, missing_field_counts: missing, rows };
     } catch { return { table, status: "unavailable" }; }
   }));
   let reports: any = null;
@@ -131,7 +135,7 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
   } catch { reports = null; }
   return "READ-ONLY LISTING REVIEW (contact details and reporter identities excluded; latest 25 rows per category only): " +
     JSON.stringify({ category_samples: results, property_issue_reports: Array.isArray(reports) ? reports : null,
-      limitation: "A missing report does not prove no issue exists. Samples are not a full-database audit; recommendations require owner review." }).slice(0, 5200);
+      limitation: "Missing-field counts apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review." }).slice(0, 5200);
 }
 
 async function fetchAggregateContext(supabaseUrl: string, serviceKey: string): Promise<string> {
@@ -175,7 +179,7 @@ async function fetchAggregateContext(supabaseUrl: string, serviceKey: string): P
     property_detail_views: { available: Array.isArray(views), sampled_rows: viewRows.length, top_properties_by_detail_views: viewCounts, note: "Detail views are not search queries." },
     property_issue_reports: { available: Array.isArray(reports), sampled_rows: reportRows.length, by_property_reason_status: reportCounts },
     support_message_intents: { available: Array.isArray(chats), sampled_rows: chatRows.length, by_intent: group(chatRows, r => String(r.intent||r.category||r.role||"unclassified")) },
-    security_event_types: { available: Array.isArray(security), sampled_rows: securityRows.length, by_action: group(securityRows, r => String(r.action||"unknown")+" | "+String(r.entity_type||"unknown")) },
+    admin_audit_actions: { available: Array.isArray(security), sampled_rows: securityRows.length, by_action: group(securityRows, r => String(r.action||"unknown")+" | "+String(r.entity_type||"unknown")), note: "These are recorded admin audit actions, not a complete authentication/login-failure log." },
     search_query_telemetry: { available: false, note: "No search-event table or query-event records are currently available. Do not report a most-searched property; request search tracking instrumentation." }
   }).slice(0, 6500);
 }
