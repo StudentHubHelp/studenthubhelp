@@ -417,34 +417,37 @@ Deno.serve(async (req: Request) => {
 
     let qcEvidence: any = null;
     if (roleKey === "quality_control_manager") {
-      const evidenceResult = await rpc(supabaseUrl, serviceKey, "office_employee_research_evidence", {
-        p_user_id: user.id, p_task_id: taskId, p_action: "get"
-      });
-      const evidence = evidenceResult.ok ? evidenceResult.data?.research_evidence : null;
-      const drafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
-      const dceDraft = drafts.find((item: any) => item?.role_key === "data_collection_executive");
-      const evidenceAt = Date.parse(String(evidence?.saved_at || ""));
-      const draftAt = Date.parse(String(dceDraft?.created_at || ""));
-      const verifiedSources = Array.isArray(evidence?.sources) ? evidence.sources.filter((source: any) => {
-        try {
-          const parsed = new URL(String(source?.url || ""));
-          return parsed.protocol === "https:" && !parsed.username && !parsed.password;
-        } catch { return false; }
-      }) : [];
-      if (!evidenceResult.ok || evidence?.status !== "completed" ||
-          !Number.isFinite(evidenceAt) || !Number.isFinite(draftAt) || draftAt < evidenceAt ||
-          verifiedSources.length === 0) {
-        await releaseGenerationLock();
-        console.warn("QC generation blocked until fresh DCE evidence and draft are saved", JSON.stringify({
-          task_id: taskId, evidence_status: evidence?.status || "missing",
-          has_fresh_dce_draft: Number.isFinite(draftAt) && Number.isFinite(evidenceAt) && draftAt >= evidenceAt,
-          source_count: verifiedSources.length
-        }));
-        return respond({ ok: false, code: "qc_waiting_for_fresh_dce" }, 409, origin);
+      const taskIntent = String(task.title || "") + " " + String(task.description || "");
+      const requiresDceEvidence = /research|public web|citation|official website|source collection|student support services/i.test(taskIntent);
+      if (requiresDceEvidence) {
+        const evidenceResult = await rpc(supabaseUrl, serviceKey, "office_employee_research_evidence", {
+          p_user_id: user.id, p_task_id: taskId, p_action: "get"
+        });
+        const evidence = evidenceResult.ok ? evidenceResult.data?.research_evidence : null;
+        const drafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
+        const dceDraft = drafts.find((item: any) => item?.role_key === "data_collection_executive");
+        const evidenceAt = Date.parse(String(evidence?.saved_at || ""));
+        const draftAt = Date.parse(String(dceDraft?.created_at || ""));
+        const verifiedSources = Array.isArray(evidence?.sources) ? evidence.sources.filter((source: any) => {
+          try {
+            const parsed = new URL(String(source?.url || ""));
+            return parsed.protocol === "https:" && !parsed.username && !parsed.password;
+          } catch { return false; }
+        }) : [];
+        if (!evidenceResult.ok || evidence?.status !== "completed" ||
+            !Number.isFinite(evidenceAt) || !Number.isFinite(draftAt) || draftAt < evidenceAt ||
+            verifiedSources.length === 0) {
+          await releaseGenerationLock();
+          console.warn("QC generation blocked until fresh DCE evidence and draft are saved", JSON.stringify({
+            task_id: taskId, evidence_status: evidence?.status || "missing",
+            has_fresh_dce_draft: Number.isFinite(draftAt) && Number.isFinite(evidenceAt) && draftAt >= evidenceAt,
+            source_count: verifiedSources.length
+          }));
+          return respond({ ok: false, code: "qc_waiting_for_fresh_dce" }, 409, origin);
+        }
+        qcEvidence = { dceDraft, evidence, verifiedSources };
       }
-      qcEvidence = { dceDraft, evidence, verifiedSources };
     }
-
     const taskTitle = redact(String(task.title || "").slice(0, 160));
     const taskDescription = redact(String(task.description || "").slice(0, 1300));
     const stepTitle = redact(String(step.title || "").slice(0, 160));
@@ -555,6 +558,18 @@ Deno.serve(async (req: Request) => {
             extraction_status: String(source.extraction_status || "unknown")
           }))
         }
+      }).slice(0, 3200);
+    } else if (roleKey === "quality_control_manager") {
+      const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
+      researchContext = JSON.stringify({
+        employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => ({
+          role_key: String(item.role_key || ""),
+          title: String(item.title || "").slice(0, 160),
+          summary: String(item.summary || "").slice(0, 500),
+          draft_content: String(item.draft_content || "").slice(0, 900),
+          checks: Array.isArray(item.checks) ? item.checks.slice(0, 5) : []
+        })),
+        review_note: "No DCE web research dependency applies to this task. Review the available role drafts against the task's acceptance criteria. Do not infer missing evidence."
       }).slice(0, 3200);
     } else {
       researchContext = await buildRoleContext(roleKey, supabaseUrl, serviceKey);

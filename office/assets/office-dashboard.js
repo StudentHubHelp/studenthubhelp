@@ -13,6 +13,7 @@
   });
   const $ = id => document.getElementById(id);
   const employeeDraftRequests = new Set();
+  const planExecutionRequests = new Set();
   const status = (message, ok = false) => {
     $("dashboard-status").textContent = message;
     $("dashboard-status").className = "status" + (ok ? " success" : "");
@@ -51,6 +52,9 @@
     if (!response.ok || result.ok !== true) {
       const messages = {
         owner_access_denied: "This account is not authorized for Office access.",
+        gm_plan_unavailable: "The General Manager plan could not be loaded.",
+        gm_plan_not_safe_to_run: "This plan contains an external action or failed the draft-only safety checks.",
+        employee_step_failed: "An employee workflow stopped before all drafts were generated.",
         invalid_input: "Please check the task details and try again.",
         task_transition_not_allowed: "This task can no longer be changed from its current status.",
         authentication_required: "Please sign in again.",
@@ -140,6 +144,11 @@
         location.replace("./login.html");
       }
       const providerCode = String(result.code || "");
+      if (providerCode === "employee_step_failed") {
+        const completed = Array.isArray(result.data?.completed_steps) ? result.data.completed_steps.length : 0;
+        const failed = result.data?.failed_step?.role_key ? titleCase(result.data.failed_step.role_key) : "an employee";
+        throw new Error("Workflow stopped at " + failed + ". " + completed + " employee draft(s) were saved; refresh to review them and retry the remaining step.");
+      }
       const providerFailure = /^gemini_provider_http_\\d+_/.test(providerCode) || providerCode === "gemini_provider_unavailable";
       const providerRateLimited = /_429_/.test(providerCode);
       throw new Error(providerFailure
@@ -543,6 +552,13 @@
       const gmPlan = planMap.get(task.id);
       if (task.status === "queued" && !gmPlan) {
         addAction(actions, "Plan with GM", "small-action gm-action", button => createGmPlan(task, button));
+      } else if (task.status === "queued" && gmPlan) {
+        const runButton = addAction(actions, "Generate all employee drafts", "small-action gm-action",
+          button => runEmployeePlan(task, button));
+        if (planExecutionRequests.has(task.id)) {
+          runButton.disabled = true;
+          runButton.textContent = "Running employee drafts…";
+        }
       }
       if (task.status === "queued" || task.status === "draft") {
         addAction(actions, "Pause", "small-action", () => changeTaskStatus(task.id, "paused"));
@@ -572,6 +588,7 @@
             try { return new URL(String(source.url || "")).protocol === "https:"; } catch { return false; }
           });
         const dceRequestKey = task.id + ":data_collection_executive:0";
+        const requiresDceResearch = /research|public web|citation|official website|source collection|student support services/i.test(String(task.title || "") + " " + String(task.description || ""));
         (gmPlan.steps || []).forEach((step, stepIndex) => {
           const li = node("li", "gm-step-item");
           li.append(node("span", "gm-step-title", step.title + " · " + titleCase(step.role_key)));
@@ -596,7 +613,7 @@
               employeeButton.disabled = true;
               employeeButton.textContent = "Generating…";
             }
-            if (step.role_key === "quality_control_manager" &&
+            if (step.role_key === "quality_control_manager" && requiresDceResearch &&
                 (!dceDraftIsFresh || employeeDraftRequests.has(dceRequestKey))) {
               employeeButton.disabled = true;
               employeeButton.textContent = "Waiting for fresh DCE research";
@@ -625,6 +642,34 @@
       button.disabled = false;
       button.textContent = "Plan with GM";
     }
+  }
+
+
+  async function runEmployeePlan(task, button) {
+    if (planExecutionRequests.has(task.id)) return;
+    planExecutionRequests.add(task.id);
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = "Running employee drafts…";
+    status("General Manager is running the planned employees one by one. Drafts only; no external actions will run.");
+    let finalMessage = "";
+    let succeeded = false;
+    try {
+      const result = await gmApi("execute_plan", { task_id: task.id });
+      const count = Array.isArray(result.completed_steps) ? result.completed_steps.length : 0;
+      finalMessage = count + " employee draft(s) generated successfully. Owner review is still required; no external actions were executed.";
+      succeeded = true;
+    } catch (error) {
+      finalMessage = error.message || "Employee workflow failed.";
+    } finally {
+      planExecutionRequests.delete(task.id);
+      if (button) {
+        button.disabled = false;
+        button.textContent = originalLabel;
+      }
+    }
+    await loadWorkspace();
+    status(finalMessage, succeeded);
   }
 
   async function createEmployeeDraft(task, roleKey, stepIndex, button, requestKey) {
@@ -737,7 +782,7 @@
         priority: String(values.get("priority") || "normal")
       });
       form.reset();
-      status("Task added to the queue. GM planning and employee drafts are available; external execution remains disabled.", true);
+      status("Task added. Use Plan with GM, then Generate all employee drafts to run the read-only workflow.", true);
       await loadWorkspace();
     } catch (error) { status(error.message); }
     finally { button.disabled = false; }

@@ -134,3 +134,12 @@ See `office/PHASES.md` for the consolidated 12-phase status, hard safety gates a
 - The General Manager now creates deterministic proposal-only plans from task keywords; it does not call Gemini. Ambiguous tasks route to QC for clarification rather than inventing work.
 
 - In API-independent mode, the standalone DCE/Tavily Edge Function is hard-blocked before any provider usage/search/extract request; the integration overview skips usage validation for disabled providers. The Gemini gateway global kill switch is OFF.
+
+
+## Owner-triggered employee workflow runner
+
+The General Manager supports deterministic, API-independent role routing. After the Owner creates a queued task and saves a proposal-only GM plan, the Owner can use **Generate all employee drafts** to run each planned employee sequentially through the existing Employee Agent. The runner stops on the first failed step and reports which drafts were saved. It does not change the task's business status, modify public listings, send email, publish content, create deployments, or execute production changes. All outputs remain drafts requiring Owner review.
+
+QC only waits for fresh DCE research evidence when the task actually requires public research/citations. For listing, analytics, login, and technical tasks, QC reviews the preceding employee drafts directly.
+
+The dashboard explicitly identifies search-query telemetry as unavailable until a future search-event instrumentation change. Property detail views must never be described as searches.
