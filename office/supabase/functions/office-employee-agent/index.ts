@@ -112,20 +112,12 @@ function extractSourceSnippets(source: string, patterns: string[], maxPer = 650)
 
 async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string): Promise<string> {
   const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
-  const headers = { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public" };
-  const results = await Promise.all(tables.map(async table => {
-    try {
-      const url = supabaseUrl + "/rest/v1/" + table + "?select=id,name,city,area,status,verified&order=created_at.desc&limit=25";
-      const response = await fetch(url, { headers, signal: AbortSignal.timeout(7000) });
-      if (!response.ok) return { table, status: "unavailable" };
-      const data = await response.json();
-      const rows = Array.isArray(data) ? data : [];
-      const fields = ["name","city","area","status"];
-      const missing: Record<string,number> = {};
-      for (const field of fields) missing[field] = rows.filter((row:any) => row[field] == null || String(row[field]).trim() === "").length;
-      return { table, sample_limit: 25, sample_size: rows.length, missing_field_counts: missing, rows };
-    } catch { return { table, status: "unavailable" }; }
-  }));
+        const legacyTables = ["pg_listings", "tiffin_listings", "library_listings"];
+        return tables.every(table => evidence?.listing_counts?.some((item: any) =>
+          item.table === table && item.query_ok === true && Number.isInteger(item.count)
+        )) && legacyTables.every(table => evidence?.listing_counts?.some((item: any) =>
+          item.table === table && item.query_ok === true && Number.isInteger(item.count)
+        ));
   let reports: any = null;
   try {
     const response = await fetch(supabaseUrl + "/rest/v1/property_reports?select=property_id,property_table,reason,status,created_at&order=created_at.desc&limit=200", {
@@ -552,6 +544,9 @@ function buildOwnerCountReport(context: string) {
       "| cafes | " + fmtCount(byTable("cafes")) + " | Canonical cafe table |",
       "| bookstores | " + fmtCount(byTable("bookstores")) + " | Canonical bookstore table |",
       "| PG category | Unavailable | Not separately derived from the combined hostels table in this aggregate query |",
+      "| Legacy pg_listings | " + fmtCount(byTable("pg_listings")) + " | Legacy table; excluded from canonical total |",
+      "| Legacy tiffin_listings | " + fmtCount(byTable("tiffin_listings")) + " | Legacy table; excluded from canonical total |",
+      "| Legacy library_listings | " + fmtCount(byTable("library_listings")) + " | Legacy table; excluded from canonical total |",
       "",
       "**Canonical table-row total:** " + (totalRows === null ? "Unavailable (one or more exact queries failed)" : String(totalRows)),
       "**Unique property total:** Unavailable; cross-table duplicate reconciliation was not run.",
@@ -634,12 +629,12 @@ function buildConsolidatedQaQc(researchContext: string) {
     payload = match ? JSON.parse(match[1]) : null;
   } catch { payload = null; }
   const priorDrafts = Array.isArray(payload?.employee_drafts) ? payload.employee_drafts : [];
-  const byRole = new Map(priorDrafts.map((item: any) => [String(item?.role_key || ""), item]));
+  const byRole = new Map<string, any>(priorDrafts.map((item: any) => [String(item?.role_key || ""), item] as [string, any]));
   const roleSpecs: Array<{key:string;label:string;check:(content:string)=>boolean}> = [
     { key: "data_listing_manager", label: "DLM", check: (content: string) =>
       content.includes("## Read-only listing evidence") && content.includes("duplicate_candidates") &&
       content.includes("missing_field_counts") && content.includes("sample_limit") },
-    { key: "data_collection_executive", label: "DCE", check: (content: string) =>
+    { key: "data_collection_executive", label: "DCE", check: (content: string) => content.includes("## Sources") && /https:\/\/studenthubhelp\.in\//i.test(content) },
       content.includes("## Sources") && /https:\\/\\/studenthubhelp\\.in\\//i.test(content) },
     { key: "customer_support_executive", label: "CSE", check: (content: string) =>
       content.includes("## Reply draft") && content.includes("## Escalation") &&
