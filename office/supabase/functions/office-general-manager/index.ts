@@ -99,19 +99,21 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const loginIssue = /login|log in|sign.?in|password|otp|authentication|auth issue|account access|लॉग.?इन|पासवर्ड|ओटीपी/.test(textValue);
   const customerIssue = /customer|student|user|visitor|complaint|ticket|support|issue|problem|pareshani|dikkat|समस्या|शिकायत|ग्राहक|छात्र/.test(textValue);
   const propertyIssue = /property|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल/.test(textValue);
-  const popularityQuestion = /most searched|most search|highest search|popular property|top searched|search.*property|property.*search|sabse jyada search|sabse adhik search|zyada search|popular listing|सबसे ज्यादा खोज|सबसे अधिक खोज/.test(textValue);
-  const analyticsQuestion = /report|analytics|aggregate|count|metric|trend|dashboard|how many|kitne|कितने|कितनी|कौन.*ज्यादा|sabse jyada|सबसे ज्यादा/.test(textValue);
+  const popularityQuestion = /most searched|most search|highest search|popular property|top searched|search.*property|property.*search|(?:sabse|sbse|sabase)\s+(?:jyada|jyaada|adhik)\s+(?:search|seach|searched|dekhi)|search(?:ed)?\s+(?:ki|hui|gayi|gyi|h|hai)|popular listing|सबसे ज्यादा खोज|सबसे अधिक खोज/.test(textValue);
+  const analyticsQuestion = /report|analytics|aggregate|count|metric|trend|dashboard|how many|kitne|कितने|कितनी|कौन.*ज्यादा|(?:sabse|sbse)\s+(?:jyada|adhik)|सबसे ज्यादा/.test(textValue);
   const fixRequest = /fix|resolve|repair|correct|thik|sahi karo|sudhar|ठीक करो|सुधार/.test(textValue);
   if (loginIssue) { add("technical_support_engineer"); if (customerIssue) add("customer_support_executive"); }
   if (popularityQuestion || analyticsQuestion) add("data_analyst_reporting_manager");
-  if (propertyIssue) add("data_listing_manager");
+  if (propertyIssue && !popularityQuestion) add("data_listing_manager");
+  if (propertyIssue && /issue|problem|galat|missing|update|outdated|duplicate|kharab|दिक्कत|गलत|अपडेट|समस्या/.test(textValue)) add("data_listing_manager");
   if (customerIssue && !loginIssue) add("customer_support_executive");
   if (/bug|error|code|technical|deploy|build|function|api|crash|website|page|mobile|map|direction|not working|nahi chal|failed|failure|त्रुटि|एरर/.test(textValue)) add("technical_support_engineer");
-  if (/research|source|public web|studenthubhelp|student support|official website|citation/.test(textValue)) add("data_collection_executive");
+  if (/research|source|public web|student support|official website|citation|website research/.test(textValue)) add("data_collection_executive");
   if (/seo|robots|sitemap|canonical|metadata|indexing|ranking|search visibility/.test(textValue)) add("seo_marketing_manager");
   if (/social|instagram|caption|post|content calendar|campaign/.test(textValue)) add("social_media_manager");
   if (/test|quality|verify|verification|acceptance criteria|regression/.test(textValue)) add("quality_control_manager");
   if (fixRequest && (loginIssue || propertyIssue || customerIssue)) add("quality_control_manager");
+  if ((loginIssue || (propertyIssue && /issue|problem|missing|update|outdated|duplicate|kharab|दिक्कत|गलत|अपडेट|समस्या/.test(textValue))) && !selected.includes("quality_control_manager")) add("quality_control_manager");
   if (selected.length === 0) add("quality_control_manager");
   if (selected.length > 1 && !selected.includes("quality_control_manager")) add("quality_control_manager");
   const labels: Record<string, {title:string;rationale:string;expected:string}> = {
