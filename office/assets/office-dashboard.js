@@ -630,6 +630,22 @@
           steps.append(li);
         });
         planBox.append(steps);
+        const completedDrafts = (gmPlan.steps || []).map((step, stepIndex) =>
+          taskDrafts.find(item => item.role_key === step.role_key && item.step_index === stepIndex)
+        );
+        if (completedDrafts.length > 0 && completedDrafts.every(Boolean)) {
+          const finalReport = node("div", "gm-final-report");
+          finalReport.append(node("strong", "gm-final-report-title", "General Manager · Final task report"));
+          finalReport.append(node("p", "", completedDrafts.length + "/" + (gmPlan.steps || []).length +
+            " employee drafts completed. All findings below are draft-only and require Owner review."));
+          completedDrafts.forEach((draft, index) => {
+            const role = (gmPlan.steps || [])[index]?.role_key || "employee";
+            finalReport.append(node("p", "", titleCase(role) + ": " + (draft.summary || draft.title || "Draft saved.")));
+          });
+          const qcDraft = completedDrafts.find((draft, index) => (gmPlan.steps || [])[index]?.role_key === "quality_control_manager");
+          if (qcDraft) finalReport.append(node("small", "gm-approval-note", "QC review: " + (qcDraft.summary || "See the QC draft above.") + " Owner approval is still required."));
+          planBox.append(finalReport);
+        }
         planBox.append(node("small", "gm-approval-note", "Proposal only · Owner approval required · No actions executed"));
         card.append(planBox);
       }
@@ -782,17 +798,31 @@
     const button = $("create-task-btn");
     const values = new FormData(form);
     button.disabled = true;
+    let createdTask = null;
     try {
-      await api("create_task", {
+      const created = await api("create_task", {
         title: String(values.get("title") || "").trim(),
         description: String(values.get("description") || "").trim(),
         priority: String(values.get("priority") || "normal")
       });
+      createdTask = created.task || null;
       form.reset();
-      status("Task added. Use Plan with GM, then Generate all employee drafts to run the read-only workflow.", true);
+      if (!createdTask?.id) throw new Error("Task was created, but its ID could not be confirmed. Refresh the queue before retrying.");
+      status("Task created. General Manager is preparing the plan automatically…");
+      await gmApi("plan_task", { task_id: createdTask.id });
+      status("GM plan saved. Employees are now preparing their drafts sequentially…");
+      const run = await gmApi("execute_plan", { task_id: createdTask.id });
+      const completed = Array.isArray(run.completed_steps) ? run.completed_steps.length : 0;
       await loadWorkspace();
-    } catch (error) { status(error.message); }
-    finally { button.disabled = false; }
+      status("GM completed " + completed + " employee draft(s). The final task report is now available in this task card. Owner review is required; no external actions were executed.", true);
+    } catch (error) {
+      if (createdTask?.id) {
+        await loadWorkspace();
+        status("Task " + (createdTask.task_key || "") + " was created, but the automatic GM workflow stopped: " + (error.message || "Unknown error") + ". Refresh the task card to review saved drafts and retry the remaining work.");
+      } else {
+        status(error.message || "Unable to create the task.");
+      }
+    } finally { button.disabled = false; }
   });
 
   $("refresh-btn").addEventListener("click", loadWorkspace);
