@@ -570,7 +570,7 @@ function buildOwnerCountReport(context: string) {
       summary: allExact
         ? "Exact all-city table counts are available; no city-specific or unique-property total is claimed."
         : "Some exact aggregate table counts are unavailable; unknown values are not zero.",
-    content: lines.join("\n"),
+  return { summary, content: lines.join("\n") };
     };
   }
   const city = String(evidence.city_filter?.value || "requested city");
@@ -682,7 +682,7 @@ function buildConsolidatedQaQc(researchContext: string) {
     }
     const content = String(draft.draft_content || "");
     if (!spec.check(content)) {
-      const evidenceUnavailable = /No verified context|No independently verified source URLs|No external context|No matching source-code sections|Unavailable|INCONCLUSIVE|"sample_size":\\s*0/.test(content);
+      const evidenceUnavailable = /No verified context|No independently verified source URLs|No external context|No matching source-code sections|Unavailable|INCONCLUSIVE/.test(content) || content.includes('"sample_size":0');
       return { ...spec, verdict: evidenceUnavailable ? "INCONCLUSIVE" : "FAIL",
         reason: "Role-specific deliverable or required evidence marker is incomplete." };
     }
@@ -1053,7 +1053,7 @@ Deno.serve(async (req: Request) => {
       }).slice(0, 3200);
     } else if (roleKey === "quality_control_manager" && isConsolidatedTeamQaTask(taskTitle, taskDescription)) {
       const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
-    const match = researchContext.match(/CONSOLIDATED_QA_DRAFTS_JSON:(\{[\s\S]*\})$/);
+      researchContext = "CONSOLIDATED_QA_DRAFTS_JSON:" + JSON.stringify({
         employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => ({
           role_key: String(item.role_key || ""),
           title: String(item.title || "").slice(0, 160),
