@@ -657,7 +657,7 @@ function buildConsolidatedQaQc(researchContext: string) {
     { key: "data_collection_executive", label: "DCE", check: (content: string) => content.includes("## Sources") && /https:\/\/studenthubhelp\.in\//i.test(content) },
     { key: "customer_support_executive", label: "CSE", check: (content: string) =>
       content.includes("## Reply draft") && content.includes("## Escalation") &&
-      /do not share passwords, OTPs or payment credentials/i.test(content) },
+      /do not share passwords, OTPs or payment credentials/i.test(content) && content.includes("https://studenthubhelp.in/") },
     { key: "technical_support_engineer", label: "TSE", check: (content: string) =>
       content.includes("## Inspected public code and evidence") &&
       content.includes("No genuine issue is confirmed") && content.includes("raw.githubusercontent.com") },
@@ -1066,7 +1066,7 @@ Deno.serve(async (req: Request) => {
         employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => {
           const role = String(item.role_key || "");
           const raw = String(item.draft_content || "");
-          const marker = role === "data_listing_manager" ? "READ-ONLY LISTING REVIEW"
+          const marker = role === "data_listing_manager" ? "## Read-only listing evidence"
             : role === "data_collection_executive" ? "## Sources"
             : role === "customer_support_executive" ? "## Available policy context"
             : role === "technical_support_engineer" ? "## Inspected public code and evidence"
