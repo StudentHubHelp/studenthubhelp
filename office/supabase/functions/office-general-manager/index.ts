@@ -94,7 +94,7 @@ function parsePlan(raw: string, allowedRoles: Set<string>) {
 
 function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
   const value = (taskTitle + " " + taskDescription).toLowerCase();
-  return /consolidated/.test(value) && /all\\s+(?:8|eight)\\s+employees/.test(value) &&
+  return /consolidated/.test(value) && /all\s+(?:8|eight)\\s+employees/.test(value) &&
     /qc manager|quality control manager/.test(value) && /seo manager/.test(value);
 }
 const consolidatedQaRoles = [
@@ -116,7 +116,7 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const fixRequest = /fix|resolve|repair|correct|thik|sahi karo|sudhar|ठीक करो|सुधार/.test(textValue);
   const consolidatedQaTask = isConsolidatedTeamQaTask(taskTitle, taskDescription);
   const countTask = !consolidatedQaTask && /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(textValue) &&
-    /(property|properties|listing|hostel|\\bpg\\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल)/i.test(textValue);
+    /(property|properties|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल)/i.test(textValue);
   if (consolidatedQaTask) {
     for (const roleKey of consolidatedQaRoles) add(roleKey);
   } else if (countTask) {
@@ -284,7 +284,7 @@ Deno.serve(async (req: Request) => {
         consolidatedQaRoles.every(roleKey => savedRoleKeys.includes(roleKey))
       );
       const qcPassed = Boolean(qcDraft && (consolidatedQaTask
-        ? /(?:^|\\n)## Overall QC verdict: PASS(?:\\s|$)/i.test(String(qcDraft.draft_content || ""))
+        ? /(?:^|\n)## Overall QC verdict: PASS(?:\s|$)/i.test(String(qcDraft.draft_content || ""))
         : /QC verdict: *PASS/i.test(String(qcDraft.draft_content || ""))));
       const taskCompleted = consolidatedQaTask
         ? completedRolesValid && savedDraftsValid && qcPassed
