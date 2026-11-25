@@ -97,7 +97,7 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const selected: string[] = [];
   const add = (roleKey: string) => { if (available.has(roleKey) && !selected.includes(roleKey)) selected.push(roleKey); };
   const loginIssue = /login|log in|sign.?in|password|otp|authentication|auth issue|account access|लॉग.?इन|पासवर्ड|ओटीपी/.test(textValue);
-  const customerIssue = /customer|student|user|visitor|complaint|ticket|support|issue|problem|pareshani|dikkat|समस्या|शिकायत|ग्राहक|छात्र/.test(textValue);
+  const customerIssue = /customer|student|user|visitor|complaint|ticket|support|grahak|chhatra|ग्राहक|छात्र|शिकायत/.test(textValue);
   const propertyIssue = /property|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल/.test(textValue);
   const popularityQuestion = /most searched|most search|highest search|popular property|top searched|search.*property|property.*search|(?:sabse|sbse|sabase)\s+(?:jyada|jyaada|adhik)\s+(?:search|seach|searched|dekhi)|search(?:ed)?\s+(?:ki|hui|gayi|gyi|h|hai)|popular listing|सबसे ज्यादा खोज|सबसे अधिक खोज/.test(textValue);
   const analyticsQuestion = /report|analytics|aggregate|count|metric|trend|dashboard|how many|kitne|कितने|कितनी|कौन.*ज्यादा|(?:sabse|sbse)\s+(?:jyada|adhik)|सबसे ज्यादा/.test(textValue);
@@ -113,7 +113,8 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   if (/social|instagram|caption|post|content calendar|campaign/.test(textValue)) add("social_media_manager");
   if (/test|quality|verify|verification|acceptance criteria|regression/.test(textValue)) add("quality_control_manager");
   if (fixRequest && (loginIssue || propertyIssue || customerIssue)) add("quality_control_manager");
-  if ((loginIssue || (propertyIssue && /issue|problem|missing|update|outdated|duplicate|kharab|दिक्कत|गलत|अपडेट|समस्या/.test(textValue))) && !selected.includes("quality_control_manager")) add("quality_control_manager");
+  if (popularityQuestion || analyticsQuestion) add("quality_control_manager");
+  if ((loginIssue || customerIssue || (propertyIssue && /issue|problem|missing|update|outdated|duplicate|kharab|दिक्कत|गलत|अपडेट|समस्या/.test(textValue))) && !selected.includes("quality_control_manager")) add("quality_control_manager");
   if (selected.length === 0) add("quality_control_manager");
   if (selected.length > 1 && !selected.includes("quality_control_manager")) add("quality_control_manager");
   const labels: Record<string, {title:string;rationale:string;expected:string}> = {
