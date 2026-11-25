@@ -268,9 +268,7 @@ Deno.serve(async (req: Request) => {
       const taskDrafts = Array.isArray(taskDraftRow?.drafts) ? taskDraftRow.drafts : [];
       const qcDraft = taskDrafts.find((item: any) => item.role_key === "quality_control_manager");
       const taskForCompletion = preparedForRun.data?.task;
-      const consolidatedQaTask = isConsolidatedTeamQaTask(
-        String(taskForCompletion?.title || ""), String(taskForCompletion?.description || "")
-      );
+      // Reuse the consolidatedQaTask flag validated earlier in this execute_plan scope.
       const completedRoleKeys = completed.map(item => item.role_key);
       const savedRoleKeys = taskDrafts.map((item: any) => String(item?.role_key || ""));
       const completedRolesValid = !consolidatedQaTask || (
