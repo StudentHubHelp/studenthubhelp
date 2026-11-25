@@ -145,7 +145,7 @@ function extractRequestedCity(value: string): string {
   const text = value.replace(/\s+/g, " ").trim();
   const patterns = [
     /([a-z][a-z -]{1,40}?)\s+(?:(?:me|mein)\b|में(?=\s))/i,
-    /(?:city\s*[:=]|in|for)\s+([a-z][a-z -]{1,40}?)(?=\s+(?:count|total|properties|property|listings?|hai|hain|is|are)\b|[,;.]|$)/i
+    /(?:city\s*[:=]|in|for)\s+([a-z][a-z -]{1,40}?)(?=\s+(?:count|total|properties|property|listings?|hai|hain|is|are)\b|[?,;.]|$)/i
   ];
   for (const pattern of patterns) {
     const match = text.match(pattern);
@@ -169,12 +169,11 @@ async function fetchCityCountEvidence(supabaseUrl: string, serviceKey: string, t
   const city = extractRequestedCity(taskTitle + " " + taskDescription);
   if (!city) return "COUNT_EVIDENCE_JSON:" + JSON.stringify({ query_status: "failed", exact_count_query: false, city_filter: null, error: "City could not be extracted; no unfiltered count was run." });
   const primary = [
-    { table: "hostels", category: "Hostels" }, { table: "tiffins", category: "Tiffin / Mess" },
+    { table: "hostels", category: "Hostels" }, { table: "pg_listings", category: "PG" }, { table: "tiffins", category: "Tiffin / Mess" },
     { table: "libraries", category: "Libraries" }, { table: "cafes", category: "Cafes" },
     { table: "bookstores", category: "Bookstores" }
   ];
   const legacy = [
-    { table: "pg_listings", category: "PG (legacy table)" },
     { table: "tiffin_listings", category: "Tiffin (legacy table)" },
     { table: "library_listings", category: "Library (legacy table)" }
   ];
@@ -380,7 +379,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
         evidence = evidenceMatch ? JSON.parse(evidenceMatch[1]) : null;
       } catch { evidence = null; }
       const categories = Array.isArray(evidence?.primary_category_counts) ? evidence.primary_category_counts : [];
-      const required = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
+      const required = ["hostels", "pg_listings", "tiffins", "libraries", "cafes", "bookstores"];
       const categoryCountsComplete = required.every(table => categories.some((item: any) =>
         item.table === table && Number.isInteger(item.exact_total) &&
         ["active", "pending", "suspended", "rejected"].every(state => Number.isInteger(item.status_counts?.[state]))
