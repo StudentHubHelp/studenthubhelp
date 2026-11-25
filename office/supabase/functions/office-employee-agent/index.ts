@@ -570,7 +570,7 @@ function buildOwnerCountReport(context: string) {
       summary: allExact
         ? "Exact all-city table counts are available; no city-specific or unique-property total is claimed."
         : "Some exact aggregate table counts are unavailable; unknown values are not zero.",
-  return { summary, content: lines.join("\n") };
+      content: lines.join("\n")
     };
   }
   const city = String(evidence.city_filter?.value || "requested city");
@@ -630,7 +630,7 @@ function buildOwnerCountReport(context: string) {
   }
   lines.push("", "**City filter:** city ILIKE exact match (no wildcard), value " + city + ".",
     "**Generated:** " + String(evidence.generated_at || "timestamp unavailable") + ".");
-    content: lines.join("\n"),
+  return { summary, content: lines.join("\n") };
 }
 
 function buildConsolidatedQaQc(researchContext: string) {
