@@ -803,28 +803,43 @@
     await loadWorkspace();
   }
 
+  function renderReportUnavailable() {
+    ["report-requests", "report-input-tokens", "report-output-tokens", "report-estimated-cost"].forEach(id => {
+      $(id).textContent = "—";
+    });
+    ["daily-usage-chart", "employee-status-report", "task-status-report", "provider-usage-report", "recent-activity-report"].forEach(id => {
+      const target = $(id);
+      target.replaceChildren(node("div", "report-empty", "Reports are temporarily unavailable. The task queue is not affected."));
+    });
+  }
+
   async function loadWorkspace() {
     $("refresh-btn").disabled = true;
     try {
-      const [overview, taskResult, planResult, employeeResult, integrationResult, approvalResult, quotaResult, reportResult] = await Promise.all([
+      const [overview, taskResult, planResult, employeeResult, integrationResult, approvalResult, quotaResult] = await Promise.all([
         api("overview"),
         api("list_tasks"),
         gmApi("list_plans"),
         employeeApi("list_drafts"),
         integrationApi("overview"),
         approvalApi("list", { status: $("approval-filter").value }),
-        quotaApi(),
-        reportApi()
+        quotaApi()
       ]);
       renderMetrics(overview.task_counts);
       renderTasks(taskResult.tasks || [], planResult.plans || [], employeeResult.items || []);
       renderIntegrations(integrationResult);
       renderApprovals(approvalResult);
       renderQuota(quotaResult);
-      renderReport(reportResult);
       renderTeam(overview.employees || []);
       status("Secure owner session verified. Task queue is connected.", true);
       void autoRunSavedPlans(taskResult.tasks || [], planResult.plans || [], employeeResult.items || []);
+
+      // Reports are secondary analytics. A slow or unreachable report endpoint
+      // must never prevent the task queue and employee drafts from rendering.
+      void reportApi().then(renderReport).catch(error => {
+        renderReportUnavailable();
+        console.warn("Office reports could not be loaded independently:", error);
+      });
     } catch (error) {
       status(error.message || "Unable to load the Office workspace.");
       if (/session has expired|sign in again|Two-step verification/i.test(error.message)) {
