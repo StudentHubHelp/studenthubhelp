@@ -530,7 +530,7 @@ function buildOwnerCountReport(context: string) {
     evidence.duplicate_check?.complete === true && evidence.duplicate_check?.duplicate_count === 0;
   const summary = verified
     ? city + ": " + fmt(evidence.primary_category_total) + " total properties (" + fmt(activeTotal) +
-      " active; " + fmt(pendingTotal) + " pending; " + fmt(suspendedTotal) + " suspended; " +
+      " active; " + fmt(pendingTotal) + " pending; " + fmt(suspendedTotal) + " suspended; rejected " +
       fmt(rejectedTotal) + "). " + breakdown + "."
     : city + ": counts are provisional and NOT VERIFIED. " + breakdown + ". QC must not PASS.";
   const lines = [
@@ -562,7 +562,7 @@ function buildOwnerCountReport(context: string) {
     lines.push("- " + item.table + ": " + fmt(item.exact_total) +
       " rows; approved " + fmt(item.status_counts?.active) +
       "; unapproved " + fmt(item.status_counts?.pending) +
-      "; suspended/rejected " + (item.unsupported_statuses?.join(", ") || "not reported") + ".");
+      "; suspended/rejected " + (item.unsupported_statuses?.length ? "Unavailable (legacy schema has no such statuses)" : "not reported") + ".");
   }
   lines.push("", "**City filter:** city ILIKE exact match (no wildcard), value " + city + ".",
     "**Generated:** " + String(evidence.generated_at || "timestamp unavailable") + ".");
@@ -656,7 +656,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
           "\n\n## QC verdict: " + verdict + "\n" + summary +
           "\n\nDraft creation alone is not task completion. Owner review remains required.",
         checks: countTask
-          ? ["Exact count query must succeed.", "City filter must be explicit.", "All five category totals and status breakdowns must be numeric.", "GM completion requires QC PASS."]
+          ? ["Exact count query must succeed.", "City filter must be explicit.", "All six category totals and status breakdowns must be numeric.", "Legacy tables must be zero or reconciled.", "Duplicate property IDs must be checked.", "GM completion requires QC PASS."]
           : ["Review each task acceptance criterion against direct evidence.", "Never mark PASS without evidence."],
         risk: countTask && !passed ? "high" : "medium"
       };
