@@ -682,7 +682,7 @@ function buildConsolidatedQaQc(researchContext: string) {
     }
     const content = String(draft.draft_content || "");
     if (!spec.check(content)) {
-      const evidenceUnavailable = /No verified context|No independently verified source URLs|Unavailable/.test(content);
+      const evidenceUnavailable = /No verified context|No independently verified source URLs|No external context|No matching source-code sections|Unavailable|INCONCLUSIVE|"sample_size":\\s*0/.test(content);
       return { ...spec, verdict: evidenceUnavailable ? "INCONCLUSIVE" : "FAIL",
         reason: "Role-specific deliverable or required evidence marker is incomplete." };
     }
@@ -941,7 +941,7 @@ Deno.serve(async (req: Request) => {
       }
     }
     const taskTitle = redact(String(task.title || "").slice(0, 160));
-    const taskDescription = redact(String(task.description || "").slice(0, 1300));
+    const taskDescription = redact(String(task.description || "").slice(0, 1800));
     const stepTitle = redact(String(step.title || "").slice(0, 160));
     const stepRationale = redact(String(step.rationale || "").slice(0, 300));
     const stepExpectedOutput = redact(String(step.expected_output || "").slice(0, 300));
@@ -1058,10 +1058,10 @@ Deno.serve(async (req: Request) => {
           role_key: String(item.role_key || ""),
           title: String(item.title || "").slice(0, 160),
           summary: String(item.summary || "").slice(0, 400),
-          draft_content: String(item.draft_content || "").slice(0, 1000),
+          draft_content: String(item.draft_content || "").slice(-1400),
           checks: Array.isArray(item.checks) ? item.checks.slice(0, 5) : []
         }))
-      }).slice(0, 9000);
+      }).slice(0, 14000);
     } else if (roleKey === "quality_control_manager" && isCountingTask(taskTitle, taskDescription)) {
       // QC independently reruns exact city-filtered counts instead of trusting a truncated
       // Analyst draft. This keeps the evidence payload intact and makes the review independent.
