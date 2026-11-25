@@ -137,7 +137,7 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
   for (const result of results) {
     for (const row of Array.isArray(result.rows) ? result.rows : []) {
       const key = [row.name, row.city, row.area].map((value: any) => String(value || "").trim().toLowerCase()).join("|");
-      if (!row.name || !row.city || !key.replace(/\\|/g, "")) continue;
+      if (!row.name || !row.city) continue;
       const group = duplicateMap.get(key) || [];
       group.push({ table: result.table, id: row.id, name: row.name, city: row.city, area: row.area });
       duplicateMap.set(key, group);
@@ -564,7 +564,7 @@ function buildOwnerCountReport(context: string) {
       summary: allExact
         ? "Exact all-city table counts are available; no city-specific or unique-property total is claimed."
         : "Some exact aggregate table counts are unavailable; unknown values are not zero.",
-      content: lines.join("\n")
+    content: lines.join("\n"),
     };
   }
   const city = String(evidence.city_filter?.value || "requested city");
@@ -624,13 +624,13 @@ function buildOwnerCountReport(context: string) {
   }
   lines.push("", "**City filter:** city ILIKE exact match (no wildcard), value " + city + ".",
     "**Generated:** " + String(evidence.generated_at || "timestamp unavailable") + ".");
-      content: lines.join("\n")
+    content: lines.join("\n"),
 }
 
 function buildConsolidatedQaQc(researchContext: string) {
   let payload: any = null;
   try {
-    const match = researchContext.match(/CONSOLIDATED_QA_DRAFTS_JSON:(\\{[\\s\\S]*\\})$/);
+    const match = researchContext.match(/CONSOLIDATED_QA_DRAFTS_JSON:(\{[\s\S]*\})$/);
     payload = match ? JSON.parse(match[1]) : null;
   } catch { payload = null; }
   const priorDrafts = Array.isArray(payload?.employee_drafts) ? payload.employee_drafts : [];
@@ -648,7 +648,7 @@ function buildConsolidatedQaQc(researchContext: string) {
       content.includes("## Inspected public code and evidence") &&
       content.includes("No genuine issue is confirmed") && content.includes("raw.githubusercontent.com") },
     { key: "data_analyst_reporting_manager", label: "DAR", check: (content: string) => {
-      const match = content.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\\{[^\\n]*\\})/);
+      const match = content.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\{[^\n]*\})/);
       try {
         const evidence = match ? JSON.parse(match[1]) : null;
         const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
@@ -695,7 +695,7 @@ function buildConsolidatedQaQc(researchContext: string) {
   ];
   return {
     summary: "Consolidated QA overall QC " + overall + " — " + results.filter(item => item.verdict === "PASS").length + "/7 employee drafts passed.",
-    content: lines.join("\\n"),
+    content: lines.join("\n"),
     checks: ["All seven employee drafts must exist.", "Every role must meet its role-specific evidence criteria.", "Overall PASS requires seven PASS results.", "Owner review remains required."],
     risk: overall === "PASS" ? "medium" : "high"
   };
@@ -1044,7 +1044,7 @@ Deno.serve(async (req: Request) => {
       }).slice(0, 3200);
     } else if (roleKey === "quality_control_manager" && isConsolidatedTeamQaTask(taskTitle, taskDescription)) {
       const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
-      researchContext = "CONSOLIDATED_QA_DRAFTS_JSON:" + JSON.stringify({
+    const match = researchContext.match(/CONSOLIDATED_QA_DRAFTS_JSON:(\{[\s\S]*\})$/);
         employee_drafts: priorDrafts.filter((item: any) => item?.role_key !== "quality_control_manager").slice(0, 7).map((item: any) => ({
           role_key: String(item.role_key || ""),
           title: String(item.title || "").slice(0, 160),
