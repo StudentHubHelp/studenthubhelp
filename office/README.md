@@ -121,3 +121,12 @@ Do not change the root `CNAME` or the existing website deployment. The root webs
 
 ## Phase status
 See `office/PHASES.md` for the consolidated 12-phase status, hard safety gates and remaining production launch steps.
+
+
+## API-independent employee operating mode (2026-11-25)
+- The active office-employee-agent v16 generates role-specific, rule-based drafts without calling Gemini.
+- DCE collects only first-party StudentHubHelp public pages in this mode; it does not call Tavily. If the task is not StudentHubHelp-specific or official pages cannot be fetched, research is reported as inconclusive rather than fabricated.
+- DLM and DAR use read-only Supabase context. TSE, SEO, SMM and CSE use bounded public repository/site context. QC remains conservative and reports INCONCLUSIVE where semantic claim verification cannot be proven deterministically.
+- Gemini, Tavily, Brevo, Gmail, Instagram/Meta, OpenSEO, Google Places and the Cloudflare API integration are marked disabled in the integration registry. Their secrets, if present in Supabase, are retained and are not read by the employee generation path.
+- Supabase remains connected. GitHub runtime API access remains needs_secret; public raw repository reads and Cloudflare Pages GitHub-App deployments are separate from a private Office GitHub API token.
+- Deterministic drafts are templates/checklists, not LLM-quality reasoning. No employee can publish, send messages, write listing data, merge code or deploy production changes from this mode.
