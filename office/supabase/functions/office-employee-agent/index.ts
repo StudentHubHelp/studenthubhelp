@@ -284,7 +284,7 @@ async function fetchCityCountEvidence(
 
   // The hostels table stores both Hostel and PG rows. Split them using category/type;
   // pg_listings is retained as a separate legacy source and is never silently added.
-  const pgHostelFilter = { or: "(category.ilike.*pg*,type.ilike.*pg*)" };
+  const pgHostelFilter = { or: "(category.ilike.*pg*,type.ilike.*pg*,name.ilike.*pg*,name.ilike.*p g*,category.ilike.*paying guest*,type.ilike.*paying guest*,name.ilike.*paying guest*)" };
   const [allHostels, pgHostels, tiffins, libraries, cafes, bookstores, legacyPg, legacyTiffins, legacyLibraries] = await Promise.all([
     runStatusTable(supabaseUrl, serviceKey, "hostels", "All hostels-table rows", city),
     runStatusTable(supabaseUrl, serviceKey, "hostels", "PG rows stored in hostels", city, pgHostelFilter),
