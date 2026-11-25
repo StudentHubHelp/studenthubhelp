@@ -630,6 +630,22 @@
           steps.append(li);
         });
         planBox.append(steps);
+        const completedDrafts = (gmPlan.steps || []).map((step, stepIndex) =>
+          taskDrafts.find(item => item.role_key === step.role_key && item.step_index === stepIndex)
+        );
+        if (completedDrafts.length > 0 && completedDrafts.every(Boolean)) {
+          const finalReport = node("div", "gm-final-report");
+          finalReport.append(node("strong", "gm-final-report-title", "General Manager · Final task report"));
+          finalReport.append(node("p", "", completedDrafts.length + "/" + (gmPlan.steps || []).length +
+            " employee drafts completed. All findings below are draft-only and require Owner review."));
+          completedDrafts.forEach((draft, index) => {
+            const role = (gmPlan.steps || [])[index]?.role_key || "employee";
+            finalReport.append(node("p", "", titleCase(role) + ": " + (draft.summary || draft.title || "Draft saved.")));
+          });
+          const qcDraft = completedDrafts.find((draft, index) => (gmPlan.steps || [])[index]?.role_key === "quality_control_manager");
+          if (qcDraft) finalReport.append(node("small", "gm-approval-note", "QC review: " + (qcDraft.summary || "See the QC draft above.") + " Owner approval is still required."));
+          planBox.append(finalReport);
+        }
         planBox.append(node("small", "gm-approval-note", "Proposal only · Owner approval required · No actions executed"));
         card.append(planBox);
       }
@@ -746,6 +762,40 @@
     if (!employees.length) grid.append(node("div", "empty-state", "Team directory is unavailable."));
   }
 
+  const protectedAutoRunTaskKeys = new Set(["SHH-AEBE4B0698", "SHH-B1C4302C14"]);
+  const autoRunAttemptedTasks = new Set();
+
+  async function autoRunSavedPlans(tasks = [], plans = [], employeeItems = []) {
+    const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
+    const draftsByTask = new Map((employeeItems || []).map(item => [item.task_id, item.drafts || []]));
+    const pending = (tasks || []).filter(task => {
+      if (task.status !== "queued" || protectedAutoRunTaskKeys.has(task.task_key) ||
+          autoRunAttemptedTasks.has(task.id) || planExecutionRequests.has(task.id)) return false;
+      const plan = planMap.get(task.id);
+      const steps = Array.isArray(plan?.steps) ? plan.steps : [];
+      const drafts = draftsByTask.get(task.id) || [];
+      return plan?.plan_status === "proposal_only" && plan?.requires_owner_approval === true &&
+        steps.length > 0 && steps.every(step => step?.requires_external_action === false) &&
+        drafts.length === 0;
+    });
+    if (!pending.length) return;
+    for (const task of pending) {
+      autoRunAttemptedTasks.add(task.id);
+      planExecutionRequests.add(task.id);
+      status("General Manager is automatically resuming the saved employee workflow for " + task.task_key + "…");
+      try {
+        const result = await gmApi("execute_plan", { task_id: task.id });
+        const count = Array.isArray(result.completed_steps) ? result.completed_steps.length : 0;
+        status("GM completed " + count + " employee draft(s) for " + task.task_key + ". The final report is available in its task card.", true);
+      } catch (error) {
+        status("Automatic workflow for " + task.task_key + " stopped: " + (error.message || "Unknown error") + ". Saved drafts remain available for review.");
+      } finally {
+        planExecutionRequests.delete(task.id);
+      }
+    }
+    await loadWorkspace();
+  }
+
   async function loadWorkspace() {
     $("refresh-btn").disabled = true;
     try {
@@ -767,6 +817,7 @@
       renderReport(reportResult);
       renderTeam(overview.employees || []);
       status("Secure owner session verified. Task queue is connected.", true);
+      void autoRunSavedPlans(taskResult.tasks || [], planResult.plans || [], employeeResult.items || []);
     } catch (error) {
       status(error.message || "Unable to load the Office workspace.");
       if (/session has expired|sign in again|Two-step verification/i.test(error.message)) {
@@ -782,17 +833,31 @@
     const button = $("create-task-btn");
     const values = new FormData(form);
     button.disabled = true;
+    let createdTask = null;
     try {
-      await api("create_task", {
+      const created = await api("create_task", {
         title: String(values.get("title") || "").trim(),
         description: String(values.get("description") || "").trim(),
         priority: String(values.get("priority") || "normal")
       });
+      createdTask = created.task || null;
       form.reset();
-      status("Task added. Use Plan with GM, then Generate all employee drafts to run the read-only workflow.", true);
+      if (!createdTask?.id) throw new Error("Task was created, but its ID could not be confirmed. Refresh the queue before retrying.");
+      status("Task created. General Manager is preparing the plan automatically…");
+      await gmApi("plan_task", { task_id: createdTask.id });
+      status("GM plan saved. Employees are now preparing their drafts sequentially…");
+      const run = await gmApi("execute_plan", { task_id: createdTask.id });
+      const completed = Array.isArray(run.completed_steps) ? run.completed_steps.length : 0;
       await loadWorkspace();
-    } catch (error) { status(error.message); }
-    finally { button.disabled = false; }
+      status("GM completed " + completed + " employee draft(s). The final task report is now available in this task card. Owner review is required; no external actions were executed.", true);
+    } catch (error) {
+      if (createdTask?.id) {
+        await loadWorkspace();
+        status("Task " + (createdTask.task_key || "") + " was created, but the automatic GM workflow stopped: " + (error.message || "Unknown error") + ". Refresh the task card to review saved drafts and retry the remaining work.");
+      } else {
+        status(error.message || "Unable to create the task.");
+      }
+    } finally { button.disabled = false; }
   });
 
   $("refresh-btn").addEventListener("click", loadWorkspace);
