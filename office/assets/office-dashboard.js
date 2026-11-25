@@ -855,8 +855,12 @@
       status("GM plan saved. Employees are now preparing their drafts sequentially…");
       const run = await gmApi("execute_plan", { task_id: createdTask.id });
       const completed = Array.isArray(run.completed_steps) ? run.completed_steps.length : 0;
+      const qcPassed = run.task_completed === true && run.qc_status === "PASS";
       await loadWorkspace();
-      status("GM completed " + completed + " employee draft(s). The final task report is now available in this task card. Owner review is required; no external actions were executed.", true);
+      status(qcPassed
+        ? "GM generated " + completed + " employee draft(s) and QC PASS. Owner review is still required; no external actions were executed."
+        : "GM generated " + completed + " employee draft(s), but the task is NOT complete because QC PASS is missing. " + (run.completion_blocked_reason || "Review the QC draft before treating this task as complete."),
+        qcPassed);
     } catch (error) {
       if (createdTask?.id) {
         await loadWorkspace();
