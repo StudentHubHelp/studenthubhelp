@@ -14,6 +14,7 @@
   const $ = id => document.getElementById(id);
   const employeeDraftRequests = new Set();
   const planExecutionRequests = new Set();
+  let showingArchivedTasks = false;
   const status = (message, ok = false) => {
     $("dashboard-status").textContent = message;
     $("dashboard-status").className = "status" + (ok ? " success" : "");
@@ -57,6 +58,7 @@
         employee_step_failed: "An employee workflow stopped before all drafts were generated.",
         invalid_input: "Please check the task details and try again.",
         task_transition_not_allowed: "This task can no longer be changed from its current status.",
+        task_archive_blocked: "Running or approval-waiting tasks cannot be archived. Pause or finish them first.",
         authentication_required: "Please sign in again.",
         mfa_required: "Two-step verification is required. Please sign in again."
       };
@@ -533,13 +535,13 @@
     return button;
   }
 
-  function renderTasks(tasks = [], plans = [], employeeItems = []) {
+  function renderCurrentTask(task) {\n    const target = $("current-task-card");\n    target.replaceChildren();\n    if (!task) { target.append(node("div", "empty-state", "No current task. Create a task from Tasks & Delegation to get started.")); return; }\n    const card = node("article", "current-task-inner");\n    const top = node("div", "task-card-top");\n    top.append(node("span", "task-key", task.task_key), node("span", "task-status status-" + task.status, titleCase(task.status)));\n    card.append(top, node("h3", "", task.title), node("p", "task-description", task.description || "No additional description provided."));\n    const meta = node("div", "task-meta");\n    meta.append(node("span", "", titleCase(task.priority) + " priority"), node("span", "", "Updated " + dateText(task.updated_at || task.created_at)));\n    card.append(meta);\n    addAction(card, "Open task workspace", "small-action gm-action", () => location.hash = "tasks");\n    target.append(card);\n  }\n\n  function renderTasks(tasks = [], plans = [], employeeItems = []) {
     const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
     const draftMap = new Map((employeeItems || []).map(item => [item.task_id, item.drafts || []]));
     const researchEvidenceMap = new Map((employeeItems || []).map(item => [item.task_id, item.research_evidence || null]));
     const list = $("task-list");
     list.replaceChildren();
-    $("task-total-pill").textContent = tasks.length + (tasks.length === 1 ? " task" : " tasks");
+    $("task-total-pill").textContent = tasks.length + (tasks.length === 1 ? " task" : " tasks");\n    $("active-tasks-tab").classList.toggle("active", !showingArchivedTasks);\n    $("archived-tasks-tab").classList.toggle("active", showingArchivedTasks);\n    $("active-tasks-tab").setAttribute("aria-pressed", String(!showingArchivedTasks));\n    $("archived-tasks-tab").setAttribute("aria-pressed", String(showingArchivedTasks));
     if (!tasks.length) {
       list.append(node("div", "empty-state", "No tasks yet. Create your first task to start building the work queue."));
       return;
@@ -567,14 +569,14 @@
           runButton.textContent = "Running employee drafts…";
         }
       }
-      if (task.status === "queued" || task.status === "draft") {
+      if (task.archived_at) {\n        addAction(actions, "Restore", "small-action gm-action", button => archiveTask(task, "restore_task", button));\n      } else if (task.status === "queued" || task.status === "draft") {
         addAction(actions, "Pause", "small-action", () => changeTaskStatus(task.id, "paused"));
         addAction(actions, "Cancel", "small-action danger-action", () => changeTaskStatus(task.id, "cancelled"));
       } else if (task.status === "paused") {
         addAction(actions, "Resume", "small-action", () => changeTaskStatus(task.id, "queued"));
         addAction(actions, "Cancel", "small-action danger-action", () => changeTaskStatus(task.id, "cancelled"));
       }
-      addAction(actions, "Activity", "small-action subtle-action", () => loadTaskLogs(task));
+      if (!task.archived_at && !["running", "waiting_approval"].includes(task.status)) {\n        addAction(actions, "Delete", "small-action danger-action", button => archiveTask(task, "archive_task", button));\n      }\n      addAction(actions, "Activity", "small-action subtle-action", () => loadTaskLogs(task));
       card.append(top, heading, description, meta, actions);
       if (gmPlan) {
         const planBox = node("div", "gm-plan-box");
@@ -732,7 +734,7 @@
     }
   }
 
-  async function changeTaskStatus(taskId, nextStatus) {
+  async function archiveTask(task, action, button) {\n    const restoring = action === "restore_task";\n    const prompt = restoring\n      ? "Restore this task to the active task list? Its activity and employee drafts will remain intact."\n      : "Move this task to Archived? This is a reversible soft-delete. Task activity, approvals and employee drafts will be retained. Running or approval-waiting tasks cannot be archived.";\n    if (!window.confirm(prompt)) return;\n    if (button) { button.disabled = true; button.textContent = restoring ? "Restoring…" : "Archiving…"; }\n    try {\n      await api(action, { task_id: task.id });\n      status(restoring ? "Task restored. Its history is intact." : "Task archived. Its history and drafts were retained.", true);\n      await loadWorkspace();\n    } catch (error) { status(error.message); if (button) { button.disabled = false; button.textContent = restoring ? "Restore" : "Delete"; } }\n  }\n\n  async function changeTaskStatus(taskId, nextStatus) {
     try {
       await api("set_task_status", { task_id: taskId, status: nextStatus });
       status("Task status updated.", true);
@@ -825,7 +827,7 @@
     try {
       const [overview, taskResult, planResult, employeeResult, integrationResult, approvalResult, quotaResult] = await Promise.all([
         api("overview"),
-        api("list_tasks"),
+        api("list_tasks", { include_archived: showingArchivedTasks }),
         gmApi("list_plans"),
         employeeApi("list_drafts"),
         integrationApi("overview"),
@@ -893,7 +895,7 @@
     } finally { button.disabled = false; }
   });
 
-  $("refresh-btn").addEventListener("click", loadWorkspace);
+  $("refresh-btn").addEventListener("click", loadWorkspace);\n  $("active-tasks-tab").addEventListener("click", () => { showingArchivedTasks = false; loadWorkspace(); });\n  $("archived-tasks-tab").addEventListener("click", () => { showingArchivedTasks = true; loadWorkspace(); });
   $("approval-filter").addEventListener("change", loadApprovals);
   $("close-logs-btn").addEventListener("click", () => { $("task-logs-panel").hidden = true; });
   $("logout-btn").addEventListener("click", async () => {
