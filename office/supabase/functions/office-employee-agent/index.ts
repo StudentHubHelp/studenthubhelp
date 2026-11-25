@@ -696,11 +696,12 @@ function buildConsolidatedQaQc(researchContext: string) {
     }
     return { ...spec, verdict: "PASS", reason: "Required role-specific deliverable and evidence markers are present." };
   });
-  const allPass = results.length === 7 && results.every(item => item.verdict === "PASS");
-  const anyFail = results.some(item => item.verdict === "FAIL");
+  const allPass = inventoryValid && results.length === 7 && results.every(item => item.verdict === "PASS");
+  const anyFail = !inventoryValid || results.some(item => item.verdict === "FAIL");
   const overall = allPass ? "PASS" : anyFail ? "FAIL" : "INCONCLUSIVE";
   const lines = [
     "## Consolidated employee QA review",
+    "- Seven-draft inventory: " + (inventoryValid ? "PASS — exactly seven unique employee roles are present." : "FAIL — missing, duplicate or unexpected employee drafts."),
     ...results.map(item => "- " + item.label + " (" + item.key + "): " + item.verdict + " — " + item.reason),
     "",
     "## Overall QC verdict: " + overall,
@@ -712,7 +713,7 @@ function buildConsolidatedQaQc(researchContext: string) {
   ];
   return {
     summary: "Consolidated QA overall QC " + overall + " — " + results.filter(item => item.verdict === "PASS").length + "/7 employee drafts passed.",
-  return { summary, content: lines.join("\n") };
+    content: lines.join("\n"),
     checks: ["All seven employee drafts must exist.", "Every role must meet its role-specific evidence criteria.", "Overall PASS requires seven PASS results.", "Owner review remains required."],
     risk: overall === "PASS" ? "medium" : "high"
   };
