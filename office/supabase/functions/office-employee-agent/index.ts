@@ -133,14 +133,27 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
     });
     if (response.ok) reports = await response.json();
   } catch { reports = null; }
+  const duplicateMap = new Map<string, any[]>();
+  for (const result of results) {
+    for (const row of Array.isArray(result.rows) ? result.rows : []) {
+      const key = [row.name, row.city, row.area].map((value: any) => String(value || "").trim().toLowerCase()).join("|");
+      if (!row.name || !row.city || !key.replace(/\\|/g, "")) continue;
+      const group = duplicateMap.get(key) || [];
+      group.push({ table: result.table, id: row.id, name: row.name, city: row.city, area: row.area });
+      duplicateMap.set(key, group);
+    }
+  }
+  const duplicateCandidates = [...duplicateMap.values()].filter(group => group.length > 1).slice(0, 30);
   return "READ-ONLY LISTING REVIEW (contact details and reporter identities excluded; latest 25 rows per category only): " +
-    JSON.stringify({ category_samples: results, property_issue_reports: Array.isArray(reports) ? reports : null,
-      limitation: "Missing-field counts apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review." }).slice(0, 5200);
+    JSON.stringify({ category_samples: results, duplicate_candidates: duplicateCandidates,
+      duplicate_method: "Exact normalized name + city + area match within the returned samples; candidates require manual confirmation.",
+      property_issue_reports: Array.isArray(reports) ? reports : null,
+      limitation: "Missing-field counts and duplicate candidates apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review." }).slice(0, 6500);
 }
 
 function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
   const value = (taskTitle + " " + taskDescription).toLowerCase();
-  return /consolidated/.test(value) && /all\s+(?:8|eight)\\s+employees/.test(value) &&
+  return /consolidated/.test(value) && /all\s+(?:8|eight)\s+employees/.test(value) &&
     /qc manager|quality control manager/.test(value) && /seo manager/.test(value);
 }
 function isCountingTask(taskTitle: string, taskDescription: string): boolean {
@@ -614,6 +627,80 @@ function buildOwnerCountReport(context: string) {
       content: lines.join("\n")
 }
 
+function buildConsolidatedQaQc(researchContext: string) {
+  let payload: any = null;
+  try {
+    const match = researchContext.match(/CONSOLIDATED_QA_DRAFTS_JSON:(\\{[\\s\\S]*\\})$/);
+    payload = match ? JSON.parse(match[1]) : null;
+  } catch { payload = null; }
+  const priorDrafts = Array.isArray(payload?.employee_drafts) ? payload.employee_drafts : [];
+  const byRole = new Map(priorDrafts.map((item: any) => [String(item?.role_key || ""), item]));
+  const roleSpecs: Array<{key:string;label:string;check:(content:string)=>boolean}> = [
+    { key: "data_listing_manager", label: "DLM", check: (content: string) =>
+      content.includes("## Read-only listing evidence") && content.includes("duplicate_candidates") &&
+      content.includes("missing_field_counts") && content.includes("sample_limit") },
+    { key: "data_collection_executive", label: "DCE", check: (content: string) =>
+      content.includes("## Sources") && /https:\\/\\/studenthubhelp\\.in\\//i.test(content) },
+    { key: "customer_support_executive", label: "CSE", check: (content: string) =>
+      content.includes("## Reply draft") && content.includes("## Escalation") &&
+      /do not share passwords, OTPs or payment credentials/i.test(content) },
+    { key: "technical_support_engineer", label: "TSE", check: (content: string) =>
+      content.includes("## Inspected public code and evidence") &&
+      content.includes("No genuine issue is confirmed") && content.includes("raw.githubusercontent.com") },
+    { key: "data_analyst_reporting_manager", label: "DAR", check: (content: string) => {
+      const match = content.match(/AGGREGATE_COUNT_EVIDENCE_JSON:(\\{[^\\n]*\\})/);
+      try {
+        const evidence = match ? JSON.parse(match[1]) : null;
+        const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
+        return tables.every(table => evidence?.listing_counts?.some((item: any) =>
+          item.table === table && item.query_ok === true && Number.isInteger(item.count)
+        ));
+      } catch { return false; }
+    }},
+    { key: "social_media_manager", label: "SMM", check: (content: string) =>
+      content.includes("## Draft caption") && content.includes("## CTA") &&
+      content.includes("Do not imply guaranteed safety") },
+    { key: "seo_marketing_manager", label: "SEO Manager", check: (content: string) =>
+      content.includes("## Homepage SEO audit") && content.includes("Title and meta description") &&
+      content.includes("Canonical") && content.includes("robots.txt") && content.includes("sitemap.xml") &&
+      content.includes("Favicon and Open Graph") && content.includes("Structured data") &&
+      content.includes("Internal links") && content.includes("INCONCLUSIVE") }
+  ];
+  const results = roleSpecs.map(spec => {
+    const draft: any = byRole.get(spec.key);
+    if (!draft || !String(draft.draft_content || "").trim()) {
+      return { ...spec, verdict: "FAIL", reason: "Required employee draft is missing." };
+    }
+    const content = String(draft.draft_content || "");
+    if (!spec.check(content)) {
+      const evidenceUnavailable = /No verified context|No independently verified source URLs|Unavailable/.test(content);
+      return { ...spec, verdict: evidenceUnavailable ? "INCONCLUSIVE" : "FAIL",
+        reason: "Role-specific deliverable or required evidence marker is incomplete." };
+    }
+    return { ...spec, verdict: "PASS", reason: "Required role-specific deliverable and evidence markers are present." };
+  });
+  const allPass = results.length === 7 && results.every(item => item.verdict === "PASS");
+  const anyFail = results.some(item => item.verdict === "FAIL");
+  const overall = allPass ? "PASS" : anyFail ? "FAIL" : "INCONCLUSIVE";
+  const lines = [
+    "## Consolidated employee QA review",
+    ...results.map(item => "- " + item.label + " (" + item.key + "): " + item.verdict + " — " + item.reason),
+    "",
+    "## Overall QC verdict: " + overall,
+    allPass
+      ? "All seven employee drafts were independently checked against their role-specific deliverable and evidence markers."
+      : "The consolidated task is NOT complete. Missing, incomplete or unavailable evidence must be resolved; no PASS is inferred.",
+    "",
+    "This is a deterministic structural/evidence-marker review. Owner must inspect the underlying source facts before approving any external action."
+  ];
+  return {
+    summary: "Consolidated QA overall QC " + overall + " — " + results.filter(item => item.verdict === "PASS").length + "/7 employee drafts passed.",
+    content: lines.join("\\n"),
+    checks: ["All seven employee drafts must exist.", "Every role must meet its role-specific evidence criteria.", "Overall PASS requires seven PASS results.", "Owner review remains required."],
+    risk: overall === "PASS" ? "medium" : "high"
+  };
+}
+
 function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
   const brief = [taskTitle, taskDescription, stepTitle, stepRationale, stepExpectedOutput].filter(Boolean).join("\n");
   const context = researchContext || "No verified context was available.";
@@ -666,6 +753,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
       checks: ["Verify each URL and page status.", "Use Search Console data for actual impressions and indexing metrics."], risk: "medium"
     },
     quality_control_manager: (() => {
+      if (isConsolidatedTeamQaTask(taskTitle, taskDescription)) return buildConsolidatedQaQc(researchContext);
       const countTask = isCountingTask(taskTitle, taskDescription);
       let evidence: any = null;
       try {
