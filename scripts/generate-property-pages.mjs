@@ -165,6 +165,8 @@ function buildHtml({ type, slug, name, city, area, address, description, details
 </div>`;
   // Remove inherited favicon tags (including the old purple-N SVG) before rendering.
   const cleanTemplate = detailsTemplate
+    // Property pages live at nested URLs: keep only the root-absolute mobile stylesheet.
+    .replace(/<link\b(?=[^>]*\bhref\s*=\s*["']mobile\.css(?:\?[^"']*)?["'])[^>]*>\s*/gi, '')
     .replace(/<link\b(?=[^>]*\brel\s*=\s*["'](?:icon|shortcut icon|alternate icon)["'])[^>]*>\s*/gi, '')
     .replace(/<link\b(?=[^>]*\brel\s*=\s*["']apple-touch-icon["'])[^>]*>\s*/gi, '')
     .replace(/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:image:secure_url["'])[^>]*>\s*/gi, '')
