@@ -704,7 +704,7 @@ function buildConsolidatedQaQc(researchContext: string) {
   ];
   return {
     summary: "Consolidated QA overall QC " + overall + " — " + results.filter(item => item.verdict === "PASS").length + "/7 employee drafts passed.",
-    content: lines.join("\n"),
+  return { summary, content: lines.join("\n") };
     checks: ["All seven employee drafts must exist.", "Every role must meet its role-specific evidence criteria.", "Overall PASS requires seven PASS results.", "Owner review remains required."],
     risk: overall === "PASS" ? "medium" : "high"
   };
