@@ -641,6 +641,14 @@ function buildConsolidatedQaQc(researchContext: string) {
   } catch { payload = null; }
   const priorDrafts = Array.isArray(payload?.employee_drafts) ? payload.employee_drafts : [];
   const byRole = new Map<string, any>(priorDrafts.map((item: any) => [String(item?.role_key || ""), item] as [string, any]));
+  const requiredRoleKeys = [
+    "data_listing_manager", "data_collection_executive", "customer_support_executive",
+    "technical_support_engineer", "data_analyst_reporting_manager", "social_media_manager",
+    "seo_marketing_manager"
+  ];
+  const inventoryValid = priorDrafts.length === requiredRoleKeys.length &&
+    new Set(priorDrafts.map((item: any) => String(item?.role_key || ""))).size === requiredRoleKeys.length &&
+    requiredRoleKeys.every(roleKey => byRole.has(roleKey));
   const roleSpecs: Array<{key:string;label:string;check:(content:string)=>boolean}> = [
     { key: "data_listing_manager", label: "DLM", check: (content: string) =>
       content.includes("## Read-only listing evidence") && content.includes("duplicate_candidates") &&
