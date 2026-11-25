@@ -140,7 +140,7 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
 
 function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
   const value = (taskTitle + " " + taskDescription).toLowerCase();
-  return /consolidated/.test(value) && /all\\s+(?:8|eight)\\s+employees/.test(value) &&
+  return /consolidated/.test(value) && /all\s+(?:8|eight)\\s+employees/.test(value) &&
     /qc manager|quality control manager/.test(value) && /seo manager/.test(value);
 }
 function isCountingTask(taskTitle: string, taskDescription: string): boolean {
@@ -602,7 +602,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
     },
     technical_support_engineer: {
       summary: "Read-only technical triage and investigation checklist; no code was changed.",
-      content: undefined,
+      content: "## Reported task\\n" + brief + "\\n\\n## Inspected public code and evidence\\n" + context + "\\n\\n## Findings\\nNo genuine issue is confirmed in the fetched excerpts. This is a bounded review of the sources shown above, not proof that the entire repository is defect-free. No unsupported root cause is asserted.\\n\\n## Diagnostic limitations\\nOnly publicly fetched source excerpts were inspected; no login, account, production or write operation was performed.",
       checks: ["Attach exact file/line evidence before proposing a code change.", "Run targeted tests and review the diff before merging."], risk: "medium"
     },
     data_analyst_reporting_manager: (() => {
@@ -622,7 +622,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
     },
     seo_marketing_manager: {
       summary: "Rule-based SEO inspection notes from publicly fetched crawl resources.",
-      content: undefined,
+      content: "## SEO task\\n" + brief + "\\n\\n## Public crawl evidence\\n" + context + "\\n\\n## Homepage SEO audit\\n- Title and meta description: not independently extracted from the homepage head; INCONCLUSIVE.\\n- Canonical: not independently extracted; INCONCLUSIVE.\\n- robots.txt: public resource fetch attempted; inspect the evidence above for returned content.\\n- sitemap.xml: public resource fetch attempted; inspect the evidence above for returned content.\\n- Favicon and Open Graph image: not independently inspected; INCONCLUSIVE.\\n- Structured data: not independently inspected; INCONCLUSIVE.\\n- Internal links: not crawled comprehensively; INCONCLUSIVE.\\n- Indexability: only robots and sitemap signals were sampled; full indexability is INCONCLUSIVE.\\n\\n## Limitations\\nThis deterministic workflow does not calculate search volume, rankings, backlinks or AI visibility. Uninspected fields are explicitly unknown, not passed.",
       checks: ["Verify each URL and page status.", "Use Search Console data for actual impressions and indexing metrics."], risk: "medium"
     },
     quality_control_manager: (() => {
