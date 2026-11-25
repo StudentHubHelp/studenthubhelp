@@ -642,8 +642,15 @@
             : "Employee drafts generated · Task NOT complete"));
           finalReport.append(node("p", "", completedDrafts.length + "/" + (gmPlan.steps || []).length +
             " employee drafts generated. " + (qcPassed ? "QC passed; Owner review is still required." : "QC PASS is missing. Draft generation is not task completion.")));
+          const analystDraft = completedDrafts.find((draft, index) =>
+            (gmPlan.steps || [])[index]?.role_key === "data_analyst_reporting_manager");
+          if (qcPassed && analystDraft) {
+            finalReport.append(node("strong", "gm-owner-answer-title", "Owner business answer"));
+            finalReport.append(node("p", "gm-owner-answer", analystDraft.summary || analystDraft.title || "Verified count report is available."));
+          }
           completedDrafts.forEach((draft, index) => {
             const role = (gmPlan.steps || [])[index]?.role_key || "employee";
+            if (qcPassed && role === "data_analyst_reporting_manager") return;
             finalReport.append(node("p", "", titleCase(role) + ": " + (draft.summary || draft.title || "Draft saved.")));
           });
           if (qcDraft) finalReport.append(node("small", "gm-approval-note", "QC review: " + (qcDraft.summary || "See the QC draft above.") + " Owner approval is still required."));
