@@ -1,4 +1,6 @@
 import { isDailyWebsiteActivityTask } from "../_shared/task-intent.ts";
+import { buildEmployeePrompt, callOfficeGemini } from "../_shared/employee-intelligence.ts";
+import { fetchTavilyEvidence } from "../_shared/tavily-research.ts";
 const allowedOrigins = new Set([
   "https://office.studenthubhelp.in",
   "http://localhost:5173",
@@ -97,6 +99,7 @@ async function fetchPublicText(url: string, maxChars = 900): Promise<string> {
 }
 
 
+
 function extractSourceSnippets(source: string, patterns: string[], maxPer = 650): string {
   if (!source) return "No source code could be fetched.";
   const body = source.includes("\n") ? source.slice(source.indexOf("\n") + 1) : source;
@@ -113,48 +116,97 @@ function extractSourceSnippets(source: string, patterns: string[], maxPer = 650)
 
 async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string): Promise<string> {
   const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
-  const headers = { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public" };
+  const headers = {
+    apikey: serviceKey,
+    Authorization: "Bearer " + serviceKey,
+    "Accept-Profile": "public",
+    Prefer: "count=exact"
+  };
+  const pageSize = 500;
+  const maxRows = 10000;
   const results = await Promise.all(tables.map(async table => {
-    try {
-      const url = supabaseUrl + "/rest/v1/" + table + "?select=id,name,city,area,status,verified&order=created_at.desc&limit=25";
-      const response = await fetch(url, { headers, signal: AbortSignal.timeout(7000) });
-      if (!response.ok) return { table, status: "unavailable" };
-      const data = await response.json();
-      const rows = Array.isArray(data) ? data : [];
-      const fields = ["name", "city", "area", "status"];
-      const missing: Record<string, number> = {};
-      for (const field of fields) missing[field] = rows.filter((row: any) => row[field] == null || String(row[field]).trim() === "").length;
-      return { table, sample_limit: 25, sample_size: rows.length, missing_field_counts: missing, rows };
-    } catch { return { table, status: "unavailable" }; }
+    const rows: any[] = [];
+    let expected: number | null = null;
+    let complete = false;
+    let failure = "";
+    for (let offset = 0; offset < maxRows; offset += pageSize) {
+      try {
+        const params = new URLSearchParams({
+          select: "id,name,city,area,status,verified,updated_at",
+          order: "created_at.asc",
+          limit: String(pageSize),
+          offset: String(offset)
+        });
+        const response = await fetch(supabaseUrl + "/rest/v1/" + table + "?" + params.toString(), {
+          headers, signal: AbortSignal.timeout(9000)
+        });
+        if (!response.ok) { failure = "http_" + response.status; break; }
+        if (expected === null) {
+          const range = response.headers.get("content-range") || "";
+          const total = range.includes("/") ? range.slice(range.lastIndexOf("/") + 1) : "";
+          if (!/^\d+$/.test(total)) { failure = "exact_count_unavailable"; break; }
+          expected = Number(total);
+        }
+        const page = await response.json().catch(() => null);
+        if (!Array.isArray(page)) { failure = "invalid_page"; break; }
+        rows.push(...page);
+        if (rows.length >= expected) { complete = true; break; }
+        if (page.length < pageSize) break;
+      } catch {
+        failure = "request_failed";
+        break;
+      }
+    }
+    const fields = ["name", "city", "area", "status"];
+    const missing: Record<string, number> = {};
+    for (const field of fields) missing[field] = rows.filter((row: any) =>
+      row[field] == null || String(row[field]).trim() === ""
+    ).length;
+    return {
+      table, expected_count: expected, scanned_count: rows.length,
+      complete: complete && expected === rows.length,
+      truncated: expected !== null && rows.length < expected,
+      failure: failure || null,
+      missing_field_counts: missing,
+      rows
+    };
   }));
   let reports: any = null;
   try {
     const response = await fetch(supabaseUrl + "/rest/v1/property_reports?select=property_id,property_table,reason,status,created_at&order=created_at.desc&limit=200", {
-      headers, signal: AbortSignal.timeout(7000)
+      headers, signal: AbortSignal.timeout(9000)
     });
     if (response.ok) reports = await response.json();
   } catch { reports = null; }
   const duplicateMap = new Map<string, any[]>();
   for (const result of results) {
-    for (const row of Array.isArray(result.rows) ? result.rows : []) {
-      const key = [row.name, row.city, row.area].map((value: any) => String(value || "").trim().toLowerCase()).join("|");
+    for (const row of result.rows) {
+      const key = [row.name, row.city, row.area].map((value: any) =>
+        String(value || "").trim().toLowerCase().replace(/\s+/g, " ")
+      ).join("|");
       if (!row.name || !row.city) continue;
       const group = duplicateMap.get(key) || [];
       group.push({ table: result.table, id: row.id, name: row.name, city: row.city, area: row.area });
       duplicateMap.set(key, group);
     }
   }
-  const duplicateCandidates = [...duplicateMap.values()].filter(group => group.length > 1).slice(0, 30);
-  return "READ-ONLY LISTING REVIEW (contact details and reporter identities excluded; latest 25 rows per category only): " +
+  const duplicateCandidates = [...duplicateMap.values()].filter(group => group.length > 1).slice(0, 50);
+  const allComplete = results.every(result => result.complete);
+  return "READ-ONLY LISTING QUALITY EVIDENCE (contact details and reporter identities excluded): " +
     JSON.stringify({
-      category_samples: results.map(({ rows, ...sample }: any) => sample),
+      coverage: {
+        complete: allComplete,
+        categories: results.map(({ rows, ...summary }: any) => summary),
+        maximum_rows_per_category: maxRows
+      },
       duplicate_candidates: duplicateCandidates,
-      duplicate_method: "Exact normalized name + city + area match within returned samples; candidates require manual confirmation.",
+      duplicate_method: "Exact normalized name + city + area match across every fetched row; candidates require human confirmation.",
       property_issue_reports: Array.isArray(reports) ? reports : null,
-      limitation: "Missing-field counts and duplicate candidates apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review."
-    }).slice(0, 6500);
+      limitation: allComplete
+        ? "All rows in the five canonical listing tables were scanned. Duplicate matches are candidates, not confirmed duplicates."
+        : "At least one category could not be fully scanned; findings are partial. Do not describe partial coverage as a complete audit."
+    }).slice(0, 9000);
 }
-
 function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
   const value = (taskTitle + " " + taskDescription).toLowerCase();
   return /consolidated/.test(value) && /all\s+(?:8|eight)\s+employees/.test(value) &&
@@ -996,9 +1048,9 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
           checks: ["Confirm sample coverage before treating findings as complete.", "Manually inspect suspected duplicates and verification evidence."], risk: "medium"
         },
     data_collection_executive: {
-      summary: "First-party StudentHubHelp evidence collection; external web search is disabled in API-independent mode.",
-      content: "## Research brief\n" + brief + "\n\n## Retrieved first-party evidence\n" + context + "\n\n## Sources\n" + sourceList + "\n\n## Limitations\nTavily and general web search were not called. Findings are limited to the official StudentHubHelp pages successfully fetched. Any fact not present in those pages remains unknown.",
-      checks: ["Verify each cited page and its relevance to the exact task.", "Use a separately approved research provider only if third-party discovery is essential."], risk: sourceUrls.length ? "medium" : "high"
+      summary: "Evidence collection uses one bounded Tavily Basic search when configured, plus relevant first-party StudentHubHelp pages; it does not crawl or extract full external pages.",
+      content: "## Research brief\n" + brief + "\n\n## Retrieved source evidence\n" + context + "\n\n## Sources\n" + sourceList + "\n\n## Limitations\nAt most one Tavily Basic search (up to five result snippets) is attempted per DCE task when TAVILY_API_KEY is configured. Advanced search, raw-content extraction and site crawling are disabled. If the provider is unavailable, only successfully fetched first-party pages are used. Snippets are leads, not independent verification; check source dates, relevance and claims before relying on them.",
+      checks: ["Verify each cited page, publisher, date and relevance to the exact task.", "Treat snippets as leads; do not claim full-page extraction.", "Escalate if primary-source evidence is unavailable or sources conflict."], risk: sourceUrls.length ? "medium" : "high"
     },
     customer_support_executive: {
       summary: "Support response framework prepared from available official support context; not sent.",
@@ -1232,8 +1284,9 @@ Deno.serve(async (req: Request) => {
         return respond({ ok: false, code: beginResult.message === "task_must_be_queued" ? "task_must_be_queued" : "dce_evidence_prepare_failed" }, 409, origin);
       }
 
-      // API-independent mode: collect only first-party StudentHubHelp pages.
-      // No Tavily search/extraction request is made from the employee workflow.
+      // Use one bounded Tavily Basic search when the server-side secret is configured.
+      // No raw page extraction, crawling, advanced search or repeated query fan-out.
+      const tavily = await fetchTavilyEvidence((taskTitle + " " + taskDescription).trim(), Deno.env.get("TAVILY_API_KEY") || "");
       const firstPartyBrief = /studenthubhelp(?:\.in)?/i.test(taskTitle + " " + taskDescription);
       const officialUrls = firstPartyBrief ? [
         "https://studenthubhelp.in/",
@@ -1250,14 +1303,22 @@ Deno.serve(async (req: Request) => {
           url,
           snippet: content.slice(0, 500),
           content: content.slice(0, 3500),
-          extraction_status: "extracted"
+          extraction_status: "first_party_page_extracted"
         };
       }));
+      const combinedSources = [...officialPages.filter(Boolean), ...tavily.sources];
+      const uniqueSources = [...new Map(combinedSources.map((source: any) => [String(source.url), source])).values()].slice(0, 6);
       const researchData: any = {
         query: taskTitle,
-        sources: officialPages.filter(Boolean),
-        extraction: officialPages.some(Boolean) ? "first_party_only" : "no_first_party_match",
-        extraction_counts: { requested: officialUrls.length, extracted: officialPages.filter(Boolean).length, snippet_only: 0 }
+        sources: uniqueSources,
+        extraction: tavily.sources.length ? tavily.status : officialPages.some(Boolean) ? "first_party_fallback_" + tavily.status : tavily.status,
+        extraction_counts: {
+          tavily_requests: tavily.requested,
+          tavily_results: tavily.sources.length,
+          first_party_requested: officialUrls.length,
+          first_party_extracted: officialPages.filter(Boolean).length,
+          total_unique_sources: uniqueSources.length
+        }
       };
 
       const sources = Array.isArray(researchData.sources) ? researchData.sources : [];
@@ -1397,20 +1458,65 @@ Deno.serve(async (req: Request) => {
         try { const parsed = new URL(value); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; }
       }).filter(Boolean))];
     }
-    // Default operating mode is deterministic and API-independent.
-    // No Gemini request is made. A future opt-in AI mode must be explicitly configured and separately approved.
+    // Prepare a deterministic safety-net draft first. Gemini is optional and can only
+    // run through the Owner-authenticated, quota-guarded gateway when its kill switch is ready.
     let draft;
+    let generationMode = "deterministic_fallback";
+    let generationReason = "gemini_not_enabled_or_not_ready";
     try {
       const deterministic = buildDeterministicDraft(
         roleKey, taskTitle, taskDescription, stepTitle, stepRationale,
         stepExpectedOutput, researchContext, allowedSourceUrls
       );
       draft = parseDraft(JSON.stringify(deterministic), roleKey, stepIndex, allowedSourceUrls);
+      const evidenceCriticalTask = isDailyWebsiteActivityTask(taskTitle, taskDescription) ||
+        isCountingTask(taskTitle, taskDescription) || isConsolidatedTeamQaTask(taskTitle, taskDescription);
+      if (evidenceCriticalTask) {
+        generationReason = "deterministic_evidence_contract_preserved";
+      } else {
+        const prompt = buildEmployeePrompt({
+          roleKey, taskTitle, taskDescription, stepTitle,
+          rationale: stepRationale, expectedOutput: stepExpectedOutput,
+          context: researchContext
+        });
+        const ai = await callOfficeGemini(supabaseUrl, anonKey, token, prompt);
+        if (ai.available && ai.text) {
+          try {
+            const aiDraft = parseDraft(ai.text, roleKey, stepIndex, allowedSourceUrls);
+            let qcMayReplace = true;
+            if (roleKey === "quality_control_manager") {
+              const verdictRank = (value: string) => value === "FAIL" ? 0
+                : value === "INCONCLUSIVE" ? 1
+                : value === "PASS WITH LIMITATIONS" ? 2
+                : value === "PASS" ? 3 : -1;
+              const getVerdict = (value: string) =>
+                value.match(/(?:Overall )?QC verdict:\s*(PASS WITH LIMITATIONS|PASS|FAIL|INCONCLUSIVE)/i)?.[1]?.toUpperCase() || "";
+              const deterministicVerdict = getVerdict(String(draft.draft_content || ""));
+              const aiVerdict = getVerdict(String(aiDraft.draft_content || ""));
+              qcMayReplace = Boolean(deterministicVerdict && aiVerdict) &&
+                verdictRank(aiVerdict) <= verdictRank(deterministicVerdict);
+            }
+            if (qcMayReplace) {
+              // Model output can enrich analysis, but it cannot promote QC beyond deterministic evidence.
+              draft = { ...aiDraft, generation_mode: "gemini_free_tier", model: ai.model || null };
+              generationMode = "gemini_free_tier";
+              generationReason = "quota_guarded_generation_succeeded";
+            } else {
+              generationReason = "qc_verdict_promotion_blocked";
+            }
+          } catch {
+            generationReason = "gemini_output_failed_schema_validation";
+          }
+        } else if (ai.reason) {
+          generationReason = ai.reason;
+        }
+      }
     } catch {
       await releaseGenerationLock();
-      return respond({ ok: false, code: "employee_deterministic_draft_failed" }, 500, origin);
+      return respond({ ok: false, code: "employee_draft_preparation_failed" }, 500, origin);
     }
 
+    draft = { ...draft, generation_mode: generationMode, generation_reason: generationReason };
     const saved = await rpc(supabaseUrl, serviceKey, "office_employee_save_draft", {
       p_user_id: user.id, p_task_id: taskId, p_role_key: roleKey,
       p_step_index: stepIndex, p_draft: draft
@@ -1424,7 +1530,7 @@ Deno.serve(async (req: Request) => {
       return respond({ ok: false, code }, 409, origin);
     }
     await releaseGenerationLock();
-    return respond({ ok: true, data: { task_id: taskId, draft } }, 200, origin);
+    return respond({ ok: true, data: { task_id: taskId, draft, generation_mode: generationMode, generation_reason: generationReason } }, 200, origin);
   } catch {
     await releaseGenerationLock();
     return respond({ ok: false, code: "employee_agent_unavailable" }, 503, origin);

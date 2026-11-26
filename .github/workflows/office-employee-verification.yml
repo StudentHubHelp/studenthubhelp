@@ -1,0 +1,34 @@
+name: Office employee verification
+
+on:
+  pull_request:
+    paths:
+      - "office/**"
+      - ".github/workflows/office-employee-verification.yml"
+  push:
+    branches:
+      - "feature/office-advanced-employees-phase-b"
+    paths:
+      - "office/**"
+      - ".github/workflows/office-employee-verification.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deno-tests-and-typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        run: |
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --depth=1 origin "${GITHUB_SHA}"
+          git checkout --detach FETCH_HEAD
+      - name: Run Office contract tests
+        run: |
+          docker run --rm -v "${GITHUB_WORKSPACE}:/workspace" -w /workspace denoland/deno:2.2.12 deno test office/tests/phase13-employee-intelligence.test.ts
+      - name: Type-check Office Edge Functions
+        run: |
+          docker run --rm -v "${GITHUB_WORKSPACE}:/workspace" -w /workspace denoland/deno:2.2.12 deno check office/supabase/functions/office-gemini-gateway/index.ts office/supabase/functions/office-employee-agent/index.ts office/supabase/functions/office-general-manager/index.ts

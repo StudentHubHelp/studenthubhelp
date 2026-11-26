@@ -1,4 +1,5 @@
 import { DAILY_ACTIVITY_REQUIRED_ROLES, isDailyWebsiteActivityTask } from "../_shared/task-intent.ts";
+import { buildGeneralManagerPrompt, callOfficeGemini } from "../_shared/employee-intelligence.ts";
 const allowedOrigins = new Set([
   "https://office.studenthubhelp.in",
   "http://localhost:5173",
@@ -72,7 +73,7 @@ function parsePlan(raw: string, allowedRoles: Set<string>) {
     const expectedOutput = typeof step.expected_output === "string" ? step.expected_output.trim() : "";
     if (!title || title.length > 160 || !allowedRoles.has(roleKey) ||
         !rationale || rationale.length > 500 || !expectedOutput || expectedOutput.length > 500 ||
-        typeof step.requires_external_action !== "boolean") throw new Error("invalid_plan_step");
+        step.requires_external_action !== false) throw new Error("invalid_plan_step");
     return {
       title: redact(title),
       role_key: roleKey,
@@ -362,21 +363,42 @@ Deno.serve(async (req: Request) => {
     const taskTitle = redact(String(task.title || "").slice(0, 160));
     const taskDescription = redact(String(task.description || "").slice(0, 1800));
     let plan: any;
+    let planningMode = "deterministic_fallback";
+    let planningReason = "gemini_not_enabled_or_not_ready";
     try {
       const allowedRoles = new Set<string>(roles.map((role: any) => String(role.role_key)));
       const deterministic = buildDeterministicPlan(taskTitle, taskDescription, roles);
       plan = parsePlan(JSON.stringify(deterministic), allowedRoles);
+      const prompt = buildGeneralManagerPrompt(taskTitle, taskDescription, roles);
+      const ai = await callOfficeGemini(supabaseUrl, anonKey, token, prompt);
+      if (ai.available && ai.text) {
+        try {
+          const aiPlan = parsePlan(ai.text, allowedRoles);
+          plan = aiPlan;
+          planningMode = "gemini_free_tier";
+          planningReason = "quota_guarded_planning_succeeded";
+        } catch {
+          planningReason = "gemini_plan_failed_schema_or_role_validation";
+        }
+      } else if (ai.reason) {
+        planningReason = ai.reason;
+      }
       if (isConsolidatedTeamQaTask(taskTitle, taskDescription) &&
           (plan.steps.length !== consolidatedQaRoles.length ||
            new Set(plan.steps.map((step: any) => step.role_key)).size !== consolidatedQaRoles.length ||
            !consolidatedQaRoles.every(roleKey => plan.steps.some((step: any) => step.role_key === roleKey)))) {
-        return respond({ ok: false, code: "gm_consolidated_plan_incomplete" }, 503, origin);
+        // Deterministic special-case routing is authoritative for mandatory workflow roles.
+        plan = parsePlan(JSON.stringify(deterministic), allowedRoles);
+        planningMode = "deterministic_required_workflow";
+        planningReason = "mandatory_consolidated_qc_roles_enforced";
       }
       if (isDailyWebsiteActivityTask(taskTitle, taskDescription) &&
           (plan.steps.length !== dailyActivityRoles.length ||
            new Set(plan.steps.map((step: any) => step.role_key)).size !== dailyActivityRoles.length ||
            !dailyActivityRoles.every(roleKey => plan.steps.some((step: any) => step.role_key === roleKey)))) {
-        return respond({ ok: false, code: "gm_daily_activity_plan_incomplete" }, 503, origin);
+        plan = parsePlan(JSON.stringify(deterministic), allowedRoles);
+        planningMode = "deterministic_required_workflow";
+        planningReason = "mandatory_daily_activity_roles_enforced";
       }
     } catch {
       return respond({ ok: false, code: "gm_plan_validation_failed" }, 502, origin);
@@ -391,7 +413,7 @@ Deno.serve(async (req: Request) => {
         : "gm_plan_save_failed";
       return respond({ ok: false, code }, 409, origin);
     }
-    return respond({ ok: true, data: { task_id: taskId, plan } }, 200, origin);
+    return respond({ ok: true, data: { task_id: taskId, plan, planning_mode: planningMode, planning_reason: planningReason } }, 200, origin);
   } catch {
     return respond({ ok: false, code: "general_manager_unavailable" }, 503, origin);
   }
