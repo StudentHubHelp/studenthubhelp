@@ -819,7 +819,7 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
   const auditUpdates=unique.filter((x:any)=>x.activity==="updated"),removals=unique.filter((x:any)=>x.activity==="removed");
   const bookings=(booking.rows||[]).map((row:any)=>({booking_ref:String(row.id),property_name:String(row.property_name||"नाम उपलब्ध नहीं"),property_ref:String(row.property_id||"ID उपलब्ध नहीं"),category:String(row.category||"उपलब्ध नहीं"),status:String(row.status||"उपलब्ध नहीं"),created_at:String(row.created_at||"")}));
   const bookingStatuses:Record<string,number>={};
-  for(const item of bookings){const s=item.status.toLowerCase(),key=/confirm|booked|approved|active|joined/.test(s)?"confirmed":/pending|requested|new/.test(s)?"pending":/cancel|reject|failed|expired/.test(s)?"cancelled_or_failed":"other";bookingStatuses[key]=(bookingStatuses[key]||0)+1;}
+  for(const item of bookings){const s=item.status.toLowerCase(),key=/confirm|booked|approved|active|joined/.test(s)?"confirmed":/pending|requested|new/.test(s)?"pending":/cancel/.test(s)?"cancelled":/fail|reject|expired/.test(s)?"failed":"other";bookingStatuses[key]=(bookingStatuses[key]||0)+1;}
   const tableChecks=tables.map(item=>({table:item.table,created:{ok:created[item.table]?.ok===true,complete:created[item.table]?.complete===true,exact_total:created[item.table]?.total},
     updated:item.updated?{ok:updated[item.table]?.ok===true,complete:updated[item.table]?.complete===true,exact_total:updated[item.table]?.total}:{ok:false,complete:false,exact_total:null,reason:"legacy table has no updated_at"}}));
   const evidence={report_date:window.date,timezone:window.timezone,window_start_utc:window.start_utc,window_end_utc:window.end_utc,
@@ -828,6 +828,7 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
       legacy_pg_records:created.pg_listings?.complete?created.pg_listings.total:null,
       timestamp_updated_properties:canonical.every(x=>updated[x.table]?.complete)?timestampUpdates.length:null,
       audit_updated_events:admin.ok&&security.ok?auditUpdates.length:null,removal_events_logged:admin.ok&&security.ok?removals.length:null,
+      unique_property_ids_in_removal_logs:admin.ok&&security.ok?[...new Set(removals.map((x:any)=>String(x.entity_type)+"|"+String(x.entity_ref)).filter((x:string)=>!x.endsWith("|ID उपलब्ध नहीं"))) ].length:null,
       bookings:booking.complete?booking.total:null,booking_statuses:booking.complete?bookingStatuses:null},
     new_properties:newRows.slice(0,40),legacy_pg_records:legacyPgRows.slice(0,20),updated_properties:timestampUpdates.slice(0,40),
     audit_update_events:auditUpdates.slice(0,40),removal_events:removals.slice(0,40),bookings:bookings.slice(0,30),
@@ -865,9 +866,11 @@ function buildDailyActivityAnalystDraft(context:string){
   const e=parseDailyActivityEvidence(context);
   if(!e)return {summary:"आज की website activity report तैयार नहीं हो सकी; source data उपलब्ध नहीं है.",content:"DAILY_ACTIVITY_EVIDENCE_JSON उपलब्ध नहीं है.",checks:["हर required source की query स्थिति जाँचें."],risk:"high" as const};
   const s=e.counts.booking_statuses||{},bookingText=Number.isInteger(e.counts.bookings)
-    ?"कुल "+e.counts.bookings+" booking record(s): confirmed "+(s.confirmed||0)+", pending "+(s.pending||0)+", cancelled/failed "+(s.cancelled_or_failed||0)+", other "+(s.other||0)+"."
+    ?"कुल "+e.counts.bookings+" booking record(s): confirmed "+(s.confirmed||0)+", pending "+(s.pending||0)+", cancelled "+(s.cancelled||0)+", failed "+(s.failed||0)+", other "+(s.other||0)+"."
     :"Booking records की exact संख्या उपलब्ध नहीं है.";
-  const removalText=(e.removal_events||[]).length?(e.removal_events.length+" removal-related audit events मिले."):"Removal audit log में कोई matching entry नहीं मिली; इसे zero removal नहीं माना जा सकता.";
+  const removalText=(e.removal_events||[]).length
+    ?e.removal_events.length+" removal-related audit events मिले; log में "+activityCount(e.counts.unique_property_ids_in_removal_logs)+" unique property ID(s) दिखे। यह पूरी deletion history का प्रमाण नहीं है."
+    :"Removal audit log में कोई matching entry नहीं मिली; actual removal count verify नहीं हुआ.";
   const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,
     "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks}),
     "","| गतिविधि | नतीजा |","|---|---:|",
@@ -878,7 +881,7 @@ function buildDailyActivityAnalystDraft(context:string){
   if(!(e.bookings||[]).length)lines.push("- "+(Number.isInteger(e.counts.bookings)?"इस date range में कोई booking record नहीं मिला।":"Booking detail उपलब्ध नहीं है।"));
   lines.push("","### हटाई गई properties",removalText,"","### Report की सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x),
     "","सभी timestamps India time (Asia/Kolkata) के अनुसार हैं। Student की निजी जानकारी report में शामिल नहीं है.");
-  return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+", updated "+activityCount(e.counts.timestamp_updated_properties)+", bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled/failed "+(s.cancelled_or_failed??"पता नहीं")+"). "+removalText,
+  return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+", updated "+activityCount(e.counts.timestamp_updated_properties)+", bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled/failed "+(s.cancelled??"पता नहीं")+", failed "+(s.failed??"पता नहीं")+"). "+removalText,
     content:lines.join("\n"),checks:["Booking count केवल student_bookings के created_at से लें; enquiries को booking न मानें.","Unavailable को zero न दिखाएँ.","हर section में source coverage स्पष्ट रखें."],risk:"medium" as const};
 }
 function stableActivityJson(value:any):string {
