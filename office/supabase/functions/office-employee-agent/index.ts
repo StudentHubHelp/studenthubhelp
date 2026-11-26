@@ -732,7 +732,7 @@ function buildConsolidatedQaQc(researchContext: string) {
 }
 
 
-function resolveDailyActivityWindow(taskTitle: string, taskDescription: string) {
+function resolveDailyActivityWindow(taskTitle: string, taskDescription: string, taskCreatedAt = "") {
   const value = String(taskTitle || "") + " " + String(taskDescription || "");
   let date = "";
   const iso = value.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
@@ -743,7 +743,9 @@ function resolveDailyActivityWindow(taskTitle: string, taskDescription: string) 
     if (named) date = named[3] + "-" + months[named[2].toLowerCase()] + "-" + named[1].padStart(2,"0");
   }
   if (!date) {
-    const parts = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+    const createdAt = new Date(taskCreatedAt);
+    const dateAnchor = taskCreatedAt && Number.isFinite(createdAt.getTime()) ? createdAt : new Date();
+    const parts = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(dateAnchor);
     const part=(type:string)=>parts.find(x=>x.type===type)?.value||"";
     date=part("year")+"-"+part("month")+"-"+part("day");
   }
@@ -800,8 +802,8 @@ function safeAuditEvent(row:any,source:string) {
     changed_fields:Array.isArray(changed)?changed.map((x:any)=>String(x).slice(0,60)).slice(0,12):[],
     timestamp:String(row?.created_at||"")};
 }
-async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,taskTitle:string,taskDescription:string) {
-  const window=resolveDailyActivityWindow(taskTitle,taskDescription);
+async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,taskTitle:string,taskDescription:string,taskCreatedAt="") {
+  const window=resolveDailyActivityWindow(taskTitle,taskDescription,taskCreatedAt);
   const tables=[
     {table:"hostels",select:"id,property_id,name,city,category,type,status,created_at,updated_at",updated:true},
     {table:"tiffins",select:"id,property_id,name,service_name,city,category,status,created_at,updated_at",updated:true},
@@ -1318,7 +1320,7 @@ Deno.serve(async (req: Request) => {
         })
       }).slice(0, 26000);
     } else if (roleKey === "quality_control_manager" && isDailyWebsiteActivityTask(taskTitle, taskDescription)) {
-      const independent = await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription);
+      const independent = await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription, String(task.created_at || ""));
       const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
       const draftEvidenceRef = (role: string) => {
         const draft = priorDrafts.find((item: any) => item?.role_key === role);
@@ -1354,10 +1356,10 @@ Deno.serve(async (req: Request) => {
     } else {
       researchContext = roleKey === "data_analyst_reporting_manager"
         ? (isDailyWebsiteActivityTask(taskTitle, taskDescription)
-          ? await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription)
+          ? await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription, String(task.created_at || ""))
           : await fetchAggregateContext(supabaseUrl, serviceKey, taskTitle, taskDescription))
         : roleKey === "data_listing_manager" && isDailyWebsiteActivityTask(taskTitle, taskDescription)
-          ? await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription)
+          ? await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription, String(task.created_at || ""))
           : await buildRoleContext(roleKey, supabaseUrl, serviceKey, taskTitle, taskDescription);
       allowedSourceUrls = [...new Set((researchContext.match(/https:\/\/[^\s<>"']+/g) || []).map((value: string) => {
         try { const parsed = new URL(value); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; }
