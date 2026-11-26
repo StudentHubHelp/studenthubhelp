@@ -877,7 +877,7 @@ function buildDailyActivityAnalystDraft(context:string){
     ?e.removal_events.length+" removal-related audit events मिले; log में "+activityCount(e.counts.unique_property_ids_in_removal_logs)+" unique property ID(s) दिखे। यह पूरी deletion history का प्रमाण नहीं है."
     :"Removal audit log में कोई matching entry नहीं मिली; actual removal count verify नहीं हुआ.";
   const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,
-    "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks}),
+    "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks,signature:e.snapshot_signature}),
     "","| गतिविधि | नतीजा |","|---|---:|",
     "| नई properties | "+activityCount(e.counts.new_properties)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
     "| Audit log updates | "+activityCount(e.counts.audit_updated_events)+" |","| Removed / hidden events | "+(e.removal_events||[]).length+" logged (zero confirmed नहीं) |",
