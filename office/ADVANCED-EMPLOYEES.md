@@ -50,7 +50,7 @@ Status: automated contract tests added; not yet fully executed.
 - No production Edge Function deployment or production cutover is performed by this branch.
 
 ## Gemini Free Tier budget
-The Owner supplied an AI Studio screenshot showing Google limits of 15 RPM, 250,000 TPM and 500 RPD. The Office application caps are lower: 8 RPM, 200,000 TPM and 100 RPD, with 512 output tokens. The gateway currently remains disabled until the Owner explicitly enables it after confirming the key and quota status. No paid fallback is permitted.
+The Owner supplied an AI Studio screenshot showing Google limits of 15 RPM, 250,000 TPM and 500 RPD. The Office application caps are lower: 8 RPM, 200,000 TPM and 100 RPD, with 1,024 output tokens. The gateway currently remains disabled until the Owner explicitly enables it after confirming the key and quota status. No paid fallback is permitted.
 
 ## Remaining blockers before calling A–F complete
 1. Run the Deno tests and type-check the Edge Functions.
