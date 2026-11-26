@@ -827,8 +827,8 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
     counts:{new_properties:canonical.every(x=>created[x.table]?.complete)?canonical.reduce((n,x)=>n+Number(created[x.table].total||0),0):null,
       legacy_pg_records:created.pg_listings?.complete?created.pg_listings.total:null,
       timestamp_updated_properties:canonical.every(x=>updated[x.table]?.complete)?timestampUpdates.length:null,
-      audit_updated_events:admin.ok&&security.ok?auditUpdates.length:null,removal_events_logged:admin.ok&&security.ok?removals.length:null,
-      unique_property_ids_in_removal_logs:admin.ok&&security.ok?[...new Set(removals.map((x:any)=>String(x.entity_type)+"|"+String(x.entity_ref)).filter((x:string)=>!x.endsWith("|ID उपलब्ध नहीं"))) ].length:null,
+      audit_updated_events:admin.complete&&security.complete?auditUpdates.length:null,removal_events_logged:admin.complete&&security.complete?removals.length:null,
+      unique_property_ids_in_removal_logs:admin.complete&&security.complete?[...new Set(removals.map((x:any)=>String(x.entity_type)+"|"+String(x.entity_ref)).filter((x:string)=>!x.endsWith("|ID उपलब्ध नहीं"))) ].length:null,
       bookings:booking.complete?booking.total:null,booking_statuses:booking.complete?bookingStatuses:null},
     new_properties:newRows.slice(0,40),legacy_pg_records:legacyPgRows.slice(0,20),updated_properties:timestampUpdates.slice(0,40),
     audit_update_events:auditUpdates.slice(0,40),removal_events:removals.slice(0,40),bookings:bookings.slice(0,30),
@@ -874,14 +874,14 @@ function buildDailyActivityAnalystDraft(context:string){
   const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,
     "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks}),
     "","| गतिविधि | नतीजा |","|---|---:|",
-    "| नई properties | "+activityCount(e.counts.new_properties)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |",
+    "| नई properties | "+activityCount(e.counts.new_properties)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
     "| Audit log updates | "+activityCount(e.counts.audit_updated_events)+" |","| Removed / hidden events | "+(e.removal_events||[]).length+" logged (zero confirmed नहीं) |",
     "| Bookings | "+activityCount(e.counts.bookings)+" |","","### Booking status",bookingText,"","### Booking details"];
   for(const x of (e.bookings||[]).slice(0,25))lines.push("- "+x.property_name+" · "+x.category+" · "+x.status+" · "+x.created_at+" · Booking ref "+x.booking_ref);
   if(!(e.bookings||[]).length)lines.push("- "+(Number.isInteger(e.counts.bookings)?"इस date range में कोई booking record नहीं मिला।":"Booking detail उपलब्ध नहीं है।"));
   lines.push("","### हटाई गई properties",removalText,"","### Report की सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x),
     "","सभी timestamps India time (Asia/Kolkata) के अनुसार हैं। Student की निजी जानकारी report में शामिल नहीं है.");
-  return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+", updated "+activityCount(e.counts.timestamp_updated_properties)+", bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled/failed "+(s.cancelled??"पता नहीं")+", failed "+(s.failed??"पता नहीं")+"). "+removalText,
+  return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+", updated "+activityCount(e.counts.timestamp_updated_properties)+", bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled "+(s.cancelled??"पता नहीं")+", failed "+(s.failed??"पता नहीं")+"). "+removalText,
     content:lines.join("\n"),checks:["Booking count केवल student_bookings के created_at से लें; enquiries को booking न मानें.","Unavailable को zero न दिखाएँ.","हर section में source coverage स्पष्ट रखें."],risk:"medium" as const};
 }
 function stableActivityJson(value:any):string {
