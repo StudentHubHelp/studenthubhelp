@@ -14,6 +14,7 @@
   const $ = id => document.getElementById(id);
   const employeeDraftRequests = new Set();
   const planExecutionRequests = new Set();
+  let showingArchivedTasks = false;
   const status = (message, ok = false) => {
     $("dashboard-status").textContent = message;
     $("dashboard-status").className = "status" + (ok ? " success" : "");
@@ -57,6 +58,7 @@
         employee_step_failed: "An employee workflow stopped before all drafts were generated.",
         invalid_input: "Please check the task details and try again.",
         task_transition_not_allowed: "This task can no longer be changed from its current status.",
+        task_archive_blocked: "Running or approval-waiting tasks cannot be archived. Pause or finish them first.",
         authentication_required: "Please sign in again.",
         mfa_required: "Two-step verification is required. Please sign in again."
       };
@@ -533,6 +535,21 @@
     return button;
   }
 
+  function renderCurrentTask(task) {
+    const target = $("current-task-card");
+    target.replaceChildren();
+    if (!task) { target.append(node("div", "empty-state", "No current task. Create a task from Tasks & Delegation to get started.")); return; }
+    const card = node("article", "current-task-inner");
+    const top = node("div", "task-card-top");
+    top.append(node("span", "task-key", task.task_key), node("span", "task-status status-" + task.status, titleCase(task.status)));
+    card.append(top, node("h3", "", task.title), node("p", "task-description", task.description || "No additional description provided."));
+    const meta = node("div", "task-meta");
+    meta.append(node("span", "", titleCase(task.priority) + " priority"), node("span", "", "Updated " + dateText(task.updated_at || task.created_at)));
+    card.append(meta);
+    addAction(card, "Open task workspace", "small-action gm-action", () => location.hash = "tasks");
+    target.append(card);
+  }
+
   function renderTasks(tasks = [], plans = [], employeeItems = []) {
     const planMap = new Map((plans || []).map(item => [item.task_id, item.plan]));
     const draftMap = new Map((employeeItems || []).map(item => [item.task_id, item.drafts || []]));
@@ -540,6 +557,10 @@
     const list = $("task-list");
     list.replaceChildren();
     $("task-total-pill").textContent = tasks.length + (tasks.length === 1 ? " task" : " tasks");
+    $("active-tasks-tab").classList.toggle("active", !showingArchivedTasks);
+    $("archived-tasks-tab").classList.toggle("active", showingArchivedTasks);
+    $("active-tasks-tab").setAttribute("aria-pressed", String(!showingArchivedTasks));
+    $("archived-tasks-tab").setAttribute("aria-pressed", String(showingArchivedTasks));
     if (!tasks.length) {
       list.append(node("div", "empty-state", "No tasks yet. Create your first task to start building the work queue."));
       return;
@@ -567,12 +588,17 @@
           runButton.textContent = "Running employee drafts…";
         }
       }
-      if (task.status === "queued" || task.status === "draft") {
+      if (task.archived_at) {
+        addAction(actions, "Restore", "small-action gm-action", button => archiveTask(task, "restore_task", button));
+      } else if (task.status === "queued" || task.status === "draft") {
         addAction(actions, "Pause", "small-action", () => changeTaskStatus(task.id, "paused"));
         addAction(actions, "Cancel", "small-action danger-action", () => changeTaskStatus(task.id, "cancelled"));
       } else if (task.status === "paused") {
         addAction(actions, "Resume", "small-action", () => changeTaskStatus(task.id, "queued"));
         addAction(actions, "Cancel", "small-action danger-action", () => changeTaskStatus(task.id, "cancelled"));
+      }
+      if (!task.archived_at && !["running", "waiting_approval"].includes(task.status)) {
+        addAction(actions, "Delete", "small-action danger-action", button => archiveTask(task, "archive_task", button));
       }
       addAction(actions, "Activity", "small-action subtle-action", () => loadTaskLogs(task));
       card.append(top, heading, description, meta, actions);
@@ -732,6 +758,20 @@
     }
   }
 
+  async function archiveTask(task, action, button) {
+    const restoring = action === "restore_task";
+    const prompt = restoring
+      ? "Restore this task to the active task list? Its activity and employee drafts will remain intact."
+      : "Move this task to Archived? This is a reversible soft-delete. Task activity, approvals and employee drafts will be retained. Running or approval-waiting tasks cannot be archived.";
+    if (!window.confirm(prompt)) return;
+    if (button) { button.disabled = true; button.textContent = restoring ? "Restoring…" : "Archiving…"; }
+    try {
+      await api(action, { task_id: task.id });
+      status(restoring ? "Task restored. Its history is intact." : "Task archived. Its history and drafts were retained.", true);
+      await loadWorkspace();
+    } catch (error) { status(error.message); if (button) { button.disabled = false; button.textContent = restoring ? "Restore" : "Delete"; } }
+  }
+
   async function changeTaskStatus(taskId, nextStatus) {
     try {
       await api("set_task_status", { task_id: taskId, status: nextStatus });
@@ -825,7 +865,7 @@
     try {
       const [overview, taskResult, planResult, employeeResult, integrationResult, approvalResult, quotaResult] = await Promise.all([
         api("overview"),
-        api("list_tasks"),
+        api("list_tasks", { include_archived: showingArchivedTasks }),
         gmApi("list_plans"),
         employeeApi("list_drafts"),
         integrationApi("overview"),
@@ -894,6 +934,8 @@
   });
 
   $("refresh-btn").addEventListener("click", loadWorkspace);
+  $("active-tasks-tab").addEventListener("click", () => { showingArchivedTasks = false; loadWorkspace(); });
+  $("archived-tasks-tab").addEventListener("click", () => { showingArchivedTasks = true; loadWorkspace(); });
   $("approval-filter").addEventListener("change", loadApprovals);
   $("close-logs-btn").addEventListener("click", () => { $("task-logs-panel").hidden = true; });
   $("logout-btn").addEventListener("click", async () => {

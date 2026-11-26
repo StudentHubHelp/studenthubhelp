@@ -65,7 +65,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => null);
     const allowedActions = new Set([
       "overview", "list_tasks", "list_employees", "create_task",
-      "set_task_status", "list_task_logs",
+      "set_task_status", "list_task_logs", "archive_task", "restore_task",
     ]);
     if (!body || typeof body.action !== "string" || !allowedActions.has(body.action)) {
       return respond({ ok: false, code: "invalid_request" }, 400, origin);
@@ -93,6 +93,7 @@ Deno.serve(async (req: Request) => {
       const message = typeof result?.message === "string" ? result.message : "";
       const code = message === "owner_access_denied" ? "owner_access_denied"
         : message === "task_not_found_or_transition_not_allowed" ? "task_transition_not_allowed"
+        : message === "task_not_found_or_archive_blocked" ? "task_archive_blocked"
         : message.startsWith("title_") || message === "description_too_long" ||
           message === "invalid_priority" || message.startsWith("invalid_") ||
           message.startsWith("owner_can_only") ? "invalid_input"
