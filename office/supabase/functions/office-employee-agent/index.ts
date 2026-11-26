@@ -114,48 +114,97 @@ function extractSourceSnippets(source: string, patterns: string[], maxPer = 650)
 
 async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string): Promise<string> {
   const tables = ["hostels", "tiffins", "libraries", "cafes", "bookstores"];
-  const headers = { apikey: serviceKey, Authorization: "Bearer " + serviceKey, "Accept-Profile": "public" };
+  const headers = {
+    apikey: serviceKey,
+    Authorization: "Bearer " + serviceKey,
+    "Accept-Profile": "public",
+    Prefer: "count=exact"
+  };
+  const pageSize = 500;
+  const maxRows = 10000;
   const results = await Promise.all(tables.map(async table => {
-    try {
-      const url = supabaseUrl + "/rest/v1/" + table + "?select=id,name,city,area,status,verified&order=created_at.desc&limit=25";
-      const response = await fetch(url, { headers, signal: AbortSignal.timeout(7000) });
-      if (!response.ok) return { table, status: "unavailable" };
-      const data = await response.json();
-      const rows = Array.isArray(data) ? data : [];
-      const fields = ["name", "city", "area", "status"];
-      const missing: Record<string, number> = {};
-      for (const field of fields) missing[field] = rows.filter((row: any) => row[field] == null || String(row[field]).trim() === "").length;
-      return { table, sample_limit: 25, sample_size: rows.length, missing_field_counts: missing, rows };
-    } catch { return { table, status: "unavailable" }; }
+    const rows: any[] = [];
+    let expected: number | null = null;
+    let complete = false;
+    let failure = "";
+    for (let offset = 0; offset < maxRows; offset += pageSize) {
+      try {
+        const params = new URLSearchParams({
+          select: "id,name,city,area,status,verified,updated_at",
+          order: "created_at.asc",
+          limit: String(pageSize),
+          offset: String(offset)
+        });
+        const response = await fetch(supabaseUrl + "/rest/v1/" + table + "?" + params.toString(), {
+          headers, signal: AbortSignal.timeout(9000)
+        });
+        if (!response.ok) { failure = "http_" + response.status; break; }
+        if (expected === null) {
+          const range = response.headers.get("content-range") || "";
+          const total = range.includes("/") ? range.slice(range.lastIndexOf("/") + 1) : "";
+          if (!/^\\d+$/.test(total)) { failure = "exact_count_unavailable"; break; }
+          expected = Number(total);
+        }
+        const page = await response.json().catch(() => null);
+        if (!Array.isArray(page)) { failure = "invalid_page"; break; }
+        rows.push(...page);
+        if (rows.length >= expected) { complete = true; break; }
+        if (page.length < pageSize) break;
+      } catch {
+        failure = "request_failed";
+        break;
+      }
+    }
+    const fields = ["name", "city", "area", "status"];
+    const missing: Record<string, number> = {};
+    for (const field of fields) missing[field] = rows.filter((row: any) =>
+      row[field] == null || String(row[field]).trim() === ""
+    ).length;
+    return {
+      table, expected_count: expected, scanned_count: rows.length,
+      complete: complete && expected === rows.length,
+      truncated: expected !== null && rows.length < expected,
+      failure: failure || null,
+      missing_field_counts: missing,
+      rows
+    };
   }));
   let reports: any = null;
   try {
     const response = await fetch(supabaseUrl + "/rest/v1/property_reports?select=property_id,property_table,reason,status,created_at&order=created_at.desc&limit=200", {
-      headers, signal: AbortSignal.timeout(7000)
+      headers, signal: AbortSignal.timeout(9000)
     });
     if (response.ok) reports = await response.json();
   } catch { reports = null; }
   const duplicateMap = new Map<string, any[]>();
   for (const result of results) {
-    for (const row of Array.isArray(result.rows) ? result.rows : []) {
-      const key = [row.name, row.city, row.area].map((value: any) => String(value || "").trim().toLowerCase()).join("|");
+    for (const row of result.rows) {
+      const key = [row.name, row.city, row.area].map((value: any) =>
+        String(value || "").trim().toLowerCase().replace(/\\s+/g, " ")
+      ).join("|");
       if (!row.name || !row.city) continue;
       const group = duplicateMap.get(key) || [];
       group.push({ table: result.table, id: row.id, name: row.name, city: row.city, area: row.area });
       duplicateMap.set(key, group);
     }
   }
-  const duplicateCandidates = [...duplicateMap.values()].filter(group => group.length > 1).slice(0, 30);
-  return "READ-ONLY LISTING REVIEW (contact details and reporter identities excluded; latest 25 rows per category only): " +
+  const duplicateCandidates = [...duplicateMap.values()].filter(group => group.length > 1).slice(0, 50);
+  const allComplete = results.every(result => result.complete);
+  return "READ-ONLY LISTING QUALITY EVIDENCE (contact details and reporter identities excluded): " +
     JSON.stringify({
-      category_samples: results.map(({ rows, ...sample }: any) => sample),
+      coverage: {
+        complete: allComplete,
+        categories: results.map(({ rows, ...summary }: any) => summary),
+        maximum_rows_per_category: maxRows
+      },
       duplicate_candidates: duplicateCandidates,
-      duplicate_method: "Exact normalized name + city + area match within returned samples; candidates require manual confirmation.",
+      duplicate_method: "Exact normalized name + city + area match across every fetched row; candidates require human confirmation.",
       property_issue_reports: Array.isArray(reports) ? reports : null,
-      limitation: "Missing-field counts and duplicate candidates apply only to returned samples. No report records means no reports are currently stored, not proof that no property has problems. Recommendations require owner review."
-    }).slice(0, 6500);
+      limitation: allComplete
+        ? "All rows in the five canonical listing tables were scanned. Duplicate matches are candidates, not confirmed duplicates."
+        : "At least one category could not be fully scanned; findings are partial. Do not describe partial coverage as a complete audit."
+    }).slice(0, 9000);
 }
-
 function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
   const value = (taskTitle + " " + taskDescription).toLowerCase();
   return /consolidated/.test(value) && /all\s+(?:8|eight)\s+employees/.test(value) &&
