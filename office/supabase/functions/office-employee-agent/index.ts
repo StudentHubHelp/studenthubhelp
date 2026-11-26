@@ -1430,7 +1430,7 @@ Deno.serve(async (req: Request) => {
                 : value === "PASS WITH LIMITATIONS" ? 2
                 : value === "PASS" ? 3 : -1;
               const getVerdict = (value: string) =>
-                value.match(/(?:Overall )?QC verdict:\\s*(PASS WITH LIMITATIONS|PASS|FAIL|INCONCLUSIVE)/i)?.[1]?.toUpperCase() || "";
+                value.match(/(?:Overall )?QC verdict:\s*(PASS WITH LIMITATIONS|PASS|FAIL|INCONCLUSIVE)/i)?.[1]?.toUpperCase() || "";
               const deterministicVerdict = getVerdict(String(draft.draft_content || ""));
               const aiVerdict = getVerdict(String(aiDraft.draft_content || ""));
               qcMayReplace = Boolean(deterministicVerdict && aiVerdict) &&
