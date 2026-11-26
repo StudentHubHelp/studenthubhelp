@@ -14,6 +14,10 @@ Deno.test("daily Hinglish property and booking report routes to daily activity",
   );
 });
 
+Deno.test("plain Hinglish what-happened-today request is daily activity", () => {
+  assertEqual(isDailyWebsiteActivityTask("Aaj website me kya hua?", ""), true, "plain daily activity intent");
+});
+
 Deno.test("plain city-wise property count remains a count task", () => {
   assertEqual(
     isDailyWebsiteActivityTask("Sikar property count", "How many hostels are in Sikar?"),
