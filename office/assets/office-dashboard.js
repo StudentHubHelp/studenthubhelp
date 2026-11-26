@@ -671,8 +671,9 @@
           const analystDraft = completedDrafts.find((draft, index) =>
             (gmPlan.steps || [])[index]?.role_key === "data_analyst_reporting_manager");
           if (qcPassed && analystDraft) {
-            finalReport.append(node("strong", "gm-owner-answer-title", "Owner business answer"));
-            finalReport.append(node("p", "gm-owner-answer", analystDraft.summary || analystDraft.title || "Verified count report is available."));
+            const isDailyActivity = /daily|today|aaj|आज|website activity/i.test(String(task.title || "") + " " + String(task.description || ""));
+            finalReport.append(node("strong", "gm-owner-answer-title", isDailyActivity ? "आज की आसान वेबसाइट रिपोर्ट" : "Owner business answer"));
+            finalReport.append(node("p", "gm-owner-answer", analystDraft.summary || analystDraft.title || "Verified report is available."));
           }
           completedDrafts.forEach((draft, index) => {
             const role = (gmPlan.steps || [])[index]?.role_key || "employee";

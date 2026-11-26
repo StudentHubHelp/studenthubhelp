@@ -1,3 +1,4 @@
+import { isDailyWebsiteActivityTask } from "../_shared/task-intent.ts";
 const allowedOrigins = new Set([
   "https://office.studenthubhelp.in",
   "http://localhost:5173",
@@ -160,7 +161,9 @@ function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): b
     /qc manager|quality control manager/.test(value) && /seo manager/.test(value);
 }
 function isCountingTask(taskTitle: string, taskDescription: string): boolean {
-  return !isConsolidatedTeamQaTask(taskTitle, taskDescription) && /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskTitle + " " + taskDescription);
+  return !isConsolidatedTeamQaTask(taskTitle, taskDescription) &&
+    !isDailyWebsiteActivityTask(taskTitle, taskDescription) &&
+    /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskTitle + " " + taskDescription);
 }
 function extractRequestedCity(value: string): string {
   const text = value.replace(/\s+/g, " ").trim();
@@ -221,8 +224,9 @@ async function runStatusTable(
     ...statuses.map(state => exactCityCount(supabaseUrl, serviceKey, table, city, { ...filters, status: "eq." + state }))
   ]);
   const statusCounts = Object.fromEntries(statuses.map((state, index) => [state, stateCounts[index]]));
-  const otherStatusCount = Number.isInteger(total) && stateCounts.every(Number.isInteger)
-    ? Number(total) - stateCounts.reduce((sum, value) => sum + Number(value), 0) : null;
+  const numericStateCounts = stateCounts.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  const otherStatusCount = Number.isInteger(total) && numericStateCounts.length === stateCounts.length
+    ? Number(total) - numericStateCounts.reduce((sum, value) => sum + value, 0) : null;
   return {
     table,
     category,
@@ -449,7 +453,7 @@ async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, ta
     search_query_telemetry: { available: false, note: "No search-event table or query-event records are currently available. Do not report a most-searched property; request search tracking instrumentation." }
   }).slice(0, 6500);
 }
-async function buildRoleContext(roleKey: string, supabaseUrl: string, serviceKey: string): Promise<string> {
+async function buildRoleContext(roleKey: string, supabaseUrl: string, serviceKey: string, taskTitle = "", taskDescription = ""): Promise<string> {
   if (roleKey === "data_listing_manager") return await fetchListingReviewContext(supabaseUrl, serviceKey);
   if (roleKey === "data_analyst_reporting_manager") return await fetchAggregateContext(supabaseUrl, serviceKey, taskTitle, taskDescription);
   const sources: string[] = [];
@@ -723,8 +727,226 @@ function buildConsolidatedQaQc(researchContext: string) {
     summary: "Consolidated QA overall QC " + overall + " — " + results.filter(item => item.verdict === "PASS").length + "/7 employee drafts passed.",
     content: lines.join("\n"),
     checks: ["All seven employee drafts must exist.", "Every role must meet its role-specific evidence criteria.", "Overall PASS requires seven PASS results.", "Owner review remains required."],
-    risk: overall === "PASS" ? "medium" : "high"
+    risk: overall === "PASS" ? "medium" as const : "high" as const
   };
+}
+
+
+function resolveDailyActivityWindow(taskTitle: string, taskDescription: string, taskCreatedAt = "") {
+  const value = String(taskTitle || "") + " " + String(taskDescription || "");
+  let date = "";
+  const iso = value.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  if (iso) date = iso[1];
+  if (!date) {
+    const months: Record<string, string> = {jan:"01",january:"01",feb:"02",february:"02",mar:"03",march:"03",apr:"04",april:"04",may:"05",jun:"06",june:"06",jul:"07",july:"07",aug:"08",august:"08",sep:"09",september:"09",oct:"10",october:"10",nov:"11",november:"11",dec:"12",december:"12"};
+    const named = value.match(/\b(\d{1,2})\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(20\d{2})\b/i);
+    if (named) date = named[3] + "-" + months[named[2].toLowerCase()] + "-" + named[1].padStart(2,"0");
+  }
+  if (!date) {
+    const createdAt = new Date(taskCreatedAt);
+    const dateAnchor = taskCreatedAt && Number.isFinite(createdAt.getTime()) ? createdAt : new Date();
+    const parts = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(dateAnchor);
+    const part=(type:string)=>parts.find(x=>x.type===type)?.value||"";
+    date=part("year")+"-"+part("month")+"-"+part("day");
+  }
+  const start = new Date(date+"T00:00:00+05:30");
+  return {date,timezone:"Asia/Kolkata",start_utc:start.toISOString(),end_utc:new Date(start.getTime()+86400000).toISOString()};
+}
+
+async function readDailyActivityRows(supabaseUrl:string,serviceKey:string,table:string,select:string,dateColumn:string,window:{start_utc:string;end_utc:string}) {
+  const rows:any[]=[]; let exactTotal:number|null=null; const pageSize=250; const maxRows=2000;
+  try {
+    for(let offset=0;offset<maxRows;offset+=pageSize) {
+      const params=new URLSearchParams({select,order:dateColumn+".asc",limit:String(pageSize),offset:String(offset)});
+      params.set("and","("+dateColumn+".gte."+window.start_utc+","+dateColumn+".lt."+window.end_utc+")");
+      const response=await fetch(supabaseUrl+"/rest/v1/"+table+"?"+params.toString(),{
+        headers:{apikey:serviceKey,Authorization:"Bearer "+serviceKey,"Accept-Profile":"public",Prefer:"count=exact"},
+        signal:AbortSignal.timeout(10000)
+      });
+      if(!response.ok)return {ok:false,complete:false,total:null,rows,error:"http_"+response.status};
+      if(exactTotal===null){const range=response.headers.get("content-range")||"";const total=range.includes("/")?range.slice(range.lastIndexOf("/")+1):"";if(!/^\d+$/.test(total))return {ok:false,complete:false,total:null,rows,error:"exact_count_unavailable"};exactTotal=Number(total);}
+      const page=await response.json().catch(()=>null);if(!Array.isArray(page))return {ok:false,complete:false,total:exactTotal,rows,error:"invalid_rows"};
+      rows.push(...page);if(rows.length>=exactTotal||page.length<pageSize)break;
+    }
+    return {ok:true,complete:exactTotal!==null&&rows.length===exactTotal,total:exactTotal,rows,truncated:exactTotal!==null&&rows.length<exactTotal};
+  } catch {return {ok:false,complete:false,total:exactTotal,rows,error:"query_timeout_or_network_error"};}
+}
+function safeActivityProperty(row:any,table:string,activity:string) {
+  return {activity,source_table:table,category:String(row?.category||row?.type||(table==="pg_listings"?"PG":table)),
+    property_name:String(row?.name||row?.service_name||row?.title||"नाम उपलब्ध नहीं"),
+    property_ref:String(row?.property_id??row?.id??"ID उपलब्ध नहीं"),
+    property_ref_kind:row?.property_id!=null?"property_id":"table_id",city:String(row?.city||"शहर उपलब्ध नहीं"),
+    status:row?.status==null?(typeof row?.is_approved==="boolean"?(row.is_approved?"approved":"pending"):"उपलब्ध नहीं"):String(row.status),
+    timestamp:String(activity==="new"?row?.created_at:row?.updated_at||row?.created_at||"")};
+}
+function uniqueActivityProperties(rows:any[]) {
+  const seen=new Map<string,any>();
+  for(const row of rows) {
+    const key=row.property_ref_kind==="property_id"
+      ?"property:"+String(row.property_ref).toLowerCase()
+      :String(row.source_table)+":id:"+String(row.property_ref).toLowerCase();
+    if(!seen.has(key))seen.set(key,row);
+  }
+  return [...seen.values()];
+}
+function safeAuditEvent(row:any,source:string) {
+  const action=String(row?.action||"").slice(0,100),entityType=String(row?.entity_type||"").slice(0,100),normalized=action.toLowerCase();
+  if(!/property|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore/i.test(entityType+" "+action))return null;
+  const details=row?.details&&typeof row.details==="object"?row.details:row?.metadata&&typeof row.metadata==="object"?row.metadata:{};
+  const newStatus=String(details.new_status||details.status||"").toLowerCase();
+  const isInactive=details.is_active===false||/inactive|deactivat|disabled|hidden|archived|suspended/.test(newStatus);
+  const activity=/delet|remov|archiv|hide|deactivat|disable/i.test(normalized)||isInactive?"removed"
+    :/updat|edit|modif|chang|status/i.test(normalized)?"updated"
+    :/creat|add|insert|publish/i.test(normalized)?"created":"other";
+  if(activity==="other")return null;
+  const changed=details.changed_fields||details.updated_fields||details.fields;
+  return {activity,source,action,entity_type:entityType,entity_ref:String(row?.entity_id||"ID उपलब्ध नहीं"),
+    property_name:String(details.property_name||details.name||details.title||"लॉग में नाम उपलब्ध नहीं"),
+    city:String(details.city||"लॉग में शहर उपलब्ध नहीं"),
+    changed_fields:Array.isArray(changed)?changed.map((x:any)=>String(x).slice(0,60)).slice(0,12):[],
+    timestamp:String(row?.created_at||"")};
+}
+async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,taskTitle:string,taskDescription:string,taskCreatedAt="") {
+  const window=resolveDailyActivityWindow(taskTitle,taskDescription,taskCreatedAt);
+  const tables=[
+    {table:"hostels",select:"id,property_id,name,city,category,type,status,created_at,updated_at",updated:true},
+    {table:"tiffins",select:"id,property_id,name,service_name,city,category,status,created_at,updated_at",updated:true},
+    {table:"libraries",select:"id,property_id,name,city,category,status,created_at,updated_at",updated:true},
+    {table:"cafes",select:"id,property_id,name,city,category,status,created_at,updated_at",updated:true},
+    {table:"bookstores",select:"id,property_id,name,service_name,city,category,status,created_at,updated_at",updated:true},
+    {table:"pg_listings",select:"id,title,city,is_approved,created_at",updated:false}
+  ];
+  const jobs:Promise<any>[]=[];
+  for(const item of tables){jobs.push(readDailyActivityRows(supabaseUrl,serviceKey,item.table,item.select,"created_at",window));if(item.updated)jobs.push(readDailyActivityRows(supabaseUrl,serviceKey,item.table,item.select,"updated_at",window));}
+  jobs.push(readDailyActivityRows(supabaseUrl,serviceKey,"admin_activity_logs","id,action,entity_type,entity_id,details,created_at","created_at",window));
+  jobs.push(readDailyActivityRows(supabaseUrl,serviceKey,"security_audit_log","id,action,entity_type,entity_id,metadata,created_at","created_at",window));
+  jobs.push(readDailyActivityRows(supabaseUrl,serviceKey,"student_bookings","id,property_id,property_table,property_name,category,status,created_at","created_at",window));
+  const results=await Promise.all(jobs);let cursor=0;const created:any={},updated:any={};
+  for(const item of tables){created[item.table]=results[cursor++];updated[item.table]=item.updated?results[cursor++]:null;}
+  const admin=results[cursor++],security=results[cursor++],booking=results[cursor++];
+  const canonical=tables.filter(x=>x.table!=="pg_listings");
+  const newRows=canonical.flatMap(item=>(created[item.table]?.rows||[]).map((row:any)=>safeActivityProperty(row,item.table,"new")));
+  const legacyPgRows=(created.pg_listings?.rows||[]).map((row:any)=>safeActivityProperty(row,"pg_listings","legacy_pg_new"));
+  const uniqueNewRows=uniqueActivityProperties(newRows);
+  const timestampUpdates=canonical.flatMap(item=>{
+    const result=updated[item.table];if(!result?.ok)return [];
+    return (result.rows||[]).filter((row:any)=>{const cr=Date.parse(String(row?.created_at||"")),up=Date.parse(String(row?.updated_at||"")),st=Date.parse(window.start_utc);return Number.isFinite(up)&&up>=st&&(!Number.isFinite(cr)||cr<st);})
+      .map((row:any)=>safeActivityProperty(row,item.table,"updated"));
+  });
+  const uniqueTimestampUpdates=uniqueActivityProperties(timestampUpdates);
+  const auditEvents=[...(admin.rows||[]).map((row:any)=>safeAuditEvent(row,"admin_activity_logs")),...(security.rows||[]).map((row:any)=>safeAuditEvent(row,"security_audit_log"))].filter(Boolean);
+  const unique=[...new Map(auditEvents.map((x:any)=>[x.activity+"|"+x.entity_type+"|"+x.entity_ref+"|"+String(x.timestamp).slice(0,16),x])).values()];
+  const auditUpdates=unique.filter((x:any)=>x.activity==="updated"),removals=unique.filter((x:any)=>x.activity==="removed");
+  const bookings=(booking.rows||[]).map((row:any)=>({booking_ref:String(row.id),property_name:String(row.property_name||"नाम उपलब्ध नहीं"),property_ref:String(row.property_id||"ID उपलब्ध नहीं"),category:String(row.category||"उपलब्ध नहीं"),status:String(row.status||"उपलब्ध नहीं"),created_at:String(row.created_at||"")}));
+  const bookingStatuses:Record<string,number>={};
+  for(const item of bookings){const s=item.status.toLowerCase(),key=/confirm|booked|approved|active|joined/.test(s)?"confirmed":/pending|requested|new/.test(s)?"pending":/cancel/.test(s)?"cancelled":/fail|reject|expired/.test(s)?"failed":"other";bookingStatuses[key]=(bookingStatuses[key]||0)+1;}
+  const tableChecks=tables.map(item=>({table:item.table,created:{ok:created[item.table]?.ok===true,complete:created[item.table]?.complete===true,exact_total:created[item.table]?.total},
+    updated:item.updated?{ok:updated[item.table]?.ok===true,complete:updated[item.table]?.complete===true,exact_total:updated[item.table]?.total}:{ok:false,complete:false,exact_total:null,reason:"legacy table has no updated_at"}}));
+  const evidence:any={report_date:window.date,timezone:window.timezone,window_start_utc:window.start_utc,window_end_utc:window.end_utc,
+    source_checks:{property_tables:tableChecks,admin_activity_logs:{ok:admin.ok===true,complete:admin.complete===true,exact_total:admin.total},security_audit_log:{ok:security.ok===true,complete:security.complete===true,exact_total:security.total},student_bookings:{ok:booking.ok===true,complete:booking.complete===true,exact_total:booking.total}},
+    counts:{new_properties:canonical.every(x=>created[x.table]?.complete)?uniqueNewRows.length:null,
+      duplicate_new_property_rows:canonical.every(x=>created[x.table]?.complete)?newRows.length-uniqueNewRows.length:null,
+      legacy_pg_records:created.pg_listings?.complete?created.pg_listings.total:null,
+      timestamp_updated_properties:canonical.every(x=>updated[x.table]?.complete)?uniqueTimestampUpdates.length:null,
+      audit_updated_events:admin.complete&&security.complete?auditUpdates.length:null,removal_events_logged:admin.complete&&security.complete?removals.length:null,
+      unique_property_ids_in_removal_logs:admin.complete&&security.complete?[...new Set(removals.map((x:any)=>String(x.entity_type)+"|"+String(x.entity_ref)).filter((x:string)=>!x.endsWith("|ID उपलब्ध नहीं"))) ].length:null,
+      bookings:booking.complete?booking.total:null,booking_statuses:booking.complete?bookingStatuses:null},
+    new_properties:uniqueNewRows.slice(0,40),legacy_pg_records:legacyPgRows.slice(0,20),updated_properties:uniqueTimestampUpdates.slice(0,40),
+    audit_update_events:auditUpdates.slice(0,40),removal_events:removals.slice(0,40),bookings:bookings.slice(0,30),
+    limitations:["PG legacy table में updated_at column नहीं है; उसके records को published property count में शामिल नहीं किया गया.","Removal log में entry न होना zero removal का प्रमाण नहीं है.","updated_at row-touch बताता है; बदले हुए fields केवल audit log में उपलब्ध होने पर ही बताए जा सकते हैं.","हर section में अधिकतम 40 records दिखाए गए हैं; exact counts source count header से हैं."]};
+  evidence.snapshot_signature = hashActivitySnapshot({
+    report_date: window.date, counts: evidence.counts, source_checks: evidence.source_checks,
+    new_properties: [...newRows].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    legacy_pg_records: [...legacyPgRows].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    updated_properties: [...timestampUpdates].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    audit_update_events: [...auditUpdates].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    removal_events: [...removals].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    bookings: [...bookings].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b)))
+  });
+  return "DAILY_ACTIVITY_EVIDENCE_JSON:"+JSON.stringify(evidence);
+}
+function parseDailyActivityEvidence(context:string){const match=context.match(/DAILY_ACTIVITY_EVIDENCE_JSON:(\{[^\n]*\})/);if(!match)return null;try{return JSON.parse(match[1]);}catch{return null;}}
+function activityCount(value:any){return Number.isInteger(value)?String(value):"पता नहीं";}
+function buildDailyActivityListingDraft(context:string){
+  const e=parseDailyActivityEvidence(context);
+  if(!e)return {summary:"आज की property activity का verified data उपलब्ध नहीं है.",content:"Evidence payload उपलब्ध नहीं; कोई संख्या अनुमान से नहीं दी गई।",checks:["Read-only property tables और audit logs की query स्थिति जाँचें."],risk:"high" as const};
+  const lines=["## आज की Property Activity — "+e.report_date,
+    "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks,signature:e.snapshot_signature}),
+    "","### नई properties ("+activityCount(e.counts.new_properties)+")"];
+  for(const x of e.new_properties||[])lines.push("- "+x.property_name+" · "+x.category+" · "+x.city+" · ID "+x.property_ref+" · "+x.timestamp);
+  if(!(e.new_properties||[]).length)lines.push("- "+(Number.isInteger(e.counts.new_properties)?"इस दिन कोई नई row दर्ज नहीं हुई।":"रिकॉर्ड उपलब्ध नहीं; count की पुष्टि नहीं हुई।"));
+  lines.push("","### Updated properties ("+activityCount(e.counts.timestamp_updated_properties)+")");
+  for(const x of e.updated_properties||[])lines.push("- "+x.property_name+" · "+x.category+" · "+x.city+" · ID "+x.property_ref+" · "+x.timestamp);
+  if(!(e.updated_properties||[]).length)lines.push("- "+(Number.isInteger(e.counts.timestamp_updated_properties)?"updated_at में कोई पुरानी property दर्ज नहीं मिली।":"Update count की पुष्टि नहीं हुई।"));
+  lines.push("","Duplicate property rows collapsed: "+activityCount(e.counts.duplicate_new_property_rows),
+    "","### Audit log में दर्ज updates ("+activityCount(e.counts.audit_updated_events)+")");
+  for(const x of e.audit_update_events||[])lines.push("- "+x.action+" · "+x.entity_type+" · ID "+x.entity_ref+" · "+x.timestamp+(x.changed_fields?.length?" · fields: "+x.changed_fields.join(", "):""));
+  lines.push("","### Removed / hidden / deactivated properties");
+  if((e.removal_events||[]).length){lines.push(e.removal_events.length+" removal-related audit events मिले:");for(const x of e.removal_events)lines.push("- "+x.action+" · "+x.entity_type+" · ID "+x.entity_ref+" · "+x.timestamp);}
+  else lines.push("Removal audit log में कोई matching entry नहीं मिली। इसे zero removal नहीं माना जा सकता; audit logging completeness उपलब्ध नहीं है।");
+  lines.push("","### Legacy PG submissions (published property count में शामिल नहीं): "+activityCount(e.counts.legacy_pg_records));
+  for(const x of e.legacy_pg_records||[])lines.push("- "+x.property_name+" · ID "+x.property_ref+" · "+x.city+" · "+x.timestamp);
+  lines.push("","### Source coverage");
+  for(const x of e.source_checks.property_tables||[])lines.push("- "+x.table+": created "+(x.created.ok&&x.created.complete?"exact query OK ("+x.created.exact_total+")":"incomplete")+"; updated "+(x.updated.ok&&x.updated.complete?"exact query OK ("+x.updated.exact_total+")":"not fully available"));
+  lines.push("- admin_activity_logs: "+(e.source_checks.admin_activity_logs.ok&&e.source_checks.admin_activity_logs.complete?"read OK":"incomplete"));
+  lines.push("- security_audit_log: "+(e.source_checks.security_audit_log.ok&&e.source_checks.security_audit_log.complete?"read OK":"incomplete"),"","## सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x));
+  return {summary:"आज "+e.report_date+" को नई properties: "+activityCount(e.counts.new_properties)+"; updated: "+activityCount(e.counts.timestamp_updated_properties)+"; removal: "+((e.removal_events||[]).length?(e.removal_events.length+" logged events"):"audit log में entry नहीं, zero confirm नहीं")+".",
+    content:lines.join("\n"),checks:["created_at और updated_at की India-time date range verify करें.","Removal log में entry न होने को zero removal न मानें.","किसी property में बदलाव न करें."],risk:"medium" as const};
+}
+function buildDailyActivityAnalystDraft(context:string){
+  const e=parseDailyActivityEvidence(context);
+  if(!e)return {summary:"आज की website activity report तैयार नहीं हो सकी; source data उपलब्ध नहीं है.",content:"DAILY_ACTIVITY_EVIDENCE_JSON उपलब्ध नहीं है.",checks:["हर required source की query स्थिति जाँचें."],risk:"high" as const};
+  const s=e.counts.booking_statuses||{},bookingText=Number.isInteger(e.counts.bookings)
+    ?"कुल "+e.counts.bookings+" booking record(s): confirmed "+(s.confirmed||0)+", pending "+(s.pending||0)+", cancelled "+(s.cancelled||0)+", failed "+(s.failed||0)+", other "+(s.other||0)+"."
+    :"Booking records की exact संख्या उपलब्ध नहीं है.";
+  const removalText=(e.removal_events||[]).length
+    ?e.removal_events.length+" removal-related audit events मिले; log में "+activityCount(e.counts.unique_property_ids_in_removal_logs)+" unique property ID(s) दिखे। यह पूरी deletion history का प्रमाण नहीं है."
+    :"Removal audit log में कोई matching entry नहीं मिली; actual removal count verify नहीं हुआ.";
+  const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,
+    "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks,signature:e.snapshot_signature}),
+    "","| गतिविधि | नतीजा |","|---|---:|",
+    "| नई properties (unique property ID) | "+activityCount(e.counts.new_properties)+" |","| Duplicate new rows merged | "+activityCount(e.counts.duplicate_new_property_rows)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
+    "| Audit log updates | "+activityCount(e.counts.audit_updated_events)+" |","| Removed / hidden events | "+(e.removal_events||[]).length+" logged (zero confirmed नहीं) |",
+    "| Bookings | "+activityCount(e.counts.bookings)+" |","","### Booking status",bookingText,"","### Booking details"];
+  for(const x of (e.bookings||[]).slice(0,25))lines.push("- "+x.property_name+" · "+x.category+" · "+x.status+" · "+x.created_at+" · Booking ref "+x.booking_ref);
+  if(!(e.bookings||[]).length)lines.push("- "+(Number.isInteger(e.counts.bookings)?"इस date range में कोई booking record नहीं मिला।":"Booking detail उपलब्ध नहीं है।"));
+  lines.push("","### हटाई गई properties",removalText,"","### Report की सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x),
+    "","सभी timestamps India time (Asia/Kolkata) के अनुसार हैं। Student की निजी जानकारी report में शामिल नहीं है.");
+  return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+", updated "+activityCount(e.counts.timestamp_updated_properties)+", bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled "+(s.cancelled??"पता नहीं")+", failed "+(s.failed??"पता नहीं")+"). "+removalText,
+    content:lines.join("\n"),checks:["Booking count केवल student_bookings के created_at से लें; enquiries को booking न मानें.","Unavailable को zero न दिखाएँ.","हर section में source coverage स्पष्ट रखें."],risk:"medium" as const};
+}
+function stableActivityJson(value:any):string {
+  if (Array.isArray(value)) return "["+value.map(stableActivityJson).join(",")+"]";
+  if (value && typeof value === "object") return "{"+Object.keys(value).sort().map(key=>JSON.stringify(key)+":"+stableActivityJson(value[key])).join(",")+"}";
+  return JSON.stringify(value);
+}
+function hashActivitySnapshot(value:any):string {
+  const raw=stableActivityJson(value);let hash=2166136261;
+  for(let i=0;i<raw.length;i++)hash=Math.imul(hash^raw.charCodeAt(i),16777619);
+  return (hash>>>0).toString(16).padStart(8,"0");
+}
+function buildDailyActivityQc(context:string){
+  const e=parseDailyActivityEvidence(context);let prior:any={};const m=context.match(/DAILY_ACTIVITY_PRIOR_DRAFTS_JSON:(\{[^\n]*\})/);try{prior=m?JSON.parse(m[1]):{};}catch{}
+  const p=Array.isArray(e?.source_checks?.property_tables)?e.source_checks.property_tables:[];
+  const created=p.length===6&&p.every((x:any)=>x.created?.ok&&x.created?.complete);
+  const updated=p.filter((x:any)=>x.table!=="pg_listings").length===5&&p.filter((x:any)=>x.table!=="pg_listings").every((x:any)=>x.updated?.ok&&x.updated?.complete);
+  const bookings=e?.source_checks?.student_bookings?.ok===true&&e?.source_checks?.student_bookings?.complete===true;
+  const admin=e?.source_checks?.admin_activity_logs?.ok===true&&e?.source_checks?.admin_activity_logs?.complete===true;
+  const security=e?.source_checks?.security_audit_log?.ok===true&&e?.source_checks?.security_audit_log?.complete===true;
+  const dlm=prior.data_listing_manager,dar=prior.data_analyst_reporting_manager;
+  const sameSnapshot=(draft:any)=>Boolean(draft&&e&&draft.date===e.report_date&&
+    draft.signature===e.snapshot_signature&&
+    stableActivityJson(draft.counts)===stableActivityJson(e.counts)&&
+    stableActivityJson(draft.source_checks)===stableActivityJson(e.source_checks));
+  const drafts=sameSnapshot(dlm)&&sameSnapshot(dar);
+  const pass=Boolean(e&&created&&updated&&bookings&&admin&&security&&drafts),verdict=pass?"PASS":"FAIL";
+  const summary=pass?"QC PASS — सभी required read-only sources, date range और DLM/DAR के evidence snapshots स्वतंत्र रूप से match हुए। Removal को zero नहीं बताया गया।":"QC FAIL — required source query या DLM/DAR evidence snapshot अधूरा है अथवा independent verification से match नहीं करता.";
+  const lines=["## स्वतंत्र Quality Check","- Report date: "+(e?.report_date||"Unavailable")+" (Asia/Kolkata)","- 6 property tables created_at: "+(created?"PASS":"FAIL"),
+    "- 5 canonical tables updated_at: "+(updated?"PASS":"FAIL"),"- student_bookings: "+(bookings?"PASS":"FAIL"),
+    "- admin_activity_logs: "+(admin?"PASS":"FAIL"),"- security_audit_log: "+(security?"PASS":"FAIL"),
+    "- DLM और DAR के evidence counts/source coverage independent re-query से match: "+(drafts?"PASS":"FAIL"),
+    "- No removal log को zero removal नहीं माना: "+(e&&!(e.removal_events||[]).length?"PASS":"REVIEW"),"","## QC verdict: "+verdict,summary];
+  return {summary,content:lines.join("\n"),checks:["Exact date range और pagination verify करें.","DLM और DAR के count/source snapshots को स्वतंत्र query से match करें.","Missing audit event को zero activity न बताएं."],risk:pass?"low" as const:"high" as const};
 }
 
 function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
@@ -738,11 +960,13 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
     "Owner approval is required before any external action."
   ];
   const drafts: Record<string, {summary:string; content:string; checks:string[]; risk:"low"|"medium"|"high"}> = {
-    data_listing_manager: {
-      summary: "Read-only listing review based on available samples; automated checks only.",
-      content: "## Review scope\n" + brief + "\n\n## Read-only listing evidence\n" + context + "\n\n## Review limitations\nThis is a sample-based review, not a complete audit of every listing. Missing fields in the returned sample are not proof that the full database lacks those fields. No listing was edited, approved or verified.",
-      checks: ["Confirm sample coverage before treating findings as complete.", "Manually inspect suspected duplicates and verification evidence."], risk: "medium"
-    },
+    data_listing_manager: isDailyWebsiteActivityTask(taskTitle, taskDescription)
+      ? buildDailyActivityListingDraft(context)
+      : {
+          summary: "Read-only listing review based on available samples; automated checks only.",
+          content: "## Review scope\\n" + brief + "\\n\\n## Read-only listing evidence\\n" + context + "\\n\\n## Review limitations\\nThis is a sample-based review, not a complete audit of every listing. Missing fields in the returned sample are not proof that the full database lacks those fields. No listing was edited, approved or verified.",
+          checks: ["Confirm sample coverage before treating findings as complete.", "Manually inspect suspected duplicates and verification evidence."], risk: "medium"
+        },
     data_collection_executive: {
       summary: "First-party StudentHubHelp evidence collection; external web search is disabled in API-independent mode.",
       content: "## Research brief\n" + brief + "\n\n## Retrieved first-party evidence\n" + context + "\n\n## Sources\n" + sourceList + "\n\n## Limitations\nTavily and general web search were not called. Findings are limited to the official StudentHubHelp pages successfully fetched. Any fact not present in those pages remains unknown.",
@@ -759,12 +983,13 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
       checks: ["Attach exact file/line evidence before proposing a code change.", "Run targeted tests and review the diff before merging."], risk: "medium"
     },
     data_analyst_reporting_manager: (() => {
+      if (isDailyWebsiteActivityTask(taskTitle, taskDescription)) return buildDailyActivityAnalystDraft(context);
       const report = buildOwnerCountReport(context);
       return {
         summary: report.summary,
-        content: "## Reporting request\n" + brief + "\n\n" + report.content +
-          "\n\n## Interpretation rules\nA null or unavailable count is not zero. Legacy tables are excluded unless reconciled. No student-level records or personal information were queried.",
-        checks: ["Verify exact city filter and category source tables.", "Reconcile any non-zero legacy tables before using the grand total.", "Check duplicate property identifiers before reporting unique properties."],
+        content: "## Reporting request\\n" + brief + "\\n\\n" + report.content +
+          "\\n\\n## Interpretation rules\\nA null or unavailable count is not zero. Legacy tables are excluded unless reconciled. No student-level records or personal information were queried.",
+        checks: ["Verify exact city filter and source tables.", "Reconcile any non-zero legacy tables before using the grand total.", "Check duplicate property identifiers before reporting unique properties."],
         risk: report.summary.includes("NOT VERIFIED") || report.summary.includes("unavailable") ? "high" : "low"
       };
     })(),
@@ -780,6 +1005,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
     },
     quality_control_manager: (() => {
       if (isConsolidatedTeamQaTask(taskTitle, taskDescription)) return buildConsolidatedQaQc(researchContext);
+      if (isDailyWebsiteActivityTask(taskTitle, taskDescription)) return buildDailyActivityQc(researchContext);
       const countTask = isCountingTask(taskTitle, taskDescription);
       let evidence: any = null;
       try {
@@ -822,7 +1048,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
         checks: countTask
           ? ["Exact count query must succeed.", "City filter must be explicit.", "All six category totals and status breakdowns must be numeric.", "Legacy tables must be zero or reconciled.", "Duplicate property IDs must be checked.", "GM completion requires QC PASS."]
           : ["Review each task acceptance criterion against direct evidence.", "Never mark PASS without evidence."],
-        risk: countTask && !passed ? "high" : "medium"
+        risk: countTask && !passed ? "high" as const : "medium" as const
       };
     })()
   };
@@ -1097,6 +1323,18 @@ Deno.serve(async (req: Request) => {
           };
         })
       }).slice(0, 26000);
+    } else if (roleKey === "quality_control_manager" && isDailyWebsiteActivityTask(taskTitle, taskDescription)) {
+      const independent = await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription, String(task.created_at || ""));
+      const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
+      const draftEvidenceRef = (role: string) => {
+        const draft = priorDrafts.find((item: any) => item?.role_key === role);
+        const match = String(draft?.draft_content || "").match(/DAILY_ACTIVITY_EVIDENCE_REF:(\{[^\n]*\})/);
+        try { return match ? JSON.parse(match[1]) : null; } catch { return null; }
+      };
+      researchContext = independent + "\nDAILY_ACTIVITY_PRIOR_DRAFTS_JSON:" + JSON.stringify({
+        data_listing_manager: draftEvidenceRef("data_listing_manager"),
+        data_analyst_reporting_manager: draftEvidenceRef("data_analyst_reporting_manager")
+      });
     } else if (roleKey === "quality_control_manager" && isCountingTask(taskTitle, taskDescription)) {
       // QC independently reruns exact city-filtered counts instead of trusting a truncated
       // Analyst draft. This keeps the evidence payload intact and makes the review independent.
@@ -1120,7 +1358,13 @@ Deno.serve(async (req: Request) => {
         review_note: "No DCE web research dependency applies to this task. Review the available role drafts against the task's acceptance criteria. Do not infer missing evidence."
       }).slice(0, 3200) + "\\n" + countEvidence;
     } else {
-      researchContext = roleKey === "data_analyst_reporting_manager" ? await fetchAggregateContext(supabaseUrl, serviceKey, taskTitle, taskDescription) : await buildRoleContext(roleKey, supabaseUrl, serviceKey);
+      researchContext = roleKey === "data_analyst_reporting_manager"
+        ? (isDailyWebsiteActivityTask(taskTitle, taskDescription)
+          ? await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription, String(task.created_at || ""))
+          : await fetchAggregateContext(supabaseUrl, serviceKey, taskTitle, taskDescription))
+        : roleKey === "data_listing_manager" && isDailyWebsiteActivityTask(taskTitle, taskDescription)
+          ? await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription, String(task.created_at || ""))
+          : await buildRoleContext(roleKey, supabaseUrl, serviceKey, taskTitle, taskDescription);
       allowedSourceUrls = [...new Set((researchContext.match(/https:\/\/[^\s<>"']+/g) || []).map((value: string) => {
         try { const parsed = new URL(value); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; }
       }).filter(Boolean))];

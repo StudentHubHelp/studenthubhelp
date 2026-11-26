@@ -1,3 +1,4 @@
+import { DAILY_ACTIVITY_REQUIRED_ROLES, isDailyWebsiteActivityTask } from "../_shared/task-intent.ts";
 const allowedOrigins = new Set([
   "https://office.studenthubhelp.in",
   "http://localhost:5173",
@@ -92,6 +93,8 @@ function parsePlan(raw: string, allowedRoles: Set<string>) {
   };
 }
 
+const dailyActivityRoles = [...DAILY_ACTIVITY_REQUIRED_ROLES];
+
 function isConsolidatedTeamQaTask(taskTitle: string, taskDescription: string): boolean {
   const value = (taskTitle + " " + taskDescription).toLowerCase();
   return /consolidated/.test(value) && /all\s+(?:8|eight)\s+employees/.test(value) &&
@@ -115,13 +118,15 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const analyticsQuestion = /report|analytics|aggregate|count|metric|trend|dashboard|how many|kitne|कितने|कितनी|कौन.*ज्यादा|(?:sabse|sbse)\s+(?:jyada|adhik)|सबसे ज्यादा/.test(textValue);
   const fixRequest = /fix|resolve|repair|correct|thik|sahi karo|sudhar|ठीक करो|सुधार/.test(textValue);
   const consolidatedQaTask = isConsolidatedTeamQaTask(taskTitle, taskDescription);
-  const countTask = !consolidatedQaTask && /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(textValue) &&
+  const dailyActivityTask = isDailyWebsiteActivityTask(taskTitle, taskDescription);
+  const countTask = !consolidatedQaTask && !dailyActivityTask &&
+    /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(textValue) &&
     /(property|properties|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल)/i.test(textValue);
   if (consolidatedQaTask) {
     for (const roleKey of consolidatedQaRoles) add(roleKey);
+  } else if (dailyActivityTask) {
+    for (const roleKey of dailyActivityRoles) add(roleKey);
   } else if (countTask) {
-    // Counting work needs one source-of-truth analyst and an independent QC reviewer.
-    // Avoid unrelated support/listing-review drafts triggered by the word StudentHubHelp.
     add("data_analyst_reporting_manager");
     add("quality_control_manager");
   } else {
@@ -141,10 +146,15 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
     if (selected.length === 0) add("quality_control_manager");
     if (selected.length > 1 && !selected.includes("quality_control_manager")) add("quality_control_manager");
   }
+
   const labels: Record<string, {title:string;rationale:string;expected:string}> = {
     data_collection_executive: {title:"Collect first-party StudentHubHelp evidence",rationale:"The task calls for source-backed public information; use approved first-party pages only in API-independent mode.",expected:"A source inventory with exact URLs, extracted facts and explicit unknowns."},
-    data_listing_manager: {title:"Inspect listing quality and property issues",rationale:"The request concerns property/listing popularity, completeness or reported defects; inspect safe listing fields and report evidence only.",expected:"Property-wise findings with confirmed defects, suspected issues and proposed updates; no listing changes."},
-    data_analyst_reporting_manager: {title:"Count city-wise properties and prepare Owner report",rationale:"The task explicitly requests category-wise property counts for a city; use exact city-filtered Supabase evidence and never substitute global totals or samples.",expected:"An Owner-facing total, six category counts, active/pending/suspended/rejected breakdown, source tables and limitations."},
+    data_listing_manager: dailyActivityTask
+      ? {title:"Audit today's property additions, updates and removals",rationale:"The Owner requested a daily website activity report; inspect property creation/update timestamps and property audit events read-only.",expected:"Property-wise additions, timestamp-based updates, logged removals, event times and explicit evidence gaps; no listing changes."}
+      : {title:"Inspect listing quality and property issues",rationale:"The request concerns property/listing popularity, completeness or reported defects; inspect safe listing fields and report evidence only.",expected:"Property-wise findings with confirmed defects, suspected issues and proposed updates; no listing changes."},
+    data_analyst_reporting_manager: dailyActivityTask
+      ? {title:"Verify bookings and prepare the Owner's daily activity summary",rationale:"The Owner requested a daily website activity report; verify booking records and consolidate counts/statuses from read-only evidence.",expected:"A simple Hindi Owner summary with booking statuses, exact date window, source coverage and unavailable data clearly labelled."}
+      : {title:"Count city-wise properties and prepare Owner report",rationale:"The task explicitly requests category-wise property counts for a city; use exact city-filtered Supabase evidence and never substitute global totals or samples.",expected:"An Owner-facing total, six category counts, status breakdown, source tables and limitations."},
     technical_support_engineer: {title:"Diagnose technical or login issue",rationale:"The request concerns authentication, website behavior or a technical failure; inspect repository code and available safe diagnostics.",expected:"Reproduction steps, evidence-backed cause or hypotheses, minimal patch proposal and regression checklist; no production deploy."},
     seo_marketing_manager: {title:"Inspect public SEO and crawl signals",rationale:"The task concerns search visibility or technical SEO; review public crawl resources and page metadata.",expected:"An evidence-based SEO audit checklist with prioritized recommendations."},
     social_media_manager: {title:"Prepare social content draft",rationale:"The task concerns social content or campaigns; create draft-only copy from verified brand facts.",expected:"A content draft or calendar proposal, not published."},
@@ -217,14 +227,22 @@ Deno.serve(async (req: Request) => {
       const consolidatedQaTask = isConsolidatedTeamQaTask(
         String(taskForPlan?.title || ""), String(taskForPlan?.description || "")
       );
+      const dailyActivityTask = isDailyWebsiteActivityTask(
+        String(taskForPlan?.title || ""), String(taskForPlan?.description || "")
+      );
       const planRoleKeys = steps.map((step: any) => String(step?.role_key || ""));
       const consolidatedPlanValid = !consolidatedQaTask || (
         steps.length === consolidatedQaRoles.length &&
         new Set(planRoleKeys).size === consolidatedQaRoles.length &&
         consolidatedQaRoles.every(roleKey => planRoleKeys.includes(roleKey))
       );
+      const dailyActivityPlanValid = !dailyActivityTask || (
+        steps.length === dailyActivityRoles.length &&
+        new Set(planRoleKeys).size === dailyActivityRoles.length &&
+        dailyActivityRoles.every(roleKey => planRoleKeys.includes(roleKey))
+      );
       if (!plan || plan.plan_status !== "proposal_only" || plan.requires_owner_approval !== true ||
-          steps.length < 1 || steps.length > 8 || !consolidatedPlanValid ||
+          steps.length < 1 || steps.length > 8 || !consolidatedPlanValid || !dailyActivityPlanValid ||
           steps.some((step: any) => !step || typeof step.role_key !== "string" ||
             step.role_key === "general_manager" || step.requires_external_action !== false)) {
         return respond({ ok: false, code: consolidatedQaTask ? "gm_consolidated_plan_incomplete" : "gm_plan_not_safe_to_run" }, 409, origin);
@@ -271,27 +289,35 @@ Deno.serve(async (req: Request) => {
       // Reuse the consolidatedQaTask flag validated earlier in this execute_plan scope.
       const completedRoleKeys = completed.map(item => item.role_key);
       const savedRoleKeys = taskDrafts.map((item: any) => String(item?.role_key || ""));
-      const completedRolesValid = !consolidatedQaTask || (
-        completed.length === consolidatedQaRoles.length &&
-        new Set(completedRoleKeys).size === consolidatedQaRoles.length &&
-        consolidatedQaRoles.every(roleKey => completedRoleKeys.includes(roleKey))
-      );
-      const savedDraftsValid = !consolidatedQaTask || (
-        taskDrafts.length === consolidatedQaRoles.length &&
-        new Set(savedRoleKeys).size === consolidatedQaRoles.length &&
-        consolidatedQaRoles.every(roleKey => savedRoleKeys.includes(roleKey))
-      );
+      const completedRolesValid = consolidatedQaTask
+        ? completed.length === consolidatedQaRoles.length && new Set(completedRoleKeys).size === consolidatedQaRoles.length &&
+          consolidatedQaRoles.every(roleKey => completedRoleKeys.includes(roleKey))
+        : dailyActivityTask
+          ? completed.length === dailyActivityRoles.length && new Set(completedRoleKeys).size === dailyActivityRoles.length &&
+            dailyActivityRoles.every(roleKey => completedRoleKeys.includes(roleKey))
+          : true;
+      const savedDraftsValid = consolidatedQaTask
+        ? taskDrafts.length === consolidatedQaRoles.length && new Set(savedRoleKeys).size === consolidatedQaRoles.length &&
+          consolidatedQaRoles.every(roleKey => savedRoleKeys.includes(roleKey))
+        : dailyActivityTask
+          ? taskDrafts.length === dailyActivityRoles.length &&
+            new Set(savedRoleKeys).size === dailyActivityRoles.length &&
+            dailyActivityRoles.every(roleKey => savedRoleKeys.includes(roleKey))
+          : true;
       const qcPassed = Boolean(qcDraft && (consolidatedQaTask
         ? /(?:^|\n)## Overall QC verdict: PASS(?:\s|$)/i.test(String(qcDraft.draft_content || ""))
         : /QC verdict: *PASS/i.test(String(qcDraft.draft_content || ""))));
-      const taskCompleted = consolidatedQaTask
+      const taskCompleted = (consolidatedQaTask || dailyActivityTask)
         ? completedRolesValid && savedDraftsValid && qcPassed
         : qcPassed;
       const taskText = String(taskForCompletion?.title || "") + " " + String(taskForCompletion?.description || "");
-      const countTask = !consolidatedQaTask && /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskText);
+      const countTask = !consolidatedQaTask && !dailyActivityTask &&
+        /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(taskText);
       const blockedReason = !draftsResult.ok ? "qc_drafts_unavailable"
         : consolidatedQaTask && !completedRolesValid ? "consolidated_employee_assignments_incomplete"
         : consolidatedQaTask && !savedDraftsValid ? "consolidated_employee_drafts_incomplete"
+        : dailyActivityTask && !completedRolesValid ? "daily_activity_employee_assignments_incomplete"
+        : dailyActivityTask && !savedDraftsValid ? "daily_activity_employee_drafts_incomplete"
         : !qcDraft ? "qc_draft_missing"
         : !qcPassed ? (countTask ? "counting_task_qc_failed" : "qc_pass_required") : null;
       return respond({
@@ -301,7 +327,9 @@ Deno.serve(async (req: Request) => {
           task_completed: taskCompleted, completion_status: taskCompleted ? "qc_pass_owner_review_required" : "blocked_qc",
           qc_status: qcPassed ? "PASS" : (qcDraft ? "FAIL_OR_INCONCLUSIVE" : "MISSING"),
           completion_blocked_reason: blockedReason,
-          message: taskCompleted ? "QC passed and all eight unique employee drafts are saved. Evidence-backed report is ready for Owner review; no external action was executed."
+          message: taskCompleted ? (dailyActivityTask
+            ? "Daily website activity report passed QC. The three required employee drafts are saved; Owner review is required and no external action was executed."
+            : "QC passed and all required employee drafts are saved. Evidence-backed report is ready for Owner review; no external action was executed.")
             : "Employee drafts were generated, but the task is NOT complete. All required role drafts and QC PASS are mandatory."
         }
       }, 200, origin);
@@ -323,9 +351,9 @@ Deno.serve(async (req: Request) => {
 
     const taskTitle = redact(String(task.title || "").slice(0, 160));
     const taskDescription = redact(String(task.description || "").slice(0, 1800));
-    let plan;
+    let plan: any;
     try {
-      const allowedRoles = new Set(roles.map((role: any) => role.role_key));
+      const allowedRoles = new Set<string>(roles.map((role: any) => String(role.role_key)));
       const deterministic = buildDeterministicPlan(taskTitle, taskDescription, roles);
       plan = parsePlan(JSON.stringify(deterministic), allowedRoles);
       if (isConsolidatedTeamQaTask(taskTitle, taskDescription) &&
@@ -333,6 +361,12 @@ Deno.serve(async (req: Request) => {
            new Set(plan.steps.map((step: any) => step.role_key)).size !== consolidatedQaRoles.length ||
            !consolidatedQaRoles.every(roleKey => plan.steps.some((step: any) => step.role_key === roleKey)))) {
         return respond({ ok: false, code: "gm_consolidated_plan_incomplete" }, 503, origin);
+      }
+      if (isDailyWebsiteActivityTask(taskTitle, taskDescription) &&
+          (plan.steps.length !== dailyActivityRoles.length ||
+           new Set(plan.steps.map((step: any) => step.role_key)).size !== dailyActivityRoles.length ||
+           !dailyActivityRoles.every(roleKey => plan.steps.some((step: any) => step.role_key === roleKey)))) {
+        return respond({ ok: false, code: "gm_daily_activity_plan_incomplete" }, 503, origin);
       }
     } catch {
       return respond({ ok: false, code: "gm_plan_validation_failed" }, 502, origin);
