@@ -9,7 +9,7 @@ Status: completed in the preceding audit.
 - Confirmed that the Gemini gateway is fail-closed and that external integration execution is disabled.
 
 ## Phase B — Specialist intelligence
-Status: code implemented; live Gemini verification pending.
+Status: code merged and deployed; live Gemini generation under Owner AAL2 still pending.
 - Added shared role-specific instructions for all eight specialist employees and the General Manager.
 - Employee drafts and GM plans can use Gemini only through the existing Owner-authenticated office-gemini-gateway.
 - The helper checks gateway readiness and secret presence before generation. It does not contain or expose provider credentials.
@@ -20,14 +20,14 @@ Status: code implemented; live Gemini verification pending.
 - QC model output cannot promote a verdict above the deterministic evidence verdict.
 
 ## Phase C — Read-only tools and evidence
-Status: partially implemented; provider-dependent research remains gated.
+Status: bounded read-only research deployed; full breadth remains limited by available evidence.
 - DLM now paginates across all five canonical listing tables, up to 10,000 rows per category, and reports exact scan coverage, missing-field counts and duplicate candidates.
 - DLM excludes phone, email, owner identity and other contact fields from its review payload.
 - DCE can make at most one Tavily Basic search per task when TAVILY_API_KEY is configured (up to five snippets); advanced search, raw extraction and crawling are disabled. Relevant first-party pages are added separately. Missing key/provider errors fall back to first-party-only evidence. Tavily account billing/credit plan remains an external account setting.
 - Other specialists use only the bounded public repository/site and read-only Supabase evidence currently supplied to their workflows.
 
 ## Phase D — GM management
-Status: code implemented; live AI planning verification pending.
+Status: code merged and deployed; live AI planning verification still pending.
 - GM can use Gemini for Hindi/Hinglish task interpretation and ordered role planning when the gateway is ready.
 - Every generated plan is validated against registered role keys.
 - Plans that request external actions are rejected.
@@ -36,28 +36,27 @@ Status: code implemented; live AI planning verification pending.
 - Task status is not falsely marked completed merely because drafts were generated; owner review remains required.
 
 ## Phase E — Independent QC
-Status: safeguards implemented; end-to-end acceptance testing pending.
+Status: safeguards merged and deployed; task-based end-to-end acceptance testing pending.
 - QC receives prior drafts and task-specific evidence.
 - Evidence-critical count and daily activity checks continue to run independent deterministic queries.
 - Gemini can add analytical review for eligible tasks, but cannot upgrade a deterministic FAIL/INCONCLUSIVE/qualified verdict to a stronger PASS.
 - QC remains a reviewer, not a release approver or executor.
 
 ## Phase F — Verification and acceptance
-Status: automated contract tests added; not yet fully executed.
+Status: automated tests and Edge Function type-check passed in GitHub Actions; browser/live acceptance remains pending.
 - Added Deno tests for role-specific instructions, prompt-injection boundaries, output contracts, GM role/action restrictions, Gemini gateway readiness and Tavily Basic source validation.
-- These tests must be run in a Deno-capable environment before deployment.
-- Live acceptance still requires an authenticated Owner AAL2 session, a configured Gemini API secret, gateway enablement, quota-status confirmation and real task scenarios across all eight roles.
-- No production Edge Function deployment or production cutover is performed by this branch.
+- GitHub Actions Deno contract tests passed (6/6); all three Edge Functions passed Deno type-check.
+- Gemini secret presence and quota readiness were verified without exposing the key. Gateway is enabled in Free Tier-only mode with app caps 8 RPM, 200,000 TPM, 100 RPD and 1,024 output tokens.
+- Production deployed: office-employee-agent v31, office-general-manager v18; office-gemini-gateway remains v13. Cloudflare Pages production deployment succeeded for merge commit b4132d14b21585267c75fee6ca98d66d6e18c5ea.
 
 ## Gemini Free Tier budget
-The Owner supplied an AI Studio screenshot showing Google limits of 15 RPM, 250,000 TPM and 500 RPD. The Office application caps are lower: 8 RPM, 200,000 TPM and 100 RPD, with 1,024 output tokens. The gateway currently remains disabled until the Owner explicitly enables it after confirming the key and quota status. No paid fallback is permitted.
+The Owner supplied an AI Studio screenshot showing Google limits of 15 RPM, 250,000 TPM and 500 RPD. The Office application caps are lower: 8 RPM, 200,000 TPM and 100 RPD, with 1,024 output tokens. The gateway is enabled; quota status currently reports ready. Paid Gemini billing mode remains blocked. No paid fallback is permitted.
 
 ## Remaining blockers before calling A–F complete
-1. Run the Deno tests and type-check the Edge Functions.
-2. Confirm the Gemini secret is present without exposing its value; then test gateway status under the Owner's AAL2 session.
-3. Enable the gateway only after readiness checks pass, then run representative employee tasks and verify usage/caps.
-4. Decide whether a free research provider is available and approved for DCE; until then, research scope remains first-party only.
-5. Run the browser acceptance suite and verify all nine roles, dashboard labels, retries, failure paths and Owner-review gates.
-6. Deploy only after the above tests pass and review the exact Office-only diff.
+1. Run one real GM task and employee generation under the Owner's authenticated AAL2 browser session; confirm Gemini generation mode rather than deterministic fallback.
+2. Run separate acceptance tasks for DLM, DCE, CSE, TSE, DAR, SMM, SEO and QC; inspect source evidence, output completeness and failure handling.
+3. Verify Tavily account credit/pay-as-you-go settings in the user's Tavily dashboard; Office makes at most one Basic search per DCE task.
+4. Verify dashboard rendering and task lifecycle in the authenticated browser, including retries, missing evidence, quota exhaustion and Owner approval gates.
+5. Monitor Gemini quota usage after real tasks and confirm no paid fallback or unexpected external actions.
 
 A phase is not considered complete merely because code exists. It is complete only after the corresponding tests and live acceptance checks pass.
