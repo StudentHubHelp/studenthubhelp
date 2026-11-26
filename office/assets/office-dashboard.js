@@ -630,7 +630,7 @@
             const draftCard = node("div", "employee-draft-card");
             draftCard.append(node("strong", "employee-draft-title", draft.title));
             draftCard.append(node("p", "employee-draft-summary", draft.summary));
-            const modeLabel = draft.generation_mode === "gemini_free_tier" ? "AI reasoning · Gemini Free Tier" : "Deterministic fallback · AI gateway not ready";
+            const modeLabel = draft.generation_mode === "gemini_free_tier" ? "AI reasoning · Gemini Free Tier" : draft.generation_reason === "deterministic_evidence_contract_preserved" ? "Deterministic · evidence-critical workflow" : "Deterministic fallback · Gemini not ready";
             draftCard.append(node("small", "gm-approval-note", modeLabel));
             draftCard.append(node("div", "employee-draft-content", draft.draft_content));
             const checks = node("ul", "employee-draft-checks");
