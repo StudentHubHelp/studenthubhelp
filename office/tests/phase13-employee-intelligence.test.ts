@@ -102,8 +102,11 @@ Deno.test("Tavily DCE helper uses one Basic search and filters unsafe or incompl
   let calls = 0;
   let requestBody: any = null;
   try {
-    globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       calls++;
+      if (String(input).includes("/usage")) {
+        return new Response(JSON.stringify({ account: { current_plan: "researcher", paygo_limit: 0 }, key: { usage: 1, limit: 1000 } }), { status: 200 });
+      }
       requestBody = JSON.parse(String(init?.body || "{}"));
       return new Response(JSON.stringify({
         results: [
@@ -116,7 +119,7 @@ Deno.test("Tavily DCE helper uses one Basic search and filters unsafe or incompl
       }), { status: 200, headers: { "Content-Type": "application/json" } });
     }) as typeof fetch;
     const result = await fetchTavilyEvidence("StudentHubHelp student services", "test-key");
-    if (calls !== 1 || requestBody.search_depth !== "basic" || requestBody.max_results !== 5 ||
+    if (calls !== 2 || requestBody.search_depth !== "basic" || requestBody.max_results !== 5 ||
         requestBody.include_raw_content !== false || result.sources.length !== 1 ||
         result.sources[0].url !== "https://example.org/page") {
       throw new Error("Tavily request limits or source validation failed");
@@ -134,6 +137,24 @@ Deno.test("Tavily DCE helper makes no request without a configured key", async (
     const result = await fetchTavilyEvidence("research query", "");
     if (calls !== 0 || result.status !== "tavily_secret_unavailable" || result.requested !== 0) {
       throw new Error("Tavily must remain disabled when secret is absent");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+Deno.test("Tavily DCE helper blocks paid plan or pay-as-you-go before search", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  try {
+    globalThis.fetch = (async () => {
+      calls++;
+      return new Response(JSON.stringify({ account: { current_plan: "researcher", paygo_limit: 100 } }), { status: 200 });
+    }) as typeof fetch;
+    const result = await fetchTavilyEvidence("research query", "test-key");
+    if (calls !== 1 || result.status !== "tavily_paid_plan_blocked" || result.sources.length !== 0) {
+      throw new Error("Tavily must block paid/paygo usage before searching");
     }
   } finally {
     globalThis.fetch = originalFetch;
