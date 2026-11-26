@@ -792,9 +792,13 @@ function uniqueActivityProperties(rows:any[]) {
 function safeAuditEvent(row:any,source:string) {
   const action=String(row?.action||"").slice(0,100),entityType=String(row?.entity_type||"").slice(0,100),normalized=action.toLowerCase();
   if(!/property|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore/i.test(entityType+" "+action))return null;
-  const activity=/delet|remov|archiv|hide|deactivat|disable/i.test(normalized)?"removed":/updat|edit|modif|chang|status/i.test(normalized)?"updated":/creat|add|insert|publish/i.test(normalized)?"created":"other";
-  if(activity==="other")return null;
   const details=row?.details&&typeof row.details==="object"?row.details:row?.metadata&&typeof row.metadata==="object"?row.metadata:{};
+  const newStatus=String(details.new_status||details.status||"").toLowerCase();
+  const isInactive=details.is_active===false||/inactive|deactivat|disabled|hidden|archived|suspended/.test(newStatus);
+  const activity=/delet|remov|archiv|hide|deactivat|disable/i.test(normalized)||isInactive?"removed"
+    :/updat|edit|modif|chang|status/i.test(normalized)?"updated"
+    :/creat|add|insert|publish/i.test(normalized)?"created":"other";
+  if(activity==="other")return null;
   const changed=details.changed_fields||details.updated_fields||details.fields;
   return {activity,source,action,entity_type:entityType,entity_ref:String(row?.entity_id||"ID उपलब्ध नहीं"),
     property_name:String(details.property_name||details.name||details.title||"लॉग में नाम उपलब्ध नहीं"),
