@@ -1,4 +1,5 @@
 import { buildEmployeePrompt, buildGeneralManagerPrompt, callOfficeGemini } from "../supabase/functions/_shared/employee-intelligence.ts";
+import { fetchTavilyEvidence } from "../supabase/functions/_shared/tavily-research.ts";
 
 const roles = [
   "data_listing_manager",
@@ -89,6 +90,50 @@ Deno.test("Gemini helper fails closed when gateway is disabled and generates onl
     const generated = await callOfficeGemini("https://example.supabase.co", "anon", "owner-token", "prompt");
     if (!generated.available || generated.model !== "gemini-3.5-flash-lite" || calls !== 2) {
       throw new Error("ready gateway should status-check then generate exactly once");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+Deno.test("Tavily DCE helper uses one Basic search and filters unsafe or incomplete sources", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  let requestBody: any = null;
+  try {
+    globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      calls++;
+      requestBody = JSON.parse(String(init?.body || "{}"));
+      return new Response(JSON.stringify({
+        results: [
+          { title: "Official result", url: "https://example.org/page", content: "Relevant source text", score: 0.91 },
+          { title: "Insecure result", url: "http://example.org/page", content: "Ignore" },
+          { title: "Local result", url: "https://localhost/private", content: "Ignore" },
+          { title: "IP result", url: "https://127.0.0.1/private", content: "Ignore" },
+          { title: "Empty result", url: "https://example.net/empty", content: "" }
+        ]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }) as typeof fetch;
+    const result = await fetchTavilyEvidence("StudentHubHelp student services", "test-key");
+    if (calls !== 1 || requestBody.search_depth !== "basic" || requestBody.max_results !== 5 ||
+        requestBody.include_raw_content !== false || result.sources.length !== 1 ||
+        result.sources[0].url !== "https://example.org/page") {
+      throw new Error("Tavily request limits or source validation failed");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+Deno.test("Tavily DCE helper makes no request without a configured key", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  try {
+    globalThis.fetch = (async () => { calls++; throw new Error("must not call without key"); }) as typeof fetch;
+    const result = await fetchTavilyEvidence("research query", "");
+    if (calls !== 0 || result.status !== "tavily_secret_unavailable" || result.requested !== 0) {
+      throw new Error("Tavily must remain disabled when secret is absent");
     }
   } finally {
     globalThis.fetch = originalFetch;
