@@ -879,9 +879,10 @@ function buildDailyActivityListingDraft(context:string){
     "","### नई properties ("+activityCount(e.counts.new_properties)+")"];
   for(const x of e.new_properties||[])lines.push("- "+x.property_name+" · "+x.category+" · "+x.city+" · ID "+x.property_ref+" · "+x.timestamp);
   if(!(e.new_properties||[]).length)lines.push("- "+(Number.isInteger(e.counts.new_properties)?"इस दिन कोई नई row दर्ज नहीं हुई।":"रिकॉर्ड उपलब्ध नहीं; count की पुष्टि नहीं हुई।"));
-  lines.push("","### Updated properties ("+activityCount(e.counts.timestamp_updated_properties)+")");
+  lines.push("","### Canonical properties updated ("+activityCount(e.counts.timestamp_updated_properties)+")");
   for(const x of e.updated_properties||[])lines.push("- "+x.property_name+" · "+x.category+" · "+x.city+" · ID "+x.property_ref+" · "+x.timestamp);
-  if(!(e.updated_properties||[]).length)lines.push("- "+(Number.isInteger(e.counts.timestamp_updated_properties)?"updated_at में कोई पुरानी property दर्ज नहीं मिली।":"Update count की पुष्टि नहीं हुई।"));
+  if(!(e.updated_properties||[]).length)lines.push("- "+(Number.isInteger(e.counts.timestamp_updated_properties)?"updated_at में कोई पुरानी canonical property दर्ज नहीं मिली।":"Canonical update count की पुष्टि नहीं हुई।"));
+  lines.push("- PG legacy updates: Unavailable (pg_listings में updated_at column नहीं है).");
   lines.push("","Duplicate property rows collapsed: "+activityCount(e.counts.duplicate_new_property_rows),
     "","### Audit log में दर्ज updates ("+activityCount(e.counts.audit_updated_events)+")");
   for(const x of e.audit_update_events||[])lines.push("- "+x.action+" · "+x.entity_type+" · ID "+x.entity_ref+" · "+x.timestamp+(x.changed_fields?.length?" · fields: "+x.changed_fields.join(", "):""));
@@ -894,7 +895,7 @@ function buildDailyActivityListingDraft(context:string){
   for(const x of e.source_checks.property_tables||[])lines.push("- "+x.table+": created "+(x.created.ok&&x.created.complete?"exact query OK ("+x.created.exact_total+")":"incomplete")+"; updated "+(x.updated.ok&&x.updated.complete?"exact query OK ("+x.updated.exact_total+")":"not fully available"));
   lines.push("- admin_activity_logs: "+(e.source_checks.admin_activity_logs.ok&&e.source_checks.admin_activity_logs.complete?"read OK":"incomplete"));
   lines.push("- security_audit_log: "+(e.source_checks.security_audit_log.ok&&e.source_checks.security_audit_log.complete?"read OK":"incomplete"),"","## सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x));
-  return {summary:"आज "+e.report_date+" को नई properties: "+activityCount(e.counts.new_properties)+"; updated: "+activityCount(e.counts.timestamp_updated_properties)+"; removal: "+((e.removal_events||[]).length?(e.removal_events.length+" logged events"):"audit log में entry नहीं, zero confirm नहीं")+".",
+  return {summary:"आज "+e.report_date+" को नई properties: "+activityCount(e.counts.new_properties)+"; Canonical properties updated: "+activityCount(e.counts.timestamp_updated_properties)+"; PG legacy updates: Unavailable (pg_listings में updated_at column नहीं है); removal: "+((e.removal_events||[]).length?(e.removal_events.length+" logged events"):"audit log में entry नहीं, zero confirm नहीं")+".",
     content:lines.join("\n"),checks:["created_at और updated_at की India-time date range verify करें.","Removal log में entry न होने को zero removal न मानें.","किसी property में बदलाव न करें."],risk:"medium" as const};
 }
 function buildDailyActivityAnalystDraft(context:string){
@@ -915,7 +916,7 @@ function buildDailyActivityAnalystDraft(context:string){
   const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,
     "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks,signature:e.snapshot_signature}),
     "","| गतिविधि | नतीजा |","|---|---:|",
-    "| नई properties (unique property ID) | "+activityCount(e.counts.new_properties)+" |","| Duplicate new rows merged | "+activityCount(e.counts.duplicate_new_property_rows)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| PG legacy updates | Unavailable (pg_listings में updated_at column नहीं है) |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
+    "| नई properties (unique property ID) | "+activityCount(e.counts.new_properties)+" |","| Duplicate new rows merged | "+activityCount(e.counts.duplicate_new_property_rows)+" |","| Canonical properties updated | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| PG legacy updates | Unavailable (pg_listings में updated_at column नहीं है) |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
     "| Audit log updates | "+activityCount(e.counts.audit_updated_events)+" |","| Removal audit events | "+activityCount(e.counts.removal_events_logged)+" (incomplete होने पर पता नहीं) |",
     "| Bookings | "+activityCount(e.counts.bookings)+" |","","### Booking status",bookingText,
     "Confirmed: "+(e.source_checks.student_bookings.complete?String(s.confirmed):"Unavailable")+" · Pending: "+(e.source_checks.student_bookings.complete?String(s.pending):"Unavailable")+" · Cancelled: "+(e.source_checks.student_bookings.complete?String(s.cancelled):"Unavailable")+" · Failed: "+(e.source_checks.student_bookings.complete?String(s.failed):"Unavailable"),
@@ -924,7 +925,7 @@ function buildDailyActivityAnalystDraft(context:string){
   if(!(e.bookings||[]).length)lines.push("- "+(Number.isInteger(e.counts.bookings)?"इस date range में कोई booking record नहीं मिला।":"Booking detail उपलब्ध नहीं है।"));
   lines.push("","### हटाई गई properties",removalText,"","### Report की सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x),
     "","सभी timestamps India time (Asia/Kolkata) के अनुसार हैं। Student की निजी जानकारी report में शामिल नहीं है.");
-  return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+", updated "+activityCount(e.counts.timestamp_updated_properties)+", bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled "+(s.cancelled??"पता नहीं")+", failed "+(s.failed??"पता नहीं")+"). "+removalText,
+  return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+"; Canonical properties updated: "+activityCount(e.counts.timestamp_updated_properties)+"; PG legacy updates: Unavailable; bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled "+(s.cancelled??"पता नहीं")+", failed "+(s.failed??"पता नहीं")+"). "+removalText,
     content:lines.join("\n"),checks:["Booking count केवल student_bookings के created_at से लें; enquiries को booking न मानें.","Unavailable को zero न दिखाएँ.","हर section में source coverage स्पष्ट रखें."],risk:"medium" as const};
 }
 function stableActivityJson(value:any):string {
