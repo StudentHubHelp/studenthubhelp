@@ -310,7 +310,7 @@ Deno.serve(async (req: Request) => {
         : dailyActivityTask
           ? (/(?:^|\n)## QC verdict: PASS WITH LIMITATIONS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS WITH LIMITATIONS"
             : /(?:^|\n)## QC verdict: PASS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS" : "FAIL_OR_INCONCLUSIVE")
-          : (/(?:^|\n)QC verdict:[ \t]*PASS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS" : "FAIL_OR_INCONCLUSIVE");
+          : (/(?:^|\n)(?:## )?QC verdict:[ \t]*PASS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS" : "FAIL_OR_INCONCLUSIVE");
       const qcPassed = qcVerdict === "PASS" || (dailyActivityTask && qcVerdict === "PASS WITH LIMITATIONS");
       const taskCompleted = (consolidatedQaTask || dailyActivityTask)
         ? completedRolesValid && savedDraftsValid && qcPassed
