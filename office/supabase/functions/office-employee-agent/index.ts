@@ -839,7 +839,9 @@ function activityCount(value:any){return Number.isInteger(value)?String(value):"
 function buildDailyActivityListingDraft(context:string){
   const e=parseDailyActivityEvidence(context);
   if(!e)return {summary:"आज की property activity का verified data उपलब्ध नहीं है.",content:"Evidence payload उपलब्ध नहीं; कोई संख्या अनुमान से नहीं दी गई।",checks:["Read-only property tables और audit logs की query स्थिति जाँचें."],risk:"high" as const};
-  const lines=["## आज की Property Activity — "+e.report_date,"","### नई properties ("+activityCount(e.counts.new_properties)+")"];
+  const lines=["## आज की Property Activity — "+e.report_date,
+    "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks}),
+    "","### नई properties ("+activityCount(e.counts.new_properties)+")"];
   for(const x of e.new_properties||[])lines.push("- "+x.property_name+" · "+x.category+" · "+x.city+" · ID "+x.property_ref+" · "+x.timestamp);
   if(!(e.new_properties||[]).length)lines.push("- "+(Number.isInteger(e.counts.new_properties)?"इस दिन कोई नई row दर्ज नहीं हुई।":"रिकॉर्ड उपलब्ध नहीं; count की पुष्टि नहीं हुई।"));
   lines.push("","### Updated properties ("+activityCount(e.counts.timestamp_updated_properties)+")");
@@ -855,7 +857,7 @@ function buildDailyActivityListingDraft(context:string){
   lines.push("","### Source coverage");
   for(const x of e.source_checks.property_tables||[])lines.push("- "+x.table+": created "+(x.created.ok&&x.created.complete?"exact query OK ("+x.created.exact_total+")":"incomplete")+"; updated "+(x.updated.ok&&x.updated.complete?"exact query OK ("+x.updated.exact_total+")":"not fully available"));
   lines.push("- admin_activity_logs: "+(e.source_checks.admin_activity_logs.ok&&e.source_checks.admin_activity_logs.complete?"read OK":"incomplete"));
-  lines.push("- security_audit_log: "+(e.source_checks.security_audit_log.ok&&e.source_checks.security_audit_log.complete?"read OK":"incomplete"),"","## सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x),"","DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks}));
+  lines.push("- security_audit_log: "+(e.source_checks.security_audit_log.ok&&e.source_checks.security_audit_log.complete?"read OK":"incomplete"),"","## सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x));
   return {summary:"आज "+e.report_date+" को नई properties: "+activityCount(e.counts.new_properties)+"; updated: "+activityCount(e.counts.timestamp_updated_properties)+"; removal: "+((e.removal_events||[]).length?(e.removal_events.length+" logged events"):"audit log में entry नहीं, zero confirm नहीं")+".",
     content:lines.join("\\n"),checks:["created_at और updated_at की India-time date range verify करें.","Removal log में entry न होने को zero removal न मानें.","किसी property में बदलाव न करें."],risk:"medium" as const};
 }
@@ -866,14 +868,16 @@ function buildDailyActivityAnalystDraft(context:string){
     ?"कुल "+e.counts.bookings+" booking record(s): confirmed "+(s.confirmed||0)+", pending "+(s.pending||0)+", cancelled/failed "+(s.cancelled_or_failed||0)+", other "+(s.other||0)+"."
     :"Booking records की exact संख्या उपलब्ध नहीं है.";
   const removalText=(e.removal_events||[]).length?(e.removal_events.length+" removal-related audit events मिले."):"Removal audit log में कोई matching entry नहीं मिली; इसे zero removal नहीं माना जा सकता.";
-  const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,"","| गतिविधि | नतीजा |","|---|---:|",
+  const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,
+    "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks}),
+    "","| गतिविधि | नतीजा |","|---|---:|",
     "| नई properties | "+activityCount(e.counts.new_properties)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |",
     "| Audit log updates | "+activityCount(e.counts.audit_updated_events)+" |","| Removed / hidden events | "+(e.removal_events||[]).length+" logged (zero confirmed नहीं) |",
     "| Bookings | "+activityCount(e.counts.bookings)+" |","","### Booking status",bookingText,"","### Booking details"];
   for(const x of (e.bookings||[]).slice(0,25))lines.push("- "+x.property_name+" · "+x.category+" · "+x.status+" · "+x.created_at+" · Booking ref "+x.booking_ref);
   if(!(e.bookings||[]).length)lines.push("- "+(Number.isInteger(e.counts.bookings)?"इस date range में कोई booking record नहीं मिला।":"Booking detail उपलब्ध नहीं है।"));
   lines.push("","### हटाई गई properties",removalText,"","### Report की सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x),
-    "","सभी timestamps India time (Asia/Kolkata) के अनुसार हैं। Student की निजी जानकारी report में शामिल नहीं है.","","DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks}));
+    "","सभी timestamps India time (Asia/Kolkata) के अनुसार हैं। Student की निजी जानकारी report में शामिल नहीं है.");
   return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+", updated "+activityCount(e.counts.timestamp_updated_properties)+", bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled/failed "+(s.cancelled_or_failed??"पता नहीं")+"). "+removalText,
     content:lines.join("\\n"),checks:["Booking count केवल student_bookings के created_at से लें; enquiries को booking न मानें.","Unavailable को zero न दिखाएँ.","हर section में source coverage स्पष्ट रखें."],risk:"medium" as const};
 }
