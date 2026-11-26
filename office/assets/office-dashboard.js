@@ -470,6 +470,24 @@
           stateLabel = integration.provider_key === "gemini" ? "Connected · Free Tier" : "Connected";
         }
       }
+      if (["cloudflare", "github", "gmail", "openseo"].includes(integration.provider_key)) {
+        if (!integration.secret_configured) {
+          stateClass = "needs_secret";
+          stateLabel = "Credential missing";
+        } else if (integration.credential_valid === true) {
+          stateClass = "connected";
+          stateLabel = integration.provider_key === "gmail" ? "Connected · Gmail profile read" : "Connected · API verified";
+        } else if (integration.credential_status === "invalid" || integration.credential_status === "invalid_or_scope_limited" || integration.credential_status === "expired_or_invalid_token") {
+          stateClass = "needs_secret";
+          stateLabel = "Invalid token or scope";
+        } else if (integration.credential_status === "scope_or_api_disabled" || integration.credential_status === "valid_token_repo_access_limited") {
+          stateClass = "disabled";
+          stateLabel = "Token valid · access limited";
+        } else {
+          stateClass = "disabled";
+          stateLabel = "Validation unavailable";
+        }
+      }
       if (integration.provider_key === "tavily") {
         if (!integration.secret_configured) {
           stateClass = "needs_secret";
