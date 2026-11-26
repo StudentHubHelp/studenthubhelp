@@ -1,5 +1,6 @@
 import { isDailyWebsiteActivityTask } from "../_shared/task-intent.ts";
 import { buildEmployeePrompt, callOfficeGemini } from "../_shared/employee-intelligence.ts";
+import { fetchTavilyEvidence } from "../_shared/tavily-research.ts";
 const allowedOrigins = new Set([
   "https://office.studenthubhelp.in",
   "http://localhost:5173",
@@ -97,51 +98,6 @@ async function fetchPublicText(url: string, maxChars = 900): Promise<string> {
   } catch { return ""; }
 }
 
-
-async function fetchTavilyEvidence(query: string): Promise<{ sources: any[]; status: string; requested: number }> {
-  const apiKey = Deno.env.get("TAVILY_API_KEY");
-  if (!apiKey) return { sources: [], status: "tavily_secret_unavailable", requested: 0 };
-  try {
-    const response = await fetch("https://api.tavily.com/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + apiKey },
-      body: JSON.stringify({
-        query: query.slice(0, 500),
-        search_depth: "basic",
-        max_results: 5,
-        include_answer: false,
-        include_raw_content: false
-      }),
-      signal: AbortSignal.timeout(14000)
-    });
-    if (!response.ok) return { sources: [], status: "tavily_http_" + response.status, requested: 1 };
-    const data = await response.json().catch(() => null);
-    const results = Array.isArray(data?.results) ? data.results : [];
-    const sources = results.slice(0, 5).flatMap((item: any) => {
-      try {
-        const parsed = new URL(String(item?.url || ""));
-        if (parsed.protocol !== "https:" || parsed.username || parsed.password ||
-            parsed.hostname === "localhost" || parsed.hostname.endsWith(".local") ||
-            /^\d{1,3}(?:\.\d{1,3}){3}$/.test(parsed.hostname)) return [];
-        const title = String(item?.title || "").trim().slice(0, 240);
-        const content = String(item?.content || "").trim().slice(0, 1800);
-        if (!title || !content) return [];
-        return [{
-          title,
-          url: parsed.toString(),
-          snippet: content.slice(0, 700),
-          content,
-          score: Number.isFinite(Number(item?.score)) ? Number(item.score) : null,
-          published_date: String(item?.published_date || "").slice(0, 40),
-          extraction_status: "tavily_basic_search_snippet"
-        }];
-      } catch { return []; }
-    });
-    return { sources, status: sources.length ? "tavily_basic_search" : "tavily_no_valid_results", requested: 1 };
-  } catch {
-    return { sources: [], status: "tavily_timeout_or_network_error", requested: 1 };
-  }
-}
 
 
 function extractSourceSnippets(source: string, patterns: string[], maxPer = 650): string {
@@ -1330,7 +1286,7 @@ Deno.serve(async (req: Request) => {
 
       // Use one bounded Tavily Basic search when the server-side secret is configured.
       // No raw page extraction, crawling, advanced search or repeated query fan-out.
-      const tavily = await fetchTavilyEvidence((taskTitle + " " + taskDescription).trim());
+      const tavily = await fetchTavilyEvidence((taskTitle + " " + taskDescription).trim(), Deno.env.get("TAVILY_API_KEY") || "");
       const firstPartyBrief = /studenthubhelp(?:\.in)?/i.test(taskTitle + " " + taskDescription);
       const officialUrls = firstPartyBrief ? [
         "https://studenthubhelp.in/",
