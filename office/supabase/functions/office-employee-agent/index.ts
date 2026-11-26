@@ -142,7 +142,7 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
         if (expected === null) {
           const range = response.headers.get("content-range") || "";
           const total = range.includes("/") ? range.slice(range.lastIndexOf("/") + 1) : "";
-          if (!/^\\d+$/.test(total)) { failure = "exact_count_unavailable"; break; }
+          if (!/^\d+$/.test(total)) { failure = "exact_count_unavailable"; break; }
           expected = Number(total);
         }
         const page = await response.json().catch(() => null);
@@ -180,7 +180,7 @@ async function fetchListingReviewContext(supabaseUrl: string, serviceKey: string
   for (const result of results) {
     for (const row of result.rows) {
       const key = [row.name, row.city, row.area].map((value: any) =>
-        String(value || "").trim().toLowerCase().replace(/\\s+/g, " ")
+        String(value || "").trim().toLowerCase().replace(/\s+/g, " ")
       ).join("|");
       if (!row.name || !row.city) continue;
       const group = duplicateMap.get(key) || [];
