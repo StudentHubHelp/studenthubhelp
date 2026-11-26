@@ -455,6 +455,21 @@
       const heading = node("h3", "", integration.display_name);
       let stateClass = integration.connection_status;
       let stateLabel = titleCase(integration.connection_status).replace(/_/g, " ");
+      if (["gemini", "brevo"].includes(integration.provider_key)) {
+        if (!integration.secret_configured) {
+          stateClass = "needs_secret";
+          stateLabel = "Credential missing";
+        } else if (integration.credential_status === "invalid") {
+          stateClass = "needs_secret";
+          stateLabel = "Invalid API key";
+        } else if (integration.credential_status === "unavailable") {
+          stateClass = "needs_secret";
+          stateLabel = "Validation unavailable";
+        } else if (integration.credential_valid) {
+          stateClass = "connected";
+          stateLabel = integration.provider_key === "gemini" ? "Connected · Free Tier" : "Connected";
+        }
+      }
       if (integration.provider_key === "tavily") {
         if (!integration.secret_configured) {
           stateClass = "needs_secret";
@@ -481,7 +496,17 @@
       meta.append(node("span", "", "Mode: " + titleCase(integration.access_mode)));
       if (integration.secret_reference) {
         meta.append(node("span", "", "Secret reference: " + integration.secret_reference));
-        if (integration.provider_key === "tavily") {
+        if (["gemini", "brevo"].includes(integration.provider_key)) {
+          const valid = integration.credential_valid === true;
+          const credentialText = !integration.secret_configured ? "Credential missing"
+            : integration.credential_status === "invalid" ? "API key invalid"
+            : integration.credential_status === "unavailable" ? "Validation unavailable"
+            : valid ? (integration.provider_key === "gemini" ? "Free Tier gateway verified · quota guard active" : "Brevo API credential verified")
+            : "Credential present · validation pending";
+          meta.append(node("span", valid ? "credential-present" : "credential-missing", credentialText));
+          if (integration.provider_model) meta.append(node("span", "", "Model: " + integration.provider_model));
+          if (integration.quota_rpm_cap) meta.append(node("span", "", "RPM cap: " + integration.quota_rpm_cap));
+        } else if (integration.provider_key === "tavily") {
           const credentialText = !integration.secret_configured ? "Credential missing"
             : integration.credential_status === "invalid" ? "API key invalid"
             : integration.credential_status === "unavailable" ? "Credential check unavailable"
