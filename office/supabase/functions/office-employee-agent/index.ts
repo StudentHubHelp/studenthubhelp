@@ -899,14 +899,17 @@ function buildDailyActivityAnalystDraft(context:string){
   const s=e.counts.booking_statuses||{},bookingText=Number.isInteger(e.counts.bookings)
     ?"कुल "+e.counts.bookings+" booking record(s): confirmed "+(s.confirmed||0)+", pending "+(s.pending||0)+", cancelled "+(s.cancelled||0)+", failed "+(s.failed||0)+", other "+(s.other||0)+"."
     :"Booking records की exact संख्या उपलब्ध नहीं है.";
-  const removalText=(e.removal_events||[]).length
-    ?e.removal_events.length+" removal-related audit events मिले; log में "+activityCount(e.counts.unique_property_ids_in_removal_logs)+" unique property ID(s) दिखे। यह पूरी deletion history का प्रमाण नहीं है."
-    :"Removal audit log में कोई matching entry नहीं मिली; actual removal count verify नहीं हुआ.";
+  const removalAuditComplete=e.source_checks.admin_activity_logs.complete&&e.source_checks.security_audit_log.complete;
+  const removalText=!removalAuditComplete
+    ?"Removal audit sources incomplete हैं; total removal count verify नहीं हुआ."
+    :(e.removal_events||[]).length
+      ?e.removal_events.length+" removal-related audit events मिले; log में "+activityCount(e.counts.unique_property_ids_in_removal_logs)+" unique property ID(s) दिखे। यह पूरी deletion history का प्रमाण नहीं है."
+      :"Removal audit log में कोई matching entry नहीं मिली; actual removal count verify नहीं हुआ.";
   const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,
     "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks,signature:e.snapshot_signature}),
     "","| गतिविधि | नतीजा |","|---|---:|",
     "| नई properties (unique property ID) | "+activityCount(e.counts.new_properties)+" |","| Duplicate new rows merged | "+activityCount(e.counts.duplicate_new_property_rows)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
-    "| Audit log updates | "+activityCount(e.counts.audit_updated_events)+" |","| Removed / hidden events | "+(e.removal_events||[]).length+" logged (zero confirmed नहीं) |",
+    "| Audit log updates | "+activityCount(e.counts.audit_updated_events)+" |","| Removal audit events | "+activityCount(e.counts.removal_events_logged)+" (incomplete होने पर पता नहीं) |",
     "| Bookings | "+activityCount(e.counts.bookings)+" |","","### Booking status",bookingText,"","### Booking details"];
   for(const x of (e.bookings||[]).slice(0,25))lines.push("- "+x.property_name+" · "+x.category+" · "+x.status+" · "+x.created_at+" · Booking ref "+x.booking_ref);
   if(!(e.bookings||[]).length)lines.push("- "+(Number.isInteger(e.counts.bookings)?"इस date range में कोई booking record नहीं मिला।":"Booking detail उपलब्ध नहीं है।"));
