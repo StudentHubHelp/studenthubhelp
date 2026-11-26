@@ -881,6 +881,11 @@ function buildDailyActivityAnalystDraft(context:string){
   return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+", updated "+activityCount(e.counts.timestamp_updated_properties)+", bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled/failed "+(s.cancelled_or_failed??"पता नहीं")+"). "+removalText,
     content:lines.join("\\n"),checks:["Booking count केवल student_bookings के created_at से लें; enquiries को booking न मानें.","Unavailable को zero न दिखाएँ.","हर section में source coverage स्पष्ट रखें."],risk:"medium" as const};
 }
+function stableActivityJson(value:any):string {
+  if (Array.isArray(value)) return "["+value.map(stableActivityJson).join(",")+"]";
+  if (value && typeof value === "object") return "{"+Object.keys(value).sort().map(key=>JSON.stringify(key)+":"+stableActivityJson(value[key])).join(",")+"}";
+  return JSON.stringify(value);
+}
 function buildDailyActivityQc(context:string){
   const e=parseDailyActivityEvidence(context);let prior:any={};const m=context.match(/DAILY_ACTIVITY_PRIOR_DRAFTS_JSON:(\\{[^\\n]*\\})/);try{prior=m?JSON.parse(m[1]):{};}catch{}
   const p=Array.isArray(e?.source_checks?.property_tables)?e.source_checks.property_tables:[];
@@ -891,8 +896,8 @@ function buildDailyActivityQc(context:string){
   const security=e?.source_checks?.security_audit_log?.ok===true&&e?.source_checks?.security_audit_log?.complete===true;
   const dlm=prior.data_listing_manager,dar=prior.data_analyst_reporting_manager;
   const sameSnapshot=(draft:any)=>Boolean(draft&&e&&draft.date===e.report_date&&
-    JSON.stringify(draft.counts)===JSON.stringify(e.counts)&&
-    JSON.stringify(draft.source_checks)===JSON.stringify(e.source_checks));
+    stableActivityJson(draft.counts)===stableActivityJson(e.counts)&&
+    stableActivityJson(draft.source_checks)===stableActivityJson(e.source_checks));
   const drafts=sameSnapshot(dlm)&&sameSnapshot(dar);
   const pass=Boolean(e&&created&&updated&&bookings&&admin&&security&&drafts),verdict=pass?"PASS":"FAIL";
   const summary=pass?"QC PASS — सभी required read-only sources, date range और DLM/DAR के evidence snapshots स्वतंत्र रूप से match हुए। Removal को zero नहीं बताया गया।":"QC FAIL — required source query या DLM/DAR evidence snapshot अधूरा है अथवा independent verification से match नहीं करता.";
