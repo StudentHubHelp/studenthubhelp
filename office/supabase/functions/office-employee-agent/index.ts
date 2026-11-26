@@ -822,7 +822,7 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
   for(const item of bookings){const s=item.status.toLowerCase(),key=/confirm|booked|approved|active|joined/.test(s)?"confirmed":/pending|requested|new/.test(s)?"pending":/cancel/.test(s)?"cancelled":/fail|reject|expired/.test(s)?"failed":"other";bookingStatuses[key]=(bookingStatuses[key]||0)+1;}
   const tableChecks=tables.map(item=>({table:item.table,created:{ok:created[item.table]?.ok===true,complete:created[item.table]?.complete===true,exact_total:created[item.table]?.total},
     updated:item.updated?{ok:updated[item.table]?.ok===true,complete:updated[item.table]?.complete===true,exact_total:updated[item.table]?.total}:{ok:false,complete:false,exact_total:null,reason:"legacy table has no updated_at"}}));
-  const evidence={report_date:window.date,timezone:window.timezone,window_start_utc:window.start_utc,window_end_utc:window.end_utc,
+  const evidence:any={report_date:window.date,timezone:window.timezone,window_start_utc:window.start_utc,window_end_utc:window.end_utc,
     source_checks:{property_tables:tableChecks,admin_activity_logs:{ok:admin.ok===true,complete:admin.complete===true,exact_total:admin.total},security_audit_log:{ok:security.ok===true,complete:security.complete===true,exact_total:security.total},student_bookings:{ok:booking.ok===true,complete:booking.complete===true,exact_total:booking.total}},
     counts:{new_properties:canonical.every(x=>created[x.table]?.complete)?canonical.reduce((n,x)=>n+Number(created[x.table].total||0),0):null,
       legacy_pg_records:created.pg_listings?.complete?created.pg_listings.total:null,
@@ -833,6 +833,11 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
     new_properties:newRows.slice(0,40),legacy_pg_records:legacyPgRows.slice(0,20),updated_properties:timestampUpdates.slice(0,40),
     audit_update_events:auditUpdates.slice(0,40),removal_events:removals.slice(0,40),bookings:bookings.slice(0,30),
     limitations:["PG legacy table में updated_at column नहीं है; उसके records को published property count में शामिल नहीं किया गया.","Removal log में entry न होना zero removal का प्रमाण नहीं है.","updated_at row-touch बताता है; बदले हुए fields केवल audit log में उपलब्ध होने पर ही बताए जा सकते हैं.","हर section में अधिकतम 40 records दिखाए गए हैं; exact counts source count header से हैं."]};
+  evidence.snapshot_signature = hashActivitySnapshot({
+    report_date: window.date, counts: evidence.counts, source_checks: evidence.source_checks,
+    new_properties: newRows, legacy_pg_records: legacyPgRows, updated_properties: timestampUpdates,
+    audit_update_events: auditUpdates, removal_events: removals, bookings
+  });
   return "DAILY_ACTIVITY_EVIDENCE_JSON:"+JSON.stringify(evidence);
 }
 function parseDailyActivityEvidence(context:string){const match=context.match(/DAILY_ACTIVITY_EVIDENCE_JSON:(\{[^\n]*\})/);if(!match)return null;try{return JSON.parse(match[1]);}catch{return null;}}
@@ -841,7 +846,7 @@ function buildDailyActivityListingDraft(context:string){
   const e=parseDailyActivityEvidence(context);
   if(!e)return {summary:"आज की property activity का verified data उपलब्ध नहीं है.",content:"Evidence payload उपलब्ध नहीं; कोई संख्या अनुमान से नहीं दी गई।",checks:["Read-only property tables और audit logs की query स्थिति जाँचें."],risk:"high" as const};
   const lines=["## आज की Property Activity — "+e.report_date,
-    "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks}),
+    "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks,signature:e.snapshot_signature}),
     "","### नई properties ("+activityCount(e.counts.new_properties)+")"];
   for(const x of e.new_properties||[])lines.push("- "+x.property_name+" · "+x.category+" · "+x.city+" · ID "+x.property_ref+" · "+x.timestamp);
   if(!(e.new_properties||[]).length)lines.push("- "+(Number.isInteger(e.counts.new_properties)?"इस दिन कोई नई row दर्ज नहीं हुई।":"रिकॉर्ड उपलब्ध नहीं; count की पुष्टि नहीं हुई।"));
@@ -889,6 +894,11 @@ function stableActivityJson(value:any):string {
   if (value && typeof value === "object") return "{"+Object.keys(value).sort().map(key=>JSON.stringify(key)+":"+stableActivityJson(value[key])).join(",")+"}";
   return JSON.stringify(value);
 }
+function hashActivitySnapshot(value:any):string {
+  const raw=stableActivityJson(value);let hash=2166136261;
+  for(let i=0;i<raw.length;i++)hash=Math.imul(hash^raw.charCodeAt(i),16777619);
+  return (hash>>>0).toString(16).padStart(8,"0");
+}
 function buildDailyActivityQc(context:string){
   const e=parseDailyActivityEvidence(context);let prior:any={};const m=context.match(/DAILY_ACTIVITY_PRIOR_DRAFTS_JSON:(\{[^\n]*\})/);try{prior=m?JSON.parse(m[1]):{};}catch{}
   const p=Array.isArray(e?.source_checks?.property_tables)?e.source_checks.property_tables:[];
@@ -899,6 +909,7 @@ function buildDailyActivityQc(context:string){
   const security=e?.source_checks?.security_audit_log?.ok===true&&e?.source_checks?.security_audit_log?.complete===true;
   const dlm=prior.data_listing_manager,dar=prior.data_analyst_reporting_manager;
   const sameSnapshot=(draft:any)=>Boolean(draft&&e&&draft.date===e.report_date&&
+    draft.signature===e.snapshot_signature&&
     stableActivityJson(draft.counts)===stableActivityJson(e.counts)&&
     stableActivityJson(draft.source_checks)===stableActivityJson(e.source_checks));
   const drafts=sameSnapshot(dlm)&&sameSnapshot(dar);
