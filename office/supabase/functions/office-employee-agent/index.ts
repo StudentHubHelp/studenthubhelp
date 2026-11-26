@@ -1,4 +1,5 @@
 import { isDailyWebsiteActivityTask } from "../_shared/task-intent.ts";
+import { buildEmployeePrompt, callOfficeGemini } from "../_shared/employee-intelligence.ts";
 const allowedOrigins = new Set([
   "https://office.studenthubhelp.in",
   "http://localhost:5173",
@@ -1397,18 +1398,39 @@ Deno.serve(async (req: Request) => {
         try { const parsed = new URL(value); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; }
       }).filter(Boolean))];
     }
-    // Default operating mode is deterministic and API-independent.
-    // No Gemini request is made. A future opt-in AI mode must be explicitly configured and separately approved.
+    // Prepare a deterministic safety-net draft first. Gemini is optional and can only
+    // run through the Owner-authenticated, quota-guarded gateway when its kill switch is ready.
     let draft;
+    let generationMode = "deterministic_fallback";
+    let generationReason = "gemini_not_enabled_or_not_ready";
     try {
       const deterministic = buildDeterministicDraft(
         roleKey, taskTitle, taskDescription, stepTitle, stepRationale,
         stepExpectedOutput, researchContext, allowedSourceUrls
       );
       draft = parseDraft(JSON.stringify(deterministic), roleKey, stepIndex, allowedSourceUrls);
+      const prompt = buildEmployeePrompt({
+        roleKey, taskTitle, taskDescription, stepTitle,
+        rationale: stepRationale, expectedOutput: stepExpectedOutput,
+        context: researchContext
+      });
+      const ai = await callOfficeGemini(supabaseUrl, anonKey, token, prompt);
+      if (ai.available && ai.text) {
+        try {
+          const aiDraft = parseDraft(ai.text, roleKey, stepIndex, allowedSourceUrls);
+          // Preserve the strict safety contract regardless of model output.
+          draft = { ...aiDraft, generation_mode: "gemini_free_tier", model: ai.model || null };
+          generationMode = "gemini_free_tier";
+          generationReason = "quota_guarded_generation_succeeded";
+        } catch {
+          generationReason = "gemini_output_failed_schema_validation";
+        }
+      } else if (ai.reason) {
+        generationReason = ai.reason;
+      }
     } catch {
       await releaseGenerationLock();
-      return respond({ ok: false, code: "employee_deterministic_draft_failed" }, 500, origin);
+      return respond({ ok: false, code: "employee_draft_preparation_failed" }, 500, origin);
     }
 
     const saved = await rpc(supabaseUrl, serviceKey, "office_employee_save_draft", {
@@ -1424,7 +1446,7 @@ Deno.serve(async (req: Request) => {
       return respond({ ok: false, code }, 409, origin);
     }
     await releaseGenerationLock();
-    return respond({ ok: true, data: { task_id: taskId, draft } }, 200, origin);
+    return respond({ ok: true, data: { task_id: taskId, draft, generation_mode: generationMode, generation_reason: generationReason } }, 200, origin);
   } catch {
     await releaseGenerationLock();
     return respond({ ok: false, code: "employee_agent_unavailable" }, 503, origin);
