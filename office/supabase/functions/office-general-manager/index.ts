@@ -299,11 +299,15 @@ Deno.serve(async (req: Request) => {
       const savedDraftsValid = consolidatedQaTask
         ? taskDrafts.length === consolidatedQaRoles.length && new Set(savedRoleKeys).size === consolidatedQaRoles.length &&
           consolidatedQaRoles.every(roleKey => savedRoleKeys.includes(roleKey))
-        : dailyActivityTask ? dailyActivityRoles.every(roleKey => savedRoleKeys.includes(roleKey)) : true;
+        : dailyActivityTask
+          ? taskDrafts.length === dailyActivityRoles.length &&
+            new Set(savedRoleKeys).size === dailyActivityRoles.length &&
+            dailyActivityRoles.every(roleKey => savedRoleKeys.includes(roleKey))
+          : true;
       const qcPassed = Boolean(qcDraft && (consolidatedQaTask
         ? /(?:^|\n)## Overall QC verdict: PASS(?:\s|$)/i.test(String(qcDraft.draft_content || ""))
         : /QC verdict: *PASS/i.test(String(qcDraft.draft_content || ""))));
-      const taskCompleted = consolidatedQaTask
+      const taskCompleted = (consolidatedQaTask || dailyActivityTask)
         ? completedRolesValid && savedDraftsValid && qcPassed
         : qcPassed;
       const taskText = String(taskForCompletion?.title || "") + " " + String(taskForCompletion?.description || "");
