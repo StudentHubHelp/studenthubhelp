@@ -50,7 +50,7 @@ Status: automated tests and Edge Function type-check passed in GitHub Actions; b
 - Production deployed: office-employee-agent v31, office-general-manager v18; office-gemini-gateway remains v13. Cloudflare Pages production deployment succeeded for merge commit b4132d14b21585267c75fee6ca98d66d6e18c5ea.
 
 ## Gemini Free Tier budget
-The Owner supplied an AI Studio screenshot showing Google limits of 15 RPM, 250,000 TPM and 500 RPD. The Office application caps are lower: 8 RPM, 200,000 TPM and 100 RPD, with 1,024 output tokens. The gateway is enabled; quota status currently reports ready. Paid Gemini billing mode remains blocked. No paid fallback is permitted.
+The Owner supplied an AI Studio screenshot showing Google limits of 15 RPM, 250,000 TPM and 500 RPD. The Office application caps are lower: 10 RPM, 200,000 TPM and 100 RPD, with 1,024 output tokens. The gateway is enabled; quota status currently reports ready. Paid Gemini billing mode remains blocked. No paid fallback is permitted.
 
 ## Remaining blockers before calling A–F complete
 1. Run one real GM task and employee generation under the Owner's authenticated AAL2 browser session; confirm Gemini generation mode rather than deterministic fallback.
