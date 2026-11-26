@@ -664,7 +664,7 @@
         const qcText = String(qcDraft?.draft_content || "");
         const qcVerdict = isDailyActivity && /(?:^|\n)## QC verdict: PASS WITH LIMITATIONS[ \t]*(?:\r?\n|$)/i.test(qcText)
           ? "PASS WITH LIMITATIONS"
-          : /(?:^|\n)QC verdict:[ \t]*PASS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS" : "FAIL_OR_INCONCLUSIVE";
+          : /(?:^|\n)(?:## )?QC verdict:[ \t]*PASS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS" : "FAIL_OR_INCONCLUSIVE";
         const qcPassed = qcVerdict === "PASS" || (isDailyActivity && qcVerdict === "PASS WITH LIMITATIONS");
         if (completedDrafts.length > 0 && completedDrafts.every(Boolean)) {
           const finalReport = node("div", "gm-final-report");
