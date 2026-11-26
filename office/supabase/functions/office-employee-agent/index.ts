@@ -1409,24 +1409,47 @@ Deno.serve(async (req: Request) => {
         stepExpectedOutput, researchContext, allowedSourceUrls
       );
       draft = parseDraft(JSON.stringify(deterministic), roleKey, stepIndex, allowedSourceUrls);
-      const prompt = buildEmployeePrompt({
-        roleKey, taskTitle, taskDescription, stepTitle,
-        rationale: stepRationale, expectedOutput: stepExpectedOutput,
-        context: researchContext
-      });
-      const ai = await callOfficeGemini(supabaseUrl, anonKey, token, prompt);
-      if (ai.available && ai.text) {
-        try {
-          const aiDraft = parseDraft(ai.text, roleKey, stepIndex, allowedSourceUrls);
-          // Preserve the strict safety contract regardless of model output.
-          draft = { ...aiDraft, generation_mode: "gemini_free_tier", model: ai.model || null };
-          generationMode = "gemini_free_tier";
-          generationReason = "quota_guarded_generation_succeeded";
-        } catch {
-          generationReason = "gemini_output_failed_schema_validation";
+      const evidenceCriticalTask = isDailyWebsiteActivityTask(taskTitle, taskDescription) ||
+        isCountingTask(taskTitle, taskDescription) || isConsolidatedTeamQaTask(taskTitle, taskDescription);
+      if (evidenceCriticalTask) {
+        generationReason = "deterministic_evidence_contract_preserved";
+      } else {
+        const prompt = buildEmployeePrompt({
+          roleKey, taskTitle, taskDescription, stepTitle,
+          rationale: stepRationale, expectedOutput: stepExpectedOutput,
+          context: researchContext
+        });
+        const ai = await callOfficeGemini(supabaseUrl, anonKey, token, prompt);
+        if (ai.available && ai.text) {
+          try {
+            const aiDraft = parseDraft(ai.text, roleKey, stepIndex, allowedSourceUrls);
+            let qcMayReplace = true;
+            if (roleKey === "quality_control_manager") {
+              const verdictRank = (value: string) => value === "FAIL" ? 0
+                : value === "INCONCLUSIVE" ? 1
+                : value === "PASS WITH LIMITATIONS" ? 2
+                : value === "PASS" ? 3 : -1;
+              const getVerdict = (value: string) =>
+                value.match(/(?:Overall )?QC verdict:\\s*(PASS WITH LIMITATIONS|PASS|FAIL|INCONCLUSIVE)/i)?.[1]?.toUpperCase() || "";
+              const deterministicVerdict = getVerdict(String(draft.draft_content || ""));
+              const aiVerdict = getVerdict(String(aiDraft.draft_content || ""));
+              qcMayReplace = Boolean(deterministicVerdict && aiVerdict) &&
+                verdictRank(aiVerdict) <= verdictRank(deterministicVerdict);
+            }
+            if (qcMayReplace) {
+              // Model output can enrich analysis, but it cannot promote QC beyond deterministic evidence.
+              draft = { ...aiDraft, generation_mode: "gemini_free_tier", model: ai.model || null };
+              generationMode = "gemini_free_tier";
+              generationReason = "quota_guarded_generation_succeeded";
+            } else {
+              generationReason = "qc_verdict_promotion_blocked";
+            }
+          } catch {
+            generationReason = "gemini_output_failed_schema_validation";
+          }
+        } else if (ai.reason) {
+          generationReason = ai.reason;
         }
-      } else if (ai.reason) {
-        generationReason = ai.reason;
       }
     } catch {
       await releaseGenerationLock();
