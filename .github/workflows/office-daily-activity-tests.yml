@@ -1,6 +1,13 @@
 name: AI Office daily activity tests
 
 on:
+  push:
+    branches:
+      - fix/office-gm-daily-activity-reporting
+    paths:
+      - "office/supabase/functions/**"
+      - "office/tests/**"
+      - ".github/workflows/office-daily-activity-tests.yml"
   pull_request:
     branches:
       - feature/office-phase-3
@@ -20,7 +27,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
-          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           git init .
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.git"
