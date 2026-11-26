@@ -889,14 +889,19 @@ function buildDailyActivityQc(context:string){
   const bookings=e?.source_checks?.student_bookings?.ok===true&&e?.source_checks?.student_bookings?.complete===true;
   const admin=e?.source_checks?.admin_activity_logs?.ok===true&&e?.source_checks?.admin_activity_logs?.complete===true;
   const security=e?.source_checks?.security_audit_log?.ok===true&&e?.source_checks?.security_audit_log?.complete===true;
-  const drafts=prior.data_listing_manager===true&&prior.data_analyst_reporting_manager===true;
+  const dlm=prior.data_listing_manager,dar=prior.data_analyst_reporting_manager;
+  const sameSnapshot=(draft:any)=>Boolean(draft&&e&&draft.date===e.report_date&&
+    JSON.stringify(draft.counts)===JSON.stringify(e.counts)&&
+    JSON.stringify(draft.source_checks)===JSON.stringify(e.source_checks));
+  const drafts=sameSnapshot(dlm)&&sameSnapshot(dar);
   const pass=Boolean(e&&created&&updated&&bookings&&admin&&security&&drafts),verdict=pass?"PASS":"FAIL";
-  const summary=pass?"QC PASS — required read-only sources, date range और DLM/DAR drafts verify हुए। Removal को zero नहीं बताया गया।":"QC FAIL — required source query या employee draft evidence अधूरा/अनुपलब्ध है.";
+  const summary=pass?"QC PASS — सभी required read-only sources, date range और DLM/DAR के evidence snapshots स्वतंत्र रूप से match हुए। Removal को zero नहीं बताया गया।":"QC FAIL — required source query या DLM/DAR evidence snapshot अधूरा है अथवा independent verification से match नहीं करता.";
   const lines=["## स्वतंत्र Quality Check","- Report date: "+(e?.report_date||"Unavailable")+" (Asia/Kolkata)","- 6 property tables created_at: "+(created?"PASS":"FAIL"),
     "- 5 canonical tables updated_at: "+(updated?"PASS":"FAIL"),"- student_bookings: "+(bookings?"PASS":"FAIL"),
-    "- admin_activity_logs: "+(admin?"PASS":"FAIL"),"- security_audit_log: "+(security?"PASS":"FAIL"),"- DLM और DAR drafts: "+(drafts?"PASS":"FAIL"),
+    "- admin_activity_logs: "+(admin?"PASS":"FAIL"),"- security_audit_log: "+(security?"PASS":"FAIL"),
+    "- DLM और DAR के evidence counts/source coverage independent re-query से match: "+(drafts?"PASS":"FAIL"),
     "- No removal log को zero removal नहीं माना: "+(e&&!(e.removal_events||[]).length?"PASS":"REVIEW"),"","## QC verdict: "+verdict,summary];
-  return {summary,content:lines.join("\\n"),checks:["Exact date range और pagination verify करें.","DLM और DAR दोनों drafts जाँचें.","Missing audit event को zero activity न बताएं."],risk:pass?"low" as const:"high" as const};
+  return {summary,content:lines.join("\\n"),checks:["Exact date range और pagination verify करें.","DLM और DAR के count/source snapshots को स्वतंत्र query से match करें.","Missing audit event को zero activity न बताएं."],risk:pass?"low" as const:"high" as const};
 }
 
 function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
@@ -1276,13 +1281,14 @@ Deno.serve(async (req: Request) => {
     } else if (roleKey === "quality_control_manager" && isDailyWebsiteActivityTask(taskTitle, taskDescription)) {
       const independent = await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription);
       const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
-      const hasMarker = (role: string) => {
+      const draftEvidenceRef = (role: string) => {
         const draft = priorDrafts.find((item: any) => item?.role_key === role);
-        return Boolean(draft && String(draft.draft_content || "").includes("DAILY_ACTIVITY_EVIDENCE_REF:"));
+        const match = String(draft?.draft_content || "").match(/DAILY_ACTIVITY_EVIDENCE_REF:(\\{[^\\n]*\\})/);
+        try { return match ? JSON.parse(match[1]) : null; } catch { return null; }
       };
       researchContext = independent + "\\nDAILY_ACTIVITY_PRIOR_DRAFTS_JSON:" + JSON.stringify({
-        data_listing_manager: hasMarker("data_listing_manager"),
-        data_analyst_reporting_manager: hasMarker("data_analyst_reporting_manager")
+        data_listing_manager: draftEvidenceRef("data_listing_manager"),
+        data_analyst_reporting_manager: draftEvidenceRef("data_analyst_reporting_manager")
       });
     } else if (roleKey === "quality_control_manager" && isCountingTask(taskTitle, taskDescription)) {
       // QC independently reruns exact city-filtered counts instead of trusting a truncated
