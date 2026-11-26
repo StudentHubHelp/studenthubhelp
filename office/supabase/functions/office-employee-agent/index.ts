@@ -835,8 +835,12 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
     limitations:["PG legacy table में updated_at column नहीं है; उसके records को published property count में शामिल नहीं किया गया.","Removal log में entry न होना zero removal का प्रमाण नहीं है.","updated_at row-touch बताता है; बदले हुए fields केवल audit log में उपलब्ध होने पर ही बताए जा सकते हैं.","हर section में अधिकतम 40 records दिखाए गए हैं; exact counts source count header से हैं."]};
   evidence.snapshot_signature = hashActivitySnapshot({
     report_date: window.date, counts: evidence.counts, source_checks: evidence.source_checks,
-    new_properties: newRows, legacy_pg_records: legacyPgRows, updated_properties: timestampUpdates,
-    audit_update_events: auditUpdates, removal_events: removals, bookings
+    new_properties: [...newRows].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    legacy_pg_records: [...legacyPgRows].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    updated_properties: [...timestampUpdates].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    audit_update_events: [...auditUpdates].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    removal_events: [...removals].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b))),
+    bookings: [...bookings].sort((a:any,b:any)=>stableActivityJson(a).localeCompare(stableActivityJson(b)))
   });
   return "DAILY_ACTIVITY_EVIDENCE_JSON:"+JSON.stringify(evidence);
 }
