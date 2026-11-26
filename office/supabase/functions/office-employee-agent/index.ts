@@ -224,8 +224,9 @@ async function runStatusTable(
     ...statuses.map(state => exactCityCount(supabaseUrl, serviceKey, table, city, { ...filters, status: "eq." + state }))
   ]);
   const statusCounts = Object.fromEntries(statuses.map((state, index) => [state, stateCounts[index]]));
-  const otherStatusCount = Number.isInteger(total) && stateCounts.every(Number.isInteger)
-    ? Number(total) - stateCounts.reduce((sum, value) => sum + Number(value), 0) : null;
+  const numericStateCounts = stateCounts.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  const otherStatusCount = Number.isInteger(total) && numericStateCounts.length === stateCounts.length
+    ? Number(total) - numericStateCounts.reduce((sum, value) => sum + value, 0) : null;
   return {
     table,
     category,
@@ -452,7 +453,7 @@ async function fetchAggregateContext(supabaseUrl: string, serviceKey: string, ta
     search_query_telemetry: { available: false, note: "No search-event table or query-event records are currently available. Do not report a most-searched property; request search tracking instrumentation." }
   }).slice(0, 6500);
 }
-async function buildRoleContext(roleKey: string, supabaseUrl: string, serviceKey: string): Promise<string> {
+async function buildRoleContext(roleKey: string, supabaseUrl: string, serviceKey: string, taskTitle = "", taskDescription = ""): Promise<string> {
   if (roleKey === "data_listing_manager") return await fetchListingReviewContext(supabaseUrl, serviceKey);
   if (roleKey === "data_analyst_reporting_manager") return await fetchAggregateContext(supabaseUrl, serviceKey, taskTitle, taskDescription);
   const sources: string[] = [];
@@ -1041,7 +1042,7 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
         checks: countTask
           ? ["Exact count query must succeed.", "City filter must be explicit.", "All six category totals and status breakdowns must be numeric.", "Legacy tables must be zero or reconciled.", "Duplicate property IDs must be checked.", "GM completion requires QC PASS."]
           : ["Review each task acceptance criterion against direct evidence.", "Never mark PASS without evidence."],
-        risk: countTask && !passed ? "high" : "medium"
+        risk: countTask && !passed ? "high" as const : "medium" as const
       };
     })()
   };
@@ -1357,7 +1358,7 @@ Deno.serve(async (req: Request) => {
           : await fetchAggregateContext(supabaseUrl, serviceKey, taskTitle, taskDescription))
         : roleKey === "data_listing_manager" && isDailyWebsiteActivityTask(taskTitle, taskDescription)
           ? await fetchDailyActivityEvidence(supabaseUrl, serviceKey, taskTitle, taskDescription)
-          : await buildRoleContext(roleKey, supabaseUrl, serviceKey);
+          : await buildRoleContext(roleKey, supabaseUrl, serviceKey, taskTitle, taskDescription);
       allowedSourceUrls = [...new Set((researchContext.match(/https:\/\/[^\s<>"']+/g) || []).map((value: string) => {
         try { const parsed = new URL(value); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; }
       }).filter(Boolean))];
