@@ -1433,6 +1433,7 @@ Deno.serve(async (req: Request) => {
       return respond({ ok: false, code: "employee_draft_preparation_failed" }, 500, origin);
     }
 
+    draft = { ...draft, generation_mode: generationMode, generation_reason: generationReason };
     const saved = await rpc(supabaseUrl, serviceKey, "office_employee_save_draft", {
       p_user_id: user.id, p_task_id: taskId, p_role_key: roleKey,
       p_step_index: stepIndex, p_draft: draft
