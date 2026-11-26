@@ -351,9 +351,9 @@ Deno.serve(async (req: Request) => {
 
     const taskTitle = redact(String(task.title || "").slice(0, 160));
     const taskDescription = redact(String(task.description || "").slice(0, 1800));
-    let plan;
+    let plan: any;
     try {
-      const allowedRoles = new Set(roles.map((role: any) => role.role_key));
+      const allowedRoles = new Set<string>(roles.map((role: any) => String(role.role_key)));
       const deterministic = buildDeterministicPlan(taskTitle, taskDescription, roles);
       plan = parsePlan(JSON.stringify(deterministic), allowedRoles);
       if (isConsolidatedTeamQaTask(taskTitle, taskDescription) &&
