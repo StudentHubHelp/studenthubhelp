@@ -304,9 +304,14 @@ Deno.serve(async (req: Request) => {
             new Set(savedRoleKeys).size === dailyActivityRoles.length &&
             dailyActivityRoles.every(roleKey => savedRoleKeys.includes(roleKey))
           : true;
-      const qcPassed = Boolean(qcDraft && (consolidatedQaTask
-        ? /(?:^|\n)## Overall QC verdict: PASS(?:\s|$)/i.test(String(qcDraft.draft_content || ""))
-        : /QC verdict: *PASS/i.test(String(qcDraft.draft_content || ""))));
+      const qcText = String(qcDraft?.draft_content || "");
+      const qcVerdict = consolidatedQaTask
+        ? (/(?:^|\n)## Overall QC verdict: PASS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS" : "FAIL_OR_INCONCLUSIVE")
+        : dailyActivityTask
+          ? (/(?:^|\n)## QC verdict: PASS WITH LIMITATIONS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS WITH LIMITATIONS"
+            : /(?:^|\n)## QC verdict: PASS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS" : "FAIL_OR_INCONCLUSIVE")
+          : (/(?:^|\n)(?:## )?QC verdict:[ \t]*PASS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS" : "FAIL_OR_INCONCLUSIVE");
+      const qcPassed = qcVerdict === "PASS" || (dailyActivityTask && qcVerdict === "PASS WITH LIMITATIONS");
       const taskCompleted = (consolidatedQaTask || dailyActivityTask)
         ? completedRolesValid && savedDraftsValid && qcPassed
         : qcPassed;
@@ -324,13 +329,18 @@ Deno.serve(async (req: Request) => {
         ok: true,
         data: {
           task_id: taskId, completed_steps: completed, draft_only: true, external_actions_executed: false,
-          task_completed: taskCompleted, completion_status: taskCompleted ? "qc_pass_owner_review_required" : "blocked_qc",
-          qc_status: qcPassed ? "PASS" : (qcDraft ? "FAIL_OR_INCONCLUSIVE" : "MISSING"),
+          task_completed: taskCompleted,
+          completion_status: taskCompleted
+            ? (qcVerdict === "PASS WITH LIMITATIONS" ? "qc_pass_with_limitations_owner_review_required" : "qc_pass_owner_review_required")
+            : "blocked_qc",
+          qc_status: qcDraft ? qcVerdict : "MISSING",
           completion_blocked_reason: blockedReason,
           message: taskCompleted ? (dailyActivityTask
-            ? "Daily website activity report passed QC. The three required employee drafts are saved; Owner review is required and no external action was executed."
+            ? (qcVerdict === "PASS WITH LIMITATIONS"
+              ? "Daily website activity report passed QC WITH LIMITATIONS. The three required employee drafts are saved; Owner review is required and no external action was executed."
+              : "Daily website activity report passed QC. The three required employee drafts are saved; Owner review is required and no external action was executed.")
             : "QC passed and all required employee drafts are saved. Evidence-backed report is ready for Owner review; no external action was executed.")
-            : "Employee drafts were generated, but the task is NOT complete. All required role drafts and QC PASS are mandatory."
+            : "Employee drafts were generated, but the task is NOT complete. All required role drafts and an accepted QC verdict are mandatory."
         }
       }, 200, origin);
     }

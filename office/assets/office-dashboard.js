@@ -660,18 +660,24 @@
           taskDrafts.find(item => item.role_key === step.role_key && item.step_index === stepIndex)
         );
         const qcDraft = completedDrafts.find((draft, index) => (gmPlan.steps || [])[index]?.role_key === "quality_control_manager");
-        const qcPassed = Boolean(qcDraft && /QC verdict: *PASS/i.test(String(qcDraft.draft_content || "")));
+        const isDailyActivity = /daily|today|aaj|आज|website activity/i.test(String(task.title || "") + " " + String(task.description || ""));
+        const qcText = String(qcDraft?.draft_content || "");
+        const qcVerdict = isDailyActivity && /(?:^|\n)## QC verdict: PASS WITH LIMITATIONS[ \t]*(?:\r?\n|$)/i.test(qcText)
+          ? "PASS WITH LIMITATIONS"
+          : /(?:^|\n)(?:## )?QC verdict:[ \t]*PASS[ \t]*(?:\r?\n|$)/i.test(qcText) ? "PASS" : "FAIL_OR_INCONCLUSIVE";
+        const qcPassed = qcVerdict === "PASS" || (isDailyActivity && qcVerdict === "PASS WITH LIMITATIONS");
         if (completedDrafts.length > 0 && completedDrafts.every(Boolean)) {
           const finalReport = node("div", "gm-final-report");
           finalReport.append(node("strong", "gm-final-report-title", qcPassed
-            ? "General Manager · Final task report (QC PASS)"
+            ? "General Manager · Final task report (QC " + qcVerdict + ")"
             : "Employee drafts generated · Task NOT complete"));
           finalReport.append(node("p", "", completedDrafts.length + "/" + (gmPlan.steps || []).length +
-            " employee drafts generated. " + (qcPassed ? "QC passed; Owner review is still required." : "QC PASS is missing. Draft generation is not task completion.")));
+            " employee drafts generated. " + (qcPassed
+              ? (qcVerdict === "PASS WITH LIMITATIONS" ? "QC passed with limitations; Owner review is still required." : "QC passed; Owner review is still required.")
+              : "QC PASS is missing. Draft generation is not task completion.")));
           const analystDraft = completedDrafts.find((draft, index) =>
             (gmPlan.steps || [])[index]?.role_key === "data_analyst_reporting_manager");
           if (qcPassed && analystDraft) {
-            const isDailyActivity = /daily|today|aaj|आज|website activity/i.test(String(task.title || "") + " " + String(task.description || ""));
             finalReport.append(node("strong", "gm-owner-answer-title", isDailyActivity ? "आज की आसान वेबसाइट रिपोर्ट" : "Owner business answer"));
             finalReport.append(node("p", "gm-owner-answer", analystDraft.summary || analystDraft.title || "Verified report is available."));
           }
@@ -717,10 +723,13 @@
     try {
       const result = await gmApi("execute_plan", { task_id: task.id });
       const count = Array.isArray(result.completed_steps) ? result.completed_steps.length : 0;
-      finalMessage = result.task_completed === true
-        ? count + " employee draft(s) generated and QC PASS. Owner review is still required; no external actions were executed."
-        : count + " employee draft(s) generated, but task remains INCOMPLETE: QC PASS is required. " + (result.completion_blocked_reason || "");
-      succeeded = result.task_completed === true;
+      const isDailyActivity = /daily|today|aaj|आज|website activity/i.test(String(task.title || "") + " " + String(task.description || ""));
+      const qcAccepted = result.task_completed === true &&
+        (result.qc_status === "PASS" || (isDailyActivity && result.qc_status === "PASS WITH LIMITATIONS"));
+      finalMessage = qcAccepted
+        ? count + " employee draft(s) generated and " + (result.qc_status === "PASS WITH LIMITATIONS" ? "QC PASS WITH LIMITATIONS" : "QC PASS") + ". Owner review is still required; no external actions were executed."
+        : count + " employee draft(s) generated, but task remains INCOMPLETE: an accepted QC verdict is required. " + (result.completion_blocked_reason || "");
+      succeeded = qcAccepted;
     } catch (error) {
       finalMessage = error.message || "Employee workflow failed.";
     } finally {
@@ -919,12 +928,14 @@
       status("GM plan saved. Employees are now preparing their drafts sequentially…");
       const run = await gmApi("execute_plan", { task_id: createdTask.id });
       const completed = Array.isArray(run.completed_steps) ? run.completed_steps.length : 0;
-      const qcPassed = run.task_completed === true && run.qc_status === "PASS";
+      const isDailyActivity = /daily|today|aaj|आज|website activity/i.test(String(createdTask?.title || "") + " " + String(createdTask?.description || ""));
+      const qcAccepted = run.task_completed === true &&
+        (run.qc_status === "PASS" || (isDailyActivity && run.qc_status === "PASS WITH LIMITATIONS"));
       await loadWorkspace();
-      status(qcPassed
-        ? "GM generated " + completed + " employee draft(s) and QC PASS. Owner review is still required; no external actions were executed."
-        : "GM generated " + completed + " employee draft(s), but the task is NOT complete because QC PASS is missing. " + (run.completion_blocked_reason || "Review the QC draft before treating this task as complete."),
-        qcPassed);
+      status(qcAccepted
+        ? "GM generated " + completed + " employee draft(s) and " + (run.qc_status === "PASS WITH LIMITATIONS" ? "QC PASS WITH LIMITATIONS" : "QC PASS") + ". Owner review is still required; no external actions were executed."
+        : "GM generated " + completed + " employee draft(s), but the task is NOT complete because an accepted QC verdict is missing. " + (run.completion_blocked_reason || "Review the QC draft before treating this task as complete."),
+        qcAccepted);
     } catch (error) {
       if (createdTask?.id) {
         await loadWorkspace();
