@@ -26,6 +26,14 @@ Deno.test("plain city-wise property count remains a count task", () => {
   );
 });
 
+Deno.test("date-based new-property count is not a daily activity report", () => {
+  assertEqual(
+    isDailyWebsiteActivityTask("Daily property count", "Count all hostels created today"),
+    false,
+    "created-today count must stay with the analyst count workflow"
+  );
+});
+
 Deno.test("daily report uses DLM, DAR and independent QC", () => {
   assertEqual(
     [...DAILY_ACTIVITY_REQUIRED_ROLES],
