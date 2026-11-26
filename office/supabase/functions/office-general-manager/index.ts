@@ -121,7 +121,7 @@ function buildDeterministicPlan(taskTitle: string, taskDescription: string, role
   const dailyActivityTask = isDailyWebsiteActivityTask(taskTitle, taskDescription);
   const countTask = !consolidatedQaTask && !dailyActivityTask &&
     /(count|how many|total|number of|quantity|kitne|kitni|kitna|कितने|कितनी|कितना|कुल कितनी|कुल कितने)/i.test(textValue) &&
-    /(property|properties|listing|hostel|\\bpg\\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल)/i.test(textValue);
+    /(property|properties|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore|प्रॉपर्टी|लिस्टिंग|होस्टल)/i.test(textValue);
   if (consolidatedQaTask) {
     for (const roleKey of consolidatedQaRoles) add(roleKey);
   } else if (dailyActivityTask) {
