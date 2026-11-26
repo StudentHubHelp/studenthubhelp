@@ -905,7 +905,6 @@ function buildDailyActivityAnalystDraft(context:string){
     :"Booking records की exact संख्या उपलब्ध नहीं है.";
   const removalAuditReadComplete=e.source_checks.admin_activity_logs.complete===true&&e.source_checks.security_audit_log.complete===true;
   const removalCoverageCertified=e.audit_coverage?.semantic_completeness==="certified";
-  const removalAuditComplete=removalAuditReadComplete&&removalCoverageCertified;
   const removalText=!removalAuditReadComplete
     ?"Removal audit sources incomplete हैं; total removal count verify नहीं हुआ."
     :!removalCoverageCertified
@@ -952,8 +951,8 @@ function buildDailyActivityQc(context:string){
     stableActivityJson(draft.counts)===stableActivityJson(e.counts)&&
     stableActivityJson(draft.source_checks)===stableActivityJson(e.source_checks));
   const drafts=sameSnapshot(dlm)&&sameSnapshot(dar);
-  const corePass=Boolean(e&&created&&updated&&bookings&&admin&&security&&drafts&&pgUpdateUnavailable);
   const pgUpdateUnavailable=e?.pg_legacy_update_availability?.status==="unavailable";
+  const corePass=Boolean(e&&created&&updated&&bookings&&admin&&security&&drafts&&pgUpdateUnavailable);
   const auditReadComplete=e?.audit_coverage?.read_complete===true;
   const auditCoverageIncomplete=!e||!auditReadComplete||e?.audit_coverage?.semantic_completeness!=="certified";
   const limitations:string[]=[];
