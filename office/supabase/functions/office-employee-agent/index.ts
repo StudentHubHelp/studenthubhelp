@@ -1092,9 +1092,9 @@ function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescrip
           checks: ["Confirm sample coverage before treating findings as complete.", "Manually inspect suspected duplicates and verification evidence."], risk: "medium"
         },
     data_collection_executive: {
-      summary: "First-party StudentHubHelp evidence collection; external web search is disabled in API-independent mode.",
-      content: "## Research brief\n" + brief + "\n\n## Retrieved first-party evidence\n" + context + "\n\n## Sources\n" + sourceList + "\n\n## Limitations\nTavily and general web search were not called. Findings are limited to the official StudentHubHelp pages successfully fetched. Any fact not present in those pages remains unknown.",
-      checks: ["Verify each cited page and its relevance to the exact task.", "Use a separately approved research provider only if third-party discovery is essential."], risk: sourceUrls.length ? "medium" : "high"
+      summary: "Evidence collection uses one bounded Tavily Basic search when configured, plus relevant first-party StudentHubHelp pages; it does not crawl or extract full external pages.",
+      content: "## Research brief\n" + brief + "\n\n## Retrieved source evidence\n" + context + "\n\n## Sources\n" + sourceList + "\n\n## Limitations\nAt most one Tavily Basic search (up to five result snippets) is attempted per DCE task when TAVILY_API_KEY is configured. Advanced search, raw-content extraction and site crawling are disabled. If the provider is unavailable, only successfully fetched first-party pages are used. Snippets are leads, not independent verification; check source dates, relevance and claims before relying on them.",
+      checks: ["Verify each cited page, publisher, date and relevance to the exact task.", "Treat snippets as leads; do not claim full-page extraction.", "Escalate if primary-source evidence is unavailable or sources conflict."], risk: sourceUrls.length ? "medium" : "high"
     },
     customer_support_executive: {
       summary: "Support response framework prepared from available official support context; not sent.",
