@@ -1,4 +1,4 @@
-import { buildEmployeePrompt, buildGeneralManagerPrompt } from "../supabase/functions/_shared/employee-intelligence.ts";
+import { buildEmployeePrompt, buildGeneralManagerPrompt, callOfficeGemini } from "../supabase/functions/_shared/employee-intelligence.ts";
 
 const roles = [
   "data_listing_manager",
@@ -49,4 +49,45 @@ Deno.test("GM prompt limits delegation to registered roles and disables side eff
   if (!prompt.includes("requires_external_action must always be false")) throw new Error("external action boundary missing");
   if (!prompt.includes("registered roles listed below")) throw new Error("role allowlist boundary missing");
   if (!prompt.includes("steps (1-8 unique roles")) throw new Error("plan schema missing");
+});
+
+
+Deno.test("Gemini helper fails closed when gateway is disabled and generates only after readiness", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  try {
+    globalThis.fetch = (async () => {
+      calls++;
+      return new Response(JSON.stringify({ ok: true, data: { ready: false, api_key_configured: true } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as typeof fetch;
+    const blocked = await callOfficeGemini("https://example.supabase.co", "anon", "owner-token", "prompt");
+    if (blocked.available || blocked.reason !== "gemini_not_ready" || calls !== 1) {
+      throw new Error("disabled gateway must stop before generation");
+    }
+
+    calls = 0;
+    globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      calls++;
+      const body = JSON.parse(String(init?.body || "{}"));
+      if (body.action === "status") {
+        return new Response(JSON.stringify({ ok: true, data: { ready: true, api_key_configured: true } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({
+        ok: true,
+        data: { text: "{}", model: "gemini-3.5-flash-lite", usage: { input_tokens: 12, output_tokens: 8 } },
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }) as typeof fetch;
+    const generated = await callOfficeGemini("https://example.supabase.co", "anon", "owner-token", "prompt");
+    if (!generated.available || generated.model !== "gemini-3.5-flash-lite" || calls !== 2) {
+      throw new Error("ready gateway should status-check then generate exactly once");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
