@@ -25,6 +25,8 @@ Deno.test("all eight specialists receive role-specific, proposal-only instructio
     if (!prompt.includes("proposal-only")) throw new Error(roleKey + " missing proposal-only boundary");
     if (!prompt.includes("Return one valid JSON object only")) throw new Error(roleKey + " missing strict output contract");
     if (!prompt.includes("Test evidence only")) throw new Error(roleKey + " missing supplied context");
+    if (!prompt.includes("DELIVERABLE:")) throw new Error(roleKey + " missing role-specific deliverable contract");
+    if (!prompt.includes("clear Hindi/Hinglish")) throw new Error(roleKey + " missing Owner-language output rule");
   }
 });
 
@@ -49,6 +51,7 @@ Deno.test("GM prompt limits delegation to registered roles and disables side eff
   if (!prompt.includes("requires_external_action must always be false")) throw new Error("external action boundary missing");
   if (!prompt.includes("registered roles listed below")) throw new Error("role allowlist boundary missing");
   if (!prompt.includes("steps (1-8 unique roles")) throw new Error("plan schema missing");
+  if (!prompt.includes("use Hindi/Hinglish when the request is Hindi/Hinglish")) throw new Error("GM language matching missing");
 });
 
 
