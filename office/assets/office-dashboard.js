@@ -873,6 +873,7 @@
         quotaApi()
       ]);
       renderMetrics(overview.task_counts);
+      renderCurrentTask(overview.current_task || null);
       renderTasks(taskResult.tasks || [], planResult.plans || [], employeeResult.items || []);
       renderIntegrations(integrationResult);
       renderApprovals(approvalResult);
@@ -933,6 +934,17 @@
     } finally { button.disabled = false; }
   });
 
+  function setWorkspaceView() {
+    const tasksView = location.hash === "#tasks";
+    $("tasks").hidden = !tasksView;
+    document.querySelector(".workspace-grid").hidden = !tasksView;
+    document.querySelectorAll(".nav-item").forEach(link => {
+      link.classList.toggle("active", link.getAttribute("href") === (tasksView ? "#tasks" : "#overview"));
+    });
+  }
+
+  window.addEventListener("hashchange", setWorkspaceView);
+  setWorkspaceView();
   $("refresh-btn").addEventListener("click", loadWorkspace);
   $("active-tasks-tab").addEventListener("click", () => { showingArchivedTasks = false; loadWorkspace(); });
   $("archived-tasks-tab").addEventListener("click", () => { showingArchivedTasks = true; loadWorkspace(); });
