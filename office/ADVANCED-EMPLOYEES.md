@@ -23,7 +23,7 @@ Status: code implemented; live Gemini verification pending.
 Status: partially implemented; provider-dependent research remains gated.
 - DLM now paginates across all five canonical listing tables, up to 10,000 rows per category, and reports exact scan coverage, missing-field counts and duplicate candidates.
 - DLM excludes phone, email, owner identity and other contact fields from its review payload.
-- DCE remains first-party StudentHubHelp-only in API-independent mode. Tavily is still blocked; no paid or unconfigured research provider is called.
+- DCE can make at most one Tavily Basic search per task when TAVILY_API_KEY is configured (up to five snippets); advanced search, raw extraction and crawling are disabled. Relevant first-party pages are added separately. Missing key/provider errors fall back to first-party-only evidence. Tavily account billing/credit plan remains an external account setting.
 - Other specialists use only the bounded public repository/site and read-only Supabase evidence currently supplied to their workflows.
 
 ## Phase D — GM management
@@ -44,7 +44,7 @@ Status: safeguards implemented; end-to-end acceptance testing pending.
 
 ## Phase F — Verification and acceptance
 Status: automated contract tests added; not yet fully executed.
-- Added Deno tests for role-specific instructions, prompt-injection boundaries, output contracts and GM role/action restrictions.
+- Added Deno tests for role-specific instructions, prompt-injection boundaries, output contracts, GM role/action restrictions, Gemini gateway readiness and Tavily Basic source validation.
 - These tests must be run in a Deno-capable environment before deployment.
 - Live acceptance still requires an authenticated Owner AAL2 session, a configured Gemini API secret, gateway enablement, quota-status confirmation and real task scenarios across all eight roles.
 - No production Edge Function deployment or production cutover is performed by this branch.
