@@ -583,8 +583,8 @@
         const requiredSteps = Array.isArray(gmPlan.steps) ? gmPlan.steps.length : 0;
         const qcDraft = savedDrafts.find(item => item.role_key === "quality_control_manager");
         const qcText = String(qcDraft?.draft_content || "");
-        const qcState = /QC verdict:\\s*PASS WITH LIMITATIONS/i.test(qcText) ? "QC PASS WITH LIMITATIONS"
-          : /QC verdict:\\s*PASS/i.test(qcText) ? "QC PASS"
+        const qcState = /QC verdict:\s*PASS WITH LIMITATIONS/i.test(qcText) ? "QC PASS WITH LIMITATIONS"
+          : /QC verdict:\s*PASS/i.test(qcText) ? "QC PASS"
           : qcDraft ? "QC review pending/failed" : "QC pending";
         meta.append(node("span", "", "Employee drafts " + savedDrafts.length + "/" + requiredSteps + " · " + qcState));
       }
