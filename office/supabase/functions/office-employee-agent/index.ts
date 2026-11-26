@@ -734,11 +734,11 @@ function buildConsolidatedQaQc(researchContext: string) {
 function resolveDailyActivityWindow(taskTitle: string, taskDescription: string) {
   const value = String(taskTitle || "") + " " + String(taskDescription || "");
   let date = "";
-  const iso = value.match(/\\b(20\\d{2}-\\d{2}-\\d{2})\\b/);
+  const iso = value.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
   if (iso) date = iso[1];
   if (!date) {
     const months: Record<string, string> = {jan:"01",january:"01",feb:"02",february:"02",mar:"03",march:"03",apr:"04",april:"04",may:"05",jun:"06",june:"06",jul:"07",july:"07",aug:"08",august:"08",sep:"09",september:"09",oct:"10",october:"10",nov:"11",november:"11",dec:"12",december:"12"};
-    const named = value.match(/\\b(\\d{1,2})\\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\s+(20\\d{2})\\b/i);
+    const named = value.match(/\b(\d{1,2})\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(20\d{2})\b/i);
     if (named) date = named[3] + "-" + months[named[2].toLowerCase()] + "-" + named[1].padStart(2,"0");
   }
   if (!date) {
@@ -761,7 +761,7 @@ async function readDailyActivityRows(supabaseUrl:string,serviceKey:string,table:
         signal:AbortSignal.timeout(10000)
       });
       if(!response.ok)return {ok:false,complete:false,total:null,rows,error:"http_"+response.status};
-      if(exactTotal===null){const range=response.headers.get("content-range")||"";const total=range.includes("/")?range.slice(range.lastIndexOf("/")+1):"";if(!/^\\d+$/.test(total))return {ok:false,complete:false,total:null,rows,error:"exact_count_unavailable"};exactTotal=Number(total);}
+      if(exactTotal===null){const range=response.headers.get("content-range")||"";const total=range.includes("/")?range.slice(range.lastIndexOf("/")+1):"";if(!/^\d+$/.test(total))return {ok:false,complete:false,total:null,rows,error:"exact_count_unavailable"};exactTotal=Number(total);}
       const page=await response.json().catch(()=>null);if(!Array.isArray(page))return {ok:false,complete:false,total:exactTotal,rows,error:"invalid_rows"};
       rows.push(...page);if(rows.length>=exactTotal||page.length<pageSize)break;
     }
@@ -777,7 +777,7 @@ function safeActivityProperty(row:any,table:string,activity:string) {
 }
 function safeAuditEvent(row:any,source:string) {
   const action=String(row?.action||"").slice(0,100),entityType=String(row?.entity_type||"").slice(0,100),normalized=action.toLowerCase();
-  if(!/property|listing|hostel|\\bpg\\b|tiffin|mess|library|cafe|bookstore/i.test(entityType+" "+action))return null;
+  if(!/property|listing|hostel|\bpg\b|tiffin|mess|library|cafe|bookstore/i.test(entityType+" "+action))return null;
   const activity=/delet|remov|archiv|hide|deactivat|disable/i.test(normalized)?"removed":/updat|edit|modif|chang|status/i.test(normalized)?"updated":/creat|add|insert|publish/i.test(normalized)?"created":"other";
   if(activity==="other")return null;
   const details=row?.details&&typeof row.details==="object"?row.details:row?.metadata&&typeof row.metadata==="object"?row.metadata:{};
@@ -834,7 +834,7 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
     limitations:["PG legacy table में updated_at column नहीं है; उसके records को published property count में शामिल नहीं किया गया.","Removal log में entry न होना zero removal का प्रमाण नहीं है.","updated_at row-touch बताता है; बदले हुए fields केवल audit log में उपलब्ध होने पर ही बताए जा सकते हैं.","हर section में अधिकतम 40 records दिखाए गए हैं; exact counts source count header से हैं."]};
   return "DAILY_ACTIVITY_EVIDENCE_JSON:"+JSON.stringify(evidence);
 }
-function parseDailyActivityEvidence(context:string){const match=context.match(/DAILY_ACTIVITY_EVIDENCE_JSON:(\\{[^\\n]*\\})/);if(!match)return null;try{return JSON.parse(match[1]);}catch{return null;}}
+function parseDailyActivityEvidence(context:string){const match=context.match(/DAILY_ACTIVITY_EVIDENCE_JSON:(\{[^\n]*\})/);if(!match)return null;try{return JSON.parse(match[1]);}catch{return null;}}
 function activityCount(value:any){return Number.isInteger(value)?String(value):"पता नहीं";}
 function buildDailyActivityListingDraft(context:string){
   const e=parseDailyActivityEvidence(context);
@@ -859,7 +859,7 @@ function buildDailyActivityListingDraft(context:string){
   lines.push("- admin_activity_logs: "+(e.source_checks.admin_activity_logs.ok&&e.source_checks.admin_activity_logs.complete?"read OK":"incomplete"));
   lines.push("- security_audit_log: "+(e.source_checks.security_audit_log.ok&&e.source_checks.security_audit_log.complete?"read OK":"incomplete"),"","## सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x));
   return {summary:"आज "+e.report_date+" को नई properties: "+activityCount(e.counts.new_properties)+"; updated: "+activityCount(e.counts.timestamp_updated_properties)+"; removal: "+((e.removal_events||[]).length?(e.removal_events.length+" logged events"):"audit log में entry नहीं, zero confirm नहीं")+".",
-    content:lines.join("\\n"),checks:["created_at और updated_at की India-time date range verify करें.","Removal log में entry न होने को zero removal न मानें.","किसी property में बदलाव न करें."],risk:"medium" as const};
+    content:lines.join("\n"),checks:["created_at और updated_at की India-time date range verify करें.","Removal log में entry न होने को zero removal न मानें.","किसी property में बदलाव न करें."],risk:"medium" as const};
 }
 function buildDailyActivityAnalystDraft(context:string){
   const e=parseDailyActivityEvidence(context);
@@ -879,7 +879,7 @@ function buildDailyActivityAnalystDraft(context:string){
   lines.push("","### हटाई गई properties",removalText,"","### Report की सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x),
     "","सभी timestamps India time (Asia/Kolkata) के अनुसार हैं। Student की निजी जानकारी report में शामिल नहीं है.");
   return {summary:"आज "+e.report_date+" की रिपोर्ट: नई properties "+activityCount(e.counts.new_properties)+", updated "+activityCount(e.counts.timestamp_updated_properties)+", bookings "+activityCount(e.counts.bookings)+" (confirmed "+(s.confirmed??"पता नहीं")+", pending "+(s.pending??"पता नहीं")+", cancelled/failed "+(s.cancelled_or_failed??"पता नहीं")+"). "+removalText,
-    content:lines.join("\\n"),checks:["Booking count केवल student_bookings के created_at से लें; enquiries को booking न मानें.","Unavailable को zero न दिखाएँ.","हर section में source coverage स्पष्ट रखें."],risk:"medium" as const};
+    content:lines.join("\n"),checks:["Booking count केवल student_bookings के created_at से लें; enquiries को booking न मानें.","Unavailable को zero न दिखाएँ.","हर section में source coverage स्पष्ट रखें."],risk:"medium" as const};
 }
 function stableActivityJson(value:any):string {
   if (Array.isArray(value)) return "["+value.map(stableActivityJson).join(",")+"]";
@@ -887,7 +887,7 @@ function stableActivityJson(value:any):string {
   return JSON.stringify(value);
 }
 function buildDailyActivityQc(context:string){
-  const e=parseDailyActivityEvidence(context);let prior:any={};const m=context.match(/DAILY_ACTIVITY_PRIOR_DRAFTS_JSON:(\\{[^\\n]*\\})/);try{prior=m?JSON.parse(m[1]):{};}catch{}
+  const e=parseDailyActivityEvidence(context);let prior:any={};const m=context.match(/DAILY_ACTIVITY_PRIOR_DRAFTS_JSON:(\{[^\n]*\})/);try{prior=m?JSON.parse(m[1]):{};}catch{}
   const p=Array.isArray(e?.source_checks?.property_tables)?e.source_checks.property_tables:[];
   const created=p.length===6&&p.every((x:any)=>x.created?.ok&&x.created?.complete);
   const updated=p.filter((x:any)=>x.table!=="pg_listings").length===5&&p.filter((x:any)=>x.table!=="pg_listings").every((x:any)=>x.updated?.ok&&x.updated?.complete);
@@ -906,7 +906,7 @@ function buildDailyActivityQc(context:string){
     "- admin_activity_logs: "+(admin?"PASS":"FAIL"),"- security_audit_log: "+(security?"PASS":"FAIL"),
     "- DLM और DAR के evidence counts/source coverage independent re-query से match: "+(drafts?"PASS":"FAIL"),
     "- No removal log को zero removal नहीं माना: "+(e&&!(e.removal_events||[]).length?"PASS":"REVIEW"),"","## QC verdict: "+verdict,summary];
-  return {summary,content:lines.join("\\n"),checks:["Exact date range और pagination verify करें.","DLM और DAR के count/source snapshots को स्वतंत्र query से match करें.","Missing audit event को zero activity न बताएं."],risk:pass?"low" as const:"high" as const};
+  return {summary,content:lines.join("\n"),checks:["Exact date range और pagination verify करें.","DLM और DAR के count/source snapshots को स्वतंत्र query से match करें.","Missing audit event को zero activity न बताएं."],risk:pass?"low" as const:"high" as const};
 }
 
 function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
@@ -1288,10 +1288,10 @@ Deno.serve(async (req: Request) => {
       const priorDrafts = Array.isArray(prepared.data?.employee_drafts) ? prepared.data.employee_drafts : [];
       const draftEvidenceRef = (role: string) => {
         const draft = priorDrafts.find((item: any) => item?.role_key === role);
-        const match = String(draft?.draft_content || "").match(/DAILY_ACTIVITY_EVIDENCE_REF:(\\{[^\\n]*\\})/);
+        const match = String(draft?.draft_content || "").match(/DAILY_ACTIVITY_EVIDENCE_REF:(\{[^\n]*\})/);
         try { return match ? JSON.parse(match[1]) : null; } catch { return null; }
       };
-      researchContext = independent + "\\nDAILY_ACTIVITY_PRIOR_DRAFTS_JSON:" + JSON.stringify({
+      researchContext = independent + "\nDAILY_ACTIVITY_PRIOR_DRAFTS_JSON:" + JSON.stringify({
         data_listing_manager: draftEvidenceRef("data_listing_manager"),
         data_analyst_reporting_manager: draftEvidenceRef("data_analyst_reporting_manager")
       });
