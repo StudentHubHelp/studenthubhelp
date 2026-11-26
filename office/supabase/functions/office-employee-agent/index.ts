@@ -838,8 +838,9 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
   const unique=[...new Map(auditEvents.map((x:any)=>[x.activity+"|"+x.entity_type+"|"+x.entity_ref+"|"+String(x.timestamp).slice(0,16),x])).values()];
   const auditUpdates=unique.filter((x:any)=>x.activity==="updated"),removals=unique.filter((x:any)=>x.activity==="removed");
   const bookings=(booking.rows||[]).map((row:any)=>({booking_ref:String(row.id),property_name:String(row.property_name||"नाम उपलब्ध नहीं"),property_ref:String(row.property_id||"ID उपलब्ध नहीं"),category:String(row.category||"उपलब्ध नहीं"),status:String(row.status||"उपलब्ध नहीं"),created_at:String(row.created_at||"")}));
-  const bookingStatuses:Record<string,number>={};
-  for(const item of bookings){const s=item.status.toLowerCase(),key=/confirm|booked|approved|active|joined/.test(s)?"confirmed":/pending|requested|new/.test(s)?"pending":/cancel/.test(s)?"cancelled":/fail|reject|expired/.test(s)?"failed":"other";bookingStatuses[key]=(bookingStatuses[key]||0)+1;}
+  const bookingStatuses:Record<string,number>={confirmed:0,pending:0,cancelled:0,failed:0,other:0};
+  for(const item of bookings){const s=item.status.toLowerCase(),key=/confirm|booked|approved|active|joined/.test(s)?"confirmed":/pending|requested|new/.test(s)?"pending":/cancel/.test(s)?"cancelled":/fail|reject|expired/.test(s)?"failed":"other";bookingStatuses[key]++;}
+  const bookingStatusCounts=booking.complete?bookingStatuses:null;
   const tableChecks=tables.map(item=>({table:item.table,created:{ok:created[item.table]?.ok===true,complete:created[item.table]?.complete===true,exact_total:created[item.table]?.total},
     updated:item.updated?{ok:updated[item.table]?.ok===true,complete:updated[item.table]?.complete===true,exact_total:updated[item.table]?.total}:{ok:false,complete:false,exact_total:null,reason:"legacy table has no updated_at"}}));
   const evidence:any={report_date:window.date,timezone:window.timezone,window_start_utc:window.start_utc,window_end_utc:window.end_utc,
@@ -850,7 +851,10 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
       timestamp_updated_properties:canonical.every(x=>updated[x.table]?.complete)?uniqueTimestampUpdates.length:null,
       audit_updated_events:admin.complete&&security.complete?auditUpdates.length:null,removal_events_logged:admin.complete&&security.complete?removals.length:null,
       unique_property_ids_in_removal_logs:admin.complete&&security.complete?[...new Set(removals.map((x:any)=>String(x.entity_type)+"|"+String(x.entity_ref)).filter((x:string)=>!x.endsWith("|ID उपलब्ध नहीं"))) ].length:null,
-      bookings:booking.complete?booking.total:null,booking_statuses:booking.complete?bookingStatuses:null},
+      bookings:booking.complete?booking.total:null,booking_statuses:bookingStatusCounts,
+      pg_legacy_updated_properties:null},
+    pg_legacy_update_availability:{status:"unavailable",reason:"pg_listings table has no updated_at column; update count is not measurable."},
+    audit_coverage:{read_complete:admin.complete===true&&security.complete===true,semantic_completeness:"not_certified",reason:"Successful pagination proves all rows returned by these log tables were read; it does not prove every property removal is captured by the logging system."},
     new_properties:uniqueNewRows.slice(0,40),legacy_pg_records:legacyPgRows.slice(0,20),updated_properties:uniqueTimestampUpdates.slice(0,40),
     audit_update_events:auditUpdates.slice(0,40),removal_events:removals.slice(0,40),bookings:bookings.slice(0,30),
     limitations:["PG legacy table में updated_at column नहीं है; उसके records को published property count में शामिल नहीं किया गया.","Removal log में entry न होना zero removal का प्रमाण नहीं है.","updated_at row-touch बताता है; बदले हुए fields केवल audit log में उपलब्ध होने पर ही बताए जा सकते हैं.","हर section में अधिकतम 40 records दिखाए गए हैं; exact counts source count header से हैं."]};
@@ -899,18 +903,23 @@ function buildDailyActivityAnalystDraft(context:string){
   const s=e.counts.booking_statuses||{},bookingText=Number.isInteger(e.counts.bookings)
     ?"कुल "+e.counts.bookings+" booking record(s): confirmed "+(s.confirmed||0)+", pending "+(s.pending||0)+", cancelled "+(s.cancelled||0)+", failed "+(s.failed||0)+", other "+(s.other||0)+"."
     :"Booking records की exact संख्या उपलब्ध नहीं है.";
-  const removalAuditComplete=e.source_checks.admin_activity_logs.complete&&e.source_checks.security_audit_log.complete;
-  const removalText=!removalAuditComplete
+  const removalAuditReadComplete=e.source_checks.admin_activity_logs.complete===true&&e.source_checks.security_audit_log.complete===true;
+  const removalCoverageCertified=e.audit_coverage?.semantic_completeness==="certified";
+  const removalText=!removalAuditReadComplete
     ?"Removal audit sources incomplete हैं; total removal count verify नहीं हुआ."
+    :!removalCoverageCertified
+      ?"Removal audit tables पूरी पढ़ी गईं, लेकिन logging coverage प्रमाणित नहीं है; actual removal count verify नहीं हुआ."
     :(e.removal_events||[]).length
       ?e.removal_events.length+" removal-related audit events मिले; log में "+activityCount(e.counts.unique_property_ids_in_removal_logs)+" unique property ID(s) दिखे। यह पूरी deletion history का प्रमाण नहीं है."
       :"Removal audit log में कोई matching entry नहीं मिली; actual removal count verify नहीं हुआ.";
   const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,
     "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks,signature:e.snapshot_signature}),
     "","| गतिविधि | नतीजा |","|---|---:|",
-    "| नई properties (unique property ID) | "+activityCount(e.counts.new_properties)+" |","| Duplicate new rows merged | "+activityCount(e.counts.duplicate_new_property_rows)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
+    "| नई properties (unique property ID) | "+activityCount(e.counts.new_properties)+" |","| Duplicate new rows merged | "+activityCount(e.counts.duplicate_new_property_rows)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| PG legacy updates | Unavailable (pg_listings में updated_at column नहीं है) |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
     "| Audit log updates | "+activityCount(e.counts.audit_updated_events)+" |","| Removal audit events | "+activityCount(e.counts.removal_events_logged)+" (incomplete होने पर पता नहीं) |",
-    "| Bookings | "+activityCount(e.counts.bookings)+" |","","### Booking status",bookingText,"","### Booking details"];
+    "| Bookings | "+activityCount(e.counts.bookings)+" |","","### Booking status",bookingText,
+    "Confirmed: "+(e.source_checks.student_bookings.complete?String(s.confirmed):"Unavailable")+" · Pending: "+(e.source_checks.student_bookings.complete?String(s.pending):"Unavailable")+" · Cancelled: "+(e.source_checks.student_bookings.complete?String(s.cancelled):"Unavailable")+" · Failed: "+(e.source_checks.student_bookings.complete?String(s.failed):"Unavailable"),
+    "","### Booking details"];
   for(const x of (e.bookings||[]).slice(0,25))lines.push("- "+x.property_name+" · "+x.category+" · "+x.status+" · "+x.created_at+" · Booking ref "+x.booking_ref);
   if(!(e.bookings||[]).length)lines.push("- "+(Number.isInteger(e.counts.bookings)?"इस date range में कोई booking record नहीं मिला।":"Booking detail उपलब्ध नहीं है।"));
   lines.push("","### हटाई गई properties",removalText,"","### Report की सीमाएँ",...(e.limitations||[]).map((x:string)=>"- "+x),
@@ -942,14 +951,29 @@ function buildDailyActivityQc(context:string){
     stableActivityJson(draft.counts)===stableActivityJson(e.counts)&&
     stableActivityJson(draft.source_checks)===stableActivityJson(e.source_checks));
   const drafts=sameSnapshot(dlm)&&sameSnapshot(dar);
-  const pass=Boolean(e&&created&&updated&&bookings&&admin&&security&&drafts),verdict=pass?"PASS":"FAIL";
-  const summary=pass?"QC PASS — सभी required read-only sources, date range और DLM/DAR के evidence snapshots स्वतंत्र रूप से match हुए। Removal को zero नहीं बताया गया।":"QC FAIL — required source query या DLM/DAR evidence snapshot अधूरा है अथवा independent verification से match नहीं करता.";
+  const pgUpdateUnavailable=e?.pg_legacy_update_availability?.status==="unavailable";
+  const corePass=Boolean(e&&created&&updated&&bookings&&admin&&security&&drafts&&pgUpdateUnavailable);
+  const auditReadComplete=e?.audit_coverage?.read_complete===true;
+  const auditCoverageIncomplete=!e||!auditReadComplete||e?.audit_coverage?.semantic_completeness!=="certified";
+  const limitations:string[]=[];
+  if(pgUpdateUnavailable)limitations.push("PG legacy updates: Unavailable — pg_listings में updated_at column नहीं है.");
+  if(auditCoverageIncomplete)limitations.push("Removal audit coverage incomplete / not certified — logs पढ़े गए हों तब भी unlogged removals संभव हैं.");
+  const verdict=corePass?(limitations.length?"PASS WITH LIMITATIONS":"PASS"):"FAIL";
+  const summary=corePass
+    ?(verdict==="PASS WITH LIMITATIONS"
+      ?"QC PASS WITH LIMITATIONS — required read-only queries और DLM/DAR snapshots match हुए; PG updates और removal audit coverage की सीमाएँ स्पष्ट हैं."
+      :"QC PASS — required read-only sources और independent evidence snapshots match हुए.")
+    :"QC FAIL — required source query या DLM/DAR evidence snapshot अधूरा है अथवा independent verification से match नहीं करता.";
   const lines=["## स्वतंत्र Quality Check","- Report date: "+(e?.report_date||"Unavailable")+" (Asia/Kolkata)","- 6 property tables created_at: "+(created?"PASS":"FAIL"),
-    "- 5 canonical tables updated_at: "+(updated?"PASS":"FAIL"),"- student_bookings: "+(bookings?"PASS":"FAIL"),
-    "- admin_activity_logs: "+(admin?"PASS":"FAIL"),"- security_audit_log: "+(security?"PASS":"FAIL"),
+    "- 5 canonical tables updated_at: "+(updated?"PASS":"FAIL"),"- PG legacy updated_at: "+(pgUpdateUnavailable?"UNAVAILABLE":"REVIEW"),
+    "- student_bookings: "+(bookings?"PASS":"FAIL"),
+    "- admin_activity_logs read/pagination: "+(admin?"PASS":"FAIL"),"- security_audit_log read/pagination: "+(security?"PASS":"FAIL"),
+    "- Removal audit semantic coverage: "+(auditCoverageIncomplete?"INCOMPLETE / NOT CERTIFIED":"CERTIFIED"),
     "- DLM और DAR के evidence counts/source coverage independent re-query से match: "+(drafts?"PASS":"FAIL"),
-    "- No removal log को zero removal नहीं माना: "+(e&&!(e.removal_events||[]).length?"PASS":"REVIEW"),"","## QC verdict: "+verdict,summary];
-  return {summary,content:lines.join("\n"),checks:["Exact date range और pagination verify करें.","DLM और DAR के count/source snapshots को स्वतंत्र query से match करें.","Missing audit event को zero activity न बताएं."],risk:pass?"low" as const:"high" as const};
+    "- No removal log को zero removal नहीं माना: "+(e&&!(e.removal_events||[]).length?"PASS":"REVIEW"),
+    ...(limitations.length?["","### QC limitations",...limitations.map(x=>"- "+x)]:[]),
+    "","## QC verdict: "+verdict,summary];
+  return {summary,content:lines.join("\n"),checks:["Exact date range और pagination verify करें.","DLM और DAR के count/source snapshots को स्वतंत्र query से match करें.","PG legacy updates को zero नहीं, Unavailable दिखाएँ.","Audit query completeness और event-capture coverage को अलग-अलग जाँचें.","Missing audit event को zero activity न बताएं."],risk:corePass?"medium" as const:"high" as const};
 }
 
 function buildDeterministicDraft(roleKey: string, taskTitle: string, taskDescription: string, stepTitle: string, stepRationale: string, stepExpectedOutput: string, researchContext: string, sourceUrls: string[]) {
