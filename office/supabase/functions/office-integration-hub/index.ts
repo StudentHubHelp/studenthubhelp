@@ -85,7 +85,7 @@ Deno.serve(async (req: Request) => {
           ...integration,
           secret_configured: integration.secret_reference ? Boolean(secret) : integration.provider_key === "supabase"
         };
-        if (integration.provider_key !== "tavily") return base;
+        if (!["gemini", "brevo", "tavily"].includes(integration.provider_key)) return base;
         if (integration.connection_status !== "connected") return {
           ...base, credential_valid: null, credential_status: "disabled",
           free_plan_allowed: false, paygo_enabled: false
@@ -95,6 +95,29 @@ Deno.serve(async (req: Request) => {
           free_plan_allowed: false, paygo_enabled: false
         };
         try {
+          if (integration.provider_key === "gemini") {
+            const quota = await rpc(supabaseUrl, serviceKey, "office_gemini_quota_status", { p_user_id: user.id });
+            const state = quota.ok ? quota.data : null;
+            const ready = state?.ready === true && state?.billing_mode === "free_tier_only" &&
+              state?.free_tier_confirmed === true && state?.quota_guard_enabled === true &&
+              state?.gateway_enabled === true;
+            return {
+              ...base, credential_valid: ready, credential_status: ready ? "valid_free" : "unavailable",
+              free_plan_allowed: ready, provider_model: state?.model || null,
+              quota_rpm_cap: state?.rpm_app_cap || null, quota_daily_cap: state?.daily_app_cap || null
+            };
+          }
+          if (integration.provider_key === "brevo") {
+            const check = await fetch("https://api.brevo.com/v3/account", {
+              method: "GET", headers: { "api-key": secret, "Accept": "application/json" },
+              signal: AbortSignal.timeout(10000)
+            });
+            return {
+              ...base, credential_valid: check.ok,
+              credential_status: check.ok ? "valid" : check.status === 401 || check.status === 403 ? "invalid" : "unavailable",
+              provider_account_status: check.ok ? "reachable" : null
+            };
+          }
           const usageResponse = await fetch("https://api.tavily.com/usage", {
             method: "GET",
             headers: { Authorization: "Bearer " + secret },
