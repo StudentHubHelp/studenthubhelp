@@ -509,7 +509,19 @@
       const state = node("span", "integration-state integration-" + stateClass, stateLabel);
       top.append(heading, state);
       card.append(top);
-      card.append(node("p", "integration-note", integration.notes || ""));
+      let integrationNote = integration.notes || "";
+      if (["cloudflare", "github", "gmail", "openseo"].includes(integration.provider_key)) {
+        if (!integration.secret_configured) integrationNote = "Required runtime credential is missing. Add the named secret in Supabase Edge Function secrets, then run connection validation.";
+        else if (integration.credential_valid === true) integrationNote = integration.provider_key === "gmail"
+          ? "Credential verified. Office successfully read the authenticated Gmail mailbox profile; message access and sending remain separately permission-gated."
+          : "Credential verified by a read-only provider API check. External write actions remain Owner-approval gated.";
+        else if (integration.credential_status === "invalid" || integration.credential_status === "invalid_or_scope_limited" || integration.credential_status === "expired_or_invalid_token")
+          integrationNote = "Credential is present but provider validation rejected it. Check token validity and required scopes.";
+        else if (integration.credential_status === "scope_or_api_disabled" || integration.credential_status === "valid_token_repo_access_limited")
+          integrationNote = "Credential is present and recognized, but the requested account, repository, scope or API access is limited.";
+        else integrationNote = "Credential is present. Live validation is unavailable or incomplete; this integration is not yet confirmed Connected.";
+      }
+      card.append(node("p", "integration-note", integrationNote));
       const meta = node("div", "integration-meta");
       meta.append(node("span", "", "Mode: " + titleCase(integration.access_mode)));
       if (integration.secret_reference) {
