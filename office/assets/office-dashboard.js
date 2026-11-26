@@ -578,6 +578,16 @@
       meta.append(node("span", "", "Created " + dateText(task.created_at)));
       const actions = node("div", "task-actions");
       const gmPlan = planMap.get(task.id);
+      if (gmPlan) {
+        const savedDrafts = draftMap.get(task.id) || [];
+        const requiredSteps = Array.isArray(gmPlan.steps) ? gmPlan.steps.length : 0;
+        const qcDraft = savedDrafts.find(item => item.role_key === "quality_control_manager");
+        const qcText = String(qcDraft?.draft_content || "");
+        const qcState = /QC verdict:\\s*PASS WITH LIMITATIONS/i.test(qcText) ? "QC PASS WITH LIMITATIONS"
+          : /QC verdict:\\s*PASS/i.test(qcText) ? "QC PASS"
+          : qcDraft ? "QC review pending/failed" : "QC pending";
+        meta.append(node("span", "", "Employee drafts " + savedDrafts.length + "/" + requiredSteps + " · " + qcState));
+      }
       if (task.status === "queued" && !gmPlan) {
         addAction(actions, "Plan with GM", "small-action gm-action", button => createGmPlan(task, button));
       } else if (task.status === "queued" && gmPlan) {
