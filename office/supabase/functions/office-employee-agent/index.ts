@@ -769,11 +769,22 @@ async function readDailyActivityRows(supabaseUrl:string,serviceKey:string,table:
   } catch {return {ok:false,complete:false,total:exactTotal,rows,error:"query_timeout_or_network_error"};}
 }
 function safeActivityProperty(row:any,table:string,activity:string) {
-  return {activity,category:String(row?.category||row?.type||(table==="pg_listings"?"PG":table)),
+  return {activity,source_table:table,category:String(row?.category||row?.type||(table==="pg_listings"?"PG":table)),
     property_name:String(row?.name||row?.service_name||row?.title||"नाम उपलब्ध नहीं"),
-    property_ref:String(row?.property_id??row?.id??"ID उपलब्ध नहीं"),city:String(row?.city||"शहर उपलब्ध नहीं"),
+    property_ref:String(row?.property_id??row?.id??"ID उपलब्ध नहीं"),
+    property_ref_kind:row?.property_id!=null?"property_id":"table_id",city:String(row?.city||"शहर उपलब्ध नहीं"),
     status:row?.status==null?(typeof row?.is_approved==="boolean"?(row.is_approved?"approved":"pending"):"उपलब्ध नहीं"):String(row.status),
     timestamp:String(activity==="new"?row?.created_at:row?.updated_at||row?.created_at||"")};
+}
+function uniqueActivityProperties(rows:any[]) {
+  const seen=new Map<string,any>();
+  for(const row of rows) {
+    const key=row.property_ref_kind==="property_id"
+      ?"property:"+String(row.property_ref).toLowerCase()
+      :String(row.source_table)+":id:"+String(row.property_ref).toLowerCase();
+    if(!seen.has(key))seen.set(key,row);
+  }
+  return [...seen.values()];
 }
 function safeAuditEvent(row:any,source:string) {
   const action=String(row?.action||"").slice(0,100),entityType=String(row?.entity_type||"").slice(0,100),normalized=action.toLowerCase();
@@ -809,11 +820,13 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
   const canonical=tables.filter(x=>x.table!=="pg_listings");
   const newRows=canonical.flatMap(item=>(created[item.table]?.rows||[]).map((row:any)=>safeActivityProperty(row,item.table,"new")));
   const legacyPgRows=(created.pg_listings?.rows||[]).map((row:any)=>safeActivityProperty(row,"pg_listings","legacy_pg_new"));
+  const uniqueNewRows=uniqueActivityProperties(newRows);
   const timestampUpdates=canonical.flatMap(item=>{
     const result=updated[item.table];if(!result?.ok)return [];
     return (result.rows||[]).filter((row:any)=>{const cr=Date.parse(String(row?.created_at||"")),up=Date.parse(String(row?.updated_at||"")),st=Date.parse(window.start_utc);return Number.isFinite(up)&&up>=st&&(!Number.isFinite(cr)||cr<st);})
       .map((row:any)=>safeActivityProperty(row,item.table,"updated"));
   });
+  const uniqueTimestampUpdates=uniqueActivityProperties(timestampUpdates);
   const auditEvents=[...(admin.rows||[]).map((row:any)=>safeAuditEvent(row,"admin_activity_logs")),...(security.rows||[]).map((row:any)=>safeAuditEvent(row,"security_audit_log"))].filter(Boolean);
   const unique=[...new Map(auditEvents.map((x:any)=>[x.activity+"|"+x.entity_type+"|"+x.entity_ref+"|"+String(x.timestamp).slice(0,16),x])).values()];
   const auditUpdates=unique.filter((x:any)=>x.activity==="updated"),removals=unique.filter((x:any)=>x.activity==="removed");
@@ -824,13 +837,14 @@ async function fetchDailyActivityEvidence(supabaseUrl:string,serviceKey:string,t
     updated:item.updated?{ok:updated[item.table]?.ok===true,complete:updated[item.table]?.complete===true,exact_total:updated[item.table]?.total}:{ok:false,complete:false,exact_total:null,reason:"legacy table has no updated_at"}}));
   const evidence:any={report_date:window.date,timezone:window.timezone,window_start_utc:window.start_utc,window_end_utc:window.end_utc,
     source_checks:{property_tables:tableChecks,admin_activity_logs:{ok:admin.ok===true,complete:admin.complete===true,exact_total:admin.total},security_audit_log:{ok:security.ok===true,complete:security.complete===true,exact_total:security.total},student_bookings:{ok:booking.ok===true,complete:booking.complete===true,exact_total:booking.total}},
-    counts:{new_properties:canonical.every(x=>created[x.table]?.complete)?canonical.reduce((n,x)=>n+Number(created[x.table].total||0),0):null,
+    counts:{new_properties:canonical.every(x=>created[x.table]?.complete)?uniqueNewRows.length:null,
+      duplicate_new_property_rows:canonical.every(x=>created[x.table]?.complete)?newRows.length-uniqueNewRows.length:null,
       legacy_pg_records:created.pg_listings?.complete?created.pg_listings.total:null,
-      timestamp_updated_properties:canonical.every(x=>updated[x.table]?.complete)?timestampUpdates.length:null,
+      timestamp_updated_properties:canonical.every(x=>updated[x.table]?.complete)?uniqueTimestampUpdates.length:null,
       audit_updated_events:admin.complete&&security.complete?auditUpdates.length:null,removal_events_logged:admin.complete&&security.complete?removals.length:null,
       unique_property_ids_in_removal_logs:admin.complete&&security.complete?[...new Set(removals.map((x:any)=>String(x.entity_type)+"|"+String(x.entity_ref)).filter((x:string)=>!x.endsWith("|ID उपलब्ध नहीं"))) ].length:null,
       bookings:booking.complete?booking.total:null,booking_statuses:booking.complete?bookingStatuses:null},
-    new_properties:newRows.slice(0,40),legacy_pg_records:legacyPgRows.slice(0,20),updated_properties:timestampUpdates.slice(0,40),
+    new_properties:uniqueNewRows.slice(0,40),legacy_pg_records:legacyPgRows.slice(0,20),updated_properties:uniqueTimestampUpdates.slice(0,40),
     audit_update_events:auditUpdates.slice(0,40),removal_events:removals.slice(0,40),bookings:bookings.slice(0,30),
     limitations:["PG legacy table में updated_at column नहीं है; उसके records को published property count में शामिल नहीं किया गया.","Removal log में entry न होना zero removal का प्रमाण नहीं है.","updated_at row-touch बताता है; बदले हुए fields केवल audit log में उपलब्ध होने पर ही बताए जा सकते हैं.","हर section में अधिकतम 40 records दिखाए गए हैं; exact counts source count header से हैं."]};
   evidence.snapshot_signature = hashActivitySnapshot({
@@ -857,7 +871,8 @@ function buildDailyActivityListingDraft(context:string){
   lines.push("","### Updated properties ("+activityCount(e.counts.timestamp_updated_properties)+")");
   for(const x of e.updated_properties||[])lines.push("- "+x.property_name+" · "+x.category+" · "+x.city+" · ID "+x.property_ref+" · "+x.timestamp);
   if(!(e.updated_properties||[]).length)lines.push("- "+(Number.isInteger(e.counts.timestamp_updated_properties)?"updated_at में कोई पुरानी property दर्ज नहीं मिली।":"Update count की पुष्टि नहीं हुई।"));
-  lines.push("","### Audit log में दर्ज updates ("+activityCount(e.counts.audit_updated_events)+")");
+  lines.push("","Duplicate property rows collapsed: "+activityCount(e.counts.duplicate_new_property_rows),
+    "","### Audit log में दर्ज updates ("+activityCount(e.counts.audit_updated_events)+")");
   for(const x of e.audit_update_events||[])lines.push("- "+x.action+" · "+x.entity_type+" · ID "+x.entity_ref+" · "+x.timestamp+(x.changed_fields?.length?" · fields: "+x.changed_fields.join(", "):""));
   lines.push("","### Removed / hidden / deactivated properties");
   if((e.removal_events||[]).length){lines.push(e.removal_events.length+" removal-related audit events मिले:");for(const x of e.removal_events)lines.push("- "+x.action+" · "+x.entity_type+" · ID "+x.entity_ref+" · "+x.timestamp);}
@@ -883,7 +898,7 @@ function buildDailyActivityAnalystDraft(context:string){
   const lines=["## Owner के लिए आज की आसान रिपोर्ट — "+e.report_date,
     "DAILY_ACTIVITY_EVIDENCE_REF:"+JSON.stringify({date:e.report_date,counts:e.counts,source_checks:e.source_checks,signature:e.snapshot_signature}),
     "","| गतिविधि | नतीजा |","|---|---:|",
-    "| नई properties | "+activityCount(e.counts.new_properties)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
+    "| नई properties (unique property ID) | "+activityCount(e.counts.new_properties)+" |","| Duplicate new rows merged | "+activityCount(e.counts.duplicate_new_property_rows)+" |","| Updated properties (updated_at) | "+activityCount(e.counts.timestamp_updated_properties)+" |", "| Legacy PG records (separate) | "+activityCount(e.counts.legacy_pg_records)+" |",
     "| Audit log updates | "+activityCount(e.counts.audit_updated_events)+" |","| Removed / hidden events | "+(e.removal_events||[]).length+" logged (zero confirmed नहीं) |",
     "| Bookings | "+activityCount(e.counts.bookings)+" |","","### Booking status",bookingText,"","### Booking details"];
   for(const x of (e.bookings||[]).slice(0,25))lines.push("- "+x.property_name+" · "+x.category+" · "+x.status+" · "+x.created_at+" · Booking ref "+x.booking_ref);
