@@ -477,6 +477,12 @@
         } else if (integration.credential_valid === true) {
           stateClass = "connected";
           stateLabel = integration.provider_key === "gmail" ? "Connected · Gmail profile read" : "Connected · API verified";
+        } else if (integration.credential_status === "refresh_credentials_missing") {
+          stateClass = "needs_secret";
+          stateLabel = "OAuth client details missing";
+        } else if (integration.credential_status === "refresh_token_invalid") {
+          stateClass = "needs_secret";
+          stateLabel = "Refresh token invalid";
         } else if (integration.credential_status === "invalid" || integration.credential_status === "invalid_or_scope_limited" || integration.credential_status === "expired_or_invalid_token") {
           stateClass = "needs_secret";
           stateLabel = "Invalid token or scope";
