@@ -70,3 +70,16 @@ OpenSEO estimated weekly tracking at approximately $0.12 per check / $0.48 per m
 13. How can I search for student accommodation near a railway station or bus stand?
 14. What should students check before choosing a hostel near a coaching centre?
 15. How can students find student services by city, locality and landmark?
+
+## Mobile Lighthouse baseline (production, 2026-11-27)
+
+The Lighthouse-enabled sample tested four pages in total; mobile results were available for the homepage and one property detail page. This is a sample, not a full-site performance audit.
+
+| Page | Performance | Accessibility | Best practices | SEO | LCP | CLS |
+|---|---:|---:|---:|---:|---:|---:|
+| Homepage | 89 | 93 | 100 | 100 | 3.21 s | 0.009 |
+| Property detail sample | 55 | 96 | 100 | 100 | 11.97 s | 0.394 |
+
+High-impact findings included oversized logo delivery on the property detail page, image delivery/cache lifetime opportunities, render-blocking CSS and Google Fonts, and homepage contrast/touch-target issues. The property page's visible header logo now uses the existing optimized WebP asset in the SEO/GEO branch; homepage contrast and review-dot touch targets have also been improved. These changes require a post-deployment Lighthouse rerun before their impact can be claimed.
+
+The audit observed `/mobile.css` as a render-blocking stylesheet; the file exists in the repository, so this audit did not establish a 404 for it.
