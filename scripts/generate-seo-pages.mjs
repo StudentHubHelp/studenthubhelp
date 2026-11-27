@@ -34,6 +34,8 @@ function label(v){
   return String(v||'').trim().replace(/\s+/g,' ');
 }
 function key(v){return label(v).toLowerCase();}
+function stripLocationSuffix(value,suffix){const text=label(value),part=label(suffix);if(!text||!part)return text;const lower=text.toLowerCase(),target=part.toLowerCase();if(lower===target)return '';if(lower.endsWith(' '+target))return text.slice(0,text.length-part.length).replace(/[,\\s]+$/,'').trim();return text;}
+function normalizeArea(value,city){let area=label(value);if(!area)return '';const state=stateForCity(city);area=stripLocationSuffix(area,'India');if(state)area=stripLocationSuffix(area,state);const cityEntry=CITY_ALIAS_DATA.canonicalCities.find(item=>key(item.name)===key(city));const aliases=[city,...(cityEntry?.seoAliases||[]),...(cityEntry?.searchAliases||[])].filter(Boolean).sort((a,b)=>label(b).length-label(a).length);for(const alias of aliases){area=stripLocationSuffix(area,alias);const lower=area.toLowerCase(),prefix=label(alias).toLowerCase();if(lower===prefix+' '||lower.startsWith(prefix+' '))area=area.slice(label(alias).length).replace(/^[,\\s]+/,'').trim();}return area&&key(area)!==key(city)&&key(area)!==key(state)?label(area):'';}
 const COACHINGS = JSON.parse(await readFile('data/landmark-aliases.json', 'utf8'));
 const locationRegistrySource = String.raw`(function(window){
 'use strict';
@@ -137,7 +139,7 @@ async function fetchRows(meta){
     if(!res.ok) throw new Error(meta.table+': HTTP '+res.status+' '+await res.text());
     const batch=await res.json(); if(!Array.isArray(batch)||!batch.length) break;
     for(const raw of batch){
-      const city=label(raw.city), area=label(raw.area||raw.service_area);
+      const city=canonicalCityName(raw.city), area=normalizeArea(raw.area||raw.service_area,city);
       const name=label(raw.name||raw.service_name);
       if(!city||!name) continue;
       const savedSlug=String(raw.slug||'').trim();
