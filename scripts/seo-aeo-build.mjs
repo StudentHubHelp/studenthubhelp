@@ -65,7 +65,7 @@ function buildSchema(name, html) {
     : null;
 
   const nodes = [
-    {
+    ...(name === 'index.html' ? [] : [{
       '@type': pageType,
       '@id': `${url}#webpage`,
       url,
@@ -74,7 +74,7 @@ function buildSchema(name, html) {
       inLanguage: 'en-IN',
       isPartOf: { '@id': SITE_ID },
       publisher: { '@id': ORG_ID }
-    },
+    }]),
     {
       '@type': 'BreadcrumbList',
       '@id': `${url}#breadcrumb`,

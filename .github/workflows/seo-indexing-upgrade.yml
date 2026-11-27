@@ -124,7 +124,10 @@ jobs:
           }
           graph_tag='<script id="studenthubhelp-site-graph" type="application/ld+json">'+json.dumps(site_graph,ensure_ascii=False,separators=(',',':'))+'</script>\n'
           p=Path('index.html')
-          p.write_text(add_before(p.read_text(encoding='utf-8'),'</head>',graph_tag),encoding='utf-8')
+          home=p.read_text(encoding='utf-8')
+          if 'id="studenthubhelp-site-graph"' not in home:
+              home=add_before(home,'</head>',graph_tag)
+          p.write_text(home,encoding='utf-8')
 
       - name: Generate advanced SEO and AEO schema layer
         run: node scripts/seo-aeo-build.mjs
