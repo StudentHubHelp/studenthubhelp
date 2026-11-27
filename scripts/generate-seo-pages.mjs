@@ -166,7 +166,27 @@ async function cleanupGeneratedPages(dir='.') {
   }
 }
 async function write(path,content){await mkdir(path.split('/').slice(0,-1).join('/')||'.',{recursive:true});await writeFile(path,content,'utf8');}
-async function writeAreaRedirects(redirects){const start='# BEGIN STUDENTHUBHELP GENERATED SEO AREA REDIRECTS',end='# END STUDENTHUBHELP GENERATED SEO AREA REDIRECTS';const existing=await readFile('_redirects','utf8').catch(()=> '');let preserved=existing;const a=existing.indexOf(start),b=existing.indexOf(end);if(a>=0&&b>a)preserved=(existing.slice(0,a)+'\n'+existing.slice(b+end.length)).trim();const rules=[...redirects.entries()].flatMap(([from,to])=>[from+' '+to+' 301',from.replace(/\/$/,'')+' '+to+' 301']);const block=[start,...rules,end].join('\n');await write('_redirects',[preserved,block].filter(Boolean).join('\n')+'\n');}
+async function writeAreaRedirects(redirects,expected){
+  const redirectPages=[];
+  for(const [from,to] of redirects.entries()){
+    const filePath=from.replace(/^\/+|\/+$/g,'')+'/index.html';
+    if(expected.has(filePath))continue;
+    const destination=new URL(to,BASE).href;
+    const html='<!doctype html><html lang="en-IN"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow">'+GENERATED_MARKER+'<link rel="canonical" href="'+esc(destination)+'"><meta http-equiv="refresh" content="0;url='+esc(destination)+'"><title>Page moved | StudentHubHelp</title></head><body><main><h1>This page has moved</h1><p><a href="'+esc(destination)+'">Continue to the updated StudentHubHelp page</a>.</p></main><script>window.location.replace('+JSON.stringify(destination)+');</script></body></html>';
+    await write(filePath,html);
+    expected.add(filePath);
+    redirectPages.push({from,to,path:filePath});
+  }
+  const start='# BEGIN STUDENTHUBHELP GENERATED SEO AREA REDIRECTS',end='# END STUDENTHUBHELP GENERATED SEO AREA REDIRECTS';
+  const existing=await readFile('_redirects','utf8').catch(()=> '');
+  let preserved=existing;
+  const a=existing.indexOf(start),b=existing.indexOf(end);
+  if(a>=0&&b>a)preserved=(existing.slice(0,a)+'\n'+existing.slice(b+end.length)).trim();
+  const rules=[...redirects.entries()].flatMap(([from,to])=>[from+' '+to+' 301',from.replace(/\/$/,'')+' '+to+' 301']);
+  const block=[start,...rules,end].join('\n');
+  await write('_redirects',[preserved,block].filter(Boolean).join('\n')+'\n');
+  return redirectPages;
+}
 
 await cleanupGeneratedPages();
 await mkdir(GENERATED_ROOT,{recursive:true});
@@ -252,6 +272,6 @@ for(const c of cities.values()){
 }
 
 const uniqueGenerated = [...new Set(generated)];
-await writeAreaRedirects(areaRedirects);
-await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to}))}, null, 2)+'\n');
+const redirectPages=await writeAreaRedirects(areaRedirects,expected);
+await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to})), redirectPages}, null, 2)+'\n');
 console.log(JSON.stringify({verifiedActiveProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
