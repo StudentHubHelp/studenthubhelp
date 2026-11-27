@@ -342,14 +342,14 @@ for(const c of cities.values()){
     const pageTitle=titleForCity(c.name,c.rows);
     const pageDescription=metaDescription(descriptionForCity(c));
     const replaceTag=(source,pattern,value)=>source.replace(pattern,()=>value);
-    cityHtml=replaceTag(cityHtml,/<title>[\\s\\S]*?<\\/title>/i,'<title>'+esc(pageTitle)+'</title>');
-    cityHtml=cityHtml.replace(/(<meta\\s+name=["']description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageDescription)+'$2');
-    cityHtml=cityHtml.replace(/(<meta\\s+property=["']og:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageTitle)+'$2');
-    cityHtml=cityHtml.replace(/(<meta\\s+property=["']og:description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageDescription)+'$2');
-    cityHtml=cityHtml.replace(/(<meta\\s+name=["']twitter:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageTitle)+'$2');
-    cityHtml=cityHtml.replace(/(<meta\\s+name=["']twitter:description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageDescription)+'$2');
-    cityHtml=cityHtml.replace(/<h1([^>]*)>[\\s\\S]*?<\\/h1>/i,'<h1$1>'+esc(h1ForCity(c))+'</h1>');
-    cityHtml=cityHtml.replace(/<script\\s+type=["']application\\/ld\\+json["']>([\\s\\S]*?)<\\/script>/gi,(full,jsonText)=>{
+    cityHtml=replaceTag(cityHtml,/<title>[\s\S]*?<\/title>/i,'<title>'+esc(pageTitle)+'</title>');
+    cityHtml=cityHtml.replace(/(<meta\s+name=["']description["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageDescription)+'$2');
+    cityHtml=cityHtml.replace(/(<meta\s+property=["']og:title["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageTitle)+'$2');
+    cityHtml=cityHtml.replace(/(<meta\s+property=["']og:description["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageDescription)+'$2');
+    cityHtml=cityHtml.replace(/(<meta\s+name=["']twitter:title["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageTitle)+'$2');
+    cityHtml=cityHtml.replace(/(<meta\s+name=["']twitter:description["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageDescription)+'$2');
+    cityHtml=cityHtml.replace(/<h1([^>]*)>[\s\S]*?<\/h1>/i,'<h1$1>'+esc(h1ForCity(c))+'</h1>');
+    cityHtml=cityHtml.replace(/<script\s+type=["']application\/ld\+json["']>([\s\S]*?)<\/script>/gi,(full,jsonText)=>{
       try{
         const data=JSON.parse(jsonText);
         const nodes=Array.isArray(data['@graph'])?data['@graph']:[data];
