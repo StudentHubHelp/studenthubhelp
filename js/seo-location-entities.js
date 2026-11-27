@@ -16,12 +16,9 @@
 
   function clean(v){return String(v??'').replace(/\s+/g,' ').trim()}
   function propertyUrl(r){
-    const slug=clean(r?.slug), id=clean(r?.id||r?.property_id);
-    if(!slug&&!id) return null;
-    const u=new URL('property-details.html',base);
-    u.searchParams.set('type',type);
-    u.searchParams.set(slug?'slug':'id',slug||id);
-    return u.href;
+    const slug=clean(r?.slug);
+    if(!slug) return null;
+    return new URL('properties/'+type+'/'+encodeURIComponent(slug)+'/',base).href;
   }
 
   function publish(){
