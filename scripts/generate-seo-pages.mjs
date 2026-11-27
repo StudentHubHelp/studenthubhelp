@@ -21,7 +21,7 @@ const LEGACY_REDIRECTS = JSON.parse(await readFile('property-url-redirects.json'
 const CITY_ALIAS_DATA = JSON.parse(await readFile('data/city-aliases.json', 'utf8'));
 const CITY_ALIAS_MAP = new Map();
 for (const city of CITY_ALIAS_DATA.canonicalCities || []) {
-  for (const alias of [city.name, ...(city.seoAliases || [])]) CITY_ALIAS_MAP.set(key(alias), city.name);
+  for (const alias of [city.name, ...(city.seoAliases || []), ...(city.searchAliases || [])]) CITY_ALIAS_MAP.set(key(alias), city.name);
 }
 function canonicalCityName(value) { return CITY_ALIAS_MAP.get(key(value)) || label(value); }
 
@@ -137,7 +137,8 @@ function descriptionForCity(city){
   const shortNames={hostel:'hostels/PGs',tiffin:'tiffin/mess services',library:'libraries',cafe:'cafes',bookstore:'bookstores'};
   const categories=profile.ordered.slice(0,3).map(meta=>shortNames[meta.type]||meta.label.toLowerCase());
   const categoryText=joinWithAnd(categories.length?categories:['student services']);
-  return 'Find '+city.rows.length+' verified student listings in '+city.name+': '+categoryText+'. Compare local options and listing details on StudentHubHelp.';
+  const verified=city.rows.filter(row=>row.verified===true).length;
+  return 'Find '+city.rows.length+' active student listings in '+city.name+': '+categoryText+'. '+verified+' listings are marked verified in the directory. Compare local options on StudentHubHelp.';
 }
 function h1ForCity(city){
   const profile=citySeoProfile(city);
@@ -146,6 +147,7 @@ function h1ForCity(city){
 }
 function cityContentIntro(city){
   const profile=citySeoProfile(city);
+  const verified=city.rows.filter(row=>row.verified===true).length;
   const categoryText=profile.ordered.map(meta=>meta.label+' ('+profile.counts.get(meta.type)+')').join(', ');
   const areaLinks=profile.topAreaDetails.map(area=>{
     const href=slug(area.name)+'/';
@@ -156,23 +158,23 @@ function cityContentIntro(city){
       : '<span>'+esc(label)+'</span>';
   }).join('');
   const areaText=profile.topAreas.length
-    ? 'The current directory has the most listing records in '+profile.topAreas.join(', ')+'. Counts below reflect records grouped by their saved locality; they do not indicate distance or availability.'
-    : 'Browse the available city listings and open each result for its locality details.';
+    ? 'Current active listings are most frequently recorded in '+profile.topAreas.join(', ')+'. Area totals are based on saved locality fields, not verified travel distances.'
+    : 'No locality names are currently available in the active listing records. Browse the city directory and check each listing address.';
   const coachingText=profile.coachingNames.length
-    ? 'Some listing records mention coaching institutes or landmarks such as '+profile.coachingNames.join(', ')+'. These are matches from saved listing details, not independently verified distance claims.'
-    : 'For institute or landmark searches, check each listing address and map details rather than assuming proximity.';
+    ? 'Some listing records mention coaching institutes or landmarks such as '+profile.coachingNames.join(', ')+'. These are text matches from listing details, not independently verified distance claims.'
+    : 'Use Global Search for a coaching institute or landmark, then confirm the exact route using the listing address and a map.';
   const categoryChecks=profile.ordered.map(meta=>{
     const guidance={
-      hostel:'For hostels and PGs, compare room type, sharing, facilities and published charges.',
-      tiffin:'For tiffin services, check meal options, delivery area and published timings.',
-      library:'For libraries, check access hours, seating information and available facilities.',
-      cafe:'For cafes, review location, timings and services listed by the provider.',
-      bookstore:'For bookstores, check the listed book categories, stationery and other services.'
+      hostel:'For hostels and PGs, compare room type, sharing, facilities, safety information and published charges.',
+      tiffin:'For tiffin services, check meal options, delivery coverage, plan duration and published timings.',
+      library:'For libraries, check access hours, seat availability, facilities and published fees.',
+      cafe:'For cafes, review location, opening hours and services listed by the provider.',
+      bookstore:'For bookstores, check listed book categories, stationery and availability before visiting.'
     };
     return guidance[meta.type];
   }).filter(Boolean);
   return '<section class="section city-overview"><h2>Student services and local areas in '+esc(city.name)+'</h2>'+
-    '<p>StudentHubHelp currently lists '+city.rows.length+' active listings marked verified in its source records for '+esc(city.name)+'. The directory mix is '+esc(categoryText)+'.</p>'+
+    '<p>The directory currently contains '+city.rows.length+' active listings in '+esc(city.name)+', across '+esc(categoryText||'the student-service categories')+'. '+verified+' are marked verified in the source records; the remaining active records are shown without a verification claim.</p>'+
     '<h3>Localities represented in the directory</h3><p>'+esc(areaText)+'</p><div class="links locality-links">'+areaLinks+'</div>'+
     '<h3>What to compare before choosing</h3><ul>'+categoryChecks.map(item=>'<li>'+esc(item)+'</li>').join('')+
     '<li>Confirm current price, exact address, availability and terms directly with the provider before visiting or paying.</li></ul>'+
@@ -197,13 +199,14 @@ function titleForArea(area, city, rows, hasCoaching){
 function card(row,depth){
   const href=rel(depth,propUrl(row));
   const bits=[row.area,row.city,row.address].filter(Boolean);
+  const status=row.verified===true?'<span class="badge">✓ Verified</span>':'<span class="badge">Active · Details Provided</span>';
   return '<article class="property-card"><h3><a href="'+esc(href)+'">'+esc(row.name||'Student property')+'</a></h3>'+
     (bits.length?'<p>📍 '+esc(bits.join(' • '))+'</p>':'')+
-    '<p><span class="badge">✓ Verified & Active</span></p></article>';
+    '<p>'+status+'</p></article>';
 }
 function categoryNames(rows){return [...new Set(rows.map(row=>TABLES.find(item=>item.type===row.type)?.label||row.type))].filter(Boolean);}
-function faqForCity(city){const cats=categoryNames(city.rows);return [{question:'What student services can I find in '+city.name+'?',answer:'The current StudentHubHelp directory shows '+city.rows.length+' verified and active listings across '+cats.join(', ')+' in '+city.name+'.'},{question:'How can I find services near a coaching institute or landmark in '+city.name+'?',answer:'Search the institute or landmark name in Global Search. Matches use location details stored with listings; confirm the exact route and current availability with the provider before visiting.'},{question:'Are the listings guaranteed to be available?',answer:'Listings shown here are marked active and verified in the source data when this page is generated. Availability and service details can change, so reconfirm directly with the provider.'}];}
-function faqForCategory(meta,city,rows){return [{question:'How many '+meta.label.toLowerCase()+' listings are shown in '+city.name+'?',answer:'This directory currently shows '+rows.length+' verified and active '+meta.label.toLowerCase()+' listings in '+city.name+'.'},{question:'What should I check before choosing a listing?',answer:'Review the location, facilities, timings, pricing and contact details shown on the individual listing, then confirm current availability directly with the provider.'},{question:'How can I find one near a landmark?',answer:'Search the landmark or coaching institute name in Global Search. Any distance stated in listing details is provider-supplied and should be confirmed using a map and the provider.'}];}
+function faqForCity(city){const cats=categoryNames(city.rows),verified=city.rows.filter(row=>row.verified===true).length;return [{question:'What student services can I find in '+city.name+'?',answer:'The current StudentHubHelp directory shows '+city.rows.length+' active listings across '+cats.join(', ')+' in '+city.name+'. '+verified+' are marked verified in the source records.'},{question:'How can I find services near a coaching institute or landmark in '+city.name+'?',answer:'Search the institute or landmark name in Global Search. Matches use location details stored with listings; confirm the exact route and current availability with the provider before visiting.'},{question:'Are the listings guaranteed to be available?',answer:'Active status reflects the latest listing status available when this page was generated. Availability and service details can change, so reconfirm directly with the provider.'}];}
+function faqForCategory(meta,city,rows){const verified=rows.filter(row=>row.verified===true).length;return [{question:'How many '+meta.label.toLowerCase()+' listings are shown in '+city.name+'?',answer:'This directory currently shows '+rows.length+' active '+meta.label.toLowerCase()+' listings in '+city.name+', of which '+verified+' are marked verified.'},{question:'What should I check before choosing a listing?',answer:'Review the location, facilities, timings, pricing and contact details shown on the individual listing, then confirm current availability directly with the provider.'},{question:'How can I find one near a landmark?',answer:'Search the landmark or coaching institute name in Global Search. Any distance stated in listing details is provider-supplied and should be confirmed using a map and the provider.'}];}
 function faqForArea(area,city){const cats=categoryNames(area.rows);return [{question:'What student services are listed around '+area.name+', '+city.name+'?',answer:'The current directory shows '+area.rows.length+' verified and active listings across '+cats.join(', ')+' around '+area.name+', '+city.name+'.'},{question:'How do I confirm the exact location?',answer:'Open the individual listing, review its address and map details, and confirm the route and availability with the provider before visiting.'}];}
 function faqForCoaching(coach,city,rows){const cats=categoryNames(rows);return [{question:'What student services are linked to '+coach.name+' in '+city.name+'?',answer:'This page groups '+rows.length+' verified and active listings whose stored name, area, address or nearby-landmark details mention '+coach.name+'. Categories shown include '+cats.join(', ')+'.'},{question:'Are distances from '+coach.name+' independently verified?',answer:'No. Coaching and landmark matches are based on information stored with each listing. Confirm the exact distance and route on a map and with the provider.'}];}
 function faqHtml(items){if(!items.length)return '';return '<section class="section seo-faq" aria-label="Common questions"><h2>Quick answers</h2>'+items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join('')+'</section>';}
@@ -229,11 +232,12 @@ function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[],item
   });
   const schema={'@context':'https://schema.org','@type':'CollectionPage','@id':canonicalAbs+'#page','name':h1,'url':canonicalAbs,'description':metaDesc,'inLanguage':'en-IN',...(latestDataUpdate?{'dateModified':latestDataUpdate}:{}),'isPartOf':{'@type':'WebSite','name':'StudentHubHelp','url':BASE},'breadcrumb':{'@type':'BreadcrumbList','itemListElement':crumbs.map((c,i)=>({'@type':'ListItem','position':i+1,'name':c.name,'item':c.url}))},...(about.length?{'about':about}:{}),...(itemRows.length?{'mainEntity':{'@type':'ItemList','numberOfItems':itemRows.length,'itemListOrder':'https://schema.org/ItemListOrderAscending','itemListElement':itemListElements}}:{}),...(faqItems.length?{'hasPart':{'@type':'FAQPage','mainEntity':faqItems.map(item=>({'@type':'Question','name':item.question,'acceptedAnswer':{'@type':'Answer','text':item.answer}}))}}:{})};
   const freshnessMarkup=latestDataUpdate?'<p class="data-freshness">Directory data last updated: '+esc(new Date(latestDataUpdate).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}))+'</p>':'';
-  const dataSourceMarkup=itemRows.length?'<section class="section data-source-note" aria-label="About this directory data"><h2>About this directory data</h2><p>Source: StudentHubHelp public listings directory. This page includes '+itemRows.length+' listing records selected from entries marked active and verified in the source data when this page was generated.</p><p>Listing details and availability can change. Confirm current prices, facilities, timings, location and availability directly with the owner or service provider before making a decision.</p></section>':'';
+  const verifiedCount=itemRows.filter(row=>row.verified===true).length;
+  const dataSourceMarkup=itemRows.length?'<section class="section data-source-note" aria-label="About this directory data"><h2>About this directory data</h2><p>Source: StudentHubHelp public listings directory. This page includes '+itemRows.length+' records marked active when the page was generated; '+verifiedCount+' are also marked verified in the source data.</p><p>Listing details and availability can change. Confirm current prices, facilities, timings, location and availability directly with the owner or service provider before making a decision.</p></section>':'';
   return '<!doctype html><html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
     '<title>'+esc(title)+'</title><meta name="description" content="'+esc(metaDesc)+'">'+GENERATED_MARKER+
     '<meta name="robots" content="index,follow"><link rel="icon" type="image/png" href="/logo.png?v=logo-hd-20261029"><link rel="apple-touch-icon" href="/logo.png?v=logo-hd-20261029"><link rel="canonical" href="'+esc(canonicalAbs)+'">'+
-    '<meta property="og:title" content="'+esc(title)+'"><meta property="og:description" content="'+esc(metaDesc)+'"><meta property="og:url" content="'+esc(canonicalAbs)+'"><meta property="og:type" content="website">'+
+    '<meta property="og:title" content="'+esc(title)+'"><meta property="og:description" content="'+esc(metaDesc)+'"><meta property="og:url" content="'+esc(canonicalAbs)+'"><meta property="og:type" content="website"><meta property="og:image" content="https://studenthubhelp.in/logo.png?v=logo-hd-20261029"><meta property="og:image:alt" content="StudentHubHelp student services directory"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="'+esc(title)+'"><meta name="twitter:description" content="'+esc(metaDesc)+'"><meta name="twitter:image" content="https://studenthubhelp.in/logo.png?v=logo-hd-20261029">'+
     '<script type="application/ld+json">'+JSON.stringify(schema)+'</script>'+
     '<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:1180px;margin:auto;padding:24px;line-height:1.55;color:#172033;background:#fff}.crumbs{font-size:.92rem;margin-bottom:18px;color:#64748b}.crumbs a{color:#3158c9}.hero{padding:18px 0 8px}h1{font-size:clamp(28px,5vw,44px);line-height:1.1;margin:.2em 0}.muted{color:#64748b}.data-freshness{font-size:.9rem;color:#64748b;margin:8px 0 18px}.data-source-note{padding:18px;border:1px solid #e2e8f0;border-radius:16px;background:#f8fafc}.data-source-note h2{margin-top:0}.data-source-note p:last-child{margin-bottom:0;color:#64748b}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}.property-card,.category-card{border:1px solid #e2e8f0;border-radius:14px;padding:16px;background:#fff}.property-card h3,.category-card h2{margin-top:0}.property-card a,.category-card a{color:#3158c9;text-decoration:none}.badge{font-size:.82rem;color:#166534;background:#dcfce7;padding:3px 8px;border-radius:999px}.section{margin:30px 0}.links{display:flex;flex-wrap:wrap;gap:10px}.links a{padding:8px 12px;border:1px solid #dbe3ef;border-radius:999px;text-decoration:none;color:#3158c9}.premium-location{max-width:none!important;padding:0!important;background:#f5f7fb!important;color:#172238!important}.premium-location main{max-width:1240px;margin:0 auto;padding:24px 18px 56px}.premium-location .crumbs{color:#b8c8dc;background:#0b1f3a;border-radius:14px;padding:14px 18px;margin:0 0 22px}.premium-location .crumbs a{color:#f2c866}.premium-location .hero{position:relative;overflow:hidden;padding:34px clamp(22px,4vw,48px);margin:0 0 26px;border-radius:24px;color:#fff;background:radial-gradient(ellipse at 85% 0,rgba(215,166,61,.22),transparent 30%),linear-gradient(125deg,#07182e,#102e51 62%,#091d37);box-shadow:0 18px 42px rgba(12,31,58,.12)}.premium-location .hero h1{color:#fff;font-size:clamp(32px,4.8vw,56px);letter-spacing:-1.5px;max-width:850px}.premium-location .hero .muted{color:#d1dbea;max-width:760px}.premium-location .section{margin:28px 0}.premium-location .section>h2{font-size:clamp(20px,2.3vw,28px);letter-spacing:-.5px;color:#0b1f3a;margin:0 0 16px}.premium-location .grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:18px}.premium-location .property-card,.premium-location .category-card{border:1px solid #e2eaf3;border-radius:18px;padding:20px;background:#fff;box-shadow:0 8px 24px rgba(12,31,58,.055);transition:transform .18s ease,box-shadow .18s ease}.premium-location .property-card:hover,.premium-location .category-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(12,31,58,.1)}.premium-location .property-card h3,.premium-location .category-card h2{color:#142f52;line-height:1.35}.premium-location .property-card a,.premium-location .category-card a{color:#3158c9;font-weight:700}.premium-location .badge{display:inline-block;color:#166548;background:#e2f7ed;border:1px solid #b9ecd3;padding:5px 10px;border-radius:999px;font-weight:700}.premium-location .links a{background:#fff;border:1px solid #dbe4ef;color:#203a5b;font-weight:700;padding:10px 14px;border-radius:12px;transition:background .18s,border-color .18s}.premium-location .links a:hover{background:#fff5d9;border-color:#e7c66e}.premium-location a:focus-visible{outline:3px solid #d7a63d;outline-offset:3px}.seo-faq{border:1px solid #e2e8f0;border-radius:16px;padding:20px;background:#fff}.seo-faq h2{margin-top:0}.seo-faq details{padding:12px 0;border-top:1px solid #e2e8f0}.seo-faq summary{cursor:pointer;font-weight:700;color:#142f52}.seo-faq p{color:#475569;margin:10px 0 0}@media(max-width:650px){body{padding:0}.premium-location main{padding:14px 12px 36px}.premium-location .crumbs{padding:12px 14px;border-radius:12px}.premium-location .hero{padding:26px 20px;border-radius:18px}.premium-location .hero h1{font-size:clamp(29px,8vw,40px);letter-spacing:-.8px}.premium-location .property-card,.premium-location .category-card{padding:17px;border-radius:15px}.premium-location .grid{grid-template-columns:1fr;gap:12px}.premium-location .links{gap:8px}.premium-location .links a{padding:9px 11px}}</style><link rel="stylesheet" href="/assets/premium-location.css"></head><body class="'+(premiumLocation?'premium-location':'')+'"><main>'+
     '<nav class="crumbs"><a href="'+esc(home)+'">StudentHubHelp</a> <span>›</span> '+breadcrumb+'</nav>'+
@@ -245,7 +249,7 @@ async function fetchRows(meta){
   while(true){
     const u=new URL(SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/'+meta.table);
     u.searchParams.set('select','id,property_id,slug,name,city,area,address,nearby_coaching,landmark,latitude,longitude,description,status,verified,updated_at,created_at');
-    u.searchParams.set('status','eq.active'); u.searchParams.set('verified','eq.true');
+    u.searchParams.set('status','eq.active');
     u.searchParams.set('offset',String(offset)); u.searchParams.set('limit','1000');
     const res=await fetch(u,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
     if(!res.ok) throw new Error(meta.table+': HTTP '+res.status+' '+await res.text());
@@ -324,12 +328,12 @@ const generated=[];
 const expected=new Set();
 
 for(const c of cities.values()){
-  const cs=slug(c.name); if(!cs || c.rows.length<LOCATION_MIN_PROPERTIES) continue;
+  const cs=slug(c.name); if(!cs) continue;
   const cityDir=GENERATED_ROOT+'/'+cs;
   const cityUrl=new URL(cs+'/',BASE).href;
   const groups=new Map();
   for(const r of c.rows){if(!groups.has(r.type))groups.set(r.type,[]);groups.get(r.type).push(r);}
-  const eligibleGroups=new Map([...groups.entries()].filter(([,rows])=>rows.length>=LOCATION_MIN_PROPERTIES));
+  const eligibleGroups=new Map([...groups.entries()].filter(([,rows])=>rows.length>0));
   const categories=[...eligibleGroups.keys()].map(type=>TABLES.find(t=>t.type===type));
   const categoryLinks=categories.map(meta=>'<a href="'+esc(meta.type+'/')+'">'+meta.icon+' '+esc(meta.label)+'</a>').join('');
   const cityCoachingSlugs=[...new Set(c.rows.flatMap(matchedCoachings))];
@@ -346,7 +350,7 @@ for(const c of cities.values()){
   }
 
   for(const meta of TABLES){
-    const rows=c.rows.filter(r=>r.type===meta.type); if(rows.length<LOCATION_MIN_PROPERTIES) continue;
+    const rows=c.rows.filter(r=>r.type===meta.type); if(!rows.length) continue;
     const dir=cityDir+'/'+meta.type; const url=new URL(cs+'/'+meta.type+'/',BASE).href;
     const relatedCoachings=[...new Set(rows.flatMap(matchedCoachings))];
     const relatedCoachingLinks=relatedCoachings.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
@@ -389,8 +393,8 @@ for(const c of cities.values()){
 
 
 /* Keep the legacy /sikar.html city guide useful to crawlers before client-side hydration.
-   Refresh only its marked static blocks from the same active + verified dataset used
-   by the generated Sikar directory pages. No database writes are performed. */
+   Refresh its marked static blocks from active public listings. Verification labels
+   are rendered per record; no database writes are performed. */
 const sikarCity = cities.get('sikar');
 if (sikarCity) {
   const replaceStaticBlock = (html, name, value) => {
@@ -422,14 +426,14 @@ if (sikarCity) {
     .filter(area => area.rows.length >= LOCATION_MIN_PROPERTIES)
     .sort((a, b) => b.rows.length - a.rows.length || a.name.localeCompare(b.name));
   const staticStats = [
-    '<div class="stat"><b>' + sikarCity.rows.length + '</b><span>Verified listings</span></div>',
+    '<div class="stat"><b>' + sikarCity.rows.length + '</b><span>Active listings</span></div>',
     '<div class="stat"><b>' + new Set(sikarCity.rows.map(row => row.type)).size + '</b><span>Service categories</span></div>',
     '<div class="stat"><b>' + areaEntries.length + '</b><span>Area guides</span></div>',
     '<div class="stat"><b>' + esc(updatedLabel) + '</b><span>Latest listing update</span></div>'
   ].join('');
   const staticAreas = areaEntries.map(area =>
     '<a class="area-card" href="/sikar/' + esc(slug(area.name)) + '/"><span>📍</span><div><strong>' +
-    esc(area.name) + '</strong><small>' + area.rows.length + ' verified listings · Open area guide →</small></div></a>'
+    esc(area.name) + '</strong><small>' + area.rows.length + ' active listings · Open area guide →</small></div></a>'
   ).join('');
   const staticRows = [];
   const staticCategories = TABLES.map(meta => {
@@ -441,19 +445,19 @@ if (sikarCity) {
       const href = propUrl(row);
       const place = [row.area, row.city].filter(Boolean).join(', ') || row.address || 'Sikar';
       return '<a class="listing" href="' + esc(href) + '"><span class="listing-body"><span class="listing-title"><strong>' +
-        esc(row.name || 'Student listing') + '</strong><span class="verified-tag">✓ Verified</span></span><span class="listing-location">📍 ' +
+        esc(row.name || 'Student listing') + '</strong>' + (row.verified===true?'<span class="verified-tag">✓ Verified</span>':'<span class="verified-tag">Active</span>') + '</span><span class="listing-location">📍 ' +
         esc(place) + '</span><span class="listing-bottom"><b>View Details</b><span>→</span></span></span></a>';
     }).join('');
     const categoryPath = meta.type === 'hostel' ? 'hostel' : meta.type;
     return '<section class="service-block"><div class="service-head"><div><span class="service-icon">' + meta.icon +
-      '</span><div><small>SIKAR VERIFIED DIRECTORY</small><h2>' + esc(meta.label) + ' in Sikar</h2></div></div><a href="/sikar/' +
-      categoryPath + '/">Explore all →</a></div><p class="section-copy">Browse ' + rows.length + ' active listings marked verified in the StudentHubHelp directory. Open a listing to review its supplied location and service details, then confirm current availability and terms directly with the provider.</p><div class="listing-grid">' +
+      '</span><div><small>SIKAR LIVE DIRECTORY</small><h2>' + esc(meta.label) + ' in Sikar</h2></div></div><a href="/sikar/'
+      categoryPath + '/">Explore all →</a></div><p class="section-copy">Browse ' + rows.length + ' active listings in the StudentHubHelp directory; ' + rows.filter(row=>row.verified===true).length + ' are marked verified. Open a listing to review its supplied location and service details, then confirm current availability and terms directly with the provider.</p><div class="listing-grid">' +
       cards + '</div><p class="finder-link"><a href="/' + esc(meta.finder) + '?q=Sikar">Search all ' + esc(meta.label.toLowerCase()) + ' in Sikar →</a></p></section>';
   }).join('');
   const areaNames = areaEntries.slice(0, 5).map(area => area.name);
   const areaSummary = areaNames.length ? areaNames.join(', ') : 'the Sikar city directory';
   const staticQuickAnswer = '<p>StudentHubHelp currently lists ' + sikarCity.rows.length +
-    ' active listings marked verified across ' + new Set(sikarCity.rows.map(row => row.type)).size +
+    ' active listings across ' + new Set(sikarCity.rows.map(row => row.type)).size +
     ' student-service categories in Sikar. Area guides include ' + esc(areaSummary) +
     '. Open a listing for its supplied details and confirm current availability directly with the provider.</p>';
   sikarHtml = replaceStaticBlock(sikarHtml, 'STATS', staticStats);
