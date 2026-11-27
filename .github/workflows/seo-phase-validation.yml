@@ -39,6 +39,16 @@ jobs:
           node --check scripts/generate-sitemap.mjs
           node --check js/property-seo-upgrade.js
           node --check js/seo-location-entities.js
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          source=Path('property-details.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script\b[^>]*>([\s\S]*?)</script>', source, re.I)
+          inline=next((item for item in scripts if 'function loadSimilar(r)' in item), None)
+          assert inline, 'Property detail inline application script not found'
+          Path('/tmp/property-details-inline.js').write_text(inline, encoding='utf-8')
+          PY
+          node --check /tmp/property-details-inline.js
 
       - name: Regenerate property HTML from published listing data
         env:
@@ -109,6 +119,13 @@ jobs:
               assert len(canonical_pages) >= expected, f'{category}: expected {expected} canonical pages with server-rendered summaries, found {len(canonical_pages)}'
           property_seo=Path('js/property-seo-upgrade.js').read_text(encoding='utf-8')
           finder_entities=Path('js/seo-location-entities.js').read_text(encoding='utf-8')
+          property_template=Path('property-details.html').read_text(encoding='utf-8')
+          property_generator=Path('scripts/generate-property-pages.mjs').read_text(encoding='utf-8')
+          assert 'function firstImageUrl(record)' in property_generator and 'const heroPreload = heroImage' in property_generator, 'Generated property pages must preload a known hero image'
+          assert 'skeleton-title-text' in property_generator and '.skeleton-title-text{' in property_template, 'Property heading must render in the initial skeleton to reduce LCP and CLS'
+          assert 'rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co"' in property_template, 'Property page is missing the Supabase API preconnect'
+          assert "loading=\"'+(index===0?'eager':'lazy')+'\"" in property_template, 'Only the primary property image should load eagerly'
+          assert "rootMargin:'320px 0px'" in property_template and ".eq('city',r.city)" in property_template and ".eq('status','active')" in property_template and ".limit(300)" in property_template, 'Similar listings should be deferred and city-filtered'
           assert "properties/'+type+'/'+encodeURIComponent(prettySlug||slug)+'/'" in property_seo, 'Legacy slug URL is not canonicalized to its clean property URL'
           assert "document.getElementById('baseSchema')" in property_seo, 'Property schema normalizer is not connected to the actual baseSchema node'
           assert "properties/'+type+'/'+encodeURIComponent(slug)+'/'" in finder_entities, 'Finder ItemList must use clean canonical property URLs'

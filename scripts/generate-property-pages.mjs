@@ -19,6 +19,42 @@ const escapeHtml = (value) => String(value ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+function firstImageUrl(record) {
+  const keys = ['images', 'image_urls', 'gallery_images', 'gallery', 'photos', 'image', 'image_url', 'photo_url', 'property_images'];
+  function find(value) {
+    if (value == null || value === '') return '';
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = find(item);
+        if (found) return found;
+      }
+      return '';
+    }
+    if (typeof value === 'object') return find(value.url || value.image_url || value.src || value.path || value.publicUrl);
+    if (typeof value !== 'string') return '';
+    const raw = value.trim();
+    if (!raw) return '';
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed !== raw) return find(parsed);
+    } catch {}
+    const parts = raw.split(/\r?\n|,\s*(?=https?:\/\/)/i);
+    for (const part of parts) {
+      const candidate = part.trim().replace(/^['"]|['"]$/g, '');
+      try {
+        const parsed = new URL(candidate);
+        if (parsed.protocol === 'https:') return parsed.href;
+      } catch {}
+    }
+    return '';
+  }
+  for (const key of keys) {
+    const found = find(record?.[key]);
+    if (found) return found;
+  }
+  return '';
+}
+
 async function fetchAll(table) {
   const rows = [];
   const pageSize = 500;
@@ -44,7 +80,7 @@ async function fetchAll(table) {
 }
 
 // Always regenerate canonical property pages from the shared details app; do not retain legacy redirect shells.
-function buildHtml({ type, slug, name, city, area, address, description, detailsTemplate }) {
+function buildHtml({ type, slug, name, city, area, address, description, detailsTemplate, heroImage }) {
   const canonical = `${BASE_URL}/properties/${type}/${encodeURIComponent(slug)}/`;
   const categoryLabel = ({
     hostel: 'Hostel / PG',
@@ -125,6 +161,9 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     url: canonical,
     mainEntity: entity
   }).replace(/</g, '\\u003c');
+  const heroPreload = heroImage
+    ? '<link rel="preload" as="image" href="' + escapeHtml(heroImage) + '" fetchpriority="high">\n'
+    : '';
 
   const fallbackHtml = `<section class="card" id="seo-property-fallback" aria-label="Property information">
   <div class="section-kicker">STUDENTHUBHELP LISTING</div>
@@ -143,7 +182,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   <section class="skeleton-hero">
     <div class="skeleton-gallery"><div class="skeleton-block skeleton-main-photo"></div><div class="skeleton-side"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></div>
     <div class="skeleton-info">
-      <div class="skeleton-title-row"><div class="skeleton-title-copy"><div class="skeleton-block skeleton-kicker"></div><div class="skeleton-block skeleton-heading"></div><div class="skeleton-block skeleton-line"></div></div><div class="skeleton-block skeleton-verified"></div></div>
+      <div class="skeleton-title-row"><div class="skeleton-title-copy"><div class="skeleton-block skeleton-kicker"></div><h1 class="property-title skeleton-title-text">${escapeHtml(propertyName)}</h1><p class="skeleton-line-text">${escapeHtml([area, city].filter(Boolean).join(', '))}</p></div><div class="skeleton-block skeleton-verified"></div></div>
       <div class="skeleton-trust"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
       <div class="skeleton-actions"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
     </div>
@@ -179,7 +218,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     '<link rel="shortcut icon" type="image/png" href="/logo.png">\n' +
     '<link rel="apple-touch-icon" href="/logo.png">\n' +
     '<meta property="og:image:secure_url" content="https://studenthubhelp.in/logo.png">\n' +
-    '<meta property="og:image:alt" content="StudentHubHelp logo">');
+    '<meta property="og:image:alt" content="StudentHubHelp logo">\\n' + heroPreload);
   return renderedTemplate
     .replace(/<!--PROPERTY_APP_START-->[\s\S]*?<!--PROPERTY_APP_END-->/i, `<!--PROPERTY_APP_START--><div id="app" aria-busy="true">${loadingSkeleton}</div><section class="seo-fallback-content" aria-hidden="true" aria-label="Property information">${fallbackHtml}</section><!--PROPERTY_APP_END-->`)
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
@@ -266,7 +305,8 @@ async function main() {
         area: row.area,
         address: row.address,
         description: row.description || row.about || row.details,
-        detailsTemplate
+        detailsTemplate,
+        heroImage: firstImageUrl(row)
       });
       if (/document\s*\.\s*(?:write|open)\s*\(/i.test(html)) {
         throw new Error(`Unsafe document.write/document.open found in generated page: ${key}`);
