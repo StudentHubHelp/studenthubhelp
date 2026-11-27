@@ -10,6 +10,8 @@ assert.equal(registry.canonicalizeCity('New Delhi'), 'delhi');
 assert.equal(registry.canonicalizeCity('Bangalore'), 'bengaluru');
 assert.equal(registry.canonicalizeCity('Gurgaon'), 'gurugram');
 assert.equal(registry.canonicalizeCity('सीकर (Sikar)'), 'sikar');
+assert.equal(registry.canonicalizeCity('सीकर'), 'sikar');
+assert.equal(registry.canonicalizeCity(''), '');
 assert.deepEqual(Array.from(registry.findLandmarks('hostel near ALLEN Career Institute')), ['allen']);
 assert.deepEqual(Array.from(registry.findLandmarks('library near Physics Wallah')), ['physics-wallah']);
 
