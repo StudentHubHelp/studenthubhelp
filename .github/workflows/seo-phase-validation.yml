@@ -75,7 +75,7 @@ jobs:
                       continue
                   canonical_pages.append(page)
                   assert 'id="canonicalLink" rel="canonical"' in html, f'Missing canonical: {page}'
-                  robots_match=re.search(r'<meta\s+name=["']robots["']\s+content=["']([^"']+)["']', html, re.I)
+                  robots_match=re.search(r"""<meta\s+name=["']robots["']\s+content=["']([^"']+)["']""", html, re.I)
                   assert robots_match and 'noindex' not in robots_match.group(1).lower(), f'Generated property page is not statically indexable: {page}'
                   assert 'index' in robots_match.group(1).lower(), f'Missing static index directive: {page}'
                   schema_tag='<script type="application/ld+json" id="baseSchema">'
