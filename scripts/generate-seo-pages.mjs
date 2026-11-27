@@ -96,18 +96,19 @@ function citySeoProfile(city){
   const ordered=TABLES.filter(meta=>(counts.get(meta.type)||0)>0)
     .sort((a,b)=>(counts.get(b.type)||0)-(counts.get(a.type)||0));
   const topServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels & PGs':meta.type==='tiffin'?'Tiffin & Mess':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
+  const titleServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels & PGs':meta.type==='tiffin'?'Tiffin':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
   const areaCounts=new Map();
   for(const row of rows){if(row.area)areaCounts.set(row.area,(areaCounts.get(row.area)||0)+1);}
   const topAreas=[...areaCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,5).map(([name])=>name);
   const coachingCounts=new Map();
   for(const row of rows){for(const slug of matchedCoachings(row)){const coach=coachingBySlug(slug);if(coach)coachingCounts.set(coach.name,(coachingCounts.get(coach.name)||0)+1);}}
   const coachingNames=[...coachingCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,4).map(([name])=>name);
-  return {counts,ordered,topServices,topAreas,coachingNames};
+  return {counts,ordered,topServices,titleServices,topAreas,coachingNames};
 }
 function titleForCity(city, rows){
   const profile=citySeoProfile({name:city,rows});
   const types=profile.ordered.map(meta=>meta.type);
-  let phrase=profile.topServices.join(' & ')||'Student Services';
+  let phrase=profile.titleServices.join(' & ')||'Student Services';
   if(key(city)==='kota' && types.includes('hostel') && types.includes('tiffin')) phrase='PG, Hostel & Tiffin';
   return 'Best '+phrase+' in '+city+' | StudentHubHelp';
 }
