@@ -14,6 +14,8 @@ assert.equal(registry.canonicalizeCity('सीकर'), 'sikar');
 assert.equal(registry.canonicalizeCity(''), '');
 assert.deepEqual(Array.from(registry.findLandmarks('hostel near ALLEN Career Institute')), ['allen']);
 assert.deepEqual(Array.from(registry.findLandmarks('library near Physics Wallah')), ['physics-wallah']);
+assert.deepEqual(Array.from(registry.findLandmarks('District Library Velachery')), ['district-library-velachery']);
+assert.deepEqual(Array.from(registry.findLandmarks('Sikar Railway Station')), ['sikar-railway-station']);
 
 vm.runInNewContext(fs.readFileSync('search-query-parser.js', 'utf8'), { window });
 const rows = [
