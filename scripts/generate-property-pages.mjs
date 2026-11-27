@@ -167,7 +167,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
 
   const fallbackHtml = `<section class="card" id="seo-property-fallback" aria-label="Property information">
   <div class="section-kicker">STUDENTHUBHELP LISTING</div>
-  <h1>${escapeHtml(propertyName)}</h1>
+  <h2>${escapeHtml(propertyName)}</h2>
   <p><strong>Category:</strong> ${escapeHtml(categoryLabel)}</p>
   ${locationText ? `<p><strong>Location:</strong> ${escapeHtml(locationText)}</p>` : ''}
   <p>${escapeHtml(desc)}</p>
