@@ -18,6 +18,12 @@ if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Missing Supabase public API
 const GENERATED_ROOT = '.';
 const GENERATED_MARKER = '<meta name="studenthubhelp-generated-seo" content="true">';
 const LEGACY_REDIRECTS = JSON.parse(await readFile('property-url-redirects.json', 'utf8'));
+const CITY_ALIAS_DATA = JSON.parse(await readFile('data/city-aliases.json', 'utf8'));
+const CITY_ALIAS_MAP = new Map();
+for (const city of CITY_ALIAS_DATA.canonicalCities || []) {
+  for (const alias of [city.name, ...(city.seoAliases || [])]) CITY_ALIAS_MAP.set(key(alias), city.name);
+}
+function canonicalCityName(value) { return CITY_ALIAS_MAP.get(key(value)) || label(value); }
 
 function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function slug(v){
@@ -150,11 +156,12 @@ await mkdir(GENERATED_ROOT,{recursive:true});
 const all=(await Promise.all(TABLES.map(fetchRows))).flat();
 const cities=new Map();
 for(const row of all){
-  const citySlug=slug(row.city); if(!citySlug) continue;
-  if(!cities.has(citySlug)) cities.set(citySlug,{name:row.city,rows:[],nameCounts:new Map()});
+  const canonicalCity=canonicalCityName(row.city);
+  const citySlug=slug(canonicalCity); if(!citySlug) continue;
+  if(!cities.has(citySlug)) cities.set(citySlug,{name:canonicalCity,rows:[],nameCounts:new Map()});
   const group=cities.get(citySlug);
-  group.rows.push(row);
-  group.nameCounts.set(row.city,(group.nameCounts.get(row.city)||0)+1);
+  group.rows.push({...row,city:canonicalCity});
+  group.nameCounts.set(canonicalCity,(group.nameCounts.get(canonicalCity)||0)+1);
 }
 for(const group of cities.values()){
   group.name=[...group.nameCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0][0];
@@ -179,7 +186,7 @@ for(const c of cities.values()){
     '<section class="section"><h2>Explore '+esc(c.name)+'</h2><div class="links">'+categoryLinks+'</div></section>'+
     '<section class="section"><h2>Verified properties</h2><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
   const cityPath=cityDir+'/index.html'; expected.add(cityPath); generated.push(cityUrl);
-  await write(cityPath,shell({title:'Student Hostels, Tiffins, Cafes, Libraries & Bookstores in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffin services, cafes, libraries and bookstores in '+c.name+'.',canonical:cityUrl,h1:'StudentHubHelp in '+c.name,crumbs:[{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}]}));
+  await write(cityPath,shell({title:'Student Services in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffin services, cafes, libraries and bookstores in '+c.name+'.',canonical:cityUrl,h1:'StudentHubHelp in '+c.name,crumbs:[{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}]}));
 
   for(const meta of TABLES){
     const rows=c.rows.filter(r=>r.type===meta.type); if(rows.length<LOCATION_MIN_PROPERTIES) continue;
