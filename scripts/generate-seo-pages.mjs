@@ -35,6 +35,20 @@ function label(v){
 }
 function key(v){return label(v).toLowerCase();}
 const COACHINGS = JSON.parse(await readFile('data/landmark-aliases.json', 'utf8'));
+const locationRegistrySource = String.raw\`(function(window){
+'use strict';
+const cityEntries=\${JSON.stringify(CITY_ALIAS_DATA.canonicalCities)};
+const landmarkEntries=\${JSON.stringify(COACHINGS)};
+const norm=value=>String(value??'').normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').replace(/\\s+/g,' ').trim();
+const cityMap=new Map();
+for(const city of cityEntries){for(const alias of [city.name,...(city.seoAliases||[]),...(city.searchAliases||[])])cityMap.set(norm(alias),norm(city.name));}
+const canonicalizeCity=value=>cityMap.get(norm(value))||norm(value);
+const landmarkAliases=Object.freeze(Object.fromEntries(landmarkEntries.map(item=>[item.slug,item.aliases||[]])));
+function findLandmarks(value){const text=' '+norm(value)+' ';return Object.entries(landmarkAliases).filter(([,aliases])=>aliases.some(alias=>{const a=norm(alias);return a&&text.includes(' '+a+' ');})).map(([slug])=>slug).sort((a,b)=>b.length-a.length);}
+window.StudentHubLocationRegistry=Object.freeze({version:'1.0.0',cityEntries,landmarkEntries,landmarkAliases,normalize:norm,canonicalizeCity,findLandmarks});
+})(window);
+\`;
+await writeFile('js/location-intelligence-registry.js', locationRegistrySource, 'utf8');
 
 function matchedCoachings(row){
   const text=key([row.name,row.area,row.address,row.nearby_coaching,row.landmark].filter(Boolean).join(' '));
