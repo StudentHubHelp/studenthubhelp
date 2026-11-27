@@ -444,9 +444,17 @@ if (sikarCity) {
       categoryPath + '/">Explore all →</a></div><p class="section-copy">Browse ' + rows.length + ' active listings marked verified in the StudentHubHelp directory. Open a listing to review its supplied location and service details, then confirm current availability and terms directly with the provider.</p><div class="listing-grid">' +
       cards + '</div><p class="finder-link"><a href="/' + esc(meta.finder) + '?q=Sikar">Search all ' + esc(meta.label.toLowerCase()) + ' in Sikar →</a></p></section>';
   }).join('');
+  const areaNames = areaEntries.slice(0, 5).map(area => area.name);
+  const areaSummary = areaNames.length ? areaNames.join(', ') : 'the Sikar city directory';
+  const staticQuickAnswer = '<p>StudentHubHelp currently lists ' + sikarCity.rows.length +
+    ' active listings marked verified across ' + new Set(sikarCity.rows.map(row => row.type)).size +
+    ' student-service categories in Sikar. Area guides include ' + esc(areaSummary) +
+    '. Open a listing for its supplied details and confirm current availability directly with the provider.</p>';
   sikarHtml = replaceStaticBlock(sikarHtml, 'STATS', staticStats);
   sikarHtml = replaceStaticBlock(sikarHtml, 'AREAS', staticAreas);
   sikarHtml = replaceStaticBlock(sikarHtml, 'LISTINGS', staticCategories);
+  sikarHtml = replaceStaticBlock(sikarHtml, 'QUICK_ANSWER', staticQuickAnswer);
+  sikarHtml = replaceStaticBlock(sikarHtml, 'PRICE_DATE', 'Directory data checked: ' + esc(updatedLabel) + '.');
   await write('sikar.html', sikarHtml);
 }
 
