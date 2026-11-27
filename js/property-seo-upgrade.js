@@ -13,7 +13,7 @@
   const finder={hostel:'pg-finder.html',tiffin:'tiffin-finder.html',library:'library-finder.html',cafe:'cafe-finder.html',bookstore:'bookstore-finder.html'}[type]||'pg-finder.html';
 
   function canonicalUrl(){
-    if(prettySlug) return new URL('properties/'+type+'/'+encodeURIComponent(prettySlug)+'/',BASE).href;
+    if(prettySlug||slug) return new URL('properties/'+type+'/'+encodeURIComponent(prettySlug||slug)+'/',BASE).href;
     const u=new URL('property-details.html',BASE);
     u.searchParams.set('type',type);
     if(slug) u.searchParams.set('slug',slug); else if(id) u.searchParams.set('id',id);
@@ -32,47 +32,67 @@
     links.slice(1).forEach(x=>x.remove());
   }
   function normalizeSchema(){
-    const el=document.getElementById('propertySchema');
+    const el=document.getElementById('baseSchema')||document.getElementById('propertySchema');
     if(!el) return;
     let data;
     try{data=JSON.parse(el.textContent||'{}')}catch(_){return}
-    if(!data||!Array.isArray(data['@graph'])) return;
+    if(!data||typeof data!=='object') return;
 
-    const business=data['@graph'].find(x=>x&&((x['@type']==='LocalBusiness')||Object.values(typeMap).includes(x['@type'])));
+    const graph=Array.isArray(data['@graph'])?data['@graph']:null;
+    const business=graph
+      ? graph.find(x=>x&&((x['@type']==='LocalBusiness')||Object.values(typeMap).includes(x['@type'])))
+      : (data.mainEntity&&Object.values(typeMap).includes(data.mainEntity['@type'])?data.mainEntity:null);
+
     if(business){
-      business['@type']=typeMap[type]||'LocalBusiness';
+      business['@type']=typeMap[type]||business['@type']||'LocalBusiness';
       business.url=canonicalUrl();
       business['@id']=canonicalUrl()+'#business';
       business.inLanguage='en-IN';
       business.areaServed=business.areaServed||{'@type':'Country','name':'India'};
-
       if(business.address&&business.address.addressLocality){
         business.address.addressCountry=business.address.addressCountry||'IN';
       }
-
-      const visible=document.body?.innerText||'';
-      if(/Verified by StudentHubHelp/i.test(visible)){
-        business.additionalProperty=[{'@type':'PropertyValue','name':'Verification status','value':'Verified by StudentHubHelp'}];
-      }else if(/Not currently verified/i.test(visible)){
-        business.additionalProperty=[{'@type':'PropertyValue','name':'Verification status','value':'Not currently verified'}];
+      const badge=document.querySelector('.trust-badge');
+      const verification=badge?(badge.textContent||'').trim():'';
+      const properties=Array.isArray(business.additionalProperty)
+        ? business.additionalProperty.filter(x=>x&&x.name!=='Verification status') : [];
+      if(/Verified Listing/i.test(verification)){
+        properties.push({'@type':'PropertyValue','name':'Verification status','value':'Verified by StudentHubHelp'});
+      }else if(/Details Provided/i.test(verification)){
+        properties.push({'@type':'PropertyValue','name':'Verification status','value':'Details provided; not independently verified'});
       }
+      if(properties.length) business.additionalProperty=properties;
     }
 
-    const page=data['@graph'].find(x=>x&&x['@type']==='WebPage');
+    const page=graph
+      ? graph.find(x=>x&&x['@type']==='WebPage')
+      : (data['@type']==='WebPage'?data:null);
     if(page){
       page.url=canonicalUrl();
       page['@id']=canonicalUrl()+'#webpage';
       page.inLanguage='en-IN';
-      if(business) page.mainEntity={'@id':canonicalUrl()+'#business'};
+      if(business&&graph) page.mainEntity={'@id':canonicalUrl()+'#business'};
     }
 
-    const breadcrumb=data['@graph'].find(x=>x&&x['@type']==='BreadcrumbList');
-    if(breadcrumb){
-      breadcrumb['@id']=canonicalUrl()+'#breadcrumb';
-      const last=breadcrumb.itemListElement?.find(x=>x.position===3);
-      if(last) last.item=canonicalUrl();
+    const crumb=document.getElementById('propertyBreadcrumb');
+    const crumbItems=crumb
+      ? Array.from(crumb.querySelectorAll('a,.breadcrumb-current')).map((node,index)=>({
+          '@type':'ListItem',
+          'position':index+1,
+          'name':(node.textContent||'').replace(/\s+/g,' ').trim(),
+          'item':node.href||canonicalUrl()
+        })).filter(item=>item.name)
+      : [];
+    if(crumbItems.length){
+      const breadcrumb={'@type':'BreadcrumbList','@id':canonicalUrl()+'#breadcrumb','itemListElement':crumbItems};
+      if(graph){
+        const existing=graph.find(x=>x&&x['@type']==='BreadcrumbList');
+        if(existing) Object.assign(existing,breadcrumb);
+        else graph.push(breadcrumb);
+      }else{
+        data={'@context':data['@context']||'https://schema.org','@graph':[data,breadcrumb]};
+      }
     }
-
     el.textContent=JSON.stringify(data,null,2);
   }
   function apply(){

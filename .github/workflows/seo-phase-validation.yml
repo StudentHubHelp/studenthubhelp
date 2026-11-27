@@ -11,6 +11,8 @@ on:
       - 'scripts/generate-property-pages.mjs'
       - 'scripts/generate-seo-pages.mjs'
       - 'scripts/generate-sitemap.mjs'
+      - 'js/property-seo-upgrade.js'
+      - 'js/seo-location-entities.js'
       - '.github/workflows/seo-phase-validation.yml'
 
 permissions:
@@ -35,6 +37,8 @@ jobs:
           node --check scripts/generate-property-pages.mjs
           node --check scripts/generate-seo-pages.mjs
           node --check scripts/generate-sitemap.mjs
+          node --check js/property-seo-upgrade.js
+          node --check js/seo-location-entities.js
 
       - name: Regenerate property HTML from published listing data
         env:
@@ -73,6 +77,9 @@ jobs:
                       continue
                   canonical_pages.append(page)
                   assert 'id="canonicalLink" rel="canonical"' in html, f'Missing canonical: {page}'
+                  robots_match=re.search(r"""<meta\s+name=["']robots["']\s+content=["']([^"']+)["']""", html, re.I)
+                  assert robots_match and 'noindex' not in robots_match.group(1).lower(), f'Generated property page is not statically indexable: {page}'
+                  assert 'index' in robots_match.group(1).lower(), f'Missing static index directive: {page}'
                   schema_tag='<script type="application/ld+json" id="baseSchema">'
                   schema_start=html.find(schema_tag)
                   assert schema_start >= 0, f'Missing base WebPage schema: {page}'
@@ -100,6 +107,11 @@ jobs:
                   title_text=html_lib.unescape(title_match.group(1)) if title_match else ''
                   assert title_match and len(re.sub(r'\s+',' ',title_text).strip()) <= 60, f'Property title exceeds 60 characters: {page}'
               assert len(canonical_pages) >= expected, f'{category}: expected {expected} canonical pages with server-rendered summaries, found {len(canonical_pages)}'
+          property_seo=Path('js/property-seo-upgrade.js').read_text(encoding='utf-8')
+          finder_entities=Path('js/seo-location-entities.js').read_text(encoding='utf-8')
+          assert "properties/'+type+'/'+encodeURIComponent(prettySlug||slug)+'/'" in property_seo, 'Legacy slug URL is not canonicalized to its clean property URL'
+          assert "document.getElementById('baseSchema')" in property_seo, 'Property schema normalizer is not connected to the actual baseSchema node'
+          assert "properties/'+type+'/'+encodeURIComponent(slug)+'/'" in finder_entities, 'Finder ItemList must use clean canonical property URLs'
           print(f"SEO validation passed: {report['total']} property pages; category totals {report['byCategory']}")
           PY
 
@@ -124,7 +136,7 @@ jobs:
               if 'properties' in page.parts or '.git' in page.parts:
                   continue
               source=page.read_text(encoding='utf-8')
-              if 'name="studenthubhelp-generated-seo"' not in source:
+              if 'name="studenthubhelp-generated-seo"' not in source or 'name="description"' not in source:
                   continue
               title_match=re.search(r'<title>(.*?)</title>', source, re.I|re.S)
               desc_match=re.search(r'<meta name="description" content="([^"]*)"', source, re.I)
