@@ -96,7 +96,7 @@ function citySeoProfile(city){
   const ordered=TABLES.filter(meta=>(counts.get(meta.type)||0)>0)
     .sort((a,b)=>(counts.get(b.type)||0)-(counts.get(a.type)||0));
   const topServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels & PGs':meta.type==='tiffin'?'Tiffin & Mess':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
-  const titleServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels & PGs':meta.type==='tiffin'?'Tiffin':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
+  const titleServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels, PGs':meta.type==='tiffin'?'Tiffin':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
   const areaCounts=new Map();
   const areaCategoryCounts=new Map();
   for(const row of rows){
@@ -128,13 +128,13 @@ function joinWithAnd(items){
 function titleForCity(city, rows){
   const profile=citySeoProfile({name:city,rows});
   const types=profile.ordered.map(meta=>meta.type);
-  let phrase=profile.titleServices.join(' and ')||'Student Services';
-  if(key(city)==='kota' && types.includes('hostel') && types.includes('tiffin')) phrase='PG, Hostel & Tiffin';
+  let phrase=profile.titleServices.join(' & ')||'Student Services';
+  if(key(city)==='kota' && types.includes('hostel') && types.includes('tiffin')) phrase='PGs, Hostels & Tiffin';
   return 'Best '+phrase+' in '+city+' | StudentHubHelp';
 }
 function descriptionForCity(city){
   const profile=citySeoProfile(city);
-  const shortNames={hostel:'hostels and PGs',tiffin:'tiffin services',library:'libraries',cafe:'cafes',bookstore:'bookstores'};
+  const shortNames={hostel:'hostels/PGs',tiffin:'tiffin/mess services',library:'libraries',cafe:'cafes',bookstore:'bookstores'};
   const categories=profile.ordered.slice(0,3).map(meta=>shortNames[meta.type]||meta.label.toLowerCase());
   const categoryText=joinWithAnd(categories.length?categories:['student services']);
   return 'Find '+city.rows.length+' verified student listings in '+city.name+': '+categoryText+'. Compare local options and listing details on StudentHubHelp.';
@@ -149,7 +149,8 @@ function cityContentIntro(city){
   const categoryText=profile.ordered.map(meta=>meta.label+' ('+profile.counts.get(meta.type)+')').join(', ');
   const areaLinks=profile.topAreaDetails.map(area=>{
     const href=slug(area.name)+'/';
-    const label=area.name+' ('+area.count+' listings)';
+    const categoryName=TABLES.find(meta=>meta.type===area.topCategory)?.label||'student services';
+    const label=area.name+' ('+area.count+' listings; largest category: '+categoryName+')';
     return area.count>=LOCATION_MIN_PROPERTIES
       ? '<a href="'+esc(href)+'">'+esc(label)+'</a>'
       : '<span>'+esc(label)+'</span>';
