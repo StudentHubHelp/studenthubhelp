@@ -15,13 +15,13 @@ const TOWN_LOCATIONS=['udaipurwati','nawalgarh','chirawa','chiruwa','khetri','fa
 function cityTokensFromQuery(n,data){
   const base=['jhunjhunu','sikar','kota','jaipur','delhi','new delhi','bengaluru','bangalore','gurugram','gurgaon','udaipur','jodhpur','bikaner','ajmer','alwar','churu','chandigarh','mumbai','pune','indore','ahmedabad','chennai','hyderabad','lucknow','patna',...TOWN_LOCATIONS];
   const fromData=(Array.isArray(data)?data:[]).map(r=>String(r?.city??'').trim()).filter(Boolean);
-  const canonical=v=>{const x=norm(v);return ({bangalore:'bengaluru',gurgaon:'gurugram'}[x]||x)};
+  const canonical=v=>window.StudentHubLocationRegistry?.canonicalizeCity?.(v)||({bangalore:'bengaluru',gurgaon:'gurugram'}[norm(v)]||norm(v));
   const cities=[...new Set([...base,...fromData].map(canonical).filter(Boolean))].sort((a,b)=>b.length-a.length);
   const padded=' '+norm(n)+' ';
   return cities.filter(c=>padded.includes(' '+c+' '));
 }
 function cityMatchesRecord(r,city){
-  const canonical=v=>{const x=norm(v);return ({bangalore:'bengaluru',gurgaon:'gurugram'}[x]||x)};
+  const canonical=v=>window.StudentHubLocationRegistry?.canonicalizeCity?.(v)||({bangalore:'bengaluru',gurgaon:'gurugram'}[norm(v)]||norm(v));
   const wanted=canonical(city);
   // Town/tehsil searches may be stored in area/address while city remains the district.
   if(TOWN_LOCATIONS.includes(wanted)){
