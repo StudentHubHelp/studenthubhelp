@@ -139,8 +139,22 @@ jobs:
 
           assert BASE in all_urls, 'Canonical homepage URL is missing from sitemap'
           import json
-          generated=json.loads(Path('seo-generated-manifest.json').read_text(encoding='utf-8')).get('generated', [])
+          manifest=json.loads(Path('seo-generated-manifest.json').read_text(encoding='utf-8'))
+          generated=manifest.get('generated', [])
           assert all(u in all_urls for u in generated), 'Generated SEO URL missing from sitemap'
+          redirect_pages=manifest.get('redirectPages', [])
+          for redirect in redirect_pages:
+              page=Path(redirect['path'])
+              assert page.exists(), f'Missing static redirect page: {redirect[\"path\"]}'
+              html=page.read_text(encoding='utf-8')
+              target=BASE.rstrip('/')+redirect['to']
+              assert 'name=\"robots\" content=\"noindex,follow\"' in html, f'Redirect page must be noindex: {page}'
+              assert f'<link rel=\"canonical\" href=\"{target}\">' in html, f'Redirect canonical mismatch: {page}'
+              assert f'content=\"0;url={target}\"' in html, f'Missing immediate redirect fallback: {page}'
+              assert f'window.location.replace(\"{target}\")' in html, f'Missing browser redirect: {page}'
+              target_path=Path(redirect['to'].strip('/'))
+              if not target_path.suffix: target_path=target_path/'index.html'
+              assert target_path.exists(), f'Redirect target does not exist: {redirect[\"to\"]}'
           assert f'{BASE}index.html' not in all_urls, 'Non-canonical index.html homepage URL must not be in sitemap'
           assert f'{BASE}property-index.html' in all_urls, 'Property discovery index is missing from sitemap'
           index_html=Path('property-index.html').read_text(encoding='utf-8')
@@ -162,7 +176,7 @@ jobs:
           private={'auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','admin/index.html'}
           for url in all_urls:
               assert not any(url.endswith('/'+p) for p in private), f'Private URL in sitemap: {url}'
-          print(f'Sitemap validation passed: {len(all_urls)} unique URLs across {len(sitemap_locs)} child sitemaps.')
+          print(f'Sitemap validation passed: {len(all_urls)} unique URLs across {len(sitemap_locs)} child sitemaps; {len(redirect_pages)} GitHub Pages-compatible redirect stubs validated.')
           PY
 
       - name: Commit sitemap changes only when needed
