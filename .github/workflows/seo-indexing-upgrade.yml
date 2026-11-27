@@ -166,7 +166,7 @@ jobs:
               assert f'Disallow: {private_path}' not in robots, f'{private_path} must remain crawlable so Google can read its noindex directive'
           for private_page in ['auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','add-listing.html','admin/index.html']:
               private_html=Path(private_page).read_text(encoding='utf-8')
-              robots_tag=re.search(r"""<meta\\s+name=["']robots["']\\s+content=["']([^"']+)["']""", private_html, re.I)
+              robots_tag=re.search(r"""<meta\s+name=["']robots["']\s+content=["']([^"']+)["']""", private_html, re.I)
               assert robots_tag and 'noindex' in robots_tag.group(1).lower(), f'Missing noindex directive: {private_page}'
           assert 'Disallow: /supabase/' in robots and 'Disallow: /.github/' in robots and 'Disallow: /admin/src/' in robots
           assert 'Sitemap: https://studenthubhelp.in/sitemap.xml' in robots
