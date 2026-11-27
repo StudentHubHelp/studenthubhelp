@@ -128,7 +128,8 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   const locationText = [address, area, city].filter(Boolean).map(value => String(value).trim()).filter(Boolean).join(' · ');
   const sourceDescription = String(description || '').replace(/\s+/g, ' ').trim();
   const fallbackDescription = `${propertyName} ${categoryLabel} listing${locationText ? ` in ${locationText}` : ''}.`;
-  const desc = `${sourceDescription || fallbackDescription} View available listing details on StudentHubHelp.`
+  const contentDescription = (sourceDescription || fallbackDescription).replace(/\s+/g, ' ').trim().slice(0, 2400);
+  const desc = `${contentDescription} View available listing details on StudentHubHelp.`
     .replace(/\s+/g, ' ').trim().slice(0, 160);
 
   // Match the category-specific entity types already used by the live property-details app.
@@ -170,7 +171,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   <h2>${escapeHtml(propertyName)}</h2>
   <p><strong>Category:</strong> ${escapeHtml(categoryLabel)}</p>
   ${locationText ? `<p><strong>Location:</strong> ${escapeHtml(locationText)}</p>` : ''}
-  <p>${escapeHtml(desc)}</p>
+  <p>${escapeHtml(contentDescription)}</p>
   <nav aria-label="Related StudentHubHelp pages">
     <a href="${categoryUrl}">Browse ${escapeHtml(categoryLabel)} listings</a> ·
     <a href="/property-index.html">Browse all student properties</a> ·
