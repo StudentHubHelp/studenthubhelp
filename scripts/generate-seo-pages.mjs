@@ -335,7 +335,7 @@ const generated=[];
 const expected=new Set();
 
 for(const c of cities.values()){
-  const cs=slug(c.name); if(!cs) continue;
+  const cs=slug(c.name); if(!cs || c.rows.length<LOCATION_MIN_PROPERTIES) continue;
   const cityDir=GENERATED_ROOT+'/'+cs;
   const cityUrl=new URL(CITY_HTML_ROOTS.has(cs)?cs+'.html':cs+'/',BASE).href;
   if(CITY_HTML_ROOTS.has(cs)&&cs!=='sikar'){
@@ -368,13 +368,14 @@ for(const c of cities.values()){
   }
   const groups=new Map();
   for(const r of c.rows){if(!groups.has(r.type))groups.set(r.type,[]);groups.get(r.type).push(r);}
-  const eligibleGroups=new Map([...groups.entries()].filter(([,rows])=>rows.length>0));
+  const eligibleGroups=new Map([...groups.entries()].filter(([,rows])=>rows.length>=LOCATION_MIN_PROPERTIES));
   const categories=[...eligibleGroups.keys()].map(type=>TABLES.find(t=>t.type===type));
   const categoryLinks=categories.map(meta=>'<a href="'+esc(meta.type+'/')+'">'+meta.icon+' '+esc(meta.label)+'</a>').join('');
   const cityCoachingSlugs=[...new Set(c.rows.flatMap(matchedCoachings))];
-  const coachingLinks=cityCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc(entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
+  const coachingLinks=cityCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('/'+cs+'/'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
   const coachingSection=coachingLinks?'<section class="section"><h2>Coaching institutes & landmarks in '+esc(c.name)+'</h2><p>Explore student properties connected to coaching institutes and local landmarks through active listing details.</p><div class="links">'+coachingLinks+'</div></section>':'';
-  const body=cityContentIntro(c)+coachingSection+'<section class="section"><h2>Student-focused listings in '+esc(c.name)+'</h2><div class="grid">'+[...eligibleGroups.entries()].map(([type,rows])=>{const m=TABLES.find(x=>x.type===type);return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+rows.length+' active listings; '+rows.filter(row=>row.verified===true).length+' marked verified.</p><a href="'+esc(type+'/')+'">Explore '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('')+'</div></section>'+
+  const cityCategoryCards=[...groups.entries()].map(([type,rows])=>{const m=TABLES.find(x=>x.type===type);const target=rows.length>=LOCATION_MIN_PROPERTIES?type+'/':'/'+m.finder+'?q='+encodeURIComponent(c.name);return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+rows.length+' active listings; '+rows.filter(row=>row.verified===true).length+' marked verified.</p><a href="'+esc(target)+'">Explore '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('');
+  const body=cityContentIntro(c)+coachingSection+'<section class="section"><h2>Student-focused listings in '+esc(c.name)+'</h2><div class="grid">'+cityCategoryCards+'</div></section>'+
     '<section class="section"><h2>Explore categories in '+esc(c.name)+'</h2><p>Choose a service category to compare listings available in this city.</p><div class="links">'+categoryLinks+'</div></section>'+
     '<section class="section"><h2>Student listings across '+esc(c.name)+'</h2><p>Open a listing to review its address, facilities and service information. Confirm details with the provider before visiting.</p><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
   // Sikar's primary city guide lives at /sikar.html. Do not recreate the
@@ -385,7 +386,7 @@ for(const c of cities.values()){
   }
 
   for(const meta of TABLES){
-    const rows=c.rows.filter(r=>r.type===meta.type); if(!rows.length) continue;
+    const rows=c.rows.filter(r=>r.type===meta.type); if(rows.length<LOCATION_MIN_PROPERTIES) continue;
     const dir=cityDir+'/'+meta.type; const url=new URL(cs+'/'+meta.type+'/',BASE).href;
     const relatedCoachings=[...new Set(rows.flatMap(matchedCoachings))];
     const relatedCoachingLinks=relatedCoachings.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
