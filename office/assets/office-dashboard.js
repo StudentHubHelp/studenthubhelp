@@ -458,7 +458,6 @@
       button.textContent = "Sync next 25";
       button.disabled = !data.has_more;
       button.dataset.nextPage = data.has_more ? "true" : "false";
-      button.onclick = () => syncGmailInbox(button, true);
       status("Gmail Inbox metadata synced successfully. No email was sent, modified, archived or deleted.", true);
     } catch (error) {
       if (info) info.textContent = error.message || "Gmail sync failed.";
@@ -479,6 +478,8 @@
       return;
     }
     const actionLabels = {
+      read_inbox: "Read Gmail Inbox",
+      deduplicate_threads: "Deduplicate Gmail threads",
       read_office_metrics: "Read Office metrics",
       read_listing_aggregates: "Read listing aggregates",
       create_patch_proposal: "Create patch proposal",
@@ -609,7 +610,7 @@
       if (integration.provider_key === "gmail") {
         const inboxButton = node("button", "quiet-btn", "Read Inbox · first 25");
         inboxButton.type = "button";
-        inboxButton.addEventListener("click", () => syncGmailInbox(inboxButton, false));
+        inboxButton.addEventListener("click", () => syncGmailInbox(inboxButton, inboxButton.dataset.nextPage === "true"));
         const inboxStatus = node("p", "integration-note", "Owner-triggered read-only sync. Stores sender, subject, date, snippet and thread metadata only.");
         inboxStatus.id = "gmail-sync-status";
         card.append(inboxButton, inboxStatus);
