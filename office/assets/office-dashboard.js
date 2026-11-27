@@ -424,6 +424,50 @@
     } catch (error) { status(error.message); }
   }
 
+  let gmailNextPageToken = null;
+  async function syncGmailInbox(button, useNextPage = false) {
+    const previousLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = "Connecting to Gmail…";
+    const info = $("gmail-sync-status");
+    if (info) info.textContent = "Reading Inbox metadata only. No messages are sent, changed or deleted.";
+    try {
+      const { data: { session }, error } = await client.auth.getSession();
+      if (error || !session) throw new Error("Your session has expired. Please sign in again.");
+      const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (assuranceError || assurance?.currentLevel !== "aal2") throw new Error("Two-step verification is required. Please sign in again.");
+      const response = await fetch(SUPABASE_URL + "/functions/v1/office-gmail-inbox", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + session.access_token, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync_inbox", max_results: 25, ...(useNextPage && gmailNextPageToken ? { page_token: gmailNextPageToken } : {}) })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok !== true) {
+        const messages = {
+          owner_mfa_required: "Two-step verification is required. Please sign in again.",
+          owner_access_denied: "This account is not authorized for the Gmail inbox.",
+          gmail_oauth_refresh_failed: "Google OAuth refresh failed. Reconnect the Gmail account.",
+          gmail_mailbox_mismatch: "The connected Google account does not match the configured mailbox.",
+          office_storage_failed: "Inbox metadata was read, but secure Office storage failed. No success was recorded."
+        };
+        throw new Error(messages[result.code] || "Gmail Inbox sync failed (" + (result.code || response.status) + ").");
+      }
+      const data = result.data || {};
+      gmailNextPageToken = data.next_page_token || null;
+      if (info) info.textContent = "Synced " + data.saved_messages + " message metadata across " + data.saved_threads + " threads. Snippets only; no full email bodies stored. " + (data.has_more ? "More Inbox items are available." : "No more Inbox items in this result set.");
+      button.textContent = "Sync next 25";
+      button.disabled = !data.has_more;
+      button.dataset.nextPage = data.has_more ? "true" : "false";
+      button.onclick = () => syncGmailInbox(button, true);
+      status("Gmail Inbox metadata synced successfully. No email was sent, modified, archived or deleted.", true);
+    } catch (error) {
+      if (info) info.textContent = error.message || "Gmail sync failed.";
+      button.disabled = false;
+      button.textContent = previousLabel;
+      status(error.message || "Gmail Inbox sync failed.");
+    }
+  }
+
   function renderIntegrations(data = {}) {
     const grid = $("integration-grid");
     grid.replaceChildren();
@@ -562,6 +606,14 @@
       const scopes = node("div", "integration-scopes");
       (integration.allowed_scopes || []).forEach(scope => scopes.append(node("span", "integration-scope", titleCase(scope))));
       card.append(scopes);
+      if (integration.provider_key === "gmail") {
+        const inboxButton = node("button", "quiet-btn", "Read Inbox · first 25");
+        inboxButton.type = "button";
+        inboxButton.addEventListener("click", () => syncGmailInbox(inboxButton, false));
+        const inboxStatus = node("p", "integration-note", "Owner-triggered read-only sync. Stores sender, subject, date, snippet and thread metadata only.");
+        inboxStatus.id = "gmail-sync-status";
+        card.append(inboxButton, inboxStatus);
+      }
       const providerActions = actions.filter(action => action.provider_key === integration.provider_key);
       if (providerActions.length) {
         const list = node("div", "integration-action-list");
