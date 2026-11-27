@@ -83,3 +83,11 @@ The Lighthouse-enabled sample tested four pages in total; mobile results were av
 High-impact findings included oversized logo delivery on the property detail page, image delivery/cache lifetime opportunities, render-blocking CSS and Google Fonts, and homepage contrast/touch-target issues. The property page's visible header logo now uses the existing optimized WebP asset in the SEO/GEO branch; homepage contrast and review-dot touch targets have also been improved. These changes require a post-deployment Lighthouse rerun before their impact can be claimed.
 
 The audit observed `/mobile.css` as a render-blocking stylesheet; the file exists in the repository, so this audit did not establish a 404 for it.
+
+## Branch validation snapshot (2026-11-27)
+
+- 84 generated SEO landing pages passed title, meta description, ItemList, visible FAQ and content checks.
+- XML sitemap validation found 746 unique URLs.
+- 416 generated locality redirect rules passed validation; each destination resolves to an existing page.
+- Search and SEO CI workflows passed on the latest PR head.
+- These are branch/CI results. The live website remains unchanged until the PR is approved, merged and deployed.
