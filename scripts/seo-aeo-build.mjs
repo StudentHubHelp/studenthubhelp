@@ -1,3 +1,4 @@
+// SEO/GEO: schema generation is content-only; no visible page layout is changed.
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 
 const BASE = (process.env.BASE_URL || 'https://studenthubhelp.in/').replace(/\/+$/, '') + '/';
