@@ -90,7 +90,35 @@ function rel(fromDepth,url){
   const prefix='../'.repeat(fromDepth);
   return prefix + path + (target.search ? target.search : '');
 }
-function titleWithCity(prefix,city){const suffix=' | StudentHubHelp',cityName=String(city||'').trim();const maxPrefix=60-suffix.length-cityName.length-4;let text=String(prefix||'Student Services').trim();if(maxPrefix<8)return (cityName+' | StudentHubHelp').slice(0,60);if(text.length>maxPrefix)text=text.slice(0,Math.max(1,maxPrefix-1)).trimEnd()+'…';return text+' in '+cityName+suffix;}
+function titleForCity(city, rows){
+  const types=new Set(rows.map(row=>row.type));
+  let services=[];
+  if(types.has('hostel')) services.push('Hostel');
+  if(types.has('library')) services.push('Library');
+  if(types.has('tiffin')) services.push('Tiffin');
+  if(types.has('cafe')) services.push('Cafe');
+  if(types.has('bookstore')) services.push('Bookstore');
+  if(key(city)==='kota' && types.has('hostel') && types.has('tiffin')) services=['PG','Hostel','Tiffin'];
+  else if(services.length>2) services=services.slice(0,2);
+  const phrase=services.length?services.join(' & '):'Student Services';
+  return 'Best '+phrase+' Near Coaching in '+city+' | StudentHubHelp';
+}
+function titleForCategory(meta, city){
+  const singular={hostel:'Hostel & PG',tiffin:'Tiffin & Mess',library:'Library',cafe:'Cafe',bookstore:'Bookstore'}[meta.type]||meta.label;
+  return 'Best '+singular+' in '+city+' | StudentHubHelp';
+}
+function titleForArea(area, city, rows, hasCoaching){
+  const types=new Set(rows.map(row=>row.type));
+  const names=[];
+  if(types.has('hostel')) names.push('Hostel');
+  if(types.has('library')) names.push('Library');
+  if(types.has('tiffin')) names.push('Tiffin');
+  if(types.has('cafe')) names.push('Cafe');
+  if(types.has('bookstore')) names.push('Bookstore');
+  const services=names.length>2?names.slice(0,2):names;
+  const prefix='Best '+(services.length?services.join(' & '):'Student Services');
+  return prefix+(hasCoaching?' Near Coaching':'')+' in '+area+', '+city+' | StudentHubHelp';
+}
 function card(row,depth){
   const href=rel(depth,propUrl(row));
   const bits=[row.area,row.city,row.address].filter(Boolean);
@@ -236,7 +264,7 @@ for(const c of cities.values()){
     '<section class="section"><h2>Explore '+esc(c.name)+'</h2><div class="links">'+categoryLinks+'</div></section>'+
     '<section class="section"><h2>Verified properties</h2><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
   const cityPath=cityDir+'/index.html'; expected.add(cityPath); generated.push(cityUrl);
-  await write(cityPath,shell({title:titleWithCity('Student Services',c.name),description:'Find '+c.rows.length+' verified student listings in '+c.name+', including '+categoryNames(c.rows).join(', ')+'. Browse by category and locality on StudentHubHelp.',canonical:cityUrl,h1:'StudentHubHelp in '+c.name,crumbs:[{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}],itemRows:c.rows,faqItems:faqForCity(c)}));
+  await write(cityPath,shell({title:titleForCity(c.name,c.rows),description:'Find '+c.rows.length+' verified student listings in '+c.name+', including '+categoryNames(c.rows).join(', ')+'. Browse by category and locality on StudentHubHelp.',canonical:cityUrl,h1:'StudentHubHelp in '+c.name,crumbs:[{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}],itemRows:c.rows,faqItems:faqForCity(c)}));
 
   for(const meta of TABLES){
     const rows=c.rows.filter(r=>r.type===meta.type); if(rows.length<LOCATION_MIN_PROPERTIES) continue;
@@ -247,7 +275,7 @@ for(const c of cities.values()){
     const body='<section class="section"><h2>'+esc(meta.label)+' in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+coachingContext+
       '<section class="section"><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(2,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
-    await write(p,shell({title:titleWithCity(meta.label,c.name),description:'Browse '+rows.length+' verified '+meta.label.toLowerCase()+' in '+c.name+'. Compare locations and available service details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name},{'@type':'Thing','name':meta.label}],itemRows:rows,faqItems:faqForCategory(meta,c,rows)}));
+    await write(p,shell({title:titleForCategory(meta,c.name),description:'Browse '+rows.length+' verified '+meta.label.toLowerCase()+' in '+c.name+'. Compare locations and available service details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name},{'@type':'Thing','name':meta.label}],itemRows:rows,faqItems:faqForCategory(meta,c,rows)}));
   }
 
   const areas=new Map();
@@ -264,7 +292,7 @@ for(const c of cities.values()){
       '<section class="section"><h2>Categories</h2><div class="links">'+groupLinks+'</div></section>'+
       '<p><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
-    await write(p,shell({title:titleWithCity('Student Services near '+a.name,c.name),description:'Browse '+a.rows.length+' verified student listings around '+a.name+', '+c.name+'. Compare available categories and open each listing for location and service details.',canonical:url,h1:'Student Properties in '+a.name+', '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:a.name,url}],body,depth:3,about:[{'@type':'Place','name':a.name,'containedInPlace':{'@type':'City','name':c.name}}],itemRows:a.rows,faqItems:faqForArea(a,c)}));
+    await write(p,shell({title:titleForArea(a.name,c.name,a.rows,areaCoachingSlugs.length>0),description:'Browse '+a.rows.length+' verified student listings around '+a.name+', '+c.name+'. Compare available categories and open each listing for location and service details.',canonical:url,h1:'Student Properties in '+a.name+', '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:a.name,url}],body,depth:3,about:[{'@type':'Place','name':a.name,'containedInPlace':{'@type':'City','name':c.name}}],itemRows:a.rows,faqItems:faqForArea(a,c)}));
   }
 
   for(const coachSlug of cityCoachingSlugs){
@@ -276,7 +304,7 @@ for(const c of cities.values()){
     const typeLinks=[...new Set(rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('/'+m.finder)+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
     const body='<section class="section"><h2>Student properties near '+esc(coach.name)+' in '+esc(c.name)+'</h2><p>These verified and active listings mention this location in their name, area, address or nearby-landmark details. Listing-provided distances are not independently verified; confirm the exact route before visiting.</p><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section><section class="section"><h2>Categories</h2><div class="links">'+typeLinks+'</div></section><p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
-    await write(p,shell({title:titleWithCity('Near '+coach.name,c.name),description:'Find student listings linked to '+coach.name+' in '+c.name+'. Check each listing for its location details and confirm exact distance before visiting.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':entitySchemaType(coach),'name':coach.name},{'@type':'City','name':c.name}],itemRows:rows,faqItems:faqForCoaching(coach,c,rows)}));
+    await write(p,shell({title:'Student Properties near '+coach.name+' in '+c.name+' | StudentHubHelp',description:'Find student listings linked to '+coach.name+' in '+c.name+'. Check each listing for its location details and confirm exact distance before visiting.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':entitySchemaType(coach),'name':coach.name},{'@type':'City','name':c.name}],itemRows:rows,faqItems:faqForCoaching(coach,c,rows)}));
   }
 }
 
