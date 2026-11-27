@@ -145,7 +145,7 @@ jobs:
           redirect_pages=manifest.get('redirectPages', [])
           for redirect in redirect_pages:
               page=Path(redirect['path'])
-              assert page.exists(), f'Missing static redirect page: {redirect[\"path\"]}'
+              assert page.exists(), 'Missing static redirect page: '+redirect['path']
               html=page.read_text(encoding='utf-8')
               target=BASE.rstrip('/')+redirect['to']
               assert 'name=\"robots\" content=\"noindex,follow\"' in html, f'Redirect page must be noindex: {page}'
@@ -154,7 +154,7 @@ jobs:
               assert f'window.location.replace(\"{target}\")' in html, f'Missing browser redirect: {page}'
               target_path=Path(redirect['to'].strip('/'))
               if not target_path.suffix: target_path=target_path/'index.html'
-              assert target_path.exists(), f'Redirect target does not exist: {redirect[\"to\"]}'
+              assert target_path.exists(), 'Redirect target does not exist: '+redirect['to']
           assert f'{BASE}index.html' not in all_urls, 'Non-canonical index.html homepage URL must not be in sitemap'
           assert f'{BASE}property-index.html' in all_urls, 'Property discovery index is missing from sitemap'
           index_html=Path('property-index.html').read_text(encoding='utf-8')
