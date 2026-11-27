@@ -46,7 +46,10 @@ assert.deepEqual(
   Array.from(window.StudentHubUniversalSearch.search(aliasRows, 'tiffin in Gurgaon', data => data).map(row => row.id)),
   ['gurgaon-tiffin']
 );
-const nearbyRows = rows.filter(row => row.id === 'h1' || row.id === 'h2').map(row => ({ ...row, __userDistanceKm: 1 }));
+const nearbyRows = [
+  { id: 'h1', __category: 'hostel', city: 'Sikar', area: 'Piprali Road', __userDistanceKm: 1 },
+  { id: 'h2', __category: 'hostel', city: 'Sikar', area: 'Piprali Road', __userDistanceKm: 2 }
+];
 assert.deepEqual(
   Array.from(window.StudentHubUniversalSearch.search(nearbyRows, { rawKeyword: 'hostel near me', nearbyMode: true }, data => data).map(row => row.id)).sort(),
   ['h1', 'h2']
