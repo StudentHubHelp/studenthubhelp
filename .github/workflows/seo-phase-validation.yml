@@ -75,7 +75,7 @@ jobs:
                       continue
                   canonical_pages.append(page)
                   assert 'id="canonicalLink" rel="canonical"' in html, f'Missing canonical: {page}'
-                  robots_match=re.search(r'<meta\\s+name=["']robots["']\\s+content=["']([^"']+)["']', html, re.I)
+                  robots_match=re.search(r'<meta\s+name=["']robots["']\s+content=["']([^"']+)["']', html, re.I)
                   assert robots_match and 'noindex' not in robots_match.group(1).lower(), f'Generated property page is not statically indexable: {page}'
                   assert 'index' in robots_match.group(1).lower(), f'Missing static index directive: {page}'
                   schema_tag='<script type="application/ld+json" id="baseSchema">'
@@ -110,7 +110,7 @@ jobs:
           assert "properties/'+type+'/'+encodeURIComponent(prettySlug||slug)+'/'" in property_seo, 'Legacy slug URL is not canonicalized to its clean property URL'
           assert "document.getElementById('baseSchema')" in property_seo, 'Property schema normalizer is not connected to the actual baseSchema node'
           assert "properties/'+type+'/'+encodeURIComponent(slug)+'/'" in finder_entities, 'Finder ItemList must use clean canonical property URLs'
-                    print(f"SEO validation passed: {report['total']} property pages; category totals {report['byCategory']}")
+          print(f"SEO validation passed: {report['total']} property pages; category totals {report['byCategory']}")
           PY
 
       - name: Regenerate SEO directories and XML sitemap
