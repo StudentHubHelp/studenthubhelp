@@ -158,7 +158,7 @@ for (const [type, table] of Object.entries(TABLES)) {
       continue;
     }
     const loc = await canonicalPropertyUrl(type, row, preferredLoc);
-    const propertyPagePath = new URL(preferredLoc).pathname.replace(/^\\/+/, '') + 'index.html';
+    const propertyPagePath = new URL(preferredLoc).pathname.replace(/^\/+/, '') + 'index.html';
     const pageLastmod = gitLastModified(propertyPagePath);
     const lastmodCandidates = [validDate(row.updated_at), validDate(row.created_at), pageLastmod]
       .filter(Boolean)
