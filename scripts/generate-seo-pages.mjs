@@ -34,21 +34,10 @@ function label(v){
   return String(v||'').trim().replace(/\s+/g,' ');
 }
 function key(v){return label(v).toLowerCase();}
-const COACHINGS=[
-  {slug:'allen',name:'ALLEN Career Institute',aliases:['allen career institute','allen coaching','allen']},
-  {slug:'clc',name:'CLC',aliases:['clc coaching','clc institute','clc kvm','clc-b']},
-  {slug:'matrix',name:'Matrix JEE / NEET',aliases:['matrix coaching','matrix neet','matrix jee','matrix']},
-  {slug:'gurukripa',name:'Gurukripa Career Institute',aliases:['gurukripa coaching','gurukripa coching','gurukripa']},
-  {slug:'vibrant',name:'Vibrant Academy',aliases:['vibrant coaching','vibrant academy','vibrant']},
-  {slug:'aakash',name:'Aakash Institute',aliases:['aakash coaching','aakash institute','aakash']},
-  {slug:'kalam',name:'Kalam Academy',aliases:['kalam coaching','kalam academy','kalam']},
-  {slug:'pcp',name:'PCP',aliases:['pcp coaching','pcp institute','pcp']},
-  {slug:'banco',name:'Banco Career Academy',aliases:['banco coaching','banco career academy','banco']},
-  {slug:'career-line',name:'Career Line Coaching',aliases:['career line coaching','career line']},
-  {slug:'unacademy',name:'Unacademy',aliases:['unacademy']}
-];
+const COACHINGS = JSON.parse(await readFile('data/landmark-aliases.json', 'utf8'));
+
 function matchedCoachings(row){
-  const text=key([row.name,row.area,row.address].filter(Boolean).join(' '));
+  const text=key([row.name,row.area,row.address,row.nearby_coaching,row.landmark].filter(Boolean).join(' '));
   return COACHINGS.filter(c=>c.aliases.some(a=>text.includes(a))).map(c=>c.slug);
 }
 function coachingBySlug(slug){return COACHINGS.find(c=>c.slug===slug);}
@@ -115,7 +104,7 @@ async function fetchRows(meta){
   const out=[]; let offset=0;
   while(true){
     const u=new URL(SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/'+meta.table);
-    u.searchParams.set('select','id,property_id,slug,name,city,area,address,status,verified,updated_at,created_at');
+    u.searchParams.set('select','id,property_id,slug,name,city,area,address,nearby_coaching,landmark,latitude,longitude,description,status,verified,updated_at,created_at');
     u.searchParams.set('status','eq.active'); u.searchParams.set('verified','eq.true');
     u.searchParams.set('offset',String(offset)); u.searchParams.set('limit','1000');
     const res=await fetch(u,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
@@ -209,7 +198,7 @@ for(const c of cities.values()){
     const groupLinks=[...new Set(a.rows.map(r=>r.type))].filter(type=>eligibleGroups.has(type)).map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('../'+type+'/' )+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
     const areaCoachingSlugs=[...new Set(a.rows.flatMap(matchedCoachings))];
     const areaCoachingLinks=areaCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../coaching/'+m.slug+'/')+'">🎓 '+esc(m.name)+'</a>';}).join('');
-    const areaCoachingSection=areaCoachingLinks?'<section class="section"><h2>Nearby coaching & institutes</h2><p>Coaching relationships are derived only when the coaching name is present in active verified listing data.</p><div class="links">'+areaCoachingLinks+'</div></section>':'';
+    const areaCoachingSection=areaCoachingLinks?'<section class="section"><h2>Nearby coaching & institutes</h2><p>Coaching links are derived from names found in active verified listing details, including nearby-coaching and landmark fields.</p><div class="links">'+areaCoachingLinks+'</div></section>':'';
     const body='<section class="section"><h2>Verified student properties in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+a.rows.map(r=>card(r,2)).join('')+'</div></section>'+areaCoachingSection+
       '<section class="section"><h2>Categories</h2><div class="links">'+groupLinks+'</div></section>'+
       '<p><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
@@ -223,9 +212,9 @@ for(const c of cities.values()){
     const dir=cityDir+'/coaching/'+coach.slug;
     const url=new URL(cs+'/coaching/'+coach.slug+'/',BASE).href;
     const typeLinks=[...new Set(rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('/'+m.finder)+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
-    const body='<section class="section"><h2>Student properties near '+esc(coach.name)+' in '+esc(c.name)+'</h2><p>These verified and active listings mention this coaching or institute in their stored name, area, or address.</p><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section><section class="section"><h2>Categories</h2><div class="links">'+typeLinks+'</div></section><p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
+    const body='<section class="section"><h2>Student properties near '+esc(coach.name)+' in '+esc(c.name)+'</h2><p>These verified and active listings mention this institute in their name, area, address or nearby-landmark details. Listing-provided distances are not independently verified; confirm the exact route before visiting.</p><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section><section class="section"><h2>Categories</h2><div class="links">'+typeLinks+'</div></section><p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
-    await write(p,shell({title:'Student Properties near '+coach.name+' in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffins, cafes, libraries and bookstores near '+coach.name+' in '+c.name+'.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':'EducationalOrganization','name':coach.name},{'@type':'City','name':c.name}],itemRows:rows}));
+    await write(p,shell({title:'Student Properties near '+coach.name+' in '+c.name+' | StudentHubHelp',description:'Find student listings linked to '+coach.name+' in '+c.name+'. Check each listing for its location details and confirm exact distance before visiting.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':'EducationalOrganization','name':coach.name},{'@type':'City','name':c.name}],itemRows:rows}));
   }
 }
 
