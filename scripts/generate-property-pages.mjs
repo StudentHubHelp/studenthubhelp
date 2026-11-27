@@ -248,6 +248,7 @@ function buildLegacyRedirectHtml(oldPath, targetType, targetSlug) {
 <link rel="icon" type="image/png" href="/logo.png?v=site-icon-20261026">
 <link rel="apple-touch-icon" href="/logo.png?v=site-icon-20261026">
 <link rel="canonical" href="${escapeHtml(canonical)}">
+<meta http-equiv="refresh" content="0;url=${escapeHtml(canonical)}">
 <title>Property moved | StudentHubHelp</title>
 <script>
 (function(){
