@@ -2,7 +2,9 @@
   const root=document.getElementById('cityHub');
   if(!root||!window.supabase)return;
   const city=root.dataset.city;
-  const config={Sikar:{areas:['Piprali Road','Charan Singh Nagar','Dhobiyon Ka Mohalla','New Janta Colony','Radhakishan Pura','New Indira Colony','Anand Nagar','Kishan Colony, Charan Singh Nagar','Piprali Road · Jat Colony','Railway Station Colony','Vasant Vihar','Nawalgarh Road','Kalyan Circle','Jaipur Road','Fatehpur Road']},Kota:{areas:['Talwandi','Vigyan Nagar','Landmark City','Kunhadi']},Jaipur:{areas:['Mansarovar','Malviya Nagar','Vaishali Nagar','Gopalpura']},Delhi:{areas:['Mukherjee Nagar','Laxmi Nagar','Rajinder Nagar','South Delhi']},Ahmedabad:{areas:['Navrangpura','Chandkheda','Vastrapur','Maninagar']},Lucknow:{areas:['Aliganj','Gomti Nagar','Hazratganj','Indira Nagar']},Hyderabad:{areas:['Kukatpally','Ameerpet','Dilsukhnagar','Himayatnagar']},Pune:{areas:['Kothrud','Viman Nagar','Shivajinagar','Wakad']}}[city]||{areas:[]};
+  const cityAliases={Sikar:['Sikar','SIKAR','सीकर','सीकर (Sikar)','Sikar (सीकर)','Sikar City'],Bengaluru:['Bengaluru','BENGALURU','Bangalore','Bangalore Urban','Bengaluru Urban'],Chennai:['Chennai','CHENNAI','Madras'],Kota:['Kota','KOTA','Kota Rajasthan'],Delhi:['Delhi','DELHI','NCT Delhi','New Delhi','NEW DELHI','National Capital Territory of Delhi'],Patna:['Patna','PATNA'],Jhunjhunu:['Jhunjhunu'],Pune:['Pune','PUNE'],Gurugram:['Gurugram','Gurugram (Gurgaon)','Gurgaon','Gurugram Gurgaon'],Coimbatore:['Coimbatore'],Jaipur:['Jaipur']};
+  const cityMatchValues=cityAliases[city]||[city];
+  const config={Sikar:{areas:['Piprali Road','Charan Singh Nagar','Dhobiyon Ka Mohalla','New Janta Colony','Radhakishan Pura','New Indira Colony','Anand Nagar','Kishan Colony, Charan Singh Nagar','Piprali Road · Jat Colony','Railway Station Colony','Vasant Vihar','Nawalgarh Road','Kalyan Circle','Jaipur Road','Fatehpur Road']},Kota:{areas:['Talwandi','Vigyan Nagar','Landmark City','Kunhadi']},Jaipur:{areas:['Mansarovar','Malviya Nagar','Vaishali Nagar','Gopalpura']},Delhi:{areas:['Mukherjee Nagar','Laxmi Nagar','Rajinder Nagar','South Delhi']},Bengaluru:{areas:['Basavanagudi','Indiranagar','Koramangala','Jayanagar']},Chennai:{areas:['Anna Nagar','T. Nagar','Velachery','Adyar']},Patna:{areas:['Boring Road','Kankarbagh','Rajendra Nagar','Patliputra']},Jhunjhunu:{areas:['Chirawa Road','Station Road','Mandawa Road']},Gurugram:{areas:['Sector 14','Sector 31','Sushant Lok','DLF Phase 3']},Coimbatore:{areas:['Gandhipuram','Peelamedu','RS Puram','Saibaba Colony']},Pune:{areas:['Kothrud','Viman Nagar','Shivajinagar','Wakad']}}[city]||{areas:[]};
   const sb=window.supabase.createClient('https://idurlccrarznnnqixxsd.supabase.co','sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT');
   const tables=[['hostels','Hostels & PGs','🏠','pg-finder.html'],['tiffins','Tiffin & Mess','🍱','tiffin-finder.html'],['libraries','Libraries & Study Spaces','📚','library-finder.html'],['cafes','Student Cafes','☕','cafe-finder.html'],['bookstores','Book Stores','📖','bookstore-finder.html']];
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -32,8 +34,8 @@
   document.querySelectorAll('[data-search]').forEach(a=>a.href='global-search.html?q='+encodeURIComponent(searches[a.dataset.search]||city));
   async function loadTable([table,label,icon]){
     const [count,verifiedCount,r]=await Promise.all([
-      sb.from(table).select('id',{count:'exact',head:true}).eq('status','active').ilike('city',city),
-      sb.from(table).select('id',{count:'exact',head:true}).eq('status','active').eq('verified',true).ilike('city',city),
+      sb.from(table).select('id',{count:'exact',head:true}).eq('status','active').in('city',cityMatchValues),
+      sb.from(table).select('id',{count:'exact',head:true}).eq('status','active').eq('verified',true).in('city',cityMatchValues),
       sb.from(table).select('*').eq('status','active').ilike('city',city).order('featured',{ascending:false}).order('verified',{ascending:false}).limit(40)
     ]);
     if(count.error||verifiedCount.error||r.error)return {table,label,icon,data:[],count:0,verifiedCount:0,error:true};
