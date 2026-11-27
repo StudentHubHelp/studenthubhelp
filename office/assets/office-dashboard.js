@@ -424,8 +424,7 @@
     } catch (error) { status(error.message); }
   }
 
-  let gmailNextPageToken = null;
-  async function syncGmailInbox(button, useNextPage = false) {
+  async function syncGmailInbox(button) {
     const previousLabel = button.textContent;
     button.disabled = true;
     button.textContent = "Connecting to Gmail…";
@@ -439,7 +438,7 @@
       const response = await fetch(SUPABASE_URL + "/functions/v1/office-gmail-inbox", {
         method: "POST",
         headers: { Authorization: "Bearer " + session.access_token, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync_inbox", max_results: 25, ...(useNextPage && gmailNextPageToken ? { page_token: gmailNextPageToken } : {}) })
+        body: JSON.stringify({ action: "sync_inbox" })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.ok !== true) {
@@ -448,17 +447,15 @@
           owner_access_denied: "This account is not authorized for the Gmail inbox.",
           gmail_oauth_refresh_failed: "Google OAuth refresh failed. Reconnect the Gmail account.",
           gmail_mailbox_mismatch: "The connected Google account does not match the configured mailbox.",
-          office_storage_failed: "Inbox metadata was read, but secure Office storage failed. No success was recorded."
+          office_storage_failed: "Inbox metadata was read, but secure Office storage failed. No success was recorded.",
+          inbox_over_500_threads: "Inbox has more than 500 conversations. No database changes were made; contact support for a larger safe reconciliation."
         };
         throw new Error(messages[result.code] || "Gmail Inbox sync failed (" + (result.code || response.status) + ").");
       }
       const data = result.data || {};
-      gmailNextPageToken = data.next_page_token || null;
-      if (info) info.textContent = "Synced " + data.saved_messages + " message metadata across " + data.saved_threads + " threads. Snippets only; no full email bodies stored. " + (data.has_more ? "More Inbox items are available." : "No more Inbox items in this result set.");
-      button.textContent = data.has_more ? "Sync next 25" : "Inbox up to date";
-      button.disabled = !data.has_more;
-      button.dataset.nextPage = data.has_more ? "true" : "false";
-      if (info && !data.has_more) info.textContent = "Inbox sync complete: " + data.saved_messages + " messages across " + data.saved_threads + " threads. Metadata and snippets only; no full bodies or attachments stored.";
+      if (info) info.textContent = "Current Gmail Inbox: " + data.current_inbox_threads + " conversations · " + data.saved_messages + " message metadata. Old conversations outside the current Inbox are hidden; Gmail itself is unchanged. Snippets only; no full bodies or attachments stored.";
+      button.textContent = "Refresh current Inbox";
+      button.disabled = false;
       status("Gmail Inbox sync completed. No email was sent, modified, archived or deleted.", true);
     } catch (error) {
       if (info) info.textContent = error.message || "Gmail sync failed.";
@@ -619,10 +616,10 @@
       (integration.allowed_scopes || []).forEach(scope => scopes.append(node("span", "integration-scope", titleCase(scope))));
       card.append(scopes);
       if (integration.provider_key === "gmail") {
-        const inboxButton = node("button", "quiet-btn", "Read Inbox · first 25");
+        const inboxButton = node("button", "quiet-btn", "Refresh current Inbox");
         inboxButton.type = "button";
-        inboxButton.addEventListener("click", () => syncGmailInbox(inboxButton, inboxButton.dataset.nextPage === "true"));
-        const inboxStatus = node("p", "integration-note", "Manual Owner action · Inbox only · maximum 25 messages per batch. Stores sender, subject, date, snippet, labels and thread metadata; never stores full email bodies or attachments.");
+        inboxButton.addEventListener("click", () => syncGmailInbox(inboxButton));
+        const inboxStatus = node("p", "integration-note", "Manual Owner action · reads the current Inbox conversation list (up to 500 threads) and reconciles Office visibility. Stores sender, subject, date, snippet, labels and thread metadata; never stores full email bodies or attachments.");
         inboxStatus.id = "gmail-sync-status";
         card.append(inboxButton, inboxStatus);
       }
