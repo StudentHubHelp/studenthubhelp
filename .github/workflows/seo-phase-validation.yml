@@ -113,6 +113,45 @@ jobs:
           node scripts/generate-seo-pages.mjs
           node scripts/generate-sitemap.mjs
 
+      - name: Validate generated SEO titles, descriptions and GEO answers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import html as html_lib, json, re
+
+          pages=[]
+          for page in Path('.').rglob('index.html'):
+              if 'properties' in page.parts or '.git' in page.parts:
+                  continue
+              source=page.read_text(encoding='utf-8')
+              if 'name="studenthubhelp-generated-seo"' not in source:
+                  continue
+              title_match=re.search(r'<title>(.*?)</title>', source, re.I|re.S)
+              desc_match=re.search(r'<meta name="description" content="([^"]*)"', source, re.I)
+              assert title_match and desc_match, f'Missing title or description: {page}'
+              title=html_lib.unescape(re.sub(r'\s+',' ',title_match.group(1)).strip())
+              desc=html_lib.unescape(desc_match.group(1))
+              assert len(title)<=60, f'Title exceeds 60 characters ({len(title)}): {page}'
+              assert 110<=len(desc)<=160, f'Meta description outside 110–160 characters ({len(desc)}): {page}'
+              canonical_match=re.search(r'<link rel="canonical" href="([^"]+)"',source,re.I)
+              assert canonical_match, f'Missing canonical URL: {page}'
+              schema_match=re.search(r'<script type="application/ld\+json">(.*?)</script>',source,re.I|re.S)
+              assert schema_match, f'Missing CollectionPage JSON-LD: {page}'
+              schema=json.loads(schema_match.group(1))
+              assert schema.get('@type')=='CollectionPage', f'Invalid collection schema: {page}'
+              items=schema.get('mainEntity',{})
+              assert items.get('@type')=='ItemList' and items.get('numberOfItems',0)>=3, f'Missing listing ItemList: {page}'
+              faq=schema.get('hasPart',{})
+              assert faq.get('@type')=='FAQPage' and len(faq.get('mainEntity',[]))>=2, f'Missing FAQPage schema: {page}'
+              visible=re.sub(r'<script[\s\S]*?</script>|<style[\s\S]*?</style>',' ',source,flags=re.I)
+              visible=re.sub(r'<[^>]+>',' ',visible)
+              words=re.findall(r'\b[\w-]+\b',html_lib.unescape(visible))
+              assert len(words)>=100 and 'Quick answers' in source, f'Thin or missing visible GEO answer content: {page}'
+              pages.append(page)
+          assert len(pages)>=50, f'Expected at least 50 generated SEO pages, found {len(pages)}'
+          print(f'Generated SEO validation passed: {len(pages)} pages with bounded snippets, ItemList and visible FAQ answers.')
+          PY
+
       - name: Validate sitemap output
         run: |
           python - <<'PY'
