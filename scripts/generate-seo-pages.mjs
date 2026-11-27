@@ -108,15 +108,16 @@ function citySeoProfile(city){
 function titleForCity(city, rows){
   const profile=citySeoProfile({name:city,rows});
   const types=profile.ordered.map(meta=>meta.type);
-  let phrase=profile.titleServices.join(' & ')||'Student Services';
+  let phrase=profile.titleServices.join(', ')||'Student Services';
   if(key(city)==='kota' && types.includes('hostel') && types.includes('tiffin')) phrase='PG, Hostel & Tiffin';
   return 'Best '+phrase+' in '+city+' | StudentHubHelp';
 }
 function descriptionForCity(city){
   const profile=citySeoProfile(city);
-  const categories=profile.ordered.map(meta=>meta.label+' ('+profile.counts.get(meta.type)+')');
-  const areaText=profile.topAreas.length?' across '+profile.topAreas.slice(0,3).join(', '):'';
-  return 'Explore '+city.rows.length+' active, verified student listings in '+city.name+': '+categories.join(', ')+areaText+'. Compare locations and service details on StudentHubHelp.';
+  const shortNames={hostel:'hostels & PGs',tiffin:'tiffin and mess',library:'libraries',cafe:'cafes',bookstore:'bookstores'};
+  const categories=profile.ordered.slice(0,3).map(meta=>shortNames[meta.type]||meta.label.toLowerCase());
+  const categoryText=categories.length>1?categories.slice(0,-1).join(', ')+' and '+categories[categories.length-1]:(categories[0]||'student services');
+  return 'Explore '+city.rows.length+' active, verified student listings in '+city.name+' for '+categoryText+'. Browse locations and compare service details on StudentHubHelp.';
 }
 function h1ForCity(city){
   const profile=citySeoProfile(city);
