@@ -158,7 +158,11 @@ for (const [type, table] of Object.entries(TABLES)) {
       continue;
     }
     const loc = await canonicalPropertyUrl(type, row, preferredLoc);
-    const lastmod = validDate(row.updated_at || row.created_at);
+    const pageLastmod = gitLastModified(`properties/${type}/${slug}/index.html`);
+    const lastmodCandidates = [validDate(row.updated_at), validDate(row.created_at), pageLastmod]
+      .filter(Boolean)
+      .sort();
+    const lastmod = lastmodCandidates.at(-1) || null;
     const current = properties.get(loc);
     if (!current || (lastmod && (!current.lastmod || lastmod > current.lastmod))) {
       properties.set(loc, { loc, lastmod, type, name: row.name, area: row.area, city: row.city, address: row.address });
@@ -241,16 +245,11 @@ try {
   generatedManifest = JSON.parse(await readFile('seo-generated-manifest.json', 'utf8'));
 } catch {}
 if (generatedManifest && Array.isArray(generatedManifest.generated)) {
-  const trackedCityHubs = new Set([
-    'bengaluru','chennai','coimbatore','delhi','gurugram','jaipur',
-    'jhunjhunu','kota','patna','pune','sikar'
-  ]);
   const redirectUrls = new Set((generatedManifest.redirectPages || [])
     .map(item => item?.from ? new URL(item.from, BASE).href : null)
     .filter(Boolean));
   for (const loc of generatedManifest.generated) {
     if (typeof loc !== 'string' || !loc.startsWith(BASE)) continue;
-    const segments = new URL(loc).pathname.split('/').filter(Boolean);
     const relativePath = decodeURIComponent(new URL(loc).pathname.replace(/^\/+/, ''));
     const generatedPath = relativePath.endsWith('/') ? relativePath + 'index.html' : relativePath;
     let html;
@@ -266,10 +265,8 @@ if (generatedManifest && Array.isArray(generatedManifest.generated)) {
     });
     const canonical = canonicalTag?.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
     if (canonical !== loc) throw new Error('Generated SEO page canonical mismatch for ' + loc + '; found ' + (canonical || 'missing'));
-    const cityLastmod = segments.length === 1 && trackedCityHubs.has(segments[0])
-      ? gitLastModified(segments[0] + '/index.html')
-      : null;
-    pages.set(loc, cityLastmod);
+    const pageLastmod = gitLastModified(generatedPath);
+    pages.set(loc, pageLastmod);
   }
 }
 const pageEntries = [...pages.entries()].map(([loc, lastmod]) => ({ loc, lastmod })).sort((a, b) => a.loc.localeCompare(b.loc));
