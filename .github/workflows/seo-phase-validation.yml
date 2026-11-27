@@ -236,7 +236,11 @@ jobs:
           assert len(urls)==len(set(urls)), 'Duplicate URL across sitemaps'
           assert 'https://studenthubhelp.in/' in urls
           assert 'https://studenthubhelp.in/property-index.html' in urls
-          generated=json.loads(Path('seo-generated-manifest.json').read_text(encoding='utf-8')).get('generated',[])
-          assert all(url in urls for url in generated), 'Generated SEO URL missing from sitemap'
-          print(f'Sitemap validation passed: {len(urls)} unique URLs.')
+          manifest=json.loads(Path('seo-generated-manifest.json').read_text(encoding='utf-8'))
+          generated=manifest.get('generated',[])
+          redirect_urls={'https://studenthubhelp.in'.rstrip('/')+item['from'] for item in manifest.get('redirectPages',[]) if item.get('from')}
+          missing=[url for url in generated if url not in redirect_urls and url not in urls]
+          assert not missing, 'Generated SEO URLs missing from sitemap: '+', '.join(missing[:10])
+          assert not any(url in urls for url in redirect_urls), 'Noindex redirect URL found in sitemap'
+          print(f'Sitemap validation passed: {len(urls)} unique URLs; {len(redirect_urls)} redirects excluded.')
           PY
