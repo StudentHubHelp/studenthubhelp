@@ -515,15 +515,22 @@ body>.navbar .nav-links a.nav-add{background:var(--shh-orange)!important;color:#
 </style>
 
   <link rel="stylesheet" href="mobile.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style id="shh-global-search-map">
 .shh-search-map{display:none;margin:0 0 22px;padding:16px;border:1px solid #e3eaf1;border-radius:20px;background:#fff;box-shadow:0 10px 28px rgba(7,26,51,.07)}
 .shh-search-map.show{display:block}
-.shh-search-map-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.shh-search-map-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px}
 .shh-search-map-head h3{margin:0;color:#102d55;font-size:17px;font-weight:900}
 .shh-search-map-head p{margin:4px 0 0;color:#718096;font-size:12px;line-height:1.45}
-.shh-search-map-frame{display:block;width:100%;height:320px;border:0;border-radius:14px;background:#edf2f7;touch-action:auto}
+.shh-search-map-head .category-filter{flex:1 1 620px;min-width:0;display:flex;gap:7px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:3px 2px 7px;margin:0;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.shh-search-map-head .filter-btn{flex:0 0 auto;min-height:36px;padding:0 12px;font-size:12px}
+.shh-search-map-canvas{display:block;width:100%;height:360px;border-radius:14px;background:#edf2f7;overflow:hidden;touch-action:pan-x pan-y}
+.shh-search-map-canvas .leaflet-container{width:100%;height:100%;font:inherit}
+.shh-search-map-canvas .leaflet-control-attribution{font-size:9px}
+.shh-search-map-canvas .leaflet-marker-icon{pointer-events:none}
 .shh-search-map-note{margin:9px 2px 0;color:#718096;font-size:11px;line-height:1.5}
-@media(max-width:767px){.shh-search-map{padding:12px;margin-bottom:16px;border-radius:16px}.shh-search-map-head h3{font-size:15px}.shh-search-map-frame{height:245px;border-radius:12px}}
+@media(max-width:767px){.shh-search-map{padding:12px;margin-bottom:16px;border-radius:16px}.shh-search-map-head{align-items:flex-start;gap:7px}.shh-search-map-head>div:first-child{flex:0 0 100%}.shh-search-map-head .category-filter{flex:0 0 100%;width:100%;padding-bottom:8px}.shh-search-map-head .filter-btn{min-height:35px;padding:0 11px;font-size:11px}.shh-search-map-canvas{height:280px;border-radius:12px}}
 </style>
 
 </head>
@@ -567,10 +574,10 @@ body>.navbar .nav-links a.nav-add{background:var(--shh-orange)!important;color:#
       </div>
       <div class="summary-bar"><div class="summary-left"><h2 id="resultsTitle">Explore Student Essentials</h2><p id="resultsSubtitle">Browse student-friendly services near your campus.</p></div><div class="shh-results-tools"><label class="shh-sort-label" for="shhSort">Sort by</label><select id="shhSort" aria-label="Sort listings"><option value="relevance">Relevance</option><option value="rating">Highest rated</option><option value="price">Price: low to high</option></select><div class="result-count" id="resultCount"><i class="fa-solid fa-layer-group">▦</i><span>0 results</span></div></div></div>
 
-      <section class="shh-search-map" id="shhSearchMap" aria-label="Map preview for current search results">
-        <div class="shh-search-map-head"><div><h3>Map View</h3><p id="shhSearchMapSubtitle">Location reference for your current search.</p></div></div>
-        <iframe class="shh-search-map-frame" id="shhSearchMapFrame" title="Google Maps location preview for current search results" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
-        <p class="shh-search-map-note">Drag to move the map; use +/−, mouse wheel or pinch to zoom. The map is for location viewing only—open a StudentHubHelp property from its card below to view details.</p>
+      <section class="shh-search-map" id="shhSearchMap" aria-label="Interactive map of current search listings">
+        <div class="shh-search-map-head"><div><h3>Map View</h3><p id="shhSearchMapSubtitle">Showing matching property locations.</p></div></div>
+        <div class="shh-search-map-canvas" id="shhSearchMapCanvas" role="application" aria-label="Map showing matching listings. Use map controls to zoom and drag to move."></div>
+        <p class="shh-search-map-note">Map markers are view-only. Select a category to filter both map markers and property cards; use View Details on a card to open a property.</p>
       </section>
       <div class="state" id="loadingState"><div class="spinner"></div><h3>Searching...</h3><p>Finding the most relevant student services.</p></div>
       <div class="state" id="emptyState"><div class="state-icon">⌕</div><h3 id="emptyTitle">No matching listings found</h3><p id="emptyText">Try another city, area, property name or student service.</p></div>
@@ -602,6 +609,7 @@ body>.navbar .nav-links a.nav-add{background:var(--shh-orange)!important;color:#
     const input=document.getElementById('globalSearchInput'),form=document.getElementById('globalSearchForm'),grid=document.getElementById('resultsGrid'),filter=document.getElementById('categoryFilter'),loading=document.getElementById('loadingState'),empty=document.getElementById('emptyState'),emptyTitle=document.getElementById('emptyTitle'),emptyText=document.getElementById('emptyText'),title=document.getElementById('resultsTitle'),subtitle=document.getElementById('resultsSubtitle'),count=document.getElementById('resultCount'),detailModal=document.getElementById('detailModal'),modalHead=document.getElementById('modalHead'),modalClose=document.getElementById('modalClose'),modalCategory=document.getElementById('modalCategory'),modalTitle=document.getElementById('modalTitle'),modalArea=document.getElementById('modalArea'),modalRating=document.getElementById('modalRating'),modalAddress=document.getElementById('modalAddress'),modalTiming=document.getElementById('modalTiming'),modalPhone=document.getElementById('modalPhone'),modalFacilities=document.getElementById('modalFacilities'),modalFinderBtn=document.getElementById('modalFinderBtn'),modalCallBtn=document.getElementById('modalCallBtn'),modalMapBtn=document.getElementById('modalMapBtn'),menuBtn=document.getElementById('menuBtn'),navLinks=document.getElementById('navLinks');
     document.getElementById('year').textContent=new Date().getFullYear();
     let allResults=[],activeFilter='all',currentQuery='',timer=null,requestNo=0,areaMatchCount=0,nearbyMode=new URLSearchParams(location.search).get('nearby')==='1';
+    const mapHead=document.querySelector('.shh-search-map-head');if(filter&&mapHead)mapHead.appendChild(filter);
     const STOP=new Set('me mein mai main m par pe ke ki ka ko se hai hain ho hu hun hoga hogi wale wali wala waale batao btao dikhao do de dena ek ekdum in at the a an for of to and with on from near nearest nearby pass paas around mera meri mere meko mujhe kaise kaha kahan kya konsa konsi kaun aur or ya bhi hi hai hain'.split(' '));
     const ALIASES={hostel:['hostel','hostels','hostal','hostals','pg','p g','paying guest','paying-guest','boys hostel','girls hostel','room','rooms','stay','accommodation','residential','हॉस्टल','होस्टल','पीजी','आवास','कमरा','रहने'],tiffin:['tiffin','tiffins','tifin','tiffan','mess','food','meal','meals','dabba','lunch','dinner','breakfast','thali','home food','टिफिन','मेस','खाना','भोजन','नाश्ता','थाली'],library:['library','libraries','libary','libarary','study','study room','reading room','reading','self study','self-study','पुस्तकालय','लाइब्रेरी','स्टडी','रीडिंग'],cafe:['cafe','cafes','café','cafee','coffee','coffee shop','cafeteria','chai','tea','snacks','कैफे','कॉफी','चाय','नाश्ता'],bookstore:['bookstore','book store','book shop','bookshop','books','stationery','stationary','किताब','किताबें','बुकस्टोर','बुक स्टोर','बुक शॉप','स्टेशनरी']};
     const INTENTS={nearby:['near','nearest','nearby','pass','paas','ke paas','ke pass','nazdeek','najdik','around','aas paas','aaspaas','नजदीक','नज़दीक','पास','आसपास'],cheap:['cheap','cheapest','budget','affordable','sasta','sasti','kam price','low price','कम कीमत','सस्ता','बजट','किफायती'],premium:['premium','best','top','luxury','high rated','accha','achha','acchi','अच्छा','बेहतरीन'],late:['late','late night','night','24 hour','24 hours','open late','रात','रात में','लेट नाइट','24 घंटे'],veg:['veg','vegetarian','shakahari','शाकाहारी','वेज','शुद्ध शाकाहारी'],boys:['boys','boy','male','ladke','लड़के','पुरुष'],girls:['girls','girl','female','women','ladki','ladkiyan','लड़कियां','महिला']};
@@ -688,17 +696,38 @@ function searchMapQuery(record){
   if(saved){try{const u=new URL(saved,location.origin);for(const key of ['q','query','destination','daddr']){const value=u.searchParams.get(key);if(value&&value.trim())return value.trim();}}catch(e){}}
   return [addressFromRecord(record),areaFromRecord(record),clean(record.landmark||record.nearby||record.near),clean(record.city)].filter(Boolean).join(', ');
 }
+let shhSearchLeafletMap=null,shhSearchMarkerLayer=null;
 function updateSearchMap(results){
-  const section=document.getElementById('shhSearchMap'),frame=document.getElementById('shhSearchMapFrame'),caption=document.getElementById('shhSearchMapSubtitle');
-  if(!section||!frame)return;
-  if(!Array.isArray(results)||!results.length){section.classList.remove('show');frame.removeAttribute('src');return;}
-  const record=results.find(r=>searchMapQuery(r)),query=record?searchMapQuery(record):'';
-  if(!query){section.classList.remove('show');frame.removeAttribute('src');return;}
-  const label=[areaFromRecord(record),clean(record.city)].filter(Boolean).join(', ')||nameFromRecord(record)||'matching listing location';
-  caption.textContent='Showing a location reference near '+label+'.';
-  const src='https://www.google.com/maps?q='+encodeURIComponent(query)+'&output=embed';
-  if(frame.getAttribute('src')!==src)frame.src=src;
+  const section=document.getElementById('shhSearchMap'),canvas=document.getElementById('shhSearchMapCanvas'),caption=document.getElementById('shhSearchMapSubtitle');
+  if(!section||!canvas)return;
+  const rows=Array.isArray(results)?results:[];
+  const located=rows.map(record=>({record,point:window.StudentHubNearbySearch?.coordinateOf(record)})).filter(item=>{
+    const p=item.point;return p&&Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng))&&Math.abs(Number(p.lat))<=90&&Math.abs(Number(p.lng))<=180;
+  });
   section.classList.add('show');
+  if(!window.L){caption.textContent='Interactive map could not load. Please refresh the page.';return;}
+  if(!shhSearchLeafletMap){
+    shhSearchLeafletMap=L.map(canvas,{zoomControl:true,scrollWheelZoom:true,touchZoom:true,dragging:true,doubleClickZoom:true,boxZoom:true,keyboard:true}).setView([20,0],2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(shhSearchLeafletMap);
+    shhSearchMarkerLayer=L.layerGroup().addTo(shhSearchLeafletMap);
+  }
+  shhSearchMarkerLayer.clearLayers();
+  const palette={hostel:'#16834b',tiffin:'#e58b21',library:'#2563eb',cafe:'#8b5cf6',bookstore:'#c34b78'};
+  located.forEach(({record,point})=>{
+    const color=palette[record.__category]||'#1674e8';
+    L.circleMarker([Number(point.lat),Number(point.lng)],{radius:8,color:'#fff',weight:2,fillColor:color,fillOpacity:.95,interactive:false}).addTo(shhSearchMarkerLayer);
+  });
+  if(located.length){
+    const bounds=L.latLngBounds(located.map(({point})=>[Number(point.lat),Number(point.lng)]));
+    if(located.length===1)shhSearchLeafletMap.setView(bounds.getCenter(),15);
+    else shhSearchLeafletMap.fitBounds(bounds,{padding:[28,28],maxZoom:15});
+    const missing=rows.length-located.length;
+    caption.textContent=located.length+' location marker'+(located.length===1?'':'s')+' shown'+(activeFilter==='all'?' across all categories': ' for '+(CATEGORIES[activeFilter]?.label||activeFilter))+'.'+(missing?' '+missing+' listing'+(missing===1?' has':'s have')+' no saved map coordinates.':'');
+  }else{
+    caption.textContent=rows.length?'No saved coordinates are available for these listings, so accurate map markers cannot be displayed.':'No matching listings. Choose another search or category.';
+    shhSearchLeafletMap.setView([20,0],2);
+  }
+  requestAnimationFrame(()=>shhSearchLeafletMap.invalidateSize());
 }
 function renderResults(results){const mode=document.getElementById('shhSort')?.value||'relevance';if(mode==='rating')results=[...results].sort((a,b)=>(Number(b.rating)||0)-(Number(a.rating)||0));else if(mode==='price')results=[...results].sort((a,b)=>{const price=r=>{for(const k of ['rent','price','monthly_rent','monthly_price','amount','cost']){const n=Number(String(r[k]??'').replace(/[^0-9.]/g,''));if(n>0)return n;}return Number.POSITIVE_INFINITY};return price(a)-price(b)});updateSearchMap(results);grid.innerHTML='';updateSummary(results,currentQuery);if(!results.length){showEmpty(true);emptyTitle.textContent=currentQuery?'No matching listings found':'No listings available';emptyText.textContent=currentQuery?'No strong match for "'+currentQuery+'". Try a property name, area, city or service.':'No listings are currently available.';return}showEmpty(false);results.forEach(r=>grid.appendChild(createCard(r)));decorateResults(results)}
     function decorateResults(results){grid.querySelectorAll('.shh-smart-badge').forEach(x=>x.remove());[...grid.querySelectorAll('.result-card')].forEach((c,i)=>{const r=results[i],body=c.querySelector('.card-body'),actions=body?.querySelector('.card-actions');if(!body||!actions||!r.__score)return;const b=document.createElement('span');b.className='shh-smart-badge';b.textContent='✦ Smart match '+Math.min(99,Math.max(60,Math.round(r.__score/5)))+'%';body.insertBefore(b,actions)})}
