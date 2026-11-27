@@ -149,7 +149,18 @@ jobs:
               assert len(words)>=100 and 'Quick answers' in source, f'Thin or missing visible GEO answer content: {page}'
               pages.append(page)
           assert len(pages)>=50, f'Expected at least 50 generated SEO pages, found {len(pages)}'
-          print(f'Generated SEO validation passed: {len(pages)} pages with bounded snippets, ItemList and visible FAQ answers.')
+          redirects=Path('_redirects').read_text(encoding='utf-8') if Path('_redirects').exists() else ''
+          start='# BEGIN STUDENTHUBHELP GENERATED SEO AREA REDIRECTS'
+          end='# END STUDENTHUBHELP GENERATED SEO AREA REDIRECTS'
+          assert start in redirects and end in redirects, 'Missing generated SEO area redirect block'
+          block=redirects.split(start,1)[1].split(end,1)[0].strip().splitlines()
+          for line in block:
+              parts=line.split()
+              assert len(parts)==3 and parts[2]=='301', f'Invalid area redirect: {line}'
+              assert parts[0]!=parts[1], f'Self-redirect detected: {line}'
+              target=Path(parts[1].strip('/'))/'index.html'
+              assert target.exists(), f'Area redirect target does not exist: {line}'
+          print(f'Generated SEO validation passed: {len(pages)} pages, bounded snippets, ItemList, visible FAQ answers and {len(block)} area redirect rules.')
           PY
 
       - name: Validate sitemap output
