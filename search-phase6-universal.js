@@ -1,3 +1,4 @@
+// SEO/GEO Phase 6: canonical city aliases, category-safe food filters and GPS-gated near-me results.
 (function(){
 'use strict';
 const CATEGORY={hostel:['hostel','hostels','hostals','hostal','pg','paying guest','accommodation','boys hostel','girls hostel','room','rooms','stay','हॉस्टल','पीजी'],tiffin:['tiffin','tiffins','tifin','mess','dabba','food','meal','meals','lunch','dinner','khana','टिफिन','मेस','खाना'],library:['library','libraries','study library','reading room','study room','self study','लाइब्रेरी','पुस्तकालय'],cafe:['cafe','cafes','café','coffee shop','coffeehouse','restaurant','restro','eatery','कैफे','कॉफी'],bookstore:['bookstore','book store','book shop','bookshop','stationery','books','किताब','स्टेशनरी']};
