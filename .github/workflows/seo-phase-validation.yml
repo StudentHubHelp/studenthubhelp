@@ -158,7 +158,9 @@ jobs:
               parts=line.split()
               assert len(parts)==3 and parts[2]=='301', f'Invalid area redirect: {line}'
               assert parts[0]!=parts[1], f'Self-redirect detected: {line}'
-              target=Path(parts[1].strip('/'))/'index.html'
+              target=Path(parts[1].strip('/'))
+              if target.is_dir():
+                  target=target/'index.html'
               assert target.exists(), f'Area redirect target does not exist: {line}'
           print(f'Generated SEO validation passed: {len(pages)} pages, bounded snippets, ItemList, visible FAQ answers and {len(block)} area redirect rules.')
           PY
