@@ -162,10 +162,15 @@ jobs:
               html_document_is_well_formed(text, name)
 
           robots=Path('robots.txt').read_text(encoding='utf-8')
-          for private_path in ['/admin/','/auth.html','/owner-dashboard.html','/student-dashboard.html','/partner-dashboard.html']:
-              assert f'Disallow: {private_path}' in robots, private_path
+          for private_path in ['/admin/','/auth.html','/owner-dashboard.html','/student-dashboard.html','/partner-dashboard.html','/add-listing.html']:
+              assert f'Disallow: {private_path}' not in robots, f'{private_path} must remain crawlable so Google can read its noindex directive'
+          for private_page in ['auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','add-listing.html','admin/index.html']:
+              private_html=Path(private_page).read_text(encoding='utf-8')
+              robots_tag=re.search(r'<meta\\s+name=["\\']robots["\\']\\s+content=["\\']([^"\\']+)["\\']', private_html, re.I)
+              assert robots_tag and 'noindex' in robots_tag.group(1).lower(), f'Missing noindex directive: {private_page}'
+          assert 'Disallow: /supabase/' in robots and 'Disallow: /.github/' in robots and 'Disallow: /admin/src/' in robots
           assert 'Sitemap: https://studenthubhelp.in/sitemap.xml' in robots
-          print('Advanced SEO/AEO validation passed. Sitemap generation and validation remain owned by sitemap-sync.yml.')
+          print('Advanced SEO/AEO validation passed. Private pages expose noindex to crawlers; internal source paths remain blocked.')
 
       - name: Commit SEO/GEO/AEO upgrade
         run: |
