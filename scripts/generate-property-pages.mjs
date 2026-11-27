@@ -193,7 +193,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     .replace(/<meta id="twitterImage" name="twitter:image" content="[^"]*">/i, '<meta id="twitterImage" name="twitter:image" content="https://studenthubhelp.in/logo.png">')
     .replace(/<meta id="twitterTitle" name="twitter:title" content="[^"]*">/i, `<meta id="twitterTitle" name="twitter:title" content="${escapeHtml(title)}">`)
     .replace(/<meta id="twitterDescription" name="twitter:description" content="[^"]*">/i, `<meta id="twitterDescription" name="twitter:description" content="${escapeHtml(desc)}">`)
-    .replace(/<script type="application\\/ld\\+json" id="baseSchema">[\\s\\S]*?<\\/script>/i, `<script type="application/ld+json" id="baseSchema">\\n${schema}\\n</script>`)
+    .replace(/<script type="application\/ld\+json" id="baseSchema">[\s\S]*?<\/script>/i, `<script type="application/ld+json" id="baseSchema">\n${schema}\n</script>`)
     .replace(/<link id="canonicalLink" rel="canonical" href="[^"]*">/i, `<link id="canonicalLink" rel="canonical" href="${escapeHtml(canonical)}">`);
 }
 function buildLegacyRedirectHtml(oldPath, targetType, targetSlug) {
