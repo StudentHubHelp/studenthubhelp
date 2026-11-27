@@ -79,7 +79,7 @@
       ? Array.from(crumb.querySelectorAll('a,.breadcrumb-current')).map((node,index)=>({
           '@type':'ListItem',
           'position':index+1,
-          'name':(node.textContent||'').replace(/\\s+/g,' ').trim(),
+          'name':(node.textContent||'').replace(/\s+/g,' ').trim(),
           'item':node.href||canonicalUrl()
         })).filter(item=>item.name)
       : [];
