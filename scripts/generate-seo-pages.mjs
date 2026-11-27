@@ -223,8 +223,10 @@ function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[],item
     '/kota/','/kota/talwandi-kota/','/kota/indra-vihar-talwandi/','/kota/new-jawahar-nagar-talwandi-kota/','/kota/hostel/','/kota/tiffin/',
     '/sikar/hostel/','/sikar/cafe/','/sikar/tiffin/','/sikar/coaching/allen/','/sikar/coaching/matrix/',
   ]);
+  const premiumCityPrefixes=['/bengaluru/','/chennai/','/patna/','/jhunjhunu/','/gurugram/','/coimbatore/','/delhi/','/jaipur/','/pune/'];
+  const premiumCityRoots=new Set(['/sikar.html','/delhi.html','/jaipur.html','/kota.html','/pune.html','/bengaluru/','/chennai/','/patna/','/jhunjhunu/','/gurugram/','/coimbatore/']);
   const canonicalPath = new URL(canonicalAbs).pathname;
-  const premiumLocation = premiumLocationPaths.has(canonicalPath) || canonicalPath.startsWith('/sikar/') || canonicalPath.startsWith('/kota/');
+  const premiumLocation = premiumLocationPaths.has(canonicalPath) || premiumCityRoots.has(canonicalPath) || premiumCityPrefixes.some(prefix=>canonicalPath.startsWith(prefix)) || canonicalPath.startsWith('/sikar/') || canonicalPath.startsWith('/kota/');
   const home=rel(depth,BASE);
   const breadcrumb=crumbs.filter((c,i)=>!(i===0&&c.name==='Home')).map((c,i,items)=>i===items.length-1?'<span>'+esc(c.name)+'</span>':'<a href="'+esc(rel(depth,c.url))+'">'+esc(c.name)+'</a>').join(' <span>›</span> ');
   const entityTypeByCategory={hostel:'LodgingBusiness',tiffin:'FoodEstablishment',library:'Library',cafe:'CafeOrCoffeeShop',bookstore:'BookStore'};
