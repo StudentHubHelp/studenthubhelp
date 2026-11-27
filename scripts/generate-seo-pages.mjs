@@ -96,7 +96,7 @@ function citySeoProfile(city){
   const ordered=TABLES.filter(meta=>(counts.get(meta.type)||0)>0)
     .sort((a,b)=>(counts.get(b.type)||0)-(counts.get(a.type)||0));
   const topServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels & PGs':meta.type==='tiffin'?'Tiffin & Mess':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
-  const titleServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels, PGs':meta.type==='tiffin'?'Tiffin':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
+  const titleServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?(ordered.length===1?'Hostels & PGs':'Hostels, PGs'):meta.type==='tiffin'?'Tiffin':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
   const areaCounts=new Map();
   const areaCategoryCounts=new Map();
   for(const row of rows){
