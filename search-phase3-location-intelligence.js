@@ -12,7 +12,7 @@
     fatehpuri:['fatehpuri gate road','fatehpuri gate rd','fatehpuri gate'],
     todarmal:['todarmal road','todarmal rd','todarmal']
   };
-  const LANDMARK={
+  const LANDMARK=Object.assign({
     allen:['allen','allen coaching','allen career institute'],clc:['clc','career line coaching','career line classes'],
     vibrant:['vibrant','vibrant coaching','vibrant career institute'],gurukripa:['gurukripa','gurukripa coaching','gci'],
     matrix:['matrix','matrix coaching','matrix academy'],aayaam:['aayaam','aayam','aayaam career academy'],
@@ -20,7 +20,7 @@
     aakash:['aakash','aakash institute','akash institute'],sk_college:['sk college','s k college'],
     railway_station:['railway station','railway station sikar'],piprali_circle:['piprali circle'],
     charan_singh_gate:['charan singh gate'],sk_hospital:['sk hospital'],kvm_school:['kvm school']
-  };
+  },window.StudentHubLocationRegistry?.landmarkAliases||{});
   const REL={
     near:['near','nearby','close to','paas','pass','paas mein','ke paas','ke pass','नजदीक','पास'],
     opposite:['opposite','across','samne','saamne','सामने','के सामने'],
