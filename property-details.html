@@ -358,8 +358,9 @@ function loadSimilar(r){
    const result=await db.from(cfg.table)
     .select('id,slug,name,service_name,city,area,images,image,verified,status')
     .eq('city',r.city)
+    .eq('status','active')
     .order('id',{ascending:true})
-    .limit(200);
+    .limit(300);
    if(result.error)throw result.error;
    const allRows=Array.isArray(result.data)?result.data:[];
    const normalize=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
