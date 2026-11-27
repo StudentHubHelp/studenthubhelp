@@ -219,7 +219,7 @@ function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[],item
   const canonicalPath = new URL(canonicalAbs).pathname;
   const premiumLocation = premiumLocationPaths.has(canonicalPath) || canonicalPath.startsWith('/sikar/') || canonicalPath.startsWith('/kota/');
   const home=rel(depth,BASE);
-  const breadcrumb=crumbs.map((c,i)=>i===crumbs.length-1?'<span>'+esc(c.name)+'</span>':'<a href="'+esc(rel(depth,c.url))+'">'+esc(c.name)+'</a>').join(' <span>›</span> ');
+  const breadcrumb=crumbs.filter((c,i)=>!(i===0&&c.name==='Home')).map((c,i,items)=>i===items.length-1?'<span>'+esc(c.name)+'</span>':'<a href="'+esc(rel(depth,c.url))+'">'+esc(c.name)+'</a>').join(' <span>›</span> ');
   const entityTypeByCategory={hostel:'LodgingBusiness',tiffin:'FoodEstablishment',library:'Library',cafe:'CafeOrCoffeeShop',bookstore:'BookStore'};
   const latestDataUpdate=itemRows.map(row=>row.updated_at||row.created_at||'').filter(Boolean).sort().pop()||null;
   const itemListElements=itemRows.slice(0,50).map((row,index)=>{
