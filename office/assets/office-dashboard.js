@@ -455,10 +455,11 @@
       const data = result.data || {};
       gmailNextPageToken = data.next_page_token || null;
       if (info) info.textContent = "Synced " + data.saved_messages + " message metadata across " + data.saved_threads + " threads. Snippets only; no full email bodies stored. " + (data.has_more ? "More Inbox items are available." : "No more Inbox items in this result set.");
-      button.textContent = "Sync next 25";
+      button.textContent = data.has_more ? "Sync next 25" : "Inbox up to date";
       button.disabled = !data.has_more;
       button.dataset.nextPage = data.has_more ? "true" : "false";
-      status("Gmail Inbox metadata synced successfully. No email was sent, modified, archived or deleted.", true);
+      if (info && !data.has_more) info.textContent = "Inbox sync complete: " + data.saved_messages + " messages across " + data.saved_threads + " threads. Metadata and snippets only; no full bodies or attachments stored.";
+      status("Gmail Inbox sync completed. No email was sent, modified, archived or deleted.", true);
     } catch (error) {
       if (info) info.textContent = error.message || "Gmail sync failed.";
       button.disabled = false;
@@ -521,7 +522,7 @@
           stateLabel = "Credential missing";
         } else if (integration.credential_valid === true) {
           stateClass = "connected";
-          stateLabel = integration.provider_key === "gmail" ? "Connected · Gmail profile read" : "Connected · API verified";
+          stateLabel = integration.provider_key === "gmail" ? "Connected · OAuth verified" : "Connected · API verified";
         } else if (integration.credential_status === "refresh_credentials_missing") {
           stateClass = "needs_secret";
           stateLabel = "OAuth client details missing";
@@ -564,7 +565,7 @@
       if (["cloudflare", "github", "gmail", "openseo"].includes(integration.provider_key)) {
         if (!integration.secret_configured) integrationNote = "Required runtime credential is missing. Add the named secret in Supabase Edge Function secrets, then run connection validation.";
         else if (integration.credential_valid === true) integrationNote = integration.provider_key === "gmail"
-          ? "Credential verified. Office successfully read the authenticated Gmail mailbox profile; message access and sending remain separately permission-gated."
+          ? "Google OAuth refresh token verified and Gmail profile read successfully. Inbox message metadata is read only when the Owner starts a sync. Sending, deleting, archiving and modifying Gmail messages are not enabled."
           : "Credential verified by a read-only provider API check. External write actions remain Owner-approval gated.";
         else if (integration.credential_status === "invalid" || integration.credential_status === "invalid_or_scope_limited" || integration.credential_status === "expired_or_invalid_token")
           integrationNote = "Credential is present but provider validation rejected it. Check token validity and required scopes.";
@@ -596,6 +597,16 @@
           meta.append(node("span", integration.free_plan_allowed ? "credential-present" : "credential-missing", credentialText));
           if (integration.provider_plan) meta.append(node("span", "", "Tavily plan: " + integration.provider_plan));
           if (integration.provider_key_limit) meta.append(node("span", "", "Tavily usage: " + Number(integration.provider_key_usage || 0) + " / " + Number(integration.provider_key_limit) + " credits"));
+        } else if (integration.provider_key === "gmail") {
+          const verified = integration.credential_valid === true;
+          const credentialText = !integration.secret_configured ? "OAuth credential missing"
+            : verified && integration.credential_status === "valid_refresh_token" ? "Refresh token verified · profile read"
+            : verified ? "OAuth credential verified · profile read"
+            : integration.credential_status === "refresh_token_invalid" ? "Refresh token invalid · reconnect required"
+            : integration.credential_status === "refresh_credentials_missing" ? "OAuth client details missing"
+            : "Credential present · validation pending";
+          meta.append(node("span", verified ? "credential-present" : "credential-missing", credentialText));
+          if (integration.provider_account_status) meta.append(node("span", "", "Mailbox: " + integration.provider_account_status));
         } else {
           meta.append(node("span", integration.secret_configured ? "credential-present" : "credential-missing",
             integration.secret_configured ? "Credential present · validation pending" : "Credential missing"));
@@ -611,7 +622,7 @@
         const inboxButton = node("button", "quiet-btn", "Read Inbox · first 25");
         inboxButton.type = "button";
         inboxButton.addEventListener("click", () => syncGmailInbox(inboxButton, inboxButton.dataset.nextPage === "true"));
-        const inboxStatus = node("p", "integration-note", "Owner-triggered read-only sync. Stores sender, subject, date, snippet and thread metadata only.");
+        const inboxStatus = node("p", "integration-note", "Manual Owner action · Inbox only · maximum 25 messages per batch. Stores sender, subject, date, snippet, labels and thread metadata; never stores full email bodies or attachments.");
         inboxStatus.id = "gmail-sync-status";
         card.append(inboxButton, inboxStatus);
       }
@@ -622,7 +633,11 @@
           const line = node("div", "integration-action-row");
           line.append(node("span", "integration-action-name", actionLabels[action.action_key] || titleCase(action.action_key)));
           const mode = action.requires_approval ? "Owner approval" : titleCase(action.execution_mode);
-          const stateText = action.execution_enabled ? "Enabled" : action.proposal_enabled ? mode + " · proposal only" : mode + " · not enabled";
+          const stateText = integration.provider_key === "gmail" && action.action_key === "read_inbox"
+            ? "Owner-triggered · read only"
+            : integration.provider_key === "gmail" && action.action_key === "deduplicate_threads"
+              ? "Automatic · unique thread IDs · no Gmail changes"
+              : action.execution_enabled ? "Enabled" : action.proposal_enabled ? mode + " · proposal only" : mode + " · not enabled";
           line.append(node("small", "integration-action-state", stateText));
           list.append(line);
         });
