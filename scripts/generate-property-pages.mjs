@@ -184,6 +184,8 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     .replace(/<!--PROPERTY_APP_START-->[\s\S]*?<!--PROPERTY_APP_END-->/i, `<!--PROPERTY_APP_START--><div id="app" aria-busy="true">${loadingSkeleton}</div><section class="seo-fallback-content" aria-hidden="true" aria-label="Property information">${fallbackHtml}</section><!--PROPERTY_APP_END-->`)
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
+    // Clean property URLs must be indexable in the first HTML response; do not rely on JS to remove noindex.
+    .replace(/<meta\\b(?=[^>]*\\bname\\s*=\\s*["']robots["'])[^>]*>/i, '<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">')
     .replace(/<meta id="ogTitle" property="og:title" content="[^"]*">/i, `<meta id="ogTitle" property="og:title" content="${escapeHtml(title)}">`)
     .replace(/<meta id="ogDescription" property="og:description" content="[^"]*">/i, `<meta id="ogDescription" property="og:description" content="${escapeHtml(desc)}">`)
     .replace(/<meta id="ogUrl" property="og:url" content="[^"]*">/i, `<meta id="ogUrl" property="og:url" content="${escapeHtml(canonical)}">`)
