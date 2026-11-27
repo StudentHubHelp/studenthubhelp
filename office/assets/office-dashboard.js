@@ -605,8 +605,17 @@
           meta.append(node("span", verified ? "credential-present" : "credential-missing", credentialText));
           if (integration.provider_account_status) meta.append(node("span", "", "Mailbox: " + integration.provider_account_status));
         } else {
-          meta.append(node("span", integration.secret_configured ? "credential-present" : "credential-missing",
-            integration.secret_configured ? "Credential present · validation pending" : "Credential missing"));
+          const verified = integration.credential_valid === true;
+          const credentialText = !integration.secret_configured
+            ? "Credential missing"
+            : verified
+              ? "Credential verified · read-only check passed"
+              : ["invalid", "invalid_or_scope_limited", "expired_or_invalid_token"].includes(integration.credential_status)
+                ? "Credential rejected · check token and scopes"
+                : ["scope_or_api_disabled", "valid_token_repo_access_limited"].includes(integration.credential_status)
+                  ? "Credential valid · access limited"
+                  : "Credential present · validation pending";
+          meta.append(node("span", verified ? "credential-present" : "credential-missing", credentialText));
         }
       } else {
         meta.append(node("span", "credential-present", "Server-managed connection"));
