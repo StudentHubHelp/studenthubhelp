@@ -47,3 +47,26 @@ OpenSEO estimated weekly tracking at approximately $0.12 per check / $0.48 per m
 - Keep StudentHubHelp's public listing data as the source of truth.
 - Do not change Supabase tables, RLS, policies or admin permissions as part of SEO work without explicit approval.
 - Review production results after deployment; branch CI passing does not mean Google has indexed the new pages.
+
+## Initial neutral prompt set
+
+### Hostels and PGs
+1. What are the best hostels and PGs for students in Delhi?
+2. Where can students find boys hostels near coaching institutes in Sikar?
+3. How do I compare student hostels and PG accommodation in Kota?
+4. Where can students find affordable PG accommodation in Patna?
+5. How can I find a hostel near a specific college or coaching institute in India?
+
+### Study and daily services
+6. Where can students find libraries and study spaces near colleges in Bengaluru?
+7. How can students find libraries near coaching institutes in Chennai?
+8. Where can students find tiffin and mess services near coaching areas in Sikar?
+9. Which cafes near colleges are suitable for studying and Wi-Fi?
+10. Where can students find bookstores and stationery shops near universities?
+
+### Landmark and local discovery
+11. How can students find hostels, libraries and food services near a coaching institute?
+12. What websites help students discover local hostels, PGs and daily services in Indian cities?
+13. How can I search for student accommodation near a railway station or bus stand?
+14. What should students check before choosing a hostel near a coaching centre?
+15. How can students find student services by city, locality and landmark?
