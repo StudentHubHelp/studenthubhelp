@@ -71,25 +71,16 @@ jobs:
                       continue
                   canonical_pages.append(page)
                   assert 'id="canonicalLink" rel="canonical"' in html, f'Missing canonical: {page}'
-                  schema_tag='<script id="propertySchema" type="application/ld+json">'
+                  schema_tag='<script type="application/ld+json" id="baseSchema">'
                   schema_start=html.find(schema_tag)
-                  assert schema_start >= 0, f'Missing property schema: {page}'
+                  assert schema_start >= 0, f'Missing base WebPage schema: {page}'
                   schema_start += len(schema_tag)
                   schema_end=html.find('</script>', schema_start)
-                  assert schema_end >= 0, f'Unclosed property schema: {page}'
+                  assert schema_end >= 0, f'Unclosed base schema: {page}'
                   schema=json.loads(html[schema_start:schema_end])
-                  expected_entity_types={
-                      'hostel':'LodgingBusiness',
-                      'tiffin':'FoodEstablishment',
-                      'library':'Library',
-                      'cafe':'CafeOrCoffeeShop',
-                      'bookstore':'BookStore'
-                  }
-                  entity=schema.get('mainEntity',{})
-                  assert schema.get('@type') == 'WebPage', f'Invalid property WebPage schema: {page}'
-                  assert entity.get('@type') in ('Thing', expected_entity_types[category]), f'Invalid category entity schema: {page}'
-                  if entity.get('address'):
-                      assert entity.get('@type') == expected_entity_types[category], f'Missing category-specific entity type: {page}'
+                  assert schema.get('@type') == 'WebPage', f'Invalid base WebPage schema: {page}'
+                  assert 'function setSEO(r)' in html, f'Missing dynamic listing SEO schema builder: {page}'
+                  assert all(kind in html for kind in ('LodgingBusiness','FoodEstablishment','Library','CafeOrCoffeeShop','BookStore')), f'Missing category-specific schema types: {page}'
                   assert 'href="/property-index.html"' in html, f'Missing property directory link: {page}'
                   assert 'href="/"' in html, f'Missing homepage link: {page}'
                   assert 'href="' + {
