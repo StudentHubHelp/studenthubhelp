@@ -38,7 +38,7 @@ function firstImageUrl(record) {
       const parsed = JSON.parse(raw);
       if (parsed !== raw) return find(parsed);
     } catch {}
-    const parts = raw.split(/\\r?\\n|,\\s*(?=https?:\\/\\/)/i);
+    const parts = raw.split(/\r?\n|,\s*(?=https?:\/\/)/i);
     for (const part of parts) {
       const candidate = part.trim().replace(/^['"]|['"]$/g, '');
       try {
@@ -162,7 +162,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     mainEntity: entity
   }).replace(/</g, '\\u003c');
   const heroPreload = heroImage
-    ? '<link rel="preload" as="image" href="' + escapeHtml(heroImage) + '" fetchpriority="high">\\n'
+    ? '<link rel="preload" as="image" href="' + escapeHtml(heroImage) + '" fetchpriority="high">\n'
     : '';
 
   const fallbackHtml = `<section class="card" id="seo-property-fallback" aria-label="Property information">
