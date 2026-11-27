@@ -25,4 +25,23 @@ assert.equal(window.StudentHubQueryParser.parse('hostel in New Delhi', rows).cit
 assert.equal(window.StudentHubQueryParser.parse('library near Bangalore', rows).city, 'bengaluru');
 assert.equal(window.StudentHubQueryParser.parse('tiffin in Gurgaon', rows).city, 'gurugram');
 
+const aliasRows = [
+  { id: 'delhi-hostel', __category: 'hostel', name: 'Saket Student Hostel', city: 'Delhi', area: 'Saket' },
+  { id: 'blr-library', __category: 'library', name: 'Basavanagudi Study Library', city: 'Bengaluru', area: 'Basavanagudi' },
+  { id: 'gurgaon-tiffin', __category: 'tiffin', name: 'Sector 31 Tiffin Service', city: 'Gurugram', area: 'Sector 31' }
+];
+new Function('window', fs.readFileSync('search-phase6-universal.js', 'utf8'))(window);
+assert.deepEqual(
+  Array.from(window.StudentHubUniversalSearch.search(aliasRows, 'hostel in New Delhi', data => data).map(row => row.id)),
+  ['delhi-hostel']
+);
+assert.deepEqual(
+  Array.from(window.StudentHubUniversalSearch.search(aliasRows, 'library in Bangalore', data => data).map(row => row.id)),
+  ['blr-library']
+);
+assert.deepEqual(
+  Array.from(window.StudentHubUniversalSearch.search(aliasRows, 'tiffin in Gurgaon', data => data).map(row => row.id)),
+  ['gurgaon-tiffin']
+);
+
 console.log('Location intelligence registry tests passed.');
