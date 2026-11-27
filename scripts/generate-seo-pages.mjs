@@ -427,10 +427,12 @@ if (sikarCity) {
     '<a class="area-card" href="/sikar/' + esc(slug(area.name)) + '/"><span>📍</span><div><strong>' +
     esc(area.name) + '</strong><small>' + area.rows.length + ' verified listings · Open area guide →</small></div></a>'
   ).join('');
+  const staticRows = [];
   const staticCategories = TABLES.map(meta => {
     const rows = sikarCity.rows.filter(row => row.type === meta.type)
       .sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')) || String(a.name || '').localeCompare(String(b.name || '')));
     if (!rows.length) return '';
+    staticRows.push(...rows.slice(0, 3));
     const cards = rows.slice(0, 3).map(row => {
       const href = propUrl(row);
       const place = [row.area, row.city].filter(Boolean).join(', ') || row.address || 'Sikar';
@@ -455,6 +457,20 @@ if (sikarCity) {
   sikarHtml = replaceStaticBlock(sikarHtml, 'LISTINGS', staticCategories);
   sikarHtml = replaceStaticBlock(sikarHtml, 'QUICK_ANSWER', staticQuickAnswer);
   sikarHtml = replaceStaticBlock(sikarHtml, 'PRICE_DATE', 'Directory data checked: ' + esc(updatedLabel) + '.');
+  const schemaBlock = sikarHtml.match(/<!-- SIKAR_STATIC_SCHEMA_START -->([\\s\\S]*?)<!-- SIKAR_STATIC_SCHEMA_END -->/);
+  const schemaScript = schemaBlock?.[1]?.match(/<script type="application\\/ld\\+json">([\\s\\S]*?)<\\/script>/);
+  if (!schemaBlock || !schemaScript) throw new Error('Could not locate Sikar structured data block');
+  const sikarSchema = JSON.parse(schemaScript[1]);
+  const schemaGraph = Array.isArray(sikarSchema['@graph']) ? sikarSchema['@graph'] : [];
+  const listingSchema = schemaGraph.find(node => node['@type'] === 'ItemList');
+  if (!listingSchema) throw new Error('Sikar ItemList schema is missing');
+  listingSchema.numberOfItems = staticRows.length;
+  listingSchema.itemListElement = staticRows.map((row, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    item: { '@type': 'Thing', name: row.name || 'Student listing', url: propUrl(row) }
+  }));
+  sikarHtml = replaceStaticBlock(sikarHtml, 'SCHEMA', '<script type="application/ld+json">' + JSON.stringify(sikarSchema) + '</script>');
   await write('sikar.html', sikarHtml);
 }
 
