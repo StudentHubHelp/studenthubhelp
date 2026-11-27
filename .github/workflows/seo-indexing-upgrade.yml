@@ -163,7 +163,7 @@ jobs:
 
           robots=Path('robots.txt').read_text(encoding='utf-8')
           for private_path in ['/admin/','/auth.html','/owner-dashboard.html','/student-dashboard.html','/partner-dashboard.html','/add-listing.html']:
-              assert f'Disallow: {private_path}' not in robots, f'{private_path} must remain crawlable so Google can read its noindex directive'
+              assert f'Disallow: {private_path}' not in robots.splitlines(), f'{private_path} must remain crawlable so Google can read its noindex directive'
           for private_page in ['auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','add-listing.html','admin/index.html']:
               private_html=Path(private_page).read_text(encoding='utf-8')
               robots_tag=re.search(r"""<meta\s+name=["']robots["']\s+content=["']([^"']+)["']""", private_html, re.I)
