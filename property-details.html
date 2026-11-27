@@ -7,6 +7,8 @@
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <meta name="theme-color" content="#0f3c2d">
 <title>Property Details | StudentHubHelp</title>
 <meta id="metaDescription" name="description" content="Explore student-friendly hostels, PGs and local services on StudentHubHelp.">
@@ -287,7 +289,7 @@ function openLightbox(index){if(!galleryPhotos.length)return;galleryIndex=(index
 function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow=''}
 function moveLightbox(delta){openLightbox(galleryIndex+delta)}
 document.getElementById('lightboxClose').addEventListener('click',closeLightbox);document.getElementById('lightboxPrev').addEventListener('click',()=>moveLightbox(-1));document.getElementById('lightboxNext').addEventListener('click',()=>moveLightbox(1));document.getElementById('lightbox').addEventListener('click',e=>{if(e.target.id==='lightbox')closeLightbox()});document.addEventListener('keydown',e=>{if(!document.getElementById('lightbox').classList.contains('open'))return;if(e.key==='Escape')closeLightbox();if(e.key==='ArrowLeft')moveLightbox(-1);if(e.key==='ArrowRight')moveLightbox(1)});let touchStartX=0;document.getElementById('lightbox').addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0].screenX},{passive:true});document.getElementById('lightbox').addEventListener('touchend',e=>{const dx=e.changedTouches[0].screenX-touchStartX;if(Math.abs(dx)>45)moveLightbox(dx<0?1:-1)},{passive:true});
-function photoButton(url,index,alt){return '<button type="button" class="property-photo-button" data-photo-index="'+index+'" aria-label="Open photo '+(index+1)+' in full-screen gallery"><img src="'+esc(url)+'" alt="'+esc(alt)+'" loading="eager" fetchpriority="'+(index===0?'high':'auto')+'" decoding="async"></button>'}
+function photoButton(url,index,alt){return '<button type="button" class="property-photo-button" data-photo-index="'+index+'" aria-label="Open photo '+(index+1)+' in full-screen gallery"><img src="'+esc(url)+'" alt="'+esc(alt)+'" loading="'+(index===0?'eager':'lazy')+'" fetchpriority="'+(index===0?'high':'low')+'" decoding="async"></button>'}
 function breadcrumbSource(){const fallback={href:cfg.finder,label:cfg.label+' Finder',path:''};try{const ref=document.referrer;if(!ref)return fallback;const u=new URL(ref);if(u.origin!==location.origin||u.pathname.includes('/properties/')||u.pathname.endsWith('/property-details.html'))return fallback;const path=u.pathname.replace(/\/+$/,'')||'/';const known={'/':'Home','/index.html':'Home','/explore-listings.html':'Explore Listings','/global-search.html':'Search Results','/jaipur.html':'Jaipur Listings','/sikar.html':'Sikar Listings','/sikar-piprali-road.html':'Sikar · Piprali Road','/pg-finder.html':'Hostel Finder','/tiffin-finder.html':'Tiffin Finder','/library-finder.html':'Library Finder','/cafe-finder.html':'Cafe Finder','/bookstore-finder.html':'Bookstore Finder'};let label=known[path];if(!label){const part=path.split('/').filter(Boolean).pop()||'';label=decodeURIComponent(part.replace(/\.html$/i,'').replace(/[-_]+/g,' ')).replace(/\b\w/g,ch=>ch.toUpperCase())||fallback.label+' Finder'}return {href:u.pathname+u.search+u.hash,label:label,path:path}}catch(e){return fallback}}
 function setPropertyBreadcrumb(name){const nav=document.getElementById('propertyBreadcrumb');if(!nav)return;const source=breadcrumbSource();const isHome=source.path==='/'||source.path==='/index.html';nav.innerHTML='<a href="/">Home</a>'+(isHome?'':'<span class="breadcrumb-separator">›</span><a href="'+esc(source.href)+'">'+esc(source.label)+'</a>')+'<span class="breadcrumb-separator">›</span><span class="breadcrumb-current" aria-current="page">'+esc(name)+'</span>'}
 function buildGalleryMarkup(r,photos){const name=text(first(r,['service_name','name'])||'Student Listing'),alt=name+' property photo';if(!photos.length)return '<div class="gallery no-real-photos"><div class="gallery-fallback">'+categoryBanner(name,false)+'</div></div>';let side='';for(let i=1;i<5;i++){side+=photos[i]?photoButton(photos[i],i,alt+' '+(i+1)):'<div class="gallery-empty-slot" aria-hidden="true"></div>'}return '<div class="gallery"><div class="gallery-main">'+photoButton(photos[0],0,alt)+(photos.length>1?'<span class="photo-hint">'+photos.length+' real photos · View gallery</span>':'')+'</div><div class="gallery-side">'+side+(photos.length>1?'<button class="show-all" type="button" id="showAllPhotos">▦ View all '+photos.length+' photos</button>':'')+'</div></div>'}
@@ -303,7 +305,55 @@ const mobile=document.getElementById('mobileContactBar');if(tel||wa){mobile.hidd
 setSEO(r);loadSimilar(r)
 }
 async function share(){const url=location.href,title=text(activeProperty&&activeProperty.name)||'StudentHubHelp listing';if(navigator.share){try{await navigator.share({title:title+' | StudentHubHelp',url:url})}catch(e){}}else if(navigator.clipboard){try{await navigator.clipboard.writeText(url);const b=document.getElementById('shareProperty');b.textContent='✓ Link copied';setTimeout(()=>b.textContent='↗ Share listing',1800)}catch(e){alert('Copy this link: '+url)}}}
-async function loadSimilar(r){const box=document.getElementById('similarProperties');try{const allRows=[];const pageSize=250;for(let offset=0;offset<1000;offset+=pageSize){const result=await db.from(cfg.table).select('*').order('id',{ascending:true}).range(offset,offset+pageSize-1);if(result.error)throw result.error;const batch=Array.isArray(result.data)?result.data:[];allRows.push(...batch);if(batch.length<pageSize)break}const normalize=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();const currentId=String(r.id),city=normalize(r.city),area=normalize(r.area),seen=new Set();const rows=allRows.filter(x=>{if(!x||String(x.id)===currentId||!city||normalize(x.city)!==city)return false;const status=String(x.status||'').trim().toLowerCase();if(status&&status!=='active')return false;const key=String(x.id||x.slug||'');if(!key||seen.has(key))return false;seen.add(key);return true}).map((x,index)=>({row:x,index,rank:area&&normalize(x.area)===area?0:1})).sort((a,b)=>a.rank-b.rank||a.index-b.index).slice(0,8).map(item=>item.row);if(!rows.length){box.innerHTML='<div class="empty-note similar-empty">No other active listings are available in '+esc(r.city||'this city')+' for this category.</div>';return}box.innerHTML=rows.map(x=>{const nm=text(x.service_name||x.name||x.title||'Student listing'),imgs=imageList(x),href=x.slug?'/properties/'+type+'/'+encodeURIComponent(x.slug)+'/':'/property-details.html?type='+type+'&id='+encodeURIComponent(x.id),image=imgs[0]?'<img class="similar-image" src="'+esc(imgs[0])+'" alt="'+esc(nm)+'" loading="lazy" decoding="async">':categoryBanner(nm,true),badge=verified(x)?'<span class="similar-verified">✓ Verified Listing</span>':'<span class="similar-verified unverified">Details Provided</span>';return '<a class="similar-card" href="'+esc(href)+'">'+image+'<div class="similar-copy"><div class="similar-name">'+esc(nm)+'</div><div class="similar-location">'+esc([x.area,x.city].filter(Boolean).join(' · '))+'</div>'+badge+'<span class="similar-link">View Details →</span></div></a>'}).join('');box.querySelectorAll('.similar-image').forEach(img=>img.addEventListener('error',()=>{img.outerHTML=categoryBanner(img.alt,true)},{once:true}))}catch(e){console.error('Similar listings query failed for '+cfg.table,e);box.innerHTML='<div class="empty-note similar-empty">Similar listings could not be loaded right now. Please try again shortly.</div>'}}
+function loadSimilar(r){
+ const box=document.getElementById('similarProperties');
+ if(!box)return;
+ const load=async function(){
+  try{
+   if(!r.city){box.innerHTML='<div class="empty-note similar-empty">No city is available for finding similar listings.</div>';return}
+   const result=await db.from(cfg.table)
+    .select('id,slug,name,service_name,city,area,images,image,verified,status')
+    .eq('city',r.city)
+    .order('id',{ascending:true})
+    .limit(200);
+   if(result.error)throw result.error;
+   const allRows=Array.isArray(result.data)?result.data:[];
+   const normalize=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+   const currentId=String(r.id),city=normalize(r.city),area=normalize(r.area),seen=new Set();
+   const rows=allRows.filter(x=>{
+    if(!x||String(x.id)===currentId||!city||normalize(x.city)!==city)return false;
+    const status=String(x.status||'').trim().toLowerCase();
+    if(status&&status!=='active')return false;
+    const key=String(x.id||x.slug||'');
+    if(!key||seen.has(key))return false;
+    seen.add(key);
+    return true;
+   }).map((x,index)=>({row:x,index,rank:area&&normalize(x.area)===area?0:1}))
+    .sort((a,b)=>a.rank-b.rank||a.index-b.index).slice(0,8).map(item=>item.row);
+   if(!rows.length){
+    box.innerHTML='<div class="empty-note similar-empty">No other active listings are available in '+esc(r.city||'this city')+' for this category.</div>';
+    return;
+   }
+   box.innerHTML=rows.map(x=>{
+    const nm=text(x.service_name||x.name||x.title||'Student listing'),imgs=imageList(x);
+    const href=x.slug?'/properties/'+type+'/'+encodeURIComponent(x.slug)+'/':'/property-details.html?type='+type+'&id='+encodeURIComponent(x.id);
+    const image=imgs[0]?'<img class="similar-image" src="'+esc(imgs[0])+'" alt="'+esc(nm)+'" loading="lazy" decoding="async">':categoryBanner(nm,true);
+    const badge=verified(x)?'<span class="similar-verified">✓ Verified Listing</span>':'<span class="similar-verified unverified">Details Provided</span>';
+    return '<a class="similar-card" href="'+esc(href)+'">'+image+'<div class="similar-copy"><div class="similar-name">'+esc(nm)+'</div><div class="similar-location">'+esc([x.area,x.city].filter(Boolean).join(' · '))+'</div>'+badge+'<span class="similar-link">View Details →</span></div></a>';
+   }).join('');
+   box.querySelectorAll('.similar-image').forEach(img=>img.addEventListener('error',()=>{img.outerHTML=categoryBanner(img.alt,true)},{once:true}));
+  }catch(e){
+   console.error('Similar listings query failed for '+cfg.table,e);
+   box.innerHTML='<div class="empty-note similar-empty">Similar listings could not be loaded right now. Please try again shortly.</div>';
+  }
+ };
+ if('IntersectionObserver' in window){
+  const observer=new IntersectionObserver(function(entries){
+   if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();load()}
+  },{rootMargin:'320px 0px'});
+  observer.observe(box);
+ }else load();
+}
 async function loadPropertyReviews(r){
  const host=document.getElementById('propertyReviewContent');if(!host)return;
  try{
