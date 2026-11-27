@@ -1,4 +1,5 @@
 // SEO/GEO: schema generation is content-only; no visible page layout is changed.
+// Property schema is emitted by js/property-seo-upgrade.js and checked in that source file.
 // The main-branch workflow owns insertion of the site graph and AEO JSON-LD blocks.
 // Trigger the main-branch SEO indexing workflow after its HTML closing-tag validator was corrected.
 import { readdir, readFile, writeFile } from 'node:fs/promises';
