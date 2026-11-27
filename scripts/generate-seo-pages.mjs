@@ -4,6 +4,8 @@ const BASE = (process.env.BASE_URL || 'https://studenthubhelp.in/').replace(/\/+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 const LOCATION_MIN_PROPERTIES = Number(process.env.SEO_LOCATION_MIN_PROPERTIES || 3);
+// These city guides already have approved .html URLs; keep one canonical root per city.
+const CITY_HTML_ROOTS = new Set(['sikar','delhi','jaipur','kota','pune']);
 
 const TABLES = [
   { type:'hostel', table:'hostels', label:'Hostels & PGs', finder:'pg-finder.html', icon:'🏠' },
@@ -312,7 +314,8 @@ await mkdir(GENERATED_ROOT,{recursive:true});
 const all=(await Promise.all(TABLES.map(fetchRows))).flat();
 const areaRedirects=new Map(),areaCounts=new Map(),cityCounts=new Map();
 for(const row of all){const citySlug=slug(canonicalCityName(row.city));cityCounts.set(citySlug,(cityCounts.get(citySlug)||0)+1);if(row.area){const areaKey=citySlug+'|'+key(row.area);areaCounts.set(areaKey,(areaCounts.get(areaKey)||0)+1);}}
-for(const row of all){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/';const oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+key(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/';const cityTarget=citySlug==='sikar'?'/sikar.html':((cityCounts.get(citySlug)||0)>=3?cityPath:'/explore-listings.html');const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityTarget;if(from!==to)areaRedirects.set(from,to);}
+for(const row of all){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/';const oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+key(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/';const cityTarget=CITY_HTML_ROOTS.has(citySlug)?'/'+citySlug+'.html':((cityCounts.get(citySlug)||0)>=3?cityPath:'/explore-listings.html');const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityTarget;if(from!==to)areaRedirects.set(from,to);}
+for(const citySlug of CITY_HTML_ROOTS){if(citySlug!=='sikar')areaRedirects.set('/'+citySlug+'/', '/'+citySlug+'.html');}
 const cities=new Map();
 for(const row of all){
   const canonicalCity=canonicalCityName(row.city);
@@ -332,7 +335,35 @@ const expected=new Set();
 for(const c of cities.values()){
   const cs=slug(c.name); if(!cs) continue;
   const cityDir=GENERATED_ROOT+'/'+cs;
-  const cityUrl=new URL(cs+'/',BASE).href;
+  const cityUrl=new URL(CITY_HTML_ROOTS.has(cs)?cs+'.html':cs+'/',BASE).href;
+  if(CITY_HTML_ROOTS.has(cs)&&cs!=='sikar'){
+    const htmlPath=cs+'.html';
+    let cityHtml=await readFile(htmlPath,'utf8');
+    const pageTitle=titleForCity(c.name,c.rows);
+    const pageDescription=metaDescription(descriptionForCity(c));
+    const replaceTag=(source,pattern,value)=>source.replace(pattern,()=>value);
+    cityHtml=replaceTag(cityHtml,/<title>[\\s\\S]*?<\\/title>/i,'<title>'+esc(pageTitle)+'</title>');
+    cityHtml=cityHtml.replace(/(<meta\\s+name=["']description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageDescription)+'$2');
+    cityHtml=cityHtml.replace(/(<meta\\s+property=["']og:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageTitle)+'$2');
+    cityHtml=cityHtml.replace(/(<meta\\s+property=["']og:description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageDescription)+'$2');
+    cityHtml=cityHtml.replace(/(<meta\\s+name=["']twitter:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageTitle)+'$2');
+    cityHtml=cityHtml.replace(/(<meta\\s+name=["']twitter:description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(pageDescription)+'$2');
+    cityHtml=cityHtml.replace(/<h1([^>]*)>[\\s\\S]*?<\\/h1>/i,'<h1$1>'+esc(h1ForCity(c))+'</h1>');
+    cityHtml=cityHtml.replace(/<script\\s+type=["']application\\/ld\\+json["']>([\\s\\S]*?)<\\/script>/gi,(full,jsonText)=>{
+      try{
+        const data=JSON.parse(jsonText);
+        const nodes=Array.isArray(data['@graph'])?data['@graph']:[data];
+        for(const node of nodes){
+          const types=Array.isArray(node['@type'])?node['@type']:[node['@type']];
+          if(types.includes('CollectionPage')||types.includes('WebPage')){
+            node.name=pageTitle;node.description=pageDescription;node.url=cityUrl;
+          }
+        }
+        return '<script type="application/ld+json">'+JSON.stringify(data)+'</script>';
+      }catch{return full;}
+    });
+    await write(htmlPath,cityHtml);
+  }
   const groups=new Map();
   for(const r of c.rows){if(!groups.has(r.type))groups.set(r.type,[]);groups.get(r.type).push(r);}
   const eligibleGroups=new Map([...groups.entries()].filter(([,rows])=>rows.length>0));
@@ -346,7 +377,7 @@ for(const c of cities.values()){
     '<section class="section"><h2>Student listings across '+esc(c.name)+'</h2><p>Open a listing to review its address, facilities and service information. Confirm details with the provider before visiting.</p><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
   // Sikar's primary city guide lives at /sikar.html. Do not recreate the
   // older /sikar/ city index; nested category, area and coaching pages remain.
-  if (cs !== 'sikar') {
+  if (!CITY_HTML_ROOTS.has(cs)) {
     const cityPath=cityDir+'/index.html'; expected.add(cityPath); generated.push(cityUrl);
     await write(cityPath,shell({title:titleForCity(c.name,c.rows),description:descriptionForCity(c),canonical:cityUrl,h1:h1ForCity(c),crumbs:[{name:'Home',url:BASE},{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}],itemRows:c.rows,faqItems:faqForCity(c),cityHub:true}));
   }
