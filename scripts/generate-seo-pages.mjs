@@ -117,7 +117,7 @@ function descriptionForCity(city){
   const shortNames={hostel:'hostels & PGs',tiffin:'tiffin and mess',library:'libraries',cafe:'cafes',bookstore:'bookstores'};
   const categories=profile.ordered.slice(0,3).map(meta=>shortNames[meta.type]||meta.label.toLowerCase());
   const categoryText=categories.length>1?categories.slice(0,-1).join(', ')+' and '+categories[categories.length-1]:(categories[0]||'student services');
-  return 'Find '+city.rows.length+' verified student listings in '+city.name+' for '+categoryText+'. Compare local locations, facilities and service details on StudentHubHelp.';
+  return 'Find '+city.rows.length+' verified student listings in '+city.name+' for '+categoryText+'. Compare facilities and locations on StudentHubHelp.';
 }
 function h1ForCity(city){
   const profile=citySeoProfile(city);
