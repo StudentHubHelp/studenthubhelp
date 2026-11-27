@@ -297,6 +297,9 @@ const aliases={pg:'hostel',hostel:'hostel',tiffin:'tiffin',cafe:'cafe',library:'
 const type=aliases[String(params.get('type')||(pretty?parts[1]:'hostel')).toLowerCase()]||'hostel';
 const slug=params.get('slug')||(pretty?decodeURIComponent(parts.slice(2).join('/')):'');
 const id=params.get('id')||'';
+// Legacy query-string property links must resolve to the matching clean static URL.
+// The clean-page generator publishes redirect shells for historical slug aliases.
+if(!pretty&&slug){const target='/properties/'+type+'/'+encodeURIComponent(slug)+'/';if(location.pathname!==target){location.replace(target)}}
 const configs={
 hostel:{table:'hostels',label:'Hostel / PG',finder:'/pg-finder.html',banner:'/hostel-banner.png',icon:'⌂'},
 tiffin:{table:'tiffins',label:'Tiffin & Mess',finder:'/tiffin-finder.html',banner:'/tiffin-banner.png',icon:'◒'},
