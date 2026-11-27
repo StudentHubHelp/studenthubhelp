@@ -457,8 +457,8 @@ if (sikarCity) {
   sikarHtml = replaceStaticBlock(sikarHtml, 'LISTINGS', staticCategories);
   sikarHtml = replaceStaticBlock(sikarHtml, 'QUICK_ANSWER', staticQuickAnswer);
   sikarHtml = replaceStaticBlock(sikarHtml, 'PRICE_DATE', 'Directory data checked: ' + esc(updatedLabel) + '.');
-  const schemaBlock = sikarHtml.match(/<!-- SIKAR_STATIC_SCHEMA_START -->([\\s\\S]*?)<!-- SIKAR_STATIC_SCHEMA_END -->/);
-  const schemaScript = schemaBlock?.[1]?.match(/<script type="application\\/ld\\+json">([\\s\\S]*?)<\\/script>/);
+  const schemaBlock = sikarHtml.match(/<!-- SIKAR_STATIC_SCHEMA_START -->([\s\S]*?)<!-- SIKAR_STATIC_SCHEMA_END -->/);
+  const schemaScript = schemaBlock?.[1]?.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
   if (!schemaBlock || !schemaScript) throw new Error('Could not locate Sikar structured data block');
   const sikarSchema = JSON.parse(schemaScript[1]);
   const schemaGraph = Array.isArray(sikarSchema['@graph']) ? sikarSchema['@graph'] : [];
