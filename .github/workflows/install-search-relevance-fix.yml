@@ -77,7 +77,7 @@ jobs:
           assert('city + facility + category',p.city==='jaipur'&&p.facilities.includes('wifi')&&p.category==='library'&&p.locationPhrase==='',JSON.stringify(p));
           p=window.StudentHubQueryParser.parse('bookstores in Sikar',rows);
           assert('plural bookstore category',p.category==='bookstore'&&p.city==='sikar',JSON.stringify(p));
-          const run=(q,expected)=>{const got=window.StudentHubUniversalSearch.search(rows,q,data=>data).map(x=>x.id).sort();assert(q,JSON.stringify(got)===JSON.stringify(expected.slice().sort()),JSON.stringify(got));};
+          const run=(q,expected,sourceRows=rows)=>{const got=window.StudentHubUniversalSearch.search(sourceRows,q,data=>data).map(x=>x.id).sort();assert(q,JSON.stringify(got)===JSON.stringify(expected.slice().sort()),JSON.stringify(got));};
           run({rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:'',source:'global-search'},['h1','h2']);
           run({rawKeyword:'Sikar Piprali Road par Allen ke paas boys hostel',explicitLocation:'',selectedCategory:'',source:'global-search'},['h1']);
           run({rawKeyword:'girls hostel under 5000',explicitLocation:'',selectedCategory:'',source:'global-search'},['h2','h3']);
