@@ -79,8 +79,113 @@ async function fetchAll(table) {
   return rows;
 }
 
+function factText(value) {
+  if (value === true) return 'Available';
+  if (value === false || value == null) return '';
+  if (Array.isArray(value)) return value.map(factText).filter(Boolean).join(', ');
+  if (typeof value === 'object') {
+    const candidate = value.label || value.name || value.value || value.title;
+    return candidate ? factText(candidate) : '';
+  }
+  const raw = String(value).replace(/\s+/g, ' ').trim();
+  if (!raw) return '';
+  if (raw.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(factText).filter(Boolean).join(', ');
+    } catch {}
+  }
+  return raw;
+}
+
+function buildPropertyFacts(type, record) {
+  const facts = [];
+  const add = (label, value) => {
+    const formatted = factText(value);
+    if (formatted && !facts.some(([existingLabel]) => existingLabel === label)) facts.push([label, formatted]);
+  };
+  const fields = {
+    hostel: [
+      ['Room types', record.room_types], ['Room sharing', record.room_sharing],
+      ['Food arrangement', record.food_available], ['Food type', record.food_type],
+      ['Total beds', record.total_beds], ['Available beds', record.available_beds],
+      ['Attached bathroom', record.attached_bathroom], ['Air conditioning', record.ac_available],
+      ['Wi-Fi', record.wifi], ['Electricity included', record.electricity_included],
+      ['Water', record.water_available], ['Laundry', record.laundry],
+      ['Parking', record.parking], ['Mess available', record.mess_available],
+      ['House rules', record.rules]
+    ],
+    tiffin: [
+      ['Service area', record.service_area], ['Meal type', record.meal_type],
+      ['Food type', record.food_type], ['Plan type', record.plan_type],
+      ['Breakfast', record.breakfast_available], ['Lunch', record.lunch_available],
+      ['Dinner', record.dinner_available], ['Delivery', record.delivery_available],
+      ['Jain food', record.jain_food], ['Home delivery', record.home_delivery],
+      ['Subscription', record.subscription_available], ['Custom meals', record.custom_meal],
+      ['Menu details', record.menu]
+    ],
+    library: [
+      ['Library type', record.library_type], ['24-hour access', record.open_24_hours],
+      ['Seating capacity', record.seating_capacity], ['Available seats', record.available_seats],
+      ['Air conditioning', record.ac_available], ['Wi-Fi', record.wifi],
+      ['Charging points', record.charging_point], ['Lockers', record.locker],
+      ['Parking', record.parking], ['Newspapers', record.newspaper],
+      ['Separate cabins', record.separate_cabin], ['Girls section', record.girls_section],
+      ['Boys section', record.boys_section], ['Power backup', record.power_backup],
+      ['Drinking water', record.water], ['CCTV', record.cctv]
+    ],
+    cafe: [
+      ['Cuisine', record.cuisine], ['Seating capacity', record.seating_capacity],
+      ['Wi-Fi', record.wifi], ['Air conditioning', record.ac],
+      ['Parking', record.parking], ['Delivery', record.delivery],
+      ['Takeaway', record.takeaway], ['Online ordering', record.online_order],
+      ['UPI payment', record.upi_payment]
+    ],
+    bookstore: [
+      ['Book categories', record.categories], ['Classes covered', record.classes],
+      ['Competitive exam books', record.competitive_books], ['Stationery', record.stationery],
+      ['Second-hand books', record.second_hand_books], ['Book rental', record.book_rental],
+      ['Online ordering', record.online_order], ['Home delivery', record.home_delivery],
+      ['Exam books', record.exam_books], ['School books', record.school_books],
+      ['College books', record.college_books], ['NCERT books', record.ncert_books],
+      ['Photocopy', record.photocopy], ['Printing', record.printing],
+      ['Lamination', record.lamination], ['Spiral binding', record.spiral_binding],
+      ['Study notes', record.notes_available]
+    ]
+  };
+  for (const [label, value] of (fields[type] || [])) add(label, value);
+  add('Facilities', record.facilities);
+  add('Opening hours', record.timing || record.timings || (
+    record.opening_time && record.closing_time
+      ? String(record.opening_time) + ' – ' + String(record.closing_time)
+      : (record.opening_time || record.closing_time)
+  ));
+  add('Weekly off', record.weekly_off);
+  add('Nearby coaching', record.nearby_coaching);
+  add('Landmark', record.landmark);
+  add('PIN code', record.pincode);
+  if (record.verified === true) add('Listing verification', 'Verified');
+  else if (record.verified === false) add('Listing verification', 'Details provided');
+  return facts.slice(0, 14);
+}
+
+function buildPropertyFaq(type) {
+  const categoryFaq = {
+    hostel: ['What should I confirm before booking a hostel or PG?', 'Check room type, sharing, available beds, food arrangements, facilities, house rules, deposit and current charges directly with the provider.'],
+    tiffin: ['What should I confirm before choosing a tiffin service?', 'Confirm meal type, menu, delivery area, meal timings, dietary needs, plan terms and current charges directly with the provider.'],
+    library: ['What should I confirm before choosing a library?', 'Check seating availability, access hours, fees, Wi-Fi, charging points, facilities and current availability before visiting.'],
+    cafe: ['What should I check before visiting this cafe?', 'Confirm opening hours, seating, menu, Wi-Fi, parking and current services before visiting.'],
+    bookstore: ['What should I confirm before visiting this bookstore?', 'Check book categories, class or exam stock, stationery, photocopy, printing and opening hours directly with the store.']
+  };
+  const first = categoryFaq[type] || ['What should I confirm before choosing this listing?', 'Confirm the services, location, opening hours and current availability directly with the provider.'];
+  return [
+    { question: first[0], answer: first[1] },
+    { question: 'How can I confirm the location and listing details?', answer: 'Use the address and map information on this page, then confirm the route, current availability and terms directly with the provider. Listing details can change over time.' }
+  ];
+}
+
 // Always regenerate canonical property pages from the shared details app; do not retain legacy redirect shells.
-function buildHtml({ type, slug, name, city, area, address, description, detailsTemplate, heroImage }) {
+function buildHtml({ type, slug, name, city, area, address, description, detailsTemplate, heroImage, record = {} }) {
   const canonical = `${BASE_URL}/properties/${type}/${encodeURIComponent(slug)}/`;
   const categoryLabel = ({
     hostel: 'Hostel / PG',
@@ -129,6 +234,12 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   const sourceDescription = String(description || '').replace(/\s+/g, ' ').trim();
   const fallbackDescription = `${propertyName} ${categoryLabel} listing${locationText ? ` in ${locationText}` : ''}.`;
   const contentDescription = (sourceDescription || fallbackDescription).replace(/\s+/g, ' ').trim().slice(0, 2400);
+  const facts = buildPropertyFacts(type, record);
+  const faqItems = buildPropertyFaq(type);
+  const factsHtml = facts.length ? '<section class="section seo-property-facts" aria-label="Available listing details"><h3>Available listing details</h3><ul>' + facts.map(([label, value]) => '<li><strong>' + escapeHtml(label) + ':</strong> ' + escapeHtml(value) + '</li>').join('') + '</ul></section>' : '';
+  const faqHtml = '<section class="section seo-property-faq" aria-label="Questions to ask before visiting"><h3>Questions to ask before visiting</h3>' + faqItems.map(item => '<details><summary>' + escapeHtml(item.question) + '</summary><p>' + escapeHtml(item.answer) + '</p></details>').join('') + '</section>';
+  const listingIntro = `${propertyName} is listed on StudentHubHelp as a ${categoryLabel.toLowerCase()}${locationText ? ` in ${locationText}` : ''}. This page presents the information currently supplied in the public listing record.`;
+  const dataNote = 'Facilities, timings and availability can change. Only supplied listing details are shown; missing information is not assumed. Confirm current services and terms directly with the provider before visiting or booking.';
   const desc = `${contentDescription} View available listing details on StudentHubHelp.`
     .replace(/\s+/g, ' ').trim().slice(0, 160);
 
@@ -154,13 +265,20 @@ function buildHtml({ type, slug, name, city, area, address, description, details
       addressCountry: 'IN'
     };
   }
+  if (facts.length) entity.additionalProperty = facts.map(([name, value]) => ({ '@type': 'PropertyValue', name, value }));
+  const faqSchema = {
+    '@type': 'FAQPage',
+    '@id': canonical + '#faq',
+    mainEntity: faqItems.map(item => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } }))
+  };
   const schema = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: title,
     description: desc,
     url: canonical,
-    mainEntity: entity
+    mainEntity: entity,
+    hasPart: faqSchema
   }).replace(/</g, '\\u003c');
   const heroPreload = heroImage
     ? '<link rel="preload" as="image" href="' + escapeHtml(heroImage) + '" fetchpriority="high">\n'
@@ -168,10 +286,14 @@ function buildHtml({ type, slug, name, city, area, address, description, details
 
   const fallbackHtml = `<section class="card" id="seo-property-fallback" aria-label="Property information">
   <div class="section-kicker">STUDENTHUBHELP LISTING</div>
-  <h2>${escapeHtml(propertyName)}</h2>
+  <h2>About ${escapeHtml(propertyName)}</h2>
   <p><strong>Category:</strong> ${escapeHtml(categoryLabel)}</p>
   ${locationText ? `<p><strong>Location:</strong> ${escapeHtml(locationText)}</p>` : ''}
   <p>${escapeHtml(contentDescription)}</p>
+  <p>${escapeHtml(listingIntro)}</p>
+  <p>${escapeHtml(dataNote)}</p>
+  ${factsHtml}
+  ${faqHtml}
   <nav aria-label="Related StudentHubHelp pages">
     <a href="${categoryUrl}">Browse ${escapeHtml(categoryLabel)} listings</a> ·
     <a href="/property-index.html">Browse all student properties</a> ·
@@ -183,7 +305,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   <section class="skeleton-hero">
     <div class="skeleton-gallery"><div class="skeleton-block skeleton-main-photo"></div><div class="skeleton-side"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></div>
     <div class="skeleton-info">
-      <div class="skeleton-title-row"><div class="skeleton-title-copy"><div class="skeleton-block skeleton-kicker"></div><div class="property-title skeleton-title-text" role="heading" aria-level="1">${escapeHtml(propertyName)}</div><p class="skeleton-line-text">${escapeHtml([area, city].filter(Boolean).join(', '))}</p></div><div class="skeleton-block skeleton-verified"></div></div>
+      <div class="skeleton-title-row"><div class="skeleton-title-copy"><div class="skeleton-block skeleton-kicker"></div><h1 class="property-title skeleton-title-text">${escapeHtml(propertyName)}</h1><p class="skeleton-line-text">${escapeHtml([area, city].filter(Boolean).join(', '))}</p></div><div class="skeleton-block skeleton-verified"></div></div>
       <div class="skeleton-trust"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
       <div class="skeleton-actions"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
     </div>
@@ -211,17 +333,17 @@ function buildHtml({ type, slug, name, city, area, address, description, details
     .replace(/<link\b(?=[^>]*\brel\s*=\s*["']apple-touch-icon["'])[^>]*>\s*/gi, '')
     .replace(/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:image:secure_url["'])[^>]*>\s*/gi, '')
     .replace(/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:image:alt["'])[^>]*>\s*/gi, '');
-  const withJsClass = cleanTemplate.replace(/<html([^>]*)>/i, (_match, attributes) =>
-    '<html' + attributes + ' class="js">');
+  const withJsClass = cleanTemplate;
   const renderedTemplate = withJsClass.replace(/<head([^>]*)>/i, (_match, attributes) =>
     '<head' + attributes + '>\n' +
+    '<script>document.documentElement.classList.add("js");</script>\n' +
     '<link rel="icon" type="image/png" href="/logo.png">\n' +
     '<link rel="shortcut icon" type="image/png" href="/logo.png">\n' +
     '<link rel="apple-touch-icon" href="/logo.png">\n' +
     '<meta property="og:image:secure_url" content="https://studenthubhelp.in/logo.png">\n' +
     '<meta property="og:image:alt" content="StudentHubHelp logo">\\n' + heroPreload);
   return renderedTemplate
-    .replace(/<!--PROPERTY_APP_START-->[\s\S]*?<!--PROPERTY_APP_END-->/i, `<!--PROPERTY_APP_START--><div id="app" aria-busy="true">${loadingSkeleton}</div><section class="seo-fallback-content" aria-hidden="true" aria-label="Property information">${fallbackHtml}</section><!--PROPERTY_APP_END-->`)
+    .replace(/<!--PROPERTY_APP_START-->[\s\S]*?<!--PROPERTY_APP_END-->/i, `<!--PROPERTY_APP_START--><div id="app" aria-busy="true">${loadingSkeleton}</div><section class="seo-fallback-content" aria-label="Property information">${fallbackHtml}</section><!--PROPERTY_APP_END-->`)
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta id="metaDescription" name="description" content="[^"]*">/i, `<meta id="metaDescription" name="description" content="${escapeHtml(desc)}">`)
     // Clean property URLs must be indexable in the first HTML response; do not rely on JS to remove noindex.
@@ -307,6 +429,7 @@ async function main() {
         area: row.area,
         address: row.address,
         description: row.description || row.about || row.details,
+        record: row,
         detailsTemplate,
         heroImage: firstImageUrl(row)
       });
