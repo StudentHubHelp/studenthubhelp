@@ -13,6 +13,7 @@ on:
       - 'scripts/generate-property-pages.mjs'
       - 'scripts/generate-seo-pages.mjs'
       - 'scripts/generate-sitemap.mjs'
+      - 'city-hub.js'
       - 'js/property-seo-upgrade.js'
       - 'js/seo-location-entities.js'
       - '.github/workflows/seo-phase-validation.yml'
@@ -39,6 +40,7 @@ jobs:
           node --check scripts/generate-property-pages.mjs
           node --check scripts/generate-seo-pages.mjs
           node --check scripts/generate-sitemap.mjs
+          node --check city-hub.js
           node --check js/property-seo-upgrade.js
           node --check js/seo-location-entities.js
           python - <<'PY'
@@ -71,8 +73,18 @@ jobs:
           directory=Path('property-index.html').read_text(encoding='utf-8')
           assert 'href="/explore-listings.html"' in home, 'Homepage is missing its public listings directory link'
           assert 'href="property-index.html"' in visual
-          for city in ('sikar','kota','jaipur','delhi'):
-              assert Path(city, 'index.html').exists(), f'Missing generated city hub: {city}'
+          city_roots={
+              'sikar':'sikar.html',
+              'kota':'kota.html',
+              'jaipur':'jaipur.html',
+              'delhi':'delhi.html',
+              'pune':'pune.html',
+          }
+          for city, page in city_roots.items():
+              source=Path(page)
+              assert source.exists(), f'Missing canonical city guide: {page}'
+              page_html=source.read_text(encoding='utf-8')
+              assert f'<link rel="canonical" href="{base}{page}">' in page_html, f'City guide canonical mismatch: {page}'
           assert '<link rel="canonical" href="https://studenthubhelp.in/property-index.html">' in directory
           assert re.search(r'<a href="https://studenthubhelp\.in/properties/', directory), 'Property directory has no crawlable property links'
 
