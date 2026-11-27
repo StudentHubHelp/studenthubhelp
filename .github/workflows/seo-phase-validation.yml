@@ -8,6 +8,8 @@ on:
       - 'sitemap.html'
       - 'property-index.html'
       - 'property-details.html'
+      - 'about.html'
+      - 'ahmedabad.html'
       - 'scripts/generate-property-pages.mjs'
       - 'scripts/generate-seo-pages.mjs'
       - 'scripts/generate-sitemap.mjs'
@@ -121,6 +123,14 @@ jobs:
           finder_entities=Path('js/seo-location-entities.js').read_text(encoding='utf-8')
           property_template=Path('property-details.html').read_text(encoding='utf-8')
           property_generator=Path('scripts/generate-property-pages.mjs').read_text(encoding='utf-8')
+          about_html=Path('about.html').read_text(encoding='utf-8')
+          about_style=about_html.find('<style id="shh-about-single-design-system">')
+          about_head_end=about_html.find('</head>')
+          about_body_start=about_html.find('<body')
+          assert 0 <= about_style < about_head_end < about_body_start, 'About page layout CSS must load in head before first paint'
+          ahmedabad_html=Path('ahmedabad.html').read_text(encoding='utf-8')
+          assert '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>' in ahmedabad_html, 'Ahmedabad city page Supabase SDK must be deferred'
+          assert '<script src="city-hub.js" defer></script>' in ahmedabad_html, 'Ahmedabad city page must keep city hub code deferred'
           assert 'function firstImageUrl(record)' in property_generator and 'const heroPreload = heroImage' in property_generator, 'Generated property pages must preload a known hero image'
           assert 'http-equiv="refresh" content="0;url=${escapeHtml(canonical)}"' in property_generator, 'Property alias redirects must include an immediate meta refresh'
           assert 'skeleton-title-text' in property_generator and '.skeleton-title-text{' in property_template, 'Property heading must render in the initial skeleton to reduce LCP and CLS'
