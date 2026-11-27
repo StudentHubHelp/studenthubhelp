@@ -17,6 +17,19 @@
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
 <meta name="author" content="StudentHubHelp">
 <link id="canonicalLink" rel="canonical" href="https://studenthubhelp.in/properties/hostel/uniliv-clover-boys-pg-in-malviya-nagar-malviya-nagar-delhi/">
+<script>
+(function(){
+  var p=new URLSearchParams(location.search), path=location.pathname;
+  var pretty=/^\/properties\/(hostel|tiffin|library|cafe|bookstore)\/[^/]+\/?$/i.test(path);
+  var type=String(p.get('type')||'hostel').toLowerCase();
+  var aliases={pg:'hostel',hostel:'hostel',tiffin:'tiffin',cafe:'cafe',library:'library',bookstore:'bookstore'};
+  type=aliases[type]||'hostel';
+  var slug=(p.get('slug')||'').trim();
+  if(!pretty&&slug){
+    location.replace('/properties/'+type+'/'+encodeURIComponent(slug)+'/');
+  }
+})();
+</script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="StudentHubHelp">
 <meta id="ogTitle" property="og:title" content="Uniliv Clover - Boys PG in Malviya Nagar | StudentHubHelp">
@@ -297,9 +310,7 @@ const aliases={pg:'hostel',hostel:'hostel',tiffin:'tiffin',cafe:'cafe',library:'
 const type=aliases[String(params.get('type')||(pretty?parts[1]:'hostel')).toLowerCase()]||'hostel';
 const slug=params.get('slug')||(pretty?decodeURIComponent(parts.slice(2).join('/')):'');
 const id=params.get('id')||'';
-// Legacy query-string property links must resolve to the matching clean static URL.
-// The clean-page generator publishes redirect shells for historical slug aliases.
-if(!pretty&&slug){const target='/properties/'+type+'/'+encodeURIComponent(slug)+'/';if(location.pathname!==target){location.replace(target)}}
+// Legacy slug URLs are redirected by the early head script before page content is parsed.
 const configs={
 hostel:{table:'hostels',label:'Hostel / PG',finder:'/pg-finder.html',banner:'/hostel-banner.png',icon:'⌂'},
 tiffin:{table:'tiffins',label:'Tiffin & Mess',finder:'/tiffin-finder.html',banner:'/tiffin-banner.png',icon:'◒'},
@@ -470,7 +481,7 @@ function bindPropertyReviewForm(r){
  finally{button.disabled=false;button.textContent='Submit review →'}
  });
 }
-async function load(){document.getElementById('year').textContent=new Date().getFullYear();if(!slug&&!id){document.querySelector('meta[name="robots"]').content='noindex,follow';showError('Property link incomplete','Open a property using its View Details link from StudentHubHelp.');return}if(!window.supabase||!window.supabase.createClient){showError('Listings temporarily unavailable','The property service could not be reached. Please refresh the page.');return}db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});window.__shhPropertyDb=db;try{let q=db.from(cfg.table).select('*').limit(1);q=q.eq(id?'id':'slug',id||slug);const result=await q.maybeSingle();if(result.error)throw result.error;let r=result.data;if(!r){showError('Property not found','This listing may have been removed or its link may have changed.');return}if(r.status&&String(r.status).toLowerCase()!=='active'){showError('Property unavailable','This listing is not currently published in the public directory.');return}render(r);loadGalleryRows(r,db)}catch(e){console.error('Property detail load failed',e);showError('Unable to load property','Please try again in a moment. If the issue continues, contact StudentHubHelp support.')} }
+async function load(){document.getElementById('year').textContent=new Date().getFullYear();if(!slug&&!id){document.querySelector('meta[name="robots"]').content='noindex,follow';showError('Property link incomplete','Open a property using its View Details link from StudentHubHelp.');return}if(!window.supabase||!window.supabase.createClient){showError('Listings temporarily unavailable','The property service could not be reached. Please refresh the page.');return}db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});window.__shhPropertyDb=db;try{let q=db.from(cfg.table).select('*').limit(1);q=q.eq(id?'id':'slug',id||slug);const result=await q.maybeSingle();if(result.error)throw result.error;let r=result.data;if(!r){showError('Property not found','This listing may have been removed or its link may have changed.');return}if(r.status&&String(r.status).toLowerCase()!=='active'){showError('Property unavailable','This listing is not currently published in the public directory.');return}if(!pretty&&id&&r.slug){location.replace('/properties/'+type+'/'+encodeURIComponent(String(r.slug).trim())+'/');return}render(r);loadGalleryRows(r,db)}catch(e){console.error('Property detail load failed',e);showError('Unable to load property','Please try again in a moment. If the issue continues, contact StudentHubHelp support.')} }
 async function loadGalleryRows(r,db){try{const res=await db.from('property_images').select('image_url,sort_order').eq('property_id',String(r.id)).eq('property_table',cfg.table).order('sort_order',{ascending:true});if(res.error){console.warn('Additional property photos unavailable',res.error);return}const extra=(res.data||[]).map(x=>String(x.image_url||'').trim()).filter(url=>url.startsWith('https://')||url.startsWith('http://'));const combined=Array.from(new Set(imageList(r).concat(extra))).slice(0,20);if(!combined.length)return;galleryPhotos=combined;const old=app.querySelector('.gallery');if(!old)return;old.outerHTML=buildGalleryMarkup(r,combined);bindGalleryEvents(r)}catch(e){console.warn('Additional property photos unavailable',e)}}
 function showError(title,message){app.setAttribute('aria-busy','false');app.innerHTML='<section class="state-panel"><div class="eyebrow">STUDENTHUBHELP</div><h2>'+esc(title)+'</h2><p>'+esc(message)+'</p><a class="btn btn-primary" href="/explore-listings.html">Explore listings</a></section>'}
 document.getElementById('menuToggle').addEventListener('click',function(){const nav=document.getElementById('primaryNav'),open=nav.classList.toggle('open');this.setAttribute('aria-expanded',String(open));this.setAttribute('aria-label',open?'Close navigation':'Open navigation')});
