@@ -27,7 +27,7 @@ function parse(input,rows){
  let category=Object.keys(CATEGORIES).find(k=>selected===k||selected===k+'s')||null;
  if(!category){for(const [key,aliases] of Object.entries(CATEGORIES)){if(aliases.some(a=>(' '+normalized+' ').includes(' '+norm(a)+' '))){category=key;break;}}}
  const gender=Object.keys(GENDER).filter(k=>GENDER[k].some(a=>(' '+normalized+' ').includes(' '+norm(a)+' ')));
- const facilities=Object.entries(FACILITIES).filter(([,aliases])=>aliases.some(a=>(' '+normalized+' ').includes(' '+norm(a)+' '))).map(([key])=>key);
+ const facilities=Object.entries(FACILITIES).filter(([key,aliases])=>!(category==='tiffin'&&key==='food')&&aliases.some(a=>(' '+normalized+' ').includes(' '+norm(a)+' '))).map(([key])=>key);
  const budget=priceIntent(raw),cities=[...new Set(records.map(r=>canonical(r?.city)).filter(Boolean))].sort((a,b)=>b.length-a.length);
  const cityAliasEntries=(window.StudentHubLocationRegistry?.cityEntries||[]).flatMap(entry=>[entry.name,...(entry.seoAliases||[]),...(entry.searchAliases||[])].map(alias=>({alias:norm(alias),city:canonical(entry.name)}))).sort((a,b)=>b.alias.length-a.alias.length);
  const matchedCityAlias=cityAliasEntries.find(item=>(' '+normalized+' ').includes(' '+item.alias+' '));
