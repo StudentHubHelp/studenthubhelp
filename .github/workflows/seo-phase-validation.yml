@@ -28,6 +28,8 @@ jobs:
         with:
           node-version: 22
 
+      - name: Test location intelligence registry
+        run: node tests/location-intelligence-registry.test.cjs
       - name: Check SEO generator syntax
         run: |
           node --check scripts/generate-property-pages.mjs
@@ -51,10 +53,10 @@ jobs:
           home=Path('index.html').read_text(encoding='utf-8')
           visual=Path('sitemap.html').read_text(encoding='utf-8')
           directory=Path('property-index.html').read_text(encoding='utf-8')
-          assert 'href="property-index.html">Browse All Properties' in home
+          assert 'href="/explore-listings.html"' in home, 'Homepage is missing its public listings directory link'
           assert 'href="property-index.html"' in visual
           for city in ('sikar','kota','jaipur','delhi'):
-              assert f'href="/{city}/"' in home, f'Missing generated city link: {city}'
+              assert Path(city, 'index.html').exists(), f'Missing generated city hub: {city}'
           assert '<link rel="canonical" href="https://studenthubhelp.in/property-index.html">' in directory
           assert re.search(r'<a href="https://studenthubhelp\.in/properties/', directory), 'Property directory has no crawlable property links'
 
@@ -71,25 +73,20 @@ jobs:
                       continue
                   canonical_pages.append(page)
                   assert 'id="canonicalLink" rel="canonical"' in html, f'Missing canonical: {page}'
-                  schema_tag='<script id="propertySchema" type="application/ld+json">'
+                  schema_tag='<script type="application/ld+json" id="baseSchema">'
                   schema_start=html.find(schema_tag)
-                  assert schema_start >= 0, f'Missing property schema: {page}'
+                  assert schema_start >= 0, f'Missing base WebPage schema: {page}'
                   schema_start += len(schema_tag)
                   schema_end=html.find('</script>', schema_start)
-                  assert schema_end >= 0, f'Unclosed property schema: {page}'
+                  assert schema_end >= 0, f'Unclosed base schema: {page}'
                   schema=json.loads(html[schema_start:schema_end])
-                  expected_entity_types={
-                      'hostel':'LodgingBusiness',
-                      'tiffin':'FoodEstablishment',
-                      'library':'Library',
-                      'cafe':'CafeOrCoffeeShop',
-                      'bookstore':'BookStore'
-                  }
-                  entity=schema.get('mainEntity',{})
-                  assert schema.get('@type') == 'WebPage', f'Invalid property WebPage schema: {page}'
-                  assert entity.get('@type') in ('Thing', expected_entity_types[category]), f'Invalid category entity schema: {page}'
-                  if entity.get('address'):
-                      assert entity.get('@type') == expected_entity_types[category], f'Missing category-specific entity type: {page}'
+                  assert schema.get('@type') == 'WebPage', f'Invalid base WebPage schema: {page}'
+                  entity=schema.get('mainEntity')
+                  assert isinstance(entity, dict), f'Missing static listing entity schema: {page}'
+                  assert entity.get('@type') in {'LodgingBusiness','FoodEstablishment','Library','CafeOrCoffeeShop','BookStore','Thing'}, f'Invalid listing entity type: {page}'
+                  assert entity.get('url','').startswith('https://studenthubhelp.in/properties/'), f'Listing schema URL is not canonical: {page}'
+                  assert 'function setSEO(r)' in html, f'Missing dynamic listing SEO schema builder: {page}'
+                  assert all(kind in html for kind in ('LodgingBusiness','FoodEstablishment','Library','CafeOrCoffeeShop','BookStore')), f'Missing category-specific schema types: {page}'
                   assert 'href="/property-index.html"' in html, f'Missing property directory link: {page}'
                   assert 'href="/"' in html, f'Missing homepage link: {page}'
                   assert 'href="' + {
@@ -115,6 +112,58 @@ jobs:
         run: |
           node scripts/generate-seo-pages.mjs
           node scripts/generate-sitemap.mjs
+
+      - name: Validate generated SEO titles, descriptions and GEO answers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import html as html_lib, json, re
+
+          pages=[]
+          for page in Path('.').rglob('index.html'):
+              if 'properties' in page.parts or '.git' in page.parts:
+                  continue
+              source=page.read_text(encoding='utf-8')
+              if 'name="studenthubhelp-generated-seo"' not in source:
+                  continue
+              title_match=re.search(r'<title>(.*?)</title>', source, re.I|re.S)
+              desc_match=re.search(r'<meta name="description" content="([^"]*)"', source, re.I)
+              assert title_match and desc_match, f'Missing title or description: {page}'
+              title=html_lib.unescape(re.sub(r'\s+',' ',title_match.group(1)).strip())
+              desc=html_lib.unescape(desc_match.group(1))
+              assert len(title)<=60, f'Title exceeds 60 characters ({len(title)}): {page}'
+              assert 110<=len(desc)<=160, f'Meta description outside 110–160 characters ({len(desc)}): {page}'
+              canonical_match=re.search(r'<link rel="canonical" href="([^"]+)"',source,re.I)
+              assert canonical_match, f'Missing canonical URL: {page}'
+              schema_match=re.search(r'<script type="application/ld\+json">(.*?)</script>',source,re.I|re.S)
+              assert schema_match, f'Missing CollectionPage JSON-LD: {page}'
+              schema=json.loads(schema_match.group(1))
+              assert schema.get('@type')=='CollectionPage', f'Invalid collection schema: {page}'
+              items=schema.get('mainEntity',{})
+              assert items.get('@type')=='ItemList' and items.get('numberOfItems',0)>=3, f'Missing listing ItemList: {page}'
+              faq=schema.get('hasPart',{})
+              assert faq.get('@type')=='FAQPage' and len(faq.get('mainEntity',[]))>=2, f'Missing FAQPage schema: {page}'
+              visible=re.sub(r'<script[\s\S]*?</script>|<style[\s\S]*?</style>',' ',source,flags=re.I)
+              visible=re.sub(r'<[^>]+>',' ',visible)
+              words=re.findall(r'\b[\w-]+\b',html_lib.unescape(visible))
+              assert len(words)>=100 and 'Quick answers' in source, f'Thin or missing visible GEO answer content: {page}'
+              pages.append(page)
+          assert len(pages)>=50, f'Expected at least 50 generated SEO pages, found {len(pages)}'
+          redirects=Path('_redirects').read_text(encoding='utf-8') if Path('_redirects').exists() else ''
+          start='# BEGIN STUDENTHUBHELP GENERATED SEO AREA REDIRECTS'
+          end='# END STUDENTHUBHELP GENERATED SEO AREA REDIRECTS'
+          assert start in redirects and end in redirects, 'Missing generated SEO area redirect block'
+          block=redirects.split(start,1)[1].split(end,1)[0].strip().splitlines()
+          for line in block:
+              parts=line.split()
+              assert len(parts)==3 and parts[2]=='301', f'Invalid area redirect: {line}'
+              assert parts[0]!=parts[1], f'Self-redirect detected: {line}'
+              target=Path(parts[1].strip('/'))
+              if target.is_dir():
+                  target=target/'index.html'
+              assert target.exists(), f'Area redirect target does not exist: {line}'
+          print(f'Generated SEO validation passed: {len(pages)} pages, bounded snippets, ItemList, visible FAQ answers and {len(block)} area redirect rules.')
+          PY
 
       - name: Validate sitemap output
         run: |

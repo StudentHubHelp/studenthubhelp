@@ -49,7 +49,8 @@ jobs:
           node <<'NODE'
           const fs=require('fs');
           global.window={};
-          window.normalizeLocationText=value=>String(value??'').normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/\\brd\\b/g,'road').replace(/[^\\p{L}\\p{N}]+/gu,' ').replace(/\\s+/g,' ').trim();
+          window.normalizeLocationText=value=>String(value??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\brd\b/g,'road').replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim();
+          eval(fs.readFileSync('js/location-intelligence-registry.js','utf8'));
           eval(fs.readFileSync('search-query-parser.js','utf8'));
           eval(fs.readFileSync('search-phase6-universal.js','utf8'));
           const rows=[
@@ -76,7 +77,7 @@ jobs:
           assert('city + facility + category',p.city==='jaipur'&&p.facilities.includes('wifi')&&p.category==='library'&&p.locationPhrase==='',JSON.stringify(p));
           p=window.StudentHubQueryParser.parse('bookstores in Sikar',rows);
           assert('plural bookstore category',p.category==='bookstore'&&p.city==='sikar',JSON.stringify(p));
-          const run=(q,expected)=>{const got=window.StudentHubUniversalSearch.search(rows,q,data=>data).map(x=>x.id).sort();assert(q,JSON.stringify(got)===JSON.stringify(expected.slice().sort()),JSON.stringify(got));};
+          const run=(q,expected,sourceRows=rows)=>{const got=window.StudentHubUniversalSearch.search(sourceRows,q,data=>data).map(x=>x.id).sort();assert(q,JSON.stringify(got)===JSON.stringify(expected.slice().sort()),JSON.stringify(got));};
           run({rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:'',source:'global-search'},['h1','h2']);
           run({rawKeyword:'Sikar Piprali Road par Allen ke paas boys hostel',explicitLocation:'',selectedCategory:'',source:'global-search'},['h1']);
           run({rawKeyword:'girls hostel under 5000',explicitLocation:'',selectedCategory:'',source:'global-search'},['h2','h3']);
@@ -85,7 +86,10 @@ jobs:
           run({rawKeyword:'wifi library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
           run({rawKeyword:'Jaipur mein WiFi wali library',explicitLocation:'',selectedCategory:'',source:'global-search'},['l1']);
           run({rawKeyword:'bookstores',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['b1']);
-          run({rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},['h1','h2']);
+          const noGpsNearby=window.StudentHubUniversalSearch.search(rows,{rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},data=>data);
+          assert('near-me with no GPS distance metadata stays empty',noGpsNearby.length===0);
+          const nearbyRows=rows.filter(r=>r.id==='h1'||r.id==='h2').map(r=>({...r,__userDistanceKm:1}));
+          run({rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},['h1','h2'],nearbyRows);
           assert('near-me without GPS mode is not broadened',window.StudentHubUniversalSearch.search(rows,'hostel near me',data=>data).length===0);
           const partialRanking=window.StudentHubUniversalSearch.search(rows,{rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:''},data=>data.slice(0,1));
           assert('ranking cannot discard strict matches',partialRanking.length===2,JSON.stringify(partialRanking.map(x=>x.id)));

@@ -15,6 +15,14 @@
     const btn=document.getElementById('searchBtn');
     const box=document.querySelector('.search-box');
     if(!input||!box) return;
+    if(!window.StudentHubLocationRegistry){
+      const registryScript=document.createElement('script');
+      registryScript.src='/js/location-intelligence-registry.js';
+      registryScript.onload=()=>ready();
+      registryScript.onerror=()=>console.warn('StudentHubHelp location registry could not load');
+      document.head.appendChild(registryScript);
+      return;
+    }
     if(!window.StudentHubSearchEngine){
       const s=document.createElement('script');
       s.src='/search-phase5-natural-language.js';

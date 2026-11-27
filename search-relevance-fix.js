@@ -21,7 +21,7 @@
     'fatehpuri gate road':['fatehpuri gate road','fatehpuri gate rd'],
     'todarmal road':['todarmal road','todarmal rd']
   };
-  const shhLandmarkAliases={
+  const shhLandmarkAliases=Object.assign({
     'allen':['allen','allen coaching','allen career institute','allen institute','allen career','allen sikar'],
     'clc':['clc','clc coaching','clc sikar','career line coaching','career line classes','clc kvm','clc-b'],
     'vibrant':['vibrant','vibrant coaching','vibrant career institute','vibrant academy','vibrant sikar'],
@@ -60,7 +60,7 @@
     'jat colony':['jat colony'],
     'surya nagar':['surya nagar'],
     'jyoti nagar':['jyoti nagar']
-  };
+  },window.StudentHubLocationRegistry?.landmarkAliases||{});
   const shhStop=new Set(['me','mein','mai','m','in','on','par','pr','pe','at','the','a','an','ke','ka','ki','k','near','nearby','pass','pas','paas','of','for','hai','hain','me','se','tak','andar','within','from','and','or','ya','yaar','par','में','पर','के','पास','को','का','की','और','या','से','तक','अंदर']);
   const shhRelationRe=/\b(near|nearby|beside|next to|opposite|across|front of|in front of|behind|back of|piche|samne|saamne|paas|pass|pas|k paas|k pass|ke paas|ke pass|ke pas|ke saamne|ke samne|ke piche|ke peeche|near to)\b/i;
 
