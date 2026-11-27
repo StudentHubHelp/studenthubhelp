@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#171329">
+  <title>AI Office | StudentHubHelp</title>
+  <link rel="icon" href="https://studenthubhelp.in/logo.png">
+  <link rel="stylesheet" href="./assets/office.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="./assets/office-dashboard.js"></script>
+</head>
+<body class="office-page">
+  <aside class="sidebar">
+    <a class="brand" href="./" aria-label="StudentHubHelp Office"><span class="brand-mark">SH</span><span><strong>StudentHubHelp</strong><small>AI VIRTUAL OFFICE</small></span></a>
+    <div class="side-label">WORKSPACE</div>
+    <a class="nav-item active" href="#overview">Overview</a>
+    <div class="side-label">MANAGEMENT</div>
+    <a class="nav-item" href="#tasks">Tasks & Delegation <span>Live</span></a>
+    <a class="nav-item" href="#team">AI Employees</a>
+    <a class="nav-item" href="#integrations">Integrations</a>
+    <a class="nav-item" href="#approvals">Approvals</a>
+    <a class="nav-item" href="#reports">Reports</a>
+    <div class="sidebar-bottom"><span class="online-dot"></span> Secure owner session</div>
+  </aside>
+
+  <main class="main-area" id="overview">
+    <header class="topbar">
+      <div><div class="eyebrow">OWNER WORKSPACE</div><h1>Office overview</h1></div>
+      <button id="logout-btn" class="quiet-btn" type="button">Sign out ↗</button>
+    </header>
+
+    <section class="welcome-panel">
+      <div><div class="eyebrow">YOUR PRIVATE AI OFFICE</div><h2>Good to see you.</h2><p>One control room for your AI team, delegated work and approvals.</p></div>
+      <div class="orb" aria-hidden="true">✦</div>
+    </section>
+
+    <section class="metric-grid" id="metrics" aria-label="Office metrics">
+      <article class="metric"><span>Total tasks</span><strong id="metric-total">—</strong><small>All recorded tasks</small></article>
+      <article class="metric"><span>Queued</span><strong id="metric-queued">—</strong><small>Waiting for automatic GM processing</small></article>
+      <article class="metric"><span>In progress</span><strong id="metric-running">—</strong><small>Draft workflows run automatically after task creation</small></article>
+      <article class="metric"><span>Completed</span><strong id="metric-completed">—</strong><small>Finished tasks</small></article>
+      <article class="metric"><span>Waiting approval</span><strong id="metric-waiting-approval">—</strong><small>Owner review needed</small></article>
+      <article class="metric"><span>Failed</span><strong id="metric-failed">—</strong><small>Needs investigation</small></article>
+    </section>
+
+    <section class="current-task-section" aria-labelledby="current-task-heading">
+      <div class="section-heading"><div><div class="eyebrow">AT A GLANCE</div><h2 id="current-task-heading">Current task</h2><p class="section-copy">Only the most relevant active task is shown here. Open Tasks & Delegation for the full queue and history.</p></div></div>
+      <div id="current-task-card" class="current-task-card"><div class="empty-state">Loading current task…</div></div>
+    </section>
+
+    <section class="section-heading" id="tasks">
+      <div><div class="eyebrow">OWNER CONTROL</div><h2>Tasks & delegation</h2><p class="section-copy">Create a task and GM automatically plans, delegates, runs each employee and prepares a final report. External actions never execute automatically.</p></div>
+      <button id="refresh-btn" class="quiet-btn" type="button">↻ Refresh</button>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="control-panel">
+        <div class="panel-heading"><div><div class="eyebrow">NEW WORK ITEM</div><h3>Create task & run with GM</h3></div><span class="panel-icon">＋</span></div>
+        <form id="task-form" class="task-form">
+          <label>Task title<input name="title" type="text" minlength="3" maxlength="160" required placeholder="e.g. Review new hostel listing requests"></label>
+          <label>Description <span class="optional">Optional</span><textarea name="description" rows="4" maxlength="2000" placeholder="Add context, expected result or constraints…"></textarea></label>
+          <label>Priority<select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
+          <button class="primary-btn" id="create-task-btn" type="submit">Add to task queue <span>→</span></button>
+        </form>
+        <p class="helper-note">Owner-created tasks only. GM automatically plans and runs the read-only employee workflow after task creation. Never include student personal data, contact details, passwords, OTPs or secrets in task text. External actions remain disabled; all outputs require Owner review.</p>
+      </article>
+
+      <article class="queue-panel">
+        <div class="panel-heading"><div><div class="eyebrow">WORK PIPELINE</div><h3>Task queue</h3></div><span id="task-total-pill" class="pill">Loading…</span></div>
+        <p id="dashboard-status" class="status" role="status" aria-live="polite">Secure owner session verified. Task queue is connected.</p>
+        <div class="task-view-tabs" role="group" aria-label="Task view">
+          <button id="active-tasks-tab" class="task-view-tab active" type="button" aria-pressed="true">Active tasks</button>
+          <button id="archived-tasks-tab" class="task-view-tab" type="button" aria-pressed="false">Archived</button>
+        </div>
+        <div id="task-list" class="task-list" aria-live="polite"><div class="empty-state">Loading your tasks…</div></div>
+        <div id="task-logs-panel" class="task-logs-panel" hidden>
+          <div class="logs-heading"><strong id="task-logs-title">Task activity</strong><button id="close-logs-btn" class="text-btn" type="button">Close</button></div>
+          <div id="task-logs-list"></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="section-heading team-heading" id="team"><div><div class="eyebrow">TEAM DIRECTORY</div><h2>Your AI team</h2><p class="section-copy">Nine roles are registered and active for proposal/draft work. Tool execution, outbound email and publishing remain separately gated until their secure integrations and approval checks are ready.</p></div><span class="pill">9 roles registered</span></section>
+    <section class="team-grid" id="team-grid">
+      <article class="team-card"><div class="avatar">GM</div><div><strong>General Manager</strong><p>Receives your instructions and coordinates the team.</p></div><span class="state">Planned</span></article>
+    </section>
+
+    <section class="section-heading quota-heading" id="quota">
+      <div><div class="eyebrow">OPTIONAL AI PROVIDER & USAGE CONTROL</div><h2>AI quota guard</h2><p class="section-copy">Gemini is optional and disabled for employee workflows. This panel reports legacy quota controls only; no Gemini request is made in API-independent mode.</p></div>
+      <span id="quota-status-pill" class="pill">Loading…</span>
+    </section>
+    <section id="quota-panel" class="quota-panel">
+      <div class="empty-state">Loading Gemini quota status…</div>
+    </section>
+
+    <section class="section-heading reports-heading" id="reports">
+      <div><div class="eyebrow">OPERATIONS & ANALYTICS</div><h2>Reports & activity</h2><p class="section-copy">Aggregate task, employee and AI usage data for the last seven days. No student-level personal data is shown here.</p></div>
+      <span class="pill">7-day view</span>
+    </section>
+    <section class="report-kpis">
+      <article class="report-kpi"><span>AI requests</span><strong id="report-requests">—</strong></article>
+      <article class="report-kpi"><span>Input tokens</span><strong id="report-input-tokens">—</strong></article>
+      <article class="report-kpi"><span>Output tokens</span><strong id="report-output-tokens">—</strong></article>
+      <article class="report-kpi"><span>Estimated cost</span><strong id="report-estimated-cost">—</strong></article>
+    </section>
+    <section class="report-grid">
+      <article class="report-card">
+        <div class="panel-heading"><div><div class="eyebrow">DAILY ACTIVITY</div><h3>AI usage · 7 days</h3></div></div>
+        <div id="daily-usage-chart" class="daily-usage-chart"><div class="empty-state">No usage data yet.</div></div>
+      </article>
+      <article class="report-card">
+        <div class="panel-heading"><div><div class="eyebrow">WORKFORCE</div><h3>Employee status</h3></div></div>
+        <div id="employee-status-report" class="report-list"></div>
+        <div class="panel-heading report-subheading"><div><div class="eyebrow">TASK PIPELINE</div><h3>Task status</h3></div></div>
+        <div id="task-status-report" class="report-list"></div>
+      </article>
+      <article class="report-card">
+        <div class="panel-heading"><div><div class="eyebrow">MODEL USAGE</div><h3>Provider breakdown</h3></div></div>
+        <div id="provider-usage-report" class="report-list"></div>
+      </article>
+      <article class="report-card">
+        <div class="panel-heading"><div><div class="eyebrow">AUDIT TRAIL</div><h3>Recent activity</h3></div></div>
+        <div id="recent-activity-report" class="report-list"></div>
+      </article>
+    </section>
+
+    <section class="section-heading approvals-heading" id="approvals">
+      <div><div class="eyebrow">OWNER DECISION GATE</div><h2>Approval center</h2><p class="section-copy">Review proposals before any future execution. Approving a proposal records your decision only; it does not send, publish, edit or deploy anything.</p></div>
+      <div class="approval-filter-wrap"><span id="approval-count-pill" class="pill">Loading…</span><select id="approval-filter" aria-label="Filter approvals"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All history</option></select></div>
+    </section>
+    <section id="approval-list" class="approval-list" aria-live="polite">
+      <div class="empty-state">Loading approval requests…</div>
+    </section>
+
+    <section class="section-heading integrations-heading" id="integrations">
+      <div><div class="eyebrow">CONNECTED WORKSPACE</div><h2>Tools & integrations</h2><p class="section-copy">Connection status and permitted action catalog. External writes remain disabled and must pass Owner approval.</p></div>
+      <span id="integration-pending-pill" class="pill">Loading…</span>
+    </section>
+    <section id="integration-grid" class="integration-grid" aria-live="polite">
+      <article class="integration-card"><div class="empty-state">Loading integration registry…</div></article>
+    </section>
+
+    <footer class="main-footer">StudentHubHelp AI Office · Owner-controlled · Production actions require approval</footer>
+  </main>
+</body>
+</html>

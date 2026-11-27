@@ -1,0 +1,39 @@
+name: AI Office daily activity tests
+
+on:
+  push:
+    branches:
+      - fix/office-gm-daily-activity-reporting
+    paths:
+      - "office/supabase/functions/**"
+      - "office/tests/**"
+      - ".github/workflows/office-daily-activity-tests.yml"
+  pull_request:
+    branches:
+      - feature/office-phase-3
+    paths:
+      - "office/supabase/functions/**"
+      - "office/tests/**"
+      - ".github/workflows/office-daily-activity-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch pull request commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          git init .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.git"
+          git fetch --depth=1 origin "${COMMIT_SHA}"
+          git checkout --detach FETCH_HEAD
+      - name: Run intent regression tests
+        run: npx --yes deno@2.1.4 test office/tests/task-intent.test.ts
+      - name: Type-check GM and employee Edge Functions
+        run: npx --yes deno@2.1.4 check office/supabase/functions/office-general-manager/index.ts office/supabase/functions/office-employee-agent/index.ts
