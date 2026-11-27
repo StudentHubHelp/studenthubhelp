@@ -383,6 +383,97 @@ for(const c of cities.values()){
   }
 }
 
+
+/* Keep the legacy /sikar.html city guide useful to crawlers before client-side hydration.
+   Refresh only its marked static blocks from the same active + verified dataset used
+   by the generated Sikar directory pages. No database writes are performed. */
+const sikarCity = cities.get('sikar');
+if (sikarCity) {
+  const replaceStaticBlock = (html, name, value) => {
+    const start = '<!-- SIKAR_STATIC_' + name + '_START -->';
+    const end = '<!-- SIKAR_STATIC_' + name + '_END -->';
+    if (!html.includes(start) || !html.includes(end)) {
+      throw new Error('Missing Sikar static content markers for ' + name + ' in sikar.html');
+    }
+    const from = html.indexOf(start) + start.length;
+    const to = html.indexOf(end, from);
+    if (to < from) throw new Error('Invalid Sikar static content marker order for ' + name);
+    return html.slice(0, from) + value + html.slice(to);
+  };
+  let sikarHtml = await readFile('sikar.html', 'utf8');
+  const latestSikarUpdate = sikarCity.rows
+    .map(row => row.updated_at || row.created_at || '')
+    .filter(Boolean).sort().at(-1);
+  const updatedLabel = latestSikarUpdate
+    ? new Date(latestSikarUpdate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'Current directory';
+  const sikarAreas = new Map();
+  for (const row of sikarCity.rows) {
+    if (!row.area) continue;
+    const areaKey = key(row.area);
+    if (!sikarAreas.has(areaKey)) sikarAreas.set(areaKey, { name: row.area, rows: [] });
+    sikarAreas.get(areaKey).rows.push(row);
+  }
+  const areaEntries = [...sikarAreas.values()]
+    .filter(area => area.rows.length >= LOCATION_MIN_PROPERTIES)
+    .sort((a, b) => b.rows.length - a.rows.length || a.name.localeCompare(b.name));
+  const staticStats = [
+    '<div class="stat"><b>' + sikarCity.rows.length + '</b><span>Verified listings</span></div>',
+    '<div class="stat"><b>' + new Set(sikarCity.rows.map(row => row.type)).size + '</b><span>Service categories</span></div>',
+    '<div class="stat"><b>' + areaEntries.length + '</b><span>Area guides</span></div>',
+    '<div class="stat"><b>' + esc(updatedLabel) + '</b><span>Latest listing update</span></div>'
+  ].join('');
+  const staticAreas = areaEntries.map(area =>
+    '<a class="area-card" href="/sikar/' + esc(slug(area.name)) + '/"><span>📍</span><div><strong>' +
+    esc(area.name) + '</strong><small>' + area.rows.length + ' verified listings · Open area guide →</small></div></a>'
+  ).join('');
+  const staticRows = [];
+  const staticCategories = TABLES.map(meta => {
+    const rows = sikarCity.rows.filter(row => row.type === meta.type)
+      .sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')) || String(a.name || '').localeCompare(String(b.name || '')));
+    if (!rows.length) return '';
+    staticRows.push(...rows.slice(0, 3));
+    const cards = rows.slice(0, 3).map(row => {
+      const href = propUrl(row);
+      const place = [row.area, row.city].filter(Boolean).join(', ') || row.address || 'Sikar';
+      return '<a class="listing" href="' + esc(href) + '"><span class="listing-body"><span class="listing-title"><strong>' +
+        esc(row.name || 'Student listing') + '</strong><span class="verified-tag">✓ Verified</span></span><span class="listing-location">📍 ' +
+        esc(place) + '</span><span class="listing-bottom"><b>View Details</b><span>→</span></span></span></a>';
+    }).join('');
+    const categoryPath = meta.type === 'hostel' ? 'hostel' : meta.type;
+    return '<section class="service-block"><div class="service-head"><div><span class="service-icon">' + meta.icon +
+      '</span><div><small>SIKAR VERIFIED DIRECTORY</small><h2>' + esc(meta.label) + ' in Sikar</h2></div></div><a href="/sikar/' +
+      categoryPath + '/">Explore all →</a></div><p class="section-copy">Browse ' + rows.length + ' active listings marked verified in the StudentHubHelp directory. Open a listing to review its supplied location and service details, then confirm current availability and terms directly with the provider.</p><div class="listing-grid">' +
+      cards + '</div><p class="finder-link"><a href="/' + esc(meta.finder) + '?q=Sikar">Search all ' + esc(meta.label.toLowerCase()) + ' in Sikar →</a></p></section>';
+  }).join('');
+  const areaNames = areaEntries.slice(0, 5).map(area => area.name);
+  const areaSummary = areaNames.length ? areaNames.join(', ') : 'the Sikar city directory';
+  const staticQuickAnswer = '<p>StudentHubHelp currently lists ' + sikarCity.rows.length +
+    ' active listings marked verified across ' + new Set(sikarCity.rows.map(row => row.type)).size +
+    ' student-service categories in Sikar. Area guides include ' + esc(areaSummary) +
+    '. Open a listing for its supplied details and confirm current availability directly with the provider.</p>';
+  sikarHtml = replaceStaticBlock(sikarHtml, 'STATS', staticStats);
+  sikarHtml = replaceStaticBlock(sikarHtml, 'AREAS', staticAreas);
+  sikarHtml = replaceStaticBlock(sikarHtml, 'LISTINGS', staticCategories);
+  sikarHtml = replaceStaticBlock(sikarHtml, 'QUICK_ANSWER', staticQuickAnswer);
+  sikarHtml = replaceStaticBlock(sikarHtml, 'PRICE_DATE', 'Directory data checked: ' + esc(updatedLabel) + '.');
+  const schemaBlock = sikarHtml.match(/<!-- SIKAR_STATIC_SCHEMA_START -->([\s\S]*?)<!-- SIKAR_STATIC_SCHEMA_END -->/);
+  const schemaScript = schemaBlock?.[1]?.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  if (!schemaBlock || !schemaScript) throw new Error('Could not locate Sikar structured data block');
+  const sikarSchema = JSON.parse(schemaScript[1]);
+  const schemaGraph = Array.isArray(sikarSchema['@graph']) ? sikarSchema['@graph'] : [];
+  const listingSchema = schemaGraph.find(node => node['@type'] === 'ItemList');
+  if (!listingSchema) throw new Error('Sikar ItemList schema is missing');
+  listingSchema.numberOfItems = staticRows.length;
+  listingSchema.itemListElement = staticRows.map((row, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    item: { '@type': 'Thing', name: row.name || 'Student listing', url: propUrl(row) }
+  }));
+  sikarHtml = replaceStaticBlock(sikarHtml, 'SCHEMA', '<script type="application/ld+json">' + JSON.stringify(sikarSchema) + '</script>');
+  await write('sikar.html', sikarHtml);
+}
+
 const uniqueGenerated = [...new Set(generated)];
 const redirectPages=await writeAreaRedirects(areaRedirects,expected);
 await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to})), redirectPages}, null, 2)+'\n');

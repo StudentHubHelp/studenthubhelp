@@ -2,7 +2,7 @@
   const root=document.getElementById('cityHub');
   if(!root||!window.supabase)return;
   const city=root.dataset.city;
-  const config={Sikar:{areas:['Piprali Road','Samarthpura','Station Road','Devli Road']},Kota:{areas:['Talwandi','Vigyan Nagar','Landmark City','Kunhadi']},Jaipur:{areas:['Mansarovar','Malviya Nagar','Vaishali Nagar','Gopalpura']},Delhi:{areas:['Mukherjee Nagar','Laxmi Nagar','Rajinder Nagar','South Delhi']},Ahmedabad:{areas:['Navrangpura','Chandkheda','Vastrapur','Maninagar']},Lucknow:{areas:['Aliganj','Gomti Nagar','Hazratganj','Indira Nagar']},Hyderabad:{areas:['Kukatpally','Ameerpet','Dilsukhnagar','Himayatnagar']},Pune:{areas:['Kothrud','Viman Nagar','Shivajinagar','Wakad']}}[city]||{areas:[]};
+  const config={Sikar:{areas:['Piprali Road','Charan Singh Nagar','Dhobiyon Ka Mohalla','New Janta Colony','Radhakishan Pura','New Indira Colony','Anand Nagar','Kishan Colony, Charan Singh Nagar','Piprali Road · Jat Colony','Railway Station Colony','Vasant Vihar','Nawalgarh Road','Kalyan Circle','Jaipur Road','Fatehpur Road']},Kota:{areas:['Talwandi','Vigyan Nagar','Landmark City','Kunhadi']},Jaipur:{areas:['Mansarovar','Malviya Nagar','Vaishali Nagar','Gopalpura']},Delhi:{areas:['Mukherjee Nagar','Laxmi Nagar','Rajinder Nagar','South Delhi']},Ahmedabad:{areas:['Navrangpura','Chandkheda','Vastrapur','Maninagar']},Lucknow:{areas:['Aliganj','Gomti Nagar','Hazratganj','Indira Nagar']},Hyderabad:{areas:['Kukatpally','Ameerpet','Dilsukhnagar','Himayatnagar']},Pune:{areas:['Kothrud','Viman Nagar','Shivajinagar','Wakad']}}[city]||{areas:[]};
   const sb=window.supabase.createClient('https://idurlccrarznnnqixxsd.supabase.co','sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT');
   const tables=[['hostels','Hostels & PGs','🏠','pg-finder.html'],['tiffins','Tiffin & Mess','🍱','tiffin-finder.html'],['libraries','Libraries & Study Spaces','📚','library-finder.html'],['cafes','Student Cafes','☕','cafe-finder.html'],['bookstores','Book Stores','📖','bookstore-finder.html']];
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -25,19 +25,23 @@
     cafes:{label:'CAFES',icon:'☕',image:'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80'},
     bookstores:{label:'BOOKSTORES',icon:'📖',image:'https://images.unsplash.com/photo-1509021436665-8f07dbf5bf1d?auto=format&fit=crop&w=1000&q=80'}
   };
-  areas.innerHTML=config.areas.map(a=>`<a class="area-card" href="global-search.html?q=${encodeURIComponent(a+' '+city)}"><span>📍</span><div><strong>${esc(a)}</strong><small>Explore student services →</small></div></a>`).join('');
+  const sikarAreaPaths={'Piprali Road':'/sikar/piprali-road/','Charan Singh Nagar':'/sikar/charan-singh-nagar/','Dhobiyon Ka Mohalla':'/sikar/dhobiyon-ka-mohalla/','New Janta Colony':'/sikar/new-janta-colony/','Radhakishan Pura':'/sikar/radhakishan-pura/','New Indira Colony':'/sikar/new-indira-colony/','Anand Nagar':'/sikar/anand-nagar/','Kishan Colony, Charan Singh Nagar':'/sikar/kishan-colony-charan-singh-nagar/','Piprali Road · Jat Colony':'/sikar/piprali-rd-jat-colony/','Railway Station Colony':'/sikar/railway-station-colony/','Vasant Vihar':'/sikar/vasant-vihar/'};areas.innerHTML=config.areas.map(a=>{const url=city==='Sikar'?(sikarAreaPaths[a]||'global-search.html?q='+encodeURIComponent(a+' '+city)):'global-search.html?q='+encodeURIComponent(a+' '+city);return `<a class="area-card" href="${url}"><span>📍</span><div><strong>${esc(a)}</strong><small>Explore student services →</small></div></a>`}).join('');
   const href=(id,url)=>{const e=document.getElementById(id);if(e)e.href=url};
   href('searchCity','global-search.html?q='+q);href('allHostels','pg-finder.html?q='+q);href('allTiffin','tiffin-finder.html?q='+q);href('allLibraries','library-finder.html?q='+q);href('allCafes','cafe-finder.html?q='+q);href('allBooks','bookstore-finder.html?q='+q);
   const searches={hostel:'hostel near coaching '+city,tiffin:'tiffin near coaching '+city,library:'library near coaching '+city,cafe:'cafe '+city,bookstore:'bookstore '+city};
   document.querySelectorAll('[data-search]').forEach(a=>a.href='global-search.html?q='+encodeURIComponent(searches[a.dataset.search]||city));
   async function loadTable([table,label,icon]){
-    const count=await sb.from(table).select('id',{count:'exact',head:true}).eq('status','active').ilike('city',city);
-    if(count.error)return {table,label,icon,data:[],count:0};
-    const r=await sb.from(table).select('*').eq('status','active').ilike('city',city).limit(40);
-    return {table,label,icon,data:r.error?[]:(r.data||[]),count:count.count||0};
+    const [count,verifiedCount,r]=await Promise.all([
+      sb.from(table).select('id',{count:'exact',head:true}).eq('status','active').ilike('city',city),
+      sb.from(table).select('id',{count:'exact',head:true}).eq('status','active').eq('verified',true).ilike('city',city),
+      sb.from(table).select('*').eq('status','active').ilike('city',city).order('featured',{ascending:false}).order('verified',{ascending:false}).limit(40)
+    ]);
+    if(count.error||verifiedCount.error||r.error)return {table,label,icon,data:[],count:0,verifiedCount:0,error:true};
+    return {table,label,icon,data:r.data||[],count:count.count||0,verifiedCount:verifiedCount.count||0,error:false};
   }
   Promise.all(tables.map(loadTable)).then(results=>{
-    const total=results.reduce((n,r)=>n+(Number(r.count)||0),0),verified=results.reduce((n,r)=>n+r.data.filter(x=>x.verified===true).length,0);
+    if(results.some(r=>r.error)){if(cards)cards.dataset.liveStatus='unavailable';return;}
+    const total=results.reduce((n,r)=>n+(Number(r.count)||0),0),verified=results.reduce((n,r)=>n+(Number(r.verifiedCount)||0),0);
     stats.innerHTML=`<div class="stat"><b>${total}</b><span>Live listings</span></div><div class="stat"><b>${verified}</b><span>Verified listings</span></div><div class="stat"><b>5</b><span>Student services</span></div><div class="stat"><b>${config.areas.length}</b><span>Popular areas</span></div>`;
     cards.innerHTML=results.map(r=>{
       const top=r.data.slice(0,3),finder=({hostels:'pg-finder.html',tiffins:'tiffin-finder.html',libraries:'library-finder.html',cafes:'cafe-finder.html',bookstores:'bookstore-finder.html'})[r.table];
