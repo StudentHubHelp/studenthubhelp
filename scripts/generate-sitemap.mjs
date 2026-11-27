@@ -101,12 +101,12 @@ for (const name of rootFiles) {
   const html = await readFile(name, 'utf8');
   if (hasNoindex(html)) continue;
   const loc = pageUrl(name);
-  const canonicalTag = (html.match(/<link\\b[^>]*>/gi) || []).find(tag => {
-    const rel = tag.match(/\\brel\\s*=\\s*["']([^"']+)["']/i)?.[1];
-    return rel?.split(/\\s+/).some(value => value.toLowerCase() === 'canonical');
+  const canonicalTag = (html.match(/<link\b[^>]*>/gi) || []).find(tag => {
+    const rel = tag.match(/\brel\s*=\s*["']([^"']+)["']/i)?.[1];
+    return rel?.split(/\s+/).some(value => value.toLowerCase() === 'canonical');
   });
-  const canonical = canonicalTag?.match(/\\bhref\\s*=\\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
-  if (canonical !== loc) throw new Error(`Root page canonical mismatch for ${loc}; found ${canonical || 'missing'}`);
+  const canonical = canonicalTag?.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
+  if (canonical !== loc) throw new Error('Root page canonical mismatch for ' + loc + '; found ' + (canonical || 'missing'));
   pages.set(loc, gitLastModified(name));
 }
 
@@ -251,21 +251,21 @@ if (generatedManifest && Array.isArray(generatedManifest.generated)) {
   for (const loc of generatedManifest.generated) {
     if (typeof loc !== 'string' || !loc.startsWith(BASE)) continue;
     const segments = new URL(loc).pathname.split('/').filter(Boolean);
-    const relativePath = decodeURIComponent(new URL(loc).pathname.replace(/^\\/+/, ''));
+    const relativePath = decodeURIComponent(new URL(loc).pathname.replace(/^\/+/, ''));
     const generatedPath = relativePath.endsWith('/') ? relativePath + 'index.html' : relativePath;
     let html;
     try {
       html = await readFile(generatedPath, 'utf8');
     } catch {
-      throw new Error(`Missing generated SEO page for sitemap URL: ${loc}`);
+      throw new Error('Missing generated SEO page for sitemap URL: ' + loc);
     }
     if (hasNoindex(html) || redirectUrls.has(loc)) continue;
-    const canonicalTag = (html.match(/<link\\b[^>]*>/gi) || []).find(tag => {
-      const rel = tag.match(/\\brel\\s*=\\s*["']([^"']+)["']/i)?.[1];
-      return rel?.split(/\\s+/).some(value => value.toLowerCase() === 'canonical');
+    const canonicalTag = (html.match(/<link\b[^>]*>/gi) || []).find(tag => {
+      const rel = tag.match(/\brel\s*=\s*["']([^"']+)["']/i)?.[1];
+      return rel?.split(/\s+/).some(value => value.toLowerCase() === 'canonical');
     });
-    const canonical = canonicalTag?.match(/\\bhref\\s*=\\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
-    if (canonical !== loc) throw new Error(`Generated SEO page canonical mismatch for ${loc}; found ${canonical || 'missing'}`);
+    const canonical = canonicalTag?.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
+    if (canonical !== loc) throw new Error('Generated SEO page canonical mismatch for ' + loc + '; found ' + (canonical || 'missing'));
     const cityLastmod = segments.length === 1 && trackedCityHubs.has(segments[0])
       ? gitLastModified(segments[0] + '/index.html')
       : null;
