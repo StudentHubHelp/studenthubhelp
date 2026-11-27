@@ -173,7 +173,12 @@ jobs:
           import json
           manifest=json.loads(Path('seo-generated-manifest.json').read_text(encoding='utf-8'))
           generated=manifest.get('generated', [])
-          assert all(u in all_urls for u in generated), 'Generated SEO URL missing from sitemap'
+          redirect_urls={BASE.rstrip('/')+item['from'] for item in manifest.get('redirectPages', []) if item.get('from')}
+          for generated_url in generated:
+              if generated_url in redirect_urls:
+                  assert generated_url not in all_urls, f'Noindex redirect URL must not be in sitemap: {generated_url}'
+              else:
+                  assert generated_url in all_urls, f'Indexable generated SEO URL missing from sitemap: {generated_url}'
           redirect_pages=manifest.get('redirectPages', [])
           for redirect in redirect_pages:
               page=Path(redirect['path'])
