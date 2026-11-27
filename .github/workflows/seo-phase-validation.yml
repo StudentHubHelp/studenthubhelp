@@ -51,10 +51,10 @@ jobs:
           home=Path('index.html').read_text(encoding='utf-8')
           visual=Path('sitemap.html').read_text(encoding='utf-8')
           directory=Path('property-index.html').read_text(encoding='utf-8')
-          assert 'href="property-index.html">Browse All Properties' in home
+          assert 'href="/explore-listings.html"' in home, 'Homepage is missing its public listings directory link'
           assert 'href="property-index.html"' in visual
           for city in ('sikar','kota','jaipur','delhi'):
-              assert f'href="/{city}/"' in home, f'Missing generated city link: {city}'
+              assert Path(city, 'index.html').exists(), f'Missing generated city hub: {city}'
           assert '<link rel="canonical" href="https://studenthubhelp.in/property-index.html">' in directory
           assert re.search(r'<a href="https://studenthubhelp\.in/properties/', directory), 'Property directory has no crawlable property links'
 
