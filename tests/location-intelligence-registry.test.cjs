@@ -24,6 +24,8 @@ const rows = [
 assert.equal(window.StudentHubQueryParser.parse('hostel in New Delhi', rows).city, 'delhi');
 assert.equal(window.StudentHubQueryParser.parse('library near Bangalore', rows).city, 'bengaluru');
 assert.equal(window.StudentHubQueryParser.parse('tiffin in Gurgaon', rows).city, 'gurugram');
+assert.equal(window.StudentHubQueryParser.parse('tiffin in Gurgaon', rows).facilities.includes('food'), false);
+assert.equal(window.StudentHubQueryParser.parse('hostel with mess', rows).facilities.includes('food'), true);
 
 const aliasRows = [
   { id: 'delhi-hostel', __category: 'hostel', name: 'Saket Student Hostel', city: 'Delhi', area: 'Saket' },
