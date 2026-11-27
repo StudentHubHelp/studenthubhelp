@@ -157,14 +157,14 @@ jobs:
                       assert page_file.is_file(), f'Sitemap page has no generated HTML file: {value} -> {page_file}'
                       page_html=page_file.read_text(encoding='utf-8')
                       page_head=page_html.split('</head>',1)[0]
-                      meta_tags=re.findall(r'<meta\\b[^>]*>', page_head, re.I)
+                      meta_tags=re.findall(r"""<meta\b[^>]*>""", page_head, re.I)
                       for meta in meta_tags:
-                          name_match=re.search(r'\\bname=["\\']([^"\\']+)["\\']', meta, re.I)
-                          content_match=re.search(r'\\bcontent=["\\']([^"\\']*)["\\']', meta, re.I)
+                          name_match=re.search(r"""\bname=["']([^"']+)["']""", meta, re.I)
+                          content_match=re.search(r"""\bcontent=["']([^"']*)["']""", meta, re.I)
                           if name_match and content_match and name_match.group(1).lower() in {'robots','googlebot','googlebot-news'}:
-                              assert not re.search(r'\\bnoindex\\b', content_match.group(1), re.I), f'Noindex page must not be in sitemap: {value}'
-                      canonical_tags=[tag for tag in re.findall(r'<link\\b[^>]*>', page_head, re.I) if re.search(r'\\brel=["\\'][^"\\']*canonical', tag, re.I)]
-                      canonical_urls=[match.group(1).strip() for tag in canonical_tags if (match:=re.search(r'\\bhref=["\\']([^"\\']+)["\\']', tag, re.I))]
+                              assert not re.search(r"""\bnoindex\b""", content_match.group(1), re.I), f'Noindex page must not be in sitemap: {value}'
+                      canonical_tags=[tag for tag in re.findall(r"""<link\b[^>]*>""", page_head, re.I) if re.search(r"""\brel=["'][^"']*canonical""", tag, re.I)]
+                      canonical_urls=[match.group(1).strip() for tag in canonical_tags if (match:=re.search(r"""\bhref=["']([^"']+)["']""", tag, re.I))]
                       assert len(canonical_urls)==1 and canonical_urls[0]==value, f'Sitemap page must have exactly one matching canonical: {value}; found {canonical_urls}'
                   if parsed.path.endswith('/property-details.html') or parsed.path.endswith('/property-details'):
                       assert not parse_qs(parsed.query).get('type'), f'Query-based property URL must not be in sitemap: {value}'
