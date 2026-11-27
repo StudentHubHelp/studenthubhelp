@@ -7,7 +7,7 @@ const LOCATION_MIN_PROPERTIES = Number(process.env.SEO_LOCATION_MIN_PROPERTIES |
 
 const TABLES = [
   { type:'hostel', table:'hostels', label:'Hostels & PGs', finder:'pg-finder.html', icon:'🏠' },
-  { type:'tiffin', table:'tiffins', label:'Tiffin Services', finder:'tiffin-finder.html', icon:'🍱' },
+  { type:'tiffin', table:'tiffins', label:'Tiffin & Mess Services', finder:'tiffin-finder.html', icon:'🍱' },
   { type:'library', table:'libraries', label:'Libraries & Study Spaces', finder:'library-finder.html', icon:'📚' },
   { type:'cafe', table:'cafes', label:'Cafes', finder:'cafe-finder.html', icon:'☕' },
   { type:'bookstore', table:'bookstores', label:'Bookstores & Stationery', finder:'bookstore-finder.html', icon:'📖' }
@@ -89,7 +89,7 @@ function card(row,depth){
     (bits.length?'<p>📍 '+esc(bits.join(' • '))+'</p>':'')+
     '<p><span class="badge">✓ Verified & Active</span></p></article>';
 }
-function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[]}){
+function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[],itemRows=[]}){
   const canonicalAbs=canonical;
   const premiumLocationPaths = new Set([
     '/sikar/','/sikar/piprali-road/','/sikar/nawalgarh-road/','/sikar/anand-nagar/','/sikar/new-indira-colony/','/sikar/vasant-vihar/',
@@ -100,7 +100,7 @@ function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[]}){
   const premiumLocation = premiumLocationPaths.has(canonicalPath) || canonicalPath.startsWith('/sikar/') || canonicalPath.startsWith('/kota/');
   const home=rel(depth,BASE);
   const breadcrumb=crumbs.map((c,i)=>i===crumbs.length-1?'<span>'+esc(c.name)+'</span>':'<a href="'+esc(rel(depth,c.url))+'">'+esc(c.name)+'</a>').join(' <span>›</span> ');
-  const schema={'@context':'https://schema.org','@type':'CollectionPage','@id':canonicalAbs+'#page','name':h1,'url':canonicalAbs,'description':description,'inLanguage':'en-IN','isPartOf':{'@type':'WebSite','name':'StudentHubHelp','url':BASE},'breadcrumb':{'@type':'BreadcrumbList','itemListElement':crumbs.map((c,i)=>({'@type':'ListItem','position':i+1,'name':c.name,'item':c.url}))},...(about.length?{'about':about}:{})};
+  const schema={'@context':'https://schema.org','@type':'CollectionPage','@id':canonicalAbs+'#page','name':h1,'url':canonicalAbs,'description':description,'inLanguage':'en-IN','isPartOf':{'@type':'WebSite','name':'StudentHubHelp','url':BASE},'breadcrumb':{'@type':'BreadcrumbList','itemListElement':crumbs.map((c,i)=>({'@type':'ListItem','position':i+1,'name':c.name,'item':c.url}))},...(about.length?{'about':about}:{}),...(itemRows.length?{'mainEntity':{'@type':'ItemList','numberOfItems':itemRows.length,'itemListOrder':'https://schema.org/ItemListOrderAscending','itemListElement':itemRows.slice(0,50).map((row,index)=>({'@type':'ListItem','position':index+1,'item':{'@type':'Thing','name':row.name||'Student listing','url':propUrl(row)}}))}}:{})};
   return '<!doctype html><html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
     '<title>'+esc(title)+'</title><meta name="description" content="'+esc(description)+'">'+GENERATED_MARKER+
     '<meta name="robots" content="index,follow"><link rel="icon" type="image/png" href="/logo.png?v=logo-hd-20261029"><link rel="apple-touch-icon" href="/logo.png?v=logo-hd-20261029"><link rel="canonical" href="'+esc(canonicalAbs)+'">'+
@@ -186,7 +186,7 @@ for(const c of cities.values()){
     '<section class="section"><h2>Explore '+esc(c.name)+'</h2><div class="links">'+categoryLinks+'</div></section>'+
     '<section class="section"><h2>Verified properties</h2><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
   const cityPath=cityDir+'/index.html'; expected.add(cityPath); generated.push(cityUrl);
-  await write(cityPath,shell({title:'Student Services in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffin services, cafes, libraries and bookstores in '+c.name+'.',canonical:cityUrl,h1:'StudentHubHelp in '+c.name,crumbs:[{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}]}));
+  await write(cityPath,shell({title:'Student Services in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffin services, cafes, libraries and bookstores in '+c.name+'.',canonical:cityUrl,h1:'StudentHubHelp in '+c.name,crumbs:[{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}],itemRows:c.rows}));
 
   for(const meta of TABLES){
     const rows=c.rows.filter(r=>r.type===meta.type); if(rows.length<LOCATION_MIN_PROPERTIES) continue;
@@ -197,7 +197,7 @@ for(const c of cities.values()){
     const body='<section class="section"><h2>'+esc(meta.label)+' in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+coachingContext+
       '<section class="section"><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(2,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
-    await write(p,shell({title:meta.label+' in '+c.name+' | StudentHubHelp',description:'Browse verified and active '+meta.label.toLowerCase()+' in '+c.name+' on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name},{'@type':'Thing','name':meta.label}]}));
+    await write(p,shell({title:meta.label+' in '+c.name+' | StudentHubHelp',description:'Browse '+rows.length+' verified '+meta.label.toLowerCase()+' in '+c.name+'. Compare locations and available service details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name},{'@type':'Thing','name':meta.label}],itemRows:rows}));
   }
 
   const areas=new Map();
@@ -214,7 +214,7 @@ for(const c of cities.values()){
       '<section class="section"><h2>Categories</h2><div class="links">'+groupLinks+'</div></section>'+
       '<p><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
-    await write(p,shell({title:'Student Properties in '+a.name+', '+c.name+' | StudentHubHelp',description:'Explore verified and active student-focused properties around '+a.name+', '+c.name+'.',canonical:url,h1:'Student Properties in '+a.name+', '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:a.name,url}],body,depth:3,about:[{'@type':'Place','name':a.name,'containedInPlace':{'@type':'City','name':c.name}}]}));
+    await write(p,shell({title:'Student Properties in '+a.name+', '+c.name+' | StudentHubHelp',description:'Explore verified and active student-focused properties around '+a.name+', '+c.name+'.',canonical:url,h1:'Student Properties in '+a.name+', '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:a.name,url}],body,depth:3,about:[{'@type':'Place','name':a.name,'containedInPlace':{'@type':'City','name':c.name}}],itemRows:a.rows}));
   }
 
   for(const coachSlug of cityCoachingSlugs){
@@ -225,7 +225,7 @@ for(const c of cities.values()){
     const typeLinks=[...new Set(rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('/'+m.finder)+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
     const body='<section class="section"><h2>Student properties near '+esc(coach.name)+' in '+esc(c.name)+'</h2><p>These verified and active listings mention this coaching or institute in their stored name, area, or address.</p><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section><section class="section"><h2>Categories</h2><div class="links">'+typeLinks+'</div></section><p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
-    await write(p,shell({title:'Student Properties near '+coach.name+' in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffins, cafes, libraries and bookstores near '+coach.name+' in '+c.name+'.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':'EducationalOrganization','name':coach.name},{'@type':'City','name':c.name}]}));
+    await write(p,shell({title:'Student Properties near '+coach.name+' in '+c.name+' | StudentHubHelp',description:'Find verified and active student-focused hostels, tiffins, cafes, libraries and bookstores near '+coach.name+' in '+c.name+'.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':'EducationalOrganization','name':coach.name},{'@type':'City','name':c.name}],itemRows:rows}));
   }
 }
 
