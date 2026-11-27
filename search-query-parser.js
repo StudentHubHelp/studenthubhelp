@@ -29,21 +29,25 @@ function parse(input,rows){
  const gender=Object.keys(GENDER).filter(k=>GENDER[k].some(a=>(' '+normalized+' ').includes(' '+norm(a)+' ')));
  const facilities=Object.entries(FACILITIES).filter(([,aliases])=>aliases.some(a=>(' '+normalized+' ').includes(' '+norm(a)+' '))).map(([key])=>key);
  const budget=priceIntent(normalized),cities=[...new Set(records.map(r=>canonical(r?.city)).filter(Boolean))].sort((a,b)=>b.length-a.length);
- const cityMatches=cities.filter(city=>(' '+normalized+' ').includes(' '+city+' ')),city=cityMatches[0]||null;
+ const cityAliasEntries=(window.StudentHubLocationRegistry?.cityEntries||[]).flatMap(entry=>[entry.name,...(entry.seoAliases||[]),...(entry.searchAliases||[])].map(alias=>({alias:norm(alias),city:canonical(entry.name)}))).sort((a,b)=>b.alias.length-a.alias.length);
+ const matchedCityAlias=cityAliasEntries.find(item=>(' '+normalized+' ').includes(' '+item.alias+' '));
+ const cityMatches=[...new Set([...cities.filter(city=>(' '+normalized+' ').includes(' '+city+' ')),...(matchedCityAlias?[matchedCityAlias.city]:[])])].sort((a,b)=>b.length-a.length),city=matchedCityAlias?.city||cityMatches[0]||null;
  const landmarkValues=[...new Set(records.flatMap(r=>[r?.landmark,r?.nearby_coaching]).filter(Boolean).map(norm))].filter(x=>x.length>2);
  const landmarks=landmarkValues.filter(x=>(' '+normalized+' ').includes(' '+x+' ')).sort((a,b)=>b.length-a.length);
  const nearby=/\b(near|nearby|close to|around|opposite|beside|next to|ke paas|ke pass|paas|pas|nazdeek|नजदीक|पास)\b/i.test(normalized);
  const requestedPropertyType=/\b(flat|flats|apartment|apartments)\b/i.test(normalized)?'flat':null;
  let remainder=stripAliases(normalized,[...Object.values(CATEGORIES),...Object.values(GENDER),...Object.values(FACILITIES),['under','below','upto','up to','less than','within','max','budget','se kam','से कम','तक','above','over','more than','at least','minimum','kam se kam','से ऊपर','से ज्यादा','₹','rs','inr','rupees','thousand','hazar','हजार'],['nearby','near','close to','around','opposite','beside','next to','ke paas','ke pass','paas','pas','nazdeek','नजदीक','पास'],['2 bhk','2bhk','1 bhk','1bhk','double sharing','triple sharing','single room','private room','single occupancy','room','rooms','flat','flats','apartment','apartments']]);
  remainder=remainder.replace(/\b\d+(?:\.\d+)?\s*(?:k|thousand|hazar|हजार)?\b/g,' ').replace(/[₹]/g,' ').replace(/\s+/g,' ').trim();
- const cityStripped=city?(' '+remainder+' ').replace(' '+city+' ',' ').trim():remainder;
+ const cityPhrase=matchedCityAlias?.alias||city;
+ const cityStripped=cityPhrase?(' '+remainder+' ').replace(' '+cityPhrase+' ',' ').trim():remainder;
  const locationTokens=cityStripped.split(' ').filter(t=>t.length>1&&!STOP.has(t)),locationPhrase=locationTokens.join(' ');
  const roadQuery=/\broad\b/i.test(normalized),roadMatch=normalized.match(/([\p{L}\p{N}]+)\s+road\b/iu),roadRoot=roadMatch?roadMatch[1]:null;
  const roadPhrase=roadQuery&&roadRoot?roadRoot+' road':'';
  const inferencePhrase=roadPhrase||locationPhrase;
  const inferredCities=inferencePhrase?[...new Set(records.filter(r=>norm(textOf(r,fields)).includes(inferencePhrase)).map(r=>canonical(r?.city)).filter(Boolean))]:[];
  const explicitLocation=context?String(context.explicitLocation??context.location??'').trim():'',explicitLocationNorm=norm(explicitLocation);
- const explicitLocationCity=cities.find(c=>(' '+explicitLocationNorm+' ').includes(' '+c+' '))||null;
+ const explicitMatchedAlias=cityAliasEntries.find(item=>(' '+explicitLocationNorm+' ').includes(' '+item.alias+' '));
+ const explicitLocationCity=explicitMatchedAlias?.city||cities.find(c=>(' '+explicitLocationNorm+' ').includes(' '+c+' '))||null;
  return {rawQuery:raw,normalizedQuery:normalized,category,city:explicitLocationCity||city,cityMatches:cityMatches.length?cityMatches:explicitLocationCity?[explicitLocationCity]:[],locationTokens,locationPhrase,roadQuery,roadRoot,gender,facilities,budget,landmarks,freeTextKeywords:locationTokens.filter(t=>t!=='road'&&t!==roadRoot),nearby,requestedPropertyType,inferredCities,ambiguousRoad:roadQuery&&!explicitLocationCity&&!city&&inferredCities.length>1,explicitLocation,selectedCategory:selected||''};
 }
 window.StudentHubQueryParser=Object.freeze({parse,normalize:norm,canonical,version:'1.0.0'});
