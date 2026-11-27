@@ -48,7 +48,7 @@ function parse(input,rows){
  const explicitLocation=context?String(context.explicitLocation??context.location??'').trim():'',explicitLocationNorm=norm(explicitLocation);
  const explicitMatchedAlias=cityAliasEntries.find(item=>(' '+explicitLocationNorm+' ').includes(' '+item.alias+' '));
  const explicitLocationCity=explicitMatchedAlias?.city||cities.find(c=>(' '+explicitLocationNorm+' ').includes(' '+c+' '))||null;
- return {rawQuery:raw,normalizedQuery:normalized,category,city:explicitLocationCity||city,cityMatches:cityMatches.length?cityMatches:explicitLocationCity?[explicitLocationCity]:[],locationTokens,locationPhrase,roadQuery,roadRoot,gender,facilities,budget,landmarks,freeTextKeywords:locationTokens.filter(t=>t!=='road'&&t!==roadRoot),nearby,requestedPropertyType,inferredCities,ambiguousRoad:roadQuery&&!explicitLocationCity&&!city&&inferredCities.length>1,explicitLocation,selectedCategory:selected||''};
+ return {rawQuery:raw,normalizedQuery:normalized,category,city:explicitLocationCity||city,cityMatches:cityMatches.length?cityMatches:explicitLocationCity?[explicitLocationCity]:[],locationTokens,locationPhrase,roadQuery,roadRoot,gender,facilities,budget,landmarks,freeTextKeywords:locationTokens.filter(t=>t!=='road'&&t!==roadRoot),nearby,nearbyMode:!!context?.nearbyMode,requestedPropertyType,inferredCities,ambiguousRoad:roadQuery&&!explicitLocationCity&&!city&&inferredCities.length>1,explicitLocation,selectedCategory:selected||''};
 }
 window.StudentHubQueryParser=Object.freeze({parse,normalize:norm,canonical,version:'1.0.0'});
 })(window);
