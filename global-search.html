@@ -515,6 +515,17 @@ body>.navbar .nav-links a.nav-add{background:var(--shh-orange)!important;color:#
 </style>
 
   <link rel="stylesheet" href="mobile.css">
+<style id="shh-global-search-map">
+.shh-search-map{display:none;margin:0 0 22px;padding:16px;border:1px solid #e3eaf1;border-radius:20px;background:#fff;box-shadow:0 10px 28px rgba(7,26,51,.07)}
+.shh-search-map.show{display:block}
+.shh-search-map-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.shh-search-map-head h3{margin:0;color:#102d55;font-size:17px;font-weight:900}
+.shh-search-map-head p{margin:4px 0 0;color:#718096;font-size:12px;line-height:1.45}
+.shh-search-map-frame{display:block;width:100%;height:320px;border:0;border-radius:14px;background:#edf2f7}
+.shh-search-map-note{margin:9px 2px 0;color:#718096;font-size:11px;line-height:1.5}
+@media(max-width:767px){.shh-search-map{padding:12px;margin-bottom:16px;border-radius:16px}.shh-search-map-head h3{font-size:15px}.shh-search-map-frame{height:245px;border-radius:12px}}
+</style>
+
 </head>
 <body>
   <a class="shh-skip-link" href="#resultsTitle">Skip to search results</a>
@@ -555,6 +566,12 @@ body>.navbar .nav-links a.nav-add{background:var(--shh-orange)!important;color:#
         <div class="popular-searches"><span>Try:</span><button class="quick-search" data-query="Hostel near coaching">Near Coaching</button><span class="shh-dot">·</span><button class="quick-search" data-query="Budget Hostel">Budget Hostels</button><span class="shh-dot">·</span><button class="quick-search" data-query="WiFi Library">Wi-Fi Libraries</button><span class="shh-dot">·</span><button class="quick-search" data-query="Healthy Tiffin">Healthy Tiffin</button><span class="shh-dot">·</span><button class="quick-search" data-query="Single Room Hostel">Single Rooms</button></div>
       </div>
       <div class="summary-bar"><div class="summary-left"><h2 id="resultsTitle">Explore Student Essentials</h2><p id="resultsSubtitle">Browse student-friendly services near your campus.</p></div><div class="shh-results-tools"><label class="shh-sort-label" for="shhSort">Sort by</label><select id="shhSort" aria-label="Sort listings"><option value="relevance">Relevance</option><option value="rating">Highest rated</option><option value="price">Price: low to high</option></select><div class="result-count" id="resultCount"><i class="fa-solid fa-layer-group">▦</i><span>0 results</span></div></div></div>
+
+      <section class="shh-search-map" id="shhSearchMap" aria-label="Map preview for current search results">
+        <div class="shh-search-map-head"><div><h3>Map View</h3><p id="shhSearchMapSubtitle">Location reference for your current search.</p></div></div>
+        <iframe class="shh-search-map-frame" id="shhSearchMapFrame" title="Google Maps location preview for current search results" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        <p class="shh-search-map-note">This is a location reference for the current matching results, not a separate marker for every listing. Choose a property from the cards below to view its full details and map.</p>
+      </section>
       <div class="state" id="loadingState"><div class="spinner"></div><h3>Searching...</h3><p>Finding the most relevant student services.</p></div>
       <div class="state" id="emptyState"><div class="state-icon">⌕</div><h3 id="emptyTitle">No matching listings found</h3><p id="emptyText">Try another city, area, property name or student service.</p></div>
       <section class="results-grid" id="resultsGrid"></section>
@@ -664,7 +681,26 @@ function createCard(r){
   c.innerHTML='<div class="card-media"><img class="shh-card-image" src="'+esc(image)+'" alt="'+esc(name)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src=\'https://studenthubhelp.in/'+(cat.key==='hostel'?'hostel-banner.png':cat.key==='tiffin'?'tiffin-banner.png':cat.key==='library'?'library-banner.png':cat.key==='cafe'?'cafe-banner.png':'bookstore-banner.png')+'\';"><div class="category-badge">'+cat.icon+' '+esc(cat.label)+'</div>'+(verified?'<div class="verified" title="Verified listing">✓</div>':'')+'<div class="card-media-title">'+esc(name)+'</div></div><div class="card-body"><h3 class="card-title">'+esc(name)+'</h3><div class="card-location"><i>⌖</i><span>'+esc(area?[area,r.city].filter(Boolean).join(', '):(address||r.city||'Location not available'))+'</span></div>'+(r.__userDistanceKm!=null&&Number.isFinite(Number(r.__userDistanceKm))?'<div class="shh-nearby-distance">📍 '+esc(window.StudentHubNearbySearch.formatDistance(r.__userDistanceKm))+' away</div>':'')+(r.__nearbyMatchType==='area'?'<div class="shh-nearby-distance">⌖ Area Match · distance unavailable</div>':'')+'<div class="card-meta"><span class="rating">'+esc(ratingText(r.rating))+'</span><span class="type-label">'+esc(cat.label)+'</span></div><div class="card-actions">'+(nearbyMode&&window.StudentHubNearbySearch.directionsUrl(r)?'<a class="btn btn-light directions-btn" target="_blank" rel="noopener noreferrer" href="'+esc(window.StudentHubNearbySearch.directionsUrl(r))+'">Directions ↗</a>':'')+'<a class="btn btn-primary view-btn" href="'+esc(propertyDetailsHref(r,cat))+'">◉ View Details</a><a class="btn btn-light finder-btn" href="'+esc(cat.finder+(nearbyMode?'?nearby=1':''))+'">Open Finder</a></div></div>';
   return c;
 }
-function renderResults(results){const mode=document.getElementById('shhSort')?.value||'relevance';if(mode==='rating')results=[...results].sort((a,b)=>(Number(b.rating)||0)-(Number(a.rating)||0));else if(mode==='price')results=[...results].sort((a,b)=>{const price=r=>{for(const k of ['rent','price','monthly_rent','monthly_price','amount','cost']){const n=Number(String(r[k]??'').replace(/[^0-9.]/g,''));if(n>0)return n;}return Number.POSITIVE_INFINITY};return price(a)-price(b)});grid.innerHTML='';updateSummary(results,currentQuery);if(!results.length){showEmpty(true);emptyTitle.textContent=currentQuery?'No matching listings found':'No listings available';emptyText.textContent=currentQuery?'No strong match for "'+currentQuery+'". Try a property name, area, city or service.':'No listings are currently available.';return}showEmpty(false);results.forEach(r=>grid.appendChild(createCard(r)));decorateResults(results)}
+function searchMapQuery(record){
+  const point=window.StudentHubNearbySearch?.coordinateOf(record);
+  if(point)return point.lat+','+point.lng;
+  const saved=record.google_maps_url||record.googleMapsUrl||record.maps_url||record.map_url;
+  if(saved){try{const u=new URL(saved,location.origin);for(const key of ['q','query','destination','daddr']){const value=u.searchParams.get(key);if(value&&value.trim())return value.trim();}}catch(e){}}
+  return [addressFromRecord(record),areaFromRecord(record),clean(record.landmark||record.nearby||record.near),clean(record.city)].filter(Boolean).join(', ');
+}
+function updateSearchMap(results){
+  const section=document.getElementById('shhSearchMap'),frame=document.getElementById('shhSearchMapFrame'),caption=document.getElementById('shhSearchMapSubtitle');
+  if(!section||!frame)return;
+  if(!Array.isArray(results)||!results.length){section.classList.remove('show');frame.removeAttribute('src');return;}
+  const record=results.find(r=>searchMapQuery(r)),query=record?searchMapQuery(record):'';
+  if(!query){section.classList.remove('show');frame.removeAttribute('src');return;}
+  const label=[areaFromRecord(record),clean(record.city)].filter(Boolean).join(', ')||nameFromRecord(record)||'matching listing location';
+  caption.textContent='Showing a location reference near '+label+'.';
+  const src='https://www.google.com/maps?q='+encodeURIComponent(query)+'&output=embed';
+  if(frame.getAttribute('src')!==src)frame.src=src;
+  section.classList.add('show');
+}
+function renderResults(results){const mode=document.getElementById('shhSort')?.value||'relevance';if(mode==='rating')results=[...results].sort((a,b)=>(Number(b.rating)||0)-(Number(a.rating)||0));else if(mode==='price')results=[...results].sort((a,b)=>{const price=r=>{for(const k of ['rent','price','monthly_rent','monthly_price','amount','cost']){const n=Number(String(r[k]??'').replace(/[^0-9.]/g,''));if(n>0)return n;}return Number.POSITIVE_INFINITY};return price(a)-price(b)});updateSearchMap(results);grid.innerHTML='';updateSummary(results,currentQuery);if(!results.length){showEmpty(true);emptyTitle.textContent=currentQuery?'No matching listings found':'No listings available';emptyText.textContent=currentQuery?'No strong match for "'+currentQuery+'". Try a property name, area, city or service.':'No listings are currently available.';return}showEmpty(false);results.forEach(r=>grid.appendChild(createCard(r)));decorateResults(results)}
     function decorateResults(results){grid.querySelectorAll('.shh-smart-badge').forEach(x=>x.remove());[...grid.querySelectorAll('.result-card')].forEach((c,i)=>{const r=results[i],body=c.querySelector('.card-body'),actions=body?.querySelector('.card-actions');if(!body||!actions||!r.__score)return;const b=document.createElement('span');b.className='shh-smart-badge';b.textContent='✦ Smart match '+Math.min(99,Math.max(60,Math.round(r.__score/5)))+'%';body.insertBefore(b,actions)})}
     function openDetails(r){const cat=r.__categoryConfig||CATEGORIES[r.__category],name=nameFromRecord(r)||cat.label,area=areaFromRecord(r),address=addressFromRecord(r),timing=timingFromRecord(r),phone=phoneFromRecord(r),facilities=facilitiesFromRecord(r),image=imageFromRecord(r);modalCategory.textContent=cat.icon+' '+cat.label;modalTitle.textContent=name;modalArea.textContent=area||'Not available';modalRating.textContent=ratingText(r.rating);modalAddress.textContent=address||'Not available';modalTiming.textContent=timing||'Not available';modalPhone.textContent=phone||'Not available';modalFacilities.textContent=facilities||'Not available';modalHead.style.backgroundImage='linear-gradient(90deg,rgba(7,26,51,.96),rgba(7,26,51,.55)),url("'+image.replace(/"/g,'&quot;')+'")';modalFinderBtn.href=cat.finder;modalCallBtn.href=phone?'tel:'+phone.replace(/\D/g,''):'#';modalMapBtn.href=(address||area)?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address||area):'#';detailModal.classList.add('show');detailModal.setAttribute('aria-hidden','false');document.body.classList.add('modal-open')}
     function closeDetails(){detailModal.classList.remove('show');detailModal.setAttribute('aria-hidden','true');document.body.classList.remove('modal-open')}
