@@ -223,8 +223,8 @@ for(const c of cities.values()){
     const dir=cityDir+'/'+as; const url=new URL(cs+'/'+as+'/',BASE).href;
     const groupLinks=[...new Set(a.rows.map(r=>r.type))].filter(type=>eligibleGroups.has(type)).map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('../'+type+'/' )+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
     const areaCoachingSlugs=[...new Set(a.rows.flatMap(matchedCoachings))];
-    const areaCoachingLinks=areaCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../coaching/'+m.slug+'/')+'">🎓 '+esc(m.name)+'</a>';}).join('');
-    const areaCoachingSection=areaCoachingLinks?'<section class="section"><h2>Nearby coaching & landmarks</h2><p>Coaching links are derived from names found in active verified listing details, including nearby-coaching and landmark fields.</p><div class="links">'+areaCoachingLinks+'</div></section>':'';
+    const areaCoachingLinks=areaCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
+    const areaCoachingSection=areaCoachingLinks?'<section class="section"><h2>Nearby coaching & landmarks</h2><p>Coaching and landmark links are derived from names found in active verified listing details, including nearby-coaching and landmark fields.</p><div class="links">'+areaCoachingLinks+'</div></section>':'';
     const body='<section class="section"><h2>Verified student properties in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+a.rows.map(r=>card(r,2)).join('')+'</div></section>'+areaCoachingSection+
       '<section class="section"><h2>Categories</h2><div class="links">'+groupLinks+'</div></section>'+
       '<p><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
