@@ -234,9 +234,17 @@ try {
   generatedManifest = JSON.parse(await readFile('seo-generated-manifest.json', 'utf8'));
 } catch {}
 if (generatedManifest && Array.isArray(generatedManifest.generated)) {
+  const trackedCityHubs = new Set([
+    'bengaluru','chennai','coimbatore','delhi','gurugram','jaipur',
+    'jhunjhunu','kota','patna','pune','sikar'
+  ]);
   for (const loc of generatedManifest.generated) {
     if (typeof loc !== 'string' || !loc.startsWith(BASE)) continue;
-    pages.set(loc, null);
+    const segments = new URL(loc).pathname.split('/').filter(Boolean);
+    const cityLastmod = segments.length === 1 && trackedCityHubs.has(segments[0])
+      ? gitLastModified(segments[0] + '/index.html')
+      : null;
+    pages.set(loc, cityLastmod);
   }
 }
 const pageEntries = [...pages.entries()].map(([loc, lastmod]) => ({ loc, lastmod })).sort((a, b) => a.loc.localeCompare(b.loc));
