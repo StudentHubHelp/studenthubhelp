@@ -306,7 +306,7 @@ await mkdir(GENERATED_ROOT,{recursive:true});
 const all=(await Promise.all(TABLES.map(fetchRows))).flat();
 const areaRedirects=new Map(),areaCounts=new Map(),cityCounts=new Map();
 for(const row of all){const citySlug=slug(canonicalCityName(row.city));cityCounts.set(citySlug,(cityCounts.get(citySlug)||0)+1);if(row.area){const areaKey=citySlug+'|'+key(row.area);areaCounts.set(areaKey,(areaCounts.get(areaKey)||0)+1);}}
-for(const row of all){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/';const oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+key(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/';const cityTarget=(cityCounts.get(citySlug)||0)>=3?cityPath:'/explore-listings.html';const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityTarget;if(from!==to)areaRedirects.set(from,to);}
+for(const row of all){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/';const oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+key(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/';const cityTarget=citySlug==='sikar'?'/sikar.html':((cityCounts.get(citySlug)||0)>=3?cityPath:'/explore-listings.html');const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityTarget;if(from!==to)areaRedirects.set(from,to);}
 const cities=new Map();
 for(const row of all){
   const canonicalCity=canonicalCityName(row.city);
