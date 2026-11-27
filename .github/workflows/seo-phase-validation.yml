@@ -122,6 +122,7 @@ jobs:
           property_template=Path('property-details.html').read_text(encoding='utf-8')
           property_generator=Path('scripts/generate-property-pages.mjs').read_text(encoding='utf-8')
           assert 'function firstImageUrl(record)' in property_generator and 'const heroPreload = heroImage' in property_generator, 'Generated property pages must preload a known hero image'
+          assert 'http-equiv="refresh" content="0;url=${escapeHtml(canonical)}"' in property_generator, 'Property alias redirects must include an immediate meta refresh'
           assert 'skeleton-title-text' in property_generator and '.skeleton-title-text{' in property_template, 'Property heading must render in the initial skeleton to reduce LCP and CLS'
           assert 'rel="preconnect" href="https://idurlccrarznnnqixxsd.supabase.co"' in property_template, 'Property page is missing the Supabase API preconnect'
           assert "loading=\"'+(index===0?'eager':'lazy')+'\"" in property_template, 'Only the primary property image should load eagerly'

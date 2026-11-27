@@ -48,6 +48,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json
+          from urllib.parse import urlparse, unquote
           report=json.loads(Path('property-pages-manifest.json').read_text(encoding='utf-8'))
           categories=['hostel','tiffin','library','cafe','bookstore']
           assert report['total'] >= 600, f"Too few property pages: {report['total']}"
@@ -58,6 +59,19 @@ jobs:
               assert len(pages) >= expected, f"{category}: manifest says {expected}, found only {len(pages)} files"
               valid=sum(1 for page in pages if '<link id="canonicalLink" rel="canonical"' in page.read_text(encoding='utf-8') and 'id="app"' in page.read_text(encoding='utf-8') and 'isPrettyPropertyPath' in page.read_text(encoding='utf-8') and 'propertyFaqList' in page.read_text(encoding='utf-8') and 'propertyReviewForm' in page.read_text(encoding='utf-8') and 'request_property' in page.read_text(encoding='utf-8'))
               assert valid >= expected, f"{category}: expected at least {expected} generated pages with canonical metadata, FAQ accordion and property review flow, found {valid}"
+          property_redirects=report.get('redirectedUrls', [])
+          for redirect in property_redirects:
+              source=Path(unquote(urlparse(redirect['from']).path).strip('/'))/'index.html'
+              target=redirect['to']
+              target_path=Path(unquote(urlparse(target).path).strip('/'))/'index.html'
+              assert source.exists(), f'Missing property redirect page: {source}'
+              html=source.read_text(encoding='utf-8')
+              assert 'name="robots" content="noindex,follow"' in html, f'Property redirect must be noindex: {source}'
+              assert f'<link rel="canonical" href="{target}">' in html, f'Property redirect canonical mismatch: {source}'
+              assert f'<meta http-equiv="refresh" content="0;url={target}">' in html, f'Property redirect meta refresh missing: {source}'
+              assert f'var target = {json.dumps(target)};' in html, f'Property redirect JS fallback missing: {source}'
+              assert target_path.exists(), f'Property redirect target missing: {target_path}'
+          print(f"Property redirect validation passed: {len(property_redirects)} static aliases")
           print(f"Static property page validation passed: {report['total']} pages; {report['byCategory']}")
           PY
 
