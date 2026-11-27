@@ -90,18 +90,44 @@ function rel(fromDepth,url){
   const prefix='../'.repeat(fromDepth);
   return prefix + path + (target.search ? target.search : '');
 }
+function citySeoProfile(city){
+  const rows=city.rows;
+  const counts=new Map(TABLES.map(meta=>[meta.type,rows.filter(row=>row.type===meta.type).length]));
+  const ordered=TABLES.filter(meta=>(counts.get(meta.type)||0)>0)
+    .sort((a,b)=>(counts.get(b.type)||0)-(counts.get(a.type)||0));
+  const topServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels & PGs':meta.type==='tiffin'?'Tiffin & Mess':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
+  const areaCounts=new Map();
+  for(const row of rows){if(row.area)areaCounts.set(row.area,(areaCounts.get(row.area)||0)+1);}
+  const topAreas=[...areaCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,5).map(([name])=>name);
+  const coachingCounts=new Map();
+  for(const row of rows){for(const slug of matchedCoachings(row)){const coach=coachingBySlug(slug);if(coach)coachingCounts.set(coach.name,(coachingCounts.get(coach.name)||0)+1);}}
+  const coachingNames=[...coachingCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,4).map(([name])=>name);
+  return {counts,ordered,topServices,topAreas,coachingNames};
+}
 function titleForCity(city, rows){
-  const types=new Set(rows.map(row=>row.type));
-  let services=[];
-  if(types.has('hostel')) services.push('Hostel');
-  if(types.has('library')) services.push('Library');
-  if(types.has('tiffin')) services.push('Tiffin');
-  if(types.has('cafe')) services.push('Cafe');
-  if(types.has('bookstore')) services.push('Bookstore');
-  if(key(city)==='kota' && types.has('hostel') && types.has('tiffin')) services=['PG','Hostel','Tiffin'];
-  else if(services.length>2) services=services.slice(0,2);
-  const phrase=services.length?services.join(' & '):'Student Services';
-  return 'Best '+phrase+' Near Coaching in '+city+' | StudentHubHelp';
+  const profile=citySeoProfile({name:city,rows});
+  const types=profile.ordered.map(meta=>meta.type);
+  let phrase=profile.topServices.join(' & ')||'Student Services';
+  if(key(city)==='kota' && types.includes('hostel') && types.includes('tiffin')) phrase='PG, Hostel & Tiffin';
+  return 'Best '+phrase+' in '+city+' | StudentHubHelp';
+}
+function descriptionForCity(city){
+  const profile=citySeoProfile(city);
+  const categories=profile.ordered.map(meta=>meta.label+' ('+profile.counts.get(meta.type)+')');
+  const areaText=profile.topAreas.length?' across '+profile.topAreas.slice(0,3).join(', '):'';
+  return 'Explore '+city.rows.length+' active, verified student listings in '+city.name+': '+categories.join(', ')+areaText+'. Compare locations and service details on StudentHubHelp.';
+}
+function h1ForCity(city){
+  const profile=citySeoProfile(city);
+  const phrase=profile.topServices.length?profile.topServices.join(', '):'Student Services';
+  return phrase+' in '+city.name;
+}
+function cityContentIntro(city){
+  const profile=citySeoProfile(city);
+  const categoryText=profile.ordered.map(meta=>meta.label+' ('+profile.counts.get(meta.type)+')').join(', ');
+  const areaText=profile.topAreas.length?'The strongest listing clusters in this directory include '+profile.topAreas.join(', ')+'.':'Browse the available city listings and open each result for its locality details.';
+  const coachingText=profile.coachingNames.length?'Listing details also reference coaching or landmark searches such as '+profile.coachingNames.join(', ')+'. These are data-based associations, not guaranteed distance claims.':'Use the address and map details on each listing to check proximity to your institute or destination.';
+  return '<section class="section city-overview"><h2>Student services and local areas in '+esc(city.name)+'</h2><p>StudentHubHelp currently lists '+city.rows.length+' active, verified student-service records in '+esc(city.name)+'. The directory mix is '+esc(categoryText)+'.</p><p>'+esc(areaText)+'</p><p>'+esc(coachingText)+'</p><p>Compare the individual listing pages for available facilities, pricing, timings and contact details, then confirm current availability directly with the provider.</p></section>';
 }
 function titleForCategory(meta, city){
   const singular={hostel:'Hostel & PG',tiffin:'Tiffin & Mess',library:'Library',cafe:'Cafe',bookstore:'Bookstore'}[meta.type]||meta.label;
@@ -260,11 +286,11 @@ for(const c of cities.values()){
   const cityCoachingSlugs=[...new Set(c.rows.flatMap(matchedCoachings))];
   const coachingLinks=cityCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc(entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
   const coachingSection=coachingLinks?'<section class="section"><h2>Coaching institutes & landmarks in '+esc(c.name)+'</h2><p>Explore student properties connected to coaching institutes and local landmarks through verified listing data.</p><div class="links">'+coachingLinks+'</div></section>':'';
-  const body=coachingSection+'<section class="section"><h2>Student-focused listings in '+esc(c.name)+'</h2><div class="grid">'+[...eligibleGroups.entries()].map(([type,rows])=>{const m=TABLES.find(x=>x.type===type);return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+rows.length+' verified and active listing'+(rows.length===1?'':'s')+'.</p><a href="'+esc(type+'/')+'">View '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('')+'</div></section>'+
-    '<section class="section"><h2>Explore '+esc(c.name)+'</h2><div class="links">'+categoryLinks+'</div></section>'+
-    '<section class="section"><h2>Verified properties</h2><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
+  const body=cityContentIntro(c)+coachingSection+'<section class="section"><h2>Student-focused listings in '+esc(c.name)+'</h2><div class="grid">'+[...eligibleGroups.entries()].map(([type,rows])=>{const m=TABLES.find(x=>x.type===type);return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+rows.length+' active, verified listings in '+esc(c.name)+'.</p><a href="'+esc(type+'/')+'">Explore '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('')+'</div></section>'+
+    '<section class="section"><h2>Explore categories in '+esc(c.name)+'</h2><p>Choose a service category to compare listings available in this city.</p><div class="links">'+categoryLinks+'</div></section>'+
+    '<section class="section"><h2>Student listings across '+esc(c.name)+'</h2><p>Open a listing to review its address, facilities and service information. Confirm details with the provider before visiting.</p><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
   const cityPath=cityDir+'/index.html'; expected.add(cityPath); generated.push(cityUrl);
-  await write(cityPath,shell({title:titleForCity(c.name,c.rows),description:'Find '+c.rows.length+' verified student listings in '+c.name+', including '+categoryNames(c.rows).join(', ')+'. Browse by category and locality on StudentHubHelp.',canonical:cityUrl,h1:'StudentHubHelp in '+c.name,crumbs:[{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}],itemRows:c.rows,faqItems:faqForCity(c)}));
+  await write(cityPath,shell({title:titleForCity(c.name,c.rows),description:descriptionForCity(c),canonical:cityUrl,h1:h1ForCity(c),crumbs:[{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}],itemRows:c.rows,faqItems:faqForCity(c)}));
 
   for(const meta of TABLES){
     const rows=c.rows.filter(r=>r.type===meta.type); if(rows.length<LOCATION_MIN_PROPERTIES) continue;
