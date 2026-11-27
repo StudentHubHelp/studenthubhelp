@@ -172,8 +172,9 @@ await cleanupGeneratedPages();
 await mkdir(GENERATED_ROOT,{recursive:true});
 
 const all=(await Promise.all(TABLES.map(fetchRows))).flat();
-const areaRedirects=new Map();
-for(const row of all){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),cityPath='/'+slug(cityName)+'/';const oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area);if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/';const to=row.area&&newAreaSlug?cityPath+newAreaSlug+'/':cityPath;if(from!==to)areaRedirects.set(from,to);}
+const areaRedirects=new Map(),areaCounts=new Map();
+for(const row of all){if(!row.area)continue;const areaKey=slug(canonicalCityName(row.city))+'|'+key(row.area);areaCounts.set(areaKey,(areaCounts.get(areaKey)||0)+1);}
+for(const row of all){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/';const oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+key(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/';const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityPath;if(from!==to)areaRedirects.set(from,to);}
 const cities=new Map();
 for(const row of all){
   const canonicalCity=canonicalCityName(row.city);
