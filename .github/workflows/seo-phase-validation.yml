@@ -81,6 +81,10 @@ jobs:
                   assert schema_end >= 0, f'Unclosed base schema: {page}'
                   schema=json.loads(html[schema_start:schema_end])
                   assert schema.get('@type') == 'WebPage', f'Invalid base WebPage schema: {page}'
+                  entity=schema.get('mainEntity')
+                  assert isinstance(entity, dict), f'Missing static listing entity schema: {page}'
+                  assert entity.get('@type') in {'LodgingBusiness','FoodEstablishment','Library','CafeOrCoffeeShop','BookStore','Thing'}, f'Invalid listing entity type: {page}'
+                  assert entity.get('url','').startswith('https://studenthubhelp.in/properties/'), f'Listing schema URL is not canonical: {page}'
                   assert 'function setSEO(r)' in html, f'Missing dynamic listing SEO schema builder: {page}'
                   assert all(kind in html for kind in ('LodgingBusiness','FoodEstablishment','Library','CafeOrCoffeeShop','BookStore')), f'Missing category-specific schema types: {page}'
                   assert 'href="/property-index.html"' in html, f'Missing property directory link: {page}'
