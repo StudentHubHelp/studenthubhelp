@@ -173,37 +173,3 @@ jobs:
           git push origin HEAD:main
 
 # SEO/GEO/AEO automation is intentionally UI-neutral: no layout, theme, search controls or DB schema changes.
-
-          index=Path('index.html').read_text(encoding='utf-8')
-          assert 'studenthubhelp-site-graph' in index
-          assert 'studenthubhelp-aeo-schema' in index
-          assert 'StudentHubHelp Student Finder' in index
-          assert 'https://www.instagram.com/studenthubhelp/' in index
-          html_document_is_well_formed(index, 'index.html')
-
-          prop=Path('property-details.html').read_text(encoding='utf-8')
-          assert 'js/property-seo-upgrade.js' in prop and 'propertySchema' in prop
-          html_document_is_well_formed(prop, 'property-details.html')
-
-          for name in ['pg-finder.html','tiffin-finder.html','library-finder.html','cafe-finder.html','bookstore-finder.html']:
-              text=Path(name).read_text(encoding='utf-8')
-              assert 'js/seo-location-entities.js' in text and 'js/finder-power-search.js' in text, name
-              assert 'studenthubhelp-aeo-schema' in text, name
-              html_document_is_well_formed(text, name)
-
-          robots=Path('robots.txt').read_text(encoding='utf-8')
-          for private_path in ['/admin/','/auth.html','/owner-dashboard.html','/student-dashboard.html','/partner-dashboard.html']:
-              assert f'Disallow: {private_path}' in robots, private_path
-          assert 'Sitemap: https://studenthubhelp.in/sitemap.xml' in robots
-          print('Advanced SEO/AEO validation passed. Sitemap generation and validation remain owned by sitemap-sync.yml.')
-
-      - name: Commit SEO/GEO/AEO upgrade
-        run: |
-          git config user.name 'StudentHubHelp SEO Optimizer'
-          git config user.email 'actions@github.com'
-          git add '*.html' scripts/seo-aeo-build.mjs js/property-seo-upgrade.js js/seo-location-entities.js robots.txt .github/workflows/seo-indexing-upgrade.yml
-          git diff --cached --quiet || git commit -m 'feat: complete SEO GEO AEO upgrade [seo-optimized]'
-          git pull --rebase -X ours origin main
-          git push origin HEAD:main
-
-# SEO/GEO/AEO automation is intentionally UI-neutral: no layout, theme, search controls or DB schema changes.
