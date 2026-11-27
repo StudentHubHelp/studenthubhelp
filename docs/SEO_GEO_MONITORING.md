@@ -91,5 +91,5 @@ The audit observed `/mobile.css` as a render-blocking stylesheet; the file exist
 - XML sitemap validation found 746 unique URLs: 620 property URLs and 126 other page URLs.
 - 208 locality alias paths now have GitHub Pages-compatible static redirect stubs with an immediate meta refresh, canonical target and JavaScript fallback. The accompanying 416 slash/no-slash rules in `_redirects` are retained for Cloudflare Pages compatibility. **GitHub Pages does not apply `_redirects` as HTTP 301 rules**, so these current stubs are client-side/HTML redirects, not server-side 301 responses.
 - Sitemap validation also verifies each redirect stub and its destination.
-- Search, nearby-search and sitemap-generation workflows passed; the GitHub Pages build for the generated sitemap commit is being finalized.
+- Search, nearby-search and sitemap-generation workflows passed. The SEO/AEO schema workflow also passed, and GitHub Pages build/deploy completed successfully on 2026-11-27.
 - Google indexing and AI citations remain unverified until crawlers revisit the deployed URLs.
