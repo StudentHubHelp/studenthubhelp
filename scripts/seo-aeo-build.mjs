@@ -1,4 +1,5 @@
 // SEO/GEO: schema generation is content-only; no visible page layout is changed.
+// Trigger the main-branch SEO indexing workflow after its HTML closing-tag validator was corrected.
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 
 const BASE = (process.env.BASE_URL || 'https://studenthubhelp.in/').replace(/\/+$/, '') + '/';
