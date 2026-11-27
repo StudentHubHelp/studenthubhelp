@@ -183,7 +183,7 @@ function buildHtml({ type, slug, name, city, area, address, description, details
   <section class="skeleton-hero">
     <div class="skeleton-gallery"><div class="skeleton-block skeleton-main-photo"></div><div class="skeleton-side"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div></div>
     <div class="skeleton-info">
-      <div class="skeleton-title-row"><div class="skeleton-title-copy"><div class="skeleton-block skeleton-kicker"></div><h1 class="property-title skeleton-title-text">${escapeHtml(propertyName)}</h1><p class="skeleton-line-text">${escapeHtml([area, city].filter(Boolean).join(', '))}</p></div><div class="skeleton-block skeleton-verified"></div></div>
+      <div class="skeleton-title-row"><div class="skeleton-title-copy"><div class="skeleton-block skeleton-kicker"></div><div class="property-title skeleton-title-text" role="heading" aria-level="1">${escapeHtml(propertyName)}</div><p class="skeleton-line-text">${escapeHtml([area, city].filter(Boolean).join(', '))}</p></div><div class="skeleton-block skeleton-verified"></div></div>
       <div class="skeleton-trust"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
       <div class="skeleton-actions"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
     </div>
