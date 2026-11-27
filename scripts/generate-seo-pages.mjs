@@ -145,7 +145,7 @@ async function fetchRows(meta){
       const savedSlug=String(raw.slug||'').trim();
       const duplicateRedirect=LEGACY_REDIRECTS['/properties/'+meta.type+'/'+savedSlug+'/'];
       if(duplicateRedirect && duplicateRedirect.type===meta.type && duplicateRedirect.slug && duplicateRedirect.slug!==savedSlug) continue;
-      out.push({...raw,type:meta.type,categoryLabel:meta.label,icon:meta.icon,city,area,name});
+      out.push({...raw,type:meta.type,categoryLabel:meta.label,icon:meta.icon,city,area,areaRaw:label(raw.area||raw.service_area),name});
     }
     if(batch.length<1000) break; offset+=1000;
   }
@@ -166,11 +166,14 @@ async function cleanupGeneratedPages(dir='.') {
   }
 }
 async function write(path,content){await mkdir(path.split('/').slice(0,-1).join('/')||'.',{recursive:true});await writeFile(path,content,'utf8');}
+async function writeAreaRedirects(redirects){const start='# BEGIN STUDENTHUBHELP GENERATED SEO AREA REDIRECTS',end='# END STUDENTHUBHELP GENERATED SEO AREA REDIRECTS';const existing=await readFile('_redirects','utf8').catch(()=> '');let preserved=existing;const a=existing.indexOf(start),b=existing.indexOf(end);if(a>=0&&b>a)preserved=(existing.slice(0,a)+'\n'+existing.slice(b+end.length)).trim();const rules=[...redirects.entries()].flatMap(([from,to])=>[from+' '+to+' 301',from.replace(/\/$/,'')+' '+to+' 301']);const block=[start,...rules,end].join('\n');await write('_redirects',[preserved,block].filter(Boolean).join('\n')+'\n');}
 
 await cleanupGeneratedPages();
 await mkdir(GENERATED_ROOT,{recursive:true});
 
 const all=(await Promise.all(TABLES.map(fetchRows))).flat();
+const areaRedirects=new Map();
+for(const row of all){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),cityPath='/'+slug(cityName)+'/';const oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area);if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/';const to=row.area&&newAreaSlug?cityPath+newAreaSlug+'/':cityPath;if(from!==to)areaRedirects.set(from,to);}
 const cities=new Map();
 for(const row of all){
   const canonicalCity=canonicalCityName(row.city);
@@ -248,5 +251,6 @@ for(const c of cities.values()){
 }
 
 const uniqueGenerated = [...new Set(generated)];
-await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected]}, null, 2)+'\n');
+await writeAreaRedirects(areaRedirects);
+await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to}))}, null, 2)+'\n');
 console.log(JSON.stringify({verifiedActiveProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
