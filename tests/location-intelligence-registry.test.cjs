@@ -26,6 +26,7 @@ assert.equal(window.StudentHubQueryParser.parse('library near Bangalore', rows).
 assert.equal(window.StudentHubQueryParser.parse('tiffin in Gurgaon', rows).city, 'gurugram');
 assert.equal(window.StudentHubQueryParser.parse('tiffin in Gurgaon', rows).facilities.includes('food'), false);
 assert.equal(window.StudentHubQueryParser.parse('hostel with mess', rows).facilities.includes('food'), true);
+assert.equal(window.StudentHubQueryParser.parse({rawKeyword:'hostel near me',nearbyMode:true}, rows).nearbyMode, true);
 
 const aliasRows = [
   { id: 'delhi-hostel', __category: 'hostel', name: 'Saket Student Hostel', city: 'Delhi', area: 'Saket' },
@@ -44,6 +45,11 @@ assert.deepEqual(
 assert.deepEqual(
   Array.from(window.StudentHubUniversalSearch.search(aliasRows, 'tiffin in Gurgaon', data => data).map(row => row.id)),
   ['gurgaon-tiffin']
+);
+const nearbyRows = rows.filter(row => row.id === 'h1' || row.id === 'h2').map(row => ({ ...row, __userDistanceKm: 1 }));
+assert.deepEqual(
+  Array.from(window.StudentHubUniversalSearch.search(nearbyRows, { rawKeyword: 'hostel near me', nearbyMode: true }, data => data).map(row => row.id)).sort(),
+  ['h1', 'h2']
 );
 
 console.log('Location intelligence registry tests passed.');
