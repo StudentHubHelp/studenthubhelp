@@ -213,7 +213,9 @@ function faqForArea(area,city){const cats=categoryNames(area.rows);return [{ques
 function faqForCoaching(coach,city,rows){const cats=categoryNames(rows);return [{question:'What student services are linked to '+coach.name+' in '+city.name+'?',answer:'This page groups '+rows.length+' active listings whose stored name, area, address or nearby-landmark details mention '+coach.name+'. Categories shown include '+cats.join(', ')+'.'},{question:'Are distances from '+coach.name+' independently verified?',answer:'No. Coaching and landmark matches are based on information stored with each listing. Confirm the exact distance and route on a map and with the provider.'}];}
 function faqHtml(items){if(!items.length)return '';return '<section class="section seo-faq" aria-label="Common questions"><h2>Quick answers</h2>'+items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join('')+'</section>';}
 function metaDescription(value){let text=String(value||'').replace(/\s+/g,' ').trim();if(text.length<110)text+=' Browse active listings on StudentHubHelp and check each listing status.';if(text.length>160)text=text.slice(0,157).replace(/\s+\S*$/,'').trim()+'…';return text;}
+function limitTitle(value,max=60){const suffix=' | StudentHubHelp';let title=String(value||'').replace(/\\s+/g,' ').trim();if(title.length<=max)return title;let base=title.endsWith(suffix)?title.slice(0,-suffix.length).trim():title;const room=max-suffix.length;while(base.length>room)base=base.replace(/\\s+\\S*$/,'').trim();if(!base)base=title.slice(0,room).trim();return base+suffix;}
 function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[],itemRows=[],faqItems=[],cityHub=false}){
+  title=limitTitle(title);
   const canonicalAbs=canonical;
   const cityEntity=about.find(entity=>entity['@type']==='City');
   const liveCityMarkup=cityHub&&cityEntity?'<section class="section live-city-directory" id="cityHub" data-city="'+esc(cityEntity.name)+'" data-state="'+esc(cityEntity.containedInPlace?.name||'')+'"><h2>Live student listings in '+esc(cityEntity.name)+'</h2><p>Live counts and recent active listings are loaded from the public directory. Check each listing for current details.</p><div id="liveStats" class="live-stats"><span>Loading live directory…</span></div><div id="areaGrid" class="live-areas"></div><div id="liveCards" class="live-cards"></div></section>':'';
@@ -341,7 +343,7 @@ for(const c of cities.values()){
   if(CITY_HTML_ROOTS.has(cs)&&cs!=='sikar'){
     const htmlPath=cs+'.html';
     let cityHtml=await readFile(htmlPath,'utf8');
-    const pageTitle=titleForCity(c.name,c.rows);
+    const pageTitle=limitTitle(titleForCity(c.name,c.rows));
     const pageDescription=metaDescription(descriptionForCity(c));
     const replaceTag=(source,pattern,value)=>source.replace(pattern,()=>value);
     cityHtml=replaceTag(cityHtml,/<title>[\s\S]*?<\/title>/i,'<title>'+esc(pageTitle)+'</title>');
