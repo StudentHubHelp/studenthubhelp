@@ -86,7 +86,10 @@ jobs:
           run({rawKeyword:'wifi library',explicitLocation:'Jagatpura',selectedCategory:'',source:'global-search'},['l1']);
           run({rawKeyword:'Jaipur mein WiFi wali library',explicitLocation:'',selectedCategory:'',source:'global-search'},['l1']);
           run({rawKeyword:'bookstores',explicitLocation:'Sikar',selectedCategory:'',source:'global-search'},['b1']);
-          run({rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},['h1','h2']);
+          const noGpsNearby=window.StudentHubUniversalSearch.search(rows,{rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},data=>data);
+          assert('near-me with no GPS distance metadata stays empty',noGpsNearby.length===0);
+          const nearbyRows=rows.filter(r=>r.id==='h1'||r.id==='h2').map(r=>({...r,__userDistanceKm:1}));
+          run({rawKeyword:'hostel near me',explicitLocation:'',selectedCategory:'',nearbyMode:true},['h1','h2'],nearbyRows);
           assert('near-me without GPS mode is not broadened',window.StudentHubUniversalSearch.search(rows,'hostel near me',data=>data).length===0);
           const partialRanking=window.StudentHubUniversalSearch.search(rows,{rawKeyword:'hostels',explicitLocation:'Piprali Road',selectedCategory:''},data=>data.slice(0,1));
           assert('ranking cannot discard strict matches',partialRanking.length===2,JSON.stringify(partialRanking.map(x=>x.id)));
