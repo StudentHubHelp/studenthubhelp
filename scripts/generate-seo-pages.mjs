@@ -28,12 +28,14 @@ const PREVIOUS_PAGE_STATE = JSON.parse(await readFile('data/seo-page-state.json'
 const PREVIOUS_SEO_MANIFEST = JSON.parse(await readFile('seo-generated-manifest.json', 'utf8').catch(() => '{"expected":[]}'));
 const NEXT_PAGE_STATE = { version:1, generatedAt:new Date().toISOString(), pages:{ ...(PREVIOUS_PAGE_STATE.pages || {}) } };
 const PENDING_ELIGIBILITY_REDIRECTS = new Map();
+const PAGE_DECISION_CACHE = new Map();
 const ROOT_CITY_REDIRECTS = [];
 const SEO_RUN_NOW = new Date();
 const AREA_PROFILE_MAP = new Map((SEO_AREA_PROFILES.profiles || []).map(profile => [profile.citySlug+'|'+profile.areaSlug, profile]));
 function getAreaProfile(citySlug, areaName) { return AREA_PROFILE_MAP.get(citySlug+'|'+slug(areaName)) || null; }
 function decideAndStorePage(identity, metrics, relativePath, assumePreviouslyIndexed=false) {
   const stateKey = pageStateKey(identity);
+  if(PAGE_DECISION_CACHE.has(stateKey)) return PAGE_DECISION_CACHE.get(stateKey);
   const manifestPath = './' + relativePath.replace(/^\.\//,'');
   const manifestIndexed = (PREVIOUS_SEO_MANIFEST.expected || []).includes(manifestPath);
   const previous = NEXT_PAGE_STATE.pages[stateKey] || ((manifestIndexed || assumePreviouslyIndexed) ? { status:'index', everIndexed:true } : null);
@@ -45,6 +47,7 @@ function decideAndStorePage(identity, metrics, relativePath, assumePreviouslyInd
     path:relativePath,
     evaluatedAt:SEO_RUN_NOW.toISOString()
   };
+  PAGE_DECISION_CACHE.set(stateKey,decision);
   return decision;
 }
 const CITY_ALIAS_MAP = new Map();
@@ -303,6 +306,25 @@ function faqForCity(city){
 function categoryQuickAnswer(meta,city,rows){
   const verified=rows.filter(row=>row.verified===true).length;
   return '<section class="section quick-answer" aria-label="Quick answer"><h2>Quick answer</h2><p>StudentHubHelp lists '+rows.length+' active '+esc(meta.label.toLowerCase())+' records in '+esc(city.name)+'. '+verified+' are marked verified in saved directory data. Compare provider-supplied addresses, facilities and timings on each card. Open View Details for full information, and confirm current prices, availability, terms and exact routes directly with the provider before visiting or paying.</p></section>';
+}
+function areaFallbackSections(meta,city,rows,citySlug){
+  const grouped=new Map();
+  for(const row of rows){if(!row.area)continue;const name=label(row.area),areaSlug=slug(name);if(!areaSlug)continue;if(!grouped.has(areaSlug))grouped.set(areaSlug,{name,rows:[]});grouped.get(areaSlug).rows.push(row);}
+  const sections=[...grouped.entries()].sort((a,b)=>b[1].rows.length-a[1].rows.length||a[1].name.localeCompare(b[1].name)).map(([areaSlug,area])=>{
+    const profile=getAreaProfile(citySlug,area.name);
+    const decision=decideAndStorePage(
+      {type:'areaCategory',citySlug,categorySlug:meta.type,areaSlug},
+      {listingCount:area.rows.length,verifiedCount:area.rows.filter(row=>row.verified===true).length,profileComplete:profile?.profileComplete===true},
+      citySlug+'/'+meta.type+'/'+areaSlug+'/index.html'
+    );
+    if(decision.status==='redirect') PENDING_ELIGIBILITY_REDIRECTS.set('/'+citySlug+'/'+meta.type+'/'+areaSlug+'/',parentPath({type:'areaCategory',citySlug,categorySlug:meta.type}));
+    if(decision.linkable){
+      const url=rel(2,new URL(citySlug+'/'+meta.type+'/'+areaSlug+'/',BASE).href);
+      return '<section class="section area-category-link"><h3>'+esc(area.name)+'</h3><p>'+area.rows.length+' active '+esc(meta.label.toLowerCase())+' records in this area.</p><p><a href="'+esc(url)+'">Open '+esc(meta.label)+' guide for '+esc(area.name)+' →</a></p></section>';
+    }
+    return '<section class="section area-fallback"><h3>'+esc(meta.label)+' in '+esc(area.name)+'</h3><p>'+area.rows.length+' active records are included here; a separate area page is not currently eligible for indexing.</p><div class="grid">'+area.rows.map(row=>card(row,2)).join('')+'</div></section>';
+  });
+  return sections.length?'<section class="section area-wise-listings"><h2>Area-wise '+esc(meta.label)+' listings in '+esc(city.name)+'</h2>'+sections.join('')+'</section>':'';
 }
 function categoryIntro(meta,city,rows){
   const areaCounts=new Map();
@@ -789,7 +811,7 @@ for(const c of cities.values()){
     const relatedCoachings=[...new Set(rows.flatMap(matchedCoachings))];
     const relatedCoachingLinks=relatedCoachings.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
     const coachingContext=relatedCoachingLinks?'<section class="section"><h2>Nearby coaching & landmarks</h2><div class="links">'+relatedCoachingLinks+'</div></section>':'';
-    const body=categoryQuickAnswer(meta,c,rows)+categoryIntro(meta,c,rows)+areaLandmarkTable({name:meta.label,rows},c)+'<section class="section"><h2>'+esc(meta.label)+' listings in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+coachingContext+
+    const body=categoryQuickAnswer(meta,c,rows)+categoryIntro(meta,c,rows)+areaFallbackSections(meta,c,rows,cs)+areaLandmarkTable({name:meta.label,rows},c)+'<section class="section"><h2>'+esc(meta.label)+' listings in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+coachingContext+
       '<section class="section"><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(2,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
     const p=dir+'/index.html'; expected.add(p); if(decision.sitemap) generated.push(url);
     await write(p,shell({title:titleForCategory(meta,c.name),description:'Find '+rows.length+' active '+meta.label.toLowerCase()+' in '+c.name+'. Compare local areas, facilities and provider details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,rows)}},{'@type':'Thing','name':meta.label}],itemRows:rows,faqItems:faqForCategory(meta,c,rows),robots:decision.robots}));
