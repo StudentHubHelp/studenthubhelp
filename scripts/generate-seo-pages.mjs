@@ -246,10 +246,10 @@ function card(row,depth,options={}){
   const status=row.verified===true?'<span class="badge">✓ Verified</span>':'<span class="badge">Active · Details Provided</span>';
   const details=options.details?[
     row.timing?'<p><strong>Timing:</strong> '+esc(row.timing)+'</p>':'',
-    row.phone?'<p><strong>Phone:</strong> <a href="tel:'+esc(String(row.phone).replace(/[^+\\d]/g,''))+'">'+esc(row.phone)+'</a></p>':'',
+    row.phone?'<p><strong>Phone:</strong> <a href="tel:'+esc(String(row.phone).replace(/[^+0-9]/g,''))+'">'+esc(row.phone)+'</a></p>':'',
     row.facilities?'<p><strong>Facilities:</strong> '+esc(row.facilities)+'</p>':''
   ].join(''):'';
-  return '<article class="property-card"><a class="property-card-image" href="'+esc(href)+'"><img src="'+esc(image)+'" alt="'+esc((row.name||'Student property')+' listing image')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\\''+esc(banner)+'\\'"></a><h3><a href="'+esc(href)+'">'+esc(row.name||'Student property')+'</a></h3>'+
+  return '<article class="property-card"><a class="property-card-image" href="'+esc(href)+'"><img src="'+esc(image)+'" alt="'+esc((row.name||'Student property')+' listing image')+'" loading="lazy" decoding="async"></a><h3><a href="'+esc(href)+'">'+esc(row.name||'Student property')+'</a></h3>'+
     (bits.length?'<p>📍 '+esc(bits.join(' • '))+'</p>':'')+details+
     '<p>'+status+'</p><p><a href="'+esc(href)+'">View Details →</a></p></article>';
 }
