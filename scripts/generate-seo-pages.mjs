@@ -1064,7 +1064,7 @@ for(const cs of CITY_HTML_ROOTS){
   const city=cities.get(cs);
   const latestCityUpdate=(city?.rows||[]).map(row=>row.updated_at||row.created_at||'').filter(Boolean).sort().at(-1);
   if(latestCityUpdate){
-    html=html.replace(/<script\\s+type=["']application\\/ld\\+json["']>([\\s\\S]*?)<\\/script>/gi,(full,jsonText)=>{
+    html=html.replace(/<script\s+type=["']application\/ld\+json["']>([\s\S]*?)<\/script>/gi,(full,jsonText)=>{
       try{
         const data=JSON.parse(jsonText);
         const nodes=Array.isArray(data['@graph'])?data['@graph']:[data];
