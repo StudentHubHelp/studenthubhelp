@@ -701,15 +701,15 @@ for(const cs of CITY_HTML_ROOTS){
   const cityName=city?.name || CITY_ALIAS_DATA.canonicalCities.find(item=>item.slug===cs)?.name || label(cs);
   const decision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:city?.rows.length||0},pagePath,true);
   const robots=decision.robots || 'noindex,follow';
-  html=html.replace(/<meta\\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(robots)+',max-image-preview:large,max-snippet:-1,max-video-preview:-1">');
-  if(!/<meta\\s+name=["']robots["']/i.test(html)) html=html.replace('</head>','<meta name="robots" content="'+esc(robots)+'"></head>');
+  html=html.replace(/<meta\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(robots)+',max-image-preview:large,max-snippet:-1,max-video-preview:-1">');
+  if(!/<meta\s+name=["']robots["']/i.test(html)) html=html.replace('</head>','<meta name="robots" content="'+esc(robots)+'"></head>');
   const title=limitTitle(city ? titleForCity(cityName,city.rows) : 'Student Services in '+cityName+' | StudentHubHelp');
-  html=html.replace(/<title>[\\s\\S]*?<\\/title>/i,'<title>'+esc(title)+'</title>');
+  html=html.replace(/<title>[\s\S]*?<\/title>/i,'<title>'+esc(title)+'</title>');
   if(city && city.rows.length){
     const description=metaDescription(descriptionForCity(city));
-    html=html.replace(/(<meta\\s+name=["']description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(description)+'$2');
-    html=html.replace(/(<meta\\s+property=["']og:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
-    html=html.replace(/(<meta\\s+name=["']twitter:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
+    html=html.replace(/(<meta\s+name=["']description["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(description)+'$2');
+    html=html.replace(/(<meta\s+property=["']og:title["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
+    html=html.replace(/(<meta\s+name=["']twitter:title["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
   }
   if(decision.status==='redirect') ROOT_CITY_REDIRECTS.push({from:'/'+pagePath,to:parentPath({type:'cityHub',citySlug:cs})});
   await write(pagePath,html);
