@@ -59,15 +59,13 @@ function escapeJson(value) {
 
 function buildSchema(name, html) {
   const url = canonical(html, name);
-  const title = cleanText(html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)?.[1]) || 'StudentHubHelp';
+  const title = cleanText(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]) || 'StudentHubHelp';
   const description = attr(html, 'description') || title;
   const finder = finderMap[name];
   const isHub = name === 'student-cities.html';
-  const isCityPage = /^(sikar|bengaluru|chennai|kota|delhi|patna|jhunjhunu|pune|gurugram|coimbatore|jaipur|lucknow)\\.html$/i.test(name);
+  const isCityPage = /^(sikar|bengaluru|chennai|kota|delhi|patna|jhunjhunu|pune|gurugram|coimbatore|jaipur|lucknow)\.html$/i.test(name);
   const pageType = finder || isHub || isCityPage ? 'CollectionPage' : 'WebPage';
-  const serviceId = finder
-    ? `${BASE}#${name.replace(/-finder\\.html$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-service`
-    : null;
+  const serviceId = finder ? BASE + '#' + name.replace(/-finder\.html$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-service' : null;
 
   const nodes = [];
   if (isHub) {
@@ -76,7 +74,7 @@ function buildSchema(name, html) {
       '@id': ORG_ID,
       name: 'StudentHubHelp',
       url: BASE,
-      logo: { '@type': 'ImageObject', url: `${BASE}logo.png` },
+      logo: { '@type': 'ImageObject', url: BASE + 'logo.png' },
       areaServed: { '@type': 'Country', name: 'India' },
       contactPoint: {
         '@type': 'ContactPoint',
@@ -98,7 +96,7 @@ function buildSchema(name, html) {
         '@type': 'SearchAction',
         target: {
           '@type': 'EntryPoint',
-          urlTemplate: `${BASE}global-search.html?q={search_term_string}`
+          urlTemplate: BASE + 'global-search.html?q={search_term_string}'
         },
         'query-input': 'required name=search_term_string'
       }
@@ -107,22 +105,22 @@ function buildSchema(name, html) {
 
   const pageNode = {
     '@type': pageType,
-    '@id': `${url}#webpage`,
+    '@id': url + '#webpage',
     url,
     name: title,
     description,
     inLanguage: 'en-IN',
     isPartOf: { '@id': SITE_ID },
     publisher: { '@id': ORG_ID },
-    breadcrumb: { '@id': `${url}#breadcrumb` }
+    breadcrumb: { '@id': url + '#breadcrumb' }
   };
-  if (isHub) pageNode.mainEntity = { '@id': `${url}#cities` };
+  if (isHub) pageNode.mainEntity = { '@id': url + '#cities' };
   nodes.push(pageNode);
 
-  const crumbNav = html.match(/<nav\\b[^>]*(?:aria-label=["']Breadcrumb["']|class=["'][^"']*breadcrumb[^"']*)[^>]*>([\\s\\S]*?)<\\/nav>/i);
+  const crumbNav = html.match(/<nav\b[^>]*(?:aria-label=["']Breadcrumb["']|class=["'][^"']*breadcrumb[^"']*)[^>]*>([\s\S]*?)<\/nav>/i);
   const crumbItems = [];
   if (crumbNav) {
-    for (const match of crumbNav[1].matchAll(/<a\\b[^>]*href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/gi)) {
+    for (const match of crumbNav[1].matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
       try {
         crumbItems.push({
           '@type': 'ListItem',
@@ -132,7 +130,7 @@ function buildSchema(name, html) {
         });
       } catch {}
     }
-    const current = crumbNav[1].match(/<(?:span|strong)[^>]*aria-current=["']page["'][^>]*>([\\s\\S]*?)<\\/(?:span|strong)>/i);
+    const current = crumbNav[1].match(/<(?:span|strong)[^>]*aria-current=["']page["'][^>]*>([\s\S]*?)<\/(?:span|strong)>/i);
     if (current) {
       crumbItems.push({
         '@type': 'ListItem',
@@ -145,21 +143,21 @@ function buildSchema(name, html) {
   if (!crumbItems.length) {
     crumbItems.push(
       { '@type': 'ListItem', position: 1, name: 'StudentHubHelp', item: BASE },
-      { '@type': 'ListItem', position: 2, name: title.replace(/\\s*[|•].*$/, '').trim() || title, item: url }
+      { '@type': 'ListItem', position: 2, name: title.replace(/\s*[|•].*$/, '').trim() || title, item: url }
     );
   }
   nodes.push({
     '@type': 'BreadcrumbList',
-    '@id': `${url}#breadcrumb`,
+    '@id': url + '#breadcrumb',
     itemListElement: crumbItems
   });
 
   if (isHub) {
-    const cityCards = [...html.matchAll(/<article\\b[^>]*class=["'][^"']*city-card[^"']*["'][^>]*>([\\s\\S]*?)<\\/article>/gi)];
+    const cityCards = [...html.matchAll(/<article\b[^>]*class=["'][^"']*city-card[^"']*["'][^>]*>([\s\S]*?)<\/article>/gi)];
     const cityItems = cityCards.map((match, index) => {
       const block = match[1];
-      const link = block.match(/<h3\\b[^>]*>[\\s\\S]*?<a\\b[^>]*href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/i)
-        || block.match(/<a\\b[^>]*href=["']([^"']+\\.html)["'][^>]*>([\\s\\S]*?)<\\/a>/i);
+      const link = block.match(/<h3\b[^>]*>[\s\S]*?<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i)
+        || block.match(/<a\b[^>]*href=["']([^"']+\.html)["'][^>]*>([\s\S]*?)<\/a>/i);
       if (!link) return null;
       try {
         return {
@@ -167,7 +165,7 @@ function buildSchema(name, html) {
           position: index + 1,
           item: {
             '@type': 'WebPage',
-            name: cleanText(link[2]) || cleanText(block.match(/<h3\\b[^>]*>([\\s\\S]*?)<\\/h3>/i)?.[1]),
+            name: cleanText(link[2]) || cleanText(block.match(/<h3\b[^>]*>([\s\S]*?)<\/h3>/i)?.[1]),
             url: new URL(link[1], BASE).href
           }
         };
@@ -178,20 +176,20 @@ function buildSchema(name, html) {
     if (cityItems.length) {
       nodes.push({
         '@type': 'ItemList',
-        '@id': `${url}#cities`,
+        '@id': url + '#cities',
         name: 'StudentHubHelp city guide pages',
         numberOfItems: cityItems.length,
         itemListElement: cityItems
       });
     }
   } else if (isCityPage) {
-    const listingCards = [...html.matchAll(/<article\\b[^>]*class=["'][^"']*listing-card[^"']*["'][^>]*>([\\s\\S]*?)<\\/article>/gi)];
+    const listingCards = [...html.matchAll(/<article\b[^>]*class=["'][^"']*listing-card[^"']*["'][^>]*>([\s\S]*?)<\/article>/gi)];
     const listingItems = listingCards.map((match, index) => {
       const block = match[1];
-      if (/<span\\b[^>]*class=["'][^"']*status[^"']*["'][^>]*>\\s*External\\s*<\\/span>/i.test(block)) return null;
-      const name = cleanText(block.match(/<h3\\b[^>]*>([\\s\\S]*?)<\\/h3>/i)?.[1]);
-      const link = block.match(/<a\\b[^>]*class=["'][^"']*detail-link[^"']*["'][^>]*href=["']([^"']+)["']/i)
-        || block.match(/<a\\b[^>]*href=["']([^"']*properties\\/[^"']+)["']/i);
+      if (/<span\b[^>]*class=["'][^"']*status[^"']*["'][^>]*>\s*External\s*<\/span>/i.test(block)) return null;
+      const name = cleanText(block.match(/<h3\b[^>]*>([\s\S]*?)<\/h3>/i)?.[1]);
+      const link = block.match(/<a\b[^>]*class=["'][^"']*detail-link[^"']*["'][^>]*href=["']([^"']+)["']/i)
+        || block.match(/<a\b[^>]*href=["']([^"']*properties\/[^"']+)["']/i);
       if (!name || !link) return null;
       try {
         return {
@@ -208,12 +206,12 @@ function buildSchema(name, html) {
       }
     }).filter(Boolean);
     if (listingItems.length) {
-      const itemListId = `${url}#listings`;
+      const itemListId = url + '#listings';
       pageNode.mainEntity = { '@id': itemListId };
       nodes.push({
         '@type': 'ItemList',
         '@id': itemListId,
-        name: `Selected StudentHubHelp listings in ${title.replace(/\\s*[|•].*$/, '').trim()}`,
+        name: 'Selected StudentHubHelp listings in ' + title.replace(/\s*[|•].*$/, '').trim(),
         description: 'Selected static listing cards shown on this city guide; this is not the complete city inventory.',
         numberOfItems: listingItems.length,
         itemListElement: listingItems
@@ -235,14 +233,14 @@ function buildSchema(name, html) {
     });
   }
 
-  const details = [...html.matchAll(/<details\\b[^>]*>([\\s\\S]*?)<\\/details>/gi)];
-  const hasFaqHeading = /frequently\\s+asked\\s+questions|\\bFAQs?\\b/i.test(cleanText(html));
+  const details = [...html.matchAll(/<details\b[^>]*>([\s\S]*?)<\/details>/gi)];
+  const hasFaqHeading = /frequently\s+asked\s+questions|\bFAQs?\b/i.test(cleanText(html));
   if (details.length && hasFaqHeading) {
     const questions = [];
     for (const match of details.slice(0, 20)) {
       const block = match[0];
-      const question = cleanText(block.match(/<summary\\b[^>]*>([\\s\\S]*?)<\\/summary>/i)?.[1]);
-      const answer = cleanText(block.replace(/<summary\\b[^>]*>[\\s\\S]*?<\\/summary>/i, ''));
+      const question = cleanText(block.match(/<summary\b[^>]*>([\s\S]*?)<\/summary>/i)?.[1]);
+      const answer = cleanText(block.replace(/<summary\b[^>]*>[\s\S]*?<\/summary>/i, ''));
       if (question && answer) {
         questions.push({
           '@type': 'Question',
@@ -254,7 +252,7 @@ function buildSchema(name, html) {
     if (questions.length) {
       nodes.push({
         '@type': 'FAQPage',
-        '@id': `${url}#faq`,
+        '@id': url + '#faq',
         url,
         mainEntity: questions
       });
