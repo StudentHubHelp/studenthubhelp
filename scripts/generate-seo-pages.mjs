@@ -1021,11 +1021,9 @@ if (sikarCity && !existingSikarPage.includes('<!-- STUDENT_CITY_STATIC_V2 -->'))
 }
 
 for(const [from,to] of PENDING_ELIGIBILITY_REDIRECTS) areaRedirects.set(from,to);
-for(const [from,to] of PENDING_ELIGIBILITY_REDIRECTS) areaRedirects.set(from,to);
 const redirectPages=await writeAreaRedirects(areaRedirects,expected);
 const redirectUrls=new Set(redirectPages.filter(item=>item.from.startsWith('/sikar/')).map(item=>new URL(item.from,BASE).href));
 const uniqueGenerated=[...new Set(generated)].filter(url=>!redirectUrls.has(url));
 await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to})), redirectPages}, null, 2)+'\n');
-await write('data/seo-page-state.json', JSON.stringify(NEXT_PAGE_STATE, null, 2)+'\n');
 await write('data/seo-page-state.json', JSON.stringify(NEXT_PAGE_STATE, null, 2)+'\n');
 console.log(JSON.stringify({activeProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
