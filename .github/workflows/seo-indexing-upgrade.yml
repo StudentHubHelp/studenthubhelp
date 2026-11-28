@@ -179,7 +179,7 @@ jobs:
               city_match=re.search(r'<script id="studenthubhelp-aeo-schema" type="application/ld\+json">([\s\S]*?)</script>', city_html)
               assert city_match, f'Missing city JSON-LD: {city}'
               city_graph=json.loads(city_match.group(1)).get('@graph', [])
-              city_types={node.get('@type') for node in city_graph}
+              city_types={kind for node in city_graph for kind in (node.get('@type') if isinstance(node.get('@type'), list) else [node.get('@type')])}
               assert {'CollectionPage','BreadcrumbList','FAQPage'} <= city_types, f'Missing city collection / breadcrumb / FAQ schema: {city}'
               if re.search(r'<article\b[^>]*class=["\'][^"\']*listing-card', city_html):
                   assert 'ItemList' in city_types, f'Missing static listing ItemList: {city}'

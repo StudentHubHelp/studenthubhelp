@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
-const BASE = (process.env.BASE_URL || 'https://studenthubhelp.in/').replace(/\\/+$/, '') + '/';
+const BASE = (process.env.BASE_URL || 'https://studenthubhelp.in/').replace(/\/+$/, '') + '/';
 const data = JSON.parse(await readFile('data/city-area-guides.json', 'utf8'));
 const esc = value => String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const url = (city, area) => new URL(city.slug + '/areas/' + area.slug + '/', BASE).href;

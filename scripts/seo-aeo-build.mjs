@@ -63,7 +63,7 @@ function buildSchema(name, html) {
   const description = attr(html, 'description') || title;
   const finder = finderMap[name];
   const isHub = name === 'student-cities.html';
-  const isCityPage = /^(sikar|bengaluru|chennai|kota|delhi|patna|jhunjhunu|pune|gurugram|coimbatore|jaipur|lucknow)\.html$/i.test(name);
+  const isCityPage = /^(sikar|bengaluru|chennai|kota|delhi|patna|jhunjhunu|pune|gurugram|coimbatore|jaipur|lucknow|ahmedabad|hyderabad)\.html$/i.test(name);
   const pageType = finder || isHub || isCityPage ? 'CollectionPage' : 'WebPage';
   const serviceId = finder ? BASE + '#' + name.replace(/-finder\.html$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-service' : null;
 
