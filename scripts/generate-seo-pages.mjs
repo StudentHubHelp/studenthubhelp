@@ -324,6 +324,39 @@ function categoryQuickAnswer(meta,city,rows){
   const verified=rows.filter(row=>row.verified===true).length;
   return '<section class="section quick-answer" aria-label="Quick answer"><h2>Quick answer</h2><p>StudentHubHelp lists '+rows.length+' active '+esc(meta.label.toLowerCase())+' records in '+esc(city.name)+'. '+verified+' are marked verified in saved directory data. Compare provider-supplied addresses, facilities and timings on each card. Open View Details for full information, and confirm current prices, availability, terms and exact routes directly with the provider before visiting or paying.</p></section>';
 }
+function profileReferenceTable(profile){
+  if(!profile) return '';
+  const refs=[
+    ...(profile.landmarks||[]).map(name=>({kind:'Local reference',name})),
+    ...(profile.coachingNearby||[]).map(name=>({kind:'Coaching reference',name}))
+  ];
+  if(!refs.length) return '';
+  return '<section class="section profile-reference-table"><h2>Local reference points</h2><div class="table-scroll"><table><thead><tr><th>Type</th><th>Name</th><th>Distance</th></tr></thead><tbody>'+
+    refs.map(ref=>'<tr><td>'+esc(ref.kind)+'</td><td>'+esc(ref.name)+'</td><td>Not verified</td></tr>').join('')+
+    '</tbody></table></div><p class="muted">Distances and travel times are not published unless independently verified.</p></section>';
+}
+function categoryComparisonTable(meta,rows){
+  const priceValue=row=>meta.type==='hostel'?(row.monthly_rent_range||row.monthly_rent||row.monthly_fee||row.price):meta.type==='tiffin'?(row.monthly_fee||row.price):meta.type==='library'?(row.monthly_fee||row.daily_fee||row.price):meta.type==='cafe'?(row.price_range||row.price):row.price;
+  const hasPrice=rows.some(row=>priceValue(row)!==null&&priceValue(row)!==undefined&&String(priceValue(row)).trim()!=='');
+  const headers=['Provider','Area',...(hasPrice?['Provider-supplied price / fee']:[]),'Timing','Verification','Facilities'];
+  const bodyRows=rows.slice(0,20).map(row=>{
+    const price=priceValue(row);
+    const timing=row.timing||row.timings||([row.opening_time,row.closing_time].filter(Boolean).join(' – '));
+    const facilities=row.facilitiesNormalized?.join(', ')||label(row.facilities)||'Not supplied';
+    const cells=[esc(row.name),esc(row.area||'Not supplied'),...(hasPrice?[esc(price??'Not supplied')]:[]),esc(timing||'Not supplied'),row.verified===true?'Verified':'Details Provided',esc(facilities)];
+    return '<tr>'+cells.map(value=>'<td>'+value+'</td>').join('')+'</tr>';
+  }).join('');
+  return '<section class="section comparison-table-section"><h2>Compare '+esc(meta.label)+' details</h2><div class="table-scroll"><table><thead><tr>'+headers.map(value=>'<th>'+esc(value)+'</th>').join('')+'</tr></thead><tbody>'+bodyRows+'</tbody></table></div><p class="muted">Prices, timings and facilities are shown only when supplied in the provider record. Confirm current details directly before visiting or paying.</p></section>';
+}
+function cityComparisonTable(city,categoryDecisions){
+  const rows=TABLES.map(meta=>{
+    const listings=city.rows.filter(row=>row.type===meta.type);
+    const decision=categoryDecisions.get(meta.type);
+    const guide=decision?.linkable?'<a href="'+esc(meta.type+'/')+'">Open guide</a>':'No separate indexable guide yet';
+    return '<tr><td>'+meta.icon+' '+esc(meta.label)+'</td><td>'+listings.length+'</td><td>'+listings.filter(row=>row.verified===true).length+'</td><td>'+guide+'</td></tr>';
+  }).join('');
+  return '<section class="section comparison-table-section"><h2>Compare student-service categories in '+esc(city.name)+'</h2><div class="table-scroll"><table><thead><tr><th>Category</th><th>Active listings</th><th>Verified</th><th>Guide</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+}
 function areaFallbackSections(meta,city,rows,citySlug){
   const grouped=new Map();
   for(const row of rows){if(!row.area)continue;const name=label(row.area),areaSlug=slug(name);if(!areaSlug)continue;if(!grouped.has(areaSlug))grouped.set(areaSlug,{name,rows:[]});grouped.get(areaSlug).rows.push(row);}
