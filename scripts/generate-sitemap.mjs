@@ -183,7 +183,7 @@ for (const [type, table] of Object.entries(TABLES)) {
     const loc = await canonicalPropertyUrl(type, row, preferredLoc);
     const propertyPagePath = new URL(preferredLoc).pathname.replace(/^\/+/, '') + 'index.html';
     const pageLastmod = gitLastModified(propertyPagePath);
-    const lastmodCandidates = [validDate(row.updated_at), validDate(row.created_at), generatedPageLastmod]
+    const lastmodCandidates = [validDate(row.updated_at), validDate(row.created_at), pageLastmod]
       .filter(Boolean)
       .sort();
     const lastmod = lastmodCandidates.at(-1) || null;
@@ -292,7 +292,7 @@ if (generatedManifest && Array.isArray(generatedManifest.generated)) {
     const canonical = canonicalTag?.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
     if (canonical !== loc) throw new Error('Generated SEO page canonical mismatch for ' + loc + '; found ' + (canonical || 'missing'));
     const generatedPageLastmod = pageLastmod(generatedPath,html);
-    pages.set(loc, pageLastmod);
+    pages.set(loc, generatedPageLastmod);
   }
 }
 const pageEntries = [...pages.entries()].map(([loc, lastmod]) => ({ loc, lastmod })).sort((a, b) => a.loc.localeCompare(b.loc));
