@@ -284,7 +284,66 @@ function faqForCategory(meta,city,rows){
     {question:'How can I find one near a landmark?',answer:'Search the landmark or coaching institute name in Global Search. Any distance stated in listing details is provider-supplied and should be confirmed using a map and the provider.'}
   ];
 }
-function faqForArea(area,city){const cats=categoryNames(area.rows),countText=area.rows.length===1?'1 active listing':area.rows.length+' active listings';return [{question:'What student services are listed around '+area.name+', '+city.name+'?',answer:'The current directory shows '+countText+' across '+cats.join(', ')+' around '+area.name+', '+city.name+'.'},{question:'How do I confirm the exact location?',answer:'Open the individual listing, review its address and map details, and confirm the route and availability with the provider before visiting.'}];}
+function areaLandmarkMatches(area){
+  return [...new Set(area.rows.flatMap(matchedCoachings))]
+    .map(slug=>coachingBySlug(slug))
+    .filter(Boolean);
+}
+function areaQuickAnswer(area,city){
+  const counts=new Map();
+  for(const row of area.rows) counts.set(row.type,(counts.get(row.type)||0)+1);
+  const categorySummary=TABLES.filter(meta=>counts.has(meta.type)).map(meta=>counts.get(meta.type)+' '+meta.label.toLowerCase()).join(', ');
+  const verified=area.rows.filter(row=>row.verified===true).length;
+  return '<section class="section quick-answer" aria-label="Quick answer"><h2>Quick answer</h2><p>StudentHubHelp lists '+area.rows.length+' active student-service records around '+esc(area.name)+', '+esc(city.name)+': '+esc(categorySummary)+'. '+verified+' records are marked verified in the saved directory data. Compare the provider-supplied addresses, facilities and timings on each listing. Confirm current prices, availability, exact routes and travel distances directly with the provider before visiting or paying.</p></section>';
+}
+function areaContentIntro(area,city){
+  const counts=new Map();
+  for(const row of area.rows) counts.set(row.type,(counts.get(row.type)||0)+1);
+  const categories=TABLES.filter(meta=>counts.has(meta.type)).map(meta=>meta.label+' ('+counts.get(meta.type)+')');
+  const names=[...new Set(area.rows.map(row=>label(row.name)).filter(Boolean))].slice(0,6);
+  const facilities=[...new Set(area.rows.flatMap(row=>String(row.facilities||'').split(/[,;|]/).map(label).filter(Boolean)))].slice(0,8);
+  const timings=[...new Set(area.rows.map(row=>label(row.timing)).filter(Boolean))].slice(0,4);
+  const landmarks=areaLandmarkMatches(area);
+  const verified=area.rows.filter(row=>row.verified===true).length;
+  const categoryGuidance={
+    hostel:'For hostels and PGs, compare room type, sharing arrangements, facilities, published charges and the provider’s rules.',
+    tiffin:'For tiffin and mess services, compare meal options, plan duration, delivery coverage and stated timings.',
+    library:'For libraries, compare access hours, seating information, study facilities and published fees.',
+    cafe:'For cafes, check the address, opening hours and the services actually listed by the provider.',
+    bookstore:'For bookstores, check book categories, stationery availability and whether the item you need is in stock.'
+  };
+  const guidance=[...new Set(area.rows.map(row=>categoryGuidance[row.type]).filter(Boolean))];
+  const nameText=names.length?'Examples in the current records include '+names.join(', ')+'.':'Individual listing names are available in the cards below.';
+  const facilityText=facilities.length?'Provider records mention facilities such as '+facilities.join(', ')+'. These details are shown as supplied and may need confirmation.':'The current records do not contain consistent facility details, so check each listing page or contact the provider for specific requirements.';
+  const timingText=timings.length?'Some records include timing information, including '+timings.join('; ')+'. Timings can change, so confirm before travelling.':'Timings are not consistently supplied across these records; contact the provider to confirm current operating hours.';
+  const landmarkText=landmarks.length?'Names such as '+landmarks.map(item=>item.name).join(', ')+' appear in listing names, addresses or nearby-landmark fields. These are text matches only, not independent confirmation that a provider is nearby. No travel distance is inferred from these mentions.':'The current listing fields do not provide a reliable, independently verified landmark-distance dataset for this area. Use the address and map link on each property page to check the route.';
+  return '<section class="section area-overview"><h2>About student services in '+esc(area.name)+', '+esc(city.name)+'</h2>'+
+    '<p>The StudentHubHelp directory currently contains '+area.rows.length+' active listing records associated with '+esc(area.name)+', '+esc(city.name)+'. They cover '+esc(categories.join(', '))+'. '+verified+' records are marked verified in the saved directory data; the remaining records are presented without a verification claim. This is a directory snapshot, not a guarantee of live availability.</p>'+
+    '<p>'+esc(nameText)+' Each card links to its individual details page, where students can review the provider-supplied address and any available contact or service information. '+esc(facilityText)+'</p>'+
+    '<p>'+esc(timingText)+' '+esc(landmarkText)+'</p>'+
+    '<h3>What to compare before choosing</h3><ul>'+guidance.map(item=>'<li>'+esc(item)+'</li>').join('')+'<li>Compare the exact address, total cost, terms and current availability with the provider before making a payment.</li></ul>'+
+    '<p>Listing counts and category totals are calculated from active records associated with this locality. They do not represent verified market coverage, walking distance or travel time. Use the listing’s map or directions link to assess the route that matters to you.</p></section>';
+}
+function areaLandmarkTable(area){
+  const landmarks=areaLandmarkMatches(area);
+  if(!landmarks.length) return '';
+  return '<section class="section area-landmarks"><h2>Landmarks referenced in listing details</h2><p>These names were matched against listing text. They are not independently verified proximity claims, and no distance is available in the source records.</p><div class="table-wrap"><table><thead><tr><th>Landmark or coaching name</th><th>Source match</th><th>Distance</th></tr></thead><tbody>'+
+    landmarks.map(item=>'<tr><td>'+esc(item.name)+'</td><td>Listing name, address or nearby-landmark field</td><td>Not provided / not verified</td></tr>').join('')+
+    '</tbody></table></div></section>';
+}
+function faqForArea(area,city){
+  const cats=categoryNames(area.rows),countText=area.rows.length===1?'1 active listing':area.rows.length+' active listings';
+  const verified=area.rows.filter(row=>row.verified===true).length;
+  const facilities=[...new Set(area.rows.flatMap(row=>String(row.facilities||'').split(/[,;|]/).map(label).filter(Boolean)))].slice(0,5);
+  const timings=area.rows.filter(row=>row.timing).length;
+  return [
+    {question:'What student services are listed around '+area.name+', '+city.name+'?',answer:'The current directory shows '+countText+' across '+cats.join(', ')+' around '+area.name+', '+city.name+'.'},
+    {question:'How many listings are marked verified?',answer:verified+' of '+area.rows.length+' active records are marked verified in the saved StudentHubHelp directory data. Check the badge on each card and confirm details with the provider.'},
+    {question:'Which facilities and timings are available?',answer:facilities.length?'The listing records mention '+facilities.join(', ')+'. '+timings+' records include timing information. Check each property page because details vary by provider.':'Facilities and timings are not consistently available in the saved records. Review each listing and contact the provider to confirm.'},
+    {question:'Are nearby landmark distances verified?',answer:'No verified distance field is available in these listing records. Landmark names, where shown, are text matches from listing details only. Check the map and confirm the route directly before visiting.'},
+    {question:'How can I compare listings before choosing?',answer:'Open each View Details page and compare the address, category-specific facilities, timings, published charges and contact details. Confirm current availability and terms directly with the provider before paying.'}
+  ];
+}
 function faqForCoaching(coach,city,rows){const cats=categoryNames(rows),countText=rows.length===1?'1 active listing':rows.length+' active listings';return [{question:'What student services are linked to '+coach.name+' in '+city.name+'?',answer:'This page groups '+countText+' whose stored name, area, address or nearby-landmark details mention '+coach.name+'. Categories shown include '+cats.join(', ')+'.'},{question:'Are distances from '+coach.name+' independently verified?',answer:'No. Coaching and landmark matches are based on information stored with each listing. Confirm the exact distance and route on a map and with the provider.'}];}
 function faqHtml(items){if(!items.length)return '';return '<section class="section seo-faq" aria-label="Common questions"><h2>Quick answers</h2>'+items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join('')+'</section>';}
 function metaDescription(value){let text=String(value||'').replace(/\s+/g,' ').trim();if(text.length<110)text+=' Browse active listings on StudentHubHelp and check each listing status.';if(text.length>160)text=text.slice(0,157).replace(/\s+\S*$/,'').trim()+'…';return text;}
@@ -548,7 +607,8 @@ for(const c of cities.values()){
     const areaCoachingSlugs=[...new Set(a.rows.flatMap(matchedCoachings))];
     const areaCoachingLinks=areaCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
     const areaCoachingSection=areaCoachingLinks?'<section class="section"><h2>Nearby coaching & landmarks</h2><p>Coaching and landmark links are derived from names found in active listing details, including nearby-coaching and landmark fields.</p><div class="links">'+areaCoachingLinks+'</div></section>':'';
-    const body='<section class="section"><h2>Active student properties in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+a.rows.map(r=>card(r,2)).join('')+'</div></section>'+areaCoachingSection+
+    const body=areaQuickAnswer(a,c)+areaContentIntro(a,c)+areaLandmarkTable(a)+
+      '<section class="section"><h2>Active student properties in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+a.rows.map(r=>card(r,2)).join('')+'</div></section>'+areaCoachingSection+
       '<section class="section"><h2>Categories</h2><div class="links">'+groupLinks+'</div></section>'+
       '<p><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
