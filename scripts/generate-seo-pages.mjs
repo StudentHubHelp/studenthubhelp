@@ -1170,7 +1170,7 @@ const uniqueGenerated=[...new Set(generated)].filter(url=>!redirectUrls.has(url)
 const studentCitiesDecision=decideAndStorePage({type:'studentCitiesHub',citySlug:'all'},{cityCount:CITY_HTML_ROOTS.size},'student-cities.html',true);
 const studentCitiesHtml=await readFile('student-cities.html','utf8').catch(()=>null);
 if(studentCitiesHtml){
-  const updated=studentCitiesHtml.replace(/<meta\\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(studentCitiesDecision.robots||'index,follow')+'">');
+  const updated=studentCitiesHtml.replace(/<meta\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(studentCitiesDecision.robots||'index,follow')+'">');
   await write('student-cities.html',updated);
 }
 await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to})), redirectPages}, null, 2)+'\n');
