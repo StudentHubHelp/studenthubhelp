@@ -10,7 +10,10 @@ const categoryLinks = [
 ];
 function page(city, area) {
   const canonical = url(city, area);
-  const title = (area.name + ', ' + city.name + ' Student Area Guide | StudentHubHelp').slice(0,60);
+  const titleSuffix = ' | StudentHubHelp';
+  const titleWords = (area.name + ', ' + city.name + ' Student Guide').split(/\s+/);
+  while (titleWords.length && titleWords.join(' ').length + titleSuffix.length > 60) titleWords.pop();
+  const title = titleWords.join(' ') + titleSuffix;
   const description = ('Verified location context for ' + area.name + ', ' + city.name + '. See the official source, student decision checklist and live directory search.').slice(0,160);
   const sourceLinks = area.sourceUrls.map((source, i) => '<li><a href="' + esc(source) + '" target="_blank" rel="noopener noreferrer">Open source ' + (i+1) + ' ↗</a></li>').join('');
   const search = '/global-search.html?q=' + encodeURIComponent(area.name + ' ' + city.name);
