@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { buildListingSelect, normalizeListingRecord, SEO_LISTING_TABLES } from '../scripts/seo-listing-data.mjs';
+assert.equal(Object.keys(SEO_LISTING_TABLES).length,5);
+assert.ok(buildListingSelect('library').includes('open_24_hours'));
+assert.ok(buildListingSelect('hostel').includes('monthly_rent'));
+assert.ok(buildListingSelect('tiffin').includes('service_name'));
+const row=normalizeListingRecord('library',{id:1,name:'Test Library',city:'SIKAR',area:'Piprali Road',status:'active',verified:true,open_24_hours:true,facilities:['AC','Wi-Fi'],monthly_fee:'900',updated_at:'2026-11-20T00:00:00Z'});
+assert.equal(row.active,true); assert.equal(row.verified,true); assert.equal(row.is24x7,true); assert.equal(row.priceValue,900); assert.deepEqual(row.facilitiesNormalized,['AC','Wi-Fi']);
+assert.throws(()=>buildListingSelect('unknown'));
+console.log('SEO listing data adapter tests passed.');
