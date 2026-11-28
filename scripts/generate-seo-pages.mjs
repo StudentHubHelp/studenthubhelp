@@ -284,6 +284,7 @@ function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[],item
   const premiumCityPrefixes=['/bengaluru/','/chennai/','/patna/','/jhunjhunu/','/gurugram/','/coimbatore/','/delhi/','/jaipur/','/pune/','/lucknow/'];
   const premiumCityRoots=new Set(['/sikar.html','/bengaluru.html','/chennai.html','/kota.html','/delhi.html','/patna.html','/jhunjhunu.html','/pune.html','/gurugram.html','/coimbatore.html','/jaipur.html','/lucknow.html']);
   const canonicalPath = new URL(canonicalAbs).pathname;
+  const sikarPage = canonicalPath.startsWith('/sikar/');
   const premiumLocation = premiumLocationPaths.has(canonicalPath) || premiumCityRoots.has(canonicalPath) || premiumCityPrefixes.some(prefix=>canonicalPath.startsWith(prefix)) || canonicalPath.startsWith('/sikar/') || canonicalPath.startsWith('/kota/');
   const home=rel(depth,BASE);
   const breadcrumb=crumbs.filter((c,i)=>!(i===0&&c.name==='Home')).map((c,i,items)=>i===items.length-1?'<span>'+esc(c.name)+'</span>':'<a href="'+esc(rel(depth,c.url))+'">'+esc(c.name)+'</a>').join(' <span>›</span> ');
