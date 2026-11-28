@@ -915,10 +915,21 @@ for(const c of cities.values()){
       const areaCategoryLinks=[...new Set(a.rows.map(row=>row.type))]
         .filter(type=>areaCategoryDecisions.get(type)?.linkable)
         .map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('../'+type+'/'+as+'/')+'">'+m.icon+' '+esc(m.label)+' in '+esc(a.name)+'</a>';}).join('');
-      const body=areaQuickAnswer(a,c)+editorialIntro+areaLandmarkTable(a,c)+
-        '<section class="section"><h2>Active student listings in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+a.rows.map(r=>card(r,2)).join('')+'</div></section>'+areaCoachingSection+
+      const areaCategorySections=TABLES.map(meta=>{
+        const items=a.rows.filter(row=>row.type===meta.type);
+        if(!items.length) return '';
+        const decision=areaCategoryDecisions.get(meta.type);
+        const seeAll=decision?.linkable?'<p><a href="'+esc('../'+meta.type+'/'+as+'/')+'">See all '+esc(meta.label)+' in '+esc(a.name)+' →</a></p>':'';
+        return '<section class="section area-category-preview"><h3>'+meta.icon+' '+esc(meta.label)+' in '+esc(a.name)+'</h3><div class="grid">'+items.slice(0,3).map(row=>card(row,2)).join('')+'</div>'+seeAll+'</section>';
+      }).join('');
+      const areaMapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a.name+', '+c.name);
+      const areaMapSection=profile?.latitude&&profile?.longitude
+        ? '<section class="section"><h2>Area map</h2><iframe title="Map of '+esc(a.name)+', '+esc(c.name)+'" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q='+encodeURIComponent(profile.latitude+','+profile.longitude)+'&output=embed"></iframe></section>'
+        : '<section class="section"><h2>Find '+esc(a.name)+' on the map</h2><p>Open a map search for this locality. It is a locality-level search, not a verified property pin or travel-time estimate.</p><p><a href="'+esc(areaMapUrl)+'" target="_blank" rel="noopener noreferrer">View '+esc(a.name)+' on Google Maps →</a></p></section>';
+      const body=areaQuickAnswer(a,c)+editorialIntro+profileReferenceTable(profile)+areaLandmarkTable(a,c)+
+        '<section class="section"><h2>Student listings by category in '+esc(a.name)+'</h2>'+areaCategorySections+'</section>'+areaCoachingSection+areaMapSection+
         (cityCategoryLinks?'<section class="section"><h2>City categories</h2><div class="links">'+cityCategoryLinks+'</div></section>':'')+
-        (areaCategoryLinks?'<section class="section"><h2>Explore categories in this area</h2><div class="links">'+areaCategoryLinks+'</div></section>':'')+
+        (areaCategoryLinks?'<section class="section"><h2>Explore all eligible categories in this area</h2><div class="links">'+areaCategoryLinks+'</div></section>':'')+
         '<p><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
       const url=new URL(cs+'/'+as+'/',BASE).href;
       expected.add(areaHubPath); if(areaHubDecision.sitemap) generated.push(url);
