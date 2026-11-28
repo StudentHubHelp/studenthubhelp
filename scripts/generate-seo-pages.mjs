@@ -361,9 +361,9 @@ function areaFeeSummary(area){
 function areaQuickAnswer(area,city){
   const counts=new Map();
   for(const row of area.rows) counts.set(row.type,(counts.get(row.type)||0)+1);
-  const categorySummary=TABLES.filter(meta=>counts.has(meta.type)).map(meta=>counts.get(meta.type)+' '+meta.label.toLowerCase()).join(', ');
+  const categorySummary=TABLES.filter(meta=>counts.has(meta.type)).slice(0,2).map(meta=>counts.get(meta.type)+' '+meta.label.toLowerCase()).join(', ');
   const verified=area.rows.filter(row=>row.verified===true).length;
-  return '<section class="section quick-answer" aria-label="Quick answer"><h2>Quick answer</h2><p>StudentHubHelp lists '+area.rows.length+' active student-service records around '+esc(area.name)+', '+esc(city.name)+': '+esc(categorySummary)+'. '+verified+' records are marked verified in the saved directory data. Compare the provider-supplied addresses, facilities and timings on each listing. Confirm current prices, availability, exact routes and travel distances directly with the provider before visiting or paying.</p></section>';
+  return '<section class="section quick-answer" aria-label="Quick answer"><h2>Quick answer</h2><p>StudentHubHelp lists '+area.rows.length+' active student-service records around '+esc(area.name)+', '+esc(city.name)+': '+esc(categorySummary)+'. '+verified+' records are marked verified in saved directory data. Compare each provider’s address, facilities and timings, then confirm current price, availability and route directly with the provider before visiting.</p></section>';
 }
 function areaContentIntro(area,city){
   const counts=new Map();
