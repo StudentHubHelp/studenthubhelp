@@ -34,8 +34,7 @@ alter table public.areas
   add column if not exists profile_reviewed_at timestamptz;
 
 create unique index if not exists areas_city_slug_slug_uidx
-  on public.areas (city_slug, slug)
-  where city_slug is not null and slug is not null;
+  on public.areas (city_slug, slug);
 
 alter table public.areas enable row level security;
 grant select on public.areas to anon, authenticated;
