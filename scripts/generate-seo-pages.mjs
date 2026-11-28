@@ -901,7 +901,9 @@ if (nawalgarhCity) {
   for (const page of nawalgarhConfig) {
     const rows=nawalgarhCity.rows.filter(row=>row.type===page.type && /nawalgarh/i.test([row.area,row.address,row.nearby_coaching,row.landmark].filter(Boolean).join(' ')))
       .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
-    if (!rows.length) continue;
+    const decision=decideAndStorePage({type:'areaCategory',citySlug:'sikar',categorySlug:page.type,areaSlug:'nawalgarh-road'},{listingCount:rows.length,verifiedCount:rows.filter(row=>row.verified===true).length,profileComplete:getAreaProfile('sikar','Nawalgarh Road')?.profileComplete===true},page.path);
+    if(decision.status==='redirect') PENDING_ELIGIBILITY_REDIRECTS.set('/'+page.path.replace(/index\\.html$/,''),parentPath({type:'areaCategory',citySlug:'sikar',categorySlug:page.type}));
+    if (!rows.length || decision.status==='omit' || decision.status==='redirect') continue;
     const verified=rows.filter(row=>row.verified===true).length;
     const description='Browse '+rows.length+' active '+page.plural+' around Nawalgarh Road, Sikar. Review provider-supplied addresses, timings, facilities and contact details on StudentHubHelp.';
     const listingCards=rows.map(row=>card(row,3,{details:true})).join('');
@@ -914,15 +916,15 @@ if (nawalgarhCity) {
       '<section class="section"><h2>Explore more in Sikar</h2><div class="links"><a href="/sikar.html">Sikar student directory</a><a href="/student-cities.html">Student Cities</a><a href="/sikar/hostel/">Hostels & PGs</a><a href="/sikar/tiffin/">Tiffin & Mess</a><a href="/sikar/library/">Libraries</a><a href="/sikar/bookstore/">Bookstores</a></div></section>';
     const faqItems=faqForArea(areaGroup,{name:'Sikar'});
     const pageHtml=shell({
-      title:'Best '+page.label+' on Nawalgarh Road, Sikar | StudentHubHelp',
+      title:page.label+' on Nawalgarh Road, Sikar | StudentHubHelp',
       description,canonical:page.url,h1:page.label+' on Nawalgarh Road, Sikar',
       crumbs:[{name:'Home',url:BASE},{name:'Student Cities',url:new URL('student-cities.html',BASE).href},{name:'Sikar',url:new URL('sikar.html',BASE).href},{name:page.label,url:page.url}],
       body,depth:3,about:[{'@type':'Place','name':'Nawalgarh Road','containedInPlace':{'@type':'City','name':'Sikar','containedInPlace':{'@type':'State','name':'Rajasthan'}}},{'@type':'Thing','name':page.label}],
-      itemRows:rows,faqItems
+      itemRows:rows,faqItems,robots:decision.robots
     });
     await write(page.path,pageHtml);
     expected.add(page.path);
-    generated.push(page.url);
+    if(decision.sitemap) generated.push(page.url);
   }
 }
 
@@ -1019,9 +1021,11 @@ if (sikarCity && !existingSikarPage.includes('<!-- STUDENT_CITY_STATIC_V2 -->'))
 }
 
 for(const [from,to] of PENDING_ELIGIBILITY_REDIRECTS) areaRedirects.set(from,to);
+for(const [from,to] of PENDING_ELIGIBILITY_REDIRECTS) areaRedirects.set(from,to);
 const redirectPages=await writeAreaRedirects(areaRedirects,expected);
 const redirectUrls=new Set(redirectPages.filter(item=>item.from.startsWith('/sikar/')).map(item=>new URL(item.from,BASE).href));
 const uniqueGenerated=[...new Set(generated)].filter(url=>!redirectUrls.has(url));
 await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to})), redirectPages}, null, 2)+'\n');
+await write('data/seo-page-state.json', JSON.stringify(NEXT_PAGE_STATE, null, 2)+'\n');
 await write('data/seo-page-state.json', JSON.stringify(NEXT_PAGE_STATE, null, 2)+'\n');
 console.log(JSON.stringify({activeProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
