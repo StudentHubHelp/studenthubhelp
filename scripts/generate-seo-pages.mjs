@@ -246,8 +246,7 @@ function cityContentIntro(city){
 }
 function titleForCategory(meta, city){
   const singular={hostel:'Hostels & PGs',tiffin:'Tiffin Services',library:'Libraries & Study Rooms',cafe:'Cafes for Students',bookstore:'Bookstores'}[meta.type]||meta.label;
-  const prefix='Best ';
-  return prefix+singular+' in '+city+' | StudentHubHelp';
+  return singular+' in '+city+' for Students | StudentHubHelp';
 }
 function titleForArea(area, city, rows, hasCoaching){
   const types=new Set(rows.map(row=>row.type));
@@ -258,12 +257,10 @@ function titleForArea(area, city, rows, hasCoaching){
   if(types.has('cafe')) names.push('Cafes');
   if(types.has('bookstore')) names.push('Bookstores');
   const category=names.slice(0,2).join(' & ')||'Student Services';
-  const prefix='Best ';
-  return prefix+category+' in '+area+', '+city+' | StudentHubHelp';
+  return 'Student Services in '+area+', '+city+' | StudentHubHelp';
 }
 function titleForCoaching(coach,city){
-  const prefix='Best Student Listings Near ';
-  return prefix+label(coach.name)+' in '+city+' | StudentHubHelp';
+  return 'Student Listings Near '+label(coach.name)+' in '+city+' | StudentHubHelp';
 }
 function card(row,depth,options={}){
   const href=rel(depth,propUrl(row));
