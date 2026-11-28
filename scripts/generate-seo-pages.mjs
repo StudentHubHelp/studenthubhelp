@@ -857,7 +857,7 @@ for(const c of cities.values()){
       const parentCategoryUrl=new URL(cs+'/'+meta.type+'/',BASE).href;
       const siblingLinks=[...new Set(a.rows.map(row=>row.type))]
         .filter(type=>type!==meta.type && areaCategoryDecisions.get(type)?.linkable)
-        .map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('../'+type+'/'+as+'/')+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
+        .map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc(rel(3,new URL(cs+'/'+type+'/'+as+'/',BASE).href))+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
       const parentLink=categoryDecisions.get(meta.type)?.linkable
         ? '<a href="'+esc(rel(3,parentCategoryUrl))+'">All '+esc(meta.label)+' in '+esc(c.name)+'</a>' : '';
       const areaHubLink=areaHubDecision.linkable
