@@ -14,7 +14,12 @@
     '.city-page .service-section',
     '.city-hub .city-card',
     '.city-hub .need',
-    '.city-hub .guide-item'
+    '.city-hub .guide-item',
+    '.city-hub .state-block',
+    '.city-hub .comparison',
+    '.city-hub .needs',
+    '.city-hub .guide',
+    '.city-hub .faq'
   ].join(',');
 
   const targets = [...document.querySelectorAll(selector)];
