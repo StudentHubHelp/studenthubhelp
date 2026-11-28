@@ -10,6 +10,12 @@ on:
       - '*.html'
       - 'scripts/generate-sitemap.mjs'
       - 'scripts/generate-seo-pages.mjs'
+      - 'scripts/seo-page-eligibility.mjs'
+      - 'scripts/seo-listing-data.mjs'
+      - 'scripts/validate-seo-architecture.mjs'
+      - 'data/seo-page-rules.json'
+      - 'data/seo-page-state.json'
+      - 'data/seo-area-profiles.json'
       - 'scripts/generate-city-area-guides.mjs'
       - 'data/city-area-guides.json'
       - 'scripts/generate-property-pages.mjs'
@@ -228,6 +234,9 @@ jobs:
               assert not any(url.endswith('/'+p) for p in private), f'Private URL in sitemap: {url}'
           print(f'Sitemap validation passed: {len(all_urls)} unique URLs across {len(sitemap_locs)} child sitemaps; {len(redirect_pages)} GitHub Pages-compatible redirect stubs validated.')
           PY
+
+      - name: Run SEO architecture lint
+        run: node scripts/validate-seo-architecture.mjs
 
       - name: Commit sitemap changes only when needed
         if: github.ref == 'refs/heads/main'
