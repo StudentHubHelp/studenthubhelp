@@ -312,8 +312,8 @@
 <div class="quick-answer"><span class="eyebrow">QUICK ANSWER</span><p>StudentHubHelp currently publishes student city guides for Sikar, Bengaluru, Chennai, Kota, Delhi, Patna, Jhunjhunu, Pune, Gurugram, Coimbatore, Jaipur and Lucknow. These guides bring together available hostel and PG, library, tiffin, cafe and bookstore listings with locality information where published. Coverage varies by city.</p></div>
 </div></section>
 <section class="directory" aria-label="Student city directory"><div class="wrap">
-<div class="tools"><label class="search"><span aria-hidden="true">⌕</span><input id="citySearch" type="search" placeholder="Search a city, state or area..." aria-label="Search student cities"></label>
-<div class="filter" role="group" aria-label="Filter cities by state"><button type="button" data-state="all" aria-pressed="true">All 12 cities</button><button type="button" data-state="Rajasthan" aria-pressed="false">Rajasthan</button><button type="button" data-state="Delhi NCR" aria-pressed="false">Delhi NCR</button><button type="button" data-state="Other states" aria-pressed="false">Other states</button></div></div>
+<div class="tools"><label class="search"><span aria-hidden="true">⌕</span><input id="citySearch" type="search" list="studentCitySuggestions" placeholder="Search a city, state or area..." aria-label="Search student cities"><datalist id="studentCitySuggestions"><option value="Kota"><option value="Sikar"><option value="Jaipur"><option value="Jhunjhunu"><option value="Delhi"><option value="Gurugram"><option value="Patna"><option value="Lucknow"><option value="Pune"><option value="Bengaluru"><option value="Chennai"><option value="Coimbatore"></datalist></label>
+<div class="filter" role="group" aria-label="Filter cities by state"><button type="button" data-state="all" aria-pressed="true">All 12 cities</button><button type="button" data-state="Rajasthan" aria-pressed="false">Rajasthan</button><button type="button" data-state="Delhi NCR" aria-pressed="false">Delhi NCR</button><button type="button" data-state="South" aria-pressed="false">South</button><button type="button" data-state="Other states" aria-pressed="false">Other</button></div></div>
 <div class="state-block" data-group="Rajasthan"><div class="state-head"><h2>Rajasthan</h2></div><div class="city-grid"><article class="city-card" data-city="sikar rajasthan piprali road charan singh nagar dhobiyon ka mohalla radhakishan pura hostels & pgs tiffin libraries cafes bookstores">
 <div class="city-card-main"><span class="city-state">Rajasthan</span><h3><a href="/sikar.html" aria-label="Sikar student hostels, PGs, libraries and local services">Sikar student hostels, PGs &amp; libraries</a></h3><p>Student accommodation, tiffin and study spaces</p><a class="city-guide-link" href="/sikar.html">Explore Sikar student guide ↗</a></div>
 <div class="city-services" aria-label="Sikar listed service categories"><span>⌂ Hostels & PGs</span><span>♨ Tiffin</span><span>▤ Libraries</span><span>☕ Cafes</span><span>▣ Bookstores</span></div>
@@ -428,7 +428,7 @@
   let visible=0;
   cards.forEach(card=>{
    const group=card.closest('.state-block').dataset.group;
-   const stateMatch=state==='all'||(state==='Other states'?group==='Other states':group===state);
+   const isSouth=/^(bengaluru|chennai|coimbatore)\\b/i.test(card.dataset.city);\n   const stateMatch=state==='all'||(state==='South'?isSouth:(state==='Other states'?(group==='Other states'&&!isSouth):group===state));
    const queryMatch=!q||card.dataset.city.includes(q);
    const show=stateMatch&&queryMatch;
    card.hidden=!show;
