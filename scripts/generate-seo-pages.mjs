@@ -369,9 +369,9 @@ function areaContentIntro(area,city){
   const counts=new Map();
   for(const row of area.rows)counts.set(row.type,(counts.get(row.type)||0)+1);
   const categories=TABLES.filter(meta=>counts.has(meta.type)).map(meta=>meta.label+' ('+counts.get(meta.type)+')');
-  const names=[...new Set(area.rows.map(row=>label(row.name)).filter(Boolean))].slice(0,3);
-  const facilities=[...new Set(area.rows.flatMap(row=>String(row.facilities||'').split(/[,;|]/).map(label).filter(value=>value&&value.length<=48&&value.split(/\s+/).length<=6)))].slice(0,4);
-  const timings=[...new Set(area.rows.map(row=>label(row.timing||row.timings)).filter(value=>value&&value.length<=36))].slice(0,2);
+  const names=[...new Set(area.rows.map(row=>label(row.name)).filter(Boolean))].slice(0,2);
+  const facilities=[...new Set(area.rows.flatMap(row=>String(row.facilities||'').split(/[,;|]/).map(label).filter(value=>value&&value.length<=48&&value.split(/\s+/).length<=6)))].slice(0,3);
+  const timings=[...new Set(area.rows.map(row=>label(row.timing||row.timings)).filter(value=>value&&value.length<=36))].slice(0,1);
   const verifiedLandmarks=verifiedLandmarksForArea(area,city);
   const feeSummary=areaFeeSummary(area).slice(0,2);
   const verified=area.rows.filter(row=>row.verified===true).length;
