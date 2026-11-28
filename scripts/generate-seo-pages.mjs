@@ -902,7 +902,7 @@ if (nawalgarhCity) {
     const rows=nawalgarhCity.rows.filter(row=>row.type===page.type && /nawalgarh/i.test([row.area,row.address,row.nearby_coaching,row.landmark].filter(Boolean).join(' ')))
       .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
     const decision=decideAndStorePage({type:'areaCategory',citySlug:'sikar',categorySlug:page.type,areaSlug:'nawalgarh-road'},{listingCount:rows.length,verifiedCount:rows.filter(row=>row.verified===true).length,profileComplete:getAreaProfile('sikar','Nawalgarh Road')?.profileComplete===true},page.path);
-    if(decision.status==='redirect') PENDING_ELIGIBILITY_REDIRECTS.set('/'+page.path.replace(/index\\.html$/,''),parentPath({type:'areaCategory',citySlug:'sikar',categorySlug:page.type}));
+    if(decision.status==='redirect') PENDING_ELIGIBILITY_REDIRECTS.set('/'+page.path.replace(/index\.html$/,''),parentPath({type:'areaCategory',citySlug:'sikar',categorySlug:page.type}));
     if (!rows.length || decision.status==='omit' || decision.status==='redirect') continue;
     const verified=rows.filter(row=>row.verified===true).length;
     const description='Browse '+rows.length+' active '+page.plural+' around Nawalgarh Road, Sikar. Review provider-supplied addresses, timings, facilities and contact details on StudentHubHelp.';
