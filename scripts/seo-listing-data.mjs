@@ -1,10 +1,10 @@
 export const SEO_LISTING_TABLES = Object.freeze({
   hostel:'hostels', tiffin:'tiffins', library:'libraries', cafe:'cafes', bookstore:'bookstores'
 });
-const COMMON = ['id','property_id','slug','name','service_name','city','area','address','image','images','nearby_coaching','landmark','latitude','longitude','description','status','verified','updated_at','created_at','phone','timing','timings','facilities','google_maps_url'];
+const COMMON = ['id','property_id','slug','name','service_name','city','area','address','image','images','nearby_coaching','landmark','latitude','longitude','description','status','verified','updated_at','created_at','phone','timing','facilities','google_maps_url'];
 const CATEGORY_FIELDS = Object.freeze({
   hostel:['monthly_rent','monthly_rent_range','monthly_fee','security_deposit','price','room_types','food_available','total_beds','available_beds','ac_available','wifi','electricity_included','water_available','laundry','parking','mess_available','mess_charge'],
-  tiffin:['monthly_fee','price','meal_type','food_type','plan_type','delivery_available','delivery_charge','breakfast_available','lunch_available','dinner_available','monthly_plan','weekly_plan','daily_plan','jain_food','home_delivery','subscription_available'],
+  tiffin:['service_area','timings','monthly_fee','price','meal_type','food_type','plan_type','delivery_available','delivery_charge','breakfast_available','lunch_available','dinner_available','monthly_plan','weekly_plan','daily_plan','jain_food','home_delivery','subscription_available'],
   library:['monthly_fee','daily_fee','open_24_hours','seating_capacity','available_seats','ac_available','wifi','charging_point','locker','parking','girls_section','boys_section','power_backup'],
   cafe:['price_range','price','opening_time','closing_time','weekly_off','delivery','takeaway','seating_capacity','wifi','ac','parking','online_order','upi_payment'],
   bookstore:['price','categories','classes','competitive_books','stationery','second_hand_books','book_rental','online_order','home_delivery','exam_books','school_books','college_books','ncert_books','photocopy','printing','lamination','spiral_binding','notes_available','opening_time','closing_time','weekly_off']
