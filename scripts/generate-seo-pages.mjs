@@ -218,40 +218,25 @@ function cityContentIntro(city){
     '<p>'+esc(coachingText)+'</p></section>';
 }
 function titleForCategory(meta, city){
-  const singular={hostel:'Hostel & PG',tiffin:'Tiffin & Mess',library:'Library',cafe:'Cafe',bookstore:'Bookstore'}[meta.type]||meta.label;
-  return 'Student '+singular+' in '+city+' | StudentHubHelp';
+  const singular={hostel:'Hostels & PGs',tiffin:'Tiffin Services',library:'Libraries & Study Rooms',cafe:'Cafes for Students',bookstore:'Bookstores'}[meta.type]||meta.label;
+  const prefix=key(city)==='sikar'?'Best ':'Student ';
+  return prefix+singular+' in '+city+' | StudentHubHelp';
 }
 function titleForArea(area, city, rows, hasCoaching){
   const types=new Set(rows.map(row=>row.type));
   const names=[];
-  if(types.has('hostel')) names.push('Hostel');
-  if(types.has('library')) names.push('Library');
-  if(types.has('tiffin')) names.push('Tiffin');
-  if(types.has('cafe')) names.push('Cafe');
-  if(types.has('bookstore')) names.push('Bookstore');
-  const suffix=' | StudentHubHelp';
-  const category=names.slice(0,2).join(' & ')||names[0]||'Student Services';
-  const makeTitle=(prefix,areaName)=>prefix+' in '+areaName+', '+city+suffix;
-  let title=makeTitle(category,area);
-  if(title.length>60){
-    const firstArea=label(area).split(',')[0].trim();
-    title=makeTitle(names[0]||'Student',firstArea);
-  }
-  if(title.length>60){
-    const prefix=names[0]||'Student';
-    const room=Math.max(5,60-suffix.length-(' in , '+city).length-prefix.length);
-    const shortArea=label(area).slice(0,room).replace(/\\s+\\S*$/,'').trim();
-    title=makeTitle(prefix,shortArea||label(area).slice(0,room).trim());
-  }
-  return title;
+  if(types.has('hostel')) names.push('Hostels & PGs');
+  if(types.has('library')) names.push('Libraries');
+  if(types.has('tiffin')) names.push('Tiffin Services');
+  if(types.has('cafe')) names.push('Cafes');
+  if(types.has('bookstore')) names.push('Bookstores');
+  const category=names.slice(0,2).join(' & ')||'Student Services';
+  const prefix=key(city)==='sikar'?'Best ':'';
+  return prefix+category+' in '+area+', '+city+' | StudentHubHelp';
 }
 function titleForCoaching(coach,city){
-  const suffix=' | StudentHubHelp';
-  const location=' in '+city;
-  const room=Math.max(1,60-suffix.length-location.length-5);
-  const name=label(coach.name);
-  const prefix='Near '+name.slice(0,room).trim();
-  return prefix+location+suffix;
+  const prefix=key(city)==='sikar'?'Best Student Listings Near ':'Near ';
+  return prefix+label(coach.name)+' in '+city+' | StudentHubHelp';
 }
 function card(row,depth){
   const href=rel(depth,propUrl(row));
