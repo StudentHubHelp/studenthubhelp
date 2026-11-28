@@ -141,10 +141,20 @@ function buildSchema(name, html) {
     }
   }
   if (!crumbItems.length) {
-    crumbItems.push(
-      { '@type': 'ListItem', position: 1, name: 'StudentHubHelp', item: BASE },
-      { '@type': 'ListItem', position: 2, name: title.replace(/\s*[|•].*$/, '').trim() || title, item: url }
-    );
+    if (isCityPage) {
+      const citySlug = name.replace(/\.html$/i, '');
+      const cityName = citySlug.charAt(0).toUpperCase() + citySlug.slice(1);
+      crumbItems.push(
+        { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
+        { '@type': 'ListItem', position: 2, name: 'Student Cities', item: BASE + 'student-cities.html' },
+        { '@type': 'ListItem', position: 3, name: cityName, item: url }
+      );
+    } else {
+      crumbItems.push(
+        { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
+        { '@type': 'ListItem', position: 2, name: title.replace(/\s*[|•].*$/, '').trim() || title, item: url }
+      );
+    }
   }
   nodes.push({
     '@type': 'BreadcrumbList',
