@@ -238,15 +238,20 @@ function titleForCoaching(coach,city){
   const prefix='Best Student Listings Near ';
   return prefix+label(coach.name)+' in '+city+' | StudentHubHelp';
 }
-function card(row,depth){
+function card(row,depth,options={}){
   const href=rel(depth,propUrl(row));
   const bits=[row.area,row.city,row.address].filter(Boolean);
   const banner=rel(depth,new URL(CATEGORY_BANNERS[row.type]||'/hostel-banner.png',BASE).href);
   const image=firstImageUrl(row)||banner;
   const status=row.verified===true?'<span class="badge">✓ Verified</span>':'<span class="badge">Active · Details Provided</span>';
-  return '<article class="property-card"><a class="property-card-image" href="'+esc(href)+'"><img src="'+esc(image)+'" alt="'+esc((row.name||'Student property')+' listing image')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\''+esc(banner)+'\'"></a><h3><a href="'+esc(href)+'">'+esc(row.name||'Student property')+'</a></h3>'+
-    (bits.length?'<p>📍 '+esc(bits.join(' • '))+'</p>':'')+
-    '<p>'+status+'</p></article>';
+  const details=options.details?[
+    row.timing?'<p><strong>Timing:</strong> '+esc(row.timing)+'</p>':'',
+    row.phone?'<p><strong>Phone:</strong> <a href="tel:'+esc(String(row.phone).replace(/[^+\\d]/g,''))+'">'+esc(row.phone)+'</a></p>':'',
+    row.facilities?'<p><strong>Facilities:</strong> '+esc(row.facilities)+'</p>':''
+  ].join(''):'';
+  return '<article class="property-card"><a class="property-card-image" href="'+esc(href)+'"><img src="'+esc(image)+'" alt="'+esc((row.name||'Student property')+' listing image')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\\''+esc(banner)+'\\'"></a><h3><a href="'+esc(href)+'">'+esc(row.name||'Student property')+'</a></h3>'+
+    (bits.length?'<p>📍 '+esc(bits.join(' • '))+'</p>':'')+details+
+    '<p>'+status+'</p><p><a href="'+esc(href)+'">View Details →</a></p></article>';
 }
 function categoryNames(rows){return [...new Set(rows.map(row=>TABLES.find(item=>item.type===row.type)?.label||row.type))].filter(Boolean);}
 function faqForCity(city){const cats=categoryNames(city.rows),verified=city.rows.filter(row=>row.verified===true).length,listingText=city.rows.length===1?'1 active listing':city.rows.length+' active listings';return [{question:'What student services can I find in '+city.name+'?',answer:'The current StudentHubHelp directory shows '+listingText+' across '+cats.join(', ')+' in '+city.name+'. '+verified+(verified===1?' listing is':' listings are')+' marked verified in the source records.'},{question:'How can I find services near a coaching institute or landmark in '+city.name+'?',answer:'Search the institute or landmark name in Global Search. Matches use location details stored with listings; confirm the exact route and current availability with the provider before visiting.'},{question:'Are the listings guaranteed to be available?',answer:'Active status reflects the latest listing status available when this page was generated. Availability and service details can change, so reconfirm directly with the provider.'}];}
@@ -327,7 +332,7 @@ async function fetchRows(meta){
   const out=[]; let offset=0;
   while(true){
     const u=new URL(SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/'+meta.table);
-    u.searchParams.set('select','id,property_id,slug,name,city,area,address,image,images,nearby_coaching,landmark,latitude,longitude,description,status,verified,updated_at,created_at');
+    u.searchParams.set('select','id,property_id,slug,name,city,area,address,image,images,nearby_coaching,landmark,latitude,longitude,description,status,verified,updated_at,created_at,phone,timing,facilities');
     u.searchParams.set('status','eq.active');
     u.searchParams.set('offset',String(offset)); u.searchParams.set('limit','1000');
     const res=await fetch(u,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
@@ -560,6 +565,46 @@ for(const c of cities.values()){
     const body='<section class="section"><h2>Student properties near '+esc(coach.name)+' in '+esc(c.name)+'</h2><p>These active listings mention this location in their name, area, address or nearby-landmark details. Listing-provided distances are not independently verified; confirm the exact route before visiting.</p><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section><section class="section"><h2>Categories</h2><div class="links">'+typeLinks+'</div></section><p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
     await write(p,shell({title:titleForCoaching(coach,c.name),description:'Find student listings linked to '+coach.name+' in '+c.name+'. Check each listing for its location details and confirm exact distance before visiting.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':entitySchemaType(coach),'name':coach.name},{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,rows)}}],itemRows:rows,faqItems:faqForCoaching(coach,c,rows)}));
+  }
+}
+
+
+/* Build static Nawalgarh Road category pages from the same active, deduplicated
+   listing records and card renderer used by generated SEO directory pages. */
+const nawalgarhCity = cities.get('sikar');
+if (nawalgarhCity) {
+  const nawalgarhConfig = [
+    { type:'hostel', path:'sikar/nawalgarh-road/hostel/index.html', url:'https://studenthubhelp.in/sikar/nawalgarh-road/hostel/', label:'Hostels & PGs', plural:'hostels and PGs' },
+    { type:'tiffin', path:'sikar/nawalgarh-road/tiffin/index.html', url:'https://studenthubhelp.in/sikar/nawalgarh-road/tiffin/', label:'Tiffin & Mess Services', plural:'tiffin and mess services' },
+    { type:'bookstore', path:'sikar/nawalgarh-road/bookstore/index.html', url:'https://studenthubhelp.in/sikar/nawalgarh-road/bookstore/', label:'Bookstores & Stationery', plural:'bookstores' },
+    { type:'library', path:'sikar/libraries/nawalgarh-road/index.html', url:'https://studenthubhelp.in/sikar/libraries/nawalgarh-road/', label:'Libraries & Study Spaces', plural:'libraries and study spaces' }
+  ];
+  for (const page of nawalgarhConfig) {
+    const rows=nawalgarhCity.rows.filter(row=>row.type===page.type && /nawalgarh/i.test([row.area,row.address,row.nearby_coaching,row.landmark].filter(Boolean).join(' ')))
+      .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+    if (!rows.length) continue;
+    const verified=rows.filter(row=>row.verified===true).length;
+    const description='Browse '+rows.length+' active '+page.plural+' around Nawalgarh Road, Sikar. Review provider-supplied addresses, timings, facilities and contact details on StudentHubHelp.';
+    const listingCards=rows.map(row=>card(row,3,{details:true})).join('');
+    const quickAnswer='<section class="section quick-answer"><h2>Quick answer</h2><p>StudentHubHelp lists '+rows.length+' active '+page.plural+' associated with Nawalgarh Road, Sikar. '+verified+(verified===1?' listing is':' listings are')+' marked verified in the directory records. Check each provider card for available address, timing, facilities and phone details.</p></section>';
+    const body=quickAnswer+
+      '<section class="section"><h2>'+esc(page.label)+' around Nawalgarh Road, Sikar</h2><p>These cards are rendered directly into the page HTML from active StudentHubHelp directory records. Fields not supplied in a record are omitted; confirm current availability and details with the provider.</p><div class="grid">'+listingCards+'</div></section>'+
+      '<section class="section"><h2>Explore more in Sikar</h2><div class="links"><a href="/sikar.html">Sikar student directory</a><a href="/student-cities.html">Student Cities</a><a href="/sikar/hostel/">Hostels & PGs</a><a href="/sikar/tiffin/">Tiffin & Mess</a><a href="/sikar/library/">Libraries</a><a href="/sikar/bookstore/">Bookstores</a></div></section>';
+    const faqItems=[
+      {question:'How many '+page.plural+' are listed around Nawalgarh Road, Sikar?',answer:'The current build contains '+rows.length+' active records associated with Nawalgarh Road in this category; '+verified+(verified===1?' is':' are')+' marked verified.'},
+      {question:'Are phone numbers and timings available for every listing?',answer:'Only phone numbers and timings present in the provider-supplied directory record are displayed. Missing details are not guessed; confirm them directly with the provider.'},
+      {question:'How can I check facilities and exact location?',answer:'Review the address and facilities shown on each card, then open View Details for the full property page and confirm the current route and availability with the provider.'}
+    ];
+    const pageHtml=shell({
+      title:'Best '+page.label+' on Nawalgarh Road, Sikar | StudentHubHelp',
+      description,canonical:page.url,h1:page.label+' on Nawalgarh Road, Sikar',
+      crumbs:[{name:'Home',url:BASE},{name:'Student Cities',url:new URL('student-cities.html',BASE).href},{name:'Sikar',url:new URL('sikar.html',BASE).href},{name:page.label,url:page.url}],
+      body,depth:3,about:[{'@type':'Place','name':'Nawalgarh Road','containedInPlace':{'@type':'City','name':'Sikar','containedInPlace':{'@type':'State','name':'Rajasthan'}}},{'@type':'Thing','name':page.label}],
+      itemRows:rows,faqItems
+    });
+    await write(page.path,pageHtml);
+    expected.add(page.path);
+    generated.push(page.url);
   }
 }
 
