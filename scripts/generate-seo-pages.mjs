@@ -1077,6 +1077,20 @@ for(const cs of CITY_HTML_ROOTS){
   }
   await write(folderPath,html);
 }
+// Every 301 target must exist after eligibility filtering; otherwise merge to its city hub.
+for(const [from,rawTarget] of [...areaRedirects.entries()]){
+  let target=rawTarget;
+  const firstSegment=target.split('/').filter(Boolean)[0]||from.split('/').filter(Boolean)[0];
+  if(target==='/'+firstSegment+'.html' && CITY_HTML_ROOTS.has(firstSegment)) target='/'+firstSegment+'/';
+  const targetFile=target.endsWith('/')?target.replace(/^\\//,'')+'index.html':target.replace(/^\\//,'');
+  let exists=expected.has(targetFile);
+  if(!exists) exists=!!(await readFile(targetFile,'utf8').catch(()=>null));
+  if(!exists){
+    const cityRoot=firstSegment+'/index.html';
+    target=expected.has(cityRoot)?'/'+firstSegment+'/':'/student-cities.html';
+  }
+  areaRedirects.set(from,target);
+}
 const redirectPages=await writeAreaRedirects(areaRedirects,expected);
 const redirectUrls=new Set(redirectPages.filter(item=>item.from.startsWith('/sikar/')).map(item=>new URL(item.from,BASE).href));
 const uniqueGenerated=[...new Set(generated)].filter(url=>!redirectUrls.has(url));
