@@ -5,7 +5,7 @@ const BASE='https://studenthubhelp.in';
 const manifest=JSON.parse(await readFile('seo-generated-manifest.json','utf8'));
 const state=JSON.parse(await readFile('data/seo-page-state.json','utf8'));
 const sitemap=await readFile('sitemap-pages.xml','utf8');
-const sitemapUrls=new Set([...sitemap.matchAll(/<loc>([^<]+)<\\/loc>/g)].map(match=>match[1].trim()));
+const sitemapUrls=new Set([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match=>match[1].trim()));
 const generated=(manifest.generated||[]).map(value=>new URL(value,BASE));
 const known=[];
 const errors=[];
@@ -14,14 +14,14 @@ const noindexPaths=new Set();
 
 const readPage=async path=>readFile(path,'utf8').catch(()=>null);
 const fileForUrl=url=>{
-  let path=decodeURIComponent(url.pathname).replace(/^\\//,'');
+  let path=decodeURIComponent(url.pathname).replace(/^\//,'');
   if(!path||path.endsWith('/')) path+='index.html';
   return path;
 };
-const textOf=value=>String(value||'').replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim();
+const textOf=value=>String(value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
 const getTag=(html,regex)=>html.match(regex)?.[1]?.trim()||'';
-const robotsOf=html=>(html.match(/<meta\\s+name=["']robots["']\\s+content=["']([^"']+)["']/i)?.[1]||'').toLowerCase();
-const canonicalOf=html=>html.match(/<link\\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i)?.[1]||html.match(/<link\\b[^>]*href=["']([^"']+)["'][^>]*rel=["']canonical["'][^>]*>/i)?.[1]||'';
+const robotsOf=html=>(html.match(/<meta\s+name=["']robots["']\s+content=["']([^"']+)["']/i)?.[1]||'').toLowerCase();
+const canonicalOf=html=>html.match(/<link\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i)?.[1]||html.match(/<link\b[^>]*href=["']([^"']+)["'][^>]*rel=["']canonical["'][^>]*>/i)?.[1]||'';
 
 function pageIdentity(url){
   const parts=url.pathname.split('/').filter(Boolean);
@@ -51,9 +51,9 @@ for(const url of generated){
   if(!identity) continue;
   const pageState=stateFor(identity);
   if(!pageState || pageState.status!=='index') errors.push('Generated URL is not in index state: '+url.href);
-  const title=textOf(getTag(html,/<title>([\\s\\S]*?)<\\/title>/i));
-  const description=textOf(getTag(html,/<meta\\s+name=["']description["']\\s+content=["']([^"']*)["']/i));
-  const h1=textOf(getTag(html,/<h1\\b[^>]*>([\\s\\S]*?)<\\/h1>/i));
+  const title=textOf(getTag(html,/<title>([\s\S]*?)<\/title>/i));
+  const description=textOf(getTag(html,/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i));
+  const h1=textOf(getTag(html,/<h1\b[^>]*>([\s\S]*?)<\/h1>/i));
   const canonical=canonicalOf(html);
   const robots=robotsOf(html);
   if(!title) errors.push('Missing title: '+url.href);
@@ -80,7 +80,7 @@ for(const url of generated){
     if(metrics.categoryCount<RULES.rules.areaHub.minCategories) errors.push('Area hub below category threshold: '+url.href);
     if(metrics.profileComplete!==true) errors.push('Area hub has no complete editorial profile: '+url.href);
   }
-  if(['cityCategory','areaCategory','areaHub'].includes(identity.type) && /Loading(?:\\s|…|\\.\\.\\.)/i.test(html)) errors.push('Indexable listing page contains Loading placeholder: '+url.href);
+  if(['cityCategory','areaCategory','areaHub'].includes(identity.type) && /Loading(?:\s|…|\.\.\.)/i.test(html)) errors.push('Indexable listing page contains Loading placeholder: '+url.href);
   if(['cityCategory','areaCategory','areaHub'].includes(identity.type)){
     const cards=(html.match(/class=["'][^"']*listing-card[^"']*["']/g)||[]).length;
     if(cards===0) errors.push('Indexable listing page has no server-rendered listing cards: '+url.href);
@@ -90,12 +90,12 @@ for(const url of generated){
 }
 
 for(const relativePath of manifest.expected||[]){
-  const path=relativePath.replace(/^\\.\\//,'');
+  const path=relativePath.replace(/^\.\//,'');
   const html=await readPage(path);
   if(!html) continue;
   if(robotsOf(html).includes('noindex')){
     const canonical=canonicalOf(html);
-    const url=canonical?new URL(canonical,BASE):new URL('/'+path.replace(/index\\.html$/,''),BASE);
+    const url=canonical?new URL(canonical,BASE):new URL('/'+path.replace(/index\.html$/,''),BASE);
     noindexPaths.add(url.pathname);
     if(sitemapUrls.has(url.href)) errors.push('Noindex page is present in sitemap: '+url.href);
   }
@@ -106,14 +106,14 @@ for(const city of ['sikar','jaipur','jhunjhunu','kota','delhi','gurugram','benga
   noindexPaths.add('/'+city+'.html');
 }
 for(const page of known){
-  for(const match of page.html.matchAll(/<a\\b[^>]*href=["']([^"']+)["'][^>]*>/gi)){
+  for(const match of page.html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi)){
     const href=match[1];
     if(!href||href.startsWith('#')||/^(?:mailto:|tel:|javascript:|data:)/i.test(href)) continue;
     let target;
     try{target=new URL(href,page.url);}catch{continue;}
     if(target.origin!==BASE) continue;
     if(noindexPaths.has(target.pathname)){
-      const isCityFolder= /^\\/(?:sikar|jaipur|jhunjhunu|kota|delhi|gurugram|bengaluru|patna|chennai|pune|coimbatore|lucknow|ahmedabad|hyderabad)\\/$/.test(target.pathname);
+      const isCityFolder= /^\/(?:sikar|jaipur|jhunjhunu|kota|delhi|gurugram|bengaluru|patna|chennai|pune|coimbatore|lucknow|ahmedabad|hyderabad)\/$/.test(target.pathname);
       if(!(isCityFolder && page.html.includes('city-cross-links'))) errors.push('Indexable page links to a noindex URL: '+page.url.href+' -> '+target.href);
     }
   }
