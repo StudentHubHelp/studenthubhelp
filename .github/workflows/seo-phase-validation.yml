@@ -10,6 +10,7 @@ on:
       - 'scripts/seo-listing-data.mjs'
       - 'tests/seo-listing-data.test.mjs'
       - 'scripts/generate-seo-pages.mjs'
+      - 'scripts/validate-seo-architecture.mjs'
       - 'bengaluru.html'
       - '.github/workflows/seo-phase-validation.yml'
   pull_request:
@@ -220,6 +221,9 @@ jobs:
                   assert f'href="/{target}/"' in city_html, f'{current} footer is missing {target} city link'
           print('Canonical city hub and 14-city footer validation passed.')
           PY
+
+      - name: Run full SEO architecture lint
+        run: node scripts/validate-seo-architecture.mjs
 
       - name: Validate generated SEO titles, descriptions and GEO answers
         run: |
