@@ -68,11 +68,10 @@ on conflict (slug) do update set
   updated_at=now();
 
 insert into public.areas (
-  id, name, city, state, city_slug, slug, intro_text, landmarks,
+  name, city, state, city_slug, slug, intro_text, landmarks,
   coaching_nearby, profile_complete, profile_source, profile_reviewed_at, is_active
 )
-select
-  coalesce(max(id),0)+1,
+values (
   'Piprali Road',
   'Sikar',
   'Rajasthan',
@@ -85,7 +84,7 @@ select
   'owner-supplied-local-context',
   '2026-11-28T00:00:00Z'::timestamptz,
   true
-from public.areas
+)
 on conflict (city_slug, slug) do update set
   name=excluded.name,
   city=excluded.city,
@@ -98,4 +97,3 @@ on conflict (city_slug, slug) do update set
   profile_reviewed_at=excluded.profile_reviewed_at,
   is_active=true,
   updated_at=now();
-
