@@ -65,7 +65,8 @@ function normalize(html, file) {
   const description = (html.match(/<meta\b(?=[^>]*\bname=["']description["'])[^>]*\bcontent=["']([^"']*)["'][^>]*>/i) || [,'Discover hostels, PGs, tiffin services, libraries, cafes and bookstores with StudentHubHelp.'])[1];
 
   const relative = path.relative(ROOT, file).split(path.sep).join('/');
-  const citySlug = relative === 'student-cities.html' ? 'Student Cities' : (!relative.includes('/') && relative.endsWith('.html') ? relative.slice(0, -5) : '');
+  const rootSlug = !relative.includes('/') && relative.endsWith('.html') ? relative.slice(0, -5) : '';
+  const citySlug = relative === 'student-cities.html' ? 'Student Cities' : (CITY_PREVIEW_SLUGS.has(rootSlug) ? rootSlug : '');
   const imageAlt = citySlug ? `StudentHubHelp ${citySlug} student city guide` : 'StudentHubHelp logo and student services';
   const metas = [
     [/\bproperty=["']og:image["']/i, 'property="og:image"', shareImage],
