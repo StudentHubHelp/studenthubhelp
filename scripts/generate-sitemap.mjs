@@ -81,6 +81,29 @@ function gitLastModified(path) {
   }
 }
 
+function schemaLastmod(html) {
+  const values=[];
+  for (const match of html.matchAll(/<script\\s+type=["']application\\/ld\\+json["']>([\\s\\S]*?)<\\/script>/gi)) {
+    try {
+      const data=JSON.parse(match[1]);
+      const visit=value=>{
+        if(!value||typeof value!=='object') return;
+        if(typeof value.dateModified==='string') {
+          const parsed=validDate(value.dateModified);
+          if(parsed) values.push(parsed);
+        }
+        if(Array.isArray(value)) value.forEach(visit);
+        else Object.values(value).forEach(visit);
+      };
+      visit(data);
+    } catch {}
+  }
+  return values.sort().at(-1)||null;
+}
+function pageLastmod(path,html) {
+  return schemaLastmod(html)||gitLastModified(path);
+}
+
 async function writeUrlset(filename, entries) {
   const body = entries.map(({ loc, lastmod }) =>
     `  <url><loc>${esc(loc)}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}</url>`
@@ -107,7 +130,7 @@ for (const name of rootFiles) {
   });
   const canonical = canonicalTag?.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
   if (canonical !== loc) throw new Error('Root page canonical mismatch for ' + loc + '; found ' + (canonical || 'missing'));
-  pages.set(loc, gitLastModified(name));
+  pages.set(loc, pageLastmod(name,html));
 }
 
 const finderPages = ['pg-finder.html', 'tiffin-finder.html', 'library-finder.html', 'cafe-finder.html', 'bookstore-finder.html'];
@@ -160,7 +183,7 @@ for (const [type, table] of Object.entries(TABLES)) {
     const loc = await canonicalPropertyUrl(type, row, preferredLoc);
     const propertyPagePath = new URL(preferredLoc).pathname.replace(/^\/+/, '') + 'index.html';
     const pageLastmod = gitLastModified(propertyPagePath);
-    const lastmodCandidates = [validDate(row.updated_at), validDate(row.created_at), pageLastmod]
+    const lastmodCandidates = [validDate(row.updated_at), validDate(row.created_at), generatedPageLastmod]
       .filter(Boolean)
       .sort();
     const lastmod = lastmodCandidates.at(-1) || null;
@@ -268,7 +291,7 @@ if (generatedManifest && Array.isArray(generatedManifest.generated)) {
     });
     const canonical = canonicalTag?.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
     if (canonical !== loc) throw new Error('Generated SEO page canonical mismatch for ' + loc + '; found ' + (canonical || 'missing'));
-    const pageLastmod = gitLastModified(generatedPath);
+    const generatedPageLastmod = pageLastmod(generatedPath,html);
     pages.set(loc, pageLastmod);
   }
 }
