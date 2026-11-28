@@ -5,7 +5,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 const LOCATION_MIN_PROPERTIES = Number(process.env.SEO_LOCATION_MIN_PROPERTIES || 3);
 // These city guides already have approved .html URLs; keep one canonical root per city.
-const CITY_HTML_ROOTS = new Set(['sikar','bengaluru','chennai','kota','delhi','patna','jhunjhunu','pune','gurugram','coimbatore','jaipur']);
+const CITY_HTML_ROOTS = new Set(['sikar','bengaluru','chennai','kota','delhi','patna','jhunjhunu','pune','gurugram','coimbatore','jaipur','lucknow']);
 
 const TABLES = [
   { type:'hostel', table:'hostels', label:'Hostels & PGs', finder:'pg-finder.html', icon:'🏠' },
@@ -67,7 +67,7 @@ function stateForCity(city,rows=[]){
     'sikar':'Rajasthan','jhunjhunu':'Rajasthan','udaipurwati':'Rajasthan','kota':'Rajasthan','jaipur':'Rajasthan',
     'bengaluru':'Karnataka','mysuru':'Karnataka','mangaluru':'Karnataka','manipal':'Karnataka','hassan':'Karnataka','davanagere':'Karnataka','hubballi':'Karnataka','ramanagara':'Karnataka','belagavi':'Karnataka',
     'chennai':'Tamil Nadu','coimbatore':'Tamil Nadu','vellore':'Tamil Nadu','kanchipuram':'Tamil Nadu','madurai':'Tamil Nadu','salem':'Tamil Nadu','tiruchirappalli':'Tamil Nadu','tirunelveli':'Tamil Nadu','thanjavur':'Tamil Nadu',
-    'patna':'Bihar','delhi':'Delhi','new delhi':'Delhi','gurugram':'Haryana','panchkula':'Haryana','sonipat':'Haryana','pune':'Maharashtra','vadodara':'Gujarat'
+    'patna':'Bihar','lucknow':'Uttar Pradesh','delhi':'Delhi','new delhi':'Delhi','gurugram':'Haryana','panchkula':'Haryana','sonipat':'Haryana','pune':'Maharashtra','vadodara':'Gujarat'
   };
   const normalized=key(city).replace(/\s*\([^)]*\)/g,'').trim();
   if(known[normalized]) return known[normalized];
@@ -132,7 +132,7 @@ function titleForCity(city, rows){
   const types=profile.ordered.map(meta=>meta.type);
   let phrase=profile.titleServices.join(' & ')||'Student Services';
   if(key(city)==='kota' && types.includes('hostel') && types.includes('tiffin')) phrase='PGs, Hostels & Tiffin';
-  return 'Best '+phrase+' in '+city+' | StudentHubHelp';
+  return 'Student '+phrase+' in '+city+' | StudentHubHelp';
 }
 function descriptionForCity(city){
   const profile=citySeoProfile(city);
@@ -140,7 +140,7 @@ function descriptionForCity(city){
   const categories=profile.ordered.slice(0,3).map(meta=>shortNames[meta.type]||meta.label.toLowerCase());
   const categoryText=joinWithAnd(categories.length?categories:['student services']);
   const verified=city.rows.filter(row=>row.verified===true).length;
-  return 'Find '+city.rows.length+' active student listings in '+city.name+': '+categoryText+'. '+verified+' listings are marked verified in the directory. Compare local options on StudentHubHelp.';
+  return 'Find '+city.rows.length+' active student listings in '+city.name+': '+categoryText+'. '+verified+(verified===1?' listing is':' listings are')+' marked verified in the directory. Compare local options on StudentHubHelp.';
 }
 function h1ForCity(city){
   const profile=citySeoProfile(city);
@@ -168,7 +168,7 @@ function cityContentIntro(city){
   const categoryChecks=profile.ordered.map(meta=>{
     const guidance={
       hostel:'For hostels and PGs, compare room type, sharing, facilities, safety information and published charges.',
-      tiffin:'For tiffin services, check meal options, delivery coverage, plan duration and published timings.',
+      tiffin:'For meal and tiffin listings, check meal options, delivery coverage, plan duration and published timings; confirm whether a subscription is offered.',
       library:'For libraries, check access hours, seat availability, facilities and published fees.',
       cafe:'For cafes, review location, opening hours and services listed by the provider.',
       bookstore:'For bookstores, check listed book categories, stationery and availability before visiting.'
@@ -176,7 +176,7 @@ function cityContentIntro(city){
     return guidance[meta.type];
   }).filter(Boolean);
   return '<section class="section city-overview"><h2>Student services and local areas in '+esc(city.name)+'</h2>'+
-    '<p>The directory currently contains '+city.rows.length+' active listings in '+esc(city.name)+', across '+esc(categoryText||'the student-service categories')+'. '+verified+' are marked verified in the source records; the remaining active records are shown without a verification claim.</p>'+
+    '<p>The directory currently contains '+city.rows.length+' active listings in '+esc(city.name)+', across '+esc(categoryText||'the student-service categories')+'. '+verified+(verified===1?' is':' are')+' marked verified in the source records; the remaining active records are shown without a verification claim.</p>'+
     '<h3>Localities represented in the directory</h3><p>'+esc(areaText)+'</p><div class="links locality-links">'+areaLinks+'</div>'+
     '<h3>What to compare before choosing</h3><ul>'+categoryChecks.map(item=>'<li>'+esc(item)+'</li>').join('')+
     '<li>Confirm current price, exact address, availability and terms directly with the provider before visiting or paying.</li></ul>'+
@@ -184,7 +184,7 @@ function cityContentIntro(city){
 }
 function titleForCategory(meta, city){
   const singular={hostel:'Hostel & PG',tiffin:'Tiffin & Mess',library:'Library',cafe:'Cafe',bookstore:'Bookstore'}[meta.type]||meta.label;
-  return 'Best '+singular+' in '+city+' | StudentHubHelp';
+  return 'Student '+singular+' in '+city+' | StudentHubHelp';
 }
 function titleForArea(area, city, rows, hasCoaching){
   const types=new Set(rows.map(row=>row.type));
@@ -316,12 +316,52 @@ await cleanupGeneratedPages();
 await mkdir(GENERATED_ROOT,{recursive:true});
 
 const all=(await Promise.all(TABLES.map(fetchRows))).flat();
+function escapeRegExp(value){return String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function explicitAddressCityMismatch(row){
+  const expected=canonicalCityName(row.city),address=String(row.address||'');
+  if(!address)return false;
+  for(const city of CITY_ALIAS_DATA.canonicalCities||[]){
+    if(canonicalCityName(city.name)===expected)continue;
+    const aliases=[city.name,...(city.seoAliases||[]),...(city.searchAliases||[])];
+    for(const alias of aliases){
+      const pattern=new RegExp('(?:^|[,\\s])'+escapeRegExp(alias)+'\\s*,\\s*'+escapeRegExp(city.state)+'(?:\\s|,|$)','i');
+      if(pattern.test(address))return true;
+    }
+  }
+  return false;
+}
+function cityDedupeKey(row){
+  const cityName=canonicalCityName(row.city);
+  const cityEntry=(CITY_ALIAS_DATA.canonicalCities||[]).find(x=>x.name===cityName)||{};
+  const aliases=[cityName,...(cityEntry.seoAliases||[]),...(cityEntry.searchAliases||[])];
+  let name=String(row.name||'').trim();
+  for(const alias of aliases)name=name.replace(new RegExp('\\s*\\('+escapeRegExp(alias)+'\\)\\s*$','i'),'');
+  name=name.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  let address=String(row.address||'').toLowerCase().replace(/\\b\\d{6}\\b/g,'');
+  for(const alias of aliases)address=address.replace(new RegExp('\\b'+escapeRegExp(alias)+'\\b','gi'),'');
+  address=address.replace(/\\b(india|rajasthan|karnataka|tamil nadu|bihar|delhi|haryana|maharashtra|gujarat|uttar pradesh)\\b/gi,'')
+    .replace(/\\b(no|number)\\.?\\s*(?=\\d)/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  return row.type+'|'+slug(cityName)+'|'+name+'|'+address;
+}
+function dedupeCityRows(rows){
+  const seen=new Set();
+  return rows.filter(row=>{
+    if(explicitAddressCityMismatch(row)||!row.name||!row.address)return false;
+    const keyValue=cityDedupeKey(row);
+    const parts=keyValue.split('|');
+    if(!parts[2]||!parts[3])return true;
+    if(seen.has(keyValue))return false;
+    seen.add(keyValue);return true;
+  });
+}
+const cityRows=dedupeCityRows(all);
 const areaRedirects=new Map(),areaCounts=new Map(),cityCounts=new Map();
-for(const row of all){const citySlug=slug(canonicalCityName(row.city));cityCounts.set(citySlug,(cityCounts.get(citySlug)||0)+1);if(row.area){const areaKey=citySlug+'|'+key(row.area);areaCounts.set(areaKey,(areaCounts.get(areaKey)||0)+1);}}
-for(const row of all){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/';const oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+key(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/';const cityTarget=CITY_HTML_ROOTS.has(citySlug)?'/'+citySlug+'.html':((cityCounts.get(citySlug)||0)>=3?cityPath:'/explore-listings.html');const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityTarget;if(from!==to)areaRedirects.set(from,to);}
+function normalizedAreaKey(value){return key(value).replace(/[,.]+/g,' ').replace(/\\s+/g,' ').trim();}
+for(const row of cityRows){const citySlug=slug(canonicalCityName(row.city));cityCounts.set(citySlug,(cityCounts.get(citySlug)||0)+1);if(row.area){const areaKey=citySlug+'|'+normalizedAreaKey(row.area);areaCounts.set(areaKey,(areaCounts.get(areaKey)||0)+1);}}
+for(const row of cityRows){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/',oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+normalizedAreaKey(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/',cityTarget=CITY_HTML_ROOTS.has(citySlug)?'/'+citySlug+'.html':((cityCounts.get(citySlug)||0)>=3?cityPath:'/explore-listings.html');const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityTarget;if(from!==to)areaRedirects.set(from,to);}
 for(const citySlug of CITY_HTML_ROOTS){if(citySlug!=='sikar')areaRedirects.set('/'+citySlug+'/', '/'+citySlug+'.html');}
 const cities=new Map();
-for(const row of all){
+for(const row of cityRows){
   const canonicalCity=canonicalCityName(row.city);
   const citySlug=slug(canonicalCity); if(!citySlug) continue;
   if(!cities.has(citySlug)) cities.set(citySlug,{name:canonicalCity,rows:[],nameCounts:new Map()});
