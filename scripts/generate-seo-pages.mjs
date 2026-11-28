@@ -727,33 +727,48 @@ for(const c of cities.values()){
   }
   const groups=new Map();
   for(const r of c.rows){if(!groups.has(r.type))groups.set(r.type,[]);groups.get(r.type).push(r);}
-  const eligibleGroups=new Map([...groups.entries()].filter(([,rows])=>rows.length>=LOCATION_MIN_PROPERTIES));
+  const categoryDecisions=new Map();
+  for(const meta of TABLES){
+    const rows=groups.get(meta.type)||[];
+    const path=cs+'/'+meta.type+'/index.html';
+    const decision=decideAndStorePage({type:'cityCategory',citySlug:cs,categorySlug:meta.type},{listingCount:rows.length,verifiedCount:rows.filter(row=>row.verified===true).length},path);
+    categoryDecisions.set(meta.type,decision);
+    if(decision.status==='redirect') PENDING_ELIGIBILITY_REDIRECTS.set('/'+cs+'/'+meta.type+'/',parentPath({type:'cityCategory',citySlug:cs,categorySlug:meta.type}));
+  }
+  const eligibleGroups=new Map([...groups.entries()].filter(([type])=>categoryDecisions.get(type)?.linkable));
   const categories=[...eligibleGroups.keys()].map(type=>TABLES.find(t=>t.type===type));
   const categoryLinks=categories.map(meta=>'<a href="'+esc(meta.type+'/')+'">'+meta.icon+' '+esc(meta.label)+'</a>').join('');
   const cityCoachingSlugs=[...new Set(c.rows.flatMap(matchedCoachings))];
   const coachingLinks=cityCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('/'+cs+'/'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
   const coachingSection=coachingLinks?'<section class="section"><h2>Coaching institutes & landmarks in '+esc(c.name)+'</h2><p>Explore student properties connected to coaching institutes and local landmarks through active listing details.</p><div class="links">'+coachingLinks+'</div></section>':'';
-  const cityCategoryCards=[...groups.entries()].map(([type,rows])=>{const m=TABLES.find(x=>x.type===type),target=rows.length>=LOCATION_MIN_PROPERTIES?type+'/':'/'+m.finder+'?q='+encodeURIComponent(c.name),countText=rows.length===1?'1 active record':rows.length+' active records',verified=rows.filter(row=>row.verified===true).length,verifiedText=verified===1?'1 marked verified':verified+' marked verified';return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+countText+'; '+verifiedText+'.</p><a href="'+esc(target)+'">Explore '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('');
+  const cityCategoryCards=TABLES.map(m=>{const rows=groups.get(m.type)||[],decision=categoryDecisions.get(m.type),target=decision?.linkable?m.type+'/':'/'+m.finder+'?q='+encodeURIComponent(c.name),countText=rows.length===1?'1 active record':rows.length+' active records',verified=rows.filter(row=>row.verified===true).length,verifiedText=verified===1?'1 marked verified':verified+' marked verified';return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+countText+'; '+verifiedText+'.</p><a href="'+esc(target)+'">Explore '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('');
   const body=cityQuickAnswer(c)+cityContentIntro(c)+coachingSection+'<section class="section"><h2>Student-focused listings in '+esc(c.name)+'</h2><div class="grid">'+cityCategoryCards+'</div></section>'+
     '<section class="section"><h2>Explore categories in '+esc(c.name)+'</h2><p>Choose a service category to compare listings available in this city.</p><div class="links">'+categoryLinks+'</div></section>'+
     '<section class="section"><h2>Student listings across '+esc(c.name)+'</h2><p>Open a listing to review its address, facilities and service information. Confirm details with the provider before visiting.</p><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
   // Sikar's primary city guide lives at /sikar.html. Do not recreate the
   // older /sikar/ city index; nested category, area and coaching pages remain.
   if (!CITY_HTML_ROOTS.has(cs)) {
-    const cityPath=cityDir+'/index.html'; expected.add(cityPath); generated.push(cityUrl);
-    await write(cityPath,shell({title:titleForCity(c.name,c.rows),description:descriptionForCity(c),canonical:cityUrl,h1:h1ForCity(c),crumbs:[{name:'Home',url:BASE},{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}],itemRows:c.rows,faqItems:faqForCity(c),cityHub:true}));
+    const cityPath=cityDir+'/index.html';
+    const decision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:c.rows.length},cityPath);
+    if(decision.status==='redirect') PENDING_ELIGIBILITY_REDIRECTS.set('/'+cs+'/',parentPath({type:'cityHub',citySlug:cs}));
+    if(decision.status==='index'||decision.status==='noindex-grace'){
+      expected.add(cityPath); if(decision.sitemap) generated.push(cityUrl);
+      await write(cityPath,shell({title:titleForCity(c.name,c.rows),description:descriptionForCity(c),canonical:cityUrl,h1:h1ForCity(c),crumbs:[{name:'Home',url:BASE},{name:c.name,url:cityUrl}],body,depth:1,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,c.rows)}}],itemRows:c.rows,faqItems:faqForCity(c),cityHub:true,robots:decision.robots}));
+    }
   }
 
   for(const meta of TABLES){
-    const rows=c.rows.filter(r=>r.type===meta.type); if(rows.length<LOCATION_MIN_PROPERTIES) continue;
+    const rows=c.rows.filter(r=>r.type===meta.type);
+    const decision=categoryDecisions.get(meta.type);
+    if(!decision || decision.status==='omit' || decision.status==='redirect') continue;
     const dir=cityDir+'/'+meta.type; const url=new URL(cs+'/'+meta.type+'/',BASE).href;
     const relatedCoachings=[...new Set(rows.flatMap(matchedCoachings))];
     const relatedCoachingLinks=relatedCoachings.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
     const coachingContext=relatedCoachingLinks?'<section class="section"><h2>Nearby coaching & landmarks</h2><div class="links">'+relatedCoachingLinks+'</div></section>':'';
     const body=categoryQuickAnswer(meta,c,rows)+categoryIntro(meta,c,rows)+areaLandmarkTable({name:meta.label,rows},c)+'<section class="section"><h2>'+esc(meta.label)+' listings in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+coachingContext+
       '<section class="section"><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(2,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
-    const p=dir+'/index.html'; expected.add(p); generated.push(url);
-    await write(p,shell({title:titleForCategory(meta,c.name),description:'Find '+rows.length+' active '+meta.label.toLowerCase()+' in '+c.name+'. Compare local areas, facilities and provider details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,rows)}},{'@type':'Thing','name':meta.label}],itemRows:rows,faqItems:faqForCategory(meta,c,rows)}));
+    const p=dir+'/index.html'; expected.add(p); if(decision.sitemap) generated.push(url);
+    await write(p,shell({title:titleForCategory(meta,c.name),description:'Find '+rows.length+' active '+meta.label.toLowerCase()+' in '+c.name+'. Compare local areas, facilities and provider details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,rows)}},{'@type':'Thing','name':meta.label}],itemRows:rows,faqItems:faqForCategory(meta,c,rows),robots:decision.robots}));
   }
 
   const areas=new Map();
