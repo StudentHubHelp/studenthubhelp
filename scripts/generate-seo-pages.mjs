@@ -192,7 +192,7 @@ function titleForCity(city, rows){
   const types=profile.ordered.map(meta=>meta.type);
   let phrase=profile.titleServices.join(' & ')||'Student Services';
   if(key(city)==='kota' && types.includes('hostel') && types.includes('tiffin')) phrase='PGs, Hostels & Tiffin';
-  return 'Best Student '+phrase+' in '+city+' | StudentHubHelp';
+  return 'Student '+phrase+' in '+city+' | StudentHubHelp';
 }
 function descriptionForCity(city){
   const profile=citySeoProfile(city);
