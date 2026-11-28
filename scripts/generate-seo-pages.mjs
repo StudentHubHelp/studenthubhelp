@@ -60,6 +60,13 @@ function decideAndStorePage(identity, metrics, relativePath, assumePreviouslyInd
     everIndexed: decision.status === 'index' || decision.status === 'noindex-grace' || decision.status === 'redirect' || previous?.everIndexed === true,
     parent: parentPath(identity),
     path:relativePath,
+    metrics:{
+      listingCount:metrics.listingCount??0,
+      verifiedCount:metrics.verifiedCount??0,
+      categoryCount:metrics.categoryCount??0,
+      profileComplete:metrics.profileComplete??null,
+      cityCount:metrics.cityCount??null
+    },
     evaluatedAt:SEO_RUN_NOW.toISOString()
   };
   PAGE_DECISION_CACHE.set(stateKey,decision);
@@ -1160,6 +1167,12 @@ for(const [from,rawTarget] of [...areaRedirects.entries()]){
 const redirectPages=await writeAreaRedirects(areaRedirects,expected);
 const redirectUrls=new Set(redirectPages.filter(item=>item.from.startsWith('/sikar/')).map(item=>new URL(item.from,BASE).href));
 const uniqueGenerated=[...new Set(generated)].filter(url=>!redirectUrls.has(url));
+const studentCitiesDecision=decideAndStorePage({type:'studentCitiesHub',citySlug:'all'},{cityCount:CITY_HTML_ROOTS.size},'student-cities.html',true);
+const studentCitiesHtml=await readFile('student-cities.html','utf8').catch(()=>null);
+if(studentCitiesHtml){
+  const updated=studentCitiesHtml.replace(/<meta\\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(studentCitiesDecision.robots||'index,follow')+'">');
+  await write('student-cities.html',updated);
+}
 await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to})), redirectPages}, null, 2)+'\n');
 await write('data/seo-page-state.json', JSON.stringify(NEXT_PAGE_STATE, null, 2)+'\n');
 console.log(JSON.stringify({activeProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
