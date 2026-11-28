@@ -3,6 +3,7 @@ import { RULES, CATEGORIES, pageStateKey } from './seo-page-eligibility.mjs';
 
 const BASE='https://studenthubhelp.in';
 const manifest=JSON.parse(await readFile('seo-generated-manifest.json','utf8'));
+const areaGuideData=JSON.parse(await readFile('data/city-area-guides.json','utf8').catch(()=>'{"cities":[]}'));
 const state=JSON.parse(await readFile('data/seo-page-state.json','utf8'));
 const sitemap=await readFile('sitemap-pages.xml','utf8');
 const sitemapUrls=new Set([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match=>match[1].trim()));
@@ -18,7 +19,7 @@ const fileForUrl=url=>{
   if(!path||path.endsWith('/')) path+='index.html';
   return path;
 };
-const textOf=value=>String(value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+const textOf=value=>String(value||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/\s+/g,' ').trim();
 const getTag=(html,regex)=>html.match(regex)?.[1]?.trim()||'';
 const robotsOf=html=>(html.match(/<meta\s+name=["']robots["']\s+content=["']([^"']+)["']/i)?.[1]||'').toLowerCase();
 const canonicalOf=html=>html.match(/<link\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i)?.[1]||html.match(/<link\b[^>]*href=["']([^"']+)["'][^>]*rel=["']canonical["'][^>]*>/i)?.[1]||'';
@@ -82,7 +83,7 @@ for(const url of generated){
   }
   if(['cityCategory','areaCategory','areaHub'].includes(identity.type) && /Loading(?:\s|…|\.\.\.)/i.test(html)) errors.push('Indexable listing page contains Loading placeholder: '+url.href);
   if(['cityCategory','areaCategory','areaHub'].includes(identity.type)){
-    const cards=(html.match(/class=["'][^"']*listing-card[^"']*["']/g)||[]).length;
+    const cards=(html.match(/class=["'][^"']*(?:listing-card|property-card)[^"']*["']/g)||[]).length;
     if(cards===0) errors.push('Indexable listing page has no server-rendered listing cards: '+url.href);
   }
   if(!sitemapUrls.has(url.href)) errors.push('Indexable page missing from sitemap-pages.xml: '+url.href);
@@ -103,6 +104,9 @@ for(const relativePath of manifest.expected||[]){
 // Legacy city .html aliases must not be used as internal links; footer city cross-links are exempt.
 for(const city of ['sikar','jaipur','jhunjhunu','kota','delhi','gurugram','bengaluru','patna','chennai','pune','coimbatore','lucknow','ahmedabad','hyderabad']){
   noindexPaths.add('/'+city+'.html');
+}
+for(const city of areaGuideData.cities||[]){
+  for(const area of city.candidateAreas||[]) noindexPaths.add('/'+city.slug+'/areas/'+area.slug+'/');
 }
 for(const page of known){
   for(const match of page.html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi)){
