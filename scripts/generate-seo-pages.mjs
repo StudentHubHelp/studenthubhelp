@@ -199,9 +199,12 @@ function titleForArea(area, city, rows, hasCoaching){
   if(types.has('tiffin')) names.push('Tiffin');
   if(types.has('cafe')) names.push('Cafe');
   if(types.has('bookstore')) names.push('Bookstore');
-  const services=names.length>2?names.slice(0,2):names;
-  const prefix='Student '+(services.length?services.join(' & '):'Student Services');
-  return prefix+(hasCoaching?' Near Coaching':'')+' in '+area+', '+city+' | StudentHubHelp';
+  const suffix=' | StudentHubHelp';
+  const location=' in '+area+', '+city;
+  const room=Math.max(1,60-suffix.length-location.length);
+  const candidates=[names.slice(0,2).join(' & '),names[0]||'Student Services','Student'];
+  const prefix=candidates.find(value=>value && value.length<=room)||'Student';
+  return prefix+location+suffix;
 }
 function card(row,depth){
   const href=rel(depth,propUrl(row));
