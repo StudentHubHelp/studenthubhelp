@@ -10,6 +10,8 @@ on:
       - '*.html'
       - 'scripts/generate-sitemap.mjs'
       - 'scripts/generate-seo-pages.mjs'
+      - 'scripts/generate-city-area-guides.mjs'
+      - 'data/city-area-guides.json'
       - 'scripts/generate-property-pages.mjs'
       - 'scripts/normalize-social-previews.mjs'
       - 'property-pages-manifest.json'
@@ -81,7 +83,9 @@ jobs:
           SUPABASE_KEY: sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT
           BASE_URL: https://studenthubhelp.in/
           SEO_LOCATION_MIN_PROPERTIES: 3
-        run: node scripts/generate-seo-pages.mjs
+        run: |
+          node scripts/generate-seo-pages.mjs
+          node scripts/generate-city-area-guides.mjs
 
       - name: Validate social preview generators
         run: |
@@ -209,6 +213,15 @@ jobs:
                       assert not parsed.query and not parsed.fragment, f'Non-clean URL in property sitemap: {value}'
                       property_sitemap_urls.append(value)
           assert len(property_sitemap_urls)==len(set(property_sitemap_urls)), 'Duplicate clean property URL in property sitemap'
+          area_data=json.loads(Path('data/city-area-guides.json').read_text(encoding='utf-8'))
+          for city in area_data['cities']:
+              for area in city['candidateAreas']:
+                  guide_url=BASE+city['slug']+'/areas/'+area['slug']+'/'
+                  guide_file=Path(city['slug'], 'areas', area['slug'], 'index.html')
+                  assert guide_file.is_file(), f'Missing generated area guide: {guide_file}'
+                  guide_html=guide_file.read_text(encoding='utf-8')
+                  assert 'name="robots" content="noindex,follow"' in guide_html, f'Area guide unexpectedly indexable: {guide_file}'
+                  assert guide_url not in all_urls, f'Noindex area guide must not enter sitemap: {guide_url}'
           assert len(all_urls)==len(set(all_urls)), 'Duplicate URL across sitemap files'
           private={'auth.html','owner-dashboard.html','student-dashboard.html','partner-dashboard.html','admin/index.html'}
           for url in all_urls:

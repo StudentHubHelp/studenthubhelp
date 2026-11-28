@@ -20,6 +20,10 @@ on:
       - 'pune.html'
       - 'gurugram.html'
       - 'coimbatore.html'
+      - 'lucknow.html'
+      - 'hyderabad.html'
+      - 'data/city-area-guides.json'
+      - 'scripts/generate-city-area-guides.mjs'
       - 'jaipur.html'
       - 'scripts/generate-property-pages.mjs'
       - 'scripts/generate-seo-pages.mjs'
@@ -51,6 +55,7 @@ jobs:
           node --check scripts/generate-property-pages.mjs
           node --check scripts/generate-seo-pages.mjs
           node --check scripts/generate-sitemap.mjs
+          node --check scripts/generate-city-area-guides.mjs
           node --check city-hub.js
           node --check js/property-seo-upgrade.js
           node --check js/seo-location-entities.js
@@ -109,6 +114,11 @@ jobs:
               assert '"@type":"FAQPage"' in page_html and '"@type":"ItemList"' in page_html, f'City guide FAQ/ItemList schema missing: {page}'
               assert 'class="listing-card"' in page_html, f'City guide must include server-rendered listing cards: {page}'
               assert '...' not in page_html, f'City guide contains an ellipsis placeholder: {page}'
+          all_city_slugs=['sikar','jaipur','jhunjhunu','kota','delhi','gurugram','bengaluru','patna','chennai','pune','coimbatore','lucknow','ahmedabad','hyderabad']
+          for current in all_city_slugs:
+              city_html=Path(current+'.html').read_text(encoding='utf-8')
+              for target in all_city_slugs:
+                  assert f'href="/{target}.html"' in city_html, f'{current} footer is missing {target} city link'
           assert '<link rel="canonical" href="https://studenthubhelp.in/property-index.html">' in directory
           assert re.search(r'<a href="https://studenthubhelp\.in/properties/', directory), 'Property directory has no crawlable property links'
 
@@ -187,6 +197,7 @@ jobs:
           SEO_LOCATION_MIN_PROPERTIES: 3
         run: |
           node scripts/generate-seo-pages.mjs
+          node scripts/generate-city-area-guides.mjs
           node scripts/generate-sitemap.mjs
 
       - name: Validate generated SEO titles, descriptions and GEO answers
@@ -225,6 +236,16 @@ jobs:
               assert len(words)>=100 and 'Quick answers' in source, f'Thin or missing visible GEO answer content: {page}'
               pages.append(page)
           assert len(pages)>=50, f'Expected at least 50 generated SEO pages, found {len(pages)}'
+          area_data=json.loads(Path('data/city-area-guides.json').read_text(encoding='utf-8'))
+          for city in area_data['cities']:
+              for area in city['candidateAreas']:
+                  guide=Path(city['slug'],'areas',area['slug'],'index.html')
+                  assert guide.is_file(), f'Missing evidence-led area guide: {guide}'
+                  html=guide.read_text(encoding='utf-8')
+                  assert 'name="robots" content="noindex,follow"' in html, f'Area guide must remain noindex pending review: {guide}'
+                  assert f'<link rel="canonical" href="https://studenthubhelp.in/{city["slug"]}/areas/{area["slug"]}/">' in html, f'Area guide canonical mismatch: {guide}'
+                  assert 'Evidence and source links' in html and all(source in html for source in area['sourceUrls']), f'Area guide source evidence missing: {guide}'
+                  assert 'No sample or placeholder property cards are shown' in html, f'Area guide must not fabricate listings: {guide}'
           redirects=Path('_redirects').read_text(encoding='utf-8') if Path('_redirects').exists() else ''
           start='# BEGIN STUDENTHUBHELP GENERATED SEO AREA REDIRECTS'
           end='# END STUDENTHUBHELP GENERATED SEO AREA REDIRECTS'

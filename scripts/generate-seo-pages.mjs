@@ -5,7 +5,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 const LOCATION_MIN_PROPERTIES = Number(process.env.SEO_LOCATION_MIN_PROPERTIES || 3);
 // These city guides already have approved .html URLs; keep one canonical root per city.
-const CITY_HTML_ROOTS = new Set(['sikar','bengaluru','chennai','kota','delhi','patna','jhunjhunu','pune','gurugram','coimbatore','jaipur','lucknow']);
+const CITY_HTML_ROOTS = new Set(['sikar','bengaluru','chennai','kota','delhi','patna','jhunjhunu','pune','gurugram','coimbatore','jaipur','lucknow','ahmedabad','hyderabad']);
 
 const TABLES = [
   { type:'hostel', table:'hostels', label:'Hostels & PGs', finder:'pg-finder.html', icon:'🏠' },
@@ -68,7 +68,7 @@ function stateForCity(city,rows=[]){
     'sikar':'Rajasthan','jhunjhunu':'Rajasthan','udaipurwati':'Rajasthan','kota':'Rajasthan','jaipur':'Rajasthan',
     'bengaluru':'Karnataka','mysuru':'Karnataka','mangaluru':'Karnataka','manipal':'Karnataka','hassan':'Karnataka','davanagere':'Karnataka','hubballi':'Karnataka','ramanagara':'Karnataka','belagavi':'Karnataka',
     'chennai':'Tamil Nadu','coimbatore':'Tamil Nadu','vellore':'Tamil Nadu','kanchipuram':'Tamil Nadu','madurai':'Tamil Nadu','salem':'Tamil Nadu','tiruchirappalli':'Tamil Nadu','tirunelveli':'Tamil Nadu','thanjavur':'Tamil Nadu',
-    'patna':'Bihar','lucknow':'Uttar Pradesh','delhi':'Delhi','new delhi':'Delhi','gurugram':'Haryana','panchkula':'Haryana','sonipat':'Haryana','pune':'Maharashtra','vadodara':'Gujarat'
+    'patna':'Bihar','lucknow':'Uttar Pradesh','ahmedabad':'Gujarat','hyderabad':'Telangana','delhi':'Delhi','new delhi':'Delhi','gurugram':'Haryana','panchkula':'Haryana','sonipat':'Haryana','pune':'Maharashtra','vadodara':'Gujarat'
   };
   const normalized=key(city).replace(/\s*\([^)]*\)/g,'').trim();
   if(known[normalized]) return known[normalized];
@@ -493,8 +493,8 @@ function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[],item
     '/kota/','/kota/talwandi-kota/','/kota/indra-vihar-talwandi/','/kota/new-jawahar-nagar-talwandi-kota/','/kota/hostel/','/kota/tiffin/',
     '/sikar/hostel/','/sikar/cafe/','/sikar/tiffin/','/sikar/coaching/allen/','/sikar/coaching/matrix/',
   ]);
-  const premiumCityPrefixes=['/bengaluru/','/chennai/','/patna/','/jhunjhunu/','/gurugram/','/coimbatore/','/delhi/','/jaipur/','/pune/','/lucknow/'];
-  const premiumCityRoots=new Set(['/sikar.html','/bengaluru.html','/chennai.html','/kota.html','/delhi.html','/patna.html','/jhunjhunu.html','/pune.html','/gurugram.html','/coimbatore.html','/jaipur.html','/lucknow.html']);
+  const premiumCityPrefixes=['/bengaluru/','/chennai/','/patna/','/jhunjhunu/','/gurugram/','/coimbatore/','/delhi/','/jaipur/','/pune/','/lucknow/','/ahmedabad/','/hyderabad/'];
+  const premiumCityRoots=new Set(['/sikar.html','/bengaluru.html','/chennai.html','/kota.html','/delhi.html','/patna.html','/jhunjhunu.html','/pune.html','/gurugram.html','/coimbatore.html','/jaipur.html','/lucknow.html','/ahmedabad.html','/hyderabad.html']);
   const canonicalPath = new URL(canonicalAbs).pathname;
   const sikarPage = canonicalPath.startsWith('/sikar/');
   const premiumFolderPage = [...CITY_HTML_ROOTS].some(citySlug => canonicalPath.startsWith('/' + citySlug + '/'));
