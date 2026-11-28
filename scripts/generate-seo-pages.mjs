@@ -5,7 +5,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 const LOCATION_MIN_PROPERTIES = Number(process.env.SEO_LOCATION_MIN_PROPERTIES || 3);
 // These city guides already have approved .html URLs; keep one canonical root per city.
-const CITY_HTML_ROOTS = new Set(['sikar','delhi','jaipur','kota','pune']);
+const CITY_HTML_ROOTS = new Set(['sikar','bengaluru','chennai','kota','delhi','patna','jhunjhunu','pune','gurugram','coimbatore','jaipur']);
 
 const TABLES = [
   { type:'hostel', table:'hostels', label:'Hostels & PGs', finder:'pg-finder.html', icon:'🏠' },
@@ -226,7 +226,7 @@ function shell({title,description,canonical,h1,crumbs,body,depth=2,about=[],item
     '/sikar/hostel/','/sikar/cafe/','/sikar/tiffin/','/sikar/coaching/allen/','/sikar/coaching/matrix/',
   ]);
   const premiumCityPrefixes=['/bengaluru/','/chennai/','/patna/','/jhunjhunu/','/gurugram/','/coimbatore/','/delhi/','/jaipur/','/pune/'];
-  const premiumCityRoots=new Set(['/sikar.html','/delhi.html','/jaipur.html','/kota.html','/pune.html','/bengaluru/','/chennai/','/patna/','/jhunjhunu/','/gurugram/','/coimbatore/']);
+  const premiumCityRoots=new Set(['/sikar.html','/bengaluru.html','/chennai.html','/kota.html','/delhi.html','/patna.html','/jhunjhunu.html','/pune.html','/gurugram.html','/coimbatore.html','/jaipur.html']);
   const canonicalPath = new URL(canonicalAbs).pathname;
   const premiumLocation = premiumLocationPaths.has(canonicalPath) || premiumCityRoots.has(canonicalPath) || premiumCityPrefixes.some(prefix=>canonicalPath.startsWith(prefix)) || canonicalPath.startsWith('/sikar/') || canonicalPath.startsWith('/kota/');
   const home=rel(depth,BASE);
@@ -343,6 +343,7 @@ for(const c of cities.values()){
   if(CITY_HTML_ROOTS.has(cs)&&cs!=='sikar'){
     const htmlPath=cs+'.html';
     let cityHtml=await readFile(htmlPath,'utf8');
+    if (!cityHtml.includes('<!-- STUDENT_CITY_STATIC_V2 -->')) {
     const pageTitle=limitTitle(titleForCity(c.name,c.rows));
     const pageDescription=metaDescription(descriptionForCity(c));
     const replaceTag=(source,pattern,value)=>source.replace(pattern,()=>value);
@@ -367,6 +368,7 @@ for(const c of cities.values()){
       }catch{return full;}
     });
     await write(htmlPath,cityHtml);
+    }
   }
   const groups=new Map();
   for(const r of c.rows){if(!groups.has(r.type))groups.set(r.type,[]);groups.get(r.type).push(r);}
@@ -434,7 +436,8 @@ for(const c of cities.values()){
    Refresh its marked static blocks from active public listings. Verification labels
    are rendered per record; no database writes are performed. */
 const sikarCity = cities.get('sikar');
-if (sikarCity) {
+const existingSikarPage = await readFile('sikar.html', 'utf8').catch(() => '');
+if (sikarCity && !existingSikarPage.includes('<!-- STUDENT_CITY_STATIC_V2 -->')) {
   const replaceStaticBlock = (html, name, value) => {
     const start = '<!-- SIKAR_STATIC_' + name + '_START -->';
     const end = '<!-- SIKAR_STATIC_' + name + '_END -->';
