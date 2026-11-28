@@ -367,13 +367,14 @@ function areaContentIntro(area,city){
   const facilityText=facilities.length?'Short facility details in the records include '+facilities.join(', ')+'.':'Some providers supply longer facility descriptions; review the individual cards for those details.';
   const timingText=timings.length?'Available timing examples include '+timings.join(' and ')+'.':'Operating hours are not consistently supplied across these records.';
   const feeText=feeSummary.length?'Published price or fee fields in some records show '+feeSummary.join('; ')+'.':'The active records for this locality do not contain a usable published price or fee value.';
+  const feeCaveat=feeSummary.length?' These amounts are provider-supplied; confirm billing period, deposit, inclusions and current charges directly before deciding.':' Contact providers to confirm current charges and what is included.';
   const landmarkText=verifiedLandmarks.length
     ?'Verified nearby landmarks include '+verifiedLandmarks.map(item=>item.name).join(', ')+'. The table shows approximate straight-line distances from the centroid of geocoded listings, not road distances or travel times.'
     :'No verified landmark coordinates fall within 8 km of the geocoded listing centroid, so this page makes no landmark-distance claim.';
   return '<section class="section area-overview"><h2>About student services in '+esc(area.name)+', '+esc(city.name)+'</h2>'+
     '<p>The StudentHubHelp directory currently contains '+area.rows.length+' active listing records associated with '+esc(area.name)+', '+esc(city.name)+'. They cover '+esc(categories.join(', '))+'. '+verified+' records are marked verified in the saved directory data. Counts reflect the directory snapshot when this page was generated, not live availability.</p>'+
     '<p>'+esc(nameText)+' Provider records supply addresses, phone numbers and service details where available; missing fields are omitted rather than estimated. '+esc(facilityText)+'</p>'+
-    '<p>'+esc(timingText)+' '+esc(feeText)+' These amounts are provider-supplied; confirm billing period, deposit, inclusions and current charges directly before deciding.</p>'+
+    '<p>'+esc(timingText)+' '+esc(feeText+feeCaveat)+'</p>'+
     '<p>'+esc(landmarkText)+' Where listing coordinates are missing or too far from verified landmarks, no distance is shown.</p>'+
     '<h3>What to compare before choosing</h3><p>'+esc(advice)+' Check the exact address, current availability, terms and total cost directly with the provider. Use the individual listing map link to plan your route.</p></section>';
 }
