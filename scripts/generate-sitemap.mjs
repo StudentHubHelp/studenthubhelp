@@ -248,9 +248,7 @@ pages.set(pageUrl('property-index.html'), propertyIndexLastmod);
 const additionalIndexablePages = [
   'sikar/libraries/nawalgarh-road/index.html',
   'sikar/nawalgarh-road/hostel/index.html',
-  'sikar/nawalgarh-road/library/index.html',
   'sikar/nawalgarh-road/tiffin/index.html',
-  'sikar/nawalgarh-road/cafe/index.html',
   'sikar/nawalgarh-road/bookstore/index.html'
 ];
 for (const filePath of additionalIndexablePages) {
