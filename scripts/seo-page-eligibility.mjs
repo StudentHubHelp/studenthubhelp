@@ -42,7 +42,7 @@ export function decidePageState(input) {
 export function pageStateKey({ type, citySlug, categorySlug = '', areaSlug = '' }) { return [type, citySlug, categorySlug, areaSlug].join('|'); }
 export function parentPath({ type, citySlug, categorySlug = '' }) {
   if (type === 'areaCategory') return '/' + citySlug + '/' + categorySlug + '/';
-  if (type === 'areaHub') return '/' + citySlug + '.html';
-  if (type === 'cityCategory') return '/' + citySlug + '.html';
+  if (type === 'areaHub') return '/' + citySlug + '/';
+  if (type === 'cityCategory') return '/' + citySlug + '/';
   return '/student-cities.html';
 }
