@@ -41,6 +41,9 @@ function cleanText(value) {
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;|&#x27;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -56,37 +59,170 @@ function escapeJson(value) {
 
 function buildSchema(name, html) {
   const url = canonical(html, name);
-  const title = cleanText(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]) || 'StudentHubHelp';
+  const title = cleanText(html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)?.[1]) || 'StudentHubHelp';
   const description = attr(html, 'description') || title;
   const finder = finderMap[name];
-  const pageType = finder ? 'CollectionPage' : 'WebPage';
+  const isHub = name === 'student-cities.html';
+  const isCityPage = /^(sikar|bengaluru|chennai|kota|delhi|patna|jhunjhunu|pune|gurugram|coimbatore|jaipur|lucknow)\\.html$/i.test(name);
+  const pageType = finder || isHub || isCityPage ? 'CollectionPage' : 'WebPage';
   const serviceId = finder
-    ? `${BASE}#${name.replace(/-finder\.html$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-service`
+    ? `${BASE}#${name.replace(/-finder\\.html$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-service`
     : null;
 
-  const nodes = [
-    ...(name === 'index.html' ? [] : [{
-      '@type': pageType,
-      '@id': `${url}#webpage`,
-      url,
-      name: title,
-      description,
+  const nodes = [];
+  if (isHub) {
+    nodes.push({
+      '@type': 'Organization',
+      '@id': ORG_ID,
+      name: 'StudentHubHelp',
+      url: BASE,
+      logo: { '@type': 'ImageObject', url: `${BASE}logo.png` },
+      areaServed: { '@type': 'Country', name: 'India' },
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: 'support@studenthubhelp.in',
+        areaServed: 'IN',
+        availableLanguage: ['en', 'hi']
+      },
+      sameAs: ['https://www.instagram.com/studenthubhelp/']
+    });
+    nodes.push({
+      '@type': 'WebSite',
+      '@id': SITE_ID,
+      url: BASE,
+      name: 'StudentHubHelp',
+      publisher: { '@id': ORG_ID },
       inLanguage: 'en-IN',
-      isPartOf: { '@id': SITE_ID },
-      publisher: { '@id': ORG_ID }
-    }]),
-    {
-      '@type': 'BreadcrumbList',
-      '@id': `${url}#breadcrumb`,
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'StudentHubHelp', item: BASE },
-        { '@type': 'ListItem', position: 2, name: title.replace(/\s*[|•].*$/, '').trim() || title, item: url }
-      ]
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${BASE}global-search.html?q={search_term_string}`
+        },
+        'query-input': 'required name=search_term_string'
+      }
+    });
+  }
+
+  const pageNode = {
+    '@type': pageType,
+    '@id': `${url}#webpage`,
+    url,
+    name: title,
+    description,
+    inLanguage: 'en-IN',
+    isPartOf: { '@id': SITE_ID },
+    publisher: { '@id': ORG_ID },
+    breadcrumb: { '@id': `${url}#breadcrumb` }
+  };
+  if (isHub) pageNode.mainEntity = { '@id': `${url}#cities` };
+  nodes.push(pageNode);
+
+  const crumbNav = html.match(/<nav\\b[^>]*(?:aria-label=["']Breadcrumb["']|class=["'][^"']*breadcrumb[^"']*)[^>]*>([\\s\\S]*?)<\\/nav>/i);
+  const crumbItems = [];
+  if (crumbNav) {
+    for (const match of crumbNav[1].matchAll(/<a\\b[^>]*href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/gi)) {
+      try {
+        crumbItems.push({
+          '@type': 'ListItem',
+          position: crumbItems.length + 1,
+          name: cleanText(match[2]),
+          item: new URL(match[1], BASE).href
+        });
+      } catch {}
     }
-  ];
+    const current = crumbNav[1].match(/<(?:span|strong)[^>]*aria-current=["']page["'][^>]*>([\\s\\S]*?)<\\/(?:span|strong)>/i);
+    if (current) {
+      crumbItems.push({
+        '@type': 'ListItem',
+        position: crumbItems.length + 1,
+        name: cleanText(current[1]),
+        item: url
+      });
+    }
+  }
+  if (!crumbItems.length) {
+    crumbItems.push(
+      { '@type': 'ListItem', position: 1, name: 'StudentHubHelp', item: BASE },
+      { '@type': 'ListItem', position: 2, name: title.replace(/\\s*[|•].*$/, '').trim() || title, item: url }
+    );
+  }
+  nodes.push({
+    '@type': 'BreadcrumbList',
+    '@id': `${url}#breadcrumb`,
+    itemListElement: crumbItems
+  });
+
+  if (isHub) {
+    const cityCards = [...html.matchAll(/<article\\b[^>]*class=["'][^"']*city-card[^"']*["'][^>]*>([\\s\\S]*?)<\\/article>/gi)];
+    const cityItems = cityCards.map((match, index) => {
+      const block = match[1];
+      const link = block.match(/<h3\\b[^>]*>[\\s\\S]*?<a\\b[^>]*href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/i)
+        || block.match(/<a\\b[^>]*href=["']([^"']+\\.html)["'][^>]*>([\\s\\S]*?)<\\/a>/i);
+      if (!link) return null;
+      try {
+        return {
+          '@type': 'ListItem',
+          position: index + 1,
+          item: {
+            '@type': 'WebPage',
+            name: cleanText(link[2]) || cleanText(block.match(/<h3\\b[^>]*>([\\s\\S]*?)<\\/h3>/i)?.[1]),
+            url: new URL(link[1], BASE).href
+          }
+        };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+    if (cityItems.length) {
+      nodes.push({
+        '@type': 'ItemList',
+        '@id': `${url}#cities`,
+        name: 'StudentHubHelp city guide pages',
+        numberOfItems: cityItems.length,
+        itemListElement: cityItems
+      });
+    }
+  } else if (isCityPage) {
+    const listingCards = [...html.matchAll(/<article\\b[^>]*class=["'][^"']*listing-card[^"']*["'][^>]*>([\\s\\S]*?)<\\/article>/gi)];
+    const listingItems = listingCards.map((match, index) => {
+      const block = match[1];
+      if (/<span\\b[^>]*class=["'][^"']*status[^"']*["'][^>]*>\\s*External\\s*<\\/span>/i.test(block)) return null;
+      const name = cleanText(block.match(/<h3\\b[^>]*>([\\s\\S]*?)<\\/h3>/i)?.[1]);
+      const link = block.match(/<a\\b[^>]*class=["'][^"']*detail-link[^"']*["'][^>]*href=["']([^"']+)["']/i)
+        || block.match(/<a\\b[^>]*href=["']([^"']*properties\\/[^"']+)["']/i);
+      if (!name || !link) return null;
+      try {
+        return {
+          '@type': 'ListItem',
+          position: index + 1,
+          item: {
+            '@type': 'Thing',
+            name,
+            url: new URL(link[1], BASE).href
+          }
+        };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+    if (listingItems.length) {
+      const itemListId = `${url}#listings`;
+      pageNode.mainEntity = { '@id': itemListId };
+      nodes.push({
+        '@type': 'ItemList',
+        '@id': itemListId,
+        name: `Selected StudentHubHelp listings in ${title.replace(/\\s*[|•].*$/, '').trim()}`,
+        description: 'Selected static listing cards shown on this city guide; this is not the complete city inventory.',
+        numberOfItems: listingItems.length,
+        itemListElement: listingItems
+      });
+    }
+  }
 
   if (finder) {
-    nodes[0].about = { '@id': serviceId };
+    pageNode.about = { '@id': serviceId };
     nodes.push({
       '@type': 'Service',
       '@id': serviceId,
@@ -99,14 +235,14 @@ function buildSchema(name, html) {
     });
   }
 
-  const details = [...html.matchAll(/<details\b[^>]*>[\s\S]*?<\/details>/gi)];
-  const hasFaqHeading = /frequently\s+asked\s+questions|\bFAQs?\b/i.test(cleanText(html));
-  if (details.length && hasFaqHeading && /guide|safety/i.test(name)) {
+  const details = [...html.matchAll(/<details\\b[^>]*>([\\s\\S]*?)<\\/details>/gi)];
+  const hasFaqHeading = /frequently\\s+asked\\s+questions|\\bFAQs?\\b/i.test(cleanText(html));
+  if (details.length && hasFaqHeading) {
     const questions = [];
     for (const match of details.slice(0, 20)) {
       const block = match[0];
-      const question = cleanText(block.match(/<summary\b[^>]*>([\s\S]*?)<\/summary>/i)?.[1]);
-      const answer = cleanText(block.replace(/<summary\b[^>]*>[\s\S]*?<\/summary>/i, ''));
+      const question = cleanText(block.match(/<summary\\b[^>]*>([\\s\\S]*?)<\\/summary>/i)?.[1]);
+      const answer = cleanText(block.replace(/<summary\\b[^>]*>[\\s\\S]*?<\\/summary>/i, ''));
       if (question && answer) {
         questions.push({
           '@type': 'Question',
