@@ -618,7 +618,7 @@ async function writeAreaRedirects(redirects,expected){
   let preserved=existing;
   const a=existing.indexOf(start),b=existing.indexOf(end);
   if(a>=0&&b>a)preserved=(existing.slice(0,a)+'\n'+existing.slice(b+end.length)).trim();
-  const rules=[...redirects.entries()].flatMap(([from,to])=>[from+' '+to+' 301',from.replace(/\/$/,'')+' '+to+' 301']);
+  const rules=[...redirects.entries()].flatMap(([from,to])=>[from+' '+to+' 301',from.replace(/\/$/,'')+' '+to+' 301']).concat(ROOT_CITY_REDIRECTS.map(item=>item.from+' '+item.to+' 301'));
   const block=[start,...rules,end].join('\n');
   await write('_redirects',[preserved,block].filter(Boolean).join('\n')+'\n');
   return redirectPages;
@@ -690,6 +690,30 @@ for(const group of cities.values()){
 
 const generated=[];
 const expected=new Set();
+
+// Apply the city-hub threshold to the existing canonical .html city guides.
+// Their established URLs are preserved; only robots and neutral metadata are refreshed.
+for(const cs of CITY_HTML_ROOTS){
+  const pagePath=cs+'.html';
+  let html=await readFile(pagePath,'utf8').catch(()=> '');
+  if(!html) continue;
+  const city=cities.get(cs);
+  const cityName=city?.name || CITY_ALIAS_DATA.canonicalCities.find(item=>item.slug===cs)?.name || label(cs);
+  const decision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:city?.rows.length||0},pagePath,true);
+  const robots=decision.robots || 'noindex,follow';
+  html=html.replace(/<meta\\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(robots)+',max-image-preview:large,max-snippet:-1,max-video-preview:-1">');
+  if(!/<meta\\s+name=["']robots["']/i.test(html)) html=html.replace('</head>','<meta name="robots" content="'+esc(robots)+'"></head>');
+  const title=limitTitle(city ? titleForCity(cityName,city.rows) : 'Student Services in '+cityName+' | StudentHubHelp');
+  html=html.replace(/<title>[\\s\\S]*?<\\/title>/i,'<title>'+esc(title)+'</title>');
+  if(city && city.rows.length){
+    const description=metaDescription(descriptionForCity(city));
+    html=html.replace(/(<meta\\s+name=["']description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(description)+'$2');
+    html=html.replace(/(<meta\\s+property=["']og:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
+    html=html.replace(/(<meta\\s+name=["']twitter:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
+  }
+  if(decision.status==='redirect') ROOT_CITY_REDIRECTS.push({from:'/'+pagePath,to:parentPath({type:'cityHub',citySlug:cs})});
+  await write(pagePath,html);
+}
 
 for(const c of cities.values()){
   const cs=slug(c.name); if(!cs || c.rows.length<LOCATION_MIN_PROPERTIES) continue;
@@ -994,8 +1018,10 @@ if (sikarCity && !existingSikarPage.includes('<!-- STUDENT_CITY_STATIC_V2 -->'))
   await write('sikar.html', sikarHtml);
 }
 
+for(const [from,to] of PENDING_ELIGIBILITY_REDIRECTS) areaRedirects.set(from,to);
 const redirectPages=await writeAreaRedirects(areaRedirects,expected);
 const redirectUrls=new Set(redirectPages.filter(item=>item.from.startsWith('/sikar/')).map(item=>new URL(item.from,BASE).href));
 const uniqueGenerated=[...new Set(generated)].filter(url=>!redirectUrls.has(url));
 await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to})), redirectPages}, null, 2)+'\n');
+await write('data/seo-page-state.json', JSON.stringify(NEXT_PAGE_STATE, null, 2)+'\n');
 console.log(JSON.stringify({activeProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
