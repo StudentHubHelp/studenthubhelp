@@ -340,6 +340,23 @@ async function cleanupGeneratedPages(dir='.') {
 async function write(path,content){await mkdir(path.split('/').slice(0,-1).join('/')||'.',{recursive:true});await writeFile(path,content,'utf8');}
 async function writeAreaRedirects(redirects,expected){
   const redirectPages=[];
+  // Collapse alias chains to their final destination. Never stop on another
+  // redirect stub when a direct canonical target is available.
+  for(const [from,initialTo] of [...redirects.entries()]){
+    let target=initialTo;
+    const seen=new Set([from]);
+    while(!seen.has(target)){
+      const targetPath=decodeURIComponent(new URL(target,BASE).pathname.replace(/^\/+/, ''));
+      const targetFile=targetPath.endsWith('/')?targetPath+'index.html':(/\.[a-z0-9]+$/i.test(targetPath)?targetPath:targetPath+'/index.html');
+      if(expected.has(targetFile)) break;
+      const next=redirects.get(target);
+      if(!next) break;
+      seen.add(target);
+      target=next;
+    }
+    if(seen.has(target)) throw new Error('Cyclic SEO area redirect detected: '+from+' -> '+target);
+    redirects.set(from,target);
+  }
   for(const [from,to] of redirects.entries()){
     const filePath=from.replace(/^\/+|\/+$/g,'')+'/index.html';
     if(expected.has(filePath))continue;
@@ -612,7 +629,8 @@ if (sikarCity && !existingSikarPage.includes('<!-- STUDENT_CITY_STATIC_V2 -->'))
   await write('sikar.html', sikarHtml);
 }
 
-const uniqueGenerated = [...new Set(generated)];
 const redirectPages=await writeAreaRedirects(areaRedirects,expected);
+const redirectUrls=new Set(redirectPages.map(item=>new URL(item.from,BASE).href));
+const uniqueGenerated=[...new Set(generated)].filter(url=>!redirectUrls.has(url));
 await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to})), redirectPages}, null, 2)+'\n');
 console.log(JSON.stringify({activeProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
