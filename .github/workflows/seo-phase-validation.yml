@@ -104,40 +104,7 @@ jobs:
           directory=Path('property-index.html').read_text(encoding='utf-8')
           assert 'href="/explore-listings.html"' in home, 'Homepage is missing its public listings directory link'
           assert 'href="property-index.html"' in visual
-          city_roots={
-              'sikar':'sikar.html',
-              'bengaluru':'bengaluru.html',
-              'chennai':'chennai.html',
-              'kota':'kota.html',
-              'delhi':'delhi.html',
-              'patna':'patna.html',
-              'jhunjhunu':'jhunjhunu.html',
-              'pune':'pune.html',
-              'gurugram':'gurugram.html',
-              'coimbatore':'coimbatore.html',
-              'jaipur':'jaipur.html',
-          }
-          for city, page in city_roots.items():
-              source=Path(page)
-              city_page=Path(city)/'index.html'
-              assert source.exists(), f'Missing legacy city alias: {page}'
-              assert city_page.exists(), f'Missing canonical city hub: {city_page}'
-              source_html=source.read_text(encoding='utf-8')
-              page_html=city_page.read_text(encoding='utf-8')
-              assert f'<link rel="canonical" href="{base}{city}/">' in page_html, f'City guide canonical mismatch: {city_page}'
-              assert 'noindex' in source_html.lower(), f'Legacy city .html alias must be noindex: {page}'
-              assert '<!-- STUDENT_CITY_STATIC_V2 -->' in page_html, f'City guide is missing the static HTML marker: {city_page}'
-              assert 'mobile.css' not in page_html, f'City guide must not depend on mobile.css: {city_page}'
-              assert page_html.count('class="service-section"') == 5, f'City guide must include all five static service sections: {city_page}'
-              assert page_html.count('<details>') >= 8, f'City guide must include at least 8 visible FAQ answers: {city_page}'
-              assert '"@type":"FAQPage"' in page_html and '"@type":"ItemList"' in page_html, f'City guide FAQ/ItemList schema missing: {city_page}'
-              assert 'class="listing-card"' in page_html, f'City guide must include server-rendered listing cards: {city_page}'
-              assert '...' not in page_html, f'City guide contains an ellipsis placeholder: {city_page}'
-          all_city_slugs=['sikar','jaipur','jhunjhunu','kota','delhi','gurugram','bengaluru','patna','chennai','pune','coimbatore','lucknow','ahmedabad','hyderabad']
-          for current in all_city_slugs:
-              city_html=Path(current,'index.html').read_text(encoding='utf-8')
-              for target in all_city_slugs:
-                  assert f'href="/{target}/"' in city_html, f'{current} footer is missing {target} city link'
+          # City folder pages are validated after the SEO generators run.
           assert '<link rel="canonical" href="https://studenthubhelp.in/property-index.html">' in directory
           assert re.search(r'<a href="https://studenthubhelp\.in/properties/', directory), 'Property directory has no crawlable property links'
 
@@ -218,6 +185,41 @@ jobs:
           node scripts/generate-seo-pages.mjs
           node scripts/generate-city-area-guides.mjs
           node scripts/generate-sitemap.mjs
+
+      - name: Validate canonical city hubs and 14-city footer links
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          base='https://studenthubhelp.in/'
+          city_roots={
+              'sikar':'sikar.html','bengaluru':'bengaluru.html','chennai':'chennai.html',
+              'kota':'kota.html','delhi':'delhi.html','patna':'patna.html',
+              'jhunjhunu':'jhunjhunu.html','pune':'pune.html','gurugram':'gurugram.html',
+              'coimbatore':'coimbatore.html','jaipur':'jaipur.html'
+          }
+          for city, alias in city_roots.items():
+              source=Path(alias)
+              city_page=Path(city)/'index.html'
+              assert source.exists(), f'Missing legacy city alias: {alias}'
+              assert city_page.exists(), f'Missing canonical city hub: {city_page}'
+              source_html=source.read_text(encoding='utf-8')
+              page_html=city_page.read_text(encoding='utf-8')
+              assert f'<link rel="canonical" href="{base}{city}/">' in page_html, f'City guide canonical mismatch: {city_page}'
+              assert 'noindex' in source_html.lower(), f'Legacy city .html alias must be noindex: {alias}'
+              assert '<!-- STUDENT_CITY_STATIC_V2 -->' in page_html, f'City guide is missing the static HTML marker: {city_page}'
+              assert 'mobile.css' not in page_html, f'City guide must not depend on mobile.css: {city_page}'
+              assert page_html.count('class="service-section"') == 5, f'City guide must include all five static service sections: {city_page}'
+              assert page_html.count('<details>') >= 8, f'City guide must include at least 8 visible FAQ answers: {city_page}'
+              assert '"@type":"FAQPage"' in page_html and '"@type":"ItemList"' in page_html, f'City guide FAQ/ItemList schema missing: {city_page}'
+              assert 'class="listing-card"' in page_html, f'City guide must include server-rendered listing cards: {city_page}'
+              assert '...' not in page_html, f'City guide contains an ellipsis placeholder: {city_page}'
+          all_city_slugs=['sikar','jaipur','jhunjhunu','kota','delhi','gurugram','bengaluru','patna','chennai','pune','coimbatore','lucknow','ahmedabad','hyderabad']
+          for current in all_city_slugs:
+              city_html=Path(current,'index.html').read_text(encoding='utf-8')
+              for target in all_city_slugs:
+                  assert f'href="/{target}/"' in city_html, f'{current} footer is missing {target} city link'
+          print('Canonical city hub and 14-city footer validation passed.')
+          PY
 
       - name: Validate generated SEO titles, descriptions and GEO answers
         run: |
