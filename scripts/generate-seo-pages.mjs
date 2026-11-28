@@ -100,7 +100,7 @@ function citySeoProfile(city){
   const topServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels & PGs':meta.type==='tiffin'?'Tiffin & Mess':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
   const titleServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?(ordered.length===1?'Hostels & PGs':'Hostels, PGs'):meta.type==='tiffin'?'Tiffin':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
   const areaCounts=new Map(),areaCategoryCounts=new Map(),areaNames=new Map();
-  const normalizeArea=value=>key(value).replace(/[,.]+/g,' ').replace(/\\s+/g,' ').trim();
+  const normalizeArea=value=>key(value).replace(/[,.]+/g,' ').replace(/\s+/g,' ').trim();
   for(const row of rows){
     if(!row.area)continue;
     const areaKey=normalizeArea(row.area);
@@ -153,6 +153,7 @@ function h1ForCity(city){
 function cityContentIntro(city){
   const profile=citySeoProfile(city);
   const verified=city.rows.filter(row=>row.verified===true).length;
+  const listingText=city.rows.length===1?'1 active listing':city.rows.length+' active listings';
   const categoryText=profile.ordered.map(meta=>meta.label+' ('+profile.counts.get(meta.type)+')').join(', ');
   const areaLinks=profile.topAreaDetails.map(area=>{
     const href=slug(area.name)+'/';
@@ -179,7 +180,7 @@ function cityContentIntro(city){
     return guidance[meta.type];
   }).filter(Boolean);
   return '<section class="section city-overview"><h2>Student services and local areas in '+esc(city.name)+'</h2>'+
-    '<p>The directory currently contains '+city.rows.length+' active listings in '+esc(city.name)+', across '+esc(categoryText||'the student-service categories')+'. '+verified+(verified===1?' is':' are')+' marked verified in the source records; the remaining active records are shown without a verification claim.</p>'+
+    '<p>The directory currently contains '+listingText+' in '+esc(city.name)+', across '+esc(categoryText||'the student-service categories')+'. '+verified+(verified===1?' listing is':' listings are')+' marked verified in the source records; the remaining active records are shown without a verification claim.</p>'+
     '<h3>Localities represented in the directory</h3><p>'+esc(areaText)+'</p><div class="links locality-links">'+areaLinks+'</div>'+
     '<h3>What to compare before choosing</h3><ul>'+categoryChecks.map(item=>'<li>'+esc(item)+'</li>').join('')+
     '<li>Confirm current price, exact address, availability and terms directly with the provider before visiting or paying.</li></ul>'+
@@ -198,7 +199,7 @@ function titleForArea(area, city, rows, hasCoaching){
   if(types.has('cafe')) names.push('Cafe');
   if(types.has('bookstore')) names.push('Bookstore');
   const services=names.length>2?names.slice(0,2):names;
-  const prefix='Best '+(services.length?services.join(' & '):'Student Services');
+  const prefix='Student '+(services.length?services.join(' & '):'Student Services');
   return prefix+(hasCoaching?' Near Coaching':'')+' in '+area+', '+city+' | StudentHubHelp';
 }
 function card(row,depth){
@@ -210,7 +211,7 @@ function card(row,depth){
     '<p>'+status+'</p></article>';
 }
 function categoryNames(rows){return [...new Set(rows.map(row=>TABLES.find(item=>item.type===row.type)?.label||row.type))].filter(Boolean);}
-function faqForCity(city){const cats=categoryNames(city.rows),verified=city.rows.filter(row=>row.verified===true).length;return [{question:'What student services can I find in '+city.name+'?',answer:'The current StudentHubHelp directory shows '+city.rows.length+' active listings across '+cats.join(', ')+' in '+city.name+'. '+verified+' are marked verified in the source records.'},{question:'How can I find services near a coaching institute or landmark in '+city.name+'?',answer:'Search the institute or landmark name in Global Search. Matches use location details stored with listings; confirm the exact route and current availability with the provider before visiting.'},{question:'Are the listings guaranteed to be available?',answer:'Active status reflects the latest listing status available when this page was generated. Availability and service details can change, so reconfirm directly with the provider.'}];}
+function faqForCity(city){const cats=categoryNames(city.rows),verified=city.rows.filter(row=>row.verified===true).length,listingText=city.rows.length===1?'1 active listing':city.rows.length+' active listings';return [{question:'What student services can I find in '+city.name+'?',answer:'The current StudentHubHelp directory shows '+listingText+' across '+cats.join(', ')+' in '+city.name+'. '+verified+(verified===1?' listing is':' listings are')+' marked verified in the source records.'},{question:'How can I find services near a coaching institute or landmark in '+city.name+'?',answer:'Search the institute or landmark name in Global Search. Matches use location details stored with listings; confirm the exact route and current availability with the provider before visiting.'},{question:'Are the listings guaranteed to be available?',answer:'Active status reflects the latest listing status available when this page was generated. Availability and service details can change, so reconfirm directly with the provider.'}];}
 function faqForCategory(meta,city,rows){const verified=rows.filter(row=>row.verified===true).length;return [{question:'How many '+meta.label.toLowerCase()+' listings are shown in '+city.name+'?',answer:'This directory currently shows '+rows.length+' active '+meta.label.toLowerCase()+' listings in '+city.name+', of which '+verified+' are marked verified.'},{question:'What should I check before choosing a listing?',answer:'Review the location, facilities, timings, pricing and contact details shown on the individual listing, then confirm current availability directly with the provider.'},{question:'How can I find one near a landmark?',answer:'Search the landmark or coaching institute name in Global Search. Any distance stated in listing details is provider-supplied and should be confirmed using a map and the provider.'}];}
 function faqForArea(area,city){const cats=categoryNames(area.rows);return [{question:'What student services are listed around '+area.name+', '+city.name+'?',answer:'The current directory shows '+area.rows.length+' active listings across '+cats.join(', ')+' around '+area.name+', '+city.name+'.'},{question:'How do I confirm the exact location?',answer:'Open the individual listing, review its address and map details, and confirm the route and availability with the provider before visiting.'}];}
 function faqForCoaching(coach,city,rows){const cats=categoryNames(rows);return [{question:'What student services are linked to '+coach.name+' in '+city.name+'?',answer:'This page groups '+rows.length+' active listings whose stored name, area, address or nearby-landmark details mention '+coach.name+'. Categories shown include '+cats.join(', ')+'.'},{question:'Are distances from '+coach.name+' independently verified?',answer:'No. Coaching and landmark matches are based on information stored with each listing. Confirm the exact distance and route on a map and with the provider.'}];}
