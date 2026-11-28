@@ -713,34 +713,40 @@ for(const group of cities.values()){
 const generated=[];
 const expected=new Set();
 
-// Apply the city-hub threshold to the existing canonical .html city guides.
-// Their established URLs are preserved; only robots and neutral metadata are refreshed.
+// Promote the existing city guides to the standard /city/ directory URLs.
+// The old .html URLs remain permanent 301 aliases.
 for(const cs of CITY_HTML_ROOTS){
-  const pagePath=cs+'.html';
-  let html=await readFile(pagePath,'utf8').catch(()=> '');
+  const sourcePath=cs+'.html';
+  let html=await readFile(sourcePath,'utf8').catch(()=> '');
   if(!html) continue;
   const city=cities.get(cs);
   const cityName=city?.name || CITY_ALIAS_DATA.canonicalCities.find(item=>item.slug===cs)?.name || label(cs);
-  const decision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:city?.rows.length||0},pagePath,true);
-  const robots=decision.robots || 'noindex,follow';
-  html=html.replace(/<meta\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(robots)+',max-image-preview:large,max-snippet:-1,max-video-preview:-1">');
-  if(!/<meta\s+name=["']robots["']/i.test(html)) html=html.replace('</head>','<meta name="robots" content="'+esc(robots)+'"></head>');
+  const folderPath=cs+'/index.html';
+  const cityUrl=new URL(cs+'/',BASE).href;
+  const decision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:city?.rows.length||0},folderPath,true);
   const title=limitTitle(city ? titleForCity(cityName,city.rows) : 'Student Services in '+cityName+' | StudentHubHelp');
-  html=html.replace(/<title>[\s\S]*?<\/title>/i,'<title>'+esc(title)+'</title>');
+  html=html.replace(/<meta\\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="noindex,follow">');
+  if(!/<meta\\s+name=["']robots["']/i.test(html)) html=html.replace('</head>','<meta name="robots" content="noindex,follow"></head>');
+  html=html.replace(/<title>[\\s\\S]*?<\\/title>/i,'<title>'+esc(title)+'</title>');
+  html=html.replace(/<link\\b[^>]*rel=["']canonical["'][^>]*>/i,tag=>tag.replace(/href=["'][^"']*["']/i,'href="'+esc(cityUrl)+'"'));
+  html=html.replace(/(<meta\\s+property=["']og:url["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(cityUrl)+'$2');
+  html=html.replaceAll('https://studenthubhelp.in/'+sourcePath,cityUrl);
   if(city && city.rows.length){
     const description=metaDescription(descriptionForCity(city));
-    html=html.replace(/(<meta\s+name=["']description["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(description)+'$2');
-    html=html.replace(/(<meta\s+property=["']og:title["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
-    html=html.replace(/(<meta\s+name=["']twitter:title["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
+    html=html.replace(/(<meta\\s+name=["']description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(description)+'$2');
+    html=html.replace(/(<meta\\s+property=["']og:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
+    html=html.replace(/(<meta\\s+name=["']twitter:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
   }
-  if(decision.status==='redirect') ROOT_CITY_REDIRECTS.push({from:'/'+pagePath,to:parentPath({type:'cityHub',citySlug:cs})});
-  await write(pagePath,html);
+  ROOT_CITY_REDIRECTS.push({from:'/'+sourcePath,to:decision.status==='redirect'?parentPath({type:'cityHub',citySlug:cs}):'/'+cs+'/'});
+  if(decision.status==='redirect') ROOT_CITY_REDIRECTS.push({from:'/'+cs+'/',to:parentPath({type:'cityHub',citySlug:cs})});
+  else { expected.add(folderPath); if(decision.sitemap) generated.push(cityUrl); }
+  await write(sourcePath,html);
 }
 
 for(const c of cities.values()){
   const cs=slug(c.name); if(!cs || c.rows.length<LOCATION_MIN_PROPERTIES) continue;
   const cityDir=GENERATED_ROOT+'/'+cs;
-  const cityUrl=new URL(CITY_HTML_ROOTS.has(cs)?cs+'.html':cs+'/',BASE).href;
+  const cityUrl=new URL(cs+'/',BASE).href;
   if(CITY_HTML_ROOTS.has(cs)&&cs!=='sikar'){
     const htmlPath=cs+'.html';
     let cityHtml=await readFile(htmlPath,'utf8');
@@ -1043,6 +1049,20 @@ if (sikarCity && !existingSikarPage.includes('<!-- STUDENT_CITY_STATIC_V2 -->'))
 }
 
 for(const [from,to] of PENDING_ELIGIBILITY_REDIRECTS) areaRedirects.set(from,to);
+// Materialize the final city-hub copies after all city-specific static HTML updates.
+for(const cs of CITY_HTML_ROOTS){
+  const sourcePath=cs+'.html', folderPath=cs+'/index.html';
+  const state=NEXT_PAGE_STATE.pages[pageStateKey({type:'cityHub',citySlug:cs})];
+  if(!state || state.status==='redirect') continue;
+  let html=await readFile(sourcePath,'utf8');
+  const cityUrl=new URL(cs+'/',BASE).href;
+  html=html.replace(/<meta\\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(state.robots||'noindex,follow')+',max-image-preview:large,max-snippet:-1,max-video-preview:-1">');
+  html=html.replace(/<link\\b[^>]*rel=["']canonical["'][^>]*>/i,tag=>tag.replace(/href=["'][^"']*["']/i,'href="'+esc(cityUrl)+'"'));
+  html=html.replace(/(<meta\\s+property=["']og:url["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(cityUrl)+'$2');
+  html=html.replaceAll('https://studenthubhelp.in/'+sourcePath,cityUrl);
+  for(const other of CITY_HTML_ROOTS) html=html.replaceAll('href="/'+other+'.html"','href="/'+other+'/"');
+  await write(folderPath,html);
+}
 const redirectPages=await writeAreaRedirects(areaRedirects,expected);
 const redirectUrls=new Set(redirectPages.filter(item=>item.from.startsWith('/sikar/')).map(item=>new URL(item.from,BASE).href));
 const uniqueGenerated=[...new Set(generated)].filter(url=>!redirectUrls.has(url));
