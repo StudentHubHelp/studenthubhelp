@@ -1135,6 +1135,12 @@ for(const cs of CITY_HTML_ROOTS){
       }catch{return full;}
     });
   }
+  if(city && city.rows.length && !html.includes('Compare student-service categories')){
+    const decisions=new Map(TABLES.map(meta=>[meta.type,PAGE_DECISION_CACHE.get(pageStateKey({type:'cityCategory',citySlug:cs,categorySlug:meta.type}))||{linkable:false}]));
+    const table=cityComparisonTable(city,decisions);
+    const footerIndex=html.indexOf('<footer');
+    html=footerIndex>=0?html.slice(0,footerIndex)+table+html.slice(footerIndex):html.replace('</body>',table+'</body>');
+  }
   await write(folderPath,html);
 }
 // Every 301 target must exist after eligibility filtering; otherwise merge to its city hub.
