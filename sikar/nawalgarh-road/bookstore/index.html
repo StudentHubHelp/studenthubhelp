@@ -12,4 +12,47 @@
 <link rel="apple-touch-icon" href="/logo.png?v=logo-hd-20261029">
 <link rel="stylesheet" href="/assets/premium-location.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What can students compare at bookstores near Nawalgarh Road?","acceptedAnswer":{"@type":"Answer","text":"Ask about the required course or exam books, editions, stationery, photocopy or printing services, stock availability and current prices."}},{"@type":"Question","name":"Can I assume a particular book is in stock?","acceptedAnswer":{"@type":"Answer","text":"No. Stock changes frequently. Contact the bookstore with the exact title, author or edition before visiting."}},{"@type":"Question","name":"How do I find a bookstore's location and opening hours?","acceptedAnswer":{"@type":"Answer","text":"Use the live Bookstore Finder to open a listing, then confirm its supplied address, current hours and stock directly with the shop."}}]}</script>
-</head><body class="premium-location"><main><nav class="crumbs"><a href="../../../../">StudentHubHelp</a> › <a href="../../../../sikar/">Sikar</a> › <a href="../../../../sikar/bookstore/">All Bookstores in Sikar</a> › Nawalgarh Road</nav><header class="hero"><h1>Book Store near Nawalgarh Road, Sikar</h1><p class="muted">Find book stores, bookshops and stationery shops near Nawalgarh Road, Sikar.</p></header><section class="section"><h2>Explore book stores, bookshops and stationery shops near Nawalgarh Road</h2><p>Use StudentHubHelp to discover available listings around Nawalgarh Road, compare listing details and search by locality or service name. Open the live finder for the latest active listings.</p><div class="links"><a href="../../../../bookstore-finder.html">Open Live Finder →</a><a href="../../../../sikar/bookstore/">All Bookstores in Sikar →</a></div></section><section class="section"><h2>Explore nearby StudentHubHelp areas</h2><div class="links"><a href="../../../../sikar/piprali-road/">Piprali Road</a><a href="../../../../sikar/">Explore Sikar</a></div></section><section class="section seo-faq" aria-label="Common questions"><h2>Quick answers about Bookstores and stationery shops near Nawalgarh Road</h2><details><summary>What can students compare at bookstores near Nawalgarh Road?</summary><p>Ask about the required course or exam books, editions, stationery, photocopy or printing services, stock availability and current prices.</p></details><details><summary>Can I assume a particular book is in stock?</summary><p>No. Stock changes frequently. Contact the bookstore with the exact title, author or edition before visiting.</p></details><details><summary>How do I find a bookstore's location and opening hours?</summary><p>Use the live Bookstore Finder to open a listing, then confirm its supplied address, current hours and stock directly with the shop.</p></details></section></main></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head><body class="premium-location"><main><nav class="crumbs"><a href="../../../../">StudentHubHelp</a> › <a href="../../../../sikar/">Sikar</a> › <a href="../../../../sikar/bookstore/">All Bookstores in Sikar</a> › Nawalgarh Road</nav><header class="hero"><h1>Book Store near Nawalgarh Road, Sikar</h1><p class="muted">Find book stores, bookshops and stationery shops near Nawalgarh Road, Sikar.</p></header><section class="section"><h2>Explore book stores, bookshops and stationery shops near Nawalgarh Road</h2><p>Use StudentHubHelp to discover available listings around Nawalgarh Road, compare listing details and search by locality or service name. Open the live finder for the latest active listings.</p><div class="links"><a href="../../../../bookstore-finder.html">Open Live Finder →</a><a href="../../../../sikar/bookstore/">All Bookstores in Sikar →</a></div></section><section class="section"><h2>Explore nearby StudentHubHelp areas</h2><div class="links"><a href="../../../../sikar/piprali-road/">Piprali Road</a><a href="../../../../sikar/">Explore Sikar</a></div></section><section class="section" aria-live="polite"><h2>Current active Bookstores &amp; Stationery near Nawalgarh Road</h2><p id="nawalgarh-bookstore-count" class="muted">Loading current listings…</p><div id="nawalgarh-bookstore-grid" class="grid"><p class="muted">Loading listings…</p></div></section><section class="section seo-faq" aria-label="Common questions"><h2>Quick answers about Bookstores and stationery shops near Nawalgarh Road</h2><details><summary>What can students compare at bookstores near Nawalgarh Road?</summary><p>Ask about the required course or exam books, editions, stationery, photocopy or printing services, stock availability and current prices.</p></details><details><summary>Can I assume a particular book is in stock?</summary><p>No. Stock changes frequently. Contact the bookstore with the exact title, author or edition before visiting.</p></details><details><summary>How do I find a bookstore's location and opening hours?</summary><p>Use the live Bookstore Finder to open a listing, then confirm its supplied address, current hours and stock directly with the shop.</p></details></section></main><script>
+(async()=>{
+ const cfg={table:'bookstores',type:'bookstore',label:'Bookstores & Stationery',banner:'/bookstore-banner.png'};
+ const grid=document.getElementById('nawalgarh-bookstore-grid');
+ const count=document.getElementById('nawalgarh-bookstore-count');
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function imageFor(row){
+  for(const raw of [row.images,row.image]){
+   let value=raw;
+   if(typeof value==='string'){try{value=JSON.parse(value)}catch{}}
+   const list=Array.isArray(value)?value:[value];
+   for(const item of list){
+    const url=typeof item==='string'?item:(item&&typeof item==='object'?(item.url||item.image_url||item.src||item.path):'');
+    if(typeof url==='string'&&/^https:\/\//i.test(url.trim()))return url.trim();
+   }
+  }
+  return cfg.banner;
+ }
+ try{
+  const db=window.supabase.createClient('https://idurlccrarznnnqixxsd.supabase.co','sb_publishable_JIRAAdzm97xMNN1jIS_idg_oHEObFhT');
+  const result=await db.from(cfg.table).select('id,name,city,area,address,image,images,verified,status,slug').ilike('city','%Sikar%').or('area.ilike.%Nawalgarh%,address.ilike.%Nawalgarh%').eq('status','active').order('verified',{ascending:false});
+  if(result.error)throw result.error;
+  const rows=result.data||[];
+  const verified=rows.filter(row=>row.verified===true).length;
+  count.textContent=rows.length+' active listings · '+verified+' marked verified';
+  if(!rows.length){grid.innerHTML='<p class="muted">No active listings are currently available in this category. Check the live finder for updates.</p>';return;}
+  grid.innerHTML=rows.map(row=>{
+   const slug=row.slug||row.id;
+   const href='../../../property-details.html?type='+encodeURIComponent(cfg.type)+'&slug='+encodeURIComponent(slug);
+   const name=row.name||cfg.label;
+   const place=[row.area,row.city,row.address].filter(Boolean).join(' · ')||'Nawalgarh Road, Sikar';
+   const img=imageFor(row);
+   const status=row.verified===true?'<span class="badge">✓ Verified</span>':'<span class="badge">Active · Details Provided</span>';
+   return '<article class="property-card"><a class="property-card-image" href="'+esc(href)+'"><img src="'+esc(img)+'" alt="'+esc(name+' listing image')+'" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\\''+esc(cfg.banner)+'\\'"></a><h3><a href="'+esc(href)+'">'+esc(name)+'</a></h3><p>📍 '+esc(place)+'</p><p>'+status+'</p></article>';
+  }).join('');
+  const schema={'@context':'https://schema.org','@type':'ItemList','name':cfg.label+' near Nawalgarh Road, Sikar','numberOfItems':rows.length,'itemListElement':rows.map((row,index)=>({'@type':'ListItem','position':index+1,'url':location.origin+'/properties/'+cfg.type+'/'+encodeURIComponent(row.slug||row.id)+'/','name':row.name||cfg.label}))};
+  const tag=document.createElement('script');tag.type='application/ld+json';tag.textContent=JSON.stringify(schema);document.head.appendChild(tag);
+ }catch(error){
+  count.textContent='Live listings could not be loaded right now.';
+  grid.innerHTML='<p class="muted">Please use the live '+esc(cfg.label)+' Finder to check current listings.</p>';
+ }
+})();
+</script></body></html>
