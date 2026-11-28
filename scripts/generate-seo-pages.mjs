@@ -844,10 +844,9 @@ for(const c of cities.values()){
   const coachingSection=coachingLinks?'<section class="section"><h2>Coaching institutes & landmarks in '+esc(c.name)+'</h2><p>Explore student properties connected to coaching institutes and local landmarks through active listing details.</p><div class="links">'+coachingLinks+'</div></section>':'';
   const cityCategoryCards=TABLES.map(m=>{const rows=groups.get(m.type)||[],decision=categoryDecisions.get(m.type),target=decision?.linkable?m.type+'/':'/'+m.finder+'?q='+encodeURIComponent(c.name),countText=rows.length===1?'1 active record':rows.length+' active records',verified=rows.filter(row=>row.verified===true).length,verifiedText=verified===1?'1 marked verified':verified+' marked verified';return '<article class="category-card"><h2>'+m.icon+' '+esc(m.label)+'</h2><p>'+countText+'; '+verifiedText+'.</p><a href="'+esc(target)+'">Explore '+esc(m.label)+' in '+esc(c.name)+' →</a></article>';}).join('');
   const body=cityQuickAnswer(c)+cityContentIntro(c)+coachingSection+'<section class="section"><h2>Student-focused listings in '+esc(c.name)+'</h2><div class="grid">'+cityCategoryCards+'</div></section>'+
-    '<section class="section"><h2>Explore categories in '+esc(c.name)+'</h2><p>Choose a service category to compare listings available in this city.</p><div class="links">'+categoryLinks+'</div></section>'+
+    '<section class="section"><h2>Explore categories in '+esc(c.name)+'</h2><p>Choose a service category to compare listings available in this city.</p><div class="links">'+categoryLinks+'</div></section>'+cityComparisonTable(c,categoryDecisions)+
     '<section class="section"><h2>Student listings across '+esc(c.name)+'</h2><p>Open a listing to review its address, facilities and service information. Confirm details with the provider before visiting.</p><div class="grid">'+c.rows.slice(0,120).map(r=>card(r,1)).join('')+'</div></section>';
-  // Sikar's primary city guide lives at /sikar.html. Do not recreate the
-  // older /sikar/ city index; nested category, area and coaching pages remain.
+  // Canonical city hubs are materialized at /city/ for every eligible city.
   if (!CITY_HTML_ROOTS.has(cs)) {
     const cityPath=cityDir+'/index.html';
     const decision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:c.rows.length},cityPath);
