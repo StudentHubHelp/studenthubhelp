@@ -1,41 +1,27 @@
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGO_PATH = ROOT / "logo.png"
 OUT_PATH = ROOT / "share-preview.png"
+CITY_OUT = ROOT / "share-previews"
 W, H = 1200, 630
 
-# Premium StudentHubHelp social card. The actual repository logo.png is placed
-# prominently in the card, while the 1200x630 canvas is optimized for link previews.
-base = Image.new("RGB", (W, H), "#fff8fa")
-pixels = base.load()
-left = (255, 250, 251)
-right = (248, 235, 241)
-for x in range(W):
-    t = x / (W - 1)
-    col = tuple(round(left[i] * (1 - t) + right[i] * t) for i in range(3))
-    for y in range(H):
-        pixels[x, y] = col
-
-draw = ImageDraw.Draw(base)
-# Premium navy panel with warm pink accent.
-draw.rounded_rectangle((32, 32, W - 32, H - 32), radius=34, fill="#071a33")
-draw.rounded_rectangle((32, 32, 50, H - 32), radius=9, fill="#e88ba5")
-draw.ellipse((900, -180, 1330, 250), fill="#152c4b")
-draw.ellipse((1010, 400, 1290, 680), fill="#102642")
-draw.rounded_rectangle((88, 88, 246, 246), radius=34, fill="#ffffff", outline="#f2c6d2", width=3)
-
-logo = Image.open(LOGO_PATH).convert("RGBA")
-# Keep the full original logo visible; the white tile provides a clean premium contrast.
-scale = min(122 / logo.width, 122 / logo.height)
-logo = logo.resize((max(1, round(logo.width * scale)), max(1, round(logo.height * scale))), Image.Resampling.LANCZOS)
-lx = 167 - logo.width // 2
-ly = 167 - logo.height // 2
-base_rgba = base.convert("RGBA")
-base_rgba.alpha_composite(logo, (lx, ly))
-base = base_rgba.convert("RGB")
-draw = ImageDraw.Draw(base)
+CITY_CARDS = {
+    "student-cities": ("Student Cities Across India", "Explore 12 student city guides", "Hostels • PGs • Tiffin • Libraries • Cafes"),
+    "sikar": ("Sikar", "Student city guide", "Hostels • PGs • Tiffin • Libraries • Cafes"),
+    "bengaluru": ("Bengaluru", "Student city guide", "Hostels • PGs • Tiffin • Libraries • Cafes"),
+    "chennai": ("Chennai", "Student city guide", "Hostels • PGs • Tiffin • Libraries • Cafes"),
+    "kota": ("Kota", "Student city guide", "Hostels • PGs • Tiffin"),
+    "delhi": ("Delhi", "Student city guide", "Hostels • PGs"),
+    "patna": ("Patna", "Student city guide", "Hostels • PGs • Tiffin • Libraries • Cafes"),
+    "jhunjhunu": ("Jhunjhunu", "Student city guide", "Libraries • Cafes • Bookstores"),
+    "pune": ("Pune", "Student city guide", "Hostels • PGs • Tiffin • Libraries • Cafes"),
+    "gurugram": ("Gurugram", "Student city guide", "Hostels • PGs • Tiffin • Cafes"),
+    "coimbatore": ("Coimbatore", "Student city guide", "Libraries • Reading rooms"),
+    "jaipur": ("Jaipur", "Student city guide", "Hostels • PGs • Bookstores"),
+    "lucknow": ("Lucknow", "Student city guide", "City guide • Listings coming soon"),
+}
 
 def font(size, bold=False):
     candidates = [
@@ -47,13 +33,42 @@ def font(size, bold=False):
             return ImageFont.truetype(candidate, size)
     return ImageFont.load_default()
 
-draw.text((88, 286), "STUDENTHUBHELP", font=font(54, True), fill="#ffffff", stroke_width=0)
-draw.rounded_rectangle((90, 365, 340, 372), radius=4, fill="#e88ba5")
-draw.text((88, 397), "Discover. Verify. Decide Confidently.", font=font(27, True), fill="#f6cbd7")
-draw.text((88, 454), "Hostels  •  PGs  •  Tiffin  •  Libraries", font=font(22), fill="#e8edf5")
-draw.text((88, 492), "Cafes  •  Bookstores  •  Student Services", font=font(22), fill="#e8edf5")
-draw.rounded_rectangle((88, 548, 430, 590), radius=18, fill="#e88ba5")
-draw.text((110, 558), "STUDENT SERVICES ACROSS INDIA", font=font(14, True), fill="#071a33")
+def render_card(title, eyebrow, services, output):
+    image = Image.new("RGB", (W, H), "#fff8ed")
+    draw = ImageDraw.Draw(image)
+    draw.rounded_rectangle((28, 28, W - 28, H - 28), radius=34, fill="#173b32")
+    draw.rounded_rectangle((28, 28, 48, H - 28), radius=10, fill="#f28c28")
+    draw.ellipse((930, -180, 1340, 230), fill="#245747")
+    draw.ellipse((1000, 390, 1320, 710), fill="#214b3e")
+    draw.ellipse((1040, 90, 1160, 210), outline="#f28c28", width=10)
+    draw.rounded_rectangle((88, 82, 244, 238), radius=30, fill="#ffffff", outline="#f4b36f", width=3)
 
-base.save(OUT_PATH, format="PNG", optimize=True)
-print(f"Generated {OUT_PATH} ({W}x{H}) using {LOGO_PATH.name}")
+    logo = Image.open(LOGO_PATH).convert("RGBA")
+    scale = min(120 / logo.width, 120 / logo.height)
+    logo = logo.resize((max(1, round(logo.width * scale)), max(1, round(logo.height * scale))), Image.Resampling.LANCZOS)
+    image_rgba = image.convert("RGBA")
+    image_rgba.alpha_composite(logo, (166 - logo.width // 2, 160 - logo.height // 2))
+    image = image_rgba.convert("RGB")
+    draw = ImageDraw.Draw(image)
+
+    draw.text((88, 278), "STUDENTHUBHELP", font=font(48, True), fill="#ffffff")
+    draw.rounded_rectangle((90, 350, 310, 359), radius=4, fill="#f28c28")
+    draw.text((88, 388), eyebrow.upper(), font=font(20, True), fill="#f6c58e")
+
+    title_font = font(66 if len(title) < 19 else 54, True)
+    draw.text((88, 430), title, font=title_font, fill="#ffffff")
+    draw.text((90, 526), services, font=font(20, True), fill="#e8f1ec")
+    draw.rounded_rectangle((895, 520, 1095, 570), radius=22, fill="#f28c28")
+    draw.text((928, 535), "EXPLORE", font=font(18, True), fill="#173b32")
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, format="PNG", optimize=True)
+
+# Keep the standard site-wide preview for pages outside the city-guide set.
+render_card("Student Services Across India", "Discover • Compare • Confirm", "Hostels • PGs • Tiffin • Libraries • Cafes", OUT_PATH)
+
+# City and Student Cities Hub pages receive distinct, title-specific social images.
+for slug, (title, eyebrow, services) in CITY_CARDS.items():
+    render_card(title, eyebrow, services, CITY_OUT / (slug + ".png"))
+
+print(f"Generated global share preview and {len(CITY_CARDS)} unique city-guide previews.")
