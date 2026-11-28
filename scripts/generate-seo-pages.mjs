@@ -693,10 +693,9 @@ const cityRows=dedupeCityRows(all);
 const areaRedirects=new Map(),areaCounts=new Map(),cityCounts=new Map();
 function normalizedAreaKey(value){return key(value).replace(/[,.]+/g,' ').replace(/\s+/g,' ').trim();}
 for(const row of cityRows){const citySlug=slug(canonicalCityName(row.city));cityCounts.set(citySlug,(cityCounts.get(citySlug)||0)+1);if(row.area){const areaKey=citySlug+'|'+normalizedAreaKey(row.area);areaCounts.set(areaKey,(areaCounts.get(areaKey)||0)+1);}}
-for(const row of cityRows){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/',oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+normalizedAreaKey(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/',cityTarget=CITY_HTML_ROOTS.has(citySlug)?'/'+citySlug+'.html':((cityCounts.get(citySlug)||0)>=3?cityPath:'/explore-listings.html');const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityTarget;if(from!==to)areaRedirects.set(from,to);}
-for(const citySlug of CITY_HTML_ROOTS){if(citySlug!=='sikar')areaRedirects.set('/'+citySlug+'/', '/'+citySlug+'.html');}
+for(const row of cityRows){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/',oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+normalizedAreaKey(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/',cityTarget=CITY_HTML_ROOTS.has(citySlug)||((cityCounts.get(citySlug)||0)>=10)?cityPath:'/student-cities.html';const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityTarget;if(from!==to)areaRedirects.set(from,to);}
 // Consolidate the thin duplicate Nawalgarh Road library URL into the live directory page.
-areaRedirects.set('/sikar/nawalgarh-road/library/','/sikar/libraries/nawalgarh-road/');
+areaRedirects.set('/sikar/nawalgarh-road/library/','/sikar/library/');
 const cities=new Map();
 for(const row of cityRows){
   const canonicalCity=canonicalCityName(row.city);
