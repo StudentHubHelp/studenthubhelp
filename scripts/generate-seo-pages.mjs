@@ -229,6 +229,11 @@ function titleForArea(area, city, rows, hasCoaching){
   if(types.has('tiffin')) names.push('Tiffin');
   if(types.has('cafe')) names.push('Cafe');
   if(types.has('bookstore')) names.push('Bookstore');
+  if(key(city)!=='sikar'){
+    const services=names.length>2?names.slice(0,2):names;
+    const prefix='Student '+(services.length?services.join(' & '):'Student Services');
+    return prefix+(hasCoaching?' Near Coaching':'')+' in '+area+', '+city+' | StudentHubHelp';
+  }
   const suffix=' | StudentHubHelp';
   const location=' in '+area+', '+city;
   const room=Math.max(1,60-suffix.length-location.length);
@@ -237,6 +242,7 @@ function titleForArea(area, city, rows, hasCoaching){
   return prefix+location+suffix;
 }
 function titleForCoaching(coach,city){
+  if(key(city)!=='sikar') return 'Student Properties near '+coach.name+' in '+city+' | StudentHubHelp';
   const suffix=' | StudentHubHelp';
   const location=' in '+city;
   const room=Math.max(1,60-suffix.length-location.length-5);
@@ -247,6 +253,12 @@ function titleForCoaching(coach,city){
 function card(row,depth){
   const href=rel(depth,propUrl(row));
   const bits=[row.area,row.city,row.address].filter(Boolean);
+  if(key(row.city)!=='sikar'){
+    const status=row.verified===true?'<span class="badge">✓ Verified</span>':'<span class="badge">Active · Details Provided</span>';
+    return '<article class="property-card"><h3><a href="'+esc(href)+'">'+esc(row.name||'Student property')+'</a></h3>'+
+      (bits.length?'<p>📍 '+esc(bits.join(' • '))+'</p>':'')+
+      '<p>'+status+'</p></article>';
+  }
   const banner=rel(depth,new URL(CATEGORY_BANNERS[row.type]||'/hostel-banner.png',BASE).href);
   const image=firstImageUrl(row)||banner;
   const status=row.verified===true?'<span class="badge">✓ Verified</span>':'<span class="badge">Active · Details Provided</span>';
@@ -351,6 +363,7 @@ async function writeAreaRedirects(redirects,expected){
   // Collapse alias chains to their final destination. Never stop on another
   // redirect stub when a direct canonical target is available.
   for(const [from,initialTo] of [...redirects.entries()]){
+    if(!from.startsWith('/sikar/')) continue;
     let target=initialTo;
     const seen=new Set([from]);
     while(!seen.has(target)){
@@ -638,7 +651,7 @@ if (sikarCity && !existingSikarPage.includes('<!-- STUDENT_CITY_STATIC_V2 -->'))
 }
 
 const redirectPages=await writeAreaRedirects(areaRedirects,expected);
-const redirectUrls=new Set(redirectPages.map(item=>new URL(item.from,BASE).href));
+const redirectUrls=new Set(redirectPages.filter(item=>item.from.startsWith('/sikar/')).map(item=>new URL(item.from,BASE).href));
 const uniqueGenerated=[...new Set(generated)].filter(url=>!redirectUrls.has(url));
 await write('seo-generated-manifest.json', JSON.stringify({generated: uniqueGenerated, expected:[...expected], areaRedirects:[...areaRedirects].map(([from,to])=>({from,to})), redirectPages}, null, 2)+'\n');
 console.log(JSON.stringify({activeProperties:all.length,cities:cities.size,generatedPages:generated.length,locationThreshold:LOCATION_MIN_PROPERTIES},null,2));
