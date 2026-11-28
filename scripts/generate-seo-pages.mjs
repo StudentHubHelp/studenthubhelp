@@ -647,15 +647,14 @@ if (nawalgarhCity) {
     const verified=rows.filter(row=>row.verified===true).length;
     const description='Browse '+rows.length+' active '+page.plural+' around Nawalgarh Road, Sikar. Review provider-supplied addresses, timings, facilities and contact details on StudentHubHelp.';
     const listingCards=rows.map(row=>card(row,3,{details:true})).join('');
-    const quickAnswer='<section class="section quick-answer"><h2>Quick answer</h2><p>StudentHubHelp lists '+rows.length+' active '+page.plural+' associated with Nawalgarh Road, Sikar. '+verified+(verified===1?' listing is':' listings are')+' marked verified in the directory records. Check each provider card for available address, timing, facilities and phone details.</p></section>';
-    const body=quickAnswer+
+    const areaGroup={name:'Nawalgarh Road',rows};
+    const quickAnswer=areaQuickAnswer(areaGroup,{name:'Sikar'});
+    const areaIntro=areaContentIntro(areaGroup,{name:'Sikar'});
+    const landmarkTable=areaLandmarkTable(areaGroup);
+    const body=quickAnswer+areaIntro+landmarkTable+
       '<section class="section"><h2>'+esc(page.label)+' around Nawalgarh Road, Sikar</h2><p>These cards are rendered directly into the page HTML from active StudentHubHelp directory records. Fields not supplied in a record are omitted; confirm current availability and details with the provider.</p><div class="grid">'+listingCards+'</div></section>'+
       '<section class="section"><h2>Explore more in Sikar</h2><div class="links"><a href="/sikar.html">Sikar student directory</a><a href="/student-cities.html">Student Cities</a><a href="/sikar/hostel/">Hostels & PGs</a><a href="/sikar/tiffin/">Tiffin & Mess</a><a href="/sikar/library/">Libraries</a><a href="/sikar/bookstore/">Bookstores</a></div></section>';
-    const faqItems=[
-      {question:'How many '+page.plural+' are listed around Nawalgarh Road, Sikar?',answer:'The current build contains '+rows.length+' active records associated with Nawalgarh Road in this category; '+verified+(verified===1?' is':' are')+' marked verified.'},
-      {question:'Are phone numbers and timings available for every listing?',answer:'Only phone numbers and timings present in the provider-supplied directory record are displayed. Missing details are not guessed; confirm them directly with the provider.'},
-      {question:'How can I check facilities and exact location?',answer:'Review the address and facilities shown on each card, then open View Details for the full property page and confirm the current route and availability with the provider.'}
-    ];
+    const faqItems=faqForArea(areaGroup,{name:'Sikar'});
     const pageHtml=shell({
       title:'Best '+page.label+' on Nawalgarh Road, Sikar | StudentHubHelp',
       description,canonical:page.url,h1:page.label+' on Nawalgarh Road, Sikar',
