@@ -17,7 +17,7 @@ function page(city, area) {
   const description = ('Verified location context for ' + area.name + ', ' + city.name + '. See the official source, student decision checklist and live directory search.').slice(0,160);
   const sourceLinks = area.sourceUrls.map((source, i) => '<li><a href="' + esc(source) + '" target="_blank" rel="noopener noreferrer">Open source ' + (i+1) + ' ↗</a></li>').join('');
   const search = '/global-search.html?q=' + encodeURIComponent(area.name + ' ' + city.name);
-  const categoryCards = categoryLinks.map(([label, href]) => '<a class="service-link" href="/' + href + '?q=' + encodeURIComponent(area.name + ' ' + city.name) + '">' + label + ' <span>Search →</span></a>').join('');
+  const categoryCards = categoryLinks.map(([label, href]) => '<a class="service-link" href="/' + href + '">' + label + ' <span>Open finder →</span></a>').join('');
   const faq = [
     ['What is verified about ' + area.name + '?', area.evidence],
     ['Does this page confirm available hostels or PGs?', 'No. This is a location-context guide, not a vacancy list. Search the live StudentHubHelp directory and contact providers to confirm current availability, price and terms.'],
