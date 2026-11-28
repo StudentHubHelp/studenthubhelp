@@ -39,6 +39,7 @@ function key(v){return label(v).toLowerCase();}
 function stripLocationSuffix(value,suffix){const text=label(value),part=label(suffix);if(!text||!part)return text;const lower=text.toLowerCase(),target=part.toLowerCase();if(lower===target)return '';if(lower.endsWith(' '+target))return text.slice(0,text.length-part.length).replace(/[,\s]+$/,'').trim();return text;}
 function normalizeArea(value,city){let area=label(value);if(!area)return '';const state=stateForCity(city);area=stripLocationSuffix(area,'India');if(state)area=stripLocationSuffix(area,state);const cityEntry=CITY_ALIAS_DATA.canonicalCities.find(item=>key(item.name)===key(city));const aliases=[city,...(cityEntry?.seoAliases||[]),...(cityEntry?.searchAliases||[])].filter(Boolean).sort((a,b)=>label(b).length-label(a).length);for(const alias of aliases)area=stripLocationSuffix(area,alias);return area&&key(area)!==key(city)&&key(area)!==key(state)?label(area):'';}
 const COACHINGS = JSON.parse(await readFile('data/landmark-aliases.json', 'utf8'));
+const VERIFIED_LANDMARKS = JSON.parse(await readFile('data/verified-landmarks.json', 'utf8'));
 const locationRegistrySource = String.raw`(function(window){
 'use strict';
 const cityEntries=${JSON.stringify(CITY_ALIAS_DATA.canonicalCities)};
@@ -289,6 +290,54 @@ function areaLandmarkMatches(area){
     .map(slug=>coachingBySlug(slug))
     .filter(Boolean);
 }
+function areaCentroid(area){
+  const points=area.rows.filter(row=>Number.isFinite(Number(row.latitude))&&Number.isFinite(Number(row.longitude))&&row.latitude!==null&&row.longitude!==null);
+  if(!points.length)return null;
+  return {latitude:points.reduce((sum,row)=>sum+Number(row.latitude),0)/points.length,longitude:points.reduce((sum,row)=>sum+Number(row.longitude),0)/points.length};
+}
+function straightLineKm(a,b){
+  const rad=value=>value*Math.PI/180,earth=6371;
+  const dLat=rad(Number(b.latitude)-Number(a.latitude)),dLon=rad(Number(b.longitude)-Number(a.longitude));
+  const x=Math.sin(dLat/2)**2+Math.cos(rad(Number(a.latitude)))*Math.cos(rad(Number(b.latitude)))*Math.sin(dLon/2)**2;
+  return 2*earth*Math.asin(Math.sqrt(x));
+}
+function verifiedLandmarksForArea(area,city){
+  const center=areaCentroid(area);
+  if(!center)return [];
+  return VERIFIED_LANDMARKS.filter(item=>item.verified===true&&key(item.city)===key(city.name)&&Number.isFinite(Number(item.latitude))&&Number.isFinite(Number(item.longitude)))
+    .map(item=>({...item,distanceKm:straightLineKm(center,item)}))
+    .filter(item=>item.distanceKm<=8)
+    .sort((a,b)=>a.distanceKm-b.distanceKm)
+    .slice(0,5);
+}
+function feeValueForRow(row){
+  const fields={
+    hostel:[['monthly_rent_range','monthly rent range'],['monthly_rent','monthly rent'],['monthly_fee','monthly fee'],['price','published price']],
+    tiffin:[['monthly_fee','monthly fee'],['price','published price']],
+    library:[['monthly_fee','monthly fee'],['daily_fee','daily fee'],['price','published price']],
+    cafe:[['price_range','price range'],['price','published price']],
+    bookstore:[['price','published price']]
+  }[row.type]||[];
+  const found=fields.find(([field])=>row[field]!==null&&row[field]!==undefined&&String(row[field]).trim()!=='');
+  if(!found)return null;
+  const raw=row[found[0]];
+  const formatted=typeof raw==='number'||/^\d+(?:\.\d+)?$/.test(String(raw).trim())
+    ? '₹'+new Intl.NumberFormat('en-IN',{maximumFractionDigits:0}).format(Number(raw))
+    : (/^\d+(?:\.\d+)?\s*[-–]\s*\d+(?:\.\d+)?$/.test(String(raw).trim())?'₹'+String(raw).trim():String(raw).trim());
+  return {type:row.type,label:found[1],value:formatted};
+}
+function areaFeeSummary(area){
+  const grouped=new Map();
+  for(const row of area.rows){
+    const fee=feeValueForRow(row);
+    if(!fee)continue;
+    const meta=TABLES.find(item=>item.type===fee.type);
+    const keyValue=fee.type+'|'+fee.label;
+    if(!grouped.has(keyValue))grouped.set(keyValue,{category:meta?.label||fee.type,label:fee.label,values:new Set()});
+    grouped.get(keyValue).values.add(fee.value);
+  }
+  return [...grouped.values()].map(item=>item.category+' — '+item.label+': '+[...item.values].slice(0,4).join(', '));
+}
 function areaQuickAnswer(area,city){
   const counts=new Map();
   for(const row of area.rows) counts.set(row.type,(counts.get(row.type)||0)+1);
@@ -304,6 +353,8 @@ function areaContentIntro(area,city){
   const facilities=[...new Set(area.rows.flatMap(row=>String(row.facilities||'').split(/[,;|]/).map(label).filter(Boolean)))].slice(0,8);
   const timings=[...new Set(area.rows.map(row=>label(row.timing)).filter(Boolean))].slice(0,4);
   const landmarks=areaLandmarkMatches(area);
+  const verifiedLandmarks=verifiedLandmarksForArea(area,city);
+  const feeSummary=areaFeeSummary(area);
   const verified=area.rows.filter(row=>row.verified===true).length;
   const categoryGuidance={
     hostel:'For hostels and PGs, compare room type, sharing arrangements, facilities, published charges and the provider’s rules.',
@@ -316,19 +367,21 @@ function areaContentIntro(area,city){
   const nameText=names.length?'Examples in the current records include '+names.join(', ')+'.':'Individual listing names are available in the cards below.';
   const facilityText=facilities.length?'Provider records mention facilities such as '+facilities.join(', ')+'. These details are shown as supplied and may need confirmation.':'The current records do not contain consistent facility details, so check each listing page or contact the provider for specific requirements.';
   const timingText=timings.length?'Some records include timing information, including '+timings.join('; ')+'. Timings can change, so confirm before travelling.':'Timings are not consistently supplied across these records; contact the provider to confirm current operating hours.';
-  const landmarkText=landmarks.length?'Names such as '+landmarks.map(item=>item.name).join(', ')+' appear in listing names, addresses or nearby-landmark fields. These are text matches only, not independent confirmation that a provider is nearby. No travel distance is inferred from these mentions.':'The current listing fields do not provide a reliable, independently verified landmark-distance dataset for this area. Use the address and map link on each property page to check the route.';
+  const landmarkText=verifiedLandmarks.length?'Verified landmarks recorded for '+city.name+' include '+verifiedLandmarks.map(item=>item.name).join(', ')+'. The table below gives approximate straight-line distances from the centroid of available listing coordinates, not road distance or travel time.': 'No verified landmark coordinates are available close enough to this locality in the current verified dataset; no distance claims are shown.';
+  const textMatchNote=landmarks.length?' Other names such as '+landmarks.map(item=>item.name).join(', ')+' appear in listing text only and are not treated as verified nearby landmarks.':'';
+  const feeText=feeSummary.length?'Provider-supplied prices or fees recorded in some listings include '+feeSummary.join('; ')+'. Confirm the billing period, inclusions, deposit and current amount directly with the provider.':'No usable published fee or price value is present in the active records for this locality. Contact providers to confirm current charges.';
   return '<section class="section area-overview"><h2>About student services in '+esc(area.name)+', '+esc(city.name)+'</h2>'+
     '<p>The StudentHubHelp directory currently contains '+area.rows.length+' active listing records associated with '+esc(area.name)+', '+esc(city.name)+'. They cover '+esc(categories.join(', '))+'. '+verified+' records are marked verified in the saved directory data; the remaining records are presented without a verification claim. This is a directory snapshot, not a guarantee of live availability.</p>'+
-    '<p>'+esc(nameText)+' Each card links to its individual details page, where students can review the provider-supplied address and any available contact or service information. '+esc(facilityText)+'</p>'+
-    '<p>'+esc(timingText)+' '+esc(landmarkText)+'</p>'+
+    '<p>'+esc(nameText)+' Each card links to its individual details page, where students can review the provider-supplied address and any available contact or service information. '+esc(facilityText)+' '+esc(feeText)+'</p>'+
+    '<p>'+esc(timingText)+' '+esc(landmarkText+textMatchNote)+'</p>'+
     '<h3>What to compare before choosing</h3><ul>'+guidance.map(item=>'<li>'+esc(item)+'</li>').join('')+'<li>Compare the exact address, total cost, terms and current availability with the provider before making a payment.</li></ul>'+
     '<p>Listing counts and category totals are calculated from active records associated with this locality. They do not represent verified market coverage, walking distance or travel time. Use the listing’s map or directions link to assess the route that matters to you.</p></section>';
 }
-function areaLandmarkTable(area){
-  const landmarks=areaLandmarkMatches(area);
-  if(!landmarks.length) return '';
-  return '<section class="section area-landmarks"><h2>Landmarks referenced in listing details</h2><p>These names were matched against listing text. They are not independently verified proximity claims, and no distance is available in the source records.</p><div class="table-wrap"><table><thead><tr><th>Landmark or coaching name</th><th>Source match</th><th>Distance</th></tr></thead><tbody>'+
-    landmarks.map(item=>'<tr><td>'+esc(item.name)+'</td><td>Listing name, address or nearby-landmark field</td><td>Not provided / not verified</td></tr>').join('')+
+function areaLandmarkTable(area,city){
+  const landmarks=verifiedLandmarksForArea(area,city);
+  if(!landmarks.length)return '';
+  return '<section class="section area-landmarks"><h2>Verified nearby landmarks</h2><p>Landmark coordinates are from the StudentHubHelp verified dataset. Distances are approximate straight-line measurements from the centroid of available listing coordinates, not driving distance or travel time.</p><div class="table-wrap"><table><thead><tr><th>Verified landmark</th><th>Recorded locality</th><th>Approx. straight-line distance</th></tr></thead><tbody>'+
+    landmarks.map(item=>'<tr><td>'+esc(item.name)+'</td><td>'+esc(item.area||item.address||city.name)+'</td><td>'+item.distanceKm.toFixed(1)+' km</td></tr>').join('')+
     '</tbody></table></div></section>';
 }
 function faqForArea(area,city){
@@ -336,11 +389,14 @@ function faqForArea(area,city){
   const verified=area.rows.filter(row=>row.verified===true).length;
   const facilities=[...new Set(area.rows.flatMap(row=>String(row.facilities||'').split(/[,;|]/).map(label).filter(Boolean)))].slice(0,5);
   const timings=area.rows.filter(row=>row.timing).length;
+  const fees=areaFeeSummary(area);
+  const landmarks=verifiedLandmarksForArea(area,city);
   return [
     {question:'What student services are listed around '+area.name+', '+city.name+'?',answer:'The current directory shows '+countText+' across '+cats.join(', ')+' around '+area.name+', '+city.name+'.'},
     {question:'How many listings are marked verified?',answer:verified+' of '+area.rows.length+' active records are marked verified in the saved StudentHubHelp directory data. Check the badge on each card and confirm details with the provider.'},
     {question:'Which facilities and timings are available?',answer:facilities.length?'The listing records mention '+facilities.join(', ')+'. '+timings+' records include timing information. Check each property page because details vary by provider.':'Facilities and timings are not consistently available in the saved records. Review each listing and contact the provider to confirm.'},
-    {question:'Are nearby landmark distances verified?',answer:'No verified distance field is available in these listing records. Landmark names, where shown, are text matches from listing details only. Check the map and confirm the route directly before visiting.'},
+    {question:'Are published fees or prices available?',answer:fees.length?fees.join('; ')+'. These are provider-supplied values from the saved records; confirm the exact billing period and current amount directly with the provider.':'No usable published fee or price value is present in the current active records for this locality. Contact providers for current charges.'},
+    {question:'What verified landmarks are nearby?',answer:landmarks.length?landmarks.map(item=>item.name+' ('+item.distanceKm.toFixed(1)+' km straight-line)').join(', ')+'. Distances are approximate from the listing-coordinate centroid, not road distances.':'No verified landmark coordinates are available close enough to this locality in the current verified dataset; no distance claim is made.'},
     {question:'How can I compare listings before choosing?',answer:'Open each View Details page and compare the address, category-specific facilities, timings, published charges and contact details. Confirm current availability and terms directly with the provider before paying.'}
   ];
 }
@@ -392,7 +448,8 @@ async function fetchRows(meta){
   const out=[]; let offset=0;
   while(true){
     const u=new URL(SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/'+meta.table);
-    u.searchParams.set('select','id,property_id,slug,name,city,area,address,image,images,nearby_coaching,landmark,latitude,longitude,description,status,verified,updated_at,created_at,phone,timing,facilities');
+    const priceFields={hostel:'monthly_rent,monthly_rent_range,monthly_fee,security_deposit,price',tiffin:'monthly_fee,price',library:'monthly_fee,daily_fee,price',cafe:'price_range,price',bookstore:'price'};
+    u.searchParams.set('select','id,property_id,slug,name,city,area,address,image,images,nearby_coaching,landmark,latitude,longitude,description,status,verified,updated_at,created_at,phone,timing,facilities,'+(priceFields[meta.type]||'price'));
     u.searchParams.set('status','eq.active');
     u.searchParams.set('offset',String(offset)); u.searchParams.set('limit','1000');
     const res=await fetch(u,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
@@ -608,7 +665,7 @@ for(const c of cities.values()){
     const areaCoachingSlugs=[...new Set(a.rows.flatMap(matchedCoachings))];
     const areaCoachingLinks=areaCoachingSlugs.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
     const areaCoachingSection=areaCoachingLinks?'<section class="section"><h2>Nearby coaching & landmarks</h2><p>Coaching and landmark links are derived from names found in active listing details, including nearby-coaching and landmark fields.</p><div class="links">'+areaCoachingLinks+'</div></section>':'';
-    const body=areaQuickAnswer(a,c)+areaContentIntro(a,c)+areaLandmarkTable(a)+
+    const body=areaQuickAnswer(a,c)+areaContentIntro(a,c)+areaLandmarkTable(a,c)+
       '<section class="section"><h2>Active student properties in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+a.rows.map(r=>card(r,2)).join('')+'</div></section>'+areaCoachingSection+
       '<section class="section"><h2>Categories</h2><div class="links">'+groupLinks+'</div></section>'+
       '<p><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
@@ -650,7 +707,7 @@ if (nawalgarhCity) {
     const areaGroup={name:'Nawalgarh Road',rows};
     const quickAnswer=areaQuickAnswer(areaGroup,{name:'Sikar'});
     const areaIntro=areaContentIntro(areaGroup,{name:'Sikar'});
-    const landmarkTable=areaLandmarkTable(areaGroup);
+    const landmarkTable=areaLandmarkTable(areaGroup,{name:'Sikar'});
     const body=quickAnswer+areaIntro+landmarkTable+
       '<section class="section"><h2>'+esc(page.label)+' around Nawalgarh Road, Sikar</h2><p>These cards are rendered directly into the page HTML from active StudentHubHelp directory records. Fields not supplied in a record are omitted; confirm current availability and details with the provider.</p><div class="grid">'+listingCards+'</div></section>'+
       '<section class="section"><h2>Explore more in Sikar</h2><div class="links"><a href="/sikar.html">Sikar student directory</a><a href="/student-cities.html">Student Cities</a><a href="/sikar/hostel/">Hostels & PGs</a><a href="/sikar/tiffin/">Tiffin & Mess</a><a href="/sikar/library/">Libraries</a><a href="/sikar/bookstore/">Bookstores</a></div></section>';
