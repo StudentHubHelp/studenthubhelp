@@ -925,7 +925,7 @@ if (nawalgarhCity) {
       .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
     const decision=decideAndStorePage({type:'areaCategory',citySlug:'sikar',categorySlug:page.type,areaSlug:'nawalgarh-road'},{listingCount:rows.length,verifiedCount:rows.filter(row=>row.verified===true).length,profileComplete:getAreaProfile('sikar','Nawalgarh Road')?.profileComplete===true},page.path);
     if(decision.status==='redirect') PENDING_ELIGIBILITY_REDIRECTS.set('/'+page.path.replace(/index\.html$/,''),parentPath({type:'areaCategory',citySlug:'sikar',categorySlug:page.type}));
-    if (!rows.length || decision.status==='omit' || decision.status==='redirect') continue;
+    if (decision.status==='omit' || decision.status==='redirect') continue;
     const verified=rows.filter(row=>row.verified===true).length;
     const description='Browse '+rows.length+' active '+page.plural+' around Nawalgarh Road, Sikar. Review provider-supplied addresses, timings, facilities and contact details on StudentHubHelp.';
     const listingCards=rows.map(row=>card(row,3,{details:true})).join('');
