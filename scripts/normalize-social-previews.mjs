@@ -3,7 +3,18 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const BASE_URL = (process.env.BASE_URL || 'https://studenthubhelp.in').replace(/\/+$/, '');
-const SHARE_IMAGE = `${BASE_URL}/logo.png?v=logo-hd-20261029`;
+const SHARE_IMAGE = `${BASE_URL}/share-preview.png`;
+const CITY_PREVIEW_SLUGS = new Set(['sikar','bengaluru','chennai','kota','delhi','patna','jhunjhunu','pune','gurugram','coimbatore','jaipur','lucknow']);
+
+function previewForFile(file) {
+  const relative = path.relative(ROOT, file).split(path.sep).join('/');
+  if (relative === 'student-cities.html') return `${BASE_URL}/share-previews/student-cities.png`;
+  if (!relative.includes('/') && relative.endsWith('.html')) {
+    const slug = relative.slice(0, -5);
+    if (CITY_PREVIEW_SLUGS.has(slug)) return `${BASE_URL}/share-previews/${slug}.png`;
+  }
+  return SHARE_IMAGE;
+}
 const SKIP_DIRS = new Set(['.git', 'node_modules', '.github', '.next', 'dist', 'build']);
 
 async function walk(dir) {
@@ -48,14 +59,15 @@ function dedupeSocialMeta(html) {
   }).replace(/\n[ \t]*\n{2,}/g, '\n\n');
 }
 
-function normalize(html) {
+function normalize(html, file) {
+  const shareImage = previewForFile(file);
   const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [,'StudentHubHelp | Student Services Across India'])[1].replace(/<[^>]+>/g, '').trim();
   const description = (html.match(/<meta\b(?=[^>]*\bname=["']description["'])[^>]*\bcontent=["']([^"']*)["'][^>]*>/i) || [,'Discover hostels, PGs, tiffin services, libraries, cafes and bookstores with StudentHubHelp.'])[1];
 
   const metas = [
-    [/\bproperty=["']og:image["']/i, 'property="og:image"', SHARE_IMAGE],
-    [/\bname=["']twitter:image["']/i, 'name="twitter:image"', SHARE_IMAGE],
-    [/\bproperty=["']og:image:secure_url["']/i, 'property="og:image:secure_url"', SHARE_IMAGE],
+    [/\bproperty=["']og:image["']/i, 'property="og:image"', shareImage],
+    [/\bname=["']twitter:image["']/i, 'name="twitter:image"', shareImage],
+    [/\bproperty=["']og:image:secure_url["']/i, 'property="og:image:secure_url"', shareImage],
     [/\bproperty=["']og:image:alt["']/i, 'property="og:image:alt"', 'StudentHubHelp logo and student services'],
     [/\bname=["']twitter:card["']/i, 'name="twitter:card"', 'summary_large_image'],
     [/\bproperty=["']og:title["']/i, 'property="og:title"', title],
@@ -70,10 +82,10 @@ const files = await walk(ROOT);
 let changed = 0;
 for (const file of files) {
   const original = await readFile(file, 'utf8');
-  const updated = normalize(original);
+  const updated = normalize(original, file);
   if (updated !== original) {
     await writeFile(file, updated, 'utf8');
     changed++;
   }
 }
-console.log(`Normalized social preview metadata in ${changed} HTML files; image: ${SHARE_IMAGE}`);
+console.log(`Normalized social preview metadata in ${changed} HTML files; city guides use unique share-previews/*.png assets.`);
