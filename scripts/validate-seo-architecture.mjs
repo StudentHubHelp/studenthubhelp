@@ -94,8 +94,7 @@ for(const relativePath of manifest.expected||[]){
   const html=await readPage(path);
   if(!html) continue;
   if(robotsOf(html).includes('noindex')){
-    const canonical=canonicalOf(html);
-    const url=canonical?new URL(canonical,BASE):new URL('/'+path.replace(/index\.html$/,''),BASE);
+    const url=new URL('/'+path.replace(/index\.html$/,''),BASE);
     noindexPaths.add(url.pathname);
     if(sitemapUrls.has(url.href)) errors.push('Noindex page is present in sitemap: '+url.href);
   }
