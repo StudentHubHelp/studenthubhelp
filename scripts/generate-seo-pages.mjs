@@ -236,6 +236,14 @@ function titleForArea(area, city, rows, hasCoaching){
   const prefix=candidates.find(value=>value && value.length<=room)||'Student';
   return prefix+location+suffix;
 }
+function titleForCoaching(coach,city){
+  const suffix=' | StudentHubHelp';
+  const location=' in '+city;
+  const room=Math.max(1,60-suffix.length-location.length-5);
+  const name=label(coach.name);
+  const prefix='Near '+name.slice(0,room).trim();
+  return prefix+location+suffix;
+}
 function card(row,depth){
   const href=rel(depth,propUrl(row));
   const bits=[row.area,row.city,row.address].filter(Boolean);
@@ -533,7 +541,7 @@ for(const c of cities.values()){
     const typeLinks=[...new Set(rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('/'+m.finder)+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
     const body='<section class="section"><h2>Student properties near '+esc(coach.name)+' in '+esc(c.name)+'</h2><p>These active listings mention this location in their name, area, address or nearby-landmark details. Listing-provided distances are not independently verified; confirm the exact route before visiting.</p><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section><section class="section"><h2>Categories</h2><div class="links">'+typeLinks+'</div></section><p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
-    await write(p,shell({title:'Student Properties near '+coach.name+' in '+c.name+' | StudentHubHelp',description:'Find student listings linked to '+coach.name+' in '+c.name+'. Check each listing for its location details and confirm exact distance before visiting.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':entitySchemaType(coach),'name':coach.name},{'@type':'City','name':c.name}],itemRows:rows,faqItems:faqForCoaching(coach,c,rows)}));
+    await write(p,shell({title:titleForCoaching(coach,c.name),description:'Find student listings linked to '+coach.name+' in '+c.name+'. Check each listing for its location details and confirm exact distance before visiting.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':entitySchemaType(coach),'name':coach.name},{'@type':'City','name':c.name}],itemRows:rows,faqItems:faqForCoaching(coach,c,rows)}));
   }
 }
 
