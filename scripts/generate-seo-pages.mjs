@@ -1,4 +1,5 @@
 import { mkdir, readdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { buildListingSelect, normalizeListingRecord } from './seo-listing-data.mjs';
 
 const BASE = (process.env.BASE_URL || 'https://studenthubhelp.in/').replace(/\/+$/, '') + '/';
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -526,21 +527,21 @@ async function fetchRows(meta){
   const out=[]; let offset=0;
   while(true){
     const u=new URL(SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/'+meta.table);
-    const priceFields={hostel:'monthly_rent,monthly_rent_range,monthly_fee,security_deposit,price',tiffin:'monthly_fee,price',library:'monthly_fee,daily_fee,price',cafe:'price_range,price',bookstore:'price'};
-    u.searchParams.set('select','id,property_id,slug,name,city,area,address,image,images,nearby_coaching,landmark,latitude,longitude,description,status,verified,updated_at,created_at,phone,timing,facilities,'+(priceFields[meta.type]||'price'));
+    u.searchParams.set('select',buildListingSelect(meta.type));
     u.searchParams.set('status','eq.active');
     u.searchParams.set('offset',String(offset)); u.searchParams.set('limit','1000');
     const res=await fetch(u,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
     if(!res.ok) throw new Error(meta.table+': HTTP '+res.status+' '+await res.text());
     const batch=await res.json(); if(!Array.isArray(batch)||!batch.length) break;
     for(const raw of batch){
-      const city=canonicalCityName(raw.city), area=normalizeArea(raw.area||raw.service_area,city);
-      const name=label(raw.name||raw.service_name);
-      if(!city||!name) continue;
+      const city=canonicalCityName(raw.city), areaRaw=label(raw.area||raw.service_area), area=normalizeArea(areaRaw,city);
+      const normalized=normalizeListingRecord(meta.type,raw,{city,area});
+      const name=label(normalized.name);
+      if(!city||!name||!normalized.active) continue;
       const savedSlug=String(raw.slug||'').trim();
       const duplicateRedirect=LEGACY_REDIRECTS['/properties/'+meta.type+'/'+savedSlug+'/'];
       if(duplicateRedirect && duplicateRedirect.type===meta.type && duplicateRedirect.slug && duplicateRedirect.slug!==savedSlug) continue;
-      out.push({...raw,type:meta.type,categoryLabel:meta.label,icon:meta.icon,city,area,areaRaw:label(raw.area||raw.service_area),name});
+      out.push({...normalized,categoryLabel:meta.label,icon:meta.icon,city,area,areaRaw,name});
     }
     if(batch.length<1000) break; offset+=1000;
   }
