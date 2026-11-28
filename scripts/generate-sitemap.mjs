@@ -83,7 +83,7 @@ function gitLastModified(path) {
 
 function schemaLastmod(html) {
   const values=[];
-  for (const match of html.matchAll(/<script\\s+type=["']application\\/ld\\+json["']>([\\s\\S]*?)<\\/script>/gi)) {
+  for (const match of html.matchAll(/<script\s+type=["']application\/ld\+json["']>([\s\S]*?)<\/script>/gi)) {
     try {
       const data=JSON.parse(match[1]);
       const visit=value=>{
