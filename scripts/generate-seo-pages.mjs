@@ -803,6 +803,9 @@ for(const c of cities.values()){
   const cs=slug(c.name); if(!cs || c.rows.length<LOCATION_MIN_PROPERTIES) continue;
   const cityDir=GENERATED_ROOT+'/'+cs;
   const cityUrl=new URL(cs+'/',BASE).href;
+  const cityHubPath=cs+'/index.html';
+  const cityHubDecision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:c.rows.length},cityHubPath,CITY_HTML_ROOTS.has(cs));
+  const cityCrumbUrl=cityHubDecision.linkable?cityUrl:new URL('student-cities.html',BASE).href;
   if(CITY_HTML_ROOTS.has(cs)&&cs!=='sikar'){
     const htmlPath=cs+'.html';
     let cityHtml=await readFile(htmlPath,'utf8');
@@ -856,7 +859,7 @@ for(const c of cities.values()){
   // Canonical city hubs are materialized at /city/ for every eligible city.
   if (!CITY_HTML_ROOTS.has(cs)) {
     const cityPath=cityDir+'/index.html';
-    const decision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:c.rows.length},cityPath);
+    const decision=cityHubDecision;
     if(decision.status==='redirect') PENDING_ELIGIBILITY_REDIRECTS.set('/'+cs+'/',parentPath({type:'cityHub',citySlug:cs}));
     if(decision.status==='index'||decision.status==='noindex-grace'){
       expected.add(cityPath); if(decision.sitemap) generated.push(cityUrl);
@@ -873,9 +876,9 @@ for(const c of cities.values()){
     const relatedCoachingLinks=relatedCoachings.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
     const coachingContext=relatedCoachingLinks?'<section class="section"><h2>Nearby coaching & landmarks</h2><div class="links">'+relatedCoachingLinks+'</div></section>':'';
     const body=categoryQuickAnswer(meta,c,rows)+categoryIntro(meta,c,rows)+areaFallbackSections(meta,c,rows,cs)+areaLandmarkTable({name:meta.label,rows},c)+'<section class="section"><h2>'+esc(meta.label)+' listings in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+categoryComparisonTable(meta,rows)+coachingContext+
-      '<section class="section"><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(2,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
+      '<section class="section"><a href="'+esc(rel(2,cityCrumbUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(2,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
     const p=dir+'/index.html'; expected.add(p); if(decision.sitemap) generated.push(url);
-    await write(p,shell({title:titleForCategory(meta,c.name),description:'Find '+rows.length+' active '+meta.label.toLowerCase()+' in '+c.name+'. Compare local areas, facilities and provider details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,rows)}},{'@type':'Thing','name':meta.label}],itemRows:rows,faqItems:faqForCategory(meta,c,rows),robots:decision.robots}));
+    await write(p,shell({title:titleForCategory(meta,c.name),description:'Find '+rows.length+' active '+meta.label.toLowerCase()+' in '+c.name+'. Compare local areas, facilities and provider details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityCrumbUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,rows)}},{'@type':'Thing','name':meta.label}],itemRows:rows,faqItems:faqForCategory(meta,c,rows),robots:decision.robots}));
   }
 
   const areas=new Map();
@@ -937,10 +940,10 @@ for(const c of cities.values()){
         '<section class="section"><h2>Student listings by category in '+esc(a.name)+'</h2>'+areaCategorySections+'</section>'+areaCoachingSection+areaMapSection+
         (cityCategoryLinks?'<section class="section"><h2>City categories</h2><div class="links">'+cityCategoryLinks+'</div></section>':'')+
         (areaCategoryLinks?'<section class="section"><h2>Explore all eligible categories in this area</h2><div class="links">'+areaCategoryLinks+'</div></section>':'')+
-        '<p><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
+        '<p><a href="'+esc(rel(2,cityCrumbUrl))+'">← Back to '+esc(c.name)+'</a></p>';
       const url=new URL(cs+'/'+as+'/',BASE).href;
       expected.add(areaHubPath); if(areaHubDecision.sitemap) generated.push(url);
-      await write(areaHubPath,shell({title:titleForArea(a.name,c.name,a.rows,areaCoachingSlugs.length>0),description:'Browse '+a.rows.length+' active student listings around '+a.name+', '+c.name+'. Compare available categories and confirm provider details before visiting.',canonical:url,h1:'Student Services in '+a.name+', '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:a.name,url}],body,depth:3,about:[{'@type':'Place','name':a.name,'containedInPlace':{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,a.rows)}}}],itemRows:a.rows,faqItems:faqForArea(a,c),robots:areaHubDecision.robots}));
+      await write(areaHubPath,shell({title:titleForArea(a.name,c.name,a.rows,areaCoachingSlugs.length>0),description:'Browse '+a.rows.length+' active student listings around '+a.name+', '+c.name+'. Compare available categories and confirm provider details before visiting.',canonical:url,h1:'Student Services in '+a.name+', '+c.name,crumbs:[{name:c.name,url:cityCrumbUrl},{name:a.name,url}],body,depth:3,about:[{'@type':'Place','name':a.name,'containedInPlace':{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,a.rows)}}}],itemRows:a.rows,faqItems:faqForArea(a,c),robots:areaHubDecision.robots}));
     }
 
     for(const meta of TABLES){
@@ -961,10 +964,10 @@ for(const c of cities.values()){
       const body=quick+editorialIntro+profileReferenceTable(profile)+areaLandmarkTable({name:a.name,rows:items},c)+
         '<section class="section"><h2>'+esc(meta.label)+' in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+items.map(row=>card(row,3,{details:true})).join('')+'</div></section>'+categoryComparisonTable(meta,items)+
         (crossLinks?'<section class="section"><h2>Related student pages</h2><div class="links">'+crossLinks+'</div></section>':'')+
-        '<p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
+        '<p><a href="'+esc(rel(3,cityCrumbUrl))+'">← Back to '+esc(c.name)+'</a></p>';
       const pageTitle=meta.label+' in '+a.name+', '+c.name+' | StudentHubHelp';
       expected.add(cs+'/'+meta.type+'/'+as+'/index.html'); if(decision.sitemap) generated.push(areaCategoryUrl);
-      await write(cs+'/'+meta.type+'/'+as+'/index.html',shell({title:pageTitle,description:'Compare '+items.length+' active '+meta.label.toLowerCase()+' in '+a.name+', '+c.name+'. Review verified status, provider details and available facilities.',canonical:areaCategoryUrl,h1:meta.label+' in '+a.name+', '+c.name,crumbs:[{name:'Home',url:BASE},{name:'Student Cities',url:new URL('student-cities.html',BASE).href},{name:c.name,url:cityUrl},{name:meta.label,url:parentCategoryUrl},{name:a.name,url:areaCategoryUrl}],body,depth:3,about:[{'@type':'Place','name':a.name,'containedInPlace':{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,items)}}},{'@type':'Thing','name':meta.label}],itemRows:items,faqItems:faqForArea({name:a.name,rows:items},c),robots:decision.robots}));
+      await write(cs+'/'+meta.type+'/'+as+'/index.html',shell({title:pageTitle,description:'Compare '+items.length+' active '+meta.label.toLowerCase()+' in '+a.name+', '+c.name+'. Review verified status, provider details and available facilities.',canonical:areaCategoryUrl,h1:meta.label+' in '+a.name+', '+c.name,crumbs:[{name:'Home',url:BASE},{name:'Student Cities',url:new URL('student-cities.html',BASE).href},{name:c.name,url:cityCrumbUrl},{name:meta.label,url:parentCategoryUrl},{name:a.name,url:areaCategoryUrl}],body,depth:3,about:[{'@type':'Place','name':a.name,'containedInPlace':{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,items)}}},{'@type':'Thing','name':meta.label}],itemRows:items,faqItems:faqForArea({name:a.name,rows:items},c),robots:decision.robots}));
     }
   }
 
