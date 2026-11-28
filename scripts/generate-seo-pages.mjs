@@ -866,7 +866,7 @@ for(const c of cities.values()){
     const relatedCoachings=[...new Set(rows.flatMap(matchedCoachings))];
     const relatedCoachingLinks=relatedCoachings.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
     const coachingContext=relatedCoachingLinks?'<section class="section"><h2>Nearby coaching & landmarks</h2><div class="links">'+relatedCoachingLinks+'</div></section>':'';
-    const body=categoryQuickAnswer(meta,c,rows)+categoryIntro(meta,c,rows)+areaFallbackSections(meta,c,rows,cs)+areaLandmarkTable({name:meta.label,rows},c)+'<section class="section"><h2>'+esc(meta.label)+' listings in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+coachingContext+
+    const body=categoryQuickAnswer(meta,c,rows)+categoryIntro(meta,c,rows)+areaFallbackSections(meta,c,rows,cs)+areaLandmarkTable({name:meta.label,rows},c)+'<section class="section"><h2>'+esc(meta.label)+' listings in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+categoryComparisonTable(meta,rows)+coachingContext+
       '<section class="section"><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(2,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
     const p=dir+'/index.html'; expected.add(p); if(decision.sitemap) generated.push(url);
     await write(p,shell({title:titleForCategory(meta,c.name),description:'Find '+rows.length+' active '+meta.label.toLowerCase()+' in '+c.name+'. Compare local areas, facilities and provider details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,rows)}},{'@type':'Thing','name':meta.label}],itemRows:rows,faqItems:faqForCategory(meta,c,rows),robots:decision.robots}));
@@ -941,8 +941,8 @@ for(const c of cities.values()){
         ? '<a href="'+esc(rel(3,new URL(cs+'/'+as+'/',BASE).href))+'">Area guide: '+esc(a.name)+'</a>' : '';
       const crossLinks=[parentLink,areaHubLink,siblingLinks].filter(Boolean).join('');
       const quick='<section class="section quick-answer" aria-label="Quick answer"><h2>Quick answer</h2><p>StudentHubHelp lists '+items.length+' active '+esc(meta.label.toLowerCase())+' in '+esc(a.name)+', '+esc(c.name)+'. '+items.filter(row=>row.verified===true).length+' are marked verified in the source records. Confirm current availability, charges and exact routes directly with each provider.</p></section>';
-      const body=quick+editorialIntro+areaLandmarkTable({name:a.name,rows:items},c)+
-        '<section class="section"><h2>'+esc(meta.label)+' in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+items.map(row=>card(row,3,{details:true})).join('')+'</div></section>'+
+      const body=quick+editorialIntro+profileReferenceTable(profile)+areaLandmarkTable({name:a.name,rows:items},c)+
+        '<section class="section"><h2>'+esc(meta.label)+' in '+esc(a.name)+', '+esc(c.name)+'</h2><div class="grid">'+items.map(row=>card(row,3,{details:true})).join('')+'</div></section>'+categoryComparisonTable(meta,items)+
         (crossLinks?'<section class="section"><h2>Related student pages</h2><div class="links">'+crossLinks+'</div></section>':'')+
         '<p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
       const pageTitle=meta.label+' in '+a.name+', '+c.name+' | StudentHubHelp';
