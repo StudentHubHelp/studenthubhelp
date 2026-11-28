@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const BASE_URL = (process.env.BASE_URL || 'https://studenthubhelp.in').replace(/\/+$/, '');
-const SHARE_IMAGE = `${BASE_URL}/share-preview.png`;
+const SHARE_IMAGE = `${BASE_URL}/logo.png?v=logo-hd-20261029`;
 const CITY_PREVIEW_SLUGS = new Set(['sikar','bengaluru','chennai','kota','delhi','patna','jhunjhunu','pune','gurugram','coimbatore','jaipur','lucknow']);
 
 function previewForFile(file) {
@@ -64,11 +64,14 @@ function normalize(html, file) {
   const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [,'StudentHubHelp | Student Services Across India'])[1].replace(/<[^>]+>/g, '').trim();
   const description = (html.match(/<meta\b(?=[^>]*\bname=["']description["'])[^>]*\bcontent=["']([^"']*)["'][^>]*>/i) || [,'Discover hostels, PGs, tiffin services, libraries, cafes and bookstores with StudentHubHelp.'])[1];
 
+  const relative = path.relative(ROOT, file).split(path.sep).join('/');
+  const citySlug = relative === 'student-cities.html' ? 'Student Cities' : (!relative.includes('/') && relative.endsWith('.html') ? relative.slice(0, -5) : '');
+  const imageAlt = citySlug ? `StudentHubHelp ${citySlug} student city guide` : 'StudentHubHelp logo and student services';
   const metas = [
     [/\bproperty=["']og:image["']/i, 'property="og:image"', shareImage],
     [/\bname=["']twitter:image["']/i, 'name="twitter:image"', shareImage],
     [/\bproperty=["']og:image:secure_url["']/i, 'property="og:image:secure_url"', shareImage],
-    [/\bproperty=["']og:image:alt["']/i, 'property="og:image:alt"', 'StudentHubHelp logo and student services'],
+    [/\bproperty=["']og:image:alt["']/i, 'property="og:image:alt"', imageAlt],
     [/\bname=["']twitter:card["']/i, 'name="twitter:card"', 'summary_large_image'],
     [/\bproperty=["']og:title["']/i, 'property="og:title"', title],
     [/\bproperty=["']og:description["']/i, 'property="og:description"', description],
