@@ -1082,7 +1082,7 @@ for(const [from,rawTarget] of [...areaRedirects.entries()]){
   let target=rawTarget;
   const firstSegment=target.split('/').filter(Boolean)[0]||from.split('/').filter(Boolean)[0];
   if(target==='/'+firstSegment+'.html' && CITY_HTML_ROOTS.has(firstSegment)) target='/'+firstSegment+'/';
-  const targetFile=target.endsWith('/')?target.replace(/^\\//,'')+'index.html':target.replace(/^\\//,'');
+  const targetFile=target.endsWith('/')?target.replace(/^\//,'')+'index.html':target.replace(/^\//,'');
   let exists=expected.has(targetFile);
   if(!exists) exists=!!(await readFile(targetFile,'utf8').catch(()=>null));
   if(!exists){
