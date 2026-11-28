@@ -6,7 +6,7 @@ const BASE = (process.env.BASE_URL || 'https://studenthubhelp.in/').replace(/\/+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
 const LOCATION_MIN_PROPERTIES = Number(process.env.SEO_LOCATION_MIN_PROPERTIES || 3);
-// These city guides already have approved .html URLs; keep one canonical root per city.
+// These 14 city guides are copied to canonical /city/ directory roots.
 const CITY_HTML_ROOTS = new Set(['sikar','bengaluru','chennai','kota','delhi','patna','jhunjhunu','pune','gurugram','coimbatore','jaipur','lucknow','ahmedabad','hyderabad']);
 
 const TABLES = [
@@ -25,7 +25,7 @@ const LEGACY_REDIRECTS = JSON.parse(await readFile('property-url-redirects.json'
 const CITY_ALIAS_DATA = JSON.parse(await readFile('data/city-aliases.json', 'utf8'));
 const SEO_AREA_PROFILES = JSON.parse(await readFile('data/seo-area-profiles.json', 'utf8').catch(() => '{"profiles":[]}'));
 async function fetchSeoMetadata(table,select,filters={}){
-  const url=new URL('/rest/v1/'+table,SUPABASE_URL.replace(/\\/+$/,''));
+  const url=new URL('/rest/v1/'+table,SUPABASE_URL.replace(/\/+$/,''));
   url.searchParams.set('select',select);
   for(const [field,value] of Object.entries(filters)) url.searchParams.set(field,value);
   const response=await fetch(url,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
@@ -114,6 +114,8 @@ function stateForCity(city,rows=[]){
     'chennai':'Tamil Nadu','coimbatore':'Tamil Nadu','vellore':'Tamil Nadu','kanchipuram':'Tamil Nadu','madurai':'Tamil Nadu','salem':'Tamil Nadu','tiruchirappalli':'Tamil Nadu','tirunelveli':'Tamil Nadu','thanjavur':'Tamil Nadu',
     'patna':'Bihar','lucknow':'Uttar Pradesh','ahmedabad':'Gujarat','hyderabad':'Telangana','delhi':'Delhi','new delhi':'Delhi','gurugram':'Haryana','panchkula':'Haryana','sonipat':'Haryana','pune':'Maharashtra','vadodara':'Gujarat'
   };
+  const cityMeta=CITY_METADATA_MAP.get(slug(city));
+  if(cityMeta?.state) return cityMeta.state;
   const normalized=key(city).replace(/\s*\([^)]*\)/g,'').trim();
   if(known[normalized]) return known[normalized];
   const counts=new Map();
