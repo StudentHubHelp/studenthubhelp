@@ -32,7 +32,8 @@ export function decidePageState(input) {
   const belowSince = asDate(previous.belowThresholdSince) || asDate(previous.noindexSince) || now;
   const elapsedDays = Math.floor((now.getTime() - belowSince.getTime()) / dayMs);
   if (elapsedDays >= RULES.demotion.graceDays) return { status:'redirect', robots:'noindex,follow', sitemap:false, linkable:false, belowThresholdSince:belowSince.toISOString(), reason:'grace-period-expired' };
-  const hardGatesMet = input.verifiedCount >= (rule?.minVerified || 0) && input.categoryCount >= (rule?.minCategories || 0) && (!rule?.needsAreaProfile || input.profileComplete === true);\n  if (input.listingCount > demoteAt && hardGatesMet && previous.status === 'index') return { status:'index', robots:'index,follow', sitemap:true, linkable:true, belowThresholdSince:null, reason:'hysteresis-buffer' };
+  const hardGatesMet = input.verifiedCount >= (rule?.minVerified || 0) && input.categoryCount >= (rule?.minCategories || 0) && (!rule?.needsAreaProfile || input.profileComplete === true);
+  if (input.listingCount > demoteAt && hardGatesMet && previous.status === 'index') return { status:'index', robots:'index,follow', sitemap:true, linkable:true, belowThresholdSince:null, reason:'hysteresis-buffer' };
   return { status:'noindex-grace', robots:'noindex,follow', sitemap:false, linkable:false, belowThresholdSince:belowSince.toISOString(), reason:'demotion-grace' };
 }
 
