@@ -230,11 +230,20 @@ function titleForArea(area, city, rows, hasCoaching){
   if(types.has('cafe')) names.push('Cafe');
   if(types.has('bookstore')) names.push('Bookstore');
   const suffix=' | StudentHubHelp';
-  const location=' in '+area+', '+city;
-  const room=Math.max(1,60-suffix.length-location.length);
-  const candidates=[names.slice(0,2).join(' & '),names[0]||'Student Services','Student'];
-  const prefix=candidates.find(value=>value && value.length<=room)||'Student';
-  return prefix+location+suffix;
+  const category=names.slice(0,2).join(' & ')||names[0]||'Student Services';
+  const makeTitle=(prefix,areaName)=>prefix+' in '+areaName+', '+city+suffix;
+  let title=makeTitle(category,area);
+  if(title.length>60){
+    const firstArea=label(area).split(',')[0].trim();
+    title=makeTitle(names[0]||'Student',firstArea);
+  }
+  if(title.length>60){
+    const prefix=names[0]||'Student';
+    const room=Math.max(5,60-suffix.length-(' in , '+city).length-prefix.length);
+    const shortArea=label(area).slice(0,room).replace(/\\s+\\S*$/,'').trim();
+    title=makeTitle(prefix,shortArea||label(area).slice(0,room).trim());
+  }
+  return title;
 }
 function titleForCoaching(coach,city){
   const suffix=' | StudentHubHelp';
