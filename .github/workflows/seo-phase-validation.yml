@@ -10,6 +10,17 @@ on:
       - 'property-details.html'
       - 'about.html'
       - 'ahmedabad.html'
+      - 'sikar.html'
+      - 'bengaluru.html'
+      - 'chennai.html'
+      - 'kota.html'
+      - 'delhi.html'
+      - 'patna.html'
+      - 'jhunjhunu.html'
+      - 'pune.html'
+      - 'gurugram.html'
+      - 'coimbatore.html'
+      - 'jaipur.html'
       - 'scripts/generate-property-pages.mjs'
       - 'scripts/generate-seo-pages.mjs'
       - 'scripts/generate-sitemap.mjs'
@@ -75,16 +86,29 @@ jobs:
           assert 'href="property-index.html"' in visual
           city_roots={
               'sikar':'sikar.html',
+              'bengaluru':'bengaluru.html',
+              'chennai':'chennai.html',
               'kota':'kota.html',
-              'jaipur':'jaipur.html',
               'delhi':'delhi.html',
+              'patna':'patna.html',
+              'jhunjhunu':'jhunjhunu.html',
               'pune':'pune.html',
+              'gurugram':'gurugram.html',
+              'coimbatore':'coimbatore.html',
+              'jaipur':'jaipur.html',
           }
           for city, page in city_roots.items():
               source=Path(page)
               assert source.exists(), f'Missing canonical city guide: {page}'
               page_html=source.read_text(encoding='utf-8')
               assert f'<link rel="canonical" href="{base}{page}">' in page_html, f'City guide canonical mismatch: {page}'
+              assert '<!-- STUDENT_CITY_STATIC_V2 -->' in page_html, f'City guide is missing the static HTML marker: {page}'
+              assert 'mobile.css' not in page_html, f'City guide must not depend on mobile.css: {page}'
+              assert page_html.count('class="service-section"') == 5, f'City guide must include all five static service sections: {page}'
+              assert page_html.count('<details>') >= 8, f'City guide must include at least 8 visible FAQ answers: {page}'
+              assert '"@type":"FAQPage"' in page_html and '"@type":"ItemList"' in page_html, f'City guide FAQ/ItemList schema missing: {page}'
+              assert 'class="listing-card"' in page_html, f'City guide must include server-rendered listing cards: {page}'
+              assert '...' not in page_html, f'City guide contains an ellipsis placeholder: {page}'
           assert '<link rel="canonical" href="https://studenthubhelp.in/property-index.html">' in directory
           assert re.search(r'<a href="https://studenthubhelp\.in/properties/', directory), 'Property directory has no crawlable property links'
 
