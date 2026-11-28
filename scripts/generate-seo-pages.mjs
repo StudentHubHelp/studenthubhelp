@@ -99,22 +99,25 @@ function citySeoProfile(city){
     .sort((a,b)=>(counts.get(b.type)||0)-(counts.get(a.type)||0));
   const topServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?'Hostels & PGs':meta.type==='tiffin'?'Tiffin & Mess':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
   const titleServices=ordered.slice(0,2).map(meta=>meta.type==='hostel'?(ordered.length===1?'Hostels & PGs':'Hostels, PGs'):meta.type==='tiffin'?'Tiffin':meta.type==='library'?'Libraries':meta.type==='cafe'?'Cafes':'Bookstores');
-  const areaCounts=new Map();
-  const areaCategoryCounts=new Map();
+  const areaCounts=new Map(),areaCategoryCounts=new Map(),areaNames=new Map();
+  const normalizeArea=value=>key(value).replace(/[,.]+/g,' ').replace(/\\s+/g,' ').trim();
   for(const row of rows){
     if(!row.area)continue;
-    areaCounts.set(row.area,(areaCounts.get(row.area)||0)+1);
-    if(!areaCategoryCounts.has(row.area))areaCategoryCounts.set(row.area,new Map());
-    const categoryCounts=areaCategoryCounts.get(row.area);
+    const areaKey=normalizeArea(row.area);
+    if(!areaKey)continue;
+    areaCounts.set(areaKey,(areaCounts.get(areaKey)||0)+1);
+    if(!areaNames.has(areaKey))areaNames.set(areaKey,row.area.trim());
+    if(!areaCategoryCounts.has(areaKey))areaCategoryCounts.set(areaKey,new Map());
+    const categoryCounts=areaCategoryCounts.get(areaKey);
     categoryCounts.set(row.type,(categoryCounts.get(row.type)||0)+1);
   }
   const topAreaDetails=[...areaCounts.entries()]
     .sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
     .slice(0,5)
-    .map(([name,count])=>{
-      const categoryCounts=areaCategoryCounts.get(name)||new Map();
+    .map(([areaKey,count])=>{
+      const categoryCounts=areaCategoryCounts.get(areaKey)||new Map();
       const topCategory=[...categoryCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||'';
-      return {name,count,topCategory};
+      return {name:areaNames.get(areaKey)||areaKey,count,topCategory};
     });
   const topAreas=topAreaDetails.map(item=>item.name);
   const coachingCounts=new Map();
@@ -337,16 +340,17 @@ function cityDedupeKey(row){
   let name=String(row.name||'').trim();
   for(const alias of aliases)name=name.replace(new RegExp('\\s*\\('+escapeRegExp(alias)+'\\)\\s*$','i'),'');
   name=name.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-  let address=String(row.address||'').toLowerCase().replace(/\\b\\d{6}\\b/g,'');
+  let address=String(row.address||'').toLowerCase().replace(/\b\d{6}\b/g,'');
   for(const alias of aliases)address=address.replace(new RegExp('\\b'+escapeRegExp(alias)+'\\b','gi'),'');
-  address=address.replace(/\\b(india|rajasthan|karnataka|tamil nadu|bihar|delhi|haryana|maharashtra|gujarat|uttar pradesh)\\b/gi,'')
-    .replace(/\\b(no|number)\\.?\\s*(?=\\d)/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  address=address.replace(/\b(india|rajasthan|karnataka|tamil nadu|bihar|delhi|haryana|maharashtra|gujarat|uttar pradesh)\b/gi,'')
+    .replace(/\b(no|number)\.?\s*(?=\d)/g,'').replace(/[^a-z0-9]+/g,' ').trim();
   return row.type+'|'+slug(cityName)+'|'+name+'|'+address;
 }
 function dedupeCityRows(rows){
   const seen=new Set();
   return rows.filter(row=>{
-    if(explicitAddressCityMismatch(row)||!row.name||!row.address)return false;
+    if(explicitAddressCityMismatch(row))return false;
+    if(!row.name||!row.address)return true;
     const keyValue=cityDedupeKey(row);
     const parts=keyValue.split('|');
     if(!parts[2]||!parts[3])return true;
@@ -356,7 +360,7 @@ function dedupeCityRows(rows){
 }
 const cityRows=dedupeCityRows(all);
 const areaRedirects=new Map(),areaCounts=new Map(),cityCounts=new Map();
-function normalizedAreaKey(value){return key(value).replace(/[,.]+/g,' ').replace(/\\s+/g,' ').trim();}
+function normalizedAreaKey(value){return key(value).replace(/[,.]+/g,' ').replace(/\s+/g,' ').trim();}
 for(const row of cityRows){const citySlug=slug(canonicalCityName(row.city));cityCounts.set(citySlug,(cityCounts.get(citySlug)||0)+1);if(row.area){const areaKey=citySlug+'|'+normalizedAreaKey(row.area);areaCounts.set(areaKey,(areaCounts.get(areaKey)||0)+1);}}
 for(const row of cityRows){if(!row.areaRaw)continue;const cityName=canonicalCityName(row.city),citySlug=slug(cityName),cityPath='/'+citySlug+'/',oldAreaSlug=slug(row.areaRaw),newAreaSlug=slug(row.area),count=areaCounts.get(citySlug+'|'+normalizedAreaKey(row.area))||0;if(!oldAreaSlug)continue;const from=cityPath+oldAreaSlug+'/',cityTarget=CITY_HTML_ROOTS.has(citySlug)?'/'+citySlug+'.html':((cityCounts.get(citySlug)||0)>=3?cityPath:'/explore-listings.html');const to=row.area&&newAreaSlug&&count>=3?cityPath+newAreaSlug+'/':cityTarget;if(from!==to)areaRedirects.set(from,to);}
 for(const citySlug of CITY_HTML_ROOTS){if(citySlug!=='sikar')areaRedirects.set('/'+citySlug+'/', '/'+citySlug+'.html');}
