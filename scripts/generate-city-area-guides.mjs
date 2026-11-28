@@ -11,7 +11,7 @@ const categoryLinks = [
 function page(city, area) {
   const canonical = url(city, area);
   const titleSuffix = ' | StudentHubHelp';
-  const titleWords = (area.name + ', ' + city.name + ' Student Guide').split(/\s+/);
+  const titleWords = (area.name + ', ' + city.name + ' Guide').split(/\s+/);
   while (titleWords.length && titleWords.join(' ').length + titleSuffix.length > 60) titleWords.pop();
   const title = titleWords.join(' ') + titleSuffix;
   const description = ('Verified location context for ' + area.name + ', ' + city.name + '. See the official source, student decision checklist and live directory search.').slice(0,160);
