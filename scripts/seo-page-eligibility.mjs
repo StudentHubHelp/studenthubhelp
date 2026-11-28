@@ -26,13 +26,15 @@ export function decidePageState(input) {
   const thresholdMet = pageMeetsThreshold(input);
   const rule = RULES.rules[input.type];
   const demoteAt = Math.max(0, (rule?.minListings || 0) - RULES.demotion.buffer);
+  const verifiedCount = input.verifiedCount ?? 0;
+  const categoryCount = input.categoryCount ?? 0;
   if (thresholdMet) return { status:'index', robots:'index,follow', sitemap:true, linkable:true, belowThresholdSince:null, reason:previous.status === 'noindex-grace' ? 'recovered-or-promoted' : 'threshold-met' };
   const wasIndexed = previous.status === 'index' || previous.status === 'noindex-grace' || previous.everIndexed === true;
   if (!wasIndexed) return { status:'omit', robots:null, sitemap:false, linkable:false, belowThresholdSince:null, reason:'new-page-below-threshold' };
   const belowSince = asDate(previous.belowThresholdSince) || asDate(previous.noindexSince) || now;
   const elapsedDays = Math.floor((now.getTime() - belowSince.getTime()) / dayMs);
   if (elapsedDays >= RULES.demotion.graceDays) return { status:'redirect', robots:'noindex,follow', sitemap:false, linkable:false, belowThresholdSince:belowSince.toISOString(), reason:'grace-period-expired' };
-  const hardGatesMet = input.verifiedCount >= (rule?.minVerified || 0) && input.categoryCount >= (rule?.minCategories || 0) && (!rule?.needsAreaProfile || input.profileComplete === true);
+  const hardGatesMet = verifiedCount >= (rule?.minVerified || 0) && categoryCount >= (rule?.minCategories || 0) && (!rule?.needsAreaProfile || input.profileComplete === true);
   if (input.listingCount > demoteAt && hardGatesMet && previous.status === 'index') return { status:'index', robots:'index,follow', sitemap:true, linkable:true, belowThresholdSince:null, reason:'hysteresis-buffer' };
   return { status:'noindex-grace', robots:'noindex,follow', sitemap:false, linkable:false, belowThresholdSince:belowSince.toISOString(), reason:'demotion-grace' };
 }
