@@ -242,27 +242,6 @@ for (const name of await readdir('.')) {
 
 pages.set(pageUrl('property-index.html'), propertyIndexLastmod);
 
-// These manually maintained Sikar locality/category guides are indexable but are
-// not emitted by seo-generated-manifest.json. Keep them in the page sitemap only
-// while their HTML remains indexable and their canonical points to the same URL.
-const additionalIndexablePages = [
-  'sikar/libraries/nawalgarh-road/index.html',
-  'sikar/nawalgarh-road/hostel/index.html',
-  'sikar/nawalgarh-road/tiffin/index.html',
-  'sikar/nawalgarh-road/bookstore/index.html'
-];
-for (const filePath of additionalIndexablePages) {
-  const html = await readFile(filePath, 'utf8');
-  if (hasNoindex(html)) throw new Error('Additional sitemap page is noindex: ' + filePath);
-  const loc = new URL(filePath.replace(/index\.html$/i, ''), BASE).href;
-  const canonicalTag = (html.match(/<link\b[^>]*>/gi) || []).find(tag => {
-    const rel = tag.match(/\brel\s*=\s*["']([^"']+)["']/i)?.[1];
-    return rel?.split(/\s+/).some(value => value.toLowerCase() === 'canonical');
-  });
-  const canonical = canonicalTag?.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]?.trim() || null;
-  if (canonical !== loc) throw new Error('Additional sitemap page canonical mismatch: ' + filePath + '; found ' + (canonical || 'missing'));
-  pages.set(loc, gitLastModified(filePath));
-}
 
 let generatedManifest = null;
 try {
