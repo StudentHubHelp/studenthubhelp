@@ -256,33 +256,53 @@ function card(row,depth,options={}){
 }
 function categoryNames(rows){return [...new Set(rows.map(row=>TABLES.find(item=>item.type===row.type)?.label||row.type))].filter(Boolean);}
 function faqForCity(city){const cats=categoryNames(city.rows),verified=city.rows.filter(row=>row.verified===true).length,listingText=city.rows.length===1?'1 active listing':city.rows.length+' active listings';return [{question:'What student services can I find in '+city.name+'?',answer:'The current StudentHubHelp directory shows '+listingText+' across '+cats.join(', ')+' in '+city.name+'. '+verified+(verified===1?' listing is':' listings are')+' marked verified in the source records.'},{question:'How can I find services near a coaching institute or landmark in '+city.name+'?',answer:'Search the institute or landmark name in Global Search. Matches use location details stored with listings; confirm the exact route and current availability with the provider before visiting.'},{question:'Are the listings guaranteed to be available?',answer:'Active status reflects the latest listing status available when this page was generated. Availability and service details can change, so reconfirm directly with the provider.'}];}
+function categoryQuickAnswer(meta,city,rows){
+  const verified=rows.filter(row=>row.verified===true).length;
+  return '<section class="section quick-answer" aria-label="Quick answer"><h2>Quick answer</h2><p>StudentHubHelp lists '+rows.length+' active '+esc(meta.label.toLowerCase())+' records in '+esc(city.name)+'. '+verified+' are marked verified in saved directory data. Compare provider-supplied addresses, facilities and timings on each card. Open View Details for full information, and confirm current prices, availability, terms and exact routes directly with the provider before visiting or paying.</p></section>';
+}
 function categoryIntro(meta,city,rows){
   const areaCounts=new Map();
   for(const row of rows){if(!row.area)continue;const name=label(row.area);areaCounts.set(name,(areaCounts.get(name)||0)+1);}
-  const areas=[...areaCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,4);
-  const coaching=[...new Set(rows.flatMap(matchedCoachings))].map(coachSlug=>coachingBySlug(coachSlug)?.name).filter(Boolean).slice(0,4);
-  const areaText=areas.length?areas.map(([name,count])=>name+' ('+count+')').join(', '):'locality details are not available in these listing records';
-  const coachingText=coaching.length?'Some listing records mention '+coaching.join(', ')+'. These are name/address matches, not verified distance claims.':'No coaching institute match is currently recorded in these category listings.';
+  const areas=[...areaCounts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,3);
+  const coaching=[...new Set(rows.flatMap(matchedCoachings))].map(coachSlug=>coachingBySlug(coachSlug)?.name).filter(Boolean).slice(0,3);
+  const facilities=[...new Set(rows.flatMap(row=>String(row.facilities||'').split(/[,;|]/).map(label).filter(value=>value&&value.length<=48&&value.split(/\s+/).length<=6)))].slice(0,4);
+  const timings=[...new Set(rows.map(row=>label(row.timing||row.timings)).filter(value=>value&&value.length<=36))].slice(0,2);
+  const feeSummary=areaFeeSummary({rows}).slice(0,2);
+  const verifiedLandmarks=verifiedLandmarksForArea({name:meta.label,rows},city);
+  const verified=rows.filter(row=>row.verified===true).length;
+  const areaText=areas.length?areas.map(([name,count])=>name+' ('+count+')').join(', '):'locality details are not consistently supplied';
+  const coachingText=coaching.length?'Listing text mentions '+coaching.join(', ')+'. These are name or address matches, not proof of distance.':'No coaching-institute name match is recorded in this category data.';
+  const facilityText=facilities.length?'Short facility details include '+facilities.join(', ')+'.':'Some providers supply longer facility descriptions; review each listing card for those details.';
+  const timingText=timings.length?'Available timing examples include '+timings.join(' and ')+'.':'Operating hours are not consistently supplied across the records.';
+  const feeText=feeSummary.length?'Some provider records include '+feeSummary.join('; ')+'. Confirm the billing period, deposit, inclusions and current amount directly.':'No usable published price or fee value is present in these category records; contact providers for current charges.';
+  const landmarkText=verifiedLandmarks.length?'Verified landmarks near the geocoded listing centroid include '+verifiedLandmarks.map(item=>item.name).join(', ')+'. Approximate straight-line distances are shown below, not road distances.':'No verified landmark coordinates fall within 8 km of this category’s geocoded listing centroid, so no proximity distance is claimed.';
   const guidance={
-    hostel:'Compare room type, sharing, facilities, safety information and published charges.',
-    tiffin:'Check meal options, delivery coverage, plan duration and published timings.',
-    library:'Check access hours, seat availability, study facilities and published fees.',
-    cafe:'Review the address, opening hours and services listed by the provider.',
-    bookstore:'Check book categories, stationery and availability before visiting.'
+    hostel:'For hostels and PGs, compare room type, sharing, food arrangement, facilities and house rules.',
+    tiffin:'For tiffin services, compare meal type, plan duration, delivery coverage and meal timings.',
+    library:'For libraries, compare access hours, seating, study facilities and published fees.',
+    cafe:'For cafes, check opening hours, seating and services listed by the provider.',
+    bookstore:'For bookstores, check book categories, exam stock, stationery and availability.'
   }[meta.type]||'Review the provider-supplied location and service details.';
-  return '<section class="section city-overview category-overview"><h2>About '+esc(meta.label)+' in '+esc(city.name)+'</h2>'+
-    '<p>StudentHubHelp currently shows '+rows.length+' active '+esc(meta.label.toLowerCase())+' records in '+esc(city.name)+'. Listing status and verification labels are based on the saved directory records at page generation time.</p>'+
-    '<h3>Localities represented</h3><p>'+esc(areaText)+'. Counts show how often locality names occur in these records; they do not represent verified distance or coverage.</p>'+
-    '<h3>Coaching and landmark context</h3><p>'+esc(coachingText)+'</p>'+
-    '<h3>What to compare</h3><p>'+esc(guidance)+' Confirm current price, availability and exact route directly with the provider before deciding.</p></section>';
+  return '<section class="section area-overview category-overview"><h2>About '+esc(meta.label)+' in '+esc(city.name)+'</h2>'+
+    '<p>StudentHubHelp currently shows '+rows.length+' active '+esc(meta.label.toLowerCase())+' records in '+esc(city.name)+'. '+verified+' records are marked verified in the saved directory data. Localities represented include '+esc(areaText)+'. These counts reflect the active directory snapshot when this page was generated, not live availability or complete market coverage.</p>'+
+    '<p>'+esc(coachingText)+' '+esc(facilityText)+' Provider-supplied details appear on individual cards where available; missing fields are omitted rather than estimated.</p>'+
+    '<p>'+esc(timingText)+' '+esc(feeText)+'</p>'+
+    '<p>'+esc(landmarkText)+'</p>'+
+    '<h3>What to compare before choosing</h3><p>'+esc(guidance)+' Check the exact address, total cost, terms and current availability directly with the provider. Use the listing map link to assess your route before travelling.</p></section>';
 }
 function faqForCategory(meta,city,rows){
   const verified=rows.filter(row=>row.verified===true).length;
-  const countText=rows.length===1?'1 active record':rows.length+' active records';
+  const facilities=[...new Set(rows.flatMap(row=>String(row.facilities||'').split(/[,;|]/).map(label).filter(value=>value&&value.length<=48&&value.split(/\s+/).length<=6)))].slice(0,5);
+  const timings=rows.filter(row=>row.timing||row.timings).length;
+  const fees=areaFeeSummary({rows}).slice(0,2);
+  const landmarks=verifiedLandmarksForArea({name:meta.label,rows},city);
   return [
-    {question:'How many '+meta.label.toLowerCase()+' listings are shown in '+city.name+'?',answer:'This directory currently shows '+countText+' in the '+meta.label.toLowerCase()+' category in '+city.name+', of which '+verified+(verified===1?' record is':' records are')+' marked verified.'},
-    {question:'What should I check before choosing a listing?',answer:'Review the location, facilities, timings, pricing and contact details shown on the individual listing, then confirm current availability directly with the provider.'},
-    {question:'How can I find one near a landmark?',answer:'Search the landmark or coaching institute name in Global Search. Any distance stated in listing details is provider-supplied and should be confirmed using a map and the provider.'}
+    {question:'How many '+meta.label.toLowerCase()+' listings are shown in '+city.name+'?',answer:'The current directory shows '+rows.length+' active '+meta.label.toLowerCase()+' records in '+city.name+', including '+verified+' marked verified.'},
+    {question:'Which localities are represented?',answer:'The locality names and counts shown in the page introduction come from the active listing records. Confirm the exact address on each individual listing before travelling.'},
+    {question:'Which facilities and timings are available?',answer:facilities.length?'Provider records mention '+facilities.join(', ')+'. '+timings+' listings include timing information. Details vary by provider, so review each card.':'Facilities and timings are not consistently supplied; contact the provider to confirm the details you need.'},
+    {question:'Are prices or fees published?',answer:fees.length?fees.join('; ')+'. These are provider-supplied values; confirm the billing period, deposit and current amount directly.':'No usable published price or fee value is present in these category records. Contact providers for current charges.'},
+    {question:'Are nearby landmark distances verified?',answer:landmarks.length?landmarks.map(item=>item.name+' ('+item.distanceKm.toFixed(1)+' km straight-line)').join(', ')+'. Distances are approximate from the listing-coordinate centroid, not road distances.':'No verified landmark coordinates fall within 8 km of the geocoded listing centroid, so no distance claim is made.'},
+    {question:'What should I check before choosing a listing?',answer:'Compare the exact location, facilities, timings, total cost, terms and contact details shown on the individual listing. Confirm current availability and route directly with the provider.'}
   ];
 }
 function areaLandmarkMatches(area){
@@ -401,7 +421,42 @@ function faqForArea(area,city){
     {question:'How can I compare listings before choosing?',answer:'Open each View Details page and compare the address, category-specific facilities, timings, published charges and contact details. Confirm current availability and terms directly with the provider before paying.'}
   ];
 }
-function faqForCoaching(coach,city,rows){const cats=categoryNames(rows),countText=rows.length===1?'1 active listing':rows.length+' active listings';return [{question:'What student services are linked to '+coach.name+' in '+city.name+'?',answer:'This page groups '+countText+' whose stored name, area, address or nearby-landmark details mention '+coach.name+'. Categories shown include '+cats.join(', ')+'.'},{question:'Are distances from '+coach.name+' independently verified?',answer:'No. Coaching and landmark matches are based on information stored with each listing. Confirm the exact distance and route on a map and with the provider.'}];}
+function coachingQuickAnswer(coach,city,rows){
+  const cats=categoryNames(rows);
+  const verified=rows.filter(row=>row.verified===true).length;
+  return '<section class="section quick-answer" aria-label="Quick answer"><h2>Quick answer</h2><p>StudentHubHelp groups '+rows.length+' active student listings that mention '+esc(coach.name)+' in '+esc(city.name)+'. These matches come from listing names, areas, addresses or nearby-landmark fields; they do not prove verified distance to the institute. Compare category and provider details on each card, then confirm the exact route and current availability directly with the provider. '+verified+' records are marked verified.</p></section>';
+}
+function coachingIntro(coach,city,rows){
+  const cats=categoryNames(rows);
+  const areas=[...new Set(rows.map(row=>label(row.area)).filter(Boolean))].slice(0,4);
+  const names=[...new Set(rows.map(row=>label(row.name)).filter(Boolean))].slice(0,3);
+  const facilities=[...new Set(rows.flatMap(row=>String(row.facilities||'').split(/[,;|]/).map(label).filter(value=>value&&value.length<=48&&value.split(/\s+/).length<=6)))].slice(0,4);
+  const fees=areaFeeSummary({rows}).slice(0,2);
+  const verified=rows.filter(row=>row.verified===true).length;
+  const landmarks=verifiedLandmarksForArea({name:coach.name,rows},city);
+  const facilityText=facilities.length?'Short facility details include '+facilities.join(', ')+'.':'Some providers include detailed facility information on their individual cards.';
+  const feeText=fees.length?'Published price or fee fields in some records include '+fees.join('; ')+'. Confirm current charges directly.':'Published price or fee values are not consistently available in these records; contact providers for current charges.';
+  const landmarkText=landmarks.length?'Verified landmarks near the centroid of geocoded listings include '+landmarks.map(item=>item.name).join(', ')+'. The distance table shows approximate straight-line distances from those listings, not from the coaching institute itself.':'No verified landmark coordinates fall within 8 km of the geocoded listing centroid, so no distance claim is shown.';
+  return '<section class="section area-overview coaching-overview"><h2>Student services linked to '+esc(coach.name)+' in '+esc(city.name)+'</h2>'+
+    '<p>This page groups '+rows.length+' active student-service records whose stored listing name, locality, address or nearby-landmark field mentions '+esc(coach.name)+'. Categories represented include '+esc(cats.join(', '))+'. '+verified+' records are marked verified in the saved directory data. These text matches are useful for discovery, but do not prove a provider is next to the institute.</p>'+
+    '<p>Localities represented in these records include '+esc(areas.join(', ')||'locality details not supplied')+'. Examples include '+esc(names.join(', ')||'the listings shown below')+'. '+esc(facilityText)+'</p>'+
+    '<p>'+esc(feeText)+' Review each provider’s address, timing, contact information and service details; missing fields are not estimated.</p>'+
+    '<p>'+esc(landmarkText)+'</p>'+
+    '<h3>How to use these results</h3><p>Open each View Details page, compare category-specific facilities and published charges, then confirm the route on a map and check current availability directly with the provider before paying.</p></section>';
+}
+function faqForCoaching(coach,city,rows){
+  const cats=categoryNames(rows);
+  const fees=areaFeeSummary({rows}).slice(0,2);
+  const landmarks=verifiedLandmarksForArea({name:coach.name,rows},city);
+  return [
+    {question:'What student services are linked to '+coach.name+' in '+city.name+'?',answer:'This page groups '+rows.length+' active listings whose stored name, area, address or nearby-landmark details mention '+coach.name+'. Categories include '+cats.join(', ')+'.'},
+    {question:'Are these listings confirmed to be beside '+coach.name+'?',answer:'No. Matches are based on listing text fields and are not proof of proximity. Check the provider address and route on a map before visiting.'},
+    {question:'Are distances from '+coach.name+' independently verified?',answer:landmarks.length?'The table shows approximate straight-line distances from the centroid of geocoded listings to verified landmarks. It does not measure distance from the coaching institute.':'No verified landmark coordinates are available close to the geocoded listing centroid; no distance claim is made.'},
+    {question:'Which listing categories are available?',answer:'The current records include '+cats.join(', ')+'. Open each card to review the individual provider and service details.'},
+    {question:'Are prices and facilities available?',answer:(fees.length?fees.join('; ')+'. ':'')+'Provider-supplied facilities and charges vary by listing. Review each card and confirm current details directly with the provider.'},
+    {question:'How should I choose a listing?',answer:'Compare the address, category, facilities, timings, total cost and terms. Confirm current availability and the exact route with the provider before paying.'}
+  ];
+}
 function faqHtml(items){if(!items.length)return '';return '<section class="section seo-faq" aria-label="Common questions"><h2>Quick answers</h2>'+items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join('')+'</section>';}
 function metaDescription(value){let text=String(value||'').replace(/\s+/g,' ').trim();if(text.length<110)text+=' Browse active listings on StudentHubHelp and check each listing status.';if(text.length>160)text=text.slice(0,157).replace(/\s+\S*$/,'').trim()+'…';return text;}
 function limitTitle(value,max=60){const suffix=' | StudentHubHelp';const title=String(value||'').replace(/\s+/g,' ').trim();if(title.length<=max)return title;const source=title.endsWith(suffix)?title.slice(0,-suffix.length).trim():title;const room=max-suffix.length;const words=source.split(/\s+/);while(words.length&&words.join(' ').length>room)words.pop();const base=words.join(' ')||source.slice(0,room).trim();return base+suffix;}
@@ -650,7 +705,7 @@ for(const c of cities.values()){
     const relatedCoachings=[...new Set(rows.flatMap(matchedCoachings))];
     const relatedCoachingLinks=relatedCoachings.map(s=>{const m=coachingBySlug(s);return '<a href="'+esc('../'+entitySection(m)+'/'+m.slug+'/')+'">'+entityIcon(m)+' '+esc(m.name)+'</a>';}).join('');
     const coachingContext=relatedCoachingLinks?'<section class="section"><h2>Nearby coaching & landmarks</h2><div class="links">'+relatedCoachingLinks+'</div></section>':'';
-    const body=categoryIntro(meta,c,rows)+'<section class="section"><h2>'+esc(meta.label)+' listings in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+coachingContext+
+    const body=categoryQuickAnswer(meta,c,rows)+categoryIntro(meta,c,rows)+areaLandmarkTable({name:meta.label,rows},c)+'<section class="section"><h2>'+esc(meta.label)+' listings in '+esc(c.name)+'</h2><div class="grid">'+rows.map(r=>card(r,2)).join('')+'</div></section>'+coachingContext+
       '<section class="section"><a href="'+esc(rel(2,cityUrl))+'">← Back to '+esc(c.name)+'</a> · <a href="'+esc(rel(2,new URL(meta.finder,BASE).href))+'">Open '+esc(meta.label)+' Finder</a></section>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
     await write(p,shell({title:titleForCategory(meta,c.name),description:'Find '+rows.length+' active '+meta.label.toLowerCase()+' in '+c.name+'. Compare local areas, facilities and provider details on StudentHubHelp.',canonical:url,h1:meta.label+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:meta.label,url}],body,depth:3,about:[{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,rows)}},{'@type':'Thing','name':meta.label}],itemRows:rows,faqItems:faqForCategory(meta,c,rows)}));
@@ -681,7 +736,7 @@ for(const c of cities.values()){
     const dir=cityDir+'/'+section+'/'+coach.slug;
     const url=new URL(cs+'/'+section+'/'+coach.slug+'/',BASE).href;
     const typeLinks=[...new Set(rows.map(r=>r.type))].map(type=>{const m=TABLES.find(x=>x.type===type);return '<a href="'+esc('/'+m.finder)+'">'+m.icon+' '+esc(m.label)+'</a>';}).join('');
-    const body='<section class="section"><h2>Student properties near '+esc(coach.name)+' in '+esc(c.name)+'</h2><p>These active listings mention this location in their name, area, address or nearby-landmark details. Listing-provided distances are not independently verified; confirm the exact route before visiting.</p><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section><section class="section"><h2>Categories</h2><div class="links">'+typeLinks+'</div></section><p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
+    const body=coachingQuickAnswer(coach,c,rows)+coachingIntro(coach,c,rows)+areaLandmarkTable({name:coach.name,rows},c)+'<section class="section"><h2>Student properties near '+esc(coach.name)+' in '+esc(c.name)+'</h2><p>These active listings mention this location in their name, area, address or nearby-landmark details. Text matches do not confirm proximity; verify the exact route before visiting.</p><div class="grid">'+rows.map(r=>card(r,3)).join('')+'</div></section><section class="section"><h2>Categories</h2><div class="links">'+typeLinks+'</div></section><p><a href="'+esc(rel(3,cityUrl))+'">← Back to '+esc(c.name)+'</a></p>';
     const p=dir+'/index.html'; expected.add(p); generated.push(url);
     await write(p,shell({title:titleForCoaching(coach,c.name),description:'Find student listings linked to '+coach.name+' in '+c.name+'. Check each listing for its location details and confirm exact distance before visiting.',canonical:url,h1:'Student Properties near '+coach.name+' in '+c.name,crumbs:[{name:c.name,url:cityUrl},{name:coach.name,url}],body,depth:3,about:[{'@type':entitySchemaType(coach),'name':coach.name},{'@type':'City','name':c.name,'containedInPlace':{'@type':'State','name':stateForCity(c.name,rows)}}],itemRows:rows,faqItems:faqForCoaching(coach,c,rows)}));
   }
