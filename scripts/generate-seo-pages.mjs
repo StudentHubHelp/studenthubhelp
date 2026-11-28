@@ -725,17 +725,17 @@ for(const cs of CITY_HTML_ROOTS){
   const cityUrl=new URL(cs+'/',BASE).href;
   const decision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:city?.rows.length||0},folderPath,true);
   const title=limitTitle(city ? titleForCity(cityName,city.rows) : 'Student Services in '+cityName+' | StudentHubHelp');
-  html=html.replace(/<meta\\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="noindex,follow">');
-  if(!/<meta\\s+name=["']robots["']/i.test(html)) html=html.replace('</head>','<meta name="robots" content="noindex,follow"></head>');
-  html=html.replace(/<title>[\\s\\S]*?<\\/title>/i,'<title>'+esc(title)+'</title>');
-  html=html.replace(/<link\\b[^>]*rel=["']canonical["'][^>]*>/i,tag=>tag.replace(/href=["'][^"']*["']/i,'href="'+esc(cityUrl)+'"'));
-  html=html.replace(/(<meta\\s+property=["']og:url["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(cityUrl)+'$2');
+  html=html.replace(/<meta\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="noindex,follow">');
+  if(!/<meta\s+name=["']robots["']/i.test(html)) html=html.replace('</head>','<meta name="robots" content="noindex,follow"></head>');
+  html=html.replace(/<title>[\s\S]*?<\/title>/i,'<title>'+esc(title)+'</title>');
+  html=html.replace(/<link\b[^>]*rel=["']canonical["'][^>]*>/i,tag=>tag.replace(/href=["'][^"']*["']/i,'href="'+esc(cityUrl)+'"'));
+  html=html.replace(/(<meta\s+property=["']og:url["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(cityUrl)+'$2');
   html=html.replaceAll('https://studenthubhelp.in/'+sourcePath,cityUrl);
   if(city && city.rows.length){
     const description=metaDescription(descriptionForCity(city));
-    html=html.replace(/(<meta\\s+name=["']description["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(description)+'$2');
-    html=html.replace(/(<meta\\s+property=["']og:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
-    html=html.replace(/(<meta\\s+name=["']twitter:title["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
+    html=html.replace(/(<meta\s+name=["']description["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(description)+'$2');
+    html=html.replace(/(<meta\s+property=["']og:title["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
+    html=html.replace(/(<meta\s+name=["']twitter:title["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(title)+'$2');
   }
   ROOT_CITY_REDIRECTS.push({from:'/'+sourcePath,to:decision.status==='redirect'?parentPath({type:'cityHub',citySlug:cs}):'/'+cs+'/'});
   if(decision.status==='redirect') ROOT_CITY_REDIRECTS.push({from:'/'+cs+'/',to:parentPath({type:'cityHub',citySlug:cs})});
@@ -1056,9 +1056,9 @@ for(const cs of CITY_HTML_ROOTS){
   if(!state || state.status==='redirect') continue;
   let html=await readFile(sourcePath,'utf8');
   const cityUrl=new URL(cs+'/',BASE).href;
-  html=html.replace(/<meta\\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(state.robots||'noindex,follow')+',max-image-preview:large,max-snippet:-1,max-video-preview:-1">');
-  html=html.replace(/<link\\b[^>]*rel=["']canonical["'][^>]*>/i,tag=>tag.replace(/href=["'][^"']*["']/i,'href="'+esc(cityUrl)+'"'));
-  html=html.replace(/(<meta\\s+property=["']og:url["']\\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(cityUrl)+'$2');
+  html=html.replace(/<meta\s+name=["']robots["'][^>]*>/i,'<meta name="robots" content="'+esc(state.robots||'noindex,follow')+',max-image-preview:large,max-snippet:-1,max-video-preview:-1">');
+  html=html.replace(/<link\b[^>]*rel=["']canonical["'][^>]*>/i,tag=>tag.replace(/href=["'][^"']*["']/i,'href="'+esc(cityUrl)+'"'));
+  html=html.replace(/(<meta\s+property=["']og:url["']\s+content=["'])[^"']*(["'][^>]*>)/i,'$1'+esc(cityUrl)+'$2');
   html=html.replaceAll('https://studenthubhelp.in/'+sourcePath,cityUrl);
   for(const other of CITY_HTML_ROOTS) html=html.replaceAll('href="/'+other+'.html"','href="/'+other+'/"');
   await write(folderPath,html);
