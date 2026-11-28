@@ -24,6 +24,21 @@ const GENERATED_MARKER = '<meta name="studenthubhelp-generated-seo" content="tru
 const LEGACY_REDIRECTS = JSON.parse(await readFile('property-url-redirects.json', 'utf8'));
 const CITY_ALIAS_DATA = JSON.parse(await readFile('data/city-aliases.json', 'utf8'));
 const SEO_AREA_PROFILES = JSON.parse(await readFile('data/seo-area-profiles.json', 'utf8').catch(() => '{"profiles":[]}'));
+async function fetchSeoMetadata(table,select,filters={}){
+  const url=new URL('/rest/v1/'+table,SUPABASE_URL.replace(/\\/+$/,''));
+  url.searchParams.set('select',select);
+  for(const [field,value] of Object.entries(filters)) url.searchParams.set(field,value);
+  const response=await fetch(url,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+  if(!response.ok) throw new Error('Unable to fetch SEO metadata from '+table+': HTTP '+response.status+' '+(await response.text()).slice(0,300));
+  return response.json();
+}
+const [SEO_CITIES,SEO_AREAS]=await Promise.all([
+  fetchSeoMetadata('cities','slug,name,state,tagline,intro_text,lat,lng,is_active',{is_active:'eq.true'}),
+  fetchSeoMetadata('areas','city_slug,slug,name,intro_text,landmarks,coaching_nearby,profile_complete,latitude,longitude,is_active',{is_active:'eq.true',profile_complete:'eq.true'})
+]);
+if(!SEO_CITIES.length) throw new Error('SEO cities registry returned no active city metadata.');
+if((SEO_AREA_PROFILES.profiles||[]).length && !SEO_AREAS.length) throw new Error('SEO area profiles are configured but none are publicly readable from Supabase.');
+const CITY_METADATA_MAP=new Map(SEO_CITIES.map(city=>[city.slug,city]));
 const PREVIOUS_PAGE_STATE = JSON.parse(await readFile('data/seo-page-state.json', 'utf8').catch(() => '{"version":1,"pages":{}}'));
 const PREVIOUS_SEO_MANIFEST = JSON.parse(await readFile('seo-generated-manifest.json', 'utf8').catch(() => '{"expected":[]}'));
 const NEXT_PAGE_STATE = { version:1, generatedAt:new Date().toISOString(), pages:{ ...(PREVIOUS_PAGE_STATE.pages || {}) } };
@@ -31,7 +46,7 @@ const PENDING_ELIGIBILITY_REDIRECTS = new Map();
 const PAGE_DECISION_CACHE = new Map();
 const ROOT_CITY_REDIRECTS = [];
 const SEO_RUN_NOW = new Date();
-const AREA_PROFILE_MAP = new Map((SEO_AREA_PROFILES.profiles || []).map(profile => [profile.citySlug+'|'+profile.areaSlug, profile]));
+const AREA_PROFILE_MAP = new Map(SEO_AREAS.map(profile => [profile.city_slug+'|'+profile.slug,{citySlug:profile.city_slug,areaSlug:profile.slug,areaName:profile.name,introText:profile.intro_text,landmarks:profile.landmarks||[],coachingNearby:profile.coaching_nearby||[],profileComplete:profile.profile_complete===true,latitude:profile.latitude,longitude:profile.longitude}]));
 function getAreaProfile(citySlug, areaName) { return AREA_PROFILE_MAP.get(citySlug+'|'+slug(areaName)) || null; }
 function decideAndStorePage(identity, metrics, relativePath, assumePreviouslyIndexed=false) {
   const stateKey = pageStateKey(identity);
@@ -719,7 +734,7 @@ for(const cs of CITY_HTML_ROOTS){
   let html=await readFile(sourcePath,'utf8').catch(()=> '');
   if(!html) continue;
   const city=cities.get(cs);
-  const cityName=city?.name || CITY_ALIAS_DATA.canonicalCities.find(item=>item.slug===cs)?.name || label(cs);
+  const cityName=CITY_METADATA_MAP.get(cs)?.name || city?.name || CITY_ALIAS_DATA.canonicalCities.find(item=>item.slug===cs)?.name || label(cs);
   const folderPath=cs+'/index.html';
   const cityUrl=new URL(cs+'/',BASE).href;
   const decision=decideAndStorePage({type:'cityHub',citySlug:cs},{listingCount:city?.rows.length||0},folderPath,true);
